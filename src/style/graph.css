@@ -1,0 +1,349 @@
+.graph {
+  background: white;
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  padding: 1em;
+}
+
+@media not all and (max-width: 48em) {
+  .panel:not(.outset-x) .graph {
+    border-radius: 0.5em;
+  }
+}
+
+.graph:after {
+  content: '';
+  padding-bottom: 66.6%;
+}
+
+.graph>* {
+  display: flex;
+}
+
+/* Center */
+
+.graph>.center {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  order: 2;
+}
+
+.graph>.center>.bottom {
+  order: 3;
+}
+
+.graph>.center>.top {
+  order: 1;
+}
+
+.graph>.center>*>.axis {
+  display: flex;
+  position: relative;
+}
+
+.graph>.center>*>.axis.bottom {
+  height: 2em;
+}
+
+.graph>.center>*>.axis.bottom:after {
+  border-top: 1px solid lightgrey;
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+.graph>.center>*>.axis.top {
+  height: 2em;
+}
+
+.graph>.center>*>.axis.top:after {
+  border-bottom: 1px solid lightgrey;
+  bottom: -1px;
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+/* Left / right */
+
+.graph>.left>.axis,
+.graph>.right>.axis {
+  position: relative;
+}
+
+/* Left */
+
+.graph>.left {
+  order: 1;
+}
+
+.graph.top>.left {
+  padding-top: 2em;
+}
+
+.graph.top.title>.left {
+  padding-top: 3.5em;
+}
+
+.graph.bottom>.left {
+  padding-bottom: 2em;
+}
+
+.graph.bottom.title>.left {
+  padding-bottom: 3.5em;
+}
+
+.graph>.left>.axis.left:after {
+  border-right: 1px solid lightgrey;
+  bottom: 0;
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 0;
+}
+
+/* Right */
+
+.graph>.right {
+  order: 3;
+}
+
+.graph.top>.right {
+  padding-top: 2em;
+}
+
+.graph.top.title>.right {
+  padding-top: 3.5em;
+}
+
+.graph.bottom>.right {
+  padding-bottom: 2em;
+}
+
+.graph.bottom.title>.right {
+  padding-bottom: 3.5em;
+}
+
+.graph>.right>.axis.right:after {
+  border-left: 1px solid lightgrey;
+  bottom: 0;
+  content: '';
+  left: -1px;
+  position: absolute;
+  top: 0;
+}
+
+/* Body */
+
+.graph>*>.body {
+  flex: 1;
+  order: 2;
+  overflow: hidden;
+  position: relative;
+}
+
+.graph>*>.body>svg {
+  height: 100%;
+  position: absolute;
+  width: 100%;
+}
+
+/* Body grid */
+
+.graph>*>.body>.grid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.graph>*>.body>.grid>.line {
+  opacity: 0;
+  position: absolute;
+  transition-property: opacity;
+}
+
+.graph>*>.body>.grid>.line.in {
+  opacity: 1;
+}
+
+.graph>*>.body>.grid>.line.out {
+  opacity: 0;
+}
+
+.graph>*>.body>.grid>.line.x {
+  border-left: 1px solid lightgrey;
+  height: 100%;
+}
+
+.graph>*>.body>.grid>.line.y {
+  border-top: 1px solid lightgrey;
+  width: 100%;
+}
+
+/* Body plot */
+
+.graph>*>.body>svg>.plot>* {
+  opacity: 0;
+}
+
+.graph>*>.body>svg>.plot>*.in {
+  opacity: 1;
+}
+
+.graph>*>.body>svg>.plot>*.out {
+  opacity: 0;
+}
+
+.graph>*>.body>svg>.plot>circle {
+  fill: transparent;
+  stroke: rgb(14, 122, 254);
+}
+
+.graph>*>.body>svg>.plot>path.fill {
+  fill: lightgrey;
+}
+
+.graph>*>.body>svg>.plot>path.stroke {
+  fill: none;
+  stroke: rgb(14, 122, 254);
+}
+
+.graph>*>.body>svg>.plot>rect {
+  fill: rgb(14, 122, 254);
+}
+
+.graph>*>.body>svg>.plot>rect.zero {
+  fill: lightgrey;
+}
+
+/* Title */
+
+.graph>.left>.title {
+  text-align: end;
+  transform: rotate(180deg);
+  width: 1.5em;
+  writing-mode: vertical-rl;
+}
+
+.graph>.right>.title {
+  text-align: start;
+  width: 1.5em;
+  writing-mode: vertical-rl;
+}
+
+.graph>.center>.bottom>.title {
+  align-items: flex-end;
+  display: flex;
+  height: 1.5em;
+  justify-content: flex-end;
+}
+
+.graph>.center>.top>.title {
+  align-items: flex-start;
+  display: flex;
+  height: 1.5em;
+  justify-content: flex-end;
+}
+
+.graph>*>.title span,
+.graph>.center>*>.title span {
+  font-size: 0.9em;
+}
+
+/* Tick */
+
+.graph>*>.axis>.tick,
+.graph>.center>*>.axis>.tick {
+  opacity: 0;
+}
+
+.graph>*>.axis>.tick.in,
+.graph>.center>*>.axis>.tick.in {
+  opacity: 1;
+}
+
+.graph>*>.axis>.tick.out,
+.graph>.center>*>.axis>.tick.out {
+  opacity: 0;
+}
+
+.graph>*>.axis>.tick,
+.graph>.center>*>.axis>.tick {
+  position: relative;
+}
+
+.graph>*>.axis>.tick>.text,
+.graph>.center>*>.axis>.tick>.text {
+  font-size: 0.9em;
+  position: relative;
+}
+
+/* Tick x-axis */
+
+.graph>.center>*>.axis.x>.tick {
+  width: 0;
+}
+
+.graph>.center>*>.axis.x>.tick>.mark {
+  border-left: 1px solid lightgrey;
+  height: 0.5em;
+  position: absolute;
+  left: 50%;
+}
+
+.graph>.center>*>.axis.x>.tick>.text {
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.graph>.center>*>.axis.x.bottom>.tick>.text {
+  padding-top: 0.75em;
+}
+
+.graph>.center>*>.axis.x.top>.tick>.mark {
+  bottom: 0;
+}
+
+.graph>.center>*>.axis.x.top>.tick>.text {
+  bottom: 0;
+  padding-bottom: 0.75em;
+}
+
+/* Tick y-axis */
+
+.graph>*>.axis.y>.tick {
+  height: 0;
+}
+
+.graph>*>.axis.y>.tick>.mark {
+  border-top: 1px solid lightgrey;
+  width: 0.5em;
+  position: absolute;
+  top: 50%;
+}
+
+.graph>*>.axis.y>.tick>.text {
+  transform: translateY(-50%);
+}
+
+.graph>*>.axis.y.left>.tick>.mark {
+  right: 0;
+}
+
+.graph>*>.axis.y.left>.tick>.text {
+  padding-right: 0.75em;
+  text-align: end;
+}
+
+.graph>*>.axis.y.right>.tick>.mark {
+  left: 0;
+}
+
+.graph>*>.axis.y.right>.tick>.text {
+  padding-left: 0.75em;
+}

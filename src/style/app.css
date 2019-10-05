@@ -1,0 +1,94 @@
+.app {
+  border-radius: 1em;
+  display: flex;
+  height: 48em;
+  overflow: hidden;
+  width: 64em;
+}
+
+.outset-x .app,
+.outset-y .app {
+  border-radius: 0;
+}
+
+.outset-x .app {
+  width: 100%;
+}
+
+.outset-y .app {
+  height: 100%;
+}
+
+@media (max-width: 64em) {
+  .app {
+    border-radius: 0;
+    padding: 0;
+    width: 100%;
+  }
+}
+
+@media (max-height: 48em) {
+  .app {
+    border-radius: 0;
+    height: 100%;
+    padding: 0;
+  }
+}
+
+.app>* {
+  overflow: hidden;
+}
+
+.app>.main {
+  background: whitesmoke;
+  flex: 1 1 auto;
+  height: 100%;
+  position: relative;
+}
+
+.app>.menu {
+  background: whitesmoke;
+  border-right: 1px solid lightgrey;
+  height: 100%;
+  position: relative;
+  width: 21.333em;
+}
+
+.app>*+.menu {
+  border-left: 1px solid lightgrey;
+}
+
+.app>.menu+.menu {
+  display: none;
+}
+
+.outset-x .app>.menu+.menu {
+  display: initial;
+}
+
+*[dir='rtl'] .app>.menu {
+  border-left: 1px solid lightgrey;
+  border-right: 0;
+}
+
+@media (max-width: 48em) {
+  .app>.menu {
+    left: -100%;
+    max-width: 85%;
+    position: absolute;
+    z-index: 3;
+  }
+
+  .app>.menu.in {
+    left: 0;
+  }
+
+  *[dir='rtl'] .app>.menu {
+    left: 0;
+    right: -100%;
+  }
+
+  *[dir='rtl'] .app>.menu.in {
+    right: 0;
+  }
+}

@@ -1,0 +1,17 @@
+.tip {
+  background: rgb(14, 122, 254);
+  border-radius: 0.3em;
+  color: white;
+  margin: -0.5em 0 0;
+  opacity: 0;
+  padding: 0.5em;
+  position: absolute;
+}
+
+.tip.in {
+  opacity: 1;
+}
+
+.tip.out {
+  opacity: 0;
+}

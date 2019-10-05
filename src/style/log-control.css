@@ -1,0 +1,64 @@
+.log-control {
+  background: white;
+  border-bottom: 1px solid lightgrey;
+  border-top: 1px solid lightgrey;
+  display: flex;
+  flex-direction: column;
+  padding: 1em;
+}
+
+.panel:not(.outset-x) .log-control {
+  border: none;
+  border-radius: 0.5em;
+}
+
+.log-control>.row {
+  display: flex;
+  justify-content: space-around;
+}
+
+.log-control>.row>.action {
+  display: flex;
+  flex: 1;
+}
+
+.log-control>.row>.action:not(:empty) {
+  margin-top: 0.5em;
+}
+
+.log-control>.row>.mode:not(:empty) {
+  margin-top: 0.5em;
+}
+
+.log-control>.row>.name {
+  align-items: center;
+  padding-right: 0.5em;
+}
+
+.log-control>.row>.name .input select {
+  font-size: 1.25em;
+  width: 100%;
+}
+
+.log-control>.row>.name .input select[disabled] {
+  color: black;
+}
+
+.log-control>.row>.name .input select[disabled]+.arrow {
+  display: none;
+}
+
+.log-control>.row>.range {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.log-control>.row>.range>.arrow:after {
+  content: '\f119';
+  font-size: 1.25em;
+  font-family: Ionicons;
+  margin: 0 0.5em;
+}

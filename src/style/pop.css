@@ -1,0 +1,53 @@
+.pop {
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  bottom: 0;
+  display: none;
+  justify-content: center;
+  left: 0;
+  opacity: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+}
+
+.pop.in {
+  opacity: 1;
+}
+
+.pop.open {
+  display: flex;
+  z-index: 3;
+}
+
+.pop>.dialog {
+  border-radius: 1em;
+  height: 34em;
+  overflow: hidden;
+  position: relative;
+  width: 34em;
+}
+
+.pop>.dialog.move {
+  top: 100%;
+}
+
+.pop>.dialog.move.in {
+  top: 0;
+}
+
+@media not all and (min-width: 48em) {
+  .pop>.dialog {
+    border-radius: 0;
+    height: 100%;
+    width: 100%;
+  }
+}
+
+@media not all and (min-height: 34em) {
+  .pop>.dialog {
+    border-radius: 0;
+    height: 100%;
+    width: 100%;
+  }
+}

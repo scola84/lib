@@ -1,0 +1,111 @@
+/* Check */
+
+.item.empty>.input.check {
+  margin-right: 0;
+  overflow: hidden;
+  width: 0;
+}
+
+.delete+.input.check {
+  display: none;
+}
+
+.input.check input {
+  display: none;
+}
+
+.input.check input+* {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.input.check input+*:after {
+  font-family: Ionicons;
+  font-size: 2em;
+}
+
+.input.check input[type='checkbox']+*:after {
+  content: '\f149';
+}
+
+.input.check input[type='checkbox']:checked+*:after {
+  content: '\f14a';
+}
+
+.input.check input[type='radio']+*:after {
+  content: '\f1f6';
+}
+
+.input.check input[type='radio']:checked+*:after {
+  content: '\f1f7';
+}
+
+/* Date */
+
+.input.date {
+  align-items: center;
+  display: flex;
+  position: relative;
+}
+
+.input.date input {
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+}
+
+.input.date input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  height: 100%;
+  position: absolute;
+  width: 100%;
+}
+
+.input.date input::-webkit-clear-button,
+.input.date input::-webkit-inner-spin-button {
+  display: none;
+}
+
+.input.date label {
+  cursor: pointer;
+  z-index: 1;
+}
+
+.input.date label:not(*:root) {
+  pointer-events: none;
+}
+
+/* Select */
+
+.input.select {
+  align-items: center;
+  display: flex;
+  flex: 1;
+}
+
+.input.select select {
+  background: none;
+  border: none;
+  flex: 1;
+  margin: 0;
+  padding-right: 1em;
+  text-overflow: ellipsis;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+}
+
+.input.select .arrow {
+  display: flex;
+  justify-content: center;
+  margin-left: -1em;
+  pointer-events: none;
+  width: 1em;
+}
+
+.input.select .arrow:after {
+  content: '\f3d0';
+  display: flex;
+  font-family: Ionicons;
+  margin-top: 0.15em;
+}

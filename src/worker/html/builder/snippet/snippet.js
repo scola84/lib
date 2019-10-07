@@ -1,9 +1,13 @@
 import { Builder } from '../../../core'
-let id = 0
 
 export class Snippet {
   static attachFactories (target, objects) {
     Builder.attachFactories(target, objects)
+  }
+
+  static makeId () {
+    Snippet.id = (Snippet.id || 0) + 1
+    return Snippet.id
   }
 
   constructor (options = {}) {
@@ -29,7 +33,8 @@ export class Snippet {
 
     options.args = options.args.map((snippet) => {
       return snippet instanceof Snippet
-        ? snippet.clone() : snippet
+        ? snippet.clone()
+        : snippet
     })
 
     return new this.constructor(options)
@@ -77,9 +82,7 @@ export class Snippet {
   }
 
   append (...args) {
-    return this.setArgs(
-      this._args.concat(args)
-    )
+    return this.setArgs(this._args.concat(args))
   }
 
   args (value) {
@@ -116,7 +119,7 @@ export class Snippet {
     return this._id
   }
 
-  setId (value = ++id) {
+  setId (value = Snippet.makeId()) {
     this._id = value
     return this
   }
@@ -147,13 +150,10 @@ export class Snippet {
   }
 
   setStorage (value = null) {
-    if (value === null) {
-      if (typeof window !== 'undefined') {
-        value = window.localStorage
-      }
-    }
+    this._storage = value === null && typeof window !== 'undefined'
+      ? window.localStorage
+      : value
 
-    this._storage = value
     return this
   }
 
@@ -162,27 +162,23 @@ export class Snippet {
   }
 
   find (compare) {
-    const result = []
+    const snippets = []
 
     if (compare(this) === true) {
-      result[result.length] = this
+      snippets.push(this)
     }
 
-    return this.findRecursive(result, this._args, compare)
-  }
-
-  findRecursive (result, args, compare) {
     let snippet = null
 
-    for (let i = 0; i < args.length; i += 1) {
-      snippet = args[i]
+    for (let i = 0; i < this._args.length; i += 1) {
+      snippet = this._args[i]
 
       if (snippet instanceof Snippet) {
-        result = result.concat(snippet.find(compare))
+        snippets.push(...snippet.find(compare))
       }
     }
 
-    return result
+    return snippets
   }
 
   isAllowed (box, data) {
@@ -244,6 +240,10 @@ export class Snippet {
       return value
     }
 
+    if (Array.isArray(value) === true) {
+      return value.map((v) => this.resolveValue(box, data, v))
+    }
+
     if (typeof value === 'function') {
       return this.resolveValue(box, data, value(box, data))
     }
@@ -256,7 +256,7 @@ export class Snippet {
   }
 
   resolveObject (box, data, object, name) {
-    object = this.resolveValue(box, data, object)
-    return this.resolveValue(box, data, object[name])
+    const resolvedObject = this.resolveValue(box, data, object)
+    return this.resolveValue(box, data, resolvedObject[name])
   }
 }

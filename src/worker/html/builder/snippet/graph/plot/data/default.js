@@ -7,7 +7,7 @@ export class Default extends Data {
 
     if (result.data[exogenous] === undefined) {
       result.data[exogenous] = []
-      result.keys[result.keys.length] = exogenous
+      result.keys.push(exogenous)
       result.type = 'default'
     }
 

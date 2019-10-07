@@ -1,27 +1,39 @@
-import sprintf from 'sprintf-js'
-import { HttpClient } from '../../../../http'
 import { Worker } from '../../../../core'
+import { vsprintf } from '../../../../../helper'
+import { HttpClient } from '../../../../http'
 import { Action } from '../action'
 
 export class Request extends Action {
   constructor (options = {}) {
     super(options)
 
+    this._client = null
     this._indicator = null
     this._merge = null
     this._resource = null
 
+    this.setClient(options.client)
     this.setIndicator(options.indicator)
     this.setMerge(options.merge)
     this.setResource(options.resource)
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       indicator: this._indicator,
       merge: this._merge,
       resource: this._resource
-    })
+    }
+  }
+
+  getClient () {
+    return this._client
+  }
+
+  setClient (value = null) {
+    this._client = value
+    return this
   }
 
   getIndicator () {
@@ -41,7 +53,7 @@ export class Request extends Action {
     return this._merge
   }
 
-  setMerge (value = (box, data) => data ? data.data : data) {
+  setMerge (value = null) {
     this._merge = value
     return this
   }
@@ -63,59 +75,71 @@ export class Request extends Action {
     return this.setResource(value)
   }
 
-  createClient (box, data) {
-    const client = new HttpClient({
-      filter: (meta) => {
-        return {
-          meta,
-          data
+  createClient () {
+    this._client = new HttpClient({
+      merge: (box, data, ...extra) => {
+        if (this._merge !== null) {
+          return this._merge(box, data, ...extra)
         }
+
+        return data === undefined || data.data === undefined
+          ? data
+          : data.data
       },
-      merge: (box, data) => {
-        return this._merge(box, data)
-      },
-      progress: (event) => {
+      progress: (box, event) => {
         this.resolveValue(box, event, this._indicator)
       }
     })
 
-    const resolver = new Worker({
+    this._client.connect(new Worker({
       act: (box, data) => {
         this.pass(box, data)
       },
       err: (box, error) => {
         this.fail(box, error)
       }
-    })
+    }))
 
-    client
-      .connect(resolver)
-
-    return client
+    return this._client
   }
 
   resolveAfter (box, data) {
-    const client = this.createClient(box, data)
+    if (this._client === null) {
+      this.createClient()
+    }
+
+    const headers = {}
+
+    if (box.multipart === true) {
+      headers['Content-Type'] = 'multipart/form-data'
+      delete box.multipart
+    }
+
     const options = this.resolveValue(box, data, this._resource)
 
     let [
       method,
-      meta = null
+      path = null
     ] = options.split(' ')
 
-    if (meta === null) {
-      meta = method
+    if (path === null) {
+      path = method
       method = undefined
     }
 
-    meta = sprintf.sprintf(
-      this.expand(meta),
-      Object.assign({}, box.params, box.list)
-    )
+    path = vsprintf(this.expand(path), [
+      box.params,
+      box.list
+    ])
 
-    meta = window.location.origin +
-      meta.replace(/undefined/g, '')
+    const url = window.location.origin + path.replace(/undefined/g, '')
 
-    client.handle(meta)
+    const meta = {
+      headers,
+      method,
+      url
+    }
+
+    this._client.handle(box, { meta, data })
   }
 }

@@ -1,10 +1,11 @@
 import { Node } from '../node'
+
 const classes = ['right', 'center', 'left']
 
 export class Bar extends Node {
   checkChild (classed, before) {
     const size = this._node
-      .select('.' + classed)
+      .select(`.${classed}`)
       .size()
 
     if (size > 0) {
@@ -12,7 +13,7 @@ export class Bar extends Node {
     }
 
     this._node
-      .insert('div', '.' + before)
+      .insert('div', `.${before}`)
       .classed(classed, true)
   }
 

@@ -18,13 +18,13 @@ export class Router extends Worker {
   }
 
   act (box, data) {
-    if (this._act) {
-      this._act(box, data)
-      return
-    }
-
     const name = this.filter(box, data)
-    this.pass(name, box, data)
+
+    if (this._downstreams[name] !== undefined) {
+      this._downstreams[name].handleAct(box, data)
+    } else if (this._bypass !== null) {
+      this._bypass.handleAct(box, data)
+    }
   }
 
   connect (name, worker = null) {
@@ -32,7 +32,7 @@ export class Router extends Worker {
       return this
     }
 
-    if (Array.isArray(worker)) {
+    if (Array.isArray(worker) === true) {
       this.connect(name, worker[0])
       return worker[1]
     }
@@ -42,24 +42,23 @@ export class Router extends Worker {
   }
 
   filter (box, data, context) {
-    if (this._filter) {
+    if (this._filter !== null) {
       return this._filter(box, data, context)
     }
 
     return box.name
   }
 
-  find (compare, up = false) {
-    let found = super.find(compare, up)
-
-    if (found !== null) {
-      return found
+  find (compare) {
+    if (compare(this) === true) {
+      return this
     }
 
-    const names = Object.keys(this._downstreams)
+    const downstreams = Object.values(this._downstreams)
+    let found = null
 
-    for (let i = 0; i < names.length; i += 1) {
-      found = this._downstreams[names[i]].find(compare, up)
+    for (let i = 0; i < downstreams.length; i += 1) {
+      found = downstreams[i].find(compare)
 
       if (found) {
         return found
@@ -67,13 +66,5 @@ export class Router extends Worker {
     }
 
     return found
-  }
-
-  pass (name, box, data) {
-    if (this._downstreams[name]) {
-      this._downstreams[name].handle(box, data)
-    } else if (this._bypass) {
-      this._bypass.handle(box, data)
-    }
   }
 }

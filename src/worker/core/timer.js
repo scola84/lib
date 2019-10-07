@@ -15,11 +15,12 @@ export class Timer extends Worker {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       immediate: this._immediate,
       interval: this._interval,
       schedule: this._schedule
-    })
+    }
   }
 
   getImmediate () {
@@ -50,15 +51,12 @@ export class Timer extends Worker {
   }
 
   execute (box) {
-    this.handle(
-      box,
-      this.filter(box)
-    )
+    this.handleAct(box, this.filter(box))
   }
 
   executeInterval () {
     const interval = typeof this._interval === 'number'
-      ? ({ default: this._interval })
+      ? { default: this._interval }
       : this._interval
 
     const names = Object.keys(interval)
@@ -72,7 +70,7 @@ export class Timer extends Worker {
 
   executeSchedule () {
     const schedule = typeof this._schedule === 'string'
-      ? ({ default: this._schedule })
+      ? { default: this._schedule }
       : this._schedule
 
     const names = Object.keys(schedule)
@@ -109,7 +107,7 @@ export class Timer extends Worker {
       this.executeInterval()
     }
 
-    if (this._immediate) {
+    if (this._immediate === true) {
       this.execute({
         immediate: true
       })

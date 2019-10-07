@@ -7,16 +7,16 @@ const regexpBase = '\\{([^}]+)\\}'
 const regexpGlobal = new RegExp(regexpBase, 'g')
 const regexpSingle = new RegExp(regexpBase)
 
-let flocale = 'nl_NL'
+let slocale = 'nl_NL'
 let strings = {}
 
 export class Print extends Snippet {
   static getLocale () {
-    return flocale
+    return slocale
   }
 
   static setLocale (value) {
-    flocale = value
+    slocale = value
   }
 
   static getNumbers () {
@@ -56,11 +56,12 @@ export class Print extends Snippet {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       format: this._format,
       locale: this._locale,
       values: this._values
-    })
+    }
   }
 
   getFormat () {
@@ -80,7 +81,7 @@ export class Print extends Snippet {
     return this._locale
   }
 
-  setLocale (value = flocale) {
+  setLocale (value = slocale) {
     this._locale = value
     return this
   }
@@ -114,7 +115,7 @@ export class Print extends Snippet {
     const locale = this.resolveValue(box, data, this._locale)
 
     let values = this.resolveValue(box, data, this._values)
-    values = Array.isArray(values) ? values : [values]
+    values = Array.isArray(values) === true ? values : [values]
 
     let lformat = get(strings, `${locale}.${format}`)
 
@@ -143,20 +144,21 @@ export class Print extends Snippet {
     return string === format ? '' : string
   }
 
-  resolveNested (box, data, lformat = '') {
-    const matches = lformat.match(regexpGlobal) || []
+  resolveNested (box, data, format = '') {
+    let resolvedFormat = format
+    let match = null
 
-    let format = null
+    const matches = resolvedFormat.match(regexpGlobal) || []
 
     for (let i = 0; i < matches.length; i += 1) {
-      [, format] = matches[i].match(regexpSingle)
+      [, match] = matches[i].match(regexpSingle)
 
-      lformat = lformat.replace(
+      resolvedFormat = resolvedFormat.replace(
         matches[i],
-        this.resolveFormat(box, data, format)
+        this.resolveFormat(box, data, match)
       )
     }
 
-    return lformat
+    return resolvedFormat
   }
 }

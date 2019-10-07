@@ -18,17 +18,21 @@ export class Builder extends Worker {
   }
 
   static attachFactory (target, objects, group, name) {
-    const { object: O, options } = objects[group][name]
+    const {
+      object: O,
+      options
+    } = objects[group][name]
 
-    if (target.prototype[name]) {
-      name = group + name
-    }
+    const safeName = target.prototype[name] === undefined
+      ? name
+      : group + name
 
-    target.prototype[name] = function create (...args) {
-      return new O(Object.assign({
+    target.prototype[safeName] = function create (...args) {
+      return new O({
         args,
-        builder: this
-      }, options))
+        builder: this,
+        ...options
+      })
     }
   }
 }

@@ -13,10 +13,11 @@ export class DateTime extends Input {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       formatFrom: this._formatFrom,
       formatTo: this._formatTo
-    })
+    }
   }
 
   getFormatFrom () {

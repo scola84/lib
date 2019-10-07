@@ -13,10 +13,11 @@ export class Slicer extends Worker {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       count: this._count,
       resolve: this._resolve
-    })
+    }
   }
 
   getCount () {
@@ -39,13 +40,10 @@ export class Slicer extends Worker {
 
   act (box, data) {
     const items = this.filter(box, data)
-
-    if (this._wrap === true) {
-      box = { box }
-    }
+    const newBox = this._wrap === true ? { box } : box
 
     if (this._resolve === true) {
-      merge(box, {
+      merge(newBox, {
         resolve: {
           [this._name]: {
             count: 0,
@@ -57,26 +55,42 @@ export class Slicer extends Worker {
     }
 
     if (items.length === 0) {
-      if (this._bypass) {
-        this._bypass.handle(box, data)
+      if (this._bypass !== null) {
+        this._bypass.handleAct(newBox, data)
       }
-    }
-
-    for (let i = 0; i < items.length; i += this._count) {
-      this.pass(
-        ...this.merge(box, data, items, i, i + this._count)
-      )
+    } else if (this._downstream !== null) {
+      for (let i = 0; i < items.length; i += this._count) {
+        this._downstream.handleAct(
+          ...this.merge(newBox, data, items, i, i + this._count)
+        )
+      }
     }
   }
 
+  err (box, error) {
+    const newBox = this._wrap === true ? { box } : box
+
+    if (this._resolve === true) {
+      merge(newBox, {
+        resolve: {
+          [this._name]: {
+            empty: true
+          }
+        }
+      })
+    }
+
+    this.fail(newBox, error)
+  }
+
   merge (box, data, items, begin, end) {
-    if (this._merge) {
+    if (this._merge !== null) {
       return this._merge(box, data, items, begin, end)
     }
 
-    data = items.slice(begin, end)
-    data = this._count === 1 ? data[0] : data
+    const slices = items.slice(begin, end)
+    const newData = this._count === 1 ? slices[0] : slices
 
-    return [box, data]
+    return [box, newData]
   }
 }

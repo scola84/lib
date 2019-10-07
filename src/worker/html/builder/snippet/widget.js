@@ -12,10 +12,11 @@ export class Widget extends Action {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       name: this._name,
       widget: this._widget
-    })
+    }
   }
 
   getName () {

@@ -21,17 +21,19 @@ export class HttpRouter extends Router {
 
       if (params !== null) {
         if (resource.methods.indexOf(box.request.method) === -1) {
-          return this.handleMethodError(box, data, resource.methods)
+          this.handleMethodError(box, data, resource.methods)
+          return
         }
 
         name = `${box.request.method} ${resource.pathname}`
         box.request.params = params.groups || params
 
-        return this.pass(name, box, data)
+        this._downstreams[name].handleAct(box, data)
+        return
       }
     }
 
-    return this.handlePathError(box, data)
+    this.handlePathError(box, data)
   }
 
   createResources () {

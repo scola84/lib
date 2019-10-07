@@ -11,8 +11,9 @@ export class Panel extends Node {
     const effect = ['rtl', 'ltr', 'ins']
       .find((name) => box.options[name] === true) || 'none'
 
-    const old = box.base.snippet ? box.base.snippet.node()
-      : select(document.body)
+    const old = box.base.snippet === undefined
+      ? select(document.body)
+      : box.base.snippet.node()
 
     if (old.node() === this._node.node()) {
       return this._node
@@ -24,9 +25,7 @@ export class Panel extends Node {
     old.classed('in', false)
     this._node.classed('in', true)
 
-    const duration = parseFloat(
-      this._node.style('transition-duration')
-    )
+    const duration = parseFloat(this._node.style('transition-duration'))
 
     if (effect === 'none' || duration === 0) {
       old.dispatch('transitionend')
@@ -39,8 +38,9 @@ export class Panel extends Node {
   }
 
   resolveBefore (box, data) {
-    const old = box.base.snippet ? box.base.snippet.node()
-      .classed('rtl ltr ins', false) : select()
+    const old = box.base.snippet === undefined
+      ? select()
+      : box.base.snippet.node().classed('rtl ltr ins', false)
 
     if (old.node() === this._node.node()) {
       return this.resolveOuter(box, data)

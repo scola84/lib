@@ -33,9 +33,8 @@ export class Date extends DateTime {
       .format(`%l[${formatTo}]`)
       .values(date)
 
-    select(this._node.node().nextSibling).text(
-      this.resolveValue(null, null, text)
-    )
+    select(this._node.node().nextSibling)
+      .text(this.resolveValue(null, null, text))
 
     this._node.value = value
 
@@ -55,10 +54,10 @@ export class Date extends DateTime {
     wrapper
       .append('label')
       .attr('tabindex', 0)
-      .attr('for', 'date-' + this._id)
+      .attr('for', `date-${this._id}`)
 
     this._node
-      .attr('id', 'date-' + this._id)
+      .attr('id', `date-${this._id}`)
       .attr('tabindex', -1)
       .on('input.scola-date', () => {
         this.changeValue()

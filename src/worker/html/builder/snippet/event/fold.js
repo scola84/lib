@@ -7,10 +7,10 @@ export class Fold extends Event {
     this.name('click')
   }
 
-  attach (item, immediate) {
+  attach (item, isImmediate) {
     item.style('width')
 
-    if (immediate) {
+    if (isImmediate === true) {
       item.style('transition-duration', '0s')
     }
 
@@ -23,22 +23,20 @@ export class Fold extends Event {
           .on('.scola-fold', null)
       })
 
-    const duration = parseFloat(
-      item.style('transition-duration')
-    )
+    const duration = parseFloat(item.style('transition-duration'))
 
     if (duration === 0) {
       item.dispatch('transitionend')
     }
   }
 
-  detach (item, immediate) {
-    const height = item.node().getBoundingClientRect().height
+  detach (item, isImmediate) {
+    const { height } = item.node().getBoundingClientRect()
 
-    item.style('height', height + 'px')
+    item.style('height', `${height} px`)
     item.style('width')
 
-    if (immediate) {
+    if (isImmediate === true) {
       item.style('transition-duration', '0s')
     }
 
@@ -58,20 +56,20 @@ export class Fold extends Event {
     }
   }
 
-  fold (box, data, snippet, immediate = false) {
+  fold (box, data, snippet, isImmediate = false) {
     const group = snippet.node()
     const isFolded = group.classed('folded')
 
-    const snippets = this._filter
-      ? this._filter(snippet)
-      : snippet.find((s) => s.node && s.node().classed('item'))
+    const snippets = this._filter === null
+      ? snippet.find((s) => s.node && s.node().classed('item'))
+      : this._filter(snippet)
 
-    group.classed('folded', !isFolded)
+    group.classed('folded', isFolded === false)
 
-    if (isFolded) {
-      this.show(snippets, immediate)
+    if (isFolded === true) {
+      this.show(snippets, isImmediate)
     } else {
-      this.hide(snippets, immediate)
+      this.hide(snippets, isImmediate)
     }
   }
 
@@ -91,7 +89,7 @@ export class Fold extends Event {
     }
   }
 
-  hide (snippets, immediate) {
+  hide (snippets, isImmediate) {
     let item = null
 
     for (let i = 0; i < snippets.length; i += 1) {
@@ -100,20 +98,18 @@ export class Fold extends Event {
       item.next = item.node().nextSibling
       item.parent = item.node().parentNode
 
-      this.detach(item, immediate)
+      this.detach(item, isImmediate)
     }
   }
 
   load (box, data, snippet) {
-    const isFolded = Boolean(
-      Number(
-        this._storage.getItem(`fold-${this._id}`)
-      )
-    )
+    const isFolded = Boolean(Number(
+      this._storage.getItem(`fold-${this._id}`)
+    ))
 
     snippet
       .node()
-      .classed('folded', !isFolded)
+      .classed('folded', isFolded === false)
   }
 
   resolveAfter (box, data) {
@@ -126,7 +122,7 @@ export class Fold extends Event {
       this.load(box, data, snippet)
       this.fold(box, data, snippet, true)
 
-      result[result.length] = snippet.node()
+      result.push(snippet.node())
     }
 
     return result
@@ -137,27 +133,24 @@ export class Fold extends Event {
       .node()
       .classed('folded')
 
-    this._storage.setItem(
-      `fold-${this._id}`,
-      Number(isFolded)
-    )
+    this._storage.setItem(`fold-${this._id}`, Number(isFolded))
   }
 
-  show (snippets, immediate) {
+  show (snippets, isImmediate) {
     let item = null
 
     for (let i = snippets.length - 1; i >= 0; i -= 1) {
       item = snippets[i].node()
 
-      if (item.parent) {
-        if (item.next) {
-          item.parent.insertBefore(item.node(), item.next)
-        } else {
+      if (item.parent !== undefined) {
+        if (item.next === undefined) {
           item.parent.appendChild(item.node())
+        } else {
+          item.parent.insertBefore(item.node(), item.next)
         }
       }
 
-      this.attach(item, immediate)
+      this.attach(item, isImmediate)
     }
   }
 }

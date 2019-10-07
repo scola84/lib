@@ -5,7 +5,7 @@ const queues = {}
 
 export class Queuer extends Worker {
   static createQueue (concurrency, name = null) {
-    if (queues[name]) {
+    if (queues[name] !== undefined) {
       return queues[name]
     }
 
@@ -37,19 +37,20 @@ export class Queuer extends Worker {
     this.setSub(options.sub)
     this.setUnsaturated(options.unsaturated)
 
-    if (options.handler) {
+    if (options.handler !== undefined) {
       this.setHandler(options.handler)
       this.startHandler()
     }
 
-    if (options.queuer) {
+    if (options.queuer !== undefined) {
       this.setQueuer(options.queuer)
       this.startQueuer()
     }
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       concurrency: this._concurrency,
       handler: this._handler,
       pub: this._pub,
@@ -57,7 +58,7 @@ export class Queuer extends Worker {
       queuer: this._queuer,
       sub: this._sub,
       unsaturated: this._unsaturated
-    })
+    }
   }
 
   getConcurrency () {
@@ -132,10 +133,7 @@ export class Queuer extends Worker {
   }
 
   createQueue (box) {
-    this._queue = Queuer.createQueue(
-      this._concurrency,
-      this._name
-    )
+    this._queue = Queuer.createQueue(this._concurrency, this._name)
 
     this._queue.unsaturated(() => {
       this._unsaturated(box)
@@ -144,30 +142,33 @@ export class Queuer extends Worker {
 
   handleRemote (callback) {
     this._handler.rpop(this._name, (error, data) => {
-      if (error) {
+      if (error !== null) {
         callback(error)
         return
       }
 
       if (data === null) {
         this._unsaturated = () => {}
-        callback()
+        callback(null, data)
         return
       }
 
       try {
-        data = JSON.parse(data)
+        this.pass(
+          ...this.merge(null, JSON.parse(data), callback)
+        )
       } catch (jsonError) {
         callback(jsonError)
-        return
       }
-
-      this.pass(callback, data)
     })
   }
 
-  pass (callback, data) {
-    const box = {
+  merge (box, data, callback) {
+    if (this._merge !== null) {
+      return this._merge(box, data, callback)
+    }
+
+    const newBox = {
       resolve: {
         [this._name]: {
           callback
@@ -175,7 +176,7 @@ export class Queuer extends Worker {
       }
     }
 
-    super.pass(box, data)
+    return [newBox, data]
   }
 
   pushFromRemote () {
@@ -202,20 +203,24 @@ export class Queuer extends Worker {
     }
 
     this._queue.push((callback) => {
-      this.pass(callback, data)
+      this.pass(
+        ...this.merge(box, data, callback)
+      )
     })
   }
 
   pushToRemote (box, data) {
+    let dataString = null
+
     try {
-      data = JSON.stringify(data)
+      dataString = JSON.stringify(data)
     } catch (error) {
       this.log('fail', box, error)
       return
     }
 
-    this._queuer.lpush(this._name, data, (error) => {
-      if (error) {
+    this._queuer.lpush(this._name, dataString, (error) => {
+      if (error !== null) {
         this.log('fail', box, error)
         return
       }

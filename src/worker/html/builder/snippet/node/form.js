@@ -21,17 +21,13 @@ export class Form extends Node {
     label.each((datum, index, nodes) => {
       max = Math.max(
         max,
-        Math.ceil(
-          parseFloat(
-            select(nodes[index]).style('width')
-          )
-        )
+        Math.ceil(parseFloat(select(nodes[index]).style('width')))
       )
     })
 
     this._node
       .selectAll('.label:not(:last-child)')
-      .style('width', max + 'px')
+      .style('width', `${max}px`)
 
     return this._node
   }

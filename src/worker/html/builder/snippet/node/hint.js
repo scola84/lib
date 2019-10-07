@@ -9,9 +9,10 @@ export class Hint extends Node {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       format: this._format
-    })
+    }
   }
 
   getFormat () {
@@ -52,9 +53,9 @@ export class Hint extends Node {
     let text = null
 
     if (value !== undefined && value.reason !== undefined) {
-      format = this._format
-        ? this.resolveValue(box, data, this._format)
-        : `input.${value.type}.${value.reason}`
+      format = this._format === null
+        ? `input.${value.type}.${value.reason}`
+        : this.resolveValue(box, data, this._format)
 
       text = this._builder
         .print()
@@ -62,9 +63,7 @@ export class Hint extends Node {
         .values(value)
     }
 
-    this._node.text(
-      this.resolveValue(box, data, text)
-    )
+    this._node.text(this.resolveValue(box, data, text))
 
     return this._node
   }
@@ -77,15 +76,12 @@ export class Hint extends Node {
     const all = this._builder
       .getView()
       .query(`input[name="${name}"]`)
-      .resolve()
+      .resolve(null)
 
-    if (multiple === undefined) {
-      const index = all.indexOf(input)
-      value = value[index]
-    } else {
-      value = value.reduce((a, v) => v, {})
-    }
+    const resolvedValue = multiple === undefined
+      ? value[all.indexOf(input)]
+      : value.reduce((a, v) => v, {})
 
-    return [name, value]
+    return [name, resolvedValue]
   }
 }

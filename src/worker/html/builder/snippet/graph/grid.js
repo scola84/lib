@@ -22,7 +22,7 @@ export class Grid extends Parent {
 
     const axes = this._builder.selector((snippet) => {
       return snippet instanceof Axis
-    }).resolve()
+    }).resolve(null)
 
     let distance = null
     let node = null
@@ -48,7 +48,7 @@ export class Grid extends Parent {
         node
           .classed(orientation, true)
           .classed(position, true)
-          .style(property, Math.floor(distance) + 'px')
+          .style(property, `${Math.floor(distance)}px`)
       }
     }
 

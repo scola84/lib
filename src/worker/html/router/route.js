@@ -31,6 +31,10 @@ export class Route {
       options.name = router
     }
 
+    if (options.path === '') {
+      delete options.path
+    }
+
     assignWith(options.options, qs.parse(rawOptions), () => true)
     assignWith(options.params, qs.parse(rawParams))
 
@@ -46,7 +50,9 @@ export class Route {
         bwd: false,
         clr: false,
         his: false,
+        imm: false,
         ins: true,
+        lck: false,
         ltr: false,
         mem: false,
         rtl: false
@@ -96,7 +102,7 @@ export class Route {
       name = names[i]
 
       string += string.length === 0 ? ':' : '&'
-      string += name + '=' + this.params[name]
+      string += `${name}=${this.params[name]}`
     }
 
     return string

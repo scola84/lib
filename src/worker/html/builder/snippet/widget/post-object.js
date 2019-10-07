@@ -12,21 +12,26 @@ export class PostObject extends Widget {
     let resource = `/api/${object}`
     let view = `view-${object}:{${object}_id}@main:clr`
 
-    if (link) {
+    if (link !== undefined) {
       resource += `/%(${object}_id)s/${link}`
       view = '@main:his'
     }
 
-    return b.request().resource(
-      `POST ${resource}`
-    ).indicator(
-      b.selector('.progress')
-    ).act(
-      b.route().view('@self:clr'),
-      b.route().view(view)
-    ).err(
-      b.selector('.message'),
-      b.selector('.body .hint')
-    )
+    return b
+      .request()
+      .resource(
+        `POST ${resource}`
+      )
+      .indicator(
+        b.selector('.progress')
+      )
+      .act(
+        b.route().view('@self:clr'),
+        b.route().view(view)
+      )
+      .err(
+        b.selector('.message'),
+        b.selector('.body .hint')
+      )
   }
 }

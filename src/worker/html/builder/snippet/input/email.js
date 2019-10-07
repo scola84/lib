@@ -1,4 +1,5 @@
 import { Input } from '../input'
+
 const regexp = /^[a-z0-9\-()]+$/i
 
 export class Email extends Input {

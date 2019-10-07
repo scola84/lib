@@ -15,10 +15,11 @@ export class Search extends Node {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       placeholder: this._placeholder,
       wildcard: this._wildcard
-    })
+    }
   }
 
   getPlaceholder () {
@@ -95,7 +96,7 @@ export class Search extends Node {
   }
 
   resolveInput (box) {
-    this._storage.setItem('search-' + this._id, box.input)
+    this._storage.setItem(`search-${this._id}`, box.input)
 
     box.list.search = this.formatSearch(box.input)
 
@@ -106,9 +107,9 @@ export class Search extends Node {
   }
 
   resolveSearch (box, data) {
-    const value = this._storage.getItem('search-' + this._id)
+    const value = this._storage.getItem(`search-${this._id}`)
 
-    if (value) {
+    if (value !== null) {
       this._node.classed('in', true)
       this._node.select('input').attr('value', value)
 
@@ -123,16 +124,16 @@ export class Search extends Node {
   }
 
   resolveToggle (box) {
-    const mustIn = !this._node.classed('in')
+    const addIn = !this._node.classed('in')
 
-    if (mustIn) {
+    if (addIn === true) {
       this._node
         .select('input')
         .node()
         .focus()
     }
 
-    this._node.classed('in', mustIn)
+    this._node.classed('in', addIn)
 
     delete box.toggle
     return this._node

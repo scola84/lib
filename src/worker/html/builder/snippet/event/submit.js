@@ -7,10 +7,9 @@ export class Submit extends Event {
   }
 
   handle (box, data, snippet) {
-    data = {}
-
     const formData = new window.FormData(snippet.node().node())
     const keys = Array.from(formData.keys())
+    const newData = {}
 
     let key = null
     let value = null
@@ -21,9 +20,13 @@ export class Submit extends Event {
       value = formData.getAll(key)
       value = value.length === 1 ? value[0] : value
 
-      data[key] = value
+      newData[key] = value
+
+      if (value instanceof window.File) {
+        box.multipart = true
+      }
     }
 
-    this.pass(box, data)
+    this.pass(box, newData)
   }
 }

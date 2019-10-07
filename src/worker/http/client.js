@@ -1,27 +1,24 @@
-import parseContentType from 'content-type-parser'
-import http from 'http'
 import merge from 'lodash-es/merge'
-import parse from 'url-parse'
-import { Worker } from '../../worker'
-import { codec } from '../../helper'
+import superagent from 'superagent'
+import { Worker } from '..'
+import * as codecs from '../../helper/codec'
+import { parseHeader } from '../../helper/parse'
+
+const wcodecs = Object.keys(codecs).reduce((object, name) => {
+  return {
+    ...object,
+    [codecs[name].type()]: new codecs[name]()
+  }
+}, {})
 
 const wmeta = {
   headers: {
-    'Content-Type': 'application/octet-stream'
+    'Content-Type': 'application/json'
   },
-  mode: 'disable-fetch',
-  protocol: 'https:'
+  method: 'GET'
 }
 
 export class HttpClient extends Worker {
-  static getMeta () {
-    return wmeta
-  }
-
-  static setMeta (meta) {
-    merge(wmeta, meta)
-  }
-
   constructor (options = {}) {
     super(options)
 
@@ -39,97 +36,138 @@ export class HttpClient extends Worker {
   }
 
   act (box, boxData) {
-    let {
+    const {
       meta,
       data
     } = this.filter(box, boxData)
 
-    meta = parse(meta)
-    meta = merge({}, wmeta, meta)
+    const cmeta = this._config.http === undefined
+      ? {}
+      : this._config.http.client
 
-    meta.method = meta.method || 'GET'
-    meta.pathname = meta.pathname || '/'
-    meta.path = meta.pathname + meta.query
+    const requestMeta = merge({}, wmeta, cmeta, meta)
+    const requestData = requestMeta.method === 'GET' ? null : data
 
-    data = meta.method === 'GET' ? null : data
+    const request = superagent(requestMeta.method, requestMeta.url)
 
-    const request = http.request(meta)
-
-    request.once('error', (error) => {
-      this._progress({ lengthComputable: true, loaded: 1, total: 1 })
-      this.handleError(box, boxData, request, data, error, 502)
-    })
-
-    request.once('response', (response) => {
-      this.handleResponse(box, boxData, response)
-    })
-
-    this.handleRequest(box, boxData, request, data)
-  }
-
-  handleError (box, boxData, response, data, error, status) {
-    error = new Error(`${status} ${error.message}`.trim())
-
-    error.data = data
-    error.status = status
-
-    this.fail(box, this.merge(response, data, boxData, error))
-  }
-
-  handleRequest (box, boxData, request, data) {
-    const type = parseContentType(request.getHeader('content-type'))
-
-    const encoder =
-      (type && codec[`${type.type}/${type.subtype}`]) ||
-      codec['application/octet-stream']
-
-    encoder.encode(request, data, (encodeError) => {
-      if (encodeError) {
-        this.handleError(box, boxData, request, data, encodeError, 400)
+    Object.keys(requestMeta.headers).forEach((name) => {
+      if (requestData === null && name === 'Content-Type') {
+        return
       }
+
+      request.set(name, requestMeta.headers[name])
+    })
+
+    this.patchRequest(box, request)
+    this.handleRequest(box, boxData, request, requestData)
+  }
+
+  handleError (box, boxData, messageData, error, status = 400) {
+    this._progress(box, {
+      lengthComputable: true,
+      loaded: 1,
+      total: 1
+    })
+
+    const failError = new Error(`${status} ${error.message}`.trim())
+
+    failError.data = messageData ? messageData.data : messageData
+    failError.original = boxData
+    failError.status = status
+
+    this.fail(box, failError)
+  }
+
+  handleRequest (box, boxData, request, requestData) {
+    const type = parseHeader(request.getHeader('content-type'))
+
+    const encoder = wcodecs[type.value] === undefined
+      ? wcodecs['application/octet-stream']
+      : wcodecs[type.value]
+
+    encoder.encode(request, requestData, (encoderError, encoderData) => {
+      if (encoderError !== null) {
+        this.handleError(box, boxData, requestData, encoderError)
+        return
+      }
+
+      this._progress(box, {
+        lengthComputable: true,
+        loaded: 1,
+        total: 10
+      })
+
+      if (type.value === 'multipart/form-data') {
+        request.setHeader('Content-Type', null)
+      }
+
+      request
+        .write(encoderData)
+        .end((error, response) => {
+          if (error !== null) {
+            this.handleError(box, boxData, encoderData, error,
+              response && response.statusCode)
+            return
+          }
+
+          this.patchResponse(box, response)
+          this.handleResponse(box, boxData, response)
+        })
     })
   }
 
   handleResponse (box, boxData, response) {
-    if (response._xhr) {
-      response._xhr.onprogress = (event) => {
-        this._progress(event)
-      }
+    const type = parseHeader(response.headers['content-type'])
 
-      this._progress({ lengthComputable: true, loaded: 1, total: 10 })
-    }
+    const decoder = wcodecs[type.value] === undefined
+      ? wcodecs['application/octet-stream']
+      : wcodecs[type.value]
 
-    const type = parseContentType(response.headers['content-type'])
-
-    const decoder =
-      (type && codec[`${type.type}/${type.subtype}`]) ||
-      codec['application/octet-stream']
-
-    decoder.decode(response, (decodeError, data) => {
-      if (decodeError) {
-        this.handleError(box, boxData, response, data, decodeError, 400)
+    decoder.decode(response, (decoderError, decoderData) => {
+      if (decoderError !== null) {
+        this.handleError(box, boxData, decoderData, decoderError)
         return
       }
 
       if (response.statusCode >= 400) {
-        this.handleError(box, boxData, response, data,
+        this.handleError(box, boxData, decoderData,
           new Error(response.statusText || ''), response.statusCode)
         return
       }
 
-      this.pass(box, this.merge(response, data, boxData))
+      this.pass(box, this.merge(response, decoderData, boxData))
     })
   }
 
-  merge (response, data, boxData, error) {
-    if (this._merge) {
-      return this._merge(response, data, boxData, error)
+  merge (box, data, ...extra) {
+    if (this._merge !== null) {
+      return this._merge(box, data, ...extra)
     }
 
-    if (error) {
-      return error
+    return data === undefined || data.data === undefined
+      ? data
+      : data.data
+  }
+
+  patchRequest (box, request) {
+    request.getHeader = (name) => request._header[name]
+    request.setHeader = request.set
+    request.write = request.send
+
+    request.on('progress', (event) => {
+      this._progress(box, event)
+    })
+  }
+
+  patchResponse (box, response) {
+    response.on = (name, handler) => {
+      if (name === 'data') {
+        handler(Buffer.from(response.text))
+      } else if (name === 'end') {
+        handler()
+      }
     }
 
-    return data ? data.data : data
+    response.once = response.on
   }
 }

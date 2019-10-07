@@ -1,10 +1,11 @@
 import messagebird from 'messagebird'
 import { Transport } from './transport'
+
 const clients = {}
 
 export class Messagebird extends Transport {
   open (callback) {
-    const host = this._options.host
+    const { host } = this._options
 
     if (clients[host] === undefined) {
       clients[host] = messagebird(this._options.key)
@@ -14,19 +15,28 @@ export class Messagebird extends Transport {
   }
 
   send (message, callback) {
-    this.open((error, client) => {
-      if (error) {
-        callback(error)
+    this.open((openError, client) => {
+      if (openError !== null) {
+        callback(openError)
         return
       }
 
-      client.messages.create({
+      const sms = {
         originator: message.from,
         recipients: [
           message.to
         ],
         body: message.text
-      }, callback)
+      }
+
+      client.messages.create(sms, (error, result) => {
+        if (error !== null) {
+          callback(error)
+          return
+        }
+
+        callback(null, result)
+      })
     })
   }
 }

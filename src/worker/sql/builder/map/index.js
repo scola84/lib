@@ -48,16 +48,18 @@ const custom = {
 
 const dialect = Object.keys(dialectBase).reduce((master, group) => {
   return Object.keys(dialectBase[group]).reduce((object, name) => {
-    return Object.assign(object, {
+    return {
+      ...object,
       [camel(name)]: {
         object: dialectBase[group][name]
       }
-    })
+    }
   }, master)
 }, {})
 
 const func = funcBase.reduce((object, name) => {
-  return Object.assign(object, {
+  return {
+    ...object,
     [camel(name)]: {
       object: Snippet,
       options: {
@@ -66,11 +68,12 @@ const func = funcBase.reduce((object, name) => {
         prefix: name
       }
     }
-  })
+  }
 }, {})
 
 const infix = infixBase.reduce((object, { name, token }) => {
-  return Object.assign(object, {
+  return {
+    ...object,
     [camel(name)]: {
       object: Snippet,
       options: {
@@ -78,11 +81,12 @@ const infix = infixBase.reduce((object, { name, token }) => {
         name
       }
     }
-  })
+  }
 }, {})
 
 const postfix = postfixBase.reduce((object, name) => {
-  return Object.assign(object, {
+  return {
+    ...object,
     [camel(name)]: {
       object: Snippet,
       options: {
@@ -90,11 +94,12 @@ const postfix = postfixBase.reduce((object, name) => {
         postfix: ` ${name}`
       }
     }
-  })
+  }
 }, {})
 
 const prefix = prefixBase.reduce((object, name) => {
-  return Object.assign(object, {
+  return {
+    ...object,
     [camel(name)]: {
       object: Snippet,
       options: {
@@ -102,16 +107,17 @@ const prefix = prefixBase.reduce((object, name) => {
         prefix: `${name} `
       }
     }
-  })
+  }
 }, {})
 
 const snippet = Object.keys(snippetBase).reduce((master, group) => {
   return Object.keys(snippetBase[group]).reduce((object, name) => {
-    return Object.assign(object, {
+    return {
+      ...object,
       [camel(name)]: {
         object: snippetBase[group][name]
       }
-    })
+    }
   }, master)
 }, {})
 

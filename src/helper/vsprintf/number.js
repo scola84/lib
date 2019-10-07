@@ -12,28 +12,31 @@ const defaultFormat = {
 const definitions = {}
 
 export function n (value, options = '', locale = 'nl_NL') {
-  options = options ? options.split(';') : []
+  const foptions = options === ''
+    ? []
+    : options.split(';')
 
   const [
     specifier = 'f',
     val = '',
     separator = ''
-  ] = options
+  ] = foptions
 
-  const definition = definitions[locale]
-    ? formatLocale(definitions[locale])
-    : defaultFormat
+  const definition = definitions[locale] === undefined
+    ? defaultFormat
+    : formatLocale(definitions[locale])
 
   const formatter = val === ''
     ? definition.format(specifier)
     : definition.formatPrefix(specifier, val)
 
-  value = formatter(value)
-  value = separator === ''
-    ? value
-    : value.slice(0, -1) + separator + value.slice(-1)
+  let result = formatter(value)
 
-  return value
+  result = separator === ''
+    ? result
+    : result.slice(0, -1) + separator + result.slice(-1)
+
+  return result
 }
 
 n.definitions = definitions

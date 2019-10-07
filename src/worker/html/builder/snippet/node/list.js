@@ -9,9 +9,10 @@ export class List extends Parent {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       empty: this._empty
-    })
+    }
   }
 
   getEmpty () {
@@ -19,7 +20,7 @@ export class List extends Parent {
   }
 
   setEmpty (value = null) {
-    if (value) {
+    if (value !== null) {
       this._empty = value
         .setParent(this)
         .class('empty')
@@ -60,7 +61,7 @@ export class List extends Parent {
   removeEmpty () {
     const empty = this._node.select('.empty').node()
 
-    if (empty) {
+    if (empty !== null) {
       empty.snippet.remove()
     }
   }
@@ -71,32 +72,37 @@ export class List extends Parent {
   }
 
   resolveInner (box, data) {
-    data = this._filter ? this._filter(box, data) : data
-    data = Array.isArray(data) ? data : []
+    let newData = this._filter !== null
+      ? this._filter(box, data)
+      : data
+
+    newData = Array.isArray(newData) === true
+      ? newData
+      : []
 
     const [
       item,
       ...extra
     ] = this._args
 
-    this.prepareList(box, data)
+    this.prepareList(box, newData)
 
-    for (let i = 0; i < data.length; i += 1) {
-      this.appendChild(box, data[i], item)
+    for (let i = 0; i < newData.length; i += 1) {
+      this.appendChild(box, newData[i], item)
     }
 
     const size = this._node
       .select('.item:not(.out)')
       .size()
 
-    if (data.length === 0 && size === 0) {
-      this.appendChild(box, data, this._empty)
+    if (newData.length === 0 && size === 0) {
+      this.appendChild(box, newData, this._empty)
     }
 
     for (let i = 0; i < extra.length; i += 1) {
-      this.appendChild(box, data, extra[i])
+      this.appendChild(box, newData, extra[i])
     }
 
-    return this.resolveAfter(box, data)
+    return this.resolveAfter(box, newData)
   }
 }

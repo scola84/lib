@@ -12,20 +12,25 @@ export class DeleteObject extends Widget {
     let resource = `/api/${object}/%(${object}_id)s`
     let view = 'void@main:clr'
 
-    if (link) {
+    if (link !== undefined) {
       resource += `/${link}/%(${link}_id)s`
       view = '@main:his'
     }
 
-    return b.request().resource(
-      `DELETE ${resource}`
-    ).indicator(
-      b.selector('.progress')
-    ).act(
-      b.route().view('@self:clr'),
-      b.route().view(view)
-    ).err(
-      b.selector('.message')
-    )
+    return b
+      .request()
+      .resource(
+        `DELETE ${resource}`
+      )
+      .indicator(
+        b.selector('.progress')
+      )
+      .act(
+        b.route().view('@self:clr'),
+        b.route().view(view)
+      )
+      .err(
+        b.selector('.message')
+      )
   }
 }

@@ -25,14 +25,13 @@ export class Iban extends Input {
       return this.setError(error, name, value, 'type')
     }
 
-    value = value.slice(0, specification.length)
+    const slicedValue = value.slice(0, specification.length)
 
-    if (IBAN.isValid(value) === false) {
-      return this.setError(error, name, value, 'type')
+    if (IBAN.isValid(slicedValue) === false) {
+      return this.setError(error, name, slicedValue, 'type')
     }
 
-    this.setValue(data, name, IBAN.electronicFormat(value))
-
+    this.setValue(data, name, IBAN.electronicFormat(slicedValue))
     return null
   }
 }

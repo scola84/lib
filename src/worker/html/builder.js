@@ -1,10 +1,13 @@
 import { select } from 'd3-selection'
 import { Builder } from '../core'
-import { map, snippet } from './builder/'
+import { bind, map, snippet } from './builder/'
 
 export class HtmlBuilder extends Builder {
   static setup () {
     HtmlBuilder.attachFactories(HtmlBuilder, map)
+    snippet.graph.Axis.setup()
+    snippet.graph.Plot.setup()
+    bind()
   }
 
   constructor (options = {}) {
@@ -15,9 +18,10 @@ export class HtmlBuilder extends Builder {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       view: this._view
-    })
+    }
   }
 
   getNode () {
@@ -33,23 +37,30 @@ export class HtmlBuilder extends Builder {
   }
 
   setView (value = null) {
-    this._view = value
+    this._view = typeof value === 'function' ? value(this) : value
+
+    if (this._view) {
+      this._view.setParent(this)
+    }
+
     return this
   }
 
   act (box, data) {
-    this._view.resolve(
-      box,
-      this.filter(box, data)
-    )
+    if (this._view === null) {
+      this.createView()
+    }
 
+    this._view.resolve(box, this.filter(box, data))
     this.pass(box, data)
   }
 
-  build (view) {
-    return this.setView(
-      view.setParent(this)
-    )
+  build () {
+    return this._view
+  }
+
+  createView () {
+    this.setView(this.build(this))
   }
 }
 

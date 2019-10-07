@@ -26,7 +26,7 @@
 }
 
 .input.check input[type='checkbox']+*:after {
-  content: '\f149';
+  content: '\f1f6';
 }
 
 .input.check input[type='checkbox']:checked+*:after {

@@ -14,17 +14,18 @@ export class Node extends Snippet {
     this.setNode(options.node)
     this.setTransform(options.transform)
 
-    if (options.class) {
+    if (options.class !== undefined) {
       this.class(options.class)
     }
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       name: this._name,
       node: this._node,
       transform: this._transform
-    })
+    }
   }
 
   setId (value) {
@@ -181,20 +182,31 @@ export class Node extends Snippet {
   }
 
   resolveEach (box, data, object, callback) {
-    object = this.resolveValue(box, data, object)
+    const resolvedObject = this.resolveValue(box, data, object)
 
-    const keys = Object.keys(object)
+    const keys = Object.keys(resolvedObject)
     let key = null
 
     for (let i = 0; i < keys.length; i += 1) {
       key = keys[i]
-      callback(key, this.resolveValue(box, data, object[key]))
+      callback(key, this.resolveValue(box, data, resolvedObject[key]))
     }
   }
 
   resolveOuter (box, data) {
     this.resolveTransform(box, data, this._node)
     return this.resolveInner(box, data)
+  }
+
+  resolveProperty (box, data, name) {
+    let node = this._node
+
+    if (node === null) {
+      node = new Dummy()
+      this.resolveTransform(box, data, node)
+    }
+
+    return node.property(name)
   }
 
   resolveTransform (box, data, node) {

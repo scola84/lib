@@ -1,7 +1,9 @@
 import markdown from 'marked'
 
 export function m (value, options = '') {
-  options = options ? options.split(';') : []
+  const foptions = options === ''
+    ? []
+    : options.split(';')
 
   const moptions = {
     breaks: true
@@ -10,8 +12,8 @@ export function m (value, options = '') {
   let key = null
   let val = null
 
-  for (let i = 0; i < options.length; i += 1) {
-    [key, val] = options[i].split('=')
+  for (let i = 0; i < foptions.length; i += 1) {
+    [key, val] = foptions[i].split('=')
     moptions[key] = val !== '0'
   }
 

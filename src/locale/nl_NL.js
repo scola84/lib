@@ -118,6 +118,8 @@ HtmlBuilder.snippet.misc.Print.addStrings({
     },
     status: {
       400: 'De gegevens zijn niet juist.',
+      401: 'Geen toegang tot dit pad.',
+      403: 'Geen toegang tot dit pad.',
       404: 'Het pad is niet gevonden.',
       405: 'De bewerking is niet toegestaan.',
       409: 'Er is een conflict opgetreden.',

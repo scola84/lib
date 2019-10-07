@@ -1,8 +1,11 @@
 import toPath from 'lodash-es/toPath'
 
-let id = 0
-
 export class Snippet {
+  static makeId () {
+    Snippet.id = (Snippet.id || 0) + 1
+    return Snippet.id
+  }
+
   constructor (options = {}) {
     this._allow = null
     this._args = null
@@ -32,7 +35,8 @@ export class Snippet {
 
     options.args = options.args.map((snippet) => {
       return snippet instanceof Snippet
-        ? snippet.clone() : snippet
+        ? snippet.clone()
+        : snippet
     })
 
     return new this.constructor(options)
@@ -122,7 +126,7 @@ export class Snippet {
     return this._id
   }
 
-  setId (value = ++id) {
+  setId (value = Snippet.makeId()) {
     this._id = value
     return this
   }
@@ -197,36 +201,28 @@ export class Snippet {
   }
 
   concat (left, right) {
-    const hasDouble = (
-      left[left.length - 1] === ' ' &&
-      right[0] === ' '
-    )
-
-    return left + (hasDouble ? right.slice(1) : right)
+    const hasDouble = (left[left.length - 1] === ' ' && right[0] === ' ')
+    return left + (hasDouble === true ? right.slice(1) : right)
   }
 
   find (compare) {
-    const result = []
+    const snippets = []
 
     if (compare(this) === true) {
-      result[result.length] = this
+      snippets.push(this)
     }
 
-    return this.findRecursive(result, this._args, compare)
-  }
-
-  findRecursive (result, args, compare) {
     let snippet = null
 
-    for (let i = 0; i < args.length; i += 1) {
-      snippet = args[i]
+    for (let i = 0; i < this._args.length; i += 1) {
+      snippet = this._args[i]
 
       if (snippet instanceof Snippet) {
-        result = result.concat(snippet.find(compare))
+        snippets.push(...snippet.find(compare))
       }
     }
 
-    return result
+    return snippets
   }
 
   isAllowed (box, data) {
@@ -278,17 +274,17 @@ export class Snippet {
     return this.resolveParens(string, this._parens)
   }
 
-  resolveParens (value, parens) {
-    return parens && value ? `(${value})` : value
+  resolveParens (value, addParens) {
+    return value !== '' && addParens === true ? `(${value})` : value
   }
 
   resolveValue (box, data, value) {
-    if (typeof value === 'function') {
-      return this.resolveValue(box, data, value(box, data))
-    }
-
     if (typeof value === 'string') {
       return this.resolveEscape(value, this._escape)
+    }
+
+    if (typeof value === 'function') {
+      return this.resolveValue(box, data, value(box, data))
     }
 
     if (value instanceof Snippet) {
@@ -303,35 +299,35 @@ export class Snippet {
   }
 
   selector (path, index) {
-    path = toPath(path)
+    const snippets = []
+    const pathList = toPath(path)
 
-    let result = []
+    const hasMatch =
+      pathList[0] === this._name ||
+      pathList[0] === index ||
+      pathList[0] === '*'
 
-    if (path[0] === this._name || path[0] === index || path[0] === '*') {
-      if (path.length === 1) {
-        result[result.length] = this
+    if (hasMatch === true) {
+      if (pathList.length === 1) {
+        snippets.push(this)
       } else {
-        result = result.concat(this.selector(path.slice(1)))
+        snippets.push(...this.selector(pathList.slice(1)))
       }
 
-      return result
+      return snippets
     }
 
-    return this.selectorRecursive(result, this._args, path)
-  }
-
-  selectorRecursive (result, list, path) {
     let snippet = null
 
-    for (let i = 0; i < list.length; i += 1) {
-      snippet = list[i]
+    for (let i = 0; i < this._args.length; i += 1) {
+      snippet = this._args[i]
 
       if (snippet instanceof Snippet) {
-        result = result.concat(snippet.selector(path, String(i)))
+        snippets.push(...snippet.selector(pathList, String(i)))
       }
     }
 
-    return result
+    return snippets
   }
 
   set (path, index, value) {

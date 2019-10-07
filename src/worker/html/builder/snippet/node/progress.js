@@ -15,7 +15,7 @@ export class Progress extends Node {
 
     this._node
       .style('transition-duration', null)
-      .style('width', (fraction * 100) + '%')
+      .style('width', `${(fraction * 100)}%`)
       .on('transitionend.scola-progress', () => {
         if (fraction < 1) {
           return
@@ -31,9 +31,7 @@ export class Progress extends Node {
           .on('.scola-progress', null)
       })
 
-    const duration = parseFloat(
-      this._node.style('transition-duration')
-    )
+    const duration = parseFloat(this._node.style('transition-duration'))
 
     if (duration === 0) {
       this._node.dispatch('transitionend')

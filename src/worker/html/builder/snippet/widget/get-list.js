@@ -56,19 +56,19 @@ export class GetList extends Widget {
     const names = ['count', 'offset', 'search']
 
     const expanded = names.filter((name) => {
-      return this['_' + name] !== null
+      return this[`_${name}`] !== null
     }).map((name) => {
-      return `${name}=${this['_' + name]}`
+      return `${name}=${this[`_${name}`]}`
     }).join('&')
 
     const expand = names.filter((name) => {
-      return this['_' + name] === null
+      return this[`_${name}`] === null
     }).join(',')
 
     let string = expanded
 
-    if (expand) {
-      string += string ? '&' : ''
+    if (expand !== '') {
+      string += string !== '' ? '&' : ''
       string += `{${expand}}`
     }
 
@@ -78,21 +78,29 @@ export class GetList extends Widget {
   buildWidget (args) {
     const b = this._builder
 
-    const resource = '/api' + this._name.map((name, index) => {
-      return `/${name}` +
-        (index < this._name.length - 1 ? `/%(${name}_id)s` : '')
+    const qualifier = this._name.map((name, index) => {
+      const id = index < this._name.length - 1
+        ? `/%(${name}_id)s`
+        : ''
+      return `/${name}${id}`
     }).join('')
 
+    const resource = `/api${qualifier}`
     const params = this.buildParams()
 
-    return b.request().resource(
-      `GET ${resource}?${params}`
-    ).indicator(
-      b.selector('.loading')
-    ).act(
-      ...args
-    ).err(
-      b.selector('.message')
-    )
+    return b
+      .request()
+      .resource(
+        `GET ${resource}?${params}`
+      )
+      .indicator(
+        b.selector('.loading')
+      )
+      .act(
+        ...args
+      )
+      .err(
+        b.selector('.message')
+      )
   }
 }

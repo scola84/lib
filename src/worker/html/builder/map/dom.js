@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 /*
 https://htmlreference.io/
 "{\n'" + Array.from(document.querySelectorAll('.item-name')).map((node) => node.innerText).join("',\n'") + "'\n}"

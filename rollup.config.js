@@ -48,14 +48,17 @@ export default [{
     name: 'scola'
   },
   plugins: [
-    ...plugins,
+    ...plugins({
+      format: 'umd'
+    }),
     global()
   ]
 }, {
   input,
   external: [
     ...external,
-    'http'
+    'http',
+    'superagent'
   ],
   output: {
     file: 'dist/lib.cjs.js',
@@ -66,6 +69,8 @@ export default [{
     ignore([
       'fastclick'
     ]),
-    ...plugins
+    ...plugins({
+      format: 'cjs'
+    })
   ]
 }]

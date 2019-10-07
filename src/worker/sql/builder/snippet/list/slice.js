@@ -14,11 +14,12 @@ export class Slice extends Snippet {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       count: this._count,
       max: this._max,
       offset: this._offset
-    })
+    }
   }
 
   getCount () {
@@ -61,13 +62,8 @@ export class Slice extends Snippet {
   }
 
   resolveInner (box, data) {
-    const count = parseFloat(
-      this.resolveValue(box, data, this._count) || 10
-    )
-
-    const offset = parseFloat(
-      this.resolveValue(box, data, this._offset) || 0
-    )
+    const count = parseFloat(this.resolveValue(box, data, this._count) || 10)
+    const offset = parseFloat(this.resolveValue(box, data, this._offset) || 0)
 
     if (
       Number.isInteger(count) === false ||
@@ -77,9 +73,6 @@ export class Slice extends Snippet {
       throw new Error('400 Slice parameters are invalid')
     }
 
-    return this.resolveParens(
-      `${count} OFFSET ${offset}`,
-      this._parens
-    )
+    return this.resolveParens(`${count} OFFSET ${offset}`, this._parens)
   }
 }

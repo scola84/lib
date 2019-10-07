@@ -23,11 +23,7 @@ export class Ordinal extends Scale {
     for (let i = this._domain.keys.length - 1; i >= 0; i -= 1) {
       key = this._domain.keys[i]
       distance = this.calculateDistance(key)
-
-      ticks[ticks.length] = [
-        key,
-        distance
-      ]
+      ticks.push([key, distance])
     }
 
     return ticks

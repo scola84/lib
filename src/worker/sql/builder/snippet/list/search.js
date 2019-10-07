@@ -19,13 +19,14 @@ export class Search extends Snippet {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       columns: this._columns,
       inner: this._inner,
       outer: this._outer,
       search: this._search,
       wildcard: this._wildcard
-    })
+    }
   }
 
   getColumns () {
@@ -38,9 +39,7 @@ export class Search extends Snippet {
   }
 
   columns (...columns) {
-    return this.setColumns(
-      this._columns.concat(columns)
-    )
+    return this.setColumns(this._columns.concat(columns))
   }
 
   getInner () {

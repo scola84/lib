@@ -14,10 +14,11 @@ export class Event extends Action {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       name: this._name,
       debounce: this._debounce
-    })
+    }
   }
 
   getName () {
@@ -53,8 +54,8 @@ export class Event extends Action {
       return
     }
 
-    const debounced = debounce((newEvent) => {
-      this.handleBefore(box, data, snippet, newEvent)
+    const debounced = debounce((debounceEvent) => {
+      this.handleBefore(box, data, snippet, debounceEvent)
     }, this._debounce)
 
     node.on(this._name, () => {
@@ -68,8 +69,8 @@ export class Event extends Action {
     this.pass(box, data)
   }
 
-  handleBefore (box, data, snippet, newEvent) {
-    this.handle(box, data, snippet, newEvent)
+  handleBefore (box, data, snippet, debounceEvent) {
+    this.handle(box, data, snippet, debounceEvent)
   }
 
   removeBefore () {
@@ -84,7 +85,7 @@ export class Event extends Action {
     const result = []
 
     for (let i = 0; i < this._args.length; i += 1) {
-      result[result.length] = this._args[i].node()
+      result.push(this._args[i].node())
     }
 
     return result

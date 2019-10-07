@@ -16,9 +16,10 @@ export class Axis extends Parent {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       scale: this._scale
-    })
+    }
   }
 
   getScale () {
@@ -68,7 +69,7 @@ export class Axis extends Parent {
     for (let i = 0; i < ticks.length; i += 1) {
       [value, distance] = ticks[i]
       node = this.appendChild(box, value, tick)
-      node.style(position, Math.floor(distance) + 'px')
+      node.style(position, `${Math.floor(distance)}px`)
     }
 
     return this.resolveAfter(box, data)

@@ -12,10 +12,11 @@ export class Linear extends Scale {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       count: this._count,
       step: this._step
-    })
+    }
   }
 
   getCount () {
@@ -62,9 +63,9 @@ export class Linear extends Scale {
     const count = this.resolveValue(this._domain, this._count)
     let step = this.resolveValue(this._domain, this._step)
 
-    step = count !== null
-      ? this._domain.max / (count - 1)
-      : step
+    step = count === null
+      ? step
+      : this._domain.max / (count - 1)
 
     const { max, min } = this._domain
     const ticks = []
@@ -73,11 +74,7 @@ export class Linear extends Scale {
 
     for (let value = max; value >= min; value -= step) {
       distance = this.calculateDistance(value)
-
-      ticks[ticks.length] = [
-        value,
-        distance
-      ]
+      ticks.push([value, distance])
     }
 
     return ticks

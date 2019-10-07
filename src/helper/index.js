@@ -1,3 +1,3 @@
 export * from './codec'
-export * from './setup'
+export * from './parse'
 export * from './vsprintf'

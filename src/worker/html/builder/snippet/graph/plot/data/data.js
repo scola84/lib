@@ -60,7 +60,7 @@ export class Data {
   }
 
   addPosition (value) {
-    this._position[this._position.length] = value
+    this._position.push(value)
     return this
   }
 
@@ -91,10 +91,10 @@ export class Data {
       type: null
     }
 
-    data = data.filter(this._filter)
+    const newData = data.filter(this._filter)
 
-    for (let i = 0; i < data.length; i += 1) {
-      this.prepareValue(result, data[i])
+    for (let i = 0; i < newData.length; i += 1) {
+      this.prepareValue(result, newData[i])
     }
 
     return result

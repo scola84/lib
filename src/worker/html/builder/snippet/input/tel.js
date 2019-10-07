@@ -17,10 +17,11 @@ export class Tel extends Input {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       country: this._country,
       format: this._format
-    })
+    }
   }
 
   getCountry () {
@@ -70,7 +71,6 @@ export class Tel extends Input {
     const format = this.resolveValue(box, data, this._format)
 
     this.setValue(data, name, number.format(format))
-
     return null
   }
 }

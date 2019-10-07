@@ -16,9 +16,7 @@ export class Tip extends Node {
         this.removeInner()
       })
 
-    const duration = parseFloat(
-      this._node.style('transition-duration')
-    )
+    const duration = parseFloat(this._node.style('transition-duration'))
 
     if (duration === 0) {
       this._node.dispatch('transitionend')
@@ -39,16 +37,16 @@ export class Tip extends Node {
       tipRect.height
 
     this._node
-      .style('top', top + 'px')
-      .style('left', left + 'px')
-      .style('width', tipRect.width + 'px')
-      .style('height', tipRect.height + 'px')
+      .style('top', `${top}px`)
+      .style('left', `${left}px`)
+      .style('width', `${tipRect.width}px`)
+      .style('height', `${tipRect.height}px`)
 
     this._node.classed('in', true)
   }
 
   resolveBefore (box, data) {
-    if (this._node.classed('out')) {
+    if (this._node.classed('out') === true) {
       this.removeNode()
       this.createNode()
     }

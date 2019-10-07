@@ -39,31 +39,19 @@
   overflow: hidden;
 }
 
-.app>.main {
+.app>.main:not(:empty) {
   background: whitesmoke;
   flex: 1 1 auto;
   height: 100%;
   position: relative;
 }
 
-.app>.menu {
+.app>.menu:not(:empty) {
   background: whitesmoke;
   border-right: 1px solid lightgrey;
   height: 100%;
   position: relative;
   width: 21.333em;
-}
-
-.app>*+.menu {
-  border-left: 1px solid lightgrey;
-}
-
-.app>.menu+.menu {
-  display: none;
-}
-
-.outset-x .app>.menu+.menu {
-  display: initial;
 }
 
 *[dir='rtl'] .app>.menu {

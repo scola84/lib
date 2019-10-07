@@ -1,9 +1,16 @@
-import parseContentType from 'content-type-parser'
 import http from 'http'
 import merge from 'lodash-es/merge'
 import parse from 'url-parse'
-import { Worker } from '../../worker'
-import { codec } from '../../helper'
+import { Worker } from '../core'
+import * as codecs from '../../helper/codec'
+import { parseHeader } from '../../helper/parse'
+
+const wcodecs = Object.keys(codecs).reduce((object, name) => {
+  return {
+    ...object,
+    [codecs[name].type()]: new codecs[name]()
+  }
+}, {})
 
 const wmeta = {
   headers: {},
@@ -11,79 +18,69 @@ const wmeta = {
 }
 
 export class HttpServer extends Worker {
-  static getMeta () {
-    return wmeta
-  }
-
-  static setMeta (meta) {
-    merge(wmeta, meta)
-  }
-
-  constructor (options = {}) {
-    super(options)
-
-    this._listen = null
-    this.setListen(options.listen)
-  }
-
-  getListen () {
-    return this._listen
-  }
-
-  setListen (value = 3000) {
-    this._listen = value
-    return this
-  }
-
   handleRequest (request, response) {
-    request.url = parse(request.url, true)
+    const type = parseHeader(request.headers['content-type'])
 
-    const type = parseContentType(request.headers['content-type'])
+    const decoder = wcodecs[type.value] === undefined
+      ? wcodecs['application/octet-stream']
+      : wcodecs[type.value]
 
-    const decoder =
-      (type && codec[`${type.type}/${type.subtype}`]) ||
-      codec['application/octet-stream']
-
-    decoder.decode(request, (decodeError, data) => {
-      const callback = (value) => {
-        this.handleResponse(request, response, value)
-      }
+    decoder.decode(request, (decoderError, decoderData) => {
+      request.url = parse(request.url, true)
 
       const box = {
-        callback,
         request,
-        response
+        response,
+        callback: (value) => {
+          this.handleResponse(request, response, value)
+        }
       }
 
-      if (decodeError) {
-        this.fail(box, decodeError)
+      if (decoderError !== null) {
+        this.fail(box, decoderError)
         return
       }
 
-      this.pass(box, this.merge(request, data))
+      this.pass(box, this.merge(request, decoderData))
     })
   }
 
-  handleResponse (request, response, { meta, data }) {
-    meta = merge({}, wmeta, meta)
+  handleResponse (request, response, value) {
+    const cmeta = this._config.http === undefined
+      ? {}
+      : this._config.http.server
 
-    response.statusCode = meta.statusCode
+    const responseMeta = merge({}, wmeta, cmeta, value.meta)
+    const responseData = value.data
 
-    Object.keys(meta.headers).forEach((name) => {
-      response.setHeader(name, meta.headers[name])
+    response.statusCode = responseMeta.statusCode
+
+    Object.keys(responseMeta.headers).forEach((name) => {
+      response.setHeader(name, responseMeta.headers[name])
     })
 
-    const type = parseContentType(response.getHeader('content-type'))
+    const type = parseHeader(response.getHeader('content-type'))
 
-    const encoder =
-      (type && codec[`${type.type}/${type.subtype}`]) ||
-      codec['application/octet-stream']
+    const encoder = wcodecs[type.value] === undefined
+      ? wcodecs['application/octet-stream']
+      : wcodecs[type.value]
 
-    encoder.encode(response, data, (encodeError) => {
-      if (encodeError) {
-        this.fail({ request, response }, encodeError)
+    encoder.encode(response, responseData, (encoderError, encoderData) => {
+      if (encoderError !== null) {
+        this.fail({ request, response }, encoderError)
       }
+
+      response.setHeader('Content-Length', Buffer.byteLength(encoderData))
+      response.end(encoderData)
     })
+  }
+
+  merge (box, data, ...extra) {
+    if (this._merge !== null) {
+      return this._merge(box, data, ...extra)
+    }
+
+    return data === undefined ? {} : data
   }
 
   start () {
@@ -93,6 +90,6 @@ export class HttpServer extends Worker {
       this.handleRequest(request, response)
     })
 
-    server.listen(this._listen)
+    server.listen(this._config.http.server.listen)
   }
 }

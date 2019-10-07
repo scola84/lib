@@ -2,39 +2,44 @@ import Busboy from 'busboy'
 import fs from 'fs-extra'
 import merge from 'lodash-es/merge'
 import shortid from 'shortid'
+import { Codec } from './codec'
 
-const type = 'multipart/form-data'
-const coptions = { tmpDir: '/tmp/' }
+const coptions = {
+  tmpDir: '/tmp/'
+}
 
-class Codec {
+export class FormDataCodec extends Codec {
+  static type () {
+    return 'multipart/form-data'
+  }
+
   static getOptions () {
     return coptions
   }
 
-  static setOptions (options) {
-    merge(coptions, options)
+  static setOptions (value) {
+    merge(coptions, value)
   }
 
-  static setValue (data, name, value) {
-    if (data[name] !== undefined) {
-      value = Array.isArray(data[name]) === true
-        ? data[name].concat(value)
-        : [data[name], value]
+  decode (readable, callback) {
+    const options = {
+      ...coptions,
+      headers: readable.headers
     }
 
-    data[name] = value
-  }
+    let formdata = null
 
-  static decode (readable, callback) {
-    const options = Object.assign({}, coptions, {
-      headers: readable.headers
-    })
+    try {
+      formdata = new Busboy(options)
+    } catch (error) {
+      callback(new Error(`400 ${error.message}`))
+      return
+    }
 
-    const formdata = new Busboy(options)
-    const parsed = {}
+    const data = {}
 
     formdata.on('field', (name, value) => {
-      Codec.setValue(parsed, name, value)
+      this.setValue(data, name, value)
     })
 
     formdata.on('file', (fieldName, stream, name, encoding, type) => {
@@ -57,11 +62,11 @@ class Codec {
       })
 
       stream.once('end', () => {
-        Codec.setValue(parsed, fieldName, file)
+        this.setValue(data, fieldName, file)
       })
 
       stream.once('error', (error) => {
-        Codec.setValue(parsed, fieldName, error)
+        this.setValue(data, fieldName, error)
       })
 
       stream.pipe(target)
@@ -69,18 +74,18 @@ class Codec {
 
     formdata.once('error', (error) => {
       formdata.removeAllListeners()
-      callback(new Error('400 ' + error.message))
+      callback(new Error(`400 ${error.message}`))
     })
 
     formdata.once('finish', () => {
       formdata.removeAllListeners()
-      callback(null, parsed)
+      callback(null, data)
     })
 
     readable.pipe(formdata)
   }
 
-  static encode (writable, data, callback) {
+  encode (writable, data, callback) {
     const keys = Object.keys(data)
     const form = new window.FormData()
 
@@ -89,23 +94,30 @@ class Codec {
 
     for (let i = 0; i < keys.length; i += 1) {
       name = keys[i]
+
       value = data[name]
-      value = Array.isArray(value) ? value : [value]
+      value = Array.isArray(value) === true ? value : [value]
 
       for (let j = 0; j < value.length; j += 1) {
-        form.append(name, value[j])
+        form.append(name, this.prepareValue(value[j]))
       }
     }
 
-    try {
-      writable.end(form, callback)
-    } catch (error) {
-      callback(error)
-    }
+    callback(null, form)
   }
-}
 
-export {
-  Codec,
-  type
+  prepareValue (value) {
+    return value === null || value === undefined ? '' : value
+  }
+
+  setValue (data, name, value) {
+    if (data[name] === undefined) {
+      data[name] = value
+      return
+    }
+
+    data[name] = Array.isArray(data[name]) === true
+      ? data[name].concat(value)
+      : [data[name], value]
+  }
 }

@@ -1,4 +1,5 @@
 import { Input } from '../input'
+
 const regexp = /^#[A-F0-9]{6}$/
 
 export class Color extends Input {

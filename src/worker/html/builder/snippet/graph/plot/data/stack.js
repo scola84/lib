@@ -7,13 +7,16 @@ export class Stack extends Data {
 
     if (result.data[exogenous] === undefined) {
       result.data[exogenous] = []
-      result.keys[result.keys.length] = exogenous
+      result.keys.push(exogenous)
       result.type = 'stack'
     }
 
     const set = result.data[exogenous]
     const index = set.length
-    const previous = index > 0 ? set[index - 1] : [0, 0]
+
+    const previous = index > 0
+      ? set[index - 1]
+      : [0, 0]
 
     set[index] = [
       previous[1],

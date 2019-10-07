@@ -21,10 +21,11 @@ export class Plot extends Parent {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       data: this._data,
       tip: this._tip
-    })
+    }
   }
 
   getData () {
@@ -82,7 +83,7 @@ export class Plot extends Parent {
         return position.indexOf(scale.getPosition()) > -1 &&
           scale.getType() === type
       })
-      .resolve()
+      .resolve(null)
 
     return axis.getScale()
   }

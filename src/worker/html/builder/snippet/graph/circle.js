@@ -13,9 +13,10 @@ export class Circle extends Plot {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       radius: this._radius
-    })
+    }
   }
 
   getRadius () {
@@ -51,8 +52,8 @@ export class Circle extends Plot {
     const exogenousDistance = exogenous.calculateDistance(key)
 
     const node = this.appendChild(box, data, circle)
-      .attr('c' + endogenousOrientation, endogenousDistance)
-      .attr('c' + exogenousOrientation, exogenousDistance)
+      .attr(`c${endogenousOrientation}`, endogenousDistance)
+      .attr(`c${exogenousOrientation}`, exogenousDistance)
       .attr('r', radius)
 
     this.appendTip(box, data, node)
@@ -65,17 +66,17 @@ export class Circle extends Plot {
     let key = null
     let set = null
 
-    data = this.prepare(data)
+    const newData = this.prepare(data)
 
-    for (let i = 0; i < data.keys.length; i += 1) {
-      key = data.keys[i]
-      set = data.data[key]
+    for (let i = 0; i < newData.keys.length; i += 1) {
+      key = newData.keys[i]
+      set = newData.data[key]
 
       for (let j = 0; j < set.length; j += 1) {
         this.appendCircle(box, key, j, set, endogenous, exogenous)
       }
     }
 
-    return this.resolveAfter(box, data)
+    return this.resolveAfter(box, newData)
   }
 }

@@ -4,11 +4,12 @@ import * as scale from './scale'
 export * from './scale'
 
 const map = Object.keys(scale).reduce((object, name) => {
-  return Object.assign(object, {
+  return {
+    ...object,
     [camel(name)]: {
       object: scale[name]
     }
-  })
+  }
 }, {})
 
 export {

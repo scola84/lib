@@ -2,19 +2,9 @@ import { vsprintf } from '../../helper'
 import { Builder } from '../core'
 import * as map from './sender/map'
 
-let hosts = {}
-
 export class MsgSender extends Builder {
   static setup () {
     MsgSender.attachFactories(MsgSender, map)
-  }
-
-  static getHosts () {
-    return hosts
-  }
-
-  static setHosts (value) {
-    hosts = value
   }
 
   constructor (options = {}) {
@@ -28,10 +18,11 @@ export class MsgSender extends Builder {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       host: this._host,
       transport: this._transport
-    })
+    }
   }
 
   getHost () {
@@ -54,15 +45,13 @@ export class MsgSender extends Builder {
 
   act (box, data) {
     if (this._transport === null) {
-      this.createTransport()
+      this.createTransport(box, data)
     }
 
-    const message = this.sprintf(
-      this.filter(box, data)
-    )
+    const message = this.sprintf(this.filter(box, data))
 
     this._transport.send(message, (error, result) => {
-      if (error) {
+      if (error !== null) {
         this.handleError(box, data, error)
         return
       }
@@ -71,16 +60,24 @@ export class MsgSender extends Builder {
     })
   }
 
-  createTransport () {
-    const options = hosts[this._host] || {}
+  createTransport (box, data) {
+    let host = this._host
+
+    if (typeof host === 'function') {
+      host = host(box, data)
+    }
+
+    let options = this._config.msg[host] || host
+
+    if (typeof options === 'function') {
+      options = options(box, data)
+    }
 
     if (this[options.transport] === undefined) {
       throw new Error('Transport not defined')
     }
 
-    this.setTransport(
-      this[options.transport]().options(options)
-    )
+    this.setTransport(this[options.transport]().options(options))
   }
 
   handleError (box, data, error) {
@@ -90,8 +87,7 @@ export class MsgSender extends Builder {
 
   handleSend (box, data, result) {
     try {
-      data = this.merge(box, data, { result })
-      this.pass(box, data)
+      this.pass(box, this.merge(box, data, { result }))
     } catch (error) {
       this.handleError(box, data, error)
     }

@@ -2,7 +2,7 @@ import { Snippet } from '../snippet'
 
 export class Selector extends Snippet {
   find (compare) {
-    const snippets = this.resolve()
+    const snippets = this.resolve(null)
     let result = []
 
     for (let i = 0; i < snippets.length; i += 1) {
@@ -30,9 +30,11 @@ export class Selector extends Snippet {
       .find(query)
 
     for (let i = 0; i < snippets.length; i += 1) {
-      result[result.length] = box
-        ? this.resolveValue(box, data, snippets[i])
-        : snippets[i]
+      result.push(
+        box === null
+          ? snippets[i]
+          : this.resolveValue(box, data, snippets[i])
+      )
     }
 
     return result
@@ -46,9 +48,11 @@ export class Selector extends Snippet {
       .node()
       .selectAll(query)
       .each((datum, index, nodes) => {
-        result[result.length] = box
-          ? this.resolveValue(box, data, nodes[index].snippet)
-          : nodes[index].snippet
+        result.push(
+          box === null
+            ? nodes[index].snippet
+            : this.resolveValue(box, data, nodes[index].snippet)
+        )
       })
 
     return result

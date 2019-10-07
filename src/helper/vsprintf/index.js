@@ -3,19 +3,26 @@ import { m } from './marked'
 import { n } from './number'
 import { s } from './string'
 
-const formatters = { l, m, n, s }
+const formatters = {
+  l,
+  m,
+  n,
+  s
+}
+
 const regexpBase = '%((\\((\\w+)\\))?((\\d+)\\$)?)([lmns])(\\[(.+)\\])?'
 const regexpGlobal = new RegExp(regexpBase, 'g')
 const regexpSingle = new RegExp(regexpBase)
-const reductor = (name) => (a, v) => v[name]
+const reductor = (k) => (a, v = {}) => { return a === undefined ? v[k] : a }
 
 export function vsprintf (format, args, locale) {
   const matches = format.match(regexpGlobal) || []
 
   let match = null
   let name = null
-  let position = null
   let options = null
+  let position = null
+  let result = format
   let type = null
   let value = null
 
@@ -24,24 +31,24 @@ export function vsprintf (format, args, locale) {
       match, , , name, , position, type, , options
     ] = matches[i].match(regexpSingle)
 
-    if (position) {
+    if (position !== undefined) {
       value = args[position - 1]
-    } else if (name) {
-      value = args.reduce(reductor(name), '')
+    } else if (name !== undefined) {
+      value = args.reduce(reductor(name), undefined)
     } else {
       value = args[i]
     }
 
     if (value === null || value === undefined) {
       value = ''
-    } else if (formatters[type]) {
+    } else if (formatters[type] !== undefined) {
       value = formatters[type](value, options, locale)
     }
 
-    format = format.replace(match, value)
+    result = result.replace(match, value)
   }
 
-  return format
+  return result
 }
 
 Object.assign(vsprintf, formatters)

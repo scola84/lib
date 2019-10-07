@@ -11,9 +11,10 @@ export class Async extends Action {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       handler: this._handler
-    })
+    }
   }
 
   getHandler () {
@@ -51,15 +52,14 @@ export class Async extends Action {
     const fn = []
 
     for (let i = 0; i < this._args.length; i += 1) {
-      fn[fn.length] = this.asyncify(box, data, this._args[i])
+      fn.push(this.asyncify(box, data, this._args[i]))
     }
 
     this._handler(fn, (error, results) => {
-      if (error) {
+      if (error !== null) {
         this.fail(box, error)
       } else {
-        results = fn.length === 1 ? results[0] : results
-        this.pass(box, results)
+        this.pass(box, fn.length === 1 ? results[0] : results)
       }
     })
   }

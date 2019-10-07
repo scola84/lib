@@ -14,9 +14,10 @@ export class Scroll extends Event {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       height: this._height
-    })
+    }
   }
 
   getHeight () {
@@ -39,7 +40,7 @@ export class Scroll extends Event {
 
     const node = snippet.node().node()
     const top = box.list.height + node.scrollTop
-    const threshold = node.scrollHeight - (box.list.height / 4 * 2)
+    const threshold = node.scrollHeight - (box.list.height / 2)
 
     if (top < threshold) {
       return
@@ -52,10 +53,7 @@ export class Scroll extends Event {
   }
 
   resolveBefore (box, data) {
-    const height = parseFloat(
-      this._parent.node().style('height')
-    )
-
+    const height = parseFloat(this._parent.node().style('height'))
     const count = Math.round(height / this._height) * 2
 
     defaults(box, {

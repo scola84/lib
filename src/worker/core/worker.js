@@ -1,9 +1,30 @@
+/* eslint-disable no-console */
+
 export class Worker {
+  static makeId () {
+    Worker.id = (Worker.id || 0) + 1
+    return Worker.id
+  }
+
+  static setup (config = {}) {
+    Worker.config = config
+
+    console.fail = (box, error) => {
+      if (error.logged !== true) {
+        error.logged = true
+        console.error(error)
+      }
+    }
+
+    console.info = () => {}
+    console.pass = () => {}
+  }
+
   constructor (options = {}) {
     this._act = null
     this._bypass = null
+    this._config = null
     this._decide = null
-    this._delay = null
     this._downstream = null
     this._err = null
     this._filter = null
@@ -16,8 +37,8 @@ export class Worker {
 
     this.setAct(options.act)
     this.setBypass(options.bypass)
+    this.setConfig(options.config)
     this.setDecide(options.decide)
-    this.setDelay(options.delay)
     this.setDownstream(options.downstream)
     this.setErr(options.err)
     this.setFilter(options.filter)
@@ -32,8 +53,8 @@ export class Worker {
   getOptions () {
     return {
       act: this._act,
+      config: this._config,
       decide: this._decide,
-      delay: this._delay,
       err: this._err,
       filter: this._filter,
       log: this._log,
@@ -61,21 +82,21 @@ export class Worker {
     return this
   }
 
+  getConfig () {
+    return this._config
+  }
+
+  setConfig (value = Worker.config) {
+    this._config = value
+    return this
+  }
+
   getDecide () {
     return this._decide
   }
 
   setDecide (value = null) {
     this._decide = value
-    return this
-  }
-
-  getDelay () {
-    return this._delay
-  }
-
-  setDelay (value = null) {
-    this._delay = value
     return this
   }
 
@@ -110,7 +131,7 @@ export class Worker {
     return this._id
   }
 
-  setId (value = null) {
+  setId (value = Worker.makeId()) {
     this._id = value
     return this
   }
@@ -119,7 +140,7 @@ export class Worker {
     return this._log
   }
 
-  setLog (value = null) {
+  setLog (value = console) {
     this._log = value
     return this
   }
@@ -161,7 +182,7 @@ export class Worker {
   }
 
   act (box, data) {
-    if (this._act) {
+    if (this._act !== null) {
       this._act(box, data)
       return
     }
@@ -183,7 +204,7 @@ export class Worker {
       return this
     }
 
-    if (Array.isArray(worker)) {
+    if (Array.isArray(worker) === true) {
       this.connect(worker[0])
       return worker[1]
     }
@@ -193,7 +214,7 @@ export class Worker {
   }
 
   decide (box, data) {
-    if (this._decide) {
+    if (this._decide !== null) {
       return this._decide(box, data)
     }
 
@@ -201,7 +222,7 @@ export class Worker {
   }
 
   err (box, error) {
-    if (this._err) {
+    if (this._err !== null) {
       this._err(box, error)
       return
     }
@@ -211,11 +232,16 @@ export class Worker {
 
   fail (box, error) {
     this.log('fail', box, error)
-    this.handleFail(box, error)
+
+    if (this._bypass !== null) {
+      this._bypass.handleErr(box, error)
+    } else if (this._downstream !== null) {
+      this._downstream.handleErr(box, error)
+    }
   }
 
   filter (box, data, ...extra) {
-    if (this._filter) {
+    if (this._filter !== null) {
       return this._filter(box, data, ...extra)
     }
 
@@ -227,7 +253,7 @@ export class Worker {
       return this
     }
 
-    if (this._downstream) {
+    if (this._downstream !== null) {
       return this._downstream.find(compare)
     }
 
@@ -235,45 +261,37 @@ export class Worker {
   }
 
   handle (box, data) {
-    const decision = this.decide(box, data)
+    this.handleAct(box, data)
+  }
 
-    if (decision === true) {
-      this.act(box, data)
-    } else if (decision === false) {
-      this.skip(box, data)
-    } else if (this._bypass) {
-      this._bypass.handle(box, data)
+  handleAct (box, data) {
+    try {
+      if (this.decide(box, data) === true) {
+        this.act(box, data)
+      } else {
+        this.pass(box, data)
+      }
+    } catch (error) {
+      this.handleErr(box, error)
     }
   }
 
-  handleFail (box, error) {
+  handleErr (box, error) {
     try {
-      if (this._bypass) {
-        this._bypass.err(box, error)
-      } else if (this._downstream) {
-        this._downstream.err(box, error)
-      }
+      this.err(box, error)
     } catch (tryError) {
-      console.error(tryError)
-    }
-  }
-
-  handlePass (box, data) {
-    try {
-      if (this._downstream) {
-        this._downstream.handle(box, data)
-      }
-    } catch (tryError) {
-      this.fail(box, tryError)
+      this.log('fail', box, tryError)
     }
   }
 
   log (type, ...args) {
-    (this._log || console.out || (() => {}))(type, ...args)
+    if (this._log[type] !== undefined) {
+      this._log[type](...args)
+    }
   }
 
   merge (box, data, ...extra) {
-    if (this._merge) {
+    if (this._merge !== null) {
       return this._merge(box, data, ...extra)
     }
 
@@ -281,24 +299,24 @@ export class Worker {
   }
 
   pass (box, data) {
-    if (this._delay === null) {
-      return this.handlePass(box, data)
-    }
+    this.log('pass', box, data)
 
-    setTimeout(() => {
-      this.handlePass(box, data)
-    }, this._delay)
+    if (this._bypass !== null) {
+      this._bypass.handleAct(box, data)
+    } else if (this._downstream !== null) {
+      this._downstream.handleAct(box, data)
+    }
   }
 
-  prepend (worker) {
-    return this._upstream
+  prepend (worker = null) {
+    if (worker === null) {
+      return this
+    }
+
+    this._upstream
       .connect(worker)
       .connect(this)
-  }
 
-  skip (box, data) {
-    if (this._downstream) {
-      this._downstream.handle(box, data)
-    }
+    return this
   }
 }

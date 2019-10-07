@@ -1,10 +1,11 @@
 import nodemailer from 'nodemailer'
 import { Transport } from './transport'
+
 const clients = {}
 
 export class Nodemailer extends Transport {
   open (callback) {
-    const host = this._options.host
+    const { host } = this._options
 
     if (clients[host] === undefined) {
       clients[host] = nodemailer.createTransport(this._options)
@@ -14,13 +15,20 @@ export class Nodemailer extends Transport {
   }
 
   send (message, callback) {
-    this.open((error, client) => {
-      if (error) {
-        callback(error)
+    this.open((openError, client) => {
+      if (openError !== null) {
+        callback(openError)
         return
       }
 
-      client.sendMail(message, callback)
+      client.sendMail(message, (error, result) => {
+        if (error !== null) {
+          callback(error)
+          return
+        }
+
+        callback(null, result)
+      })
     })
   }
 }

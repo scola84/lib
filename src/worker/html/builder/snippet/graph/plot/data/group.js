@@ -9,9 +9,10 @@ export class Group extends Data {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       index: this._index
-    })
+    }
   }
 
   getIndex () {
@@ -33,7 +34,7 @@ export class Group extends Data {
 
     if (result.data[exogenous] === undefined) {
       result.data[exogenous] = []
-      result.keys[result.keys.length] = exogenous
+      result.keys.push(exogenous)
       result.type = 'group'
     }
 

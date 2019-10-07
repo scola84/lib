@@ -20,15 +20,16 @@ export class Validate extends Action {
       snippets[i].resolveValidate(box, data, error)
     }
 
-    const hasError = Object.keys(error).length > 0
-
-    if (hasError) {
-      const newError = new Error('400 Input invalid')
-      newError.data = error
-      newError.original = data
-      this.fail(box, newError)
-    } else {
+    if (Object.keys(error).length === 0) {
       this.pass(box, data)
+      return
     }
+
+    const failError = new Error('400 Input invalid')
+
+    failError.data = error
+    failError.original = data
+
+    this.fail(box, failError)
   }
 }

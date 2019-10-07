@@ -14,8 +14,8 @@ export class Message extends Node {
 
     let format = `status.${data.status}`
 
-    if (data.code) {
-      format += '.' + data.code
+    if (data.code !== undefined) {
+      format += `.${data.code}`
     }
 
     const text = this._builder
@@ -23,10 +23,7 @@ export class Message extends Node {
       .format(format)
       .values(data)
 
-    this._node.text(
-      this.resolveValue(box, data, text)
-    )
-
+    this._node.text(this.resolveValue(box, data, text))
     this._node.classed('in', true)
 
     return this._node

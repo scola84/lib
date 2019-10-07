@@ -9,9 +9,10 @@ export class Resolver extends Worker {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       collect: this._collect
-    })
+    }
   }
 
   getCollect () {
@@ -24,13 +25,13 @@ export class Resolver extends Worker {
   }
 
   act (box, data) {
-    this.resolve(box, data, (...args) => {
-      this.pass(...args)
+    this.resolve(box, data, (newBox, newData) => {
+      this.pass(newBox, newData)
     })
   }
 
   decide (box, data) {
-    if (this._decide) {
+    if (this._decide !== null) {
       return this._decide(box, data)
     }
 
@@ -38,15 +39,15 @@ export class Resolver extends Worker {
   }
 
   err (box, error) {
-    this.resolve(box, error, (...args) => {
-      this.fail(...args)
+    this.resolve(box, error, (newBox) => {
+      this.fail(newBox, error)
     })
   }
 
   resolve (box, data, callback) {
     const resolve = box.resolve[this._name]
 
-    if (resolve.callback) {
+    if (resolve.callback !== undefined) {
       resolve.callback()
     }
 
@@ -65,18 +66,13 @@ export class Resolver extends Worker {
     resolve.count += 1
 
     const next = resolve.empty === true ||
-      resolve.count % resolve.total === 0
+      (resolve.count % resolve.total) === 0
 
     if (next === true) {
-      if (this._collect === true) {
-        data = resolve.data
-      }
-
-      if (this._wrap === true) {
-        box = box.box
-      }
-
-      callback(box, data)
+      callback(
+        this._wrap === true ? box.box : box,
+        this._collect === true ? resolve.data : data
+      )
     }
   }
 }

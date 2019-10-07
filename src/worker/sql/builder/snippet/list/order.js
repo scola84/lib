@@ -16,12 +16,13 @@ export class Order extends Snippet {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       by: this._by,
       columns: this._columns,
       default: this._default,
       order: this._order
-    })
+    }
   }
 
   getBy () {
@@ -47,9 +48,7 @@ export class Order extends Snippet {
   }
 
   columns (...columns) {
-    return this.setColumns(
-      this._columns.concat(columns)
-    )
+    return this.setColumns(this._columns.concat(columns))
   }
 
   getDefault () {
@@ -85,8 +84,8 @@ export class Order extends Snippet {
     let order = this.resolveValue(box, data, this._order)
     let by = this.resolveValue(box, data, this._by)
 
-    order = Array.isArray(order) ? order : [order]
-    by = Array.isArray(by) ? by : [by]
+    order = Array.isArray(order) === true ? order : [order]
+    by = Array.isArray(by) === true ? by : [by]
 
     let column = null
     let direction = null
@@ -104,7 +103,7 @@ export class Order extends Snippet {
         continue
       }
 
-      string += string.length ? ', ' : ''
+      string += string.length > 0 ? ', ' : ''
       string += this.resolveEscape(column, 'id')
       string += ' '
       string += direction

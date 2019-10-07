@@ -25,11 +25,13 @@ export class Checkbox extends Input {
         return snippet instanceof Checkbox &&
           snippet.resolveAttribute(box, data, 'name') === realName
       })
-      .resolve()
+      .resolve(null)
 
-    const values = snippets.map((snippet) => {
-      return snippet.resolveAttribute(box, data, 'value')
-    })
+    const values = []
+
+    for (let i = 0; i < snippets.length; i += 1) {
+      values.push(snippets[i].resolveProperty(box, data, 'value'))
+    }
 
     if (values.indexOf(value) === -1) {
       return this.setError(error, name, value, 'type', { values })

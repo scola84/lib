@@ -14,9 +14,10 @@ export class Zip extends Input {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       country: this._country
-    })
+    }
   }
 
   getCountry () {

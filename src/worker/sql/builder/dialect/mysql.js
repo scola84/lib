@@ -18,63 +18,61 @@ export class Mysql extends Dialect {
   }
 
   execute (box, data, query, callback) {
-    this.open(box, data, (cerror, connection, release = true) => {
-      if (cerror) {
-        callback(cerror)
+    this.open(box, data, (openError, connection, mustRelease = true) => {
+      if (openError !== null) {
+        callback(openError)
         return
       }
 
       connection.query(query, (error, result) => {
-        if (release) {
+        if (mustRelease === true) {
           connection.release()
         }
 
-        if (error) {
+        if (error !== null) {
           callback(error)
           return
         }
 
-        callback(
-          null,
-          this.resolveInsert(result)
-        )
+        callback(null, this.resolveResult(result))
       })
     })
   }
 
   open (box, data, callback) {
-    const host = this._options.host
+    const { host } = this._options
 
     if (pools[host] === undefined) {
       pools[host] = mysql.createPool(
-        this._options.dsn
-          ? this._options.dsn
-          : this._options
+        this._options.dsn === undefined
+          ? this._options
+          : this._options.dsn
       )
     }
 
     const connection = this._builder.getConnection()
 
-    if (connection) {
+    if (connection !== null) {
       connection(box, data, pools[host], callback)
       return
     }
 
-    if (box.connection) {
+    if (box.connection !== undefined) {
       callback(null, box.connection, false)
       return
     }
 
-    pools[host].getConnection(callback)
+    pools[host].getConnection((error, poolConnection) => {
+      if (error !== null) {
+        callback(error)
+        return
+      }
+
+      callback(null, poolConnection)
+    })
   }
 
   resolveInsert (result) {
-    const type = this._builder.getType()
-
-    if (type !== 'insert') {
-      return result
-    }
-
     const key = this._builder.getKey()
 
     if (key === null) {
@@ -84,10 +82,20 @@ export class Mysql extends Dialect {
     return [result.insertId]
   }
 
+  resolveResult (result) {
+    let resolvedResult = result
+
+    if (this._builder.getType() === 'insert') {
+      resolvedResult = this.resolveInsert(resolvedResult)
+    }
+
+    return resolvedResult
+  }
+
   stream (box, data, query, callback) {
-    this.open(box, data, (cerror, connection) => {
-      if (cerror) {
-        callback(cerror)
+    this.open(box, data, (openError, connection) => {
+      if (openError !== null) {
+        callback(openError)
         return
       }
 
@@ -100,13 +108,7 @@ export class Mysql extends Dialect {
       })
 
       stream.on('result', (row) => {
-        callback(null, row, (bx, resume) => {
-          if (resume === false) {
-            connection.pause()
-          } else {
-            connection.resume()
-          }
-        })
+        callback(null, row)
       })
 
       stream.once('end', () => {

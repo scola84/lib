@@ -10,7 +10,7 @@ export class File extends Input {
   }
 
   isAcceptable (value, accept) {
-    if (accept === undefined) {
+    if (accept === null || accept === undefined) {
       return true
     }
 

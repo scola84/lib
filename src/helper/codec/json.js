@@ -1,49 +1,15 @@
-const type = 'application/json'
+import { Codec } from './codec'
 
-class Codec {
-  static decode (readable, callback) {
-    const buffers = []
-
-    readable.on('data', (buffer) => {
-      buffers.push(buffer)
-    })
-
-    readable.once('end', () => {
-      const buffer = Buffer.concat(buffers)
-
-      if (buffer.length === 0) {
-        callback()
-        return
-      }
-
-      const string = typeof TextDecoder === 'undefined'
-        ? String(buffer)
-        : new TextDecoder().decode(buffer)
-
-      try {
-        callback(null, JSON.parse(string))
-      } catch (error) {
-        callback(error)
-      }
-    })
+export class JsonCodec extends Codec {
+  static type () {
+    return 'application/json'
   }
 
-  static encode (writable, data, callback) {
-    try {
-      if (data === null || data === undefined) {
-        writable.end(callback)
-      } else {
-        data = JSON.stringify(data)
-        writable.setHeader('Content-Length', Buffer.byteLength(data))
-        writable.end(data, callback)
-      }
-    } catch (error) {
-      callback(error)
-    }
+  parse (data) {
+    return JSON.parse(String(data))
   }
-}
 
-export {
-  Codec,
-  type
+  stringify (data) {
+    return JSON.stringify(data)
+  }
 }

@@ -1,14 +1,19 @@
 import { DateTime } from 'luxon'
 
 export function l (value, options = '', locale = 'nl_NL') {
-  locale = locale.replace('_', '-')
-  options = options ? options.split(';') : []
+  const foptions = options === ''
+    ? []
+    : options.split(';')
 
   const [
     format = 'D'
-  ] = options
+  ] = foptions
+
+  const loptions = {
+    locale: locale.replace('_', '-')
+  }
 
   return DateTime
     .fromISO(value)
-    .toFormat(format, { locale })
+    .toFormat(format, loptions)
 }

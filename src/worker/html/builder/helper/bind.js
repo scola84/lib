@@ -1,8 +1,7 @@
 import { select, event } from 'd3-selection'
 import fastclick from 'fastclick'
-import { HtmlBuilder } from '../../worker'
 
-export function gui () {
+export function bind () {
   if (typeof window === 'undefined') {
     return
   }
@@ -30,8 +29,4 @@ export function gui () {
         .on('click.scola-menu', null)
     }
   })
-
-  HtmlBuilder.setup()
-  HtmlBuilder.snippet.graph.Axis.setup()
-  HtmlBuilder.snippet.graph.Plot.setup()
 }

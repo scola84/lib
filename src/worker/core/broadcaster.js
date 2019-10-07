@@ -13,9 +13,10 @@ export class Broadcaster extends Worker {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       resolve: this._resolve
-    })
+    }
   }
 
   getDownstreams () {
@@ -36,45 +37,11 @@ export class Broadcaster extends Worker {
     return this
   }
 
-  connect (worker = null) {
-    if (worker === null) {
-      return this
-    }
-
-    if (Array.isArray(worker)) {
-      this.connect(worker[0])
-      return worker[1]
-    }
-
-    this._downstreams.push(worker)
-    return super.connect(worker)
-  }
-
-  find (compare, up = false) {
-    let found = super.find(compare, up)
-
-    if (found !== null) {
-      return found
-    }
-
-    for (let i = 0; i < this._downstreams.length; i += 1) {
-      found = this.downstreams[i].find(compare, up)
-
-      if (found) {
-        return found
-      }
-    }
-
-    return found
-  }
-
-  pass (box, data) {
-    if (this._wrap === true) {
-      box = { box }
-    }
+  act (box, data) {
+    const newBox = this._wrap === true ? { box } : box
 
     if (this._resolve === true) {
-      merge(box, {
+      merge(newBox, {
         resolve: {
           [this._name]: {
             count: 0,
@@ -86,7 +53,39 @@ export class Broadcaster extends Worker {
     }
 
     for (let i = 0; i < this._downstreams.length; i += 1) {
-      this._downstreams[i].handle(box, data)
+      this._downstreams[i].handleAct(newBox, data)
     }
+  }
+
+  connect (worker = null) {
+    if (worker === null) {
+      return this
+    }
+
+    if (Array.isArray(worker) === true) {
+      this.connect(worker[0])
+      return worker[1]
+    }
+
+    this._downstreams.push(worker)
+    return super.connect(worker)
+  }
+
+  find (compare) {
+    if (compare(this) === true) {
+      return this
+    }
+
+    let found = null
+
+    for (let i = 0; i < this._downstreams.length; i += 1) {
+      found = this._downstreams[i].find(compare)
+
+      if (found) {
+        return found
+      }
+    }
+
+    return found
   }
 }

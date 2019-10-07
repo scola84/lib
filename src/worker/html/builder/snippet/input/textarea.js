@@ -11,9 +11,10 @@ export class Textarea extends Input {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       grow: this._grow
-    })
+    }
   }
 
   getGrow () {
@@ -39,7 +40,7 @@ export class Textarea extends Input {
   }
 
   resolveAfter () {
-    if (this._grow) {
+    if (this._grow === true) {
       this.resolveGrow()
     }
 

@@ -10,8 +10,7 @@ export class Select extends Input {
     const values = []
 
     for (let i = 0; i < this._args.length; i += 1) {
-      values[values.length] = this._args[i]
-        .resolveAttribute(box, data, 'value')
+      values.push(this._args[i].resolveProperty(box, data, 'value'))
     }
 
     for (let i = 0; i < values.length; i += 1) {

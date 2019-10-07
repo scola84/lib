@@ -1,5 +1,5 @@
-import sprintf from 'sprintf-js'
-import { HtmlRouter } from '../../../../html'
+import { vsprintf } from '../../../../../helper'
+import { HtmlRouter } from '../../../router'
 import { Action } from '../action'
 
 export class Route extends Action {
@@ -11,9 +11,10 @@ export class Route extends Action {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       view: this._view
-    })
+    }
   }
 
   getView () {
@@ -32,10 +33,10 @@ export class Route extends Action {
   resolveAfter (box, data) {
     let route = this.resolveValue(box, data, this._view)
 
-    route = sprintf.sprintf(
-      this.expand(route),
-      Object.assign({}, box.params, data)
-    )
+    route = vsprintf(this.expand(route), [
+      box.params,
+      data
+    ])
 
     HtmlRouter.handle(box, {}, route)
   }

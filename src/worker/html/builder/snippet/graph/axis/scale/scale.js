@@ -209,22 +209,22 @@ export class Scale {
     const plots = this._axis.getBuilder().selector((snippet) => {
       return snippet instanceof Plot &&
         snippet.getData().getPosition().indexOf(this._position) > -1
-    }).resolve()
+    }).resolve(null)
 
-    let plotData = null
+    let newData = null
 
     for (let i = 0; i < plots.length; i += 1) {
-      plotData = plots[i].prepare(data)
+      newData = plots[i].prepare(data)
 
-      this._domain.size = plotData.size
-      this._domain.type = plotData.type
+      this._domain.size = newData.size
+      this._domain.type = newData.type
 
-      this.prepareDomainKeys(plotData)
+      this.prepareDomainKeys(newData)
 
       if (this._type === 'endogenous') {
-        this.prepareDomainEndogenous(plotData)
+        this.prepareDomainEndogenous(newData)
       } else {
-        this.prepareDomainExogenous(plotData)
+        this.prepareDomainExogenous(newData)
       }
     }
 
@@ -242,7 +242,7 @@ export class Scale {
       set = data.data[key]
 
       for (let j = 0; j < set.length; j += 1) {
-        values[values.length] = set[j][1]
+        values.push(set[j][1])
       }
     }
 
@@ -259,7 +259,7 @@ export class Scale {
       key = data.keys[i]
 
       if (this._domain.keys.indexOf(key) === -1) {
-        this._domain.keys[this._domain.keys.length] = key
+        this._domain.keys.push(key)
       }
     }
   }

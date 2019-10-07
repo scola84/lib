@@ -19,12 +19,13 @@ export class Input extends Node {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       clean: this._clean,
       default: this._default,
       validate: this._validate,
       wrap: this._wrap
-    })
+    }
   }
 
   getClean () {
@@ -86,14 +87,16 @@ export class Input extends Node {
   }
 
   cleanInput (box, data, name, value) {
+    let cleanValue = value
+
     const isAllowed = this.isAllowed(box, data)
 
     if (isAllowed === false) {
-      value = ''
-      this.setValue(data, name, value)
+      cleanValue = ''
+      this.setValue(data, name, cleanValue)
     }
 
-    const isEmpty = this.isEmpty(value)
+    const isEmpty = this.isEmpty(cleanValue)
 
     if (isEmpty === true) {
       if (this._default === null) {
@@ -101,20 +104,20 @@ export class Input extends Node {
         return
       }
 
-      value = this.resolveValue(box, data, this._default)
-      this.setValue(data, name, value)
+      cleanValue = this.resolveValue(box, data, this._default)
+      this.setValue(data, name, cleanValue)
     }
 
-    value = this._clean(box, data, value)
-    this.setValue(data, name, value)
+    cleanValue = this._clean(box, data, cleanValue)
+    this.setValue(data, name, cleanValue)
 
-    this.cleanAfter(box, data, name, value)
+    this.cleanAfter(box, data, name, cleanValue)
   }
 
   createNode () {
     super.createNode()
 
-    if (this._wrap) {
+    if (this._wrap === true) {
       this.wrapInput()
     }
   }
@@ -193,13 +196,12 @@ export class Input extends Node {
   }
 
   setError (error, name, value, reason, options = {}) {
-    value = Object.assign({}, options, {
+    this.setValue(error, name, {
+      ...options,
       reason,
       type: this.constructor.name.toLowerCase(),
       value
     })
-
-    this.setValue(error, name, value)
   }
 
   setValue (object, key, value) {

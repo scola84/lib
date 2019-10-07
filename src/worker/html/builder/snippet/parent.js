@@ -13,10 +13,11 @@ export class Parent extends Node {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       children: this._children,
       key: this._key
-    })
+    }
   }
 
   getChildren () {
@@ -50,28 +51,28 @@ export class Parent extends Node {
       return null
     }
 
-    let key = this._key
-      ? this._key(box, data)
-      : JSON.stringify(data)
+    let key = this._key === null
+      ? JSON.stringify(data)
+      : this._key(box, data)
 
     key = key || snippet.getId()
 
-    if (this._children.has(key)) {
+    if (this._children.has(key) === true) {
       return this._children
         .get(key)
         .resolve(box, data)
     }
 
-    snippet = snippet.clone()
+    const clone = snippet.clone()
 
-    let node = snippet.resolve(box, data)
-    node = Array.isArray(node) ? node[0] : node
+    let node = clone.resolve(box, data)
+    node = Array.isArray(node) === true ? node[0] : node
 
     if (node === null) {
       return null
     }
 
-    this._children.set(key, snippet)
+    this._children.set(key, clone)
 
     const transition = select(node.node().parentNode)
       .classed('transition')
@@ -97,9 +98,7 @@ export class Parent extends Node {
         nodes[index].snippet.remove()
       })
 
-    const duration = parseFloat(
-      children.style('transition-duration')
-    )
+    const duration = parseFloat(children.style('transition-duration'))
 
     if (duration === 0) {
       children.dispatch('transitionend')

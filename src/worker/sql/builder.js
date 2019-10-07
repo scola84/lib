@@ -2,19 +2,9 @@ import groupBy from 'lodash-es/groupBy'
 import { Builder } from '../core'
 import { map, snippet } from './builder/'
 
-let hosts = {}
-
 export class SqlBuilder extends Builder {
   static setup () {
     SqlBuilder.attachFactories(SqlBuilder, map)
-  }
-
-  static getHosts () {
-    return hosts
-  }
-
-  static setHosts (value) {
-    hosts = value
   }
 
   constructor (options = {}) {
@@ -38,7 +28,8 @@ export class SqlBuilder extends Builder {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       connection: this._connection,
       dialect: this._dialect,
       host: this._host,
@@ -46,7 +37,7 @@ export class SqlBuilder extends Builder {
       query: this._query,
       stream: this._stream,
       type: this._type
-    })
+    }
   }
 
   getConnection () {
@@ -89,8 +80,8 @@ export class SqlBuilder extends Builder {
     return this._query
   }
 
-  setQuery (query = null) {
-    this._query = query
+  setQuery (value = null) {
+    this._query = typeof value === 'function' ? value(this) : value
     return this
   }
 
@@ -117,14 +108,15 @@ export class SqlBuilder extends Builder {
       this.createDialect(box, data)
     }
 
-    const query = this._query.resolve(
-      box,
-      this.filter(box, data)
-    )
+    if (this._query === null) {
+      this.createQuery(box, data)
+    }
+
+    const query = this._query.resolve(box, this.filter(box, data))
 
     this.log('info', box, data, query)
 
-    if (this._stream) {
+    if (this._stream === true) {
       this._dialect.stream(box, data, query, (error, result, cb) => {
         this.process(box, data, query, error, result, cb)
       })
@@ -135,8 +127,8 @@ export class SqlBuilder extends Builder {
     }
   }
 
-  build (query) {
-    return this.setQuery(query)
+  build () {
+    return this._query
   }
 
   createDialect (box, data) {
@@ -146,7 +138,7 @@ export class SqlBuilder extends Builder {
       host = host(box, data)
     }
 
-    let options = hosts[host] || host
+    let options = this._config.sql[host] || host
 
     if (typeof options === 'function') {
       options = options(box, data)
@@ -156,9 +148,11 @@ export class SqlBuilder extends Builder {
       throw new Error('Dialect not defined')
     }
 
-    this.setDialect(
-      this[options.dialect]().options(options)
-    )
+    this.setDialect(this[options.dialect]().options(options))
+  }
+
+  createQuery () {
+    this.setQuery(this.build(this))
   }
 
   escape (value, type) {
@@ -166,7 +160,7 @@ export class SqlBuilder extends Builder {
   }
 
   merge (box, data, { query, result }) {
-    if (this._merge) {
+    if (this._merge !== null) {
       return this._merge(box, data, {
         key: this._key,
         query,
@@ -208,13 +202,14 @@ export class SqlBuilder extends Builder {
   }
 
   process (box, data, query, error, result) {
-    if (error) {
+    if (error !== null) {
       this.fail(box, error)
       return
     }
 
     if (this._stream === false) {
-      result = this.merge(box, data, { query, result })
+      this.pass(box, this.merge(box, data, { query, result }))
+      return
     }
 
     this.pass(box, result)

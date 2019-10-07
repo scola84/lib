@@ -13,9 +13,10 @@ export class Path extends Plot {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       fill: this._fill
-    })
+    }
   }
 
   getFill () {
@@ -66,15 +67,15 @@ export class Path extends Plot {
         value = this.preparePoint(endogenous, exogenous, set, key, j)
 
         if (i === 0) {
-          fill[j] += 'M ' + min
-          stroke[j] += 'M ' + value
+          fill[j] += `M ${min}`
+          stroke[j] += `M ${value}`
         }
 
-        fill[j] += ' L ' + value
-        stroke[j] += ' L ' + value
+        fill[j] += ` L ${value}`
+        stroke[j] += ` L ${value}`
 
         if (i === data.keys.length - 1) {
-          fill[j] += ' L ' + min
+          fill[j] += ` L ${min}`
         }
       }
     }
@@ -103,23 +104,22 @@ export class Path extends Plot {
   }
 
   resolveInner (box, data) {
-    data = this.prepare(data)
-
-    const [fill, stroke] = this.preparePath(box, data)
+    const newData = this.prepare(data)
+    const [fill, stroke] = this.preparePath(box, newData)
     const [path] = this._args
 
     for (let i = stroke.length - 1; i >= 0; i -= 1) {
-      if (this._fill) {
-        this.appendChild(box, data, path)
+      if (this._fill === true) {
+        this.appendChild(box, newData, path)
           .attr('d', fill[i])
           .classed('fill', true)
       }
 
-      this.appendChild(box, data, path)
+      this.appendChild(box, newData, path)
         .attr('d', stroke[i])
         .classed('stroke', true)
     }
 
-    return this.resolveAfter(box, data)
+    return this.resolveAfter(box, newData)
   }
 }

@@ -17,12 +17,13 @@ export class LogControl extends Widget {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       action: this._action,
       begin: this._begin,
       end: this._end,
       mode: this._mode
-    })
+    }
   }
 
   getAction () {
@@ -82,16 +83,22 @@ export class LogControl extends Widget {
 
     return this._mode.map((name) => {
       const selected = name.slice(-1) === '#'
-      name = selected ? name.slice(0, -1) : name
 
-      return b.button().attributes({
-        value: name.split('.').pop()
-      }).classed({
-        click: true,
-        selected
-      }).text(
-        b.print().format(name)
-      )
+      const selectedName = selected === true
+        ? name.slice(0, -1)
+        : name
+
+      return b.button()
+        .attributes({
+          value: selectedName.split('.').pop()
+        })
+        .classed({
+          click: true,
+          selected
+        })
+        .text(
+          b.print().format(selectedName)
+        )
     })
   }
 
@@ -99,15 +106,22 @@ export class LogControl extends Widget {
     const b = this._builder
 
     return this._name.map((name) => {
-      const selected = name.slice(-1) === '#' ? 'selected' : null
-      name = selected ? name.slice(0, -1) : name
+      const selected = name.slice(-1) === '#'
+        ? 'selected'
+        : null
 
-      return b.option().attributes({
-        selected,
-        value: name.split('.').pop()
-      }).text(
-        b.print().format(name)
-      )
+      const selectedName = selected === null
+        ? name
+        : name.slice(0, -1)
+
+      return b.option()
+        .attributes({
+          selected,
+          value: selectedName.split('.').pop()
+        })
+        .text(
+          b.print().format(selectedName)
+        )
     })
   }
 
@@ -118,14 +132,17 @@ export class LogControl extends Widget {
       b.row(
         b.div().class('name').append(
           b.input(
-            b.select().wrap().classed({
-              click: !(this._name.length < 2)
-            }).attributes({
-              disabled: this._name.length < 2 ? 'disabled' : null,
-              name: 'name'
-            }).append(
-              ...this.buildName()
-            )
+            b.select().wrap()
+              .classed({
+                click: !(this._name.length < 2)
+              })
+              .attributes({
+                disabled: this._name.length < 2 ? 'disabled' : null,
+                name: 'name'
+              })
+              .append(
+                ...this.buildName()
+              )
           ).act((box, data) => {
             this.handleInput(box, data)
           })
@@ -175,13 +192,13 @@ export class LogControl extends Widget {
 
   load () {
     const control = JSON.parse(
-      this._storage.getItem('control-' + this._id) || '{}'
+      this._storage.getItem(`control-${this._id}`) || '{}'
     )
 
     const [snippet] = this._args
     const node = snippet.node()
 
-    if (control.mode) {
+    if (control.mode !== null) {
       node
         .selectAll('.tab *')
         .classed('selected', false)
@@ -191,7 +208,7 @@ export class LogControl extends Widget {
         .classed('selected', true)
     }
 
-    if (control.name) {
+    if (control.name !== null) {
       node
         .select('select')
         .property('value', control.name)
@@ -249,7 +266,7 @@ export class LogControl extends Widget {
 
   save (box) {
     this._storage.setItem(
-      'control-' + this._id,
+      `control-${this._id}`,
       JSON.stringify(box.control)
     )
   }

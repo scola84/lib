@@ -12,10 +12,11 @@ export class Action extends Snippet {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       act: this._act,
       err: this._err
-    })
+    }
   }
 
   getAct () {
@@ -45,10 +46,11 @@ export class Action extends Snippet {
   }
 
   expand (string) {
-    const matches = string.match(/\{.+\}/g)
+    let expandedString = string
+    const matches = expandedString.match(/\{.+\}/g)
 
     if (matches === null) {
-      return string
+      return expandedString
     }
 
     let names = null
@@ -63,10 +65,10 @@ export class Action extends Snippet {
         .map((name) => `${name}=%(${name})s`)
         .join('&')
 
-      string = string.replace(match, names)
+      expandedString = expandedString.replace(match, names)
     }
 
-    return string
+    return expandedString
   }
 
   fail (box, error) {

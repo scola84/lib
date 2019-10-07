@@ -1,3 +1,5 @@
+/* eslint-disable import/no-dynamic-require */
+
 const { execSync } = require('child_process')
 const { readFileSync, writeFileSync } = require('fs')
 const { template } = require('lodash')
@@ -6,12 +8,15 @@ const babel = require('rollup-plugin-babel')
 const commonjs = require('rollup-plugin-commonjs')
 const json = require('rollup-plugin-json')
 const license = require('rollup-plugin-license')
+const livereload = require('rollup-plugin-livereload')
 const builtins = require('rollup-plugin-node-builtins')
 const resolve = require('rollup-plugin-node-resolve')
 const css = require('rollup-plugin-postcss')
 const { uglify } = require('rollup-plugin-uglify')
-const pkg = require([process.cwd(), 'package.json'].join('/'))
-const { w: watch } = minimist(process.argv)
+
+const pkg = require(`${process.cwd()}/package.json`)
+const { w } = minimist(process.argv)
+const watch = Boolean(w)
 
 const bannerTemplate = `
 @license <%= pkg.name %>@<%= pkg.version %>
@@ -77,7 +82,7 @@ function scolaChangelog () {
 
   return {
     writeBundle: () => {
-      const file = process.cwd() + '/CHANGELOG.md'
+      const file = `${process.cwd()}/CHANGELOG.md`
       let log = null
 
       try {
@@ -130,6 +135,14 @@ function scolaLicense () {
   })
 }
 
+function scolaLivereload (options) {
+  if (watch && options.live) {
+    return livereload(options.live)
+  }
+
+  return {}
+}
+
 function scolaUglify () {
   if (watch) {
     return {}
@@ -138,18 +151,24 @@ function scolaUglify () {
   return uglify()
 }
 
-module.exports = [
-  { watch },
-  resolve(),
-  commonjs(),
-  builtins(),
-  css({
-    extract: true,
-    minimize: true
-  }),
-  json(),
-  scolaBabel(),
-  scolaUglify(),
-  scolaLicense(),
-  scolaChangelog()
-]
+module.exports = (options) => {
+  return [
+    resolve({
+      mainFields: options.format === 'umd'
+        ? ['module', 'main', 'browser']
+        : ['module', 'main']
+    }),
+    commonjs(),
+    builtins(),
+    css({
+      extract: true,
+      minimize: true
+    }),
+    json(),
+    scolaBabel(),
+    scolaUglify(),
+    scolaLicense(),
+    scolaChangelog(),
+    scolaLivereload(options)
+  ]
+}

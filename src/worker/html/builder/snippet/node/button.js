@@ -22,10 +22,11 @@ export class Button extends Node {
   }
 
   getOptions () {
-    return Object.assign(super.getOptions(), {
+    return {
+      ...super.getOptions(),
       form: this._form,
       menu: this._menu
-    })
+    }
   }
 
   getForm () {
@@ -55,7 +56,7 @@ export class Button extends Node {
   }
 
   removeBefore () {
-    if (this._node) {
+    if (this._node !== null) {
       this._node.on('.scola-button', null)
     }
 
@@ -63,11 +64,11 @@ export class Button extends Node {
   }
 
   resolveAfter (box, data) {
-    if (this._form) {
+    if (this._form !== null) {
       return this.resolveForm(box, data)
     }
 
-    if (this._menu) {
+    if (this._menu !== false) {
       return this.resolveMenu(box, data)
     }
 
@@ -82,7 +83,7 @@ export class Button extends Node {
     this._node.on('click.scola-button', () => {
       event.preventDefault()
 
-      select('#' + this._form).dispatch('submit', {
+      select(`#${this._form}`).dispatch('submit', {
         cancelable: true
       })
     })

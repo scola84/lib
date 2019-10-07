@@ -1,5 +1,5 @@
-import { Worker } from '../core'
 import { STATUS_CODES } from 'http'
+import { Worker } from '../core'
 
 export class HttpResponder extends Worker {
   act (box, boxData) {
@@ -7,6 +7,11 @@ export class HttpResponder extends Worker {
       meta = {},
       data
     } = this.filter(box, boxData)
+
+    if (box.request.method === 'GET' && data === undefined) {
+      this.err(box, new Error('404 Resource not found'))
+      return
+    }
 
     meta.statusCode = box.request.method === 'POST'
       ? 201
@@ -29,17 +34,19 @@ export class HttpResponder extends Worker {
     const [,
       code = 500,
       text
-    ] = error.message.match(/^(\d{3})\s?(.*)/) || []
+    ] = error.message.match(/(\d{3})?([^(]*)/) || []
 
-    if (code) {
-      meta.statusCode = Number(code)
+    meta.statusCode = Number(code)
+
+    let { data } = error
+
+    if (data === undefined) {
+      if (meta.statusCode < 500 && text !== undefined) {
+        data = text.trim()
+      } else {
+        data = STATUS_CODES[meta.statusCode]
+      }
     }
-
-    const data = error.data
-      ? error.data
-      : meta.statusCode < 500 && text
-        ? text
-        : STATUS_CODES[meta.statusCode]
 
     box.callback({
       meta,
@@ -51,7 +58,7 @@ export class HttpResponder extends Worker {
   }
 
   filter (box, data) {
-    if (this._filter) {
+    if (this._filter !== null) {
       return this.filter(box, data)
     }
 

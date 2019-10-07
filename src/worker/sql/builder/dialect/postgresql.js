@@ -16,88 +16,90 @@ export class Postgresql extends Dialect {
     }
 
     if (type === 'id') {
-      return '"' + value.replace(/\./g, '"."') + '"'
+      return `"${value.replace(/\./g, '"."')}"`
     }
 
     return value
   }
 
   execute (box, data, query, callback) {
-    this.open(box, data, (cerror, connection, release = true) => {
-      if (cerror) {
-        callback(cerror)
+    this.open(box, data, (openError, connection, mustRelease = true) => {
+      if (openError !== null) {
+        callback(openError)
         return
       }
 
-      query = this.prepareInsert(query)
+      const preparedQuery = this.prepareQuery(query)
 
-      connection.query(query, (error, result = {}) => {
-        if (release) {
+      connection.query(preparedQuery, (error, result = {}) => {
+        if (mustRelease === true) {
           connection.release()
         }
 
-        if (error) {
+        if (error !== null) {
           callback(error)
           return
         }
 
-        callback(
-          null,
-          this.resolveInsert(result.rows)
-        )
+        callback(null, this.resolveResult(result.rows))
       })
     })
   }
 
   open (box, data, callback) {
-    const host = this._options.host
+    const { host } = this._options
 
     if (pools[host] === undefined) {
       pools[host] = new pg.Pool(
-        this._options.dsn ? {
-          connectionString: this._options.dsn
-        } : this._options
+        this._options.dsn === undefined
+          ? this._options
+          : { connectionString: this._options.dsn }
       )
     }
 
     const connection = this._builder.getConnection()
 
-    if (connection) {
+    if (connection !== null) {
       connection(box, data, pools[host], callback)
       return
     }
 
-    if (box.connection) {
+    if (box.connection !== undefined) {
       callback(null, box.connection, false)
       return
     }
 
-    pools[host].connect(callback)
+    pools[host].connect((error, poolConnection) => {
+      if (error !== undefined) {
+        callback(error)
+        return
+      }
+
+      callback(null, poolConnection)
+    })
   }
 
   prepareInsert (query) {
-    const type = this._builder.getType()
-
-    if (type !== 'insert') {
-      return query
-    }
-
     const key = this._builder.getKey()
 
     if (key === null) {
       return query
     }
 
-    return query + ` RETURNING ${key}`
+    return `${query} RETURNING ${key}`
+  }
+
+  prepareQuery (query) {
+    let preparedQuery = query
+
+    if (this._builder.getType() === 'insert') {
+      preparedQuery = this.prepareInsert(preparedQuery)
+    }
+
+    return preparedQuery
   }
 
   resolveInsert (result = []) {
-    const type = this._builder.getType()
-
-    if (type !== 'insert') {
-      return result
-    }
-
     const key = this._builder.getKey()
 
     if (key === null) {
@@ -107,15 +109,24 @@ export class Postgresql extends Dialect {
     return result.map((row) => row[key])
   }
 
+  resolveResult (result) {
+    let resolvedResult = result
+
+    if (this._builder.getType() === 'insert') {
+      resolvedResult = this.resolveInsert(resolvedResult)
+    }
+
+    return resolvedResult
+  }
+
   stream (box, data, query, callback) {
-    this.open(box, data, (cerror, connection) => {
-      if (cerror) {
-        callback(cerror)
+    this.open(box, data, (openError, connection) => {
+      if (openError !== null) {
+        callback(openError)
         return
       }
 
-      query = new PgQueryStream(query)
-      const stream = connection.query(query)
+      const stream = connection.query(new PgQueryStream(query))
 
       stream.once('error', (error) => {
         stream.removeAllListeners()
@@ -124,13 +135,7 @@ export class Postgresql extends Dialect {
       })
 
       stream.on('data', (row) => {
-        callback(null, row, (bx, resume) => {
-          if (resume === false) {
-            query.pause()
-          } else {
-            query.resume()
-          }
-        })
+        callback(null, row)
       })
 
       stream.once('end', () => {

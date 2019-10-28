@@ -38,6 +38,6 @@ export class Route extends Action {
       data
     ])
 
-    HtmlRouter.handle(box, {}, route)
+    HtmlRouter.handle(route, {})
   }
 }

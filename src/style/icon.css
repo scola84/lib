@@ -10,10 +10,12 @@
   font-size: 1.5em !important;
 }
 
-.ion-ios-list:before {
+.ion-ios-list:before,
+.ion-ios-log-out:before {
   font-size: 1.75em !important;
 }
 
+.ion-ios-log-out,
 *[dir='rtl'] .ion-ios-arrow-back,
 *[dir='rtl'] .ion-ios-arrow-forward {
   transform: rotate(180deg);

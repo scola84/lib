@@ -49,6 +49,7 @@ export class Route {
       options: {
         bwd: false,
         clr: false,
+        def: false,
         his: false,
         imm: false,
         ins: true,

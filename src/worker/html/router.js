@@ -1,12 +1,15 @@
-import { event, select } from 'd3-selection'
 import { Router } from '../core'
-import { Route } from './router/'
+
+import {
+  Popup,
+  Route
+} from './router/'
 
 const routers = {}
 
 export class HtmlRouter extends Router {
-  static handle (box, data, route) {
-    const parsedRoute = Route.parse(route, box.name)
+  static handle (route, data) {
+    const parsedRoute = Route.parse(route)
     routers[parsedRoute.name].handle(parsedRoute, data)
   }
 
@@ -17,8 +20,8 @@ export class HtmlRouter extends Router {
     this._default = null
     this._history = null
     this._name = null
-    this._pop = null
-    this._start = null
+    this._popup = null
+    this._starter = null
     this._stash = null
     this._storage = null
     this._user = null
@@ -27,8 +30,8 @@ export class HtmlRouter extends Router {
     this.setDefault(options.default)
     this.setHistory(options.history)
     this.setName(options.name)
-    this.setPop(options.pop)
-    this.setStart(options.start)
+    this.setPopup(options.popup)
+    this.setStarter(options.starter)
     this.setStash(options.stash)
     this.setStorage(options.storage)
     this.setUser(options.user)
@@ -45,8 +48,8 @@ export class HtmlRouter extends Router {
       default: this._default,
       history: this._history,
       name: this._name,
-      pop: this._pop,
-      start: this._start,
+      popup: this._popup,
+      starter: this._starter,
       stash: this._stash,
       storage: this._storage,
       user: this._user
@@ -89,21 +92,24 @@ export class HtmlRouter extends Router {
     return this
   }
 
-  getPop () {
-    return this._pop
+  getPopup () {
+    return this._popup
   }
 
-  setPop (value = false) {
-    this._pop = value
+  setPopup (value = null) {
+    this._popup = value === true
+      ? new Popup({ router: this })
+      : value
+
     return this
   }
 
-  getStart () {
-    return this._start
+  getStarter () {
+    return this._starter
   }
 
-  setStart (value = null) {
-    this._start = value
+  setStarter (value = null) {
+    this._starter = value
     return this
   }
 
@@ -138,11 +144,11 @@ export class HtmlRouter extends Router {
   }
 
   act (box, data) {
-    box.options = box.options || {}
-
-    if (this._pop === true && box.options.clr === true) {
-      this.popClose(box)
-      return
+    if (this._popup !== null) {
+      if (box.options.clr === true) {
+        this._popup.close(box, data)
+        return
+      }
     }
 
     this.process(box, data)
@@ -180,69 +186,12 @@ export class HtmlRouter extends Router {
     return routes
   }
 
-  popClose (box) {
-    const base = select(this._base)
-    const parent = select(this._base.parentNode)
-
-    select(document).on('keydown.scola-pop', null)
-
-    parent.style('width')
-
-    parent
-      .classed('in', false)
-      .on('click.scola-pop', null)
-      .on('transitionend.scola-pop', () => {
-        parent
-          .classed('open', false)
-          .on('.scola-pop', null)
-
-        this.process(box)
-      })
-
-    base.style('width')
-
-    base
-      .classed('in', false)
-      .on('click.scola-pop', null)
-
-    const duration = parseFloat(parent.style('transition-duration'))
-
-    if (duration === 0) {
-      parent.dispatch('transitionend')
+  previous () {
+    if (this._history.length === 0) {
+      return null
     }
-  }
 
-  popOpen (box) {
-    const base = select(this._base)
-    const parent = select(this._base.parentNode)
-
-    select(document).on('keydown.scola-pop', () => {
-      if (event.keyCode === 27) {
-        parent.dispatch('click')
-      }
-    })
-
-    parent.classed('open', true)
-    parent.style('width')
-
-    parent
-      .classed('in', true)
-      .on('click.scola-pop', () => {
-        if (box.options.lck === false) {
-          box.path = null
-          box.options.clr = true
-          this.act(box)
-        }
-      })
-
-    base.classed('move', box.options.imm === false)
-    base.style('width')
-
-    base
-      .classed('in', true)
-      .on('click.scola-pop', () => {
-        event.stopPropagation()
-      })
+    return this._history.pop()
   }
 
   process (box, data) {
@@ -251,7 +200,7 @@ export class HtmlRouter extends Router {
 
     newBox = this.processHistory(newBox, routes)
     newBox = this.processBackward(newBox, routes)
-    newBox = this.processDelete(newBox, routes)
+    newBox = this.processClear(newBox, routes)
 
     if (newBox.path !== null) {
       newBox = this.processRoute(newBox, routes, newBox)
@@ -267,8 +216,8 @@ export class HtmlRouter extends Router {
     this.processForward(newBox)
 
     if (this._downstreams[newBox.path] !== undefined) {
-      if (this._pop === true) {
-        this.popOpen(newBox)
+      if (this._popup !== null) {
+        this._popup.open(newBox, data)
       }
 
       this._downstreams[newBox.path].handleAct(newBox, data)
@@ -288,7 +237,11 @@ export class HtmlRouter extends Router {
     const current = this._history.pop()
     const previous = this._history.pop()
 
-    if (current.options.mem === true || previous.options.mem === true) {
+    const mustMemorize =
+      current.options.mem === true ||
+      previous.options.mem === true
+
+    if (mustMemorize === true) {
       box.options.mem = previous.options.mem
       box.params = previous.params
       box.path = previous.path
@@ -297,17 +250,7 @@ export class HtmlRouter extends Router {
     return box
   }
 
-  processDefault (box, routes) {
-    const path = box.default || this._default
-
-    if (path === null) {
-      return box
-    }
-
-    return this.processRoute(box, routes, { path })
-  }
-
-  processDelete (box, routes) {
+  processClear (box, routes) {
     if (box.options.clr === false) {
       return box
     }
@@ -322,10 +265,24 @@ export class HtmlRouter extends Router {
 
     if (this._base.snippet !== undefined) {
       this._base.snippet.remove()
-      this._base.snippet = null
+      delete this._base.snippet
     }
 
     return box
+  }
+
+  processDefault (box, routes) {
+    if (box.options.def === false) {
+      return box
+    }
+
+    const path = box.default || this._default
+
+    if (path === null) {
+      return box
+    }
+
+    return this.processRoute(box, routes, { path })
   }
 
   processForward (box) {
@@ -360,9 +317,8 @@ export class HtmlRouter extends Router {
     return routes[this._name]
   }
 
-  route (box, data, route) {
-    const parsedRoute = Route.parse(route, box.name)
-    this.handle(parsedRoute, data)
+  route (route, data) {
+    this.handle(Route.parse(route, this._name), data)
   }
 
   saveHistory () {
@@ -372,13 +328,17 @@ export class HtmlRouter extends Router {
     )
   }
 
-  start () {
-    if (this._start) {
-      this._start()
+  start (...args) {
+    if (this._starter === false) {
       return
     }
 
-    this.route({}, {}, `@${this._name}:his`)
+    if (this._starter !== null) {
+      this._starter.start(...args)
+      return
+    }
+
+    this.route(`@${this._name}:his`, {})
   }
 
   stash () {

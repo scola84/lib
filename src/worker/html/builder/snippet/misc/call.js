@@ -1,14 +1,14 @@
 import { Snippet } from '../snippet'
 
-const calls = {}
+const handlers = {}
 
 export class Call extends Snippet {
-  static getCall (name) {
-    return calls[name]
+  static getHandler (name) {
+    return handlers[name]
   }
 
-  static setCall (name, fn) {
-    calls[name] = fn
+  static setHandler (name, fn) {
+    handlers[name] = fn
   }
 
   constructor (options = {}) {
@@ -32,8 +32,8 @@ export class Call extends Snippet {
   }
 
   resolveAfter (box, data) {
-    if (calls[this._name]) {
-      calls[this._name](box, data)
+    if (handlers[this._name]) {
+      handlers[this._name].handle(box, data)
     }
   }
 }

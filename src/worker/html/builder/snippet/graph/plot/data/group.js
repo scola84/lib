@@ -39,7 +39,10 @@ export class Group extends Data {
     }
 
     const set = result.data[exogenous]
-    const index = this._index ? this._index(datum) : set.length
+
+    const index = this._index
+      ? this._index(datum)
+      : set.length
 
     set[index] = [
       0,

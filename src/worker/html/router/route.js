@@ -59,7 +59,8 @@ export class Route {
         rtl: false
       },
       params: {},
-      path: null
+      path: null,
+      user: null
     })
   }
 

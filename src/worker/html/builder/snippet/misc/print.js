@@ -1,6 +1,5 @@
-import get from 'lodash-es/get'
 import merge from 'lodash-es/merge'
-import { vsprintf } from '../../../../../helper'
+import { HtmlBuilder } from '../../../builder'
 import { Snippet } from '../snippet'
 
 const regexpBase = '\\{([^}]+)\\}'
@@ -20,15 +19,15 @@ export class Print extends Snippet {
   }
 
   static getNumbers () {
-    return vsprintf.n.definitions
+    return HtmlBuilder.formatter.n.definitions
   }
 
   static setNumbers (value) {
-    vsprintf.n.definitions = value
+    HtmlBuilder.formatter.n.definitions = value
   }
 
   static addNumbers (value) {
-    merge(vsprintf.n.definitions, value)
+    merge(HtmlBuilder.formatter.n.definitions, value)
   }
 
   static getStrings () {
@@ -48,10 +47,12 @@ export class Print extends Snippet {
 
     this._format = null
     this._locale = null
+    this._prefix = null
     this._values = null
 
     this.setFormat(options.format)
     this.setLocale(options.locale)
+    this.setPrefix(options.prefix)
     this.setValues(options.values)
   }
 
@@ -60,6 +61,7 @@ export class Print extends Snippet {
       ...super.getOptions(),
       format: this._format,
       locale: this._locale,
+      prefix: this._prefix,
       values: this._values
     }
   }
@@ -90,6 +92,22 @@ export class Print extends Snippet {
     return this.setLocale(value)
   }
 
+  getPrefix () {
+    return this._prefix
+  }
+
+  setPrefix (value = []) {
+    this._prefix = Array.isArray(value) === true
+      ? value
+      : [value]
+
+    return this
+  }
+
+  prefix (value) {
+    return this.setPrefix(value)
+  }
+
   getValues () {
     return this._values
   }
@@ -103,6 +121,32 @@ export class Print extends Snippet {
     return this.setValues(value)
   }
 
+  findLocaleString (box, data, locale, format) {
+    if (this._prefix.length === 0) {
+      return this.findString(`${locale}.${format}`)
+    }
+
+    let prefix = null
+    let string = null
+
+    for (let i = 0; i < this._prefix.length; i += 1) {
+      prefix = this.resolveValue(box, data, this._prefix[i])
+      string = this.findString(`${locale}.${prefix}.${format}`)
+
+      if (string !== undefined) {
+        return string
+      }
+    }
+
+    return undefined
+  }
+
+  findString (path) {
+    return path.split('.').reduce((v, k) => {
+      return v === undefined ? v : v[k]
+    }, strings)
+  }
+
   resolveAfter (box, data) {
     return this.resolveFormat(
       box,
@@ -113,35 +157,36 @@ export class Print extends Snippet {
 
   resolveFormat (box, data, format) {
     const locale = this.resolveValue(box, data, this._locale)
-
     let values = this.resolveValue(box, data, this._values)
-    values = Array.isArray(values) === true ? values : [values]
 
-    let lformat = get(strings, `${locale}.${format}`)
-
-    if (lformat === undefined) {
-      lformat = format
+    if (Array.isArray(values) === false) {
+      values = [values]
     }
 
-    if (typeof lformat === 'object') {
-      lformat = lformat[values[0]] || lformat.d
+    let string = this.findLocaleString(box, data, locale, format)
+
+    if (string === undefined) {
+      string = format
     }
 
-    if (typeof lformat === 'function') {
-      lformat = lformat(box, data)
+    if (typeof string === 'object') {
+      string = string[values[0]] || string.d
     }
 
-    lformat = this.resolveNested(box, data, lformat)
-
-    let string = null
+    string = this.resolveValue(box, data, string)
+    string = this.resolveNested(box, data, string)
 
     try {
-      string = vsprintf(lformat, values, locale)
+      string = this._builder.format(string, values, locale)
     } catch (error) {
       string = error.message
     }
 
-    return string === format ? '' : string
+    if (string === format) {
+      return ''
+    }
+
+    return string
   }
 
   resolveNested (box, data, format = '') {

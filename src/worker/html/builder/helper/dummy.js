@@ -1,6 +1,7 @@
 export class Dummy {
   constructor () {
     this._attributes = {}
+    this._properties = {}
   }
 
   attr (key, value) {
@@ -22,7 +23,18 @@ export class Dummy {
     return this
   }
 
-  property () {
+  property (key, value) {
+    if (value === undefined) {
+      if (key === 'value') {
+        return this.attr(key)
+      }
+
+      return this._properties[key] === undefined
+        ? null
+        : this._properties[key]
+    }
+
+    this._properties[key] = value
     return this
   }
 

@@ -1,15 +1,8 @@
 import merge from 'lodash-es/merge'
 import superagent from 'superagent'
-import { Worker } from '..'
-import * as codecs from '../../helper/codec'
-import { parseHeader } from '../../helper/parse'
+import { HttpWorker } from './worker'
 
-const wcodecs = Object.keys(codecs).reduce((object, name) => {
-  return {
-    ...object,
-    [codecs[name].type()]: new codecs[name]()
-  }
-}, {})
+const wcodecs = HttpWorker.createCodecs()
 
 const wmeta = {
   headers: {
@@ -18,7 +11,7 @@ const wmeta = {
   method: 'GET'
 }
 
-export class HttpClient extends Worker {
+export class HttpClient extends HttpWorker {
   constructor (options = {}) {
     super(options)
 
@@ -35,18 +28,16 @@ export class HttpClient extends Worker {
     return this
   }
 
-  act (box, boxData) {
-    const {
-      meta,
-      data
-    } = this.filter(box, boxData)
+  act (box, data) {
+    let {
+      meta: requestMeta,
+      data: requestData
+    } = data
 
-    const cmeta = this._config.http === undefined
-      ? {}
-      : this._config.http.client
+    const cmeta = this.getConfig('http.client') || {}
 
-    const requestMeta = merge({}, wmeta, cmeta, meta)
-    const requestData = requestMeta.method === 'GET' ? null : data
+    requestMeta = merge({}, wmeta, cmeta, requestMeta)
+    requestData = requestMeta.method === 'GET' ? null : requestData
 
     const request = superagent(requestMeta.method, requestMeta.url)
 
@@ -59,10 +50,10 @@ export class HttpClient extends Worker {
     })
 
     this.patchRequest(box, request)
-    this.handleRequest(box, boxData, request, requestData)
+    this.handleRequest(box, data, request, requestData)
   }
 
-  handleError (box, boxData, messageData, error, status = 400) {
+  handleError (box, data, error, messageData, status = 400) {
     this._progress(box, {
       lengthComputable: true,
       loaded: 1,
@@ -71,15 +62,18 @@ export class HttpClient extends Worker {
 
     const failError = new Error(`${status} ${error.message}`.trim())
 
-    failError.data = messageData ? messageData.data : messageData
-    failError.original = boxData
+    failError.data = messageData === undefined || messageData === null
+      ? messageData
+      : messageData.data
+
+    failError.original = data
     failError.status = status
 
     this.fail(box, failError)
   }
 
-  handleRequest (box, boxData, request, requestData) {
-    const type = parseHeader(request.getHeader('content-type'))
+  handleRequest (box, data, request, requestData) {
+    const type = request.parseHeader('content-type')
 
     const encoder = wcodecs[type.value] === undefined
       ? wcodecs['application/octet-stream']
@@ -87,7 +81,7 @@ export class HttpClient extends Worker {
 
     encoder.encode(request, requestData, (encoderError, encoderData) => {
       if (encoderError !== null) {
-        this.handleError(box, boxData, requestData, encoderError)
+        this.handleError(box, data, encoderError, requestData)
         return
       }
 
@@ -105,52 +99,51 @@ export class HttpClient extends Worker {
         .write(encoderData)
         .end((error, response) => {
           if (error !== null) {
-            this.handleError(box, boxData, encoderData, error,
+            this.handleError(box, data, error, encoderData,
               response && response.statusCode)
             return
           }
 
           this.patchResponse(box, response)
-          this.handleResponse(box, boxData, response)
+          this.handleResponse(box, data, response)
         })
     })
   }
 
-  handleResponse (box, boxData, response) {
-    const type = parseHeader(response.headers['content-type'])
+  handleResponse (box, data, response) {
+    const type = response.parseHeader('content-type')
 
     const decoder = wcodecs[type.value] === undefined
       ? wcodecs['application/octet-stream']
       : wcodecs[type.value]
 
-    decoder.decode(response, (decoderError, decoderData) => {
+    decoder.decode(response, (decoderError, responseData) => {
       if (decoderError !== null) {
-        this.handleError(box, boxData, decoderData, decoderError)
+        this.handleError(box, data, decoderError, responseData)
         return
       }
 
       if (response.statusCode >= 400) {
-        this.handleError(box, boxData, decoderData,
-          new Error(response.statusText || ''), response.statusCode)
+        this.handleError(box, data, new Error(response.statusText || ''),
+          responseData, response.statusCode)
         return
       }
 
-      this.pass(box, this.merge(response, decoderData, boxData))
+      this.pass(box, data, response, responseData)
     })
   }
 
-  merge (box, data, ...extra) {
-    if (this._merge !== null) {
-      return this._merge(box, data, ...extra)
+  merge (box, data, response, responseData) {
+    if (responseData === undefined || responseData.data === undefined) {
+      return {}
     }
 
-    return data === undefined || data.data === undefined
-      ? data
-      : data.data
+    return responseData.data
   }
 
   patchRequest (box, request) {
     request.getHeader = (name) => request._header[name]
+    request.parseHeader = (name) => this.parseHeader(request.getHeader(name))
     request.setHeader = request.set
     request.write = request.send
 
@@ -160,6 +153,9 @@ export class HttpClient extends Worker {
   }
 
   patchResponse (box, response) {
+    response.getHeader = (name) => response.headers[name]
+    response.parseHeader = (name) => this.parseHeader(response.getHeader(name))
+
     response.on = (name, handler) => {
       if (name === 'data') {
         handler(Buffer.from(response.text))

@@ -2,66 +2,60 @@ import { STATUS_CODES } from 'http'
 import { Worker } from '../core'
 
 export class HttpResponder extends Worker {
-  act (box, boxData) {
+  act (box, data) {
     const {
-      meta = {},
-      data
-    } = this.filter(box, boxData)
+      meta: responseMeta = {},
+      data: responseData
+    } = data
 
-    if (box.request.method === 'GET' && data === undefined) {
+    if (box.request.method === 'GET' && responseData === undefined) {
       this.err(box, new Error('404 Resource not found'))
       return
     }
 
-    meta.statusCode = box.request.method === 'POST'
+    responseMeta.statusCode = box.request.method === 'POST'
       ? 201
       : 200
 
     box.callback({
-      meta,
+      meta: responseMeta,
       data: {
-        data,
-        status: meta.statusCode
+        data: responseData,
+        status: responseMeta.statusCode
       }
     })
   }
 
   err (box, error) {
     const {
-      meta = {}
-    } = this.filter(box, error)
+      meta: responseMeta = {}
+    } = error
 
     const [,
       code = 500,
       text
     ] = error.message.match(/(\d{3})?([^(]*)/) || []
 
-    meta.statusCode = Number(code)
+    responseMeta.statusCode = Number(code)
 
-    let { data } = error
+    let {
+      data: responseData
+    } = error
 
-    if (data === undefined) {
-      if (meta.statusCode < 500 && text !== undefined) {
-        data = text.trim()
+    if (responseData === undefined) {
+      if (responseMeta.statusCode < 500 && text !== undefined) {
+        responseData = text.trim()
       } else {
-        data = STATUS_CODES[meta.statusCode]
+        responseData = STATUS_CODES[responseMeta.statusCode]
       }
     }
 
     box.callback({
-      meta,
+      meta: responseMeta,
       data: {
-        data,
-        status: meta.statusCode
+        data: responseData,
+        status: responseMeta.statusCode
       }
     })
-  }
-
-  filter (box, data) {
-    if (this._filter !== null) {
-      return this.filter(box, data)
-    }
-
-    return data
   }
 }

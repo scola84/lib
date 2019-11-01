@@ -195,13 +195,15 @@
 /* Body message */
 
 .panel>.body.message {
-  align-items: center;
   color: #a9a9a9;
-  display: flex;
   font-size: 2em;
-  justify-content: center;
-  padding: 0.5em;
-  text-align: center;
+}
+
+.panel>.body>.message {
+  background: lightgrey;
+  color: dimgrey;
+  margin-bottom: 1em;
+  min-height: 2.25em;
 }
 
 /* Footer / header */
@@ -221,16 +223,11 @@
 /* Header message */
 
 .panel>.header>.message {
-  align-items: center;
   background: lightgrey;
   color: dimgrey;
-  display: flex;
-  justify-content: center;
   margin-bottom: -2.25em;
   min-height: 2.25em;
-  padding: 0.5em;
   position: relative;
-  text-align: center;
   top: -2.25em;
 }
 

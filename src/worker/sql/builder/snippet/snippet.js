@@ -201,8 +201,11 @@ export class Snippet {
   }
 
   concat (left, right) {
-    const hasDouble = (left[left.length - 1] === ' ' && right[0] === ' ')
-    return left + (hasDouble === true ? right.slice(1) : right)
+    if ((left[left.length - 1] === ' ' && right[0] === ' ')) {
+      return left + right.slice(1)
+    }
+
+    return left + right
   }
 
   find (compare) {
@@ -275,7 +278,11 @@ export class Snippet {
   }
 
   resolveParens (value, addParens) {
-    return value !== '' && addParens === true ? `(${value})` : value
+    if (value !== '' && addParens === true) {
+      return `(${value})`
+    }
+
+    return value
   }
 
   resolveValue (box, data, value) {

@@ -132,6 +132,16 @@ export class Queuer extends Worker {
     }
   }
 
+  createBox (callback) {
+    return {
+      resolve: {
+        [this._name]: {
+          callback
+        }
+      }
+    }
+  }
+
   createQueue (box) {
     this._queue = Queuer.createQueue(this._concurrency, this._name)
 
@@ -154,29 +164,11 @@ export class Queuer extends Worker {
       }
 
       try {
-        this.pass(
-          ...this.merge(null, JSON.parse(data), callback)
-        )
+        this.pass(this.createBox(callback), JSON.parse(data))
       } catch (jsonError) {
         callback(jsonError)
       }
     })
-  }
-
-  merge (box, data, callback) {
-    if (this._merge !== null) {
-      return this._merge(box, data, callback)
-    }
-
-    const newBox = {
-      resolve: {
-        [this._name]: {
-          callback
-        }
-      }
-    }
-
-    return [newBox, data]
   }
 
   pushFromRemote () {
@@ -203,9 +195,7 @@ export class Queuer extends Worker {
     }
 
     this._queue.push((callback) => {
-      this.pass(
-        ...this.merge(box, data, callback)
-      )
+      this.pass(this.createBox(callback), data)
     })
   }
 

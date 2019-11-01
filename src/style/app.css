@@ -2,8 +2,13 @@
   border-radius: 1em;
   display: flex;
   height: 48em;
+  opacity: 0;
   overflow: hidden;
   width: 64em;
+}
+
+.app.in {
+  opacity: 1;
 }
 
 .outset-x .app,

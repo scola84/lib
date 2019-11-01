@@ -1,4 +1,3 @@
-import { vsprintf } from '../../helper'
 import { Builder } from '../core'
 import * as map from './sender/map'
 
@@ -10,27 +9,27 @@ export class MsgSender extends Builder {
   constructor (options = {}) {
     super(options)
 
-    this._host = null
+    this._name = null
     this._transport = null
 
-    this.setHost(options.host)
+    this.setName(options.name)
     this.setTransport(options.transport)
   }
 
   getOptions () {
     return {
       ...super.getOptions(),
-      host: this._host,
+      name: this._name,
       transport: this._transport
     }
   }
 
-  getHost () {
-    return this._host
+  getName () {
+    return this._name
   }
 
-  setHost (value = 'default') {
-    this._host = value
+  setName (value = 'default') {
+    this._name = value
     return this
   }
 
@@ -48,26 +47,44 @@ export class MsgSender extends Builder {
       this.createTransport(box, data)
     }
 
-    const message = this.sprintf(this.filter(box, data))
+    const message = this.createMessage(data)
 
     this._transport.send(message, (error, result) => {
       if (error !== null) {
-        this.handleError(box, data, error)
+        this.fail(box, error)
         return
       }
 
-      this.handleSend(box, data, result)
+      this.pass(box, data, result)
     })
   }
 
-  createTransport (box, data) {
-    let host = this._host
-
-    if (typeof host === 'function') {
-      host = host(box, data)
+  createMessage (data) {
+    const message = {
+      ...data
     }
 
-    let options = this._config.msg[host] || host
+    message.subject = this.format(data.subject, [data.data])
+    message.text = this.format(data.text, [data.data])
+
+    if (data.html !== undefined) {
+      message.html = this.format(
+        data.html.replace(/%([^s])/g, '%%$1'),
+        [vsprintf('%m', [data.text])]
+      )
+    }
+
+    return message
+  }
+
+  createTransport (box, data) {
+    let name = this._name
+
+    if (typeof name === 'function') {
+      name = name(box, data)
+    }
+
+    let options = this.getConfig(`msg.${name}`) || name
 
     if (typeof options === 'function') {
       options = options(box, data)
@@ -78,32 +95,5 @@ export class MsgSender extends Builder {
     }
 
     this.setTransport(this[options.transport]().options(options))
-  }
-
-  handleError (box, data, error) {
-    error.data = data
-    this.fail(box, error)
-  }
-
-  handleSend (box, data, result) {
-    try {
-      this.pass(box, this.merge(box, data, { result }))
-    } catch (error) {
-      this.handleError(box, data, error)
-    }
-  }
-
-  sprintf (data) {
-    data.subject = vsprintf(data.subject, [data.data])
-    data.text = vsprintf(data.text, [data.data])
-
-    if (data.html !== undefined) {
-      data.html = vsprintf(
-        data.html.replace(/%([^s])/g, '%%$1'),
-        [vsprintf('%m', [data.text])]
-      )
-    }
-
-    return data
   }
 }

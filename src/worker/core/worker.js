@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
 export class Worker {
-  static makeId () {
+  static createId () {
     Worker.id = (Worker.id || 0) + 1
     return Worker.id
   }
@@ -82,8 +82,10 @@ export class Worker {
     return this
   }
 
-  getConfig () {
-    return this._config
+  getConfig (path = '') {
+    return path.split('.').reduce((v, k) => {
+      return v === undefined || k === '' ? v : v[k]
+    }, this._config)
   }
 
   setConfig (value = Worker.config) {
@@ -131,7 +133,7 @@ export class Worker {
     return this._id
   }
 
-  setId (value = Worker.makeId()) {
+  setId (value = Worker.createId()) {
     this._id = value
     return this
   }
@@ -213,11 +215,7 @@ export class Worker {
     return worker
   }
 
-  decide (box, data) {
-    if (this._decide !== null) {
-      return this._decide(box, data)
-    }
-
+  decide () {
     return true
   }
 
@@ -240,11 +238,7 @@ export class Worker {
     }
   }
 
-  filter (box, data, ...extra) {
-    if (this._filter !== null) {
-      return this._filter(box, data, ...extra)
-    }
-
+  filter (box, data) {
     return data
   }
 
@@ -266,14 +260,22 @@ export class Worker {
 
   handleAct (box, data) {
     try {
-      if (this.decide(box, data) === true) {
-        this.act(box, data)
-      } else {
-        this.pass(box, data)
+      if (this.handleDecide(box, data) === true) {
+        this.act(box, this.handleFilter(box, data))
+      } else if (this._downstream !== null) {
+        this._downstream.handleAct(box, data)
       }
     } catch (error) {
       this.handleErr(box, error)
     }
+  }
+
+  handleDecide (box, data) {
+    if (this._decide !== null) {
+      return this._decide(box, data)
+    }
+
+    return this.decide(box, data)
   }
 
   handleErr (box, error) {
@@ -284,27 +286,42 @@ export class Worker {
     }
   }
 
+  handleFilter (box, data) {
+    if (this._filter !== null) {
+      return this._filter(box, data)
+    }
+
+    return this.filter(box, data)
+  }
+
+  handleMerge (box, data, ...extra) {
+    if (this._merge !== null) {
+      return this._merge(box, data, ...extra)
+    }
+
+    return this.merge(box, data, ...extra)
+  }
+
   log (type, ...args) {
     if (this._log[type] !== undefined) {
       this._log[type](...args)
     }
   }
 
-  merge (box, data, ...extra) {
-    if (this._merge !== null) {
-      return this._merge(box, data, ...extra)
-    }
-
+  merge (box, data) {
     return data
   }
 
-  pass (box, data) {
-    this.log('pass', box, data)
+  pass (box, data, ...extra) {
+    this.log('pass', box, data, ...extra)
 
-    if (this._bypass !== null) {
-      this._bypass.handleAct(box, data)
-    } else if (this._downstream !== null) {
-      this._downstream.handleAct(box, data)
+    try {
+      if (this._downstream !== null) {
+        this._downstream.handleAct(box,
+          this.handleMerge(box, data, ...extra))
+      }
+    } catch (error) {
+      this.fail(box, error)
     }
   }
 

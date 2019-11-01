@@ -5,7 +5,10 @@ export class Router extends Worker {
     super(options)
 
     this._downstreams = null
+    this._route = null
+
     this.setDownstreams(options.downstreams)
+    this.setRoute(options.route)
   }
 
   getDownstreams () {
@@ -17,11 +20,20 @@ export class Router extends Worker {
     return this
   }
 
-  act (box, data) {
-    const name = this.filter(box, data)
+  getRoute () {
+    return this._route
+  }
 
-    if (this._downstreams[name] !== undefined) {
-      this._downstreams[name].handleAct(box, data)
+  setRoute (value = null) {
+    this._route = value
+    return this
+  }
+
+  act (box, data) {
+    const route = this.route(box, data)
+
+    if (this._downstreams[route] !== undefined) {
+      this._downstreams[route].handleAct(box, data)
     } else if (this._bypass !== null) {
       this._bypass.handleAct(box, data)
     }
@@ -41,14 +53,6 @@ export class Router extends Worker {
     return super.connect(worker)
   }
 
-  filter (box, data, context) {
-    if (this._filter !== null) {
-      return this._filter(box, data, context)
-    }
-
-    return box.name
-  }
-
   find (compare) {
     if (compare(this) === true) {
       return this
@@ -66,5 +70,13 @@ export class Router extends Worker {
     }
 
     return found
+  }
+
+  route (box, data) {
+    if (this._router !== null) {
+      return this._route(box, data)
+    }
+
+    return box.name
   }
 }

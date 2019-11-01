@@ -1,4 +1,4 @@
-import { select } from 'd3-selection'
+import { select, selectAll } from 'd3-selection'
 import { Builder } from '../core'
 import { bind, map, snippet } from './builder/'
 
@@ -8,6 +8,10 @@ export class HtmlBuilder extends Builder {
     snippet.graph.Axis.setup()
     snippet.graph.Plot.setup()
     bind()
+  }
+
+  static querySelector (...args) {
+    return select(...args)
   }
 
   constructor (options = {}) {
@@ -37,7 +41,9 @@ export class HtmlBuilder extends Builder {
   }
 
   setView (value = null) {
-    this._view = typeof value === 'function' ? value(this) : value
+    this._view = typeof value === 'function'
+      ? value(this)
+      : value
 
     if (this._view) {
       this._view.setParent(this)
@@ -51,7 +57,7 @@ export class HtmlBuilder extends Builder {
       this.createView()
     }
 
-    this._view.resolve(box, this.filter(box, data))
+    this._view.resolve(box, data)
     this.pass(box, data)
   }
 
@@ -61,6 +67,14 @@ export class HtmlBuilder extends Builder {
 
   createView () {
     this.setView(this.build(this))
+  }
+
+  querySelector (...args) {
+    return select(...args)
+  }
+
+  querySelectorAll (...args) {
+    return selectAll(...args)
   }
 }
 

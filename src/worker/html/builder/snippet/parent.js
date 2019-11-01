@@ -66,7 +66,10 @@ export class Parent extends Node {
     const clone = snippet.clone()
 
     let node = clone.resolve(box, data)
-    node = Array.isArray(node) === true ? node[0] : node
+
+    if (Array.isArray(node) === true) {
+      [node] = node
+    }
 
     if (node === null) {
       return null

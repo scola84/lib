@@ -16,7 +16,7 @@ export class Postgresql extends Dialect {
     }
 
     if (type === 'id') {
-      return `"${value.replace(/\./g, '"."')}"`
+      return `"${value.replace(/\./g, '"."')}"`.replace('."*"', '.*')
     }
 
     return value

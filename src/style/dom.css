@@ -29,7 +29,6 @@ button {
 }
 
 @media not all and (max-width: 64em) {
-
   button:focus,
   input:focus,
   label:focus,
@@ -84,6 +83,14 @@ select:-moz-focusring {
   position: relative;
   top: -0.5em;
   width: 1.5em;
+}
+
+.message:not(:empty) {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  padding: 0.5em;
+  text-align: center;
 }
 
 .transition {

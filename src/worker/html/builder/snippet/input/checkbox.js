@@ -6,7 +6,8 @@ export class Checkbox extends Input {
     super(options)
 
     this.attributes({
-      type: 'checkbox'
+      type: 'checkbox',
+      value: 'on'
     })
   }
 

@@ -1,4 +1,3 @@
-import groupBy from 'lodash-es/groupBy'
 import { Builder } from '../core'
 import { map, snippet } from './builder/'
 
@@ -12,16 +11,16 @@ export class SqlBuilder extends Builder {
 
     this._connection = null
     this._dialect = null
-    this._host = null
     this._key = null
+    this._name = null
     this._query = null
     this._stream = null
     this._type = null
 
     this.setConnection(options.connection)
     this.setDialect(options.dialect)
-    this.setHost(options.host)
     this.setKey(options.key)
+    this.setName(options.name)
     this.setQuery(options.query)
     this.setStream(options.stream)
     this.setType(options.type)
@@ -32,8 +31,8 @@ export class SqlBuilder extends Builder {
       ...super.getOptions(),
       connection: this._connection,
       dialect: this._dialect,
-      host: this._host,
       key: this._key,
+      name: this._name,
       query: this._query,
       stream: this._stream,
       type: this._type
@@ -58,15 +57,6 @@ export class SqlBuilder extends Builder {
     return this
   }
 
-  getHost () {
-    return this._host
-  }
-
-  setHost (value = 'default') {
-    this._host = value
-    return this
-  }
-
   getKey () {
     return this._key
   }
@@ -76,12 +66,24 @@ export class SqlBuilder extends Builder {
     return this
   }
 
+  getName () {
+    return this._name
+  }
+
+  setName (value = 'default') {
+    this._name = value
+    return this
+  }
+
   getQuery () {
     return this._query
   }
 
   setQuery (value = null) {
-    this._query = typeof value === 'function' ? value(this) : value
+    this._query = typeof value === 'function'
+      ? value(this)
+      : value
+
     return this
   }
 
@@ -109,22 +111,17 @@ export class SqlBuilder extends Builder {
     }
 
     if (this._query === null) {
-      this.createQuery(box, data)
+      this.createQuery()
     }
 
-    const query = this._query.resolve(box, this.filter(box, data))
-
-    this.log('info', box, data, query)
+    const query = this._query.resolve(box, data)
 
     if (this._stream === true) {
-      this._dialect.stream(box, data, query, (error, result, cb) => {
-        this.process(box, data, query, error, result, cb)
-      })
-    } else {
-      this._dialect.execute(box, data, query, (error, row) => {
-        this.process(box, data, query, error, row)
-      })
+      this.stream(box, data, query)
+      return
     }
+
+    this.execute(box, data, query)
   }
 
   build () {
@@ -132,13 +129,13 @@ export class SqlBuilder extends Builder {
   }
 
   createDialect (box, data) {
-    let host = this._host
+    let name = this._name
 
-    if (typeof host === 'function') {
-      host = host(box, data)
+    if (typeof name === 'function') {
+      name = name(box, data)
     }
 
-    let options = this._config.sql[host] || host
+    let options = this.getConfig(`sql.${name}`) || name
 
     if (typeof options === 'function') {
       options = options(box, data)
@@ -159,13 +156,20 @@ export class SqlBuilder extends Builder {
     return this._dialect.escape(value, type)
   }
 
-  merge (box, data, { query, result }) {
-    if (this._merge !== null) {
-      return this._merge(box, data, {
-        key: this._key,
-        query,
-        result
-      })
+  execute (box, data, query) {
+    this._dialect.execute(box, data, query, (error, result) => {
+      if (error !== null) {
+        this.fail(box, error)
+        return
+      }
+
+      this.pass(box, data, query, result)
+    })
+  }
+
+  merge (box, data, query, result) {
+    if (this._stream === true) {
+      return result
     }
 
     if (this._type === 'insert') {
@@ -173,16 +177,6 @@ export class SqlBuilder extends Builder {
         data: {
           [this._key]: result
         }
-      }
-    }
-
-    if (this._type === 'link') {
-      return {
-        data: groupBy(result, (item) => {
-          const link = item.__link
-          delete item.__link
-          return link
-        })
       }
     }
 
@@ -201,22 +195,19 @@ export class SqlBuilder extends Builder {
     return { data: {} }
   }
 
-  process (box, data, query, error, result) {
-    if (error !== null) {
-      this.fail(box, error)
-      return
-    }
-
-    if (this._stream === false) {
-      this.pass(box, this.merge(box, data, { query, result }))
-      return
-    }
-
-    this.pass(box, result)
-  }
-
   selector (...args) {
     return this._query.selector(...args)
+  }
+
+  stream (box, data, query) {
+    this._dialect.stream(box, data, query, (error, result) => {
+      if (error !== null) {
+        this.fail(box, error)
+        return
+      }
+
+      this.pass(box, data, query, result)
+    })
   }
 }
 

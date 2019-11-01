@@ -11,7 +11,7 @@ export class Mysql extends Dialect {
     }
 
     if (type === 'id') {
-      return sqlstring.escapeId(value)
+      return `\`${value.replace(/\./g, '`.`')}\``.replace('.`*`', '.*')
     }
 
     return value

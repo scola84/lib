@@ -51,7 +51,7 @@ export class Timer extends Worker {
   }
 
   execute (box) {
-    this.handleAct(box, this.filter(box))
+    this.handleAct(box)
   }
 
   executeInterval () {

@@ -1,5 +1,4 @@
 import { Worker } from '../../../../core'
-import { vsprintf } from '../../../../../helper'
 import { HttpClient } from '../../../../http'
 import { Action } from '../action'
 
@@ -77,14 +76,16 @@ export class Request extends Action {
 
   createClient () {
     this._client = new HttpClient({
-      merge: (box, data, ...extra) => {
+      merge: (box, data, response, responseData) => {
         if (this._merge !== null) {
-          return this._merge(box, data, ...extra)
+          return this._merge(box, data, response, responseData)
         }
 
-        return data === undefined || data.data === undefined
-          ? data
-          : data.data
+        if (responseData === undefined || responseData.data === undefined) {
+          return {}
+        }
+
+        return responseData.data
       },
       progress: (box, event) => {
         this.resolveValue(box, event, this._indicator)
@@ -127,7 +128,7 @@ export class Request extends Action {
       method = undefined
     }
 
-    path = vsprintf(this.expand(path), [
+    path = this._builder.format(this.expand(path), [
       box.params,
       box.list
     ])

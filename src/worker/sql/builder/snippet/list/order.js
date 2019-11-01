@@ -84,8 +84,13 @@ export class Order extends Snippet {
     let order = this.resolveValue(box, data, this._order)
     let by = this.resolveValue(box, data, this._by)
 
-    order = Array.isArray(order) === true ? order : [order]
-    by = Array.isArray(by) === true ? by : [by]
+    if (Array.isArray(order) === false) {
+      order = [order]
+    }
+
+    if (Array.isArray(by) === false) {
+      by = [by]
+    }
 
     let column = null
     let direction = null

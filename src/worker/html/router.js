@@ -173,7 +173,10 @@ export class HtmlRouter extends Router {
 
   parseHash () {
     const hash = window.location.hash.slice(2)
-    const parts = hash === '' ? [] : hash.split('/')
+
+    const parts = hash === ''
+      ? []
+      : hash.split('/')
 
     const routes = {}
     let route = null
@@ -194,33 +197,33 @@ export class HtmlRouter extends Router {
     return this._history.pop()
   }
 
-  process (box, data) {
+  process (actBox, data) {
     const routes = this.parseHash()
-    let newBox = box
+    let box = actBox
 
-    newBox = this.processHistory(newBox, routes)
-    newBox = this.processBackward(newBox, routes)
-    newBox = this.processClear(newBox, routes)
+    box = this.processHistory(box, routes)
+    box = this.processBackward(box, routes)
+    box = this.processClear(box, routes)
 
-    if (newBox.path !== null) {
-      newBox = this.processRoute(newBox, routes, newBox)
+    if (box.path !== null) {
+      box = this.processRoute(box, routes, box)
     } else if (routes[this._name] !== undefined) {
-      newBox = this.processRoute(newBox, routes, routes[this._name])
+      box = this.processRoute(box, routes, routes[this._name])
     }
 
-    if (this._downstreams[newBox.path] === undefined) {
-      newBox = this.processDefault(newBox, routes)
+    if (this._downstreams[box.path] === undefined) {
+      box = this.processDefault(box, routes)
     }
 
     this.formatHash(routes)
-    this.processForward(newBox)
+    this.processForward(box)
 
-    if (this._downstreams[newBox.path] !== undefined) {
+    if (this._downstreams[box.path] !== undefined) {
       if (this._popup !== null) {
-        this._popup.open(newBox, data)
+        this._popup.open(box, data)
       }
 
-      this._downstreams[newBox.path].handleAct(newBox, data)
+      this._downstreams[box.path].handleAct(box, data)
     }
   }
 
@@ -311,7 +314,8 @@ export class HtmlRouter extends Router {
       name: this._name,
       options: from.options,
       params: from.params,
-      path: from.path
+      path: from.path,
+      user: this._user
     })
 
     return routes[this._name]

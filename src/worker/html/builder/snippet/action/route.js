@@ -1,4 +1,3 @@
-import { vsprintf } from '../../../../../helper'
 import { HtmlRouter } from '../../../router'
 import { Action } from '../action'
 
@@ -33,7 +32,7 @@ export class Route extends Action {
   resolveAfter (box, data) {
     let route = this.resolveValue(box, data, this._view)
 
-    route = vsprintf(this.expand(route), [
+    route = this._builder.format(this.expand(route), [
       box.params,
       data
     ])

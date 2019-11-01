@@ -94,9 +94,11 @@ export class FormDataCodec extends Codec {
 
     for (let i = 0; i < keys.length; i += 1) {
       name = keys[i]
-
       value = data[name]
-      value = Array.isArray(value) === true ? value : [value]
+
+      if (Array.isArray(value) === false) {
+        value = [value]
+      }
 
       for (let j = 0; j < value.length; j += 1) {
         form.append(name, this.prepareValue(value[j]))
@@ -107,7 +109,11 @@ export class FormDataCodec extends Codec {
   }
 
   prepareValue (value) {
-    return value === null || value === undefined ? '' : value
+    if (value === null || value === undefined) {
+      return ''
+    }
+
+    return value
   }
 
   setValue (data, name, value) {
@@ -116,8 +122,10 @@ export class FormDataCodec extends Codec {
       return
     }
 
-    data[name] = Array.isArray(data[name]) === true
-      ? data[name].concat(value)
-      : [data[name], value]
+    if (Array.isArray(data[name]) === true) {
+      data[name] = data[name].concat(value)
+    } else {
+      data[name] = [data[name], value]
+    }
   }
 }

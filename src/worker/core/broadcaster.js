@@ -37,23 +37,17 @@ export class Broadcaster extends Worker {
     return this
   }
 
-  act (box, data) {
-    const newBox = this._wrap === true ? { box } : box
+  act (actBox, data) {
+    const box = this._wrap === true
+      ? { box: actBox }
+      : actBox
 
     if (this._resolve === true) {
-      merge(newBox, {
-        resolve: {
-          [this._name]: {
-            count: 0,
-            empty: false,
-            total: this._downstreams.length
-          }
-        }
-      })
+      this.prepare(box)
     }
 
     for (let i = 0; i < this._downstreams.length; i += 1) {
-      this._downstreams[i].handleAct(newBox, data)
+      this._downstreams[i].handleAct(box, data)
     }
   }
 
@@ -87,5 +81,17 @@ export class Broadcaster extends Worker {
     }
 
     return found
+  }
+
+  prepare (box) {
+    merge(box, {
+      resolve: {
+        [this._name]: {
+          count: 0,
+          empty: false,
+          total: this._downstreams.length
+        }
+      }
+    })
   }
 }

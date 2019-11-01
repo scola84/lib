@@ -1,31 +1,24 @@
 import http from 'http'
 import merge from 'lodash-es/merge'
 import parse from 'url-parse'
-import { Worker } from '../core'
-import * as codecs from '../../helper/codec'
-import { parseHeader } from '../../helper/parse'
+import { HttpWorker } from './worker'
 
-const wcodecs = Object.keys(codecs).reduce((object, name) => {
-  return {
-    ...object,
-    [codecs[name].type()]: new codecs[name]()
-  }
-}, {})
+const wcodecs = HttpWorker.createCodecs()
 
 const wmeta = {
   headers: {},
   statusCode: 200
 }
 
-export class HttpServer extends Worker {
+export class HttpServer extends HttpWorker {
   handleRequest (request, response) {
-    const type = parseHeader(request.headers['content-type'])
+    const type = request.parseHeader('content-type')
 
     const decoder = wcodecs[type.value] === undefined
       ? wcodecs['application/octet-stream']
       : wcodecs[type.value]
 
-    decoder.decode(request, (decoderError, decoderData) => {
+    decoder.decode(request, (decoderError, requestData) => {
       request.url = parse(request.url, true)
 
       const box = {
@@ -41,15 +34,12 @@ export class HttpServer extends Worker {
         return
       }
 
-      this.pass(box, this.merge(request, decoderData))
+      this.pass(box, {}, request, requestData)
     })
   }
 
   handleResponse (request, response, value) {
-    const cmeta = this._config.http === undefined
-      ? {}
-      : this._config.http.server
-
+    const cmeta = this.getConfig('http.server') || {}
     const responseMeta = merge({}, wmeta, cmeta, value.meta)
     const responseData = value.data
 
@@ -59,7 +49,7 @@ export class HttpServer extends Worker {
       response.setHeader(name, responseMeta.headers[name])
     })
 
-    const type = parseHeader(response.getHeader('content-type'))
+    const type = response.parseHeader('content-type')
 
     const encoder = wcodecs[type.value] === undefined
       ? wcodecs['application/octet-stream']
@@ -75,21 +65,32 @@ export class HttpServer extends Worker {
     })
   }
 
-  merge (box, data, ...extra) {
-    if (this._merge !== null) {
-      return this._merge(box, data, ...extra)
+  merge (box, data, request, requestData) {
+    if (requestData === undefined) {
+      return {}
     }
 
-    return data === undefined ? {} : data
+    return requestData
+  }
+
+  patchRequest (request) {
+    request.getHeader = (name) => request.headers[name]
+    request.parseHeader = (name) => this.parseHeader(request.getHeader(name))
+  }
+
+  patchResponse (response) {
+    response.parseHeader = (name) => this.parseHeader(response.getHeader(name))
   }
 
   start () {
     const server = http.createServer()
 
     server.on('request', (request, response) => {
+      this.patchRequest(request)
+      this.patchResponse(response)
       this.handleRequest(request, response)
     })
 
-    server.listen(this._config.http.server.listen)
+    server.listen(this.getConfig('http.server.listen'))
   }
 }

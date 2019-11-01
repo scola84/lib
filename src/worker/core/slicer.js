@@ -5,19 +5,34 @@ export class Slicer extends Worker {
   constructor (options = {}) {
     super(options)
 
+    this._collect = null
     this._count = null
     this._resolve = null
+    this._slice = null
 
+    this.setCollect(options.collect)
     this.setCount(options.count)
     this.setResolve(options.resolve)
+    this.setSlice(options.slice)
   }
 
   getOptions () {
     return {
       ...super.getOptions(),
+      collect: this._collect,
       count: this._count,
-      resolve: this._resolve
+      resolve: this._resolve,
+      slice: this._slice
     }
+  }
+
+  getCollect () {
+    return this._collect
+  }
+
+  setCollect (value = null) {
+    this._collect = value
+    return this
   }
 
   getCount () {
@@ -38,59 +53,79 @@ export class Slicer extends Worker {
     return this
   }
 
-  act (box, data) {
-    const items = this.filter(box, data)
-    const newBox = this._wrap === true ? { box } : box
+  getSlice () {
+    return this._slice
+  }
+
+  setSlice (value = null) {
+    this._slice = value
+    return this
+  }
+
+  act (actBox, data) {
+    const box = this._wrap === true
+      ? { box: actBox }
+      : actBox
+
+    const items = this.collect(actBox, data)
 
     if (this._resolve === true) {
-      merge(newBox, {
-        resolve: {
-          [this._name]: {
-            count: 0,
-            empty: items.length === 0,
-            total: Math.ceil(items.length / this._count)
-          }
-        }
-      })
+      this.prepare(box, items.length)
     }
 
     if (items.length === 0) {
       if (this._bypass !== null) {
-        this._bypass.handleAct(newBox, data)
+        this._bypass.handleAct(box, data)
       }
     } else if (this._downstream !== null) {
       for (let i = 0; i < items.length; i += this._count) {
-        this._downstream.handleAct(
-          ...this.merge(newBox, data, items, i, i + this._count)
-        )
+        this._downstream.handleAct(box,
+          this.slice(box, data, items, i, i + this._count))
       }
     }
   }
 
-  err (box, error) {
-    const newBox = this._wrap === true ? { box } : box
-
-    if (this._resolve === true) {
-      merge(newBox, {
-        resolve: {
-          [this._name]: {
-            empty: true
-          }
-        }
-      })
+  collect (box, data) {
+    if (this._collect !== null) {
+      return this._collect(box, data)
     }
 
-    this.fail(newBox, error)
+    return data
   }
 
-  merge (box, data, items, begin, end) {
-    if (this._merge !== null) {
-      return this._merge(box, data, items, begin, end)
+  err (actBox, error) {
+    const box = this._wrap === true
+      ? { box: actBox }
+      : actBox
+
+    if (this._resolve === true) {
+      this.prepare(box, 0)
+    }
+
+    this.fail(box, error)
+  }
+
+  slice (box, data, items, begin, end) {
+    if (this._slice !== null) {
+      return this._slice(box, data, items, begin, end)
     }
 
     const slices = items.slice(begin, end)
-    const newData = this._count === 1 ? slices[0] : slices
 
-    return [box, newData]
+    return this._count === 1
+      ? slices[0]
+      : slices
+  }
+
+  prepare (box, length) {
+    merge(box, {
+      resolve: {
+        [this._name]: {
+          count: 0,
+          empty: length === 0,
+          total: Math.ceil(length / this._count)
+        }
+      }
+    })
   }
 }

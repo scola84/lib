@@ -39,6 +39,7 @@ export class Popup {
         this._router.process(box, data)
       })
 
+    base.classed('move', box.options.imm === false)
     base.style('width')
 
     base

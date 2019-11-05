@@ -9,8 +9,11 @@ const routers = {}
 
 export class HtmlRouter extends Router {
   static handle (route, data) {
-    const parsedRoute = Route.parse(route)
-    routers[parsedRoute.name].handle(parsedRoute, data)
+    routers[route.name].handle(route, data)
+  }
+
+  static parse (route, router) {
+    return Route.parse(route, router)
   }
 
   constructor (options = {}) {
@@ -342,7 +345,7 @@ export class HtmlRouter extends Router {
       return
     }
 
-    this.route(`@${this._name}:his`, {})
+    this.route(`@${this._name}:def&his`, {})
   }
 
   stash () {

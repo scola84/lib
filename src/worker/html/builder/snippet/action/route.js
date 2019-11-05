@@ -37,6 +37,8 @@ export class Route extends Action {
       data
     ])
 
+    route = HtmlRouter.parse(route, box.name)
+
     HtmlRouter.handle(route, {})
   }
 }

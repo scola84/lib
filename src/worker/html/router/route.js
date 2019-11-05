@@ -3,7 +3,7 @@ import defaults from 'lodash-es/defaultsDeep'
 import qs from 'qs'
 
 export class Route {
-  static parse (route, router) {
+  static parse (route, self) {
     if (route instanceof Route) {
       return route
     }
@@ -28,7 +28,7 @@ export class Route {
     }
 
     if (options.name === 'self') {
-      options.name = router
+      options.name = self
     }
 
     if (options.path === '') {

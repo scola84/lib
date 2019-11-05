@@ -2,7 +2,7 @@
 
 .aero .app {
   background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 5px #000;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
 @media (max-width: 64em) {
@@ -14,7 +14,7 @@
 @media (max-width: 48em) {
   .aero .app>.menu {
     background: #0b3f8a;
-    box-shadow: 0 0 5px black;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -155,7 +155,7 @@ body.aero {
 @media (min-width: 48em) and (min-height: 34em) {
   .aero .pop>.dialog {
     background: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 5px #000;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   }
 
   .aero .app.in+.pop>.dialog {

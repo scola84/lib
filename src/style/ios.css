@@ -2,6 +2,7 @@
 
 .ios .app {
   border-radius: 1em;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
 .outset-x.ios .app,
@@ -161,13 +162,10 @@ body.ios {
 
 /* Pop */
 
-.ios .pop {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
 @media (min-width: 48em) and (min-height: 34em) {
   .ios .pop>.dialog {
     border-radius: 1em;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   }
 }
 

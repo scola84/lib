@@ -18,6 +18,25 @@ body {
   width: 100%;
 }
 
+body>video {
+  display: none;
+}
+
+@media not all and (max-width: 64em) {
+  body>video {
+    display: block;
+    height: auto;
+    left: 50%;
+    min-height: 100%;
+    min-width: 100%;
+    position: fixed;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    width: auto;
+    z-index: -100;
+  }
+}
+
 button {
   background: none;
   border: 0;
@@ -121,7 +140,6 @@ select:-moz-focusring {
 }
 
 @media (-webkit-min-device-pixel-ratio: 2) {
-
   *,
   *:before {
     border-width: 0.5px !important;

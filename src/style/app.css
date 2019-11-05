@@ -1,5 +1,4 @@
 .app {
-  border-radius: 1em;
   display: flex;
   height: 48em;
   opacity: 0;
@@ -9,11 +8,6 @@
 
 .app.in {
   opacity: 1;
-}
-
-.outset-x .app,
-.outset-y .app {
-  border-radius: 0;
 }
 
 .outset-x .app {
@@ -26,17 +20,14 @@
 
 @media (max-width: 64em) {
   .app {
-    border-radius: 0;
-    padding: 0;
+    height: 100%;
     width: 100%;
   }
 }
 
 @media (max-height: 48em) {
   .app {
-    border-radius: 0;
     height: 100%;
-    padding: 0;
   }
 }
 
@@ -44,24 +35,16 @@
   overflow: hidden;
 }
 
-.app>.main:not(:empty) {
-  background: whitesmoke;
+.app>.main {
   flex: 1 1 auto;
   height: 100%;
   position: relative;
 }
 
-.app>.menu:not(:empty) {
-  background: whitesmoke;
-  border-right: 1px solid lightgrey;
+.app>.menu {
   height: 100%;
   position: relative;
   width: 21.333em;
-}
-
-*[dir='rtl'] .app>.menu {
-  border-left: 1px solid lightgrey;
-  border-right: 0;
 }
 
 @media (max-width: 48em) {

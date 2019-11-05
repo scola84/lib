@@ -1,6 +1,5 @@
 .pop {
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.5);
   bottom: 0;
   display: none;
   justify-content: center;
@@ -25,11 +24,10 @@
 }
 
 .pop>.dialog {
-  border-radius: 1em;
-  height: 34em;
+  height: 100%;
   overflow: hidden;
   position: relative;
-  width: 34em;
+  width: 100%;
 }
 
 .pop>.dialog.move {
@@ -40,18 +38,9 @@
   top: 0;
 }
 
-@media not all and (min-width: 48em) {
+@media (min-width: 48em) and (min-height: 34em) {
   .pop>.dialog {
-    border-radius: 0;
-    height: 100%;
-    width: 100%;
-  }
-}
-
-@media not all and (min-height: 34em) {
-  .pop>.dialog {
-    border-radius: 0;
-    height: 100%;
-    width: 100%;
+    height: 34em;
+    width: 34em;
   }
 }

@@ -1,0 +1,198 @@
+/* App */
+
+.ios .app {
+  border-radius: 1em;
+}
+
+.outset-x.ios .app,
+.outset-y.ios .app {
+  border-radius: 0;
+}
+
+@media (max-width: 64em) {
+  .ios .app {
+    border-radius: 0;
+  }
+}
+
+@media (max-height: 48em) {
+  .ios .app {
+    border-radius: 0;
+  }
+}
+
+.ios .app>.main:not(:empty) {
+  background: whitesmoke;
+}
+
+.ios .app>.menu:not(:empty) {
+  background: whitesmoke;
+  border-right: 1px solid lightgrey;
+}
+
+*[dir='rtl'] .ios .app>.menu:not(:empty) {
+  border-left: 1px solid lightgrey;
+  border-right: 0;
+}
+
+/* Dom */
+
+body.ios {
+  background: lightgrey;
+}
+
+/* Graph */
+
+@media not all and (max-width: 48em) {
+  .ios .panel:not(.outset-x) .graph {
+    border-radius: 0.5em;
+  }
+}
+
+.ios .graph>*>.body>svg>.plot>circle {
+  stroke: rgb(14, 122, 254);
+}
+
+.ios .graph>*>.body>svg>.plot>path.stroke {
+  stroke: rgb(14, 122, 254);
+}
+
+.ios .graph>*>.body>svg>.plot>rect {
+  fill: rgb(14, 122, 254);
+}
+
+/* Group */
+
+.ios .group {
+  padding-bottom: 1em;
+}
+
+@media not all and (max-width: 48em) {
+  .ios .panel:not(.outset-x) .group {
+    padding-left: 1em;
+    padding-right: 1em;
+  }
+}
+
+/* Item */
+
+@media not all and (max-width: 48em) {
+  .ios .panel:not(.outset-x) .item:first-child {
+    border-top-left-radius: 0.5em;
+    border-top-right-radius: 0.5em;
+  }
+
+  .ios .panel:not(.outset-x) .item:last-child {
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
+  }
+}
+
+.ios .item>.icon {
+  color: rgb(14, 122, 254);
+}
+
+/* Log control */
+
+@media not all and (max-width: 48em) {
+  .ios .panel:not(.outset-x) .log-control {
+    border-radius: 0.5em;
+  }
+}
+
+/* Metric */
+
+.ios .metric {
+  border-radius: 0.5em;
+}
+
+/* Panel */
+
+.ios .panel {
+  background: whitesmoke;
+}
+
+.ios .panel {
+  box-shadow: 0 0 15px darkgrey;
+}
+
+.ios .panel>*>.bar {
+  background: #fafafa;
+}
+
+.ios .panel>*>.bar .button {
+  color: rgb(14, 122, 254);
+}
+
+.ios .panel>.body {
+  padding-top: 1em;
+}
+
+.ios .panel>.body .button.icon {
+  color: rgb(14, 122, 254);
+}
+
+.ios .panel>.body .button.invert {
+  background: rgb(14, 122, 254);
+  color: white
+}
+
+.ios .panel>.footer {
+  border-top: 1px solid lightgrey;
+}
+
+.ios .panel>.header {
+  border-bottom: 1px solid lightgrey;
+}
+
+.ios .panel>.header>.search {
+  margin-bottom: -3em;
+  top: -3em;
+  z-index: 1;
+}
+
+.ios .panel>.header>.search:before {
+  top: 0.35em;
+}
+
+.ios .panel>.header>.search input {
+  margin: 0 1em 0.75em;
+}
+
+/* Pop */
+
+.ios .pop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 48em) and (min-height: 34em) {
+  .ios .pop>.dialog {
+    border-radius: 1em;
+  }
+}
+
+/* Tab */
+
+.ios .tab {
+  border: 1px solid rgb(14, 122, 254);
+  color: rgb(14, 122, 254);
+}
+
+.ios .tab>.selected {
+  background: rgb(14, 122, 254);
+}
+
+.ios .tab *+* {
+  border-left: 1px solid rgb(14, 122, 254);
+}
+
+*[dir='rtl'] .ios .tab *+* {
+  border-right: 1px solid rgb(14, 122, 254);
+}
+
+/* Tip */
+
+.ios .tip {
+  background: rgb(14, 122, 254);
+  border-radius: 0.3em;
+}

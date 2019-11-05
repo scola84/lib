@@ -1,7 +1,5 @@
 .tab {
-  border: 1px solid rgb(14, 122, 254);
   border-radius: 0.25em;
-  color: rgb(14, 122, 254);
   display: flex;
 }
 
@@ -13,15 +11,9 @@
 }
 
 .tab>.selected {
-  background: rgb(14, 122, 254);
   color: white;
-}
-
-.tab *+* {
-  border-left: 1px solid rgb(14, 122, 254);
 }
 
 *[dir='rtl'] .tab *+* {
   border-left: none;
-  border-right: 1px solid rgb(14, 122, 254);
 }

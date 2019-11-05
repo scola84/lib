@@ -1,14 +1,3 @@
-.group {
-  padding-bottom: 1em;
-}
-
-@media not all and (max-width: 48em) {
-  .panel:not(.outset-x) .group {
-    padding-left: 1em;
-    padding-right: 1em;
-  }
-}
-
 /* Body */
 
 .group>.body {
@@ -64,6 +53,7 @@
 
 .group>.title:not(:empty) * {
   font-size: inherit;
+  text-transform: inherit;
 }
 
 .group>.title.fold:after {

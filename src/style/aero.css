@@ -1,0 +1,189 @@
+/* App */
+
+.aero .app {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 5px #000;
+}
+
+@media (max-width: 64em) {
+  .aero .app {
+    background: #0b3f8a;
+  }
+}
+
+@media (max-width: 48em) {
+  .aero .app>.menu {
+    background: #0b3f8a;
+    box-shadow: 0 0 5px black;
+  }
+}
+
+/* Dom */
+
+body.aero {
+  background: #0b3f8a;
+}
+
+/* Graph */
+
+.aero .graph>*>.body>svg>.plot>circle {
+  stroke: #0b3f8a;
+}
+
+.aero .graph>*>.body>svg>.plot>path.stroke {
+  stroke: #0b3f8a;
+}
+
+.aero .graph>*>.body>svg>.plot>rect {
+  fill: #0b3f8a;
+}
+
+/* Group */
+
+.aero .group {
+  padding-bottom: 0.5em;
+}
+
+@media not all and (max-width: 48em) {
+  .aero .panel:not(.outset-x) .group {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+}
+
+.aero .group>.title:not(:empty) {
+  padding-top: 0.555em;
+}
+
+/* Item */
+
+.aero .item>.icon {
+  color: #0b3f8a;
+}
+
+/* Panel */
+
+.aero .panel {
+  opacity: 1;
+}
+
+.aero .panel.old {
+  opacity: 0;
+}
+
+.aero .panel>* {
+  margin-left: 0.5em;
+}
+
+.aero :last-child>.panel>* {
+  margin-right: 0.5em;
+}
+
+.aero .panel>:last-child {
+  margin-bottom: 0.5em;
+}
+
+.aero .panel>.body,
+.aero .panel>.footer {
+  background: whitesmoke;
+}
+
+.aero .panel>.body {
+  padding-top: 0.5em;
+}
+
+.aero .panel>.body .button.icon {
+  color: #0b3f8a;
+}
+
+.aero .panel>.body .button.invert {
+  background: #0b3f8a;
+  color: white
+}
+
+.aero .panel>*>.bar>.center>.title {
+  color: black;
+  text-shadow: 0 0 9px white;
+}
+
+.aero .panel>*>.bar .button {
+  color: black;
+  text-shadow: 0 0 9px #fff
+}
+
+.aero .panel>.header>.bar {
+  margin-left: -0.5em;
+  margin-right: -0.5em;
+}
+
+.aero .panel>.header>.message {
+  opacity: 0;
+  z-index: -1;
+}
+
+.aero .panel>.header>.message.in {
+  opacity: 1;
+}
+
+.aero .panel>.header>.search {
+  opacity: 0;
+}
+
+.aero .panel>.header>.search.in {
+  opacity: 1;
+}
+
+.aero .panel>.header>.search {
+  margin-bottom: -3.75em;
+  top: -3.75em;
+}
+
+.aero .panel>.header>.search:before {
+  top: 1em;
+}
+
+.aero .panel>.header>.search input {
+  margin: 0.75em 1em;
+}
+
+/* Pop */
+
+.aero .app.in+.pop>.dialog {
+  background: #0b3f8a;
+}
+
+@media (min-width: 48em) and (min-height: 34em) {
+  .aero .pop>.dialog {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 5px #000;
+  }
+
+  .aero .app.in+.pop>.dialog {
+    background: rgba(255, 255, 255, 0.85);
+  }
+}
+
+/* Tab */
+
+.aero .tab {
+  border: 1px solid #0b3f8a;
+  color: #0b3f8a;
+}
+
+.aero .tab>.selected {
+  background: #0b3f8a;
+}
+
+.aero .tab *+* {
+  border-left: 1px solid #0b3f8a;
+}
+
+*[dir='rtl'] .aero .tab *+* {
+  border-right: 1px solid #0b3f8a;
+}
+
+/* Tip */
+
+.aero .tip {
+  background: #0b3f8a;
+}

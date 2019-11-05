@@ -6,12 +6,6 @@
   padding: 1em;
 }
 
-@media not all and (max-width: 48em) {
-  .panel:not(.outset-x) .graph {
-    border-radius: 0.5em;
-  }
-}
-
 .graph:after {
   content: '';
   padding-bottom: 66.6%;
@@ -201,7 +195,6 @@
 
 .graph>*>.body>svg>.plot>circle {
   fill: transparent;
-  stroke: rgb(14, 122, 254);
 }
 
 .graph>*>.body>svg>.plot>path.fill {
@@ -210,11 +203,6 @@
 
 .graph>*>.body>svg>.plot>path.stroke {
   fill: none;
-  stroke: rgb(14, 122, 254);
-}
-
-.graph>*>.body>svg>.plot>rect {
-  fill: rgb(14, 122, 254);
 }
 
 .graph>*>.body>svg>.plot>rect.zero {

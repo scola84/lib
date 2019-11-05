@@ -1,5 +1,14 @@
 /* Check */
 
+.item>.input.check {
+  margin-right: 0.5em;
+}
+
+*[dir='rtl'] .item>.input.check {
+  margin-left: 0.5em;
+  margin-right: 0;
+}
+
 .item.empty>.input.check {
   margin-right: 0;
   overflow: hidden;
@@ -16,6 +25,7 @@
 
 .input.check input+* {
   align-items: center;
+  cursor: pointer;
   display: flex;
   justify-content: center;
 }

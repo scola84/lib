@@ -96,7 +96,11 @@ export class Search extends Node {
   }
 
   resolveInput (box) {
-    this._storage.setItem(`search-${this._id}`, box.input)
+    if (box.input === '') {
+      this._storage.removeItem(`search-${this._id}`)
+    } else {
+      this._storage.setItem(`search-${this._id}`, box.input)
+    }
 
     box.list.search = this.formatSearch(box.input)
 

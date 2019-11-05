@@ -198,7 +198,7 @@ export class LogControl extends Widget {
     const [snippet] = this._args
     const node = snippet.node()
 
-    if (control.mode !== null) {
+    if (control.mode !== undefined) {
       node
         .selectAll('.tab *')
         .classed('selected', false)
@@ -208,7 +208,7 @@ export class LogControl extends Widget {
         .classed('selected', true)
     }
 
-    if (control.name !== null) {
+    if (control.name !== undefined) {
       node
         .select('select')
         .property('value', control.name)

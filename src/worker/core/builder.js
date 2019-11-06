@@ -38,8 +38,7 @@ export class Builder extends Worker {
   }
 
   format (string, args, locale) {
-    const reductor = (k) => (a, v = {}) => (a === undefined ? v[k] : a)
-    const regexpBase = '%((\\((\\w+)\\))?((\\d+)\\$)?)([lmns])(\\[(.+)\\])?'
+    const regexpBase = '%((\\(([\\w.]+)\\))?((\\d+)\\$)?)([lmns])(\\[(.+)\\])?'
 
     const regexpGlobal = new RegExp(regexpBase, 'g')
     const regexpSingle = new RegExp(regexpBase)
@@ -62,7 +61,7 @@ export class Builder extends Worker {
       if (position !== undefined) {
         value = args[position - 1]
       } else if (name !== undefined) {
-        value = args.reduce(reductor(name), undefined)
+        value = args.reduce(this.reduce(name), undefined)
       } else {
         value = args[i]
       }
@@ -77,6 +76,22 @@ export class Builder extends Worker {
     }
 
     return result
+  }
+
+  reduce (name) {
+    return (value, arg) => {
+      if (value !== undefined) {
+        return value
+      }
+
+      return name.split('.').reduce((object, key) => {
+        if (object === undefined || key === '') {
+          return object
+        }
+
+        return object[key]
+      }, arg)
+    }
   }
 }
 

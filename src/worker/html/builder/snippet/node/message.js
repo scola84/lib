@@ -4,10 +4,26 @@ export class Message extends Node {
   constructor (options = {}) {
     super(options)
 
+    this._markdown = null
     this._prefix = null
+
+    this.setMarkdown(options.markdown)
     this.setPrefix(options.prefix)
 
     this.class('transition')
+  }
+
+  getMarkdown () {
+    return this._markdown
+  }
+
+  setMarkdown (value = true) {
+    this._markdown = value
+    return this
+  }
+
+  markdown (value) {
+    return this.setMarkdown(value)
   }
 
   getPrefix () {
@@ -34,7 +50,14 @@ export class Message extends Node {
       .prefix(this._prefix)
       .values(data)
 
-    this._node.text(this.resolveValue(box, data, text))
+    const value = this.resolveValue(box, data, text)
+
+    if (this._markdown === true) {
+      this._node.html(this._builder.format('%m', [value]))
+    } else {
+      this._node.text(value)
+    }
+
     this._node.classed('in', true)
 
     return this._node

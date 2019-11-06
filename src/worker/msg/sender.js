@@ -9,9 +9,11 @@ export class MsgSender extends Builder {
   constructor (options = {}) {
     super(options)
 
+    this._message = null
     this._name = null
     this._transport = null
 
+    this.setMessage(options.message)
     this.setName(options.name)
     this.setTransport(options.transport)
   }
@@ -19,9 +21,19 @@ export class MsgSender extends Builder {
   getOptions () {
     return {
       ...super.getOptions(),
+      message: this._message,
       name: this._name,
       transport: this._transport
     }
+  }
+
+  getMessage () {
+    return this._message
+  }
+
+  setMessage (value = null) {
+    this._message = value
+    return this
   }
 
   getName () {
@@ -47,7 +59,9 @@ export class MsgSender extends Builder {
       this.createTransport(box, data)
     }
 
-    const message = this.createMessage(data)
+    const message = this.formatMessage(
+      this.createMessage(box, data)
+    )
 
     this._transport.send(message, (error, result) => {
       if (error !== null) {
@@ -59,22 +73,12 @@ export class MsgSender extends Builder {
     })
   }
 
-  createMessage (data) {
-    const message = {
-      ...data
+  createMessage (box, data) {
+    if (this._message !== null) {
+      return this._message(box, data)
     }
 
-    message.subject = this.format(data.subject, [data.data])
-    message.text = this.format(data.text, [data.data])
-
-    if (data.html !== undefined) {
-      message.html = this.format(
-        data.html.replace(/%([^s])/g, '%%$1'),
-        [vsprintf('%m', [data.text])]
-      )
-    }
-
-    return message
+    return this.message(box, data)
   }
 
   createTransport (box, data) {
@@ -95,5 +99,39 @@ export class MsgSender extends Builder {
     }
 
     this.setTransport(this[options.transport]().options(options))
+  }
+
+  formatMessage (message) {
+    const {
+      data,
+      html,
+      locale,
+      subject,
+      text
+    } = message
+
+    if (subject !== undefined) {
+      message.subject = this.format(subject, [data], locale)
+    }
+
+    if (text !== undefined) {
+      message.text = this.format(text, [data], locale)
+    }
+
+    if (html !== undefined) {
+      message.html = this.format(
+        html.replace(/%([^s])/g, '%%$1'),
+        [this.format('%m', [text], locale)],
+        locale
+      )
+    }
+
+    return message
+  }
+
+  message (box, data) {
+    return {
+      ...data
+    }
   }
 }

@@ -111,7 +111,7 @@ HtmlBuilder.snippet.misc.Print.addStrings({
     },
     message: {
       nodata: 'Geen gegevens gevonden.',
-      void: 'Selecteer een object'
+      select: 'Selecteer een object'
     },
     search: {
       placeholder: 'Zoeken'

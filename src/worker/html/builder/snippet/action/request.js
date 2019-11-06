@@ -1,4 +1,3 @@
-import { Worker } from '../../../../core'
 import { HttpClient } from '../../../../http'
 import { Action } from '../action'
 
@@ -6,14 +5,10 @@ export class Request extends Action {
   constructor (options = {}) {
     super(options)
 
-    this._client = null
     this._indicator = null
-    this._merge = null
     this._resource = null
 
-    this.setClient(options.client)
     this.setIndicator(options.indicator)
-    this.setMerge(options.merge)
     this.setResource(options.resource)
   }
 
@@ -24,15 +19,6 @@ export class Request extends Action {
       merge: this._merge,
       resource: this._resource
     }
-  }
-
-  getClient () {
-    return this._client
-  }
-
-  setClient (value = null) {
-    this._client = value
-    return this
   }
 
   getIndicator () {
@@ -48,19 +34,6 @@ export class Request extends Action {
     return this.setIndicator(value)
   }
 
-  getMerge () {
-    return this._merge
-  }
-
-  setMerge (value = null) {
-    this._merge = value
-    return this
-  }
-
-  merge (value) {
-    return this.setMerge(value)
-  }
-
   getResource () {
     return this._resource
   }
@@ -74,73 +47,35 @@ export class Request extends Action {
     return this.setResource(value)
   }
 
-  createClient () {
-    this._client = new HttpClient({
-      merge: (box, data, response, responseData) => {
-        if (this._merge !== null) {
-          return this._merge(box, data, response, responseData)
-        }
-
-        if (responseData === undefined || responseData.data === undefined) {
-          return {}
-        }
-
-        return responseData.data
-      },
-      progress: (box, event) => {
-        this.resolveValue(box, event, this._indicator)
-      }
-    })
-
-    this._client.connect(new Worker({
-      act: (box, data) => {
-        this.pass(box, data)
-      },
-      err: (box, error) => {
-        this.fail(box, error)
-      }
-    }))
-
-    return this._client
-  }
-
   resolveAfter (box, data) {
-    if (this._client === null) {
-      this.createClient()
-    }
+    let resource = this.resolveValue(box, data, this._resource)
 
-    const headers = {}
-
-    if (box.multipart === true) {
-      headers['Content-Type'] = 'multipart/form-data'
-      delete box.multipart
-    }
-
-    const options = this.resolveValue(box, data, this._resource)
-
-    let [
-      method,
-      path = null
-    ] = options.split(' ')
-
-    if (path === null) {
-      path = method
-      method = undefined
-    }
-
-    path = this._builder.format(this.expand(path), [
+    resource = this._builder.format(this.expand(resource), [
       box.params,
       box.list
     ])
 
-    const url = window.location.origin + path.replace(/undefined/g, '')
+    resource = HttpClient.parse(resource.replace(/undefined/g, ''))
+    resource.data = data
 
-    const meta = {
-      headers,
-      method,
-      url
+    if (box.multipart === true) {
+      resource.meta.headers = { 'Content-Type': 'multipart/form-data' }
+      delete box.multipart
     }
 
-    this._client.handle(box, { meta, data })
+    HttpClient.request(resource, (error, responseData) => {
+      this.resolveResponse(box, error, responseData)
+    }, (bx, event) => {
+      this.resolveValue(box, event, this._indicator)
+    })
+  }
+
+  resolveResponse (box, error, data) {
+    if (error !== null) {
+      this.fail(box, error)
+      return
+    }
+
+    this.pass(box, data)
   }
 }

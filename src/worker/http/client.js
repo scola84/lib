@@ -12,6 +12,50 @@ const wmeta = {
 }
 
 export class HttpClient extends HttpWorker {
+  static parse (resource) {
+    if (typeof resource === 'object') {
+      return resource
+    }
+
+    let [
+      method,
+      url = null
+    ] = resource.split(' ')
+
+    if (url === null) {
+      url = method
+      method = undefined
+    }
+
+    if (window !== undefined) {
+      url = window.location.origin + url
+    }
+
+    return {
+      meta: {
+        method,
+        url
+      }
+    }
+  }
+
+  static request (resource, callback, progress) {
+    const client = new HttpClient({
+      progress
+    })
+
+    client.connect(new HttpWorker({
+      act: (box, responseData) => {
+        callback(null, responseData)
+      },
+      err: (box, error) => {
+        callback(error)
+      }
+    }))
+
+    client.handle({}, HttpClient.parse(resource))
+  }
+
   constructor (options = {}) {
     super(options)
 
@@ -133,12 +177,12 @@ export class HttpClient extends HttpWorker {
     })
   }
 
-  merge (box, data, response, responseData) {
-    if (responseData === undefined || responseData.data === undefined) {
-      return {}
+  merge (box, data, response, responseData = {}) {
+    if (responseData.data !== undefined) {
+      return responseData.data
     }
 
-    return responseData.data
+    return responseData
   }
 
   patchRequest (box, request) {

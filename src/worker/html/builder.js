@@ -42,7 +42,7 @@ export class HtmlBuilder extends Builder {
 
   setView (value = null) {
     this._view = typeof value === 'function'
-      ? value(this)
+      ? value.call(this, this)
       : value
 
     if (this._view) {

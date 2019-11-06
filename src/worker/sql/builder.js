@@ -81,7 +81,7 @@ export class SqlBuilder extends Builder {
 
   setQuery (value = null) {
     this._query = typeof value === 'function'
-      ? value(this)
+      ? value.call(this, this)
       : value
 
     return this

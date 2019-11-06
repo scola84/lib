@@ -12,7 +12,25 @@ export class HtmlRouter extends Router {
     routers[route.name].handle(route, data)
   }
 
-  static parse (route, router) {
+  static parseHash () {
+    const hash = window.location.hash.slice(2)
+
+    const parts = hash === ''
+      ? []
+      : hash.split('/')
+
+    const routes = {}
+    let route = null
+
+    for (let i = 0; i < parts.length; i += 1) {
+      route = Route.parse(parts[i])
+      routes[route.name] = route
+    }
+
+    return routes
+  }
+
+  static parseRoute (route, router) {
     return Route.parse(route, router)
   }
 
@@ -174,24 +192,6 @@ export class HtmlRouter extends Router {
     ).map((route) => Route.parse(route))
   }
 
-  parseHash () {
-    const hash = window.location.hash.slice(2)
-
-    const parts = hash === ''
-      ? []
-      : hash.split('/')
-
-    const routes = {}
-    let route = null
-
-    for (let i = 0; i < parts.length; i += 1) {
-      route = Route.parse(parts[i])
-      routes[route.name] = route
-    }
-
-    return routes
-  }
-
   previous () {
     if (this._history.length === 0) {
       return null
@@ -201,7 +201,7 @@ export class HtmlRouter extends Router {
   }
 
   process (actBox, data) {
-    const routes = this.parseHash()
+    const routes = HtmlRouter.parseHash()
     let box = actBox
 
     box = this.processHistory(box, routes)
@@ -349,7 +349,7 @@ export class HtmlRouter extends Router {
   }
 
   stash () {
-    const routes = this.parseHash()
+    const routes = HtmlRouter.parseHash()
 
     if (routes[this._name] !== undefined) {
       this._stash = routes[this._name]

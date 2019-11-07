@@ -37,6 +37,7 @@ export class Postgresql extends Dialect {
         }
 
         if (error !== null) {
+          error.query = query
           callback(error)
           return
         }

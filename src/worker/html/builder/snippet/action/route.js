@@ -20,25 +20,28 @@ export class Route extends Action {
     return this._view
   }
 
-  setView (value = null) {
+  setView (...value) {
     this._view = value
     return this
   }
 
-  view (value) {
-    return this.setView(value)
+  view (...value) {
+    return this.setView(...value)
   }
 
   resolveAfter (box, data) {
-    let route = this.resolveValue(box, data, this._view)
+    let [
+      route,
+      routeData = data
+    ] = this.resolveValue(box, data, this._view)
 
     route = this._builder.format(this.expand(route), [
       box.params,
-      data
+      routeData
     ])
 
     route = HtmlRouter.parseRoute(route, box.name)
 
-    HtmlRouter.handle(route, data)
+    HtmlRouter.handle(route, routeData)
   }
 }

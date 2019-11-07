@@ -12,4 +12,14 @@ export class Password extends Input {
   cleanAfter (box, data, name, value) {
     this.setValue(data, name, String(value))
   }
+
+  validateAfter (box, data, error, name, value) {
+    if (name === 'repeat-password') {
+      if (data.password !== value) {
+        this.setError(error, name, null, 'repeat')
+      }
+    }
+
+    return null
+  }
 }

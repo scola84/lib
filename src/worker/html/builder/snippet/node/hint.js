@@ -29,15 +29,19 @@ export class Hint extends Node {
   }
 
   resolveAfter (box, data) {
+    if (data === undefined) {
+      return this._node.text(null)
+    }
+
     if (data.data === null || data.data === undefined) {
-      return this._node
+      return this._node.text(null)
     }
 
     const parent = this._node.node().parentNode
     let input = parent.querySelector('input, select, textarea')
 
     if (input === null || input.snippet === undefined) {
-      return this._node
+      return this._node.text(null)
     }
 
     input = input.snippet
@@ -74,8 +78,7 @@ export class Hint extends Node {
       .attr('multiple')
 
     const all = this._builder
-      .getView()
-      .query(`input[name="${name}"]`)
+      .selector(`input[name="${name}"]`)
       .resolve(null)
 
     const resolvedValue = multiple === undefined

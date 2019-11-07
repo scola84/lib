@@ -4,26 +4,28 @@ export class Message extends Node {
   constructor (options = {}) {
     super(options)
 
-    this._markdown = null
+    this._default = null
     this._prefix = null
+    this._type = null
 
-    this.setMarkdown(options.markdown)
+    this.setDefault(options.default)
     this.setPrefix(options.prefix)
+    this.setType(options.type)
 
     this.class('transition')
   }
 
-  getMarkdown () {
-    return this._markdown
+  getDefault () {
+    return this._default
   }
 
-  setMarkdown (value = true) {
-    this._markdown = value
+  setDefault (value = null) {
+    this._default = value
     return this
   }
 
-  markdown (value) {
-    return this.setMarkdown(value)
+  default (value) {
+    return this.setDefault(value)
   }
 
   getPrefix () {
@@ -39,25 +41,49 @@ export class Message extends Node {
     return this.setPrefix(value)
   }
 
+  getType () {
+    return this._type
+  }
+
+  setType (value = 'text') {
+    this._type = value
+    return this
+  }
+
+  type (value) {
+    return this.setType(value)
+  }
+
+  html () {
+    return this.setType('html')
+  }
+
+  text () {
+    return this.setType('text')
+  }
+
   resolveAfter (box, data) {
-    if (data.status === undefined) {
+    const {
+      code = this._default
+    } = data || {}
+
+    if (code === null) {
       return this._node.classed('in', false)
     }
 
     const text = this._builder
       .print()
-      .format(String(data.status))
+      .format(code)
       .prefix(this._prefix)
       .values(data)
 
-    const value = this.resolveValue(box, data, text)
+    let value = this.resolveValue(box, data, text)
 
-    if (this._markdown === true) {
-      this._node.html(this._builder.format('%m', [value]))
-    } else {
-      this._node.text(value)
+    if (this._type === 'html') {
+      value = this._builder.format('%m', [value])
     }
 
+    this._node[this._type](value)
     this._node.classed('in', true)
 
     return this._node

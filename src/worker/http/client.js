@@ -27,10 +27,6 @@ export class HttpClient extends HttpWorker {
       method = undefined
     }
 
-    if (window !== undefined) {
-      url = window.location.origin + url
-    }
-
     return {
       meta: {
         method,
@@ -97,21 +93,21 @@ export class HttpClient extends HttpWorker {
     this.handleRequest(box, data, request, requestData)
   }
 
-  handleError (box, data, error, messageData, status = 400) {
+  handleError (box, data, error, messageData, code = 400) {
     this._progress(box, {
       lengthComputable: true,
       loaded: 1,
       total: 1
     })
 
-    const failError = new Error(`${status} ${error.message}`.trim())
+    const failError = new Error(`${code} ${error.message}`.trim())
 
     failError.data = messageData === undefined || messageData === null
       ? messageData
       : messageData.data
 
+    failError.code = code
     failError.original = data
-    failError.status = status
 
     this.fail(box, failError)
   }
@@ -177,11 +173,7 @@ export class HttpClient extends HttpWorker {
     })
   }
 
-  merge (box, data, response, responseData = {}) {
-    if (responseData.data !== undefined) {
-      return responseData.data
-    }
-
+  merge (box, data, response, responseData) {
     return responseData
   }
 

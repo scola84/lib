@@ -16,7 +16,6 @@ export class Request extends Action {
     return {
       ...super.getOptions(),
       indicator: this._indicator,
-      merge: this._merge,
       resource: this._resource
     }
   }
@@ -50,13 +49,9 @@ export class Request extends Action {
   resolveAfter (box, data) {
     let resource = this.resolveValue(box, data, this._resource)
 
-    resource = this._builder.format(this.expand(resource), [
-      box.params,
-      box.list
-    ])
-
-    resource = HttpClient.parse(resource.replace(/undefined/g, ''))
-    resource.data = data
+    if (typeof resource === 'string') {
+      resource = this.resolveResource(box, data, resource)
+    }
 
     if (box.multipart === true) {
       resource.meta.headers = { 'Content-Type': 'multipart/form-data' }
@@ -68,6 +63,20 @@ export class Request extends Action {
     }, (bx, event) => {
       this.resolveValue(box, event, this._indicator)
     })
+  }
+
+  resolveResource (box, data, string) {
+    let resource = string
+
+    resource = this._builder.format(this.expand(resource), [
+      box.params,
+      box.list
+    ])
+
+    resource = HttpClient.parse(resource.replace(/undefined/g, ''))
+    resource.data = data
+
+    return resource
   }
 
   resolveResponse (box, error, data) {

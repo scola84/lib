@@ -19,10 +19,7 @@ export class HttpResponder extends Worker {
 
     box.callback({
       meta: responseMeta,
-      data: {
-        data: responseData,
-        status: responseMeta.statusCode
-      }
+      data: responseData
     })
   }
 
@@ -32,30 +29,27 @@ export class HttpResponder extends Worker {
     } = error
 
     const [,
-      code = 500,
+      status = 500,
       text
     ] = error.message.match(/(\d{3})?([^(]*)/) || []
 
-    responseMeta.statusCode = Number(code)
+    responseMeta.statusCode = Number(status)
 
     let {
       data: responseData
     } = error
 
     if (responseData === undefined) {
-      if (responseMeta.statusCode < 500 && text !== undefined) {
-        responseData = text.trim()
-      } else {
-        responseData = STATUS_CODES[responseMeta.statusCode]
+      responseData = {
+        message: responseMeta.statusCode < 500 && text !== undefined
+          ? text.trim()
+          : STATUS_CODES[responseMeta.statusCode]
       }
     }
 
     box.callback({
       meta: responseMeta,
-      data: {
-        data: responseData,
-        status: responseMeta.statusCode
-      }
+      data: responseData
     })
   }
 }

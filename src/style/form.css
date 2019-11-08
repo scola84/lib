@@ -37,6 +37,6 @@
 .form .item .hint:not(:empty) {
   margin-left: 1.111em;
   margin-right: 1.111em;
-  margin-top: 0;
+  margin-top: -0.25em;
   width: 100%;
 }

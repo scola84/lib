@@ -15,14 +15,6 @@
   flex: 1;
 }
 
-.log-control>.row>.action:not(:empty) {
-  margin-top: 0.5em;
-}
-
-.log-control>.row>.mode:not(:empty) {
-  margin-top: 0.5em;
-}
-
 .log-control>.row>.name {
   align-items: center;
   padding-right: 0.5em;

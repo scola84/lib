@@ -63,10 +63,6 @@
 }
 
 .panel>*>.bar>.center>.title {
-  font-weight: bold;
-}
-
-.panel>*>.bar>.center>.title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -217,7 +213,6 @@
 
 /* Header message */
 
-
 .panel>.header>.message {
   background: lightgrey;
   color: dimgrey;
@@ -255,12 +250,6 @@
 .panel>.header>.search.in {
   margin-bottom: 0;
   top: 0;
-}
-
-@media (-webkit-min-device-pixel-ratio: 2) {
-  .panel>.header>.search {
-    margin-top: -1px;
-  }
 }
 
 .panel>.header>.search:before {

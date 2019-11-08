@@ -211,10 +211,6 @@
   flex: 100%;
 }
 
-.item>.label>.l4:not(:empty) {
-  margin-top: 0.2em;
-}
-
 .item>.label>.l5 {
   color: darkgrey;
   flex: 100%;
@@ -224,7 +220,6 @@
 
 .item>.label>.l5:not(:empty) {
   height: 2.5em;
-  margin-top: 0.2em;
 }
 
 .item>.label>.placeholder:empty:after {

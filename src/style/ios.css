@@ -147,9 +147,15 @@ body.ios {
 }
 
 .ios .panel>.header>.search {
-  margin-bottom: -3em;
-  top: -3em;
+  margin-bottom: -3.25em;
+  top: -3.25em;
   z-index: 1;
+}
+
+@media (-webkit-min-device-pixel-ratio: 2) {
+  .ios .panel>.header>.search {
+    margin-top: -1px;
+  }
 }
 
 .ios .panel>.header>.search:before {

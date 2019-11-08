@@ -1,41 +1,31 @@
 /* App */
 
 .aero .app {
-  background: rgba(255, 255, 255, 0.15);
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
-@media (max-width: 64em) {
-  .aero .app {
-    background: #0b3f8a;
-  }
+.aero .app>* {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 @media (max-width: 48em) {
   .aero .app>.menu {
-    background: #0b3f8a;
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   }
-}
-
-/* Dom */
-
-body.aero {
-  background: #0b3f8a;
 }
 
 /* Graph */
 
 .aero .graph>*>.body>svg>.plot>circle {
-  stroke: #0b3f8a;
+  stroke: black;
 }
 
 .aero .graph>*>.body>svg>.plot>path.stroke {
-  stroke: #0b3f8a;
+  stroke: black;
 }
 
 .aero .graph>*>.body>svg>.plot>rect {
-  fill: #0b3f8a;
+  fill: black;
 }
 
 /* Group */
@@ -58,10 +48,19 @@ body.aero {
 /* Item */
 
 .aero .item>.icon {
-  color: #0b3f8a;
+  color: black;
 }
 
 /* Panel */
+
+.aero .menu+*>.panel>.header {
+  opacity: 1;
+  transition: opacity 0.25s;
+}
+
+.aero .menu.in+*>.panel>.header {
+  opacity: 0;
+}
 
 .aero .panel {
   opacity: 1;
@@ -93,11 +92,11 @@ body.aero {
 }
 
 .aero .panel>.body .button.icon {
-  color: #0b3f8a;
+  color: black;
 }
 
 .aero .panel>.body .button.invert {
-  background: #0b3f8a;
+  background: black;
   color: white
 }
 
@@ -134,8 +133,8 @@ body.aero {
 }
 
 .aero .panel>.header>.search {
-  margin-bottom: -3.75em;
-  top: -3.75em;
+  margin-bottom: -4em;
+  top: -4em;
 }
 
 .aero .panel>.header>.search:before {
@@ -148,42 +147,46 @@ body.aero {
 
 /* Pop */
 
-.aero .app.in+.pop>.dialog {
-  background: #0b3f8a;
+.aero .pop>.dialog {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
-@media (min-width: 48em) and (min-height: 34em) {
-  .aero .pop>.dialog {
-    background: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+.aero .app.in+.pop>.dialog {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+@media (max-width: 48em) {
+  .aero.popup .app.in {
+    opacity: 0;
   }
 
   .aero .app.in+.pop>.dialog {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.15);
   }
 }
 
 /* Tab */
 
 .aero .tab {
-  border: 1px solid #0b3f8a;
-  color: #0b3f8a;
+  border: 1px solid black;
+  color: black;
 }
 
 .aero .tab>.selected {
-  background: #0b3f8a;
+  background: black;
 }
 
 .aero .tab *+* {
-  border-left: 1px solid #0b3f8a;
+  border-left: 1px solid black;
 }
 
 *[dir='rtl'] .aero .tab *+* {
-  border-right: 1px solid #0b3f8a;
+  border-right: 1px solid black;
 }
 
 /* Tip */
 
 .aero .tip {
-  background: #0b3f8a;
+  background: black;
 }

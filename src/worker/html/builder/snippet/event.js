@@ -60,7 +60,6 @@ export class Event extends Action {
 
     node.on(this._name, () => {
       event.preventDefault()
-      event.stopPropagation()
       debounced(event)
     })
   }

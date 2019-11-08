@@ -21,6 +21,8 @@ export class HttpResponder extends Worker {
       meta: responseMeta,
       data: responseData
     })
+
+    this.pass(box, data)
   }
 
   err (box, error) {
@@ -51,5 +53,7 @@ export class HttpResponder extends Worker {
       meta: responseMeta,
       data: responseData
     })
+
+    this.fail(box, error)
   }
 }

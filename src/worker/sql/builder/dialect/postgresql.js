@@ -5,6 +5,8 @@ import { Dialect } from './dialect'
 
 if (typeof pg !== 'undefined') {
   pg.types.setTypeParser(1082, (value) => value)
+  pg.types.setTypeParser(1114, (value) => value)
+  pg.types.setTypeParser(1184, (value) => value)
 }
 
 const pools = {}

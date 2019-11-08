@@ -25,6 +25,7 @@ export class Popup {
     }
 
     select(document).on('keydown.scola-popup', null)
+    select('body').classed('popup', false)
 
     parent.style('width')
 
@@ -66,6 +67,8 @@ export class Popup {
         parent.dispatch('click')
       }
     })
+
+    select('body').classed('popup', true)
 
     parent.classed('open', true)
     parent.style('width')

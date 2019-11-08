@@ -63,6 +63,7 @@ HtmlBuilder.snippet.misc.Print.addStrings({
       password: {
         maxlength,
         required,
+        repeat: 'De wachtwoorden zijn niet aan elkaar gelijk.',
         type: 'Dit is geen wachtwoord.'
       },
       radio: {

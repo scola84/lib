@@ -10,7 +10,7 @@ export class DeleteObject extends Widget {
     ] = this._name
 
     let resource = `/api/${object}/%(${object}_id)s`
-    let view = 'void@main:clr'
+    let view = 'select@main:clr'
 
     if (link !== undefined) {
       resource += `/${link}/%(${link}_id)s`

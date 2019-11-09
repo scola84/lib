@@ -50,18 +50,6 @@ body.ios {
   }
 }
 
-.ios .graph>*>.body>svg>.plot>circle {
-  stroke: rgb(14, 122, 254);
-}
-
-.ios .graph>*>.body>svg>.plot>path.stroke {
-  stroke: rgb(14, 122, 254);
-}
-
-.ios .graph>*>.body>svg>.plot>rect {
-  fill: rgb(14, 122, 254);
-}
-
 /* Group */
 
 .ios .group {
@@ -87,10 +75,6 @@ body.ios {
     border-bottom-left-radius: 0.5em;
     border-bottom-right-radius: 0.5em;
   }
-}
-
-.ios .item>.icon {
-  color: rgb(14, 122, 254);
 }
 
 /* Log control */
@@ -121,29 +105,12 @@ body.ios {
   background: #fafafa;
 }
 
-.ios .panel>*>.bar .button {
-  color: rgb(14, 122, 254);
-}
-
 .ios .panel>.body {
   padding-top: 1em;
 }
 
-.ios .panel>.body .button.icon {
-  color: rgb(14, 122, 254);
-}
-
-.ios .panel>.body .button.invert {
-  background: rgb(14, 122, 254);
-  color: white
-}
-
-.ios .panel>.footer {
-  border-top: 1px solid lightgrey;
-}
-
-.ios .panel>.header {
-  border-bottom: 1px solid lightgrey;
+.ios .panel>*>.bar>.center>.title {
+  font-weight: bold;
 }
 
 .ios .panel>.header>.search {
@@ -175,28 +142,8 @@ body.ios {
   }
 }
 
-/* Tab */
-
-.ios .tab {
-  border: 1px solid rgb(14, 122, 254);
-  color: rgb(14, 122, 254);
-}
-
-.ios .tab>.selected {
-  background: rgb(14, 122, 254);
-}
-
-.ios .tab *+* {
-  border-left: 1px solid rgb(14, 122, 254);
-}
-
-*[dir='rtl'] .ios .tab *+* {
-  border-right: 1px solid rgb(14, 122, 254);
-}
-
 /* Tip */
 
 .ios .tip {
-  background: rgb(14, 122, 254);
   border-radius: 0.3em;
 }

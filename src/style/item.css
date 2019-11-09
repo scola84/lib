@@ -115,6 +115,7 @@
 
 .item>.icon {
   align-items: center;
+  color: black;
   display: flex;
   height: 1em;
   text-align: center;

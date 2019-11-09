@@ -14,20 +14,6 @@
   }
 }
 
-/* Graph */
-
-.aero .graph>*>.body>svg>.plot>circle {
-  stroke: black;
-}
-
-.aero .graph>*>.body>svg>.plot>path.stroke {
-  stroke: black;
-}
-
-.aero .graph>*>.body>svg>.plot>rect {
-  fill: black;
-}
-
 /* Group */
 
 .aero .group {
@@ -43,12 +29,6 @@
 
 .aero .group>.title:not(:empty) {
   padding-top: 0.555em;
-}
-
-/* Item */
-
-.aero .item>.icon {
-  color: black;
 }
 
 /* Panel */
@@ -91,22 +71,11 @@
   padding-top: 0.5em;
 }
 
-.aero .panel>.body .button.icon {
-  color: black;
-}
-
-.aero .panel>.body .button.invert {
-  background: black;
-  color: white
-}
-
 .aero .panel>*>.bar>.center>.title {
-  color: black;
   text-shadow: 0 0 9px white;
 }
 
 .aero .panel>*>.bar .button {
-  color: black;
   text-shadow: 0 0 9px #fff
 }
 
@@ -164,29 +133,4 @@
   .aero .app.in+.pop>.dialog {
     background: rgba(255, 255, 255, 0.15);
   }
-}
-
-/* Tab */
-
-.aero .tab {
-  border: 1px solid black;
-  color: black;
-}
-
-.aero .tab>.selected {
-  background: black;
-}
-
-.aero .tab *+* {
-  border-left: 1px solid black;
-}
-
-*[dir='rtl'] .aero .tab *+* {
-  border-right: 1px solid black;
-}
-
-/* Tip */
-
-.aero .tip {
-  background: black;
 }

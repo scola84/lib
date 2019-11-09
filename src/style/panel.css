@@ -84,6 +84,7 @@
 
 .panel>*>.bar .button {
   align-items: center;
+  color: black;
   display: flex;
   height: 1.25em;
   position: relative;
@@ -165,8 +166,8 @@
 
 .panel>.body .button.icon {
   align-items: center;
-  /* background: none; */
   border-radius: 50%;
+  color: black;
   display: flex;
   justify-content: center;
   padding: 0;
@@ -183,6 +184,11 @@
   height: 0;
   justify-content: center;
   width: 100%;
+}
+
+.panel>.body .button.invert {
+  background: black;
+  color: white
 }
 
 /* Body message */
@@ -202,12 +208,12 @@
 /* Footer / header */
 
 .panel>.footer {
+  border-top: 1px solid lightgrey;
   position: relative;
 }
 
-/* Header */
-
 .panel>.header {
+  border-bottom: 1px solid lightgrey;
   position: relative;
 }
 

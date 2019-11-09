@@ -193,8 +193,11 @@
   opacity: 0;
 }
 
+/* Graph */
+
 .graph>*>.body>svg>.plot>circle {
   fill: transparent;
+  stroke: black;
 }
 
 .graph>*>.body>svg>.plot>path.fill {
@@ -203,6 +206,11 @@
 
 .graph>*>.body>svg>.plot>path.stroke {
   fill: none;
+  stroke: black;
+}
+
+.graph>*>.body>svg>.plot>rect {
+  fill: black;
 }
 
 .graph>*>.body>svg>.plot>rect.zero {

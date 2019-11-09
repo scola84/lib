@@ -12,6 +12,14 @@ const wmeta = {
 }
 
 export class HttpClient extends HttpWorker {
+  static getMeta () {
+    return wmeta
+  }
+
+  static setMeta (meta) {
+    merge(wmeta, meta)
+  }
+
   static parse (resource) {
     if (typeof resource === 'object') {
       return resource

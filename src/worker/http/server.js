@@ -11,6 +11,14 @@ const wmeta = {
 }
 
 export class HttpServer extends HttpWorker {
+  static getMeta () {
+    return wmeta
+  }
+
+  static setMeta (meta) {
+    merge(wmeta, meta)
+  }
+
   handleRequest (request, response) {
     const type = request.parseHeader('content-type')
 

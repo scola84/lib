@@ -1,3 +1,4 @@
+import { select } from 'd3-selection'
 import { Router } from '../core'
 
 import {
@@ -227,6 +228,7 @@ export class HtmlRouter extends Router {
       }
 
       this._downstreams[box.path].handleAct(box, data)
+      select(this._base).dispatch('route')
     }
   }
 

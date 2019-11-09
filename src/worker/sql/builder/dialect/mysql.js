@@ -6,12 +6,12 @@ const pools = {}
 
 export class Mysql extends Dialect {
   escape (value, type) {
-    if (type === 'value') {
-      return sqlstring.escape(value)
-    }
-
     if (type === 'id') {
       return `\`${value.replace(/\./g, '`.`')}\``.replace('.`*`', '.*')
+    }
+
+    if (type === 'value') {
+      return sqlstring.escape(value)
     }
 
     return value

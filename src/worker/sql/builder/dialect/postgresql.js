@@ -1,6 +1,6 @@
 import pg from 'pg'
+import pgString from 'pg-escape'
 import PgQueryStream from 'pg-query-stream'
-import sqlstring from 'sqlstring'
 import { Dialect } from './dialect'
 
 if (typeof pg !== 'undefined') {
@@ -13,12 +13,12 @@ const pools = {}
 
 export class Postgresql extends Dialect {
   escape (value, type) {
-    if (type === 'value') {
-      return sqlstring.escape(value)
-    }
-
     if (type === 'id') {
       return `"${value.replace(/\./g, '"."')}"`.replace('."*"', '.*')
+    }
+
+    if (type === 'value') {
+      return pgString.dollarQuotedString(value)
     }
 
     return value

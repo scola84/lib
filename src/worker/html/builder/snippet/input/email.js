@@ -24,6 +24,10 @@ export class Email extends Input {
   }
 
   validateAfter (box, data, error, name, value) {
+    if (this._strict === false) {
+      return null
+    }
+
     if (value.match(/\s/) !== null) {
       return this.setError(error, name, value, 'space')
     }

@@ -7,11 +7,13 @@ export class Input extends Node {
 
     this._clean = null
     this._default = null
+    this._strict = null
     this._validate = null
     this._wrap = null
 
     this.setClean(options.clean)
     this.setDefault(options.default)
+    this.setStrict(options.strict)
     this.setValidate(options.validate)
     this.setWrap(options.wrap)
 
@@ -23,6 +25,7 @@ export class Input extends Node {
       ...super.getOptions(),
       clean: this._clean,
       default: this._default,
+      strict: this._strict,
       validate: this._validate,
       wrap: this._wrap
     }
@@ -32,7 +35,7 @@ export class Input extends Node {
     return this._clean
   }
 
-  setClean (value = (box, data, val) => val) {
+  setClean (value = (b, d, v) => v) {
     this._clean = value
     return this
   }
@@ -52,6 +55,19 @@ export class Input extends Node {
 
   default (value) {
     return this.setDefault(value)
+  }
+
+  getStrict () {
+    return this._strict
+  }
+
+  setStrict (value = true) {
+    this._strict = value
+    return this
+  }
+
+  strict (value) {
+    return this.setStrict(value)
   }
 
   getValidate () {

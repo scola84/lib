@@ -316,7 +316,9 @@ export class Worker {
     this.log('pass', box, data, ...extra)
 
     try {
-      if (this._downstream !== null) {
+      if (data instanceof Error) {
+        this.fail(box, data)
+      } else if (this._downstream !== null) {
         this._downstream.handleAct(box,
           this.handleMerge(box, data, ...extra))
       }

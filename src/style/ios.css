@@ -22,16 +22,16 @@
   }
 }
 
-.ios .app>.main:not(:empty) {
+.ios .app>.main {
   background: whitesmoke;
 }
 
-.ios .app>.menu:not(:empty) {
+.ios .app>.menu {
   background: whitesmoke;
   border-right: 1px solid lightgrey;
 }
 
-*[dir='rtl'] .ios .app>.menu:not(:empty) {
+*[dir='rtl'] .ios .app>.menu {
   border-left: 1px solid lightgrey;
   border-right: 0;
 }

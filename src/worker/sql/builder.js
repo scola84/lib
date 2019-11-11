@@ -142,7 +142,7 @@ export class SqlBuilder extends Builder {
     }
 
     if (this[options.dialect] === undefined) {
-      throw new Error('Dialect not defined')
+      throw new Error('500 Dialect not defined')
     }
 
     this.setDialect(this[options.dialect]().options(options))

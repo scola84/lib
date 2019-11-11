@@ -64,16 +64,16 @@ export class Message extends Node {
 
   resolveAfter (box, data) {
     const {
-      code = this._default
+      status = this._default
     } = data || {}
 
-    if (code === null) {
+    if (status === null) {
       return this._node.classed('in', false)
     }
 
     const text = this._builder
       .print()
-      .format(code)
+      .format(status)
       .prefix(this._prefix)
       .values(data)
 

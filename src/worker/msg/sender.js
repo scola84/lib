@@ -95,7 +95,7 @@ export class MsgSender extends Builder {
     }
 
     if (this[options.transport] === undefined) {
-      throw new Error('Transport not defined')
+      throw new Error('500 Transport not defined')
     }
 
     this.setTransport(this[options.transport]().options(options))

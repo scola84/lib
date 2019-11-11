@@ -101,7 +101,7 @@ export class HttpClient extends HttpWorker {
     this.handleRequest(box, data, request, requestData)
   }
 
-  handleError (box, data, error, messageData, code = 400) {
+  handleError (box, data, error, messageData = {}, code = 400) {
     this._progress(box, {
       lengthComputable: true,
       loaded: 1,
@@ -110,12 +110,17 @@ export class HttpClient extends HttpWorker {
 
     const failError = new Error(`${code} ${error.message}`.trim())
 
-    failError.data = messageData === undefined || messageData === null
-      ? messageData
-      : messageData.data
+    failError.data = messageData
+    failError.orginal = data
+    failError.status = code
 
-    failError.code = code
-    failError.original = data
+    if (failError.data.data !== undefined) {
+      failError.data = failError.data.data
+    }
+
+    if (failError.data.status) {
+      failError.status = failError.data.status
+    }
 
     this.fail(box, failError)
   }
@@ -145,13 +150,7 @@ export class HttpClient extends HttpWorker {
 
       request
         .write(encoderData)
-        .end((error, response) => {
-          if (error !== null) {
-            this.handleError(box, data, error, encoderData,
-              response && response.statusCode)
-            return
-          }
-
+        .end((e, response) => {
           this.patchResponse(box, response)
           this.handleResponse(box, data, response)
         })

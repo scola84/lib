@@ -30,12 +30,14 @@ export class HttpResponder extends Worker {
       meta: responseMeta = {}
     } = error
 
-    const [,
-      status = 500,
-      text
-    ] = error.message.match(/(\d{3})?([^(]*)/) || []
+    const match = error.message.match(/(\d{3})?[^[]*(\[(.+)\])?/)
 
-    responseMeta.statusCode = Number(status)
+    const [,
+      code = 500, ,
+      status
+    ] = match || []
+
+    responseMeta.statusCode = Number(code)
 
     let {
       data: responseData
@@ -43,9 +45,8 @@ export class HttpResponder extends Worker {
 
     if (responseData === undefined) {
       responseData = {
-        message: responseMeta.statusCode < 500 && text !== undefined
-          ? text.trim()
-          : STATUS_CODES[responseMeta.statusCode]
+        status,
+        message: STATUS_CODES[responseMeta.statusCode]
       }
     }
 

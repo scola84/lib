@@ -80,6 +80,10 @@ select:-moz-focusring {
   cursor: pointer;
 }
 
+.hidden {
+  display: none;
+}
+
 .hint:not(:empty) {
   color: red;
   font-size: 0.9em;

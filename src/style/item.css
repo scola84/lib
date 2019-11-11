@@ -104,11 +104,11 @@
 }
 
 .item>.button.icon {
+  height: 1.75em;
   margin-right: 0.5em;
   margin-top: 0;
   margin-bottom: 0;
-  width: 2em;
-  height: 2em;
+  width: 1.75em;
 }
 
 /* Icon */

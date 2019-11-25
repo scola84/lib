@@ -42,6 +42,12 @@ export class Print extends Snippet {
     merge(strings, value)
   }
 
+  static findString (path, locale = slocale) {
+    return `${locale}.${path}`.split('.').reduce((v, k) => {
+      return v === undefined ? v : v[k]
+    }, strings)
+  }
+
   constructor (options = {}) {
     super(options)
 
@@ -123,7 +129,7 @@ export class Print extends Snippet {
 
   findLocaleString (box, data, locale, format) {
     if (this._prefix.length === 0) {
-      return this.findString(`${locale}.${format}`)
+      return Print.findString(format, locale)
     }
 
     let prefix = null
@@ -131,7 +137,7 @@ export class Print extends Snippet {
 
     for (let i = 0; i < this._prefix.length; i += 1) {
       prefix = this.resolveValue(box, data, this._prefix[i])
-      string = this.findString(`${locale}.${prefix}.${format}`)
+      string = Print.findString(`${prefix}.${format}`, locale)
 
       if (string !== undefined) {
         return string
@@ -139,12 +145,6 @@ export class Print extends Snippet {
     }
 
     return undefined
-  }
-
-  findString (path) {
-    return path.split('.').reduce((v, k) => {
-      return v === undefined ? v : v[k]
-    }, strings)
   }
 
   resolveAfter (box, data) {

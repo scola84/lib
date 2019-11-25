@@ -120,8 +120,8 @@ export class MsgSender extends Builder {
 
     if (html !== undefined) {
       message.html = this.format(
-        html.replace(/%([^s])/g, '%%$1'),
-        [this.format('%m', [text], locale)],
+        html,
+        [message],
         locale
       )
     }

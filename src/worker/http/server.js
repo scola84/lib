@@ -42,6 +42,13 @@ export class HttpServer extends HttpWorker {
         return
       }
 
+      if (request.getHeader('connection') === 'close') {
+        request.socket.setTimeout(5000)
+      } else {
+        request.socket.setKeepAlive(true)
+        request.socket.setTimeout(0)
+      }
+
       this.pass(box, {}, request, requestData)
     })
   }
@@ -99,6 +106,7 @@ export class HttpServer extends HttpWorker {
       this.handleRequest(request, response)
     })
 
+    server.keepAliveTimeout = 0
     server.listen(this.getConfig('http.server.listen'))
   }
 }

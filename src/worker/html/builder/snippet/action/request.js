@@ -54,8 +54,13 @@ export class Request extends Action {
     }
 
     if (box.multipart === true) {
-      resource.meta.headers = { 'Content-Type': 'multipart/form-data' }
+      resource.meta.headers['Content-Type'] = 'multipart/form-data'
       delete box.multipart
+    }
+
+    if (box.authorization !== undefined) {
+      resource.meta.headers.Authorization = box.authorization
+      delete box.authorization
     }
 
     HttpClient.request(resource, (error, responseData) => {
@@ -63,6 +68,22 @@ export class Request extends Action {
     }, (bx, event) => {
       this.resolveValue(box, event, this._indicator)
     })
+  }
+
+  resolveError (box, error, data) {
+    if (error.status === error.code) {
+      this.fail(box, error)
+      return
+    }
+
+    const call = this._builder
+      .call()
+      .name(error.status)
+      .act(() => {
+        this.resolve(box, data)
+      })
+
+    call.resolve(box, data)
   }
 
   resolveResource (box, data, string) {
@@ -81,7 +102,7 @@ export class Request extends Action {
 
   resolveResponse (box, error, data) {
     if (error !== null) {
-      this.fail(box, error)
+      this.resolveError(box, error, data)
       return
     }
 

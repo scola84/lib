@@ -1,6 +1,6 @@
-import { Widget } from '../widget'
+import { RequestResource } from './request-resource'
 
-export class DeleteObject extends Widget {
+export class DeleteObject extends RequestResource {
   buildWidget () {
     const b = this._builder
 
@@ -9,7 +9,17 @@ export class DeleteObject extends Widget {
       link
     ] = this._name
 
-    let resource = `/api/${object}/%(${object}_id)s`
+    let resource = [
+      `/${this._prefix}`,
+      `/${this._version}`,
+      `/${this._level}`,
+      `/${object}/%(${object}_id)s`
+    ]
+
+    resource = resource
+      .filter((v) => v !== '/')
+      .join('')
+
     let view = 'select@main:clr'
 
     if (link !== undefined) {

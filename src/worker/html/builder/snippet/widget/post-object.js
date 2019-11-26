@@ -1,6 +1,6 @@
-import { Widget } from '../widget'
+import { RequestResource } from './request-resource'
 
-export class PostObject extends Widget {
+export class PostObject extends RequestResource {
   buildWidget () {
     const b = this._builder
 
@@ -9,7 +9,17 @@ export class PostObject extends Widget {
       link
     ] = this._name
 
-    let resource = `/api/${object}`
+    let resource = [
+      `/${this._prefix}`,
+      `/${this._version}`,
+      `/${this._level}`,
+      `/${object}`
+    ]
+
+    resource = resource
+      .filter((v) => v !== '/')
+      .join('')
+
     let view = `view-${object}:{${object}_id}@main:clr`
 
     if (link !== undefined) {

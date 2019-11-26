@@ -1,6 +1,6 @@
-import { Widget } from '../widget'
+import { RequestResource } from './request-resource'
 
-export class GetObject extends Widget {
+export class GetObject extends RequestResource {
   buildWidget (args) {
     const b = this._builder
 
@@ -8,7 +8,16 @@ export class GetObject extends Widget {
       return `/${name}/%(${name}_id)s`
     }).join('')
 
-    const resource = `/api${qualifier}`
+    let resource = [
+      `/${this._prefix}`,
+      `/${this._version}`,
+      `/${this._level}`,
+      qualifier
+    ]
+
+    resource = resource
+      .filter((v) => v !== '/')
+      .join('')
 
     return b
       .request()

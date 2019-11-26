@@ -1,14 +1,14 @@
-import { Snippet } from '../snippet'
+import { Action } from '../action'
 
 const handlers = {}
 
-export class Call extends Snippet {
+export class Call extends Action {
   static getHandler (name) {
     return handlers[name]
   }
 
-  static setHandler (name, fn) {
-    handlers[name] = fn
+  static setHandler (name, handler) {
+    handlers[name] = handler
   }
 
   constructor (options = {}) {
@@ -32,8 +32,16 @@ export class Call extends Snippet {
   }
 
   resolveAfter (box, data) {
-    if (handlers[this._name]) {
-      handlers[this._name].handle(box, data)
+    if (handlers[this._name] === undefined) {
+      return
     }
+
+    handlers[this._name].handle(box, data, (error) => {
+      if (error !== null) {
+        this.fail(box, error)
+      } else {
+        this.pass(box, data)
+      }
+    })
   }
 }

@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { DateTime, Duration } from 'luxon'
 
 export function l (value, options = '', locale = 'nl_NL') {
   const foptions = options === ''
@@ -14,12 +14,9 @@ export function l (value, options = '', locale = 'nl_NL') {
     locale: locale.replace('_', '-')
   }
 
-  let date = DateTime
-    .fromJSDate(new Date(value), loptions)
-
-  if (type === 'dur') {
-    date = date.diffNow()
-  }
+  const date = type === 'dat'
+    ? DateTime.fromJSDate(new Date(value), loptions)
+    : Duration.fromMillis(value)
 
   return date.toFormat(format)
 }

@@ -6,11 +6,9 @@ export class Message extends Node {
 
     this._default = null
     this._prefix = null
-    this._type = null
 
     this.setDefault(options.default)
     this.setPrefix(options.prefix)
-    this.setType(options.type)
 
     this.class('transition')
   }
@@ -41,27 +39,6 @@ export class Message extends Node {
     return this.setPrefix(value)
   }
 
-  getType () {
-    return this._type
-  }
-
-  setType (value = 'text') {
-    this._type = value
-    return this
-  }
-
-  type (value) {
-    return this.setType(value)
-  }
-
-  html () {
-    return this.setType('html')
-  }
-
-  text () {
-    return this.setType('text')
-  }
-
   resolveAfter (box, data) {
     const {
       status = this._default
@@ -71,20 +48,16 @@ export class Message extends Node {
       return this._node.classed('in', false)
     }
 
-    const text = this._builder
+    const html = this._builder
       .print()
+      .html()
       .format(status)
       .prefix(this._prefix)
       .values(data)
 
-    let value = this.resolveValue(box, data, text)
-
-    if (this._type === 'html') {
-      value = this._builder.format('%m', [value])
-    }
-
-    this._node[this._type](value)
-    this._node.classed('in', true)
+    this._node
+      .html(this.resolveValue(box, data, html))
+      .classed('in', true)
 
     return this._node
   }

@@ -54,11 +54,13 @@ export class Print extends Snippet {
     this._format = null
     this._locale = null
     this._prefix = null
+    this._type = null
     this._values = null
 
     this.setFormat(options.format)
     this.setLocale(options.locale)
     this.setPrefix(options.prefix)
+    this.setType(options.type)
     this.setValues(options.values)
   }
 
@@ -112,6 +114,27 @@ export class Print extends Snippet {
 
   prefix (value) {
     return this.setPrefix(value)
+  }
+
+  getType () {
+    return this._type
+  }
+
+  setType (value = 'text') {
+    this._type = value
+    return this
+  }
+
+  type (value) {
+    return this.setType(value)
+  }
+
+  html () {
+    return this.setType('html')
+  }
+
+  text () {
+    return this.setType('text')
   }
 
   getValues () {
@@ -184,6 +207,10 @@ export class Print extends Snippet {
 
     if (string === format) {
       return ''
+    }
+
+    if (this._type === 'html') {
+      string = this._builder.format('%m', [string])
     }
 
     return string

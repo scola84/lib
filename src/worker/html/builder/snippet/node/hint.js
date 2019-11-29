@@ -6,6 +6,8 @@ export class Hint extends Node {
 
     this._format = null
     this.setFormat(options.format)
+
+    this.class('transition')
   }
 
   getOptions () {
@@ -30,18 +32,18 @@ export class Hint extends Node {
 
   resolveAfter (box, data) {
     if (data === undefined) {
-      return this._node.text(null)
+      return this.resolveEmpty()
     }
 
     if (data.data === null || data.data === undefined) {
-      return this._node.text(null)
+      return this.resolveEmpty()
     }
 
     const parent = this._node.node().parentNode
     let input = parent.querySelector('input, select, textarea')
 
     if (input === null || input.snippet === undefined) {
-      return this._node.text(null)
+      return this.resolveEmpty()
     }
 
     input = input.snippet
@@ -53,21 +55,24 @@ export class Hint extends Node {
       [name, value] = this.resolveArray(box, data, input, name, value)
     }
 
-    let format = null
-    let text = null
-
-    if (value !== undefined && value.reason !== undefined) {
-      format = this._format === null
-        ? `input.${value.type}.${value.reason}`
-        : this.resolveValue(box, data, this._format)
-
-      text = this._builder
-        .print()
-        .format(format)
-        .values(value)
+    if (value === undefined || value.reason === undefined) {
+      return this.resolveEmpty()
     }
 
-    this._node.text(this.resolveValue(box, data, text))
+    const format = this._format === null
+      ? `input.${value.type}.${value.reason}`
+      : this.resolveValue(box, data, this._format)
+
+    const html = this._builder
+      .print()
+      .html()
+      .format(format)
+      .prefix(this._prefix)
+      .values(data)
+
+    this._node
+      .html(this.resolveValue(box, data, html))
+      .classed('in', true)
 
     return this._node
   }
@@ -86,5 +91,11 @@ export class Hint extends Node {
       : value.reduce((a, v) => v, {})
 
     return [name, resolvedValue]
+  }
+
+  resolveEmpty () {
+    this._node
+      .html(null)
+      .classed('in', false)
   }
 }

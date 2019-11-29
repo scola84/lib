@@ -29,14 +29,15 @@
   flex: none;
 }
 
-.form .item .hint:empty {
-  margin-left: 0;
-  margin-right: 0;
+.form .item .hint {
+  margin-top: -2.5em;
+  opacity: 0;
+  padding-left: 1.111em;
+  padding-right: 1.111em;
+  width: 100%;
 }
 
-.form .item .hint:not(:empty) {
-  margin-left: 1.111em;
-  margin-right: 1.111em;
+.form .item .hint.in {
   margin-top: -0.25em;
-  width: 100%;
+  opacity: 1;
 }

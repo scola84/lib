@@ -5,9 +5,11 @@ export class Request extends Action {
   constructor (options = {}) {
     super(options)
 
+    this._call = null
     this._indicator = null
     this._resource = null
 
+    this.setCall(options.call)
     this.setIndicator(options.indicator)
     this.setResource(options.resource)
   }
@@ -15,9 +17,23 @@ export class Request extends Action {
   getOptions () {
     return {
       ...super.getOptions(),
+      call: this._call,
       indicator: this._indicator,
       resource: this._resource
     }
+  }
+
+  getCall () {
+    return this._call
+  }
+
+  setCall (value = true) {
+    this._call = value
+    return this
+  }
+
+  call (value) {
+    return this.setCall(value)
   }
 
   getIndicator () {
@@ -76,11 +92,19 @@ export class Request extends Action {
       return
     }
 
+    if (this._call === false) {
+      this.fail(box, error)
+      return
+    }
+
     const call = this._builder
       .call()
       .name(error.status)
       .act(() => {
         this.resolve(box, data)
+      })
+      .err((bx, callError) => {
+        this.fail(box, callError)
       })
 
     call.resolve(box, data)

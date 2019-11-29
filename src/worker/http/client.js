@@ -37,6 +37,7 @@ export class HttpClient extends HttpWorker {
 
     return {
       meta: {
+        headers: {},
         method,
         url
       }
@@ -110,6 +111,7 @@ export class HttpClient extends HttpWorker {
 
     const failError = new Error(`${code} ${error.message}`.trim())
 
+    failError.code = code
     failError.data = messageData
     failError.orginal = data
     failError.status = code

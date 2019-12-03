@@ -1,16 +1,14 @@
 import http from 'http'
 import merge from 'lodash-es/merge'
 import parse from 'url-parse'
-import { HttpWorker } from './worker'
-
-const wcodecs = HttpWorker.createCodecs()
+import { HttpConnector } from './connector'
 
 const wmeta = {
   headers: {},
   statusCode: 200
 }
 
-export class HttpServer extends HttpWorker {
+export class HttpServer extends HttpConnector {
   static getMeta () {
     return wmeta
   }
@@ -21,10 +19,7 @@ export class HttpServer extends HttpWorker {
 
   handleRequest (request, response) {
     const type = request.parseHeader('content-type')
-
-    const decoder = wcodecs[type.value] === undefined
-      ? wcodecs['application/octet-stream']
-      : wcodecs[type.value]
+    const decoder = this.getCodec(type.value)
 
     decoder.decode(request, (decoderError, requestData) => {
       request.url = parse(request.url, true)
@@ -65,10 +60,7 @@ export class HttpServer extends HttpWorker {
     })
 
     const type = response.parseHeader('content-type')
-
-    const encoder = wcodecs[type.value] === undefined
-      ? wcodecs['application/octet-stream']
-      : wcodecs[type.value]
+    const encoder = this.getCodec(type.value)
 
     encoder.encode(response, responseData, (encoderError, encoderData) => {
       if (encoderError !== null) {

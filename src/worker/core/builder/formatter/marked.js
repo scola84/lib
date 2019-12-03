@@ -1,3 +1,4 @@
+import dompurify from 'dompurify'
 import markdown from 'marked'
 
 export function m (value, options = '') {
@@ -17,5 +18,7 @@ export function m (value, options = '') {
     moptions[key] = val !== '0'
   }
 
-  return markdown(value, moptions)
+  return dompurify.sanitize(
+    markdown(value, moptions)
+  )
 }

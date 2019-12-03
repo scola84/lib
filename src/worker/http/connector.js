@@ -1,14 +1,27 @@
 import { Worker } from '../core'
-import * as codec from './worker/helper/codec'
+import { codec } from './connector/codec'
 
-export class HttpWorker extends Worker {
-  static createCodecs () {
-    return Object.keys(codec).reduce((object, name) => {
-      return {
-        ...object,
-        [codec[name].type()]: new codec[name]()
-      }
-    }, {})
+export class HttpConnector extends Worker {
+  constructor (options = {}) {
+    super(options)
+
+    this._codecs = null
+    this.setCodecs(options.codecs)
+  }
+
+  getCodecs () {
+    return this._codecs
+  }
+
+  getCodec (type) {
+    return this._codecs[type] === undefined
+      ? this._codecs['application/octet-stream']
+      : this._codecs[type]
+  }
+
+  setCodecs (value = codec) {
+    this._codecs = value
+    return this
   }
 
   parseHeader (header = '') {
@@ -46,4 +59,4 @@ export class HttpWorker extends Worker {
   }
 }
 
-HttpWorker.codec = codec
+HttpConnector.codec = codec

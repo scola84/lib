@@ -1,8 +1,6 @@
 import merge from 'lodash-es/merge'
 import superagent from 'superagent'
-import { HttpWorker } from './worker'
-
-const wcodecs = HttpWorker.createCodecs()
+import { HttpConnector } from './connector'
 
 const wmeta = {
   headers: {
@@ -11,7 +9,7 @@ const wmeta = {
   method: 'GET'
 }
 
-export class HttpClient extends HttpWorker {
+export class HttpClient extends HttpConnector {
   static getMeta () {
     return wmeta
   }
@@ -49,7 +47,7 @@ export class HttpClient extends HttpWorker {
       progress
     })
 
-    client.connect(new HttpWorker({
+    client.connect(new HttpConnector({
       act: (box, responseData) => {
         callback(null, responseData)
       },
@@ -129,10 +127,7 @@ export class HttpClient extends HttpWorker {
 
   handleRequest (box, data, request, requestData) {
     const type = request.parseHeader('content-type')
-
-    const encoder = wcodecs[type.value] === undefined
-      ? wcodecs['application/octet-stream']
-      : wcodecs[type.value]
+    const encoder = this.getCodec(type.value)
 
     encoder.encode(request, requestData, (encoderError, encoderData) => {
       if (encoderError !== null) {
@@ -161,10 +156,7 @@ export class HttpClient extends HttpWorker {
 
   handleResponse (box, data, response) {
     const type = response.parseHeader('content-type')
-
-    const decoder = wcodecs[type.value] === undefined
-      ? wcodecs['application/octet-stream']
-      : wcodecs[type.value]
+    const decoder = this.getCodec(type.value)
 
     decoder.decode(response, (decoderError, responseData) => {
       if (decoderError !== null) {

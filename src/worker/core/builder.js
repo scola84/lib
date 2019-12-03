@@ -1,5 +1,5 @@
 import { Worker } from './worker'
-import * as formatter from './builder/helper/formatter'
+import * as formatter from './builder/formatter'
 
 export class Builder extends Worker {
   static attachFactories (target, objects) {

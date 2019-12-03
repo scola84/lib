@@ -1,5 +1,5 @@
 export * from './client'
+export * from './connector'
 export * from './responder'
 export * from './router'
 export * from './server'
-export * from './worker'

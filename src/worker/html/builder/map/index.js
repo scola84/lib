@@ -1,6 +1,5 @@
 import camel from 'lodash-es/camelCase'
 import { Node } from '../snippet/node'
-
 import clsBase from './cls'
 import domBase from './dom'
 import snippetBase from './snippet'

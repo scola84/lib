@@ -1,5 +1,6 @@
 import './import.css'
 import './aero.css'
+import './dialog.css'
 import './app.css'
 import './dom.css'
 import './form.css'

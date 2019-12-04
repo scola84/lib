@@ -1,9 +1,7 @@
 import { RequestResource } from './request-resource'
 
 export class PostObject extends RequestResource {
-  buildWidget () {
-    const b = this._builder
-
+  build (hb) {
     const [
       object,
       link
@@ -27,21 +25,23 @@ export class PostObject extends RequestResource {
       view = '@main:his'
     }
 
-    return b
+    return hb
       .request()
       .resource(
         `POST ${resource}`
       )
       .indicator(
-        b.selector('.progress')
+        hb.selector('.progress')
       )
       .act(
-        b.route().view('@self:clr'),
-        b.route().view(view)
+        hb.route()
+          .view('@self:clr'),
+        hb.route()
+          .view(view)
       )
       .err(
-        b.selector('.message'),
-        b.selector('.body .hint')
+        hb.selector('.message'),
+        hb.selector('.body .hint')
       )
   }
 }

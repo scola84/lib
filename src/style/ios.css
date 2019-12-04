@@ -36,6 +36,38 @@
   border-right: 0;
 }
 
+/* Dialog */
+
+.ios .modal>.dialog {
+  border-radius: 1em;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.ios .modal>.dialog>* {
+  background: whitesmoke;
+}
+
+.ios .modal>.dialog>.body {
+  padding: 0 0.5em 0.5em;
+}
+
+.ios .modal>.dialog>.body input {
+  margin: 1em 0 0.5em;
+}
+
+.ios .modal>.dialog>.footer {
+  padding: 0 0 1em;
+}
+
+.ios .modal>.dialog>.header {
+  padding-top: 1em;
+}
+
+.ios .modal>.dialog>.header>.title {
+  font-weight: bold;
+}
+
 /* Dom */
 
 body.ios {
@@ -136,7 +168,7 @@ body.ios {
 /* Pop */
 
 @media (min-width: 48em) and (min-height: 34em) {
-  .ios .pop>.dialog {
+  .ios .pop>.up {
     border-radius: 1em;
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   }

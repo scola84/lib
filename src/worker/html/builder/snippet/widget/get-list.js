@@ -52,6 +52,43 @@ export class GetList extends RequestResource {
     return this.setSearch(value)
   }
 
+  build (hb) {
+    const qualifier = this._name.map((name, index) => {
+      const id = index < this._name.length - 1
+        ? `/%(${name}_id)s`
+        : ''
+      return `/${name}${id}`
+    }).join('')
+
+    let resource = [
+      `/${this._prefix}`,
+      `/${this._version}`,
+      `/${this._level}`,
+      qualifier
+    ]
+
+    resource = resource
+      .filter((v) => v !== '/')
+      .join('')
+
+    const params = this.buildParams()
+
+    return hb
+      .request()
+      .resource(
+        `GET ${resource}?${params}`
+      )
+      .indicator(
+        hb.selector('.loading')
+      )
+      .act(
+        ...this._args
+      )
+      .err(
+        hb.selector('.message')
+      )
+  }
+
   buildParams () {
     const names = ['count', 'offset', 'search']
 
@@ -73,44 +110,5 @@ export class GetList extends RequestResource {
     }
 
     return string
-  }
-
-  buildWidget (args) {
-    const b = this._builder
-
-    const qualifier = this._name.map((name, index) => {
-      const id = index < this._name.length - 1
-        ? `/%(${name}_id)s`
-        : ''
-      return `/${name}${id}`
-    }).join('')
-
-    let resource = [
-      `/${this._prefix}`,
-      `/${this._version}`,
-      `/${this._level}`,
-      qualifier
-    ]
-
-    resource = resource
-      .filter((v) => v !== '/')
-      .join('')
-
-    const params = this.buildParams()
-
-    return b
-      .request()
-      .resource(
-        `GET ${resource}?${params}`
-      )
-      .indicator(
-        b.selector('.loading')
-      )
-      .act(
-        ...args
-      )
-      .err(
-        b.selector('.message')
-      )
   }
 }

@@ -1,9 +1,7 @@
 import { RequestResource } from './request-resource'
 
 export class GetObject extends RequestResource {
-  buildWidget (args) {
-    const b = this._builder
-
+  build (hb) {
     const qualifier = this._name.map((name) => {
       return `/${name}/%(${name}_id)s`
     }).join('')
@@ -19,19 +17,19 @@ export class GetObject extends RequestResource {
       .filter((v) => v !== '/')
       .join('')
 
-    return b
+    return hb
       .request()
       .resource(
         `GET ${resource}`
       )
       .indicator(
-        b.selector('.progress')
+        hb.selector('.progress')
       )
       .act(
-        ...args
+        ...this._args
       )
       .err(
-        b.selector('.message')
+        hb.selector('.message')
       )
   }
 }

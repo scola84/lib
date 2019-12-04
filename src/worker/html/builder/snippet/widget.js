@@ -45,14 +45,12 @@ export class Widget extends Action {
     return this.setWidget(value)
   }
 
-  createWidget () {
-    const args = this._args
-    this._args = []
+  create () {
+    const widget = this.build(this._builder)
 
-    const widget = this.buildWidget(args)
-
-    if (args.length > 0) {
-      widget.setArgs(args)
+    if (this._args.length > 0) {
+      widget.setArgs(this._args)
+      this._args = []
     }
 
     this.setWidget(widget)
@@ -67,7 +65,7 @@ export class Widget extends Action {
     }
 
     if (this._widget === null) {
-      this.createWidget()
+      this.create()
     }
 
     return this.resolveBefore(box, data)

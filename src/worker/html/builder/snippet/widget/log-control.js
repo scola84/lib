@@ -78,9 +78,83 @@ export class LogControl extends Widget {
     return this.setMode(...mode)
   }
 
-  buildMode () {
-    const b = this._builder
+  build (hb) {
+    return hb
+      .div()
+      .class('log-control')
+      .append(
+        hb.row(
+          hb.div()
+            .class('name')
+            .append(
+              hb.input(
+                hb.select()
+                  .wrap()
+                  .classed({
+                    click: !(this._name.length < 2)
+                  })
+                  .attributes({
+                    disabled: this._name.length < 2 ? 'disabled' : null,
+                    name: 'name'
+                  })
+                  .append(
+                    ...this.buildName(hb)
+                  )
+              ).act((box, data) => {
+                this.handleInput(box, data)
+              })
+            ),
+          hb.div()
+            .class('range')
+            .append(
+              hb.input(
+                hb.date()
+                  .wrap()
+                  .attributes({
+                    formnovalidate: 'formnovalidate',
+                    name: 'begin',
+                    required: 'required'
+                  })
+              ).act((box, data) => {
+                this.handleInput(box, data)
+              }),
+              hb.div()
+                .class('arrow'),
+              hb.input(
+                hb.date()
+                  .wrap()
+                  .attributes({
+                    formnovalidate: 'formnovalidate',
+                    name: 'end',
+                    required: 'required'
+                  })
+              ).act((box, data) => {
+                this.handleInput(box, data)
+              })
+            )
+        ),
+        hb.row(
+          hb.div()
+            .class('action')
+            .append(
+              ...this._action
+            ),
+          hb.tab()
+            .id('mode')
+            .append(
+              hb.div()
+                .class('tab mode')
+                .append(
+                  ...this.buildMode(hb)
+                )
+            ).act((box, data) => {
+              this.handleInput(box, data)
+            })
+        )
+      )
+  }
 
+  buildMode (hb) {
     return this._mode.map((name) => {
       const selected = name.slice(-1) === '#'
 
@@ -88,7 +162,8 @@ export class LogControl extends Widget {
         ? name.slice(0, -1)
         : name
 
-      return b.button()
+      return hb
+        .button()
         .attributes({
           value: selectedName.split('.').pop()
         })
@@ -97,14 +172,12 @@ export class LogControl extends Widget {
           selected
         })
         .text(
-          b.print().format(selectedName)
+          hb.print().format(selectedName)
         )
     })
   }
 
-  buildName () {
-    const b = this._builder
-
+  buildName (hb) {
     return this._name.map((name) => {
       const selected = name.slice(-1) === '#'
         ? 'selected'
@@ -114,74 +187,16 @@ export class LogControl extends Widget {
         ? name
         : name.slice(0, -1)
 
-      return b.option()
+      return hb
+        .option()
         .attributes({
           selected,
           value: selectedName.split('.').pop()
         })
         .text(
-          b.print().format(selectedName)
+          hb.print().format(selectedName)
         )
     })
-  }
-
-  buildWidget () {
-    const b = this._builder
-
-    return b.div().class('log-control').append(
-      b.row(
-        b.div().class('name').append(
-          b.input(
-            b.select().wrap()
-              .classed({
-                click: !(this._name.length < 2)
-              })
-              .attributes({
-                disabled: this._name.length < 2 ? 'disabled' : null,
-                name: 'name'
-              })
-              .append(
-                ...this.buildName()
-              )
-          ).act((box, data) => {
-            this.handleInput(box, data)
-          })
-        ),
-        b.div().class('range').append(
-          b.input(
-            b.date().wrap().attributes({
-              formnovalidate: 'formnovalidate',
-              name: 'begin',
-              required: 'required'
-            })
-          ).act((box, data) => {
-            this.handleInput(box, data)
-          }),
-          b.div().class('arrow'),
-          b.input(
-            b.date().wrap().attributes({
-              formnovalidate: 'formnovalidate',
-              name: 'end',
-              required: 'required'
-            })
-          ).act((box, data) => {
-            this.handleInput(box, data)
-          })
-        )
-      ),
-      b.row(
-        b.div().class('action').append(
-          ...this._action
-        ),
-        b.tab().id('mode').append(
-          b.div().class('tab mode').append(
-            ...this.buildMode()
-          )
-        ).act((box, data) => {
-          this.handleInput(box, data)
-        })
-      )
-    )
   }
 
   handleInput (box, data) {

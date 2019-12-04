@@ -9,6 +9,7 @@ HtmlBuilder.snippet.misc.Print.addStrings({
       back: 'Terug',
       cancel: 'Annuleren',
       delete: 'Verwijderen',
+      ok: 'OK',
       save: 'Opslaan'
     },
     input: {

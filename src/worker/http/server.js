@@ -13,8 +13,9 @@ export class HttpServer extends HttpConnector {
     return wmeta
   }
 
-  static setMeta (meta) {
-    merge(wmeta, meta)
+  static setMeta (value) {
+    merge(wmeta, value)
+    return wmeta
   }
 
   handleRequest (request, response) {

@@ -1,23 +1,30 @@
-/* eslint-disable no-console */
+import get from 'lodash-es/get'
+import { log } from './worker/'
+
+let id = 0
+let config = {}
 
 export class Worker {
-  static createId () {
-    Worker.id = (Worker.id || 0) + 1
-    return Worker.id
+  static getConfig () {
+    return config
   }
 
-  static setup (config = {}) {
-    Worker.config = config
+  static setConfig (value) {
+    config = value
+    return config
+  }
 
-    console.fail = (box, error) => {
-      if (error.logged !== true) {
-        error.logged = true
-        console.error(error)
-      }
-    }
+  static getId () {
+    return id
+  }
 
-    console.info = () => {}
-    console.pass = () => {}
+  static setId (value) {
+    id = value === undefined ? id + 1 : value
+    return id
+  }
+
+  static setup () {
+    log(get(config, 'core.worker.log'))
   }
 
   constructor (options = {}) {
@@ -83,12 +90,10 @@ export class Worker {
   }
 
   getConfig (path = '') {
-    return path.split('.').reduce((v, k) => {
-      return v === undefined || k === '' ? v : v[k]
-    }, this._config)
+    return get(this._config, path)
   }
 
-  setConfig (value = Worker.config) {
+  setConfig (value = config) {
     this._config = value
     return this
   }
@@ -133,7 +138,7 @@ export class Worker {
     return this._id
   }
 
-  setId (value = Worker.createId()) {
+  setId (value = Worker.setId()) {
     this._id = value
     return this
   }
@@ -271,11 +276,17 @@ export class Worker {
   }
 
   handleDecide (box, data) {
+    let decided = null
+
     if (this._decide !== null) {
-      return this._decide(box, data)
+      decided = this._decide(box, data)
+    } else {
+      decided = this.decide(box, data)
     }
 
-    return this.decide(box, data)
+    this.log('decide', box, data, decided)
+
+    return decided
   }
 
   handleErr (box, error) {
@@ -287,24 +298,36 @@ export class Worker {
   }
 
   handleFilter (box, data) {
+    let filtered = null
+
     if (this._filter !== null) {
-      return this._filter(box, data)
+      filtered = this._filter(box, data)
+    } else {
+      filtered = this.filter(box, data)
     }
 
-    return this.filter(box, data)
+    this.log('filter', box, data, filtered)
+
+    return filtered
   }
 
   handleMerge (box, data, ...extra) {
+    let merged = null
+
     if (this._merge !== null) {
-      return this._merge(box, data, ...extra)
+      merged = this._merge(box, data, ...extra)
+    } else {
+      merged = this.merge(box, data, ...extra)
     }
 
-    return this.merge(box, data, ...extra)
+    this.log('merge', box, data, merged)
+
+    return merged
   }
 
   log (type, ...args) {
     if (this._log[type] !== undefined) {
-      this._log[type](...args)
+      this._log[type](this._id, ...args)
     }
   }
 

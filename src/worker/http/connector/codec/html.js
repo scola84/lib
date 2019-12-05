@@ -2,10 +2,6 @@ import parse5 from 'parse5'
 import { Codec } from './codec'
 
 export class HtmlCodec extends Codec {
-  static type () {
-    return 'text/html'
-  }
-
   parse (data) {
     if (typeof parse5 === 'undefined') {
       return data

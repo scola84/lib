@@ -1,13 +1,19 @@
 import { Builder } from '../../../core'
 
+let id = 0
+
 export class Snippet {
-  static attachFactories (target, objects) {
-    Builder.attachFactories(target, objects)
+  static getId () {
+    return id
   }
 
-  static makeId () {
-    Snippet.id = (Snippet.id || 0) + 1
-    return Snippet.id
+  static setId (value) {
+    id = value === undefined ? id + 1 : value
+    return id
+  }
+
+  static attachFactories (target, objects) {
+    Builder.attachFactories(target, objects)
   }
 
   constructor (options = {}) {
@@ -106,7 +112,7 @@ export class Snippet {
     return this._id
   }
 
-  setId (value = Snippet.makeId()) {
+  setId (value = Snippet.setId()) {
     this._id = value
     return this
   }

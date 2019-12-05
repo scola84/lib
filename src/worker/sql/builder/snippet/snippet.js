@@ -1,9 +1,15 @@
 import toPath from 'lodash-es/toPath'
 
+let id = 0
+
 export class Snippet {
-  static makeId () {
-    Snippet.id = (Snippet.id || 0) + 1
-    return Snippet.id
+  static getId () {
+    return id
+  }
+
+  static setId (value) {
+    id = value === undefined ? id + 1 : value
+    return id
   }
 
   constructor (options = {}) {
@@ -113,7 +119,7 @@ export class Snippet {
     return this._id
   }
 
-  setId (value = Snippet.makeId()) {
+  setId (value = Snippet.setId()) {
     this._id = value
     return this
   }

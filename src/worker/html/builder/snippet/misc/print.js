@@ -16,6 +16,7 @@ export class Print extends Snippet {
 
   static setLocale (value) {
     slocale = value
+    return slocale
   }
 
   static getNumbers () {
@@ -24,10 +25,12 @@ export class Print extends Snippet {
 
   static setNumbers (value) {
     HtmlBuilder.formatter.n.definitions = value
+    return HtmlBuilder.formatter.n.definitions
   }
 
   static addNumbers (value) {
     merge(HtmlBuilder.formatter.n.definitions, value)
+    return HtmlBuilder.formatter.n.definitions
   }
 
   static getStrings () {
@@ -36,10 +39,12 @@ export class Print extends Snippet {
 
   static setStrings (value) {
     strings = value
+    return strings
   }
 
   static addStrings (value) {
     merge(strings, value)
+    return strings
   }
 
   static findString (path, locale = slocale) {

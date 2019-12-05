@@ -9,16 +9,13 @@ const coptions = {
 }
 
 export class FormDataCodec extends Codec {
-  static type () {
-    return 'multipart/form-data'
-  }
-
   static getOptions () {
     return coptions
   }
 
   static setOptions (value) {
     merge(coptions, value)
+    return coptions
   }
 
   decode (readable, callback) {

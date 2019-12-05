@@ -7,8 +7,9 @@ export class Call extends Action {
     return handlers[name]
   }
 
-  static setHandler (name, handler) {
-    handlers[name] = handler
+  static setHandler (name, value) {
+    handlers[name] = value
+    return handlers
   }
 
   constructor (options = {}) {

@@ -11,6 +11,7 @@ export class RequestResource extends Widget {
 
   static setLevel (value) {
     wlevel = value
+    return wlevel
   }
 
   static getPrefix () {
@@ -19,6 +20,7 @@ export class RequestResource extends Widget {
 
   static setPrefix (value) {
     wprefix = value
+    return wprefix
   }
 
   static getVersion () {
@@ -27,6 +29,7 @@ export class RequestResource extends Widget {
 
   static setVersion (value) {
     wversion = value
+    return wversion
   }
 
   constructor (options = {}) {

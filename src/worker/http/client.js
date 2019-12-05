@@ -147,7 +147,12 @@ export class HttpClient extends HttpConnector {
 
       request
         .write(encoderData)
-        .end((e, response) => {
+        .end((error, response) => {
+          if (error !== null && response === undefined) {
+            this.handleError(box, data, error)
+            return
+          }
+
           this.patchResponse(box, response)
           this.handleResponse(box, data, response)
         })

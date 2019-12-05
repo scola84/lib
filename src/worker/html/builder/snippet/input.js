@@ -105,9 +105,9 @@ export class Input extends Node {
   cleanInput (box, data, name, value) {
     let cleanValue = value
 
-    const isAllowed = this.isAllowed(box, data)
+    const hasPermission = this.hasPermission(box, data)
 
-    if (isAllowed === false) {
+    if (hasPermission === false) {
       cleanValue = ''
       this.setValue(data, name, cleanValue)
     }

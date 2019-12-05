@@ -11,20 +11,20 @@ export class Snippet {
   }
 
   constructor (options = {}) {
-    this._allow = null
     this._args = null
     this._builder = null
     this._filter = null
     this._id = null
     this._parent = null
+    this._permit = null
     this._storage = null
 
-    this.setAllow(options.allow)
     this.setArgs(options.args)
     this.setBuilder(options.builder)
     this.setFilter(options.filter)
     this.setId(options.id)
     this.setParent(options.parent)
+    this.setPermit(options.permit)
     this.setStorage(options.storage)
   }
 
@@ -42,27 +42,14 @@ export class Snippet {
 
   getOptions () {
     return {
-      allow: this._allow,
       args: this._args,
       builder: this._builder,
       filter: this._filter,
       id: this._id,
       parent: this._parent,
+      permit: this._permit,
       storage: this._storage
     }
-  }
-
-  getAllow () {
-    return this._allow
-  }
-
-  setAllow (value = null) {
-    this._allow = value
-    return this
-  }
-
-  allow (value) {
-    return this.setAllow(value)
   }
 
   getArgs () {
@@ -145,6 +132,19 @@ export class Snippet {
     return this.setParent(value)
   }
 
+  getPermit () {
+    return this._permit
+  }
+
+  setPermit (value = null) {
+    this._permit = value
+    return this
+  }
+
+  permit (value) {
+    return this.setPermit(value)
+  }
+
   getStorage () {
     return this._storage
   }
@@ -181,8 +181,8 @@ export class Snippet {
     return snippets
   }
 
-  isAllowed (box, data) {
-    return this.resolveValue(box, data, this._allow)
+  hasPermission (box, data) {
+    return this.resolveValue(box, data, this._permit)
   }
 
   remove () {
@@ -208,9 +208,9 @@ export class Snippet {
   }
 
   resolve (box, data) {
-    const isAllowed = this.isAllowed(box, data)
+    const hasPermission = this.hasPermission(box, data)
 
-    if (isAllowed === false) {
+    if (hasPermission === false) {
       return null
     }
 

@@ -7,7 +7,6 @@ export class Snippet {
   }
 
   constructor (options = {}) {
-    this._allow = null
     this._args = null
     this._builder = null
     this._escape = null
@@ -15,10 +14,10 @@ export class Snippet {
     this._infix = null
     this._name = null
     this._parens = null
+    this._permit = null
     this._postfix = null
     this._prefix = null
 
-    this.setAllow(options.allow)
     this.setArgs(options.args)
     this.setBuilder(options.builder)
     this.setEscape(options.escape)
@@ -26,6 +25,7 @@ export class Snippet {
     this.setInfix(options.infix)
     this.setName(options.name)
     this.setParens(options.parens)
+    this.setPermit(options.permit)
     this.setPostfix(options.postfix)
     this.setPrefix(options.prefix)
   }
@@ -44,7 +44,6 @@ export class Snippet {
 
   getOptions () {
     return {
-      allow: this._allow,
       args: this._args,
       builder: this._builder,
       escape: this._escape,
@@ -52,22 +51,10 @@ export class Snippet {
       infix: this._infix,
       name: this._name,
       parens: this._parens,
+      permit: this._permit,
       postfix: this._postfix,
       prefix: this._prefix
     }
-  }
-
-  getAllow () {
-    return this._allow
-  }
-
-  setAllow (value = null) {
-    this._allow = value
-    return this
-  }
-
-  allow (value) {
-    return this.setAllow(value)
   }
 
   getArg (index) {
@@ -174,6 +161,19 @@ export class Snippet {
     return this.setParens(true)
   }
 
+  getPermit () {
+    return this._permit
+  }
+
+  setPermit (value = null) {
+    this._permit = value
+    return this
+  }
+
+  permit (value) {
+    return this.setPermit(value)
+  }
+
   getPostfix () {
     return this._postfix
   }
@@ -228,14 +228,14 @@ export class Snippet {
     return snippets
   }
 
-  isAllowed (box, data) {
-    return this.resolveValue(box, data, this._allow)
+  hasPermission (box, data) {
+    return this.resolveValue(box, data, this._permit)
   }
 
   resolve (box, data) {
-    const isAllowed = this.isAllowed(box, data)
+    const hasPermission = this.hasPermission(box, data)
 
-    if (isAllowed === false) {
+    if (hasPermission === false) {
       return undefined
     }
 

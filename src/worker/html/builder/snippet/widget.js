@@ -58,9 +58,9 @@ export class Widget extends Action {
   }
 
   resolve (box, data) {
-    const isAllowed = this.isAllowed(box, data)
+    const hasPermission = this.hasPermission(box, data)
 
-    if (isAllowed === false) {
+    if (hasPermission === false) {
       return null
     }
 

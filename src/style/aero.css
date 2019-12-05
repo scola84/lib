@@ -113,7 +113,6 @@
 
 .aero .panel>.header>.message {
   opacity: 0;
-  z-index: -1;
 }
 
 .aero .panel>.header>.message.in {

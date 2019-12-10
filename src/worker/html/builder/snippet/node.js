@@ -6,11 +6,9 @@ export class Node extends Snippet {
   constructor (options = {}) {
     super(options)
 
-    this._name = null
     this._node = null
     this._transform = []
 
-    this.setName(options.name)
     this.setNode(options.node)
     this.setTransform(options.transform)
 
@@ -22,7 +20,6 @@ export class Node extends Snippet {
   getOptions () {
     return {
       ...super.getOptions(),
-      name: this._name,
       node: this._node,
       transform: this._transform
     }
@@ -38,17 +35,8 @@ export class Node extends Snippet {
     return super.setId(value)
   }
 
-  getName () {
-    return this._name
-  }
-
   setName (value = 'div') {
-    this._name = value
-    return this
-  }
-
-  name (value) {
-    return this.setName(value)
+    return super.setName(value)
   }
 
   setNode (value = null) {

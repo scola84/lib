@@ -21,6 +21,7 @@ export class Snippet {
     this._builder = null
     this._filter = null
     this._id = null
+    this._name = null
     this._parent = null
     this._permit = null
     this._storage = null
@@ -29,6 +30,7 @@ export class Snippet {
     this.setBuilder(options.builder)
     this.setFilter(options.filter)
     this.setId(options.id)
+    this.setName(options.name)
     this.setParent(options.parent)
     this.setPermit(options.permit)
     this.setStorage(options.storage)
@@ -52,6 +54,7 @@ export class Snippet {
       builder: this._builder,
       filter: this._filter,
       id: this._id,
+      name: this._name,
       parent: this._parent,
       permit: this._permit,
       storage: this._storage
@@ -119,6 +122,19 @@ export class Snippet {
 
   id (value) {
     return this.setId(value)
+  }
+
+  getName () {
+    return this._name
+  }
+
+  setName (value = null) {
+    this._name = value
+    return this
+  }
+
+  name (value) {
+    return this.setName(value)
   }
 
   node () {
@@ -246,16 +262,16 @@ export class Snippet {
       return value
     }
 
+    if (value instanceof Snippet) {
+      return this.resolveValue(box, data, value.resolve(box, data))
+    }
+
     if (Array.isArray(value) === true) {
       return value.map((v) => this.resolveValue(box, data, v))
     }
 
     if (typeof value === 'function') {
       return this.resolveValue(box, data, value(box, data))
-    }
-
-    if (value instanceof Snippet) {
-      return this.resolveValue(box, data, value.resolve(box, data))
     }
 
     return value

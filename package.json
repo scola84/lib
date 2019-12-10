@@ -74,6 +74,7 @@
     "fastclick": "^1.0.6",
     "fs-extra": "^8.1.0",
     "iban": "^0.0.12",
+    "jsdom": "^15.2.1",
     "libphonenumber-js": "^1.7.25",
     "lodash": "^4.17.15",
     "lodash-es": "^4.17.15",

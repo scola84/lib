@@ -1,5 +1,10 @@
 import dompurify from 'dompurify'
 import markdown from 'marked'
+import { JSDOM } from 'jsdom'
+
+const sanitizer = dompurify(
+  typeof window === 'undefined' ? new JSDOM().window : window
+)
 
 export function m (value, options = '') {
   const foptions = options === ''
@@ -18,7 +23,7 @@ export function m (value, options = '') {
     moptions[key] = val !== '0'
   }
 
-  return dompurify.sanitize(
+  return sanitizer.sanitize(
     markdown(value, moptions)
   )
 }

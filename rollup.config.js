@@ -5,6 +5,7 @@ const plugins = require('./rollup.plugins')
 const external = [
   'busboy',
   'fs-extra',
+  'jsdom',
   'messagebird',
   'msgpack-lite',
   'mysql',
@@ -22,6 +23,7 @@ const external = [
 const globals = {
   busboy: 'busboy',
   'fs-extra': 'fsExtra',
+  jsdom: 'jsdom',
   messagebird: 'messagebird',
   'msgpack-lite': 'msgpackLite',
   mysql: 'mysql',

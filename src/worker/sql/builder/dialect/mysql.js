@@ -1,3 +1,4 @@
+import toPath from 'lodash-es/toPath'
 import mysql from 'mysql'
 import sqlstring from 'sqlstring'
 import { Dialect } from './dialect'
@@ -7,14 +8,34 @@ const pools = {}
 export class Mysql extends Dialect {
   escape (value, type) {
     if (type === 'id') {
-      return `\`${value.replace(/\./g, '`.`')}\``.replace('.`*`', '.*')
+      return this.escapeId(value)
+    }
+
+    if (type === 'path') {
+      return this.escapePath(value)
     }
 
     if (type === 'value') {
-      return sqlstring.escape(value)
+      return this.escapeValue(value)
     }
 
     return value
+  }
+
+  escapeId (value) {
+    return `\`${value.replace(/\./g, '`.`')}\``.replace('.`*`', '.*')
+  }
+
+  escapePath (value) {
+    const path = toPath(value).map((item) => {
+      return item.match(/^\d+$/) === null ? `.${item}` : `[${item}]`
+    })
+
+    return `>'$${path.join('')}'`
+  }
+
+  escapeValue (value) {
+    return sqlstring.escape(value)
   }
 
   execute (box, data, query, callback) {

@@ -1,19 +1,4 @@
-/*
-SELECT DISTINCT
-    CONCAT(IF(LOCATE(' ', name) = 0,
-                name,
-                LEFT(name, LOCATE(' ', name) - 1)),
-            ',') AS name
-FROM
-    help_topic
-WHERE
-    REGEXP_LIKE(name, '^[a-z0-9\\s_]+$')
-        AND (REGEXP_LIKE(description, '^Syntax:\n+[a-z0-9_]+\\(')
-        OR REGEXP_LIKE(description, '^[a-z0-9_]+\\('))
-ORDER BY name;
-*/
-
-export default [
+const list = [
   'ABS',
   'ACOS',
   'ADDDATE',
@@ -399,7 +384,6 @@ export default [
   'Y',
   'YEAR',
   'YEARWEEK',
-
   'CUME_DIST',
   'DENSE_RANK',
   'FIRST_VALUE',
@@ -411,6 +395,14 @@ export default [
   'PERCENT_RANK',
   'RANK',
   'ROW_NUMBER',
-
   'STRING_AGG'
+]
+
+export default [
+  ...list.map((token) => {
+    return {
+      name: token,
+      token
+    }
+  })
 ]

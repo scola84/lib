@@ -1,3 +1,4 @@
+import toPath from 'lodash-es/toPath'
 import pg from 'pg'
 import pgString from 'pg-escape'
 import PgQueryStream from 'pg-query-stream'
@@ -14,14 +15,45 @@ const pools = {}
 export class Postgresql extends Dialect {
   escape (value, type) {
     if (type === 'id') {
-      return `"${value.replace(/\./g, '"."')}"`.replace('."*"', '.*')
+      return this.escapeId(value)
+    }
+
+    if (type === 'path') {
+      return this.escapePath(value)
     }
 
     if (type === 'value') {
-      return pgString.dollarQuotedString(value)
+      return this.escapeValue(value)
     }
 
     return value
+  }
+
+  escapeId (value) {
+    return `"${value.replace(/\./g, '"."')}"`.replace('."*"', '.*')
+  }
+
+  escapePath (value) {
+    let path = toPath(value)
+    let prefix = null
+
+    path = path.map((item, index, array) => {
+      if (index === 0) {
+        prefix = ''
+      } else if (index === array.length - 1) {
+        prefix = '->>'
+      } else {
+        prefix = '->'
+      }
+
+      return prefix + (item.match(/^\d+$/) ? item : `'${item}'`)
+    })
+
+    return path.join('')
+  }
+
+  escapeValue (value) {
+    return pgString.dollarQuotedString(value)
   }
 
   execute (box, data, query, callback) {

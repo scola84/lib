@@ -292,20 +292,24 @@ export class Snippet {
   }
 
   resolveValue (box, data, value) {
-    if (typeof value === 'string') {
-      return this.resolveEscape(value, this._escape)
-    }
-
-    if (typeof value === 'function') {
-      return this.resolveValue(box, data, value(box, data))
+    if (value === null) {
+      return 'NULL'
     }
 
     if (value instanceof Snippet) {
       return this.resolveValue(box, data, value.resolve(box, data))
     }
 
-    if (value === null) {
-      return 'NULL'
+    if (typeof value === 'object') {
+      return this.resolveValue(box, data, JSON.stringify(value))
+    }
+
+    if (typeof value === 'string') {
+      return this.resolveEscape(value, this._escape)
+    }
+
+    if (typeof value === 'function') {
+      return this.resolveValue(box, data, value(box, data))
     }
 
     return value

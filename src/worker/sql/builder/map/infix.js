@@ -1,15 +1,3 @@
-/*
-SELECT
-    CONCAT(help_topic.name, ',')
-FROM
-    help_topic
-WHERE
-    help_category_id IN (3, 15 , 19, 20, 38)
-        AND NOT ((REGEXP_LIKE(description, '^Syntax:\n+[a-z0-9_]+\\(')
-        OR REGEXP_LIKE(description, '^[a-z0-9_]+\\(')))
-ORDER BY name;
-*/
-
 const alias = {
   '!=': 'notEq',
   '&': 'bitAnd',
@@ -27,10 +15,15 @@ const alias = {
   '>>': 'bitRight',
   '^': 'bitXor',
   '|': 'bitOr',
-  '~': 'bitInv'
+  '~': 'bitInv',
+  '->': 'jsonExtract'
 }
 
-const list = [
+const unspaced = [
+  '->'
+]
+
+const spaced = [
   '!=',
   '&',
   '*',
@@ -48,8 +41,9 @@ const list = [
   '^',
   '|',
   '~',
-
+  '->',
   'AND',
+  'AS',
   'BETWEEN',
   'DIV',
   'IN',
@@ -58,19 +52,25 @@ const list = [
   'MATCH AGAINST',
   'NOT',
   'OR',
+  'OVER',
   'REGEXP',
   'RLIKE',
   'SOUNDS LIKE',
-  'XOR',
-
-  'AS',
-  'OVER',
-  'UNION'
+  'UNION',
+  'XOR'
 ]
 
-export default list.map((token) => {
-  return {
-    name: alias[token] || token,
-    token
-  }
-})
+export default [
+  ...spaced.map((token) => {
+    return {
+      name: alias[token] || token,
+      token: ` ${token} `
+    }
+  }),
+  ...unspaced.map((token) => {
+    return {
+      name: alias[token] || token,
+      token
+    }
+  })
+]

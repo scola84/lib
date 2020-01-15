@@ -1,6 +1,6 @@
-import merge from 'lodash-es/merge'
-import { HtmlBuilder } from '../../../builder'
-import { Snippet } from '../snippet'
+import merge from 'lodash/merge.js'
+import { HtmlBuilder } from '../../../builder.js'
+import { Snippet } from '../snippet.js'
 
 const regexpBase = '\\{([^}]+)\\}'
 const regexpGlobal = new RegExp(regexpBase, 'g')
@@ -48,9 +48,11 @@ export class Print extends Snippet {
   }
 
   static findString (path, locale = slocale) {
-    return `${locale}.${path}`.split('.').reduce((v, k) => {
+    const string = `${locale}.${path}`.split('.').reduce((v, k) => {
       return v === undefined ? v : v[k]
     }, strings)
+
+    return string === undefined ? null : string
   }
 
   constructor (options = {}) {
@@ -167,20 +169,16 @@ export class Print extends Snippet {
       prefix = this.resolveValue(box, data, this._prefix[i])
       string = Print.findString(`${prefix}.${format}`, locale)
 
-      if (string !== undefined) {
+      if (string !== null) {
         return string
       }
     }
 
-    return undefined
+    return null
   }
 
   resolveAfter (box, data) {
-    return this.resolveFormat(
-      box,
-      data,
-      this.resolveValue(box, data, this._format)
-    )
+    return this.resolveFormat(box, data, this.resolveValue(box, data, this._format))
   }
 
   resolveFormat (box, data, format) {
@@ -193,7 +191,7 @@ export class Print extends Snippet {
 
     let string = this.findLocaleString(box, data, locale, format)
 
-    if (string === undefined) {
+    if (string === null) {
       string = format
     }
 
@@ -229,11 +227,7 @@ export class Print extends Snippet {
 
     for (let i = 0; i < matches.length; i += 1) {
       [, match] = matches[i].match(regexpSingle)
-
-      resolvedFormat = resolvedFormat.replace(
-        matches[i],
-        this.resolveFormat(box, data, match)
-      )
+      resolvedFormat = resolvedFormat.replace(matches[i], this.resolveFormat(box, data, match))
     }
 
     return resolvedFormat

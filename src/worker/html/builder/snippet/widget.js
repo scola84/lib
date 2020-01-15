@@ -1,4 +1,4 @@
-import { Action } from './action'
+import { Action } from './action.js'
 
 export class Widget extends Action {
   constructor (options = {}) {

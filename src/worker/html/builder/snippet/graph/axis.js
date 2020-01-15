@@ -1,11 +1,7 @@
-import { Parent } from '../parent'
-import { Linear, map } from './axis/'
+import { Parent } from '../parent.js'
+import { Linear, map } from './axis/index.js'
 
 export class Axis extends Parent {
-  static setup () {
-    Axis.attachFactories(Axis, { map })
-  }
-
   constructor (options = {}) {
     super(options)
 
@@ -75,3 +71,5 @@ export class Axis extends Parent {
     return this.resolveAfter(box, data)
   }
 }
+
+Axis.attachFactories({ map })

@@ -13,7 +13,6 @@ export default [
   'item',
   'label',
   'main',
-  'metric',
   'modal',
   'row',
   'left',

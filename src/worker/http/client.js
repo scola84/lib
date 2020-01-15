@@ -1,33 +1,14 @@
-import merge from 'lodash-es/merge'
-import superagent from 'superagent'
-import { HttpConnector } from './connector'
+import fetch from 'node-fetch'
+import { Worker } from '../core/index.js'
+import { Request } from './client/message/index.js'
 
-const wmeta = {
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  method: 'GET'
-}
-
-export class HttpClient extends HttpConnector {
-  static getMeta () {
-    return wmeta
-  }
-
-  static setMeta (value) {
-    merge(wmeta, value)
-    return wmeta
-  }
-
+export class HttpClient extends Worker {
   static parse (resource) {
-    if (typeof resource === 'object') {
+    if (typeof resource === 'object' && resource !== null) {
       return resource
     }
 
-    let [
-      method,
-      url = null
-    ] = resource.split(' ')
+    let [method, url = null] = resource.split(' ')
 
     if (url === null) {
       url = method
@@ -35,11 +16,8 @@ export class HttpClient extends HttpConnector {
     }
 
     return {
-      meta: {
-        headers: {},
-        method,
-        url
-      }
+      method,
+      url
     }
   }
 
@@ -48,7 +26,7 @@ export class HttpClient extends HttpConnector {
       progress
     })
 
-    client.connect(new HttpConnector({
+    client.connect(new Worker({
       act: (box, responseData) => {
         callback(null, responseData)
       },
@@ -57,7 +35,7 @@ export class HttpClient extends HttpConnector {
       }
     }))
 
-    client.handle({}, HttpClient.parse(resource))
+    client.call({}, HttpClient.parse(resource))
   }
 
   constructor (options = {}) {
@@ -77,33 +55,40 @@ export class HttpClient extends HttpConnector {
   }
 
   act (box, data) {
-    let {
-      meta: requestMeta,
-      data: requestData
-    } = data
+    const { url, body } = data
 
-    const cmeta = this.getConfig('http.client') || {}
+    const init = {
+      ...data,
+      body: null
+    }
 
-    requestMeta = merge({}, wmeta, cmeta, requestMeta)
-    requestData = requestMeta.method === 'GET' ? null : requestData
+    const request = new Request(new fetch.Request(url, init))
 
-    const request = superagent(requestMeta.method, requestMeta.url)
+    this.log('info', 'Handling request "%s %s" %j', [
+      request.getMethod(),
+      request.original.url,
+      request.getHeaders()
+    ])
 
-    Object.keys(requestMeta.headers).forEach((name) => {
-      if (requestData === null && name === 'Content-Type') {
+    this._progress(box, {
+      loaded: 1,
+      total: 10
+    })
+
+    request.parent = this
+
+    request.send(body, (requestError, response) => {
+      if (requestError !== null) {
+        this.handleError(box, data, requestError)
         return
       }
 
-      request.set(name, requestMeta.headers[name])
+      this.handleResponse(box, data, response)
     })
-
-    this.patchRequest(box, request)
-    this.handleRequest(box, data, request, requestData)
   }
 
   handleError (box, data, error, messageData = {}, code = 400) {
     this._progress(box, {
-      lengthComputable: true,
       loaded: 1,
       total: 1
     })
@@ -112,101 +97,46 @@ export class HttpClient extends HttpConnector {
 
     failError.code = code
     failError.data = messageData
-    failError.orginal = data
-    failError.status = code
+    failError.original = data
+    failError.type = code
 
-    if (failError.data.data !== undefined) {
+    if (typeof failError.data.data === 'object') {
       failError.data = failError.data.data
     }
 
-    if (failError.data.status) {
-      failError.status = failError.data.status
+    if (failError.data.type) {
+      failError.type = failError.data.type
     }
 
     this.fail(box, failError)
   }
 
-  handleRequest (box, data, request, requestData) {
-    const type = request.parseHeader('content-type')
-    const encoder = this.getCodec(type.value)
-
-    encoder.encode(request, requestData, (encoderError, encoderData) => {
-      if (encoderError !== null) {
-        this.handleError(box, data, encoderError, requestData)
-        return
-      }
-
-      this._progress(box, {
-        lengthComputable: true,
-        loaded: 1,
-        total: 10
-      })
-
-      if (type.value === 'multipart/form-data') {
-        request.setHeader('Content-Type', null)
-      }
-
-      request
-        .write(encoderData)
-        .end((error, response) => {
-          if (error !== null && response === undefined) {
-            this.handleError(box, data, error)
-            return
-          }
-
-          this.patchResponse(box, response)
-          this.handleResponse(box, data, response)
-        })
-    })
-  }
-
   handleResponse (box, data, response) {
-    const type = response.parseHeader('content-type')
-    const decoder = this.getCodec(type.value)
+    this.log('info', 'Handling response "%s" %j', [
+      response.getStatus(),
+      response.getHeaders()
+    ])
 
-    decoder.decode(response, (decoderError, responseData) => {
+    response.parent = this
+
+    response.decode((decoderError, decoderData) => {
       if (decoderError !== null) {
-        this.handleError(box, data, decoderError, responseData)
+        this.handleError(box, data, decoderError, decoderData)
         return
       }
 
-      if (response.statusCode >= 400) {
-        this.handleError(box, data, new Error(response.statusText || ''),
-          responseData, response.statusCode)
+      if (response.getStatus() >= 400) {
+        this.handleError(box, data, new Error(response.original.statusText || ''),
+          decoderData, response.getStatus())
         return
       }
 
-      this.pass(box, data, response, responseData)
+      this.pass(box, decoderData, response, data)
+    }, (loaded) => {
+      this._progress(box, {
+        loaded,
+        total: response.getHeader('Content-Length')
+      })
     })
-  }
-
-  merge (box, data, response, responseData) {
-    return responseData
-  }
-
-  patchRequest (box, request) {
-    request.getHeader = (name) => request._header[name]
-    request.parseHeader = (name) => this.parseHeader(request.getHeader(name))
-    request.setHeader = request.set
-    request.write = request.send
-
-    request.on('progress', (event) => {
-      this._progress(box, event)
-    })
-  }
-
-  patchResponse (box, response) {
-    response.getHeader = (name) => response.headers[name]
-    response.parseHeader = (name) => this.parseHeader(response.getHeader(name))
-
-    response.on = (name, handler) => {
-      if (name === 'data') {
-        handler(Buffer.from(response.text))
-      } else if (name === 'end') {
-        handler()
-      }
-    }
-
-    response.once = response.on
   }
 }

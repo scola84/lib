@@ -1,6 +1,6 @@
-import { event } from 'd3-selection'
-import debounce from 'lodash-es/debounce'
-import { Action } from './action'
+import * as d3 from 'd3-selection'
+import debounce from 'lodash/debounce.js'
+import { Action } from './action.js'
 
 export class Event extends Action {
   constructor (options = {}) {
@@ -59,8 +59,8 @@ export class Event extends Action {
     }, this._debounce)
 
     node.on(this._name, () => {
-      event.preventDefault()
-      debounced(event)
+      d3.event.preventDefault()
+      debounced(d3.event)
     })
   }
 

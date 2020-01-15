@@ -1,3 +1,2 @@
-export * from './helper'
-export { default as map } from './map'
-export { default as snippet } from './snippet'
+export * from './locale/index.js'
+export * from './helper/index.js'

@@ -1,5 +1,5 @@
-import trim from 'lodash-es/trim'
-import { Snippet } from '../snippet'
+import trim from 'lodash/trim.js'
+import { Snippet } from '../snippet.js'
 
 export class Search extends Snippet {
   constructor (options = {}) {
@@ -118,18 +118,9 @@ export class Search extends Snippet {
 
       for (let j = 0; j < match.length; j += 1) {
         string += j === 0 ? '' : ` ${inner} `
-
-        string += this.resolveEscape(
-          this.resolveValue(box, data, columns[i]),
-          'id'
-        )
-
+        string += this.resolveEscape(this.resolveValue(box, data, columns[i]), 'id')
         string += ' LIKE '
-
-        string += this.resolveEscape(
-          trim(match[j].replace(wildcard, '%')),
-          'value'
-        )
+        string += this.resolveEscape(trim(match[j].replace(wildcard, '%')), 'value')
       }
 
       string += ')'

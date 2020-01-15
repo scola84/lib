@@ -1,4 +1,4 @@
-import { Worker } from './worker'
+import { Worker } from './worker.js'
 
 export class Resolver extends Worker {
   constructor (options = {}) {
@@ -25,54 +25,50 @@ export class Resolver extends Worker {
   }
 
   act (box, data) {
-    this.resolve(box, data, (newBox, newData) => {
-      this.pass(newBox, newData)
-    })
-  }
-
-  decide (box, data) {
-    if (this._decide !== null) {
-      return this._decide(box, data)
-    }
-
-    return box.resolve !== undefined
-  }
-
-  err (box, error) {
-    this.resolve(box, error, (newBox) => {
-      this.fail(newBox, error)
-    })
-  }
-
-  resolve (box, data, callback) {
     const resolve = box.resolve[this._name]
 
-    if (resolve.callback !== undefined) {
-      resolve.callback()
+    if (typeof resolve.callback === 'function') {
+      if (data instanceof Error) {
+        resolve.callback(data)
+      } else {
+        resolve.callback(null, data)
+      }
     }
 
     if (this._collect === true) {
-      resolve.data = resolve.data || []
-
       if (resolve.empty === false) {
-        const index = data.index === undefined
-          ? resolve.data.length
-          : data.index
+        const index = Number.isInteger(data.index) === true
+          ? data.index
+          : resolve.data.length
 
         resolve.data[index] = data
       }
     }
 
-    resolve.count += 1
-
-    const next = resolve.empty === true ||
-      (resolve.count % resolve.total) === 0
-
-    if (next === true) {
-      callback(
-        this._wrap === true ? box.box : box,
-        this._collect === true ? resolve.data : data
-      )
+    if (resolve.empty === false) {
+      resolve.count += 1
+      this.log('info', 'Resolving "%s/%s"', [resolve.count, resolve.total], box.rid)
     }
+
+    if (resolve.empty === true || (resolve.count % resolve.total) === 0) {
+      const newBox = this._wrap === true
+        ? box.box
+        : box
+
+      const newData = this._collect === true && resolve.empty === false
+        ? resolve.data
+        : data
+
+      this.pass(newBox, newData)
+    }
+  }
+
+  decide (box) {
+    return typeof box.resolve === 'object' &&
+      typeof box.resolve[this._name] === 'object'
+  }
+
+  err (box, error) {
+    this.act(box, error)
   }
 }

@@ -1,12 +1,12 @@
-import camel from 'lodash-es/camelCase'
-import * as scale from './scale'
+import camelCase from 'lodash/camelCase.js'
+import * as scale from './scale/index.js'
 
-export * from './scale'
+export * from './scale/index.js'
 
 const map = Object.keys(scale).reduce((object, name) => {
   return {
     ...object,
-    [camel(name)]: {
+    [camelCase(name)]: {
       object: scale[name]
     }
   }

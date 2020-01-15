@@ -1,4 +1,4 @@
-import { Plot } from '../../plot'
+import { Plot } from '../../plot.js'
 
 export class Scale {
   constructor (options = {}) {
@@ -304,14 +304,8 @@ export class Scale {
     const style = window.getComputedStyle(node)
 
     this._range = {
-      height: this.prepareRangeFrom(
-        style,
-        ['height', 'padding-top', 'padding-bottom']
-      ),
-      width: this.prepareRangeFrom(
-        style,
-        ['width', 'padding-left', 'padding-right']
-      )
+      height: this.prepareRangeFrom(style, ['height', 'padding-top', 'padding-bottom']),
+      width: this.prepareRangeFrom(style, ['width', 'padding-left', 'padding-right'])
     }
 
     return this.preparePpu()

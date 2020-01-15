@@ -1,5 +1,5 @@
-import defaults from 'lodash-es/defaultsDeep'
-import { Node } from '../node'
+import defaultsDeep from 'lodash/defaultsDeep.js'
+import { Node } from '../node.js'
 
 export class Search extends Node {
   constructor (options = {}) {
@@ -84,11 +84,11 @@ export class Search extends Node {
   }
 
   resolveBefore (box, data) {
-    if (box.input !== undefined) {
+    if (typeof box.input === 'string') {
       return this.resolveInput(box, data)
     }
 
-    if (box.toggle !== undefined) {
+    if (typeof box.toggle === 'boolean') {
       return this.resolveToggle(box, data)
     }
 
@@ -117,7 +117,7 @@ export class Search extends Node {
       this._node.classed('in', true)
       this._node.select('input').attr('value', value)
 
-      defaults(box, {
+      defaultsDeep(box, {
         list: {
           search: this.formatSearch(value)
         }

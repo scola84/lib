@@ -1,5 +1,5 @@
-import { HtmlRouter } from '../../../router'
-import { Action } from '../action'
+import { HtmlRouter } from '../../../router.js'
+import { Action } from '../action.js'
 
 export class Route extends Action {
   constructor (options = {}) {
@@ -42,6 +42,6 @@ export class Route extends Action {
 
     route = HtmlRouter.parseRoute(route, box.name)
 
-    HtmlRouter.handle(route, routeData)
+    HtmlRouter.call(route, routeData)
   }
 }

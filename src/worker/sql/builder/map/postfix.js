@@ -24,7 +24,7 @@ export default [
   ...list.map((token) => {
     return {
       name: token,
-      postfix: ` ${token}`
+      token: ` ${token}`
     }
   })
 ]

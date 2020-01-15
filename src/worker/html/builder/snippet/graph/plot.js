@@ -1,13 +1,9 @@
-import { event, select } from 'd3-selection'
-import { Axis } from './axis'
-import { Parent } from '../parent'
-import { map } from './plot/'
+import * as d3 from 'd3-selection'
+import { Axis } from './axis.js'
+import { Parent } from '../parent.js'
+import { map } from './plot/index.js'
 
 export class Plot extends Parent {
-  static setup () {
-    Plot.attachFactories(Plot, { map })
-  }
-
   constructor (options = {}) {
     super(options)
 
@@ -61,7 +57,7 @@ export class Plot extends Parent {
 
     node
       .on('mouseover.scola-plot', () => {
-        data.target = event.target
+        data.target = d3.event.target
         this.resolveValue(box, data, this._tip.setParent(null))
       })
       .on('mouseout.scola-plot', () => {
@@ -96,7 +92,7 @@ export class Plot extends Parent {
     const children = Array.from(this._node.node().childNodes)
 
     for (let i = 0; i < children.length; i += 1) {
-      this.removeTip(select(children[i]))
+      this.removeTip(d3.select(children[i]))
     }
 
     super.removeChildren()
@@ -116,3 +112,5 @@ export class Plot extends Parent {
     return this.resolveOuter(box, data)
   }
 }
+
+Plot.attachFactories({ map })

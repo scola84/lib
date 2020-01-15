@@ -1,5 +1,5 @@
-import { event, select } from 'd3-selection'
-import { Input } from '../input'
+import * as d3 from 'd3-selection'
+import { Input } from '../input.js'
 
 export class Checkbox extends Input {
   constructor (options) {
@@ -12,7 +12,7 @@ export class Checkbox extends Input {
   }
 
   removeBefore () {
-    select(this._node.node().parentNode)
+    d3.select(this._node.node().parentNode)
       .on('keydown.scola-check', null)
 
     this.removeOuter()
@@ -47,7 +47,7 @@ export class Checkbox extends Input {
       .attr('tabindex', 0)
       .classed('input check', true)
       .on('keydown.scola-check', () => {
-        if ([13, 32].indexOf(event.keyCode) > -1) {
+        if ([13, 32].indexOf(d3.event.keyCode) > -1) {
           this._node.property('checked', true)
         }
       })

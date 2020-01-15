@@ -1,5 +1,5 @@
-import { select } from 'd3-selection'
-import { Event } from '../event'
+import * as d3 from 'd3-selection'
+import { Event } from '../event.js'
 
 export class Fold extends Event {
   constructor (options = {}) {
@@ -80,7 +80,7 @@ export class Fold extends Event {
       return
     }
 
-    const mustFold = select(handle)
+    const mustFold = d3.select(handle)
       .classed('fold handle')
 
     if (mustFold === true) {
@@ -103,9 +103,7 @@ export class Fold extends Event {
   }
 
   load (box, data, snippet) {
-    const isFolded = Boolean(Number(
-      this._storage.getItem(`fold-${this._id}`)
-    ))
+    const isFolded = Boolean(Number(this._storage.getItem(`fold-${this._id}`)))
 
     snippet
       .node()
@@ -142,11 +140,11 @@ export class Fold extends Event {
     for (let i = snippets.length - 1; i >= 0; i -= 1) {
       item = snippets[i].node()
 
-      if (item.parent !== undefined) {
-        if (item.next === undefined) {
-          item.parent.appendChild(item.node())
-        } else {
+      if (typeof item.parent === 'object') {
+        if (typeof item.next === 'object') {
           item.parent.insertBefore(item.node(), item.next)
+        } else {
+          item.parent.appendChild(item.node())
         }
       }
 

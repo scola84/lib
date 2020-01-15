@@ -1,6 +1,6 @@
-import parallel from 'async/parallel'
-import series from 'async/series'
-import { Action } from '../action'
+import parallel from 'async/parallel.js'
+import series from 'async/series.js'
+import { Action } from '../action.js'
 
 export class Async extends Action {
   constructor (options = {}) {

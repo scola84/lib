@@ -1,2 +1,2 @@
-export * from './popup'
-export * from './route'
+export * from './popup.js'
+export * from './route.js'

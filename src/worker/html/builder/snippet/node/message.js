@@ -1,4 +1,4 @@
-import { Node } from '../node'
+import { Node } from '../node.js'
 
 export class Message extends Node {
   constructor (options = {}) {
@@ -30,7 +30,7 @@ export class Message extends Node {
     return this._prefix
   }
 
-  setPrefix (value = 'status') {
+  setPrefix (value = 'message') {
     this._prefix = value
     return this
   }
@@ -41,17 +41,17 @@ export class Message extends Node {
 
   resolveAfter (box, data) {
     const {
-      status = this._default
+      type = this._default
     } = data || {}
 
-    if (status === null) {
+    if (type === null) {
       return this._node.classed('in', false)
     }
 
     const html = this._builder
       .print()
       .html()
-      .format(status)
+      .format(type)
       .prefix(this._prefix)
       .values(data)
 

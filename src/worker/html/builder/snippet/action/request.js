@@ -1,5 +1,5 @@
-import { HttpClient } from '../../../../http'
-import { Action } from '../action'
+import { HttpClient } from '../../../../http/index.js'
+import { Action } from '../action.js'
 
 export class Request extends Action {
   constructor (options = {}) {
@@ -70,12 +70,12 @@ export class Request extends Action {
     }
 
     if (box.multipart === true) {
-      resource.meta.headers['Content-Type'] = 'multipart/form-data'
+      resource.headers['Content-Type'] = 'multipart/form-data'
       delete box.multipart
     }
 
-    if (box.authorization !== undefined) {
-      resource.meta.headers.Authorization = box.authorization
+    if (typeof box.authorization === 'string') {
+      resource.headers.Authorization = box.authorization
       delete box.authorization
     }
 
@@ -87,7 +87,7 @@ export class Request extends Action {
   }
 
   resolveError (box, error, data) {
-    if (error.status === error.code) {
+    if (error.type === error.code) {
       this.fail(box, error)
       return
     }
@@ -99,7 +99,7 @@ export class Request extends Action {
 
     const call = this._builder
       .call()
-      .name(error.status)
+      .name(error.type)
       .act(() => {
         this.resolve(box, data)
       })
@@ -119,7 +119,7 @@ export class Request extends Action {
     ])
 
     resource = HttpClient.parse(resource.replace(/undefined/g, ''))
-    resource.data = data
+    resource.body = data
 
     return resource
   }

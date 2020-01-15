@@ -1,5 +1,5 @@
-import { select } from 'd3-selection'
-import { Node } from '../node'
+import * as d3 from 'd3-selection'
+import { Node } from '../node.js'
 
 export class Tip extends Node {
   constructor (options = {}) {
@@ -24,7 +24,7 @@ export class Tip extends Node {
   }
 
   resolveAfter (box, data) {
-    select('body').insert(() => this._node.node())
+    d3.select('body').insert(() => this._node.node())
 
     const targetRect = data.target.getBoundingClientRect()
     const tipRect = this._node.node().getBoundingClientRect()

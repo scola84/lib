@@ -1,4 +1,4 @@
-import { Node } from '../node'
+import { Node } from '../node.js'
 
 export class Hint extends Node {
   constructor (options = {}) {
@@ -31,18 +31,18 @@ export class Hint extends Node {
   }
 
   resolveAfter (box, data) {
-    if (data === undefined) {
+    if (typeof data === 'object' && data !== null) {
       return this.resolveEmpty()
     }
 
-    if (data.data === null || data.data === undefined) {
+    if (typeof data.data !== 'object' || data.data === null) {
       return this.resolveEmpty()
     }
 
     const parent = this._node.node().parentNode
     let input = parent.querySelector('input, select, textarea')
 
-    if (input === null || input.snippet === undefined) {
+    if (input === null || typeof input.snippet !== 'object') {
       return this.resolveEmpty()
     }
 
@@ -55,7 +55,7 @@ export class Hint extends Node {
       [name, value] = this.resolveArray(box, data, input, name, value)
     }
 
-    if (value === undefined || value.reason === undefined) {
+    if (typeof value !== 'object' || typeof value.reason !== 'string') {
       return this.resolveEmpty()
     }
 
@@ -86,7 +86,7 @@ export class Hint extends Node {
       .selector(`input[name="${name}"]`)
       .resolve(null)
 
-    const resolvedValue = multiple === undefined
+    const resolvedValue = typeof multiple !== 'string'
       ? value[all.indexOf(input)]
       : value.reduce((a, v) => v, {})
 

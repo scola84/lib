@@ -1,2 +1,2 @@
-export * from './bind'
-export * from './dummy'
+export * from './bind.js'
+export * from './dummy.js'

@@ -1,5 +1,5 @@
-import { Dummy } from '../../helper'
-import { Node } from '../node'
+import { Dummy } from '../../helper/index.js'
+import { Node } from '../node.js'
 
 export class Fragment extends Node {
   node () {

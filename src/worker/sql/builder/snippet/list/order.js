@@ -1,4 +1,4 @@
-import { Snippet } from '../snippet'
+import { Snippet } from '../snippet.js'
 
 export class Order extends Snippet {
   constructor (options = {}) {

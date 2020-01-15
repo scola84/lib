@@ -1,5 +1,5 @@
-import { select } from 'd3-selection'
-import { Node } from '../node'
+import * as d3 from 'd3-selection'
+import { Node } from '../node.js'
 
 export class Form extends Node {
   constructor (options) {
@@ -19,10 +19,7 @@ export class Form extends Node {
     let max = 0
 
     label.each((datum, index, nodes) => {
-      max = Math.max(
-        max,
-        Math.ceil(parseFloat(select(nodes[index]).style('width')))
-      )
+      max = Math.max(max, Math.ceil(parseFloat(d3.select(nodes[index]).style('width'))))
     })
 
     this._node

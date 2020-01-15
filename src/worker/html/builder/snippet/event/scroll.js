@@ -1,5 +1,5 @@
-import defaults from 'lodash-es/defaultsDeep'
-import { Event } from '../event'
+import defaultsDeep from 'lodash/defaultsDeep.js'
+import { Event } from '../event.js'
 
 export class Scroll extends Event {
   constructor (options = {}) {
@@ -56,7 +56,7 @@ export class Scroll extends Event {
     const height = parseFloat(this._parent.node().style('height'))
     const count = Math.round(height / this._height) * 2
 
-    defaults(box, {
+    defaultsDeep(box, {
       list: {
         count,
         height,

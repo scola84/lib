@@ -1,4 +1,4 @@
-import { Node } from '../node'
+import { Node } from '../node.js'
 
 export class Progress extends Node {
   constructor (options = {}) {

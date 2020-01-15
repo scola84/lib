@@ -1,60 +1,49 @@
-import { STATUS_CODES } from 'http'
-import { Worker } from '../core'
+import { Worker } from '../core/index.js'
 
 export class HttpResponder extends Worker {
   act (box, data) {
-    const {
-      meta: responseMeta = {},
-      data: responseData
-    } = data
+    const { request, response } = box.server[this._name]
+    const { body = null, end = true, headers = {} } = data
 
-    if (box.request.method === 'GET' && responseData === undefined) {
-      this.err(box, new Error('404 Resource not found'))
+    if (request.getMethod() === 'GET' && body === null) {
+      this.err(box, new Error(`404 [responder] Resource "${request.original.url}" is not found`))
       return
     }
 
-    responseMeta.statusCode = box.request.method === 'POST'
-      ? 201
-      : 200
+    if (request.getMethod() === 'POST') {
+      response.setStatus(201)
+    }
 
-    box.callback({
-      meta: responseMeta,
-      data: responseData
-    })
+    if (response.original.headersSent === false) {
+      Object.keys(headers).forEach((name) => {
+        response.setHeader(name, headers[name])
+      })
+    }
+
+    response.send(body, end)
 
     this.pass(box, data)
   }
 
+  decide (box) {
+    return typeof box.server === 'object' &&
+      typeof box.server[this._name] === 'object'
+  }
+
   err (box, error) {
-    const {
-      meta: responseMeta = {}
-    } = error
+    const { response } = box.server[this._name]
+    const match = error.message.match(/^(\d{3})/)
+    const [, code = '500'] = match || []
 
-    const match = error.message.match(/(\d{3})?[^[]*(\[(.+)\])?/)
-
-    const [,
-      code = 500, ,
-      status
-    ] = match || []
-
-    responseMeta.statusCode = Number(code)
-
-    let {
-      data: responseData
-    } = error
-
-    if (responseData === undefined) {
-      responseData = {
-        status,
-        message: STATUS_CODES[responseMeta.statusCode]
-      }
-    }
-
-    box.callback({
-      meta: responseMeta,
-      data: responseData
-    })
+    response.setStatus(code)
+    response.send(error)
 
     this.fail(box, error)
+  }
+
+  filter (box, data) {
+    return {
+      body: data
+    }
   }
 }

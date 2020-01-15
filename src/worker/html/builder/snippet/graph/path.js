@@ -1,4 +1,4 @@
-import { Plot } from './plot'
+import { Plot } from './plot.js'
 
 export class Path extends Plot {
   constructor (options = {}) {

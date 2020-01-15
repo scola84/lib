@@ -1,5 +1,5 @@
-import { Action } from '../action'
-import { Input } from '../input'
+import { Action } from '../action.js'
+import { Input } from '../input.js'
 
 export class Validate extends Action {
   resolveInner (box, data) {
@@ -25,10 +25,8 @@ export class Validate extends Action {
       return
     }
 
-    const failError = new Error('400 Input invalid')
-
+    const failError = new Error('400 [validate] Input is invalid')
     failError.data = error
-    failError.original = data
 
     this.fail(box, failError)
   }

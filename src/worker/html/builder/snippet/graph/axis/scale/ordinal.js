@@ -1,4 +1,4 @@
-import { Scale } from './scale'
+import { Scale } from './scale.js'
 
 export class Ordinal extends Scale {
   setName (value = 'ordinal') {

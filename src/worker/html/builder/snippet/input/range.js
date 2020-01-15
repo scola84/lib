@@ -1,4 +1,4 @@
-import { Number } from './number'
+import { Number } from './number.js'
 
 export class Range extends Number {
   constructor (options) {

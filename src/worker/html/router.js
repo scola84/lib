@@ -1,16 +1,12 @@
-import { select } from 'd3-selection'
-import { Router } from '../core'
+import * as d3 from 'd3-selection'
+import { Router } from '../core/index.js'
+import { Popup, Route } from './router/index.js'
 
-import {
-  Popup,
-  Route
-} from './router/'
-
-const routers = {}
+const routers = new Map()
 
 export class HtmlRouter extends Router {
-  static handle (route, data) {
-    routers[route.name].handle(route, data)
+  static call (route, data) {
+    routers.get(route.name).call(route, data)
   }
 
   static parseHash () {
@@ -41,7 +37,6 @@ export class HtmlRouter extends Router {
     this._base = null
     this._default = null
     this._history = null
-    this._name = null
     this._popup = null
     this._starter = null
     this._stash = null
@@ -51,7 +46,6 @@ export class HtmlRouter extends Router {
     this.setBase(options.base)
     this.setDefault(options.default)
     this.setHistory(options.history)
-    this.setName(options.name)
     this.setPopup(options.popup)
     this.setStarter(options.starter)
     this.setStash(options.stash)
@@ -59,8 +53,6 @@ export class HtmlRouter extends Router {
     this.setUser(options.user)
 
     this.loadHistory()
-
-    routers[this._name] = this
   }
 
   getOptions () {
@@ -69,7 +61,6 @@ export class HtmlRouter extends Router {
       base: this._base,
       default: this._default,
       history: this._history,
-      name: this._name,
       popup: this._popup,
       starter: this._starter,
       stash: this._stash,
@@ -105,13 +96,9 @@ export class HtmlRouter extends Router {
     return this
   }
 
-  getName () {
-    return this._name
-  }
-
-  setName (value = null) {
-    this._name = value
-    return this
+  setName (value = 'default') {
+    routers.set(value, this)
+    return super.setName(value)
   }
 
   getPopup () {
@@ -149,7 +136,7 @@ export class HtmlRouter extends Router {
   }
 
   setStorage (value = null) {
-    this._storage = value === null && typeof window !== 'undefined'
+    this._storage = value === null && typeof window === 'object'
       ? window.localStorage
       : value
 
@@ -188,9 +175,9 @@ export class HtmlRouter extends Router {
   }
 
   loadHistory () {
-    this._history = JSON.parse(
-      this._storage.getItem(`route-${this._name}`) || '[]'
-    ).map((route) => Route.parse(route))
+    this._history = JSON
+      .parse(this._storage.getItem(`route-${this._name}`) || '[]')
+      .map((route) => Route.parse(route))
   }
 
   previous () {
@@ -211,24 +198,24 @@ export class HtmlRouter extends Router {
 
     if (box.path !== null) {
       box = this.processRoute(box, routes, box)
-    } else if (routes[this._name] !== undefined) {
+    } else if (typeof routes[this._name] === 'object') {
       box = this.processRoute(box, routes, routes[this._name])
     }
 
-    if (this._downstreams[box.path] === undefined) {
+    if (typeof this._downstreams[box.path] !== 'object') {
       box = this.processDefault(box, routes)
     }
 
     this.formatHash(routes)
     this.processForward(box)
 
-    if (this._downstreams[box.path] !== undefined) {
+    if (typeof this._downstreams[box.path] === 'object') {
       if (this._popup !== null) {
         this._popup.open(box, data)
       }
 
-      this._downstreams[box.path].handleAct(box, data)
-      select(this._base).dispatch('route')
+      this._downstreams[box.path].callAct(box, data)
+      d3.select(this._base).dispatch('route')
     }
   }
 
@@ -271,7 +258,7 @@ export class HtmlRouter extends Router {
       return box
     }
 
-    if (this._base.snippet !== undefined) {
+    if (typeof this._base.snippet === 'object') {
       this._base.snippet.remove()
       delete this._base.snippet
     }
@@ -327,14 +314,11 @@ export class HtmlRouter extends Router {
   }
 
   route (route, data) {
-    this.handle(Route.parse(route, this._name), data)
+    this.call(Route.parse(route, this._name), data)
   }
 
   saveHistory () {
-    this._storage.setItem(
-      `route-${this._name}`,
-      JSON.stringify(this._history)
-    )
+    this._storage.setItem(`route-${this._name}`, JSON.stringify(this._history))
   }
 
   start (...args) {
@@ -353,7 +337,7 @@ export class HtmlRouter extends Router {
   stash () {
     const routes = HtmlRouter.parseHash()
 
-    if (routes[this._name] !== undefined) {
+    if (typeof routes[this._name] === 'object') {
       this._stash = routes[this._name]
     }
 

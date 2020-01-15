@@ -1,5 +1,5 @@
-import { select } from 'd3-selection'
-import { Node } from '../node'
+import * as d3 from 'd3-selection'
+import { Node } from '../node.js'
 
 export class Clip extends Node {
   createNode () {
@@ -9,7 +9,7 @@ export class Clip extends Node {
     fragment.setAttribute = () => {}
     fragment.snippet = this
 
-    this.setNode(select(fragment))
+    this.setNode(d3.select(fragment))
 
     this._parent
       .node()

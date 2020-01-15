@@ -1,4 +1,4 @@
-import { Checkbox } from './checkbox'
+import { Checkbox } from './checkbox.js'
 
 export class Radio extends Checkbox {
   constructor (options) {

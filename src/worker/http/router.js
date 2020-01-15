@@ -1,4 +1,4 @@
-import { Router } from '../core'
+import { Router } from '../core/index.js'
 
 export class HttpRouter extends Router {
   constructor (options) {
@@ -11,29 +11,45 @@ export class HttpRouter extends Router {
       this._resources = this.createResources()
     }
 
+    const { request } = box.server[this._name]
+
+    const method = request.getMethod()
+    const url = request.getUrl()
+
     let name = null
     let params = null
     let resource = null
 
+    this.log('info', 'Routing request: "%s %s"', [method, url.pathname], box.rid)
+
     for (let i = 0; i < this._resources.length; i += 1) {
       resource = this._resources[i]
-      params = resource.regexp.exec(`${box.request.url.pathname}`)
+      params = resource.regexp.exec(`${url.pathname}`)
 
       if (params !== null) {
-        if (resource.methods.indexOf(box.request.method) === -1) {
-          this.handleMethodError(box, data, resource.methods)
+        if (resource.methods.indexOf(method) === -1) {
+          this.handleMethodError(box, data, resource.methods, method)
           return
         }
 
-        name = `${box.request.method} ${resource.pathname}`
-        box.request.params = params.groups || params
+        name = `${method} ${resource.pathname}`
+        request.params = params.groups || params
 
-        this._downstreams[name].handleAct(box, data)
+        this._downstreams[name].callAct(box, data)
         return
       }
     }
 
-    this.handlePathError(box, data)
+    this.handlePathError(box, data, url.pathname)
+  }
+
+  decide (box, data, context) {
+    if (context === 'err') {
+      return false
+    }
+
+    return typeof box.server === 'object' &&
+      typeof box.server[this._name] === 'object'
   }
 
   createResources () {
@@ -60,12 +76,12 @@ export class HttpRouter extends Router {
     return Object.values(resources)
   }
 
-  handleMethodError (box, data, methods) {
-    box.response.setHeader('Allow', methods)
-    this.fail(box, new Error('405 Method not allowed'))
+  handleMethodError (box, data, methods, method) {
+    box.server[this._name].response.setHeader('Allow', methods)
+    this.fail(box, new Error(`405 [router] Method "${method}" is not allowed`))
   }
 
-  handlePathError (box) {
-    this.fail(box, new Error('404 Resource not found'))
+  handlePathError (box, data, path) {
+    this.fail(box, new Error(`404 [router] Resource "${path}" is not found`))
   }
 }

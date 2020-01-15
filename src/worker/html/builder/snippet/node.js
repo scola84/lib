@@ -1,6 +1,6 @@
-import { select } from 'd3-selection'
-import { Snippet } from './snippet'
-import { Dummy } from '../helper'
+import * as d3 from 'd3-selection'
+import { Snippet } from './snippet.js'
+import { Dummy } from '../helper/index.js'
 
 export class Node extends Snippet {
   constructor (options = {}) {
@@ -12,7 +12,7 @@ export class Node extends Snippet {
     this.setNode(options.node)
     this.setTransform(options.transform)
 
-    if (options.class !== undefined) {
+    if (typeof options.class === 'string') {
       this.class(options.class)
     }
   }
@@ -118,7 +118,7 @@ export class Node extends Snippet {
 
   createNode () {
     const node = this._parent === null
-      ? select('body').append(this._name).remove()
+      ? d3.select('body').append(this._name).remove()
       : this._parent.node().append(this._name)
 
     node.node().snippet = this
@@ -210,6 +210,6 @@ export class Node extends Snippet {
     node.parentNode.insertBefore(wrapper, node)
     wrapper.appendChild(node)
 
-    return select(wrapper)
+    return d3.select(wrapper)
   }
 }

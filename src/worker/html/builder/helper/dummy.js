@@ -4,8 +4,8 @@ export class Dummy {
     this._properties = {}
   }
 
-  attr (key, value) {
-    if (value === undefined) {
+  attr (key, value = null) {
+    if (value === null) {
       return this._attributes[key] === undefined
         ? null
         : this._attributes[key]
@@ -23,8 +23,8 @@ export class Dummy {
     return this
   }
 
-  property (key, value) {
-    if (value === undefined) {
+  property (key, value = null) {
+    if (value === null) {
       if (key === 'value') {
         return this.attr(key)
       }

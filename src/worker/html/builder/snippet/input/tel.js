@@ -1,5 +1,5 @@
-import { parsePhoneNumber } from 'libphonenumber-js'
-import { Input } from '../input'
+import libphonenumber from 'libphonenumber-js'
+import { Input } from '../input.js'
 
 export class Tel extends Input {
   constructor (options = {}) {
@@ -59,7 +59,7 @@ export class Tel extends Input {
     let number = null
 
     try {
-      number = parsePhoneNumber(value, country)
+      number = libphonenumber.parsePhoneNumber(value, country)
     } catch (err) {
       return this.setError(error, name, value, 'type')
     }

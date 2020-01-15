@@ -1,6 +1,6 @@
-import { select } from 'd3-selection'
-import { DateTime as Luxon } from 'luxon'
-import { DateTime } from './datetime'
+import * as d3 from 'd3-selection'
+import * as luxon from 'luxon'
+import { DateTime } from './datetime.js'
 
 export class Date extends DateTime {
   constructor (options = {}) {
@@ -20,11 +20,11 @@ export class Date extends DateTime {
 
     let value = this._node.property('value')
 
-    value = value || Luxon
+    value = value || luxon.DateTime
       .local()
       .toFormat(formatFrom)
 
-    const date = Luxon
+    const date = luxon.DateTime
       .fromFormat(value, formatFrom)
       .toISO()
 
@@ -33,7 +33,7 @@ export class Date extends DateTime {
       .format(`%l[${formatTo}]`)
       .values(date)
 
-    select(this._node.node().nextSibling)
+    d3.select(this._node.node().nextSibling)
       .text(this.resolveValue(null, null, text))
 
     this._node.value = value

@@ -1,5 +1,5 @@
-import { event, select } from 'd3-selection'
-import { Node } from '../node'
+import * as d3 from 'd3-selection'
+import { Node } from '../node.js'
 
 export class Button extends Node {
   constructor (options = {}) {
@@ -81,9 +81,9 @@ export class Button extends Node {
       .attr('form', this._form)
 
     this._node.on('click.scola-button', () => {
-      event.preventDefault()
+      d3.event.preventDefault()
 
-      select(`#${this._form}`).dispatch('submit', {
+      d3.select(`#${this._form}`).dispatch('submit', {
         cancelable: true
       })
     })

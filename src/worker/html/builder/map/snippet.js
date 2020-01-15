@@ -1,10 +1,10 @@
-import * as action from '../snippet/action/'
-import * as event from '../snippet/event/'
-import * as graph from '../snippet/graph/'
-import * as input from '../snippet/input/'
-import * as misc from '../snippet/misc/'
-import * as node from '../snippet/node/'
-import * as widget from '../snippet/widget/'
+import * as action from '../snippet/action/index.js'
+import * as event from '../snippet/event/index.js'
+import * as graph from '../snippet/graph/index.js'
+import * as input from '../snippet/input/index.js'
+import * as misc from '../snippet/misc/index.js'
+import * as node from '../snippet/node/index.js'
+import * as widget from '../snippet/widget/index.js'
 
 export default {
   action,

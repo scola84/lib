@@ -1,0 +1,13 @@
+version: "3.7"
+services:
+  queue-push-task:
+    image: "node:13-alpine"
+    command: yarn bundle:dev
+    restart: always
+    volumes:
+      - $PWD/.rollup/:/www/nodejs/.rollup/
+      - $PWD/dist/:/www/nodejs/dist/
+      - $PWD/node_modules/:/www/nodejs/node_modules/
+      - $PWD/src/:/www/nodejs/src/
+      - $PWD/package.json:/www/nodejs/package.json
+    working_dir: /www/nodejs/

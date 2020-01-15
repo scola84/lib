@@ -1,4 +1,4 @@
-import { Input } from '../input'
+import { Input } from '../input.js'
 
 const regexp = /^[a-z0-9\-()]+$/i
 

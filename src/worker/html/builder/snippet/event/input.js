@@ -1,5 +1,5 @@
-import { select } from 'd3-selection'
-import { Event } from '../event'
+import * as d3 from 'd3-selection'
+import { Event } from '../event.js'
 
 export class Input extends Event {
   constructor (options) {
@@ -11,12 +11,12 @@ export class Input extends Event {
   }
 
   handle (box, data, snippet, event) {
-    const node = select(event.srcElement)
+    const node = d3.select(event.srcElement)
     const minLength = node.attr('minlength')
     const value = node.property('value')
 
-    if (minLength !== undefined) {
-      if (value.length >= minLength || value.length === 0) {
+    if (typeof minLength === 'string') {
+      if (value.length >= parseFloat(minLength) || value.length === 0) {
         box.input = value
         this.pass(box, data)
       }

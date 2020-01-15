@@ -1,5 +1,5 @@
-import set from 'lodash-es/set'
-import { Node } from './node'
+import set from 'lodash/set.js'
+import { Node } from './node.js'
 
 export class Input extends Node {
   constructor (options = {}) {

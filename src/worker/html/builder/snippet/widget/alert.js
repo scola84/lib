@@ -1,5 +1,5 @@
-import { event, select } from 'd3-selection'
-import { Widget } from '../widget'
+import * as d3 from 'd3-selection'
+import { Widget } from '../widget.js'
 
 export class Alert extends Widget {
   constructor (options = {}) {
@@ -13,7 +13,7 @@ export class Alert extends Widget {
   }
 
   node () {
-    return select('body')
+    return d3.select('body')
   }
 
   getMessage () {
@@ -83,7 +83,7 @@ export class Alert extends Widget {
   }
 
   removeBefore () {
-    select(document).on('keydown.scola-prompt', null)
+    d3.select(document).on('keydown.scola-prompt', null)
 
     const node = this._widget.node()
 
@@ -102,8 +102,8 @@ export class Alert extends Widget {
   }
 
   resolveAfter () {
-    select(document).on('keydown.scola-prompt', () => {
-      if (event.keyCode === 27) {
+    d3.select(document).on('keydown.scola-prompt', () => {
+      if (d3.event.keyCode === 27) {
         this.remove()
       }
     })

@@ -1,5 +1,5 @@
-import { Axis } from './axis'
-import { Parent } from '../parent'
+import { Axis } from './axis.js'
+import { Parent } from '../parent.js'
 
 export class Grid extends Parent {
   constructor (options) {

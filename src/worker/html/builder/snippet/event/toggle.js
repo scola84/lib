@@ -1,4 +1,4 @@
-import { Click } from './click'
+import { Click } from './click.js'
 
 export class Toggle extends Click {
   handle (box, data, snippet) {

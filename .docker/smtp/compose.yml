@@ -1,0 +1,10 @@
+version: "3.7"
+services:
+  smtp:
+    image: mwader/postfix-relay
+    environment:
+      - POSTFIX_header_checks=regexp:/etc/postfix/header_checks
+      - POSTFIX_inet_protocols=ipv4
+    restart: always
+    volumes:
+      - $PWD/node_modules/@scola/lib/.docker/smtp/postfix/headers_checks:/etc/postfix/header_checks

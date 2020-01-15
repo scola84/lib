@@ -1,5 +1,5 @@
 import IBAN from 'iban'
-import { Input } from '../input'
+import { Input } from '../input.js'
 
 export class Iban extends Input {
   constructor (options) {
@@ -21,7 +21,7 @@ export class Iban extends Input {
 
     const specification = IBAN.countries[country]
 
-    if (specification === undefined) {
+    if (typeof specification !== 'object') {
       return this.setError(error, name, value, 'type')
     }
 

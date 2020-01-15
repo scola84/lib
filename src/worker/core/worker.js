@@ -1,42 +1,32 @@
-import get from 'lodash-es/get'
-import { log } from './worker/'
+import { Cache } from './worker/cache.js'
+import { Codec } from './worker/codec.js'
+import { Formatter } from './worker/formatter.js'
+import { Listener } from './worker/listener.js'
+import { Logger } from './worker/logger.js'
 
-let id = 0
-let config = {}
+const workers = new Map()
 
 export class Worker {
-  static getConfig () {
-    return config
-  }
+  static singleton (options = {}) {
+    if (workers.has(options.id) === true) {
+      return workers.get(options.id)
+    }
 
-  static setConfig (value) {
-    config = value
-    return config
-  }
-
-  static getId () {
-    return id
-  }
-
-  static setId (value) {
-    id = value === undefined ? id + 1 : value
-    return id
-  }
-
-  static setup () {
-    log(get(config, 'core.worker.log'))
+    return new this(options)
   }
 
   constructor (options = {}) {
     this._act = null
     this._bypass = null
-    this._config = null
+    this._cache = null
+    this._codec = null
     this._decide = null
+    this._description = null
     this._downstream = null
     this._err = null
     this._filter = null
     this._id = null
-    this._log = null
+    this._logger = null
     this._merge = null
     this._name = null
     this._upstream = null
@@ -44,13 +34,15 @@ export class Worker {
 
     this.setAct(options.act)
     this.setBypass(options.bypass)
-    this.setConfig(options.config)
+    this.setCache(options.cache)
+    this.setCodec(options.codec)
     this.setDecide(options.decide)
+    this.setDescription(options.description)
     this.setDownstream(options.downstream)
     this.setErr(options.err)
     this.setFilter(options.filter)
     this.setId(options.id)
-    this.setLog(options.log)
+    this.setLogger(options.logger)
     this.setMerge(options.merge)
     this.setName(options.name)
     this.setUpstream(options.upstream)
@@ -60,11 +52,13 @@ export class Worker {
   getOptions () {
     return {
       act: this._act,
-      config: this._config,
+      cache: this._cache,
+      codec: this._codec,
       decide: this._decide,
+      description: this._description,
       err: this._err,
       filter: this._filter,
-      log: this._log,
+      logger: this._logger,
       merge: this._merge,
       name: this._name,
       wrap: this._wrap
@@ -89,12 +83,33 @@ export class Worker {
     return this
   }
 
-  getConfig (path = '') {
-    return get(this._config, path)
+  getCache (value = null) {
+    return value === null
+      ? this._cache
+      : Cache.get(value)
   }
 
-  setConfig (value = config) {
-    this._config = value
+  setCache (value = 'default') {
+    if (this._cache !== null) {
+      this.log('info', 'Changing cache to "%s"', [value])
+    }
+
+    this._cache = Cache.get(value)
+    return this
+  }
+
+  getCodec (value = null) {
+    return value === null
+      ? this._codec
+      : Codec.get(value)
+  }
+
+  setCodec (value = 'default') {
+    if (this._codec !== null) {
+      this.log('info', 'Changing codec to "%s"', [value])
+    }
+
+    this._codec = Codec.get(value)
     return this
   }
 
@@ -104,6 +119,15 @@ export class Worker {
 
   setDecide (value = null) {
     this._decide = value
+    return this
+  }
+
+  getDescription () {
+    return this._description
+  }
+
+  setDescription (value = null) {
+    this._description = value
     return this
   }
 
@@ -138,17 +162,40 @@ export class Worker {
     return this._id
   }
 
-  setId (value = Worker.setId()) {
+  setId (value = workers.size) {
+    if (this._id !== null) {
+      this.log('info', 'Changing id to "%s"', [value])
+      workers.delete(this._id)
+    }
+
+    if (workers.has(value) === true) {
+      throw new Error(`Worker "${value}" exists`)
+    }
+
+    workers.set(value, this)
+
     this._id = value
     return this
   }
 
-  getLog () {
-    return this._log
+  getLogger (value = null) {
+    return value === null
+      ? this._logger
+      : Logger.get(value)
   }
 
-  setLog (value = console) {
-    this._log = value
+  setLogger (value = 'default') {
+    if (this._logger !== null) {
+      this.log('info', 'Changing logger to "%s"', [value])
+    }
+
+    this._logger = Logger.get(value)
+    return this
+  }
+
+  callLoggerId (name, id) {
+    this.log('info', 'Changing logger id (%s)', [name])
+    this._logger.callId(name, id)
     return this
   }
 
@@ -166,6 +213,10 @@ export class Worker {
   }
 
   setName (value = 'default') {
+    if (this._name !== null) {
+      this.log('info', 'Changing name "%s" to "%s"', [this._name, value])
+    }
+
     this._name = value
     return this
   }
@@ -206,6 +257,43 @@ export class Worker {
     return this
   }
 
+  call (box = { origin: this }, data = null) {
+    this.callAct(box, data)
+  }
+
+  callAct (box, data) {
+    try {
+      if (this.resolve('decide', box, data, ['act']) === true) {
+        this.act(box, this.resolve('filter', box, data))
+      } else if (this._bypass !== null) {
+        if (this._bypass instanceof Worker) {
+          this._bypass.callAct(box, data)
+        }
+      } else if (this._downstream !== null) {
+        this._downstream.callAct(box, data)
+      }
+    } catch (tryError) {
+      this.log('fail', '', [tryError], box.rid)
+      this.callErr(box, tryError)
+    }
+  }
+
+  callErr (box, error) {
+    try {
+      if (this.resolve('decide', box, error, ['err']) === true) {
+        this.err(box, error)
+      } else if (this._bypass !== null) {
+        if (this._bypass instanceof Worker) {
+          this._bypass.callErr(box, error)
+        }
+      } else if (this._downstream !== null) {
+        this._downstream.callErr(box, error)
+      }
+    } catch (tryError) {
+      this.log('fail', '', [tryError], box.rid)
+    }
+  }
+
   connect (worker = null) {
     if (worker === null) {
       return this
@@ -220,7 +308,11 @@ export class Worker {
     return worker
   }
 
-  decide () {
+  decide (box, data, context) {
+    if (context === 'err') {
+      return false
+    }
+
     return true
   }
 
@@ -234,101 +326,25 @@ export class Worker {
   }
 
   fail (box, error) {
-    this.log('fail', box, error)
-
-    if (this._bypass !== null) {
-      this._bypass.handleErr(box, error)
-    } else if (this._downstream !== null) {
-      this._downstream.handleErr(box, error)
+    if (this._downstream === null) {
+      return
     }
+
+    this.log('fail', '', [error], box.rid)
+    this._downstream.callErr(box, error)
   }
 
   filter (box, data) {
     return data
   }
 
-  find (compare) {
-    if (compare(this) === true) {
-      return this
-    }
-
-    if (this._downstream !== null) {
-      return this._downstream.find(compare)
-    }
-
-    return null
+  format (string, args, locale) {
+    return Formatter.format(string, args, locale)
   }
 
-  handle (box, data) {
-    this.handleAct(box, data)
-  }
-
-  handleAct (box, data) {
-    try {
-      if (this.handleDecide(box, data) === true) {
-        this.act(box, this.handleFilter(box, data))
-      } else if (this._downstream !== null) {
-        this._downstream.handleAct(box, data)
-      }
-    } catch (error) {
-      this.handleErr(box, error)
-    }
-  }
-
-  handleDecide (box, data) {
-    let decided = null
-
-    if (this._decide !== null) {
-      decided = this._decide(box, data)
-    } else {
-      decided = this.decide(box, data)
-    }
-
-    this.log('decide', box, data, decided)
-
-    return decided
-  }
-
-  handleErr (box, error) {
-    try {
-      this.err(box, error)
-    } catch (tryError) {
-      this.log('fail', box, tryError)
-    }
-  }
-
-  handleFilter (box, data) {
-    let filtered = null
-
-    if (this._filter !== null) {
-      filtered = this._filter(box, data)
-    } else {
-      filtered = this.filter(box, data)
-    }
-
-    this.log('filter', box, data, filtered)
-
-    return filtered
-  }
-
-  handleMerge (box, data, ...extra) {
-    let merged = null
-
-    if (this._merge !== null) {
-      merged = this._merge(box, data, ...extra)
-    } else {
-      merged = this.merge(box, data, ...extra)
-    }
-
-    this.log('merge', box, data, merged)
-
-    return merged
-  }
-
-  log (type, ...args) {
-    if (this._log[type] !== undefined) {
-      this._log[type](this._id, ...args)
-    }
+  log (type, message, args, rid) {
+    this._logger.log(this._id, type, message, args, rid)
+    return this
   }
 
   merge (box, data) {
@@ -336,18 +352,27 @@ export class Worker {
   }
 
   pass (box, data, ...extra) {
-    this.log('pass', box, data, ...extra)
+    if (data instanceof Error) {
+      this.fail(box, data)
+      return
+    }
+
+    if (this._downstream === null) {
+      return
+    }
+
+    let merged = null
 
     try {
-      if (data instanceof Error) {
-        this.fail(box, data)
-      } else if (this._downstream !== null) {
-        this._downstream.handleAct(box,
-          this.handleMerge(box, data, ...extra))
-      }
-    } catch (error) {
-      this.fail(box, error)
+      merged = this.resolve('merge', box, data, extra)
+    } catch (tryError) {
+      this.log('fail', '', [tryError], box.rid)
+      this.callErr(box, tryError)
+      return
     }
+
+    this.log('pass', '%j', [data], box.rid)
+    this._downstream.callAct(box, merged)
   }
 
   prepend (worker = null) {
@@ -361,4 +386,24 @@ export class Worker {
 
     return this
   }
+
+  resolve (name, box, data, extra = []) {
+    let option = this[`_${name}`]
+
+    if (option === null) {
+      option = this[name](box, data, ...extra)
+    } else if (typeof option === 'function') {
+      option = option(box, data, ...extra)
+    }
+
+    this.log(name, '%j', [option], box.rid)
+
+    return option
+  }
 }
+
+Worker.Cache = Cache
+Worker.Codec = Codec
+Worker.Listener = Listener
+Worker.Logger = Logger
+Worker.workers = workers

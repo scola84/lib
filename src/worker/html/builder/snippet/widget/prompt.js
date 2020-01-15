@@ -1,4 +1,4 @@
-import { Alert } from './alert'
+import { Alert } from './alert.js'
 
 export class Prompt extends Alert {
   constructor (options = {}) {

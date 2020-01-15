@@ -1,4 +1,4 @@
-import { Node } from '../node'
+import { Node } from '../node.js'
 
 export class Loading extends Node {
   resolveAfter (box, data) {

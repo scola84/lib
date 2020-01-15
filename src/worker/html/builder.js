@@ -1,17 +1,11 @@
-import { select, selectAll } from 'd3-selection'
-import { Builder } from '../core'
-import { bind, map, snippet } from './builder/'
+import * as d3 from 'd3-selection'
+import { Builder } from '../core/index.js'
+import map from './builder/map/index.js'
+import snippet from './builder/snippet/index.js'
 
 export class HtmlBuilder extends Builder {
-  static setup () {
-    HtmlBuilder.attachFactories(HtmlBuilder, map)
-    snippet.graph.Axis.setup()
-    snippet.graph.Plot.setup()
-    bind()
-  }
-
   static querySelector (...args) {
-    return select(...args)
+    return d3.select(...args)
   }
 
   constructor (options = {}) {
@@ -29,7 +23,7 @@ export class HtmlBuilder extends Builder {
   }
 
   getNode () {
-    return select(this._upstream.getBase())
+    return d3.select(this._upstream.getBase())
   }
 
   node () {
@@ -54,7 +48,7 @@ export class HtmlBuilder extends Builder {
 
   act (box, data) {
     if (this._view === null) {
-      this.createView()
+      this._view = this.build(this)
     }
 
     this._view.resolve(box, data)
@@ -65,17 +59,14 @@ export class HtmlBuilder extends Builder {
     return this._view
   }
 
-  createView () {
-    this.setView(this.build(this))
-  }
-
   querySelector (...args) {
-    return select(...args)
+    return d3.select(...args)
   }
 
   querySelectorAll (...args) {
-    return selectAll(...args)
+    return d3.selectAll(...args)
   }
 }
 
 HtmlBuilder.snippet = snippet
+HtmlBuilder.attachFactories(map)

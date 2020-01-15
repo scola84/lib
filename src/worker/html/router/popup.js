@@ -1,4 +1,4 @@
-import { event, select } from 'd3-selection'
+import * as d3 from 'd3-selection'
 
 export class Popup {
   constructor (options = {}) {
@@ -16,16 +16,16 @@ export class Popup {
   }
 
   close (box, data) {
-    const base = select(this._router.getBase())
-    const parent = select(this._router.getBase().parentNode)
+    const base = d3.select(this._router.getBase())
+    const parent = d3.select(this._router.getBase().parentNode)
 
     if (parent.classed('in') === false) {
       this._router.process(box, data)
       return
     }
 
-    select(document).on('keydown.scola-popup', null)
-    select('body').classed('popup', false)
+    d3.select(document).on('keydown.scola-popup', null)
+    d3.select('body').classed('popup', false)
 
     parent.style('width')
 
@@ -55,20 +55,20 @@ export class Popup {
   }
 
   open (box, data) {
-    const base = select(this._router.getBase())
-    const parent = select(this._router.getBase().parentNode)
+    const base = d3.select(this._router.getBase())
+    const parent = d3.select(this._router.getBase().parentNode)
 
     if (parent.classed('in') === true) {
       return
     }
 
-    select(document).on('keydown.scola-popup', () => {
-      if (event.keyCode === 27) {
+    d3.select(document).on('keydown.scola-popup', () => {
+      if (d3.event.keyCode === 27) {
         parent.dispatch('click')
       }
     })
 
-    select('body').classed('popup', true)
+    d3.select('body').classed('popup', true)
 
     parent.classed('open', true)
     parent.style('width')
@@ -89,7 +89,7 @@ export class Popup {
     base
       .classed('in', true)
       .on('click.scola-popup', () => {
-        event.stopPropagation()
+        d3.event.stopPropagation()
       })
   }
 }

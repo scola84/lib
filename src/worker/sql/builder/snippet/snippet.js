@@ -1,17 +1,6 @@
-import toPath from 'lodash-es/toPath'
-
-let id = 0
+const snippets = new Map()
 
 export class Snippet {
-  static getId () {
-    return id
-  }
-
-  static setId (value) {
-    id = value === undefined ? id + 1 : value
-    return id
-  }
-
   constructor (options = {}) {
     this._args = null
     this._builder = null
@@ -106,7 +95,7 @@ export class Snippet {
     return this._escape
   }
 
-  setEscape (value = '') {
+  setEscape (value = null) {
     this._escape = value
     return this
   }
@@ -119,7 +108,8 @@ export class Snippet {
     return this._id
   }
 
-  setId (value = Snippet.setId()) {
+  setId (value = snippets.size) {
+    snippets.set(value, this)
     this._id = value
     return this
   }
@@ -215,10 +205,10 @@ export class Snippet {
   }
 
   find (compare) {
-    const snippets = []
+    const result = []
 
     if (compare(this) === true) {
-      snippets.push(this)
+      result.push(this)
     }
 
     let snippet = null
@@ -227,11 +217,11 @@ export class Snippet {
       snippet = this._args[i]
 
       if (snippet instanceof Snippet) {
-        snippets.push(...snippet.find(compare))
+        result.push(...snippet.find(compare))
       }
     }
 
-    return snippets
+    return result
   }
 
   hasPermission (box, data) {
@@ -254,8 +244,14 @@ export class Snippet {
     return string
   }
 
-  resolveEscape (value, type) {
-    return this._builder.escape(value, type)
+  resolveEscape (box, data, value) {
+    if (this._escape === null) {
+      return value
+    }
+
+    return this._builder
+      .resolveClient(box, data)
+      .escape(value, this._escape)
   }
 
   resolveInner (box, data) {
@@ -292,7 +288,7 @@ export class Snippet {
   }
 
   resolveValue (box, data, value) {
-    if (value === null) {
+    if (value === undefined || value === null) {
       return 'NULL'
     }
 
@@ -305,7 +301,7 @@ export class Snippet {
     }
 
     if (typeof value === 'string') {
-      return this.resolveEscape(value, this._escape)
+      return this.resolveEscape(box, data, value)
     }
 
     if (typeof value === 'function') {
@@ -314,46 +310,6 @@ export class Snippet {
 
     return value
   }
-
-  selector (path, index) {
-    const snippets = []
-    const pathList = toPath(path)
-
-    const hasMatch =
-      pathList[0] === this._name ||
-      pathList[0] === index ||
-      pathList[0] === '*'
-
-    if (hasMatch === true) {
-      if (pathList.length === 1) {
-        snippets.push(this)
-      } else {
-        snippets.push(...this.selector(pathList.slice(1)))
-      }
-
-      return snippets
-    }
-
-    let snippet = null
-
-    for (let i = 0; i < this._args.length; i += 1) {
-      snippet = this._args[i]
-
-      if (snippet instanceof Snippet) {
-        snippets.push(...snippet.selector(pathList, String(i)))
-      }
-    }
-
-    return snippets
-  }
-
-  set (path, index, value) {
-    const list = this.selector(path)
-
-    for (let i = 0; i < list.length; i += 1) {
-      list[i].setItem(index, value)
-    }
-
-    return list
-  }
 }
+
+Snippet.snippets = snippets

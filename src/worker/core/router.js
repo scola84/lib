@@ -1,4 +1,4 @@
-import { Worker } from './worker'
+import { Worker } from './worker.js'
 
 export class Router extends Worker {
   constructor (options = {}) {
@@ -30,12 +30,16 @@ export class Router extends Worker {
   }
 
   act (box, data) {
-    const route = this.route(box, data)
+    const route = this.resolve('route', box, data)
 
-    if (this._downstreams[route] !== undefined) {
-      this._downstreams[route].handleAct(box, data)
+    this.log('info', 'Routing to "%s"', [route], box.rid)
+
+    if (this._downstreams[route] instanceof Worker) {
+      this._downstreams[route].callAct(box, data)
     } else if (this._bypass !== null) {
-      this._bypass.handleAct(box, data)
+      this._bypass.callAct(box, data)
+    } else {
+      throw new Error(`404 [router] Route "${route}" is not found`)
     }
   }
 
@@ -53,28 +57,11 @@ export class Router extends Worker {
     return super.connect(worker)
   }
 
-  find (compare) {
-    if (compare(this) === true) {
-      return this
-    }
-
-    const downstreams = Object.values(this._downstreams)
-    let found = null
-
-    for (let i = 0; i < downstreams.length; i += 1) {
-      found = downstreams[i].find(compare)
-
-      if (found) {
-        return found
-      }
-    }
-
-    return found
-  }
-
   route (box, data) {
-    if (this._router !== null) {
-      return this._route(box, data)
+    if (typeof data === 'object' && data !== null) {
+      if (typeof data.name === 'string') {
+        return data.name
+      }
     }
 
     return box.name

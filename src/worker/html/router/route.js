@@ -1,5 +1,5 @@
-import assignWith from 'lodash-es/assignWith'
-import defaults from 'lodash-es/defaultsDeep'
+import assignWith from 'lodash/assignWith.js'
+import defaultsDeep from 'lodash/defaultsDeep.js'
 import qs from 'qs'
 
 export class Route {
@@ -8,11 +8,11 @@ export class Route {
       return route
     }
 
-    if (typeof route === 'object') {
+    if (typeof route === 'object' && route !== null) {
       return new Route(route)
     }
 
-    if (route === undefined) {
+    if (typeof route !== 'string') {
       return route
     }
 
@@ -42,7 +42,7 @@ export class Route {
   }
 
   constructor (options = {}) {
-    defaults(this, options, {
+    defaultsDeep(this, options, {
       base: null,
       default: null,
       name: null,

@@ -1,6 +1,6 @@
 import Resizer from 'element-resize-detector'
-import debounce from 'lodash-es/debounce'
-import { Event } from '../event'
+import debounce from 'lodash/debounce.js'
+import { Event } from '../event.js'
 
 export class Resize extends Event {
   bind (box, data, snippet) {

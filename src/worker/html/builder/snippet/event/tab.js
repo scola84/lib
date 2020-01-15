@@ -1,5 +1,5 @@
-import { select, selectAll } from 'd3-selection'
-import { Click } from './click'
+import * as d3 from 'd3-selection'
+import { Click } from './click.js'
 
 export class Tab extends Click {
   handle (box, data, snippet, event) {
@@ -13,8 +13,8 @@ export class Tab extends Click {
 
     box.tab = tab
 
-    selectAll(children).classed('selected', false)
-    select(children[box.tab]).classed('selected', true)
+    d3.selectAll(children).classed('selected', false)
+    d3.select(children[box.tab]).classed('selected', true)
 
     this.pass(box, data)
   }

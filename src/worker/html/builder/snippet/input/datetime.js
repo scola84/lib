@@ -1,5 +1,5 @@
-import { DateTime as Luxon } from 'luxon'
-import { Input } from '../input'
+import * as luxon from 'luxon'
+import { Input } from '../input.js'
 
 export class DateTime extends Input {
   constructor (options = {}) {
@@ -52,7 +52,7 @@ export class DateTime extends Input {
 
   validateAfter (box, data, error, name, value) {
     const formatFrom = this.resolveValue(box, data, this._formatFrom)
-    const date = Luxon.fromFormat(value, formatFrom)
+    const date = luxon.DateTime.fromFormat(value, formatFrom)
 
     if (date.isValid === false) {
       return this.setError(error, name, value, 'type')

@@ -5,107 +5,161 @@
   ],
   "description": "Scola Library",
   "license": "MIT",
-  "main": "./dist/lib.cjs.js",
-  "module": "./index.js",
+  "main": "./src/worker/api.js",
+  "module": "./src/worker/api.js",
   "name": "@scola/lib",
   "repository": "github:scola84/lib",
+  "type": "module",
   "version": "0.0.0",
   "files": [
-    "dist/",
-    "rollup.plugins.js"
+    ".docker/",
+    ".rollup/",
+    "dist/"
   ],
-  "scripts": {
-    "build:dev": "yarn run clean && rollup -cmw",
-    "build:prod": "yarn run clean && rollup -c",
-    "clean": "rimraf dist/ node_modules/ yarn.lock && yarn install",
-    "format": "glob-run js-beautify -r 'src/**/*.{css,js}' && npx standard --fix && npx eslint src",
-    "git:pkg": "git add CHANGELOG.md LICENSE.md yarn.lock package.json",
-    "git:src": "git add src/",
-    "preversion": "yarn run format && yarn run git:src",
-    "version": "yarn run build:prod && yarn run git:pkg"
-  },
-  "devDependencies": {
-    "eslint": ">=6.5.1",
-    "eslint-config-airbnb": "18.0.1",
-    "eslint-config-standard": "14.1.0",
-    "eslint-plugin-import": ">=2.18.2",
-    "eslint-plugin-jsx-a11y": "^6.2.3",
-    "eslint-plugin-node": ">=10.0.0",
-    "eslint-plugin-promise": ">=4.2.1",
-    "eslint-plugin-react": "^7.16.0",
-    "eslint-plugin-react-hooks": "^2.1.2",
-    "eslint-plugin-standard": ">=4.0.1",
-    "glob-run": "^0.1.7",
-    "js-beautify": "^1.10.2",
-    "rimraf": "^3.0.0",
-    "rollup": "^1.23.1",
-    "standard": "^14.3.1"
-  },
-  "peerDependencies": {
-    "@babel/core": "^7.6.3",
-    "@babel/plugin-transform-runtime": "^7.6.2",
-    "@babel/preset-env": "^7.6.3",
-    "@babel/runtime": "^7.6.3",
-    "lodash": "^4.17.15",
-    "minimist": "^1.2.0",
-    "rollup-plugin-babel": "^4.3.3",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-ignore": "^1.0.5",
-    "rollup-plugin-json": "^4.0.0",
-    "rollup-plugin-license": "^0.12.1",
-    "rollup-plugin-livereload": "^1.0.4",
-    "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-globals": "^1.4.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-postcss": "^2.0.3",
-    "rollup-plugin-uglify": "^6.0.3"
-  },
   "dependencies": {
-    "@babel/core": "^7.6.3",
-    "@babel/plugin-transform-runtime": "^7.6.2",
-    "@babel/preset-env": "^7.6.3",
-    "@babel/runtime": "^7.6.3",
-    "async": "^3.1.0",
+    "async": "^3.2.0",
+    "buffer": "^5.5.0",
     "busboy": "^0.3.1",
-    "d3-format": "^1.4.1",
-    "d3-selection": "^1.4.0",
-    "dompurify": "^2.0.7",
-    "element-resize-detector": "^1.1.15",
+    "content-type": "^1.0.4",
+    "cookie": "^0.4.0",
+    "cron-parser": "^2.13.0",
+    "d3-format": "^1.4.3",
+    "d3-selection": "^1.4.1",
+    "dompurify": "^2.0.8",
+    "element-resize-detector": "^1.2.1",
     "fastclick": "^1.0.6",
     "fs-extra": "^8.1.0",
-    "iban": "^0.0.12",
-    "jsdom": "^15.2.1",
-    "libphonenumber-js": "^1.7.25",
+    "iban": "^0.0.14",
+    "ionicons": "4",
+    "ioredis": "^4.16.0",
+    "jsdom": "^16.2.1",
+    "libphonenumber-js": "^1.7.46",
     "lodash": "^4.17.15",
-    "lodash-es": "^4.17.15",
-    "luxon": "^1.19.3",
-    "marked": "^0.7.0",
-    "messagebird": "^3.0.1",
-    "minimist": "^1.2.0",
+    "luxon": "^1.22.0",
+    "marked": "^0.8.0",
+    "math-expression-evaluator": "^1.2.22",
+    "memcached": "^2.2.2",
+    "messagebird": "^3.4.0",
     "msgpack-lite": "^0.1.26",
-    "mysql": "^2.17.1",
+    "mysql": "^2.18.1",
     "node-cron": "^2.0.3",
-    "nodemailer": "^6.3.1",
-    "parse5": "^5.1.0",
-    "pg": "^7.12.1",
+    "node-fetch": "^2.6.0",
+    "nodemailer": "^6.4.4",
+    "parse5": "^5.1.1",
+    "pg": "^7.18.2",
     "pg-escape": "^0.2.0",
-    "pg-query-stream": "^2.0.0",
-    "postal-codes-js": "^2.2.2",
-    "qs": "^6.9.0",
-    "rollup-plugin-babel": "^4.3.3",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-ignore": "^1.0.5",
-    "rollup-plugin-json": "^4.0.0",
-    "rollup-plugin-license": "^0.12.1",
-    "rollup-plugin-livereload": "^1.0.4",
-    "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-globals": "^1.4.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-postcss": "^2.0.3",
-    "rollup-plugin-uglify": "^6.0.3",
-    "shortid": "^2.2.15",
+    "pg-query-stream": "^3.0.3",
+    "postal-codes-js": "^2.3.1",
+    "qs": "^6.9.1",
     "sqlstring": "^2.3.1",
-    "superagent": "^5.1.0",
+    "twilio": "^3.40.0",
     "url-parse": "^1.4.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.7",
+    "@babel/plugin-transform-runtime": "^7.8.3",
+    "@babel/preset-env": "^7.8.7",
+    "@babel/runtime": "^7.8.7",
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-conventional": "^8.3.4",
+    "@rollup/plugin-alias": "^3.0.1",
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-json": "^4.0.2",
+    "@rollup/plugin-multi-entry": "^3.0.0",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@semantic-release/changelog": "^5.0.0",
+    "@semantic-release/git": "^9.0.0",
+    "commitizen": "^4.0.3",
+    "cz-conventional-changelog": "^3.1.0",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb": "18.0.1",
+    "eslint-config-standard": "14.1.0",
+    "eslint-plugin-import": ">=2.20.1",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-node": ">=11.0.0",
+    "eslint-plugin-promise": ">=4.2.1",
+    "eslint-plugin-react": "^7.19.0",
+    "eslint-plugin-react-hooks": "^2.5.0",
+    "eslint-plugin-standard": ">=4.0.1",
+    "husky": "^4.2.3",
+    "jest": "^25.1.0",
+    "js-beautify": "^1.10.3",
+    "minimist": "^1.2.0",
+    "nodemon": "^2.0.2",
+    "postcss-url": "^8.0.0",
+    "readable-stream": "^3.6.0",
+    "rollup": "^1.32.0",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-copy": "^3.3.0",
+    "rollup-plugin-gzip": "^2.3.0",
+    "rollup-plugin-livereload": "^1.0.4",
+    "rollup-plugin-postcss": "^2.4.1",
+    "rollup-plugin-uglify": "^6.0.4",
+    "semantic-release": "^17.0.4"
+  },
+  "scripts": {
+    "bundle": "rm -rf dist/* && rollup -c .rollup/config.js",
+    "bundle:dev": "rm -rf dist/* && rollup -lmw -c .rollup/config.cjs",
+    "find": "git diff --staged --diff-filter=ACMR --name-only | grep -E '\\.(css|js)'",
+    "lint": "eslint src",
+    "lint:dev": "js-beautify -r $(yarn -s find) && eslint --fix $(yarn -s find) && git add $(yarn -s find)",
+    "start": "node ${NODE_SCRIPT}",
+    "start:dev": "./node_modules/nodemon/bin/nodemon.js -w ./ ${NODE_SCRIPT}",
+    "test": "jest --bail",
+    "test:dev": "jest --bail --findRelatedTests $(yarn -s find)"
+  },
+  "babel": {
+    "plugins": [
+      [
+        "@babel/plugin-transform-runtime",
+        {
+          "helpers": false
+        }
+      ]
+    ],
+    "presets": [
+      "@babel/preset-env"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "gzip": {
+    "additionalFiles": [
+      "./dist/css/gui.css"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "yarn lint:dev && yarn test:dev",
+      "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true"
+    }
+  },
+  "nodemonConfig": {
+    "ignoreRoot": [
+      ".git"
+    ]
+  },
+  "release": {
+    "branches": [
+      "master",
+      "next"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      "@semantic-release/github",
+      "@semantic-release/npm",
+      "@semantic-release/git"
+    ]
   }
 }

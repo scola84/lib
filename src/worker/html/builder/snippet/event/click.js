@@ -1,4 +1,4 @@
-import { Event } from '../event'
+import { Event } from '../event.js'
 
 export class Click extends Event {
   constructor (options) {

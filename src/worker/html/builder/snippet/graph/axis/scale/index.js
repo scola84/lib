@@ -1,2 +1,2 @@
-export * from './linear'
-export * from './ordinal'
+export * from './linear.js'
+export * from './ordinal.js'

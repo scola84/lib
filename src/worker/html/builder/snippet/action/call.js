@@ -1,4 +1,4 @@
-import { Action } from '../action'
+import { Action } from '../action.js'
 
 const handlers = {}
 
@@ -33,7 +33,7 @@ export class Call extends Action {
   }
 
   resolveAfter (box, data) {
-    if (handlers[this._name] === undefined) {
+    if (typeof handlers[this._name] !== 'object') {
       return
     }
 

@@ -1,5 +1,5 @@
 import postalcodes from 'postal-codes-js'
-import { Input } from '../input'
+import { Input } from '../input.js'
 
 export class Zip extends Input {
   constructor (options = {}) {

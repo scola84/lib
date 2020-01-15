@@ -1,4 +1,4 @@
-import { Alert } from './alert'
+import { Alert } from './alert.js'
 
 export class Confirm extends Alert {
   build (hb) {

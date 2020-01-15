@@ -1,5 +1,5 @@
-import { select } from 'd3-selection'
-import { Node } from '../node'
+import * as d3 from 'd3-selection'
+import { Node } from '../node.js'
 
 export class Panel extends Node {
   constructor (options = {}) {
@@ -11,9 +11,9 @@ export class Panel extends Node {
     const effect = ['rtl', 'ltr', 'ins']
       .find((name) => box.options[name] === true) || 'none'
 
-    const old = box.base.snippet === undefined
-      ? select(document.body)
-      : box.base.snippet.node()
+    const old = typeof box.base.snippet === 'object'
+      ? box.base.snippet.node()
+      : d3.select(document.body)
 
     if (old.node() === this._node.node()) {
       return this._node
@@ -38,9 +38,9 @@ export class Panel extends Node {
   }
 
   resolveBefore (box, data) {
-    const old = box.base.snippet === undefined
-      ? select()
-      : box.base.snippet.node().classed('rtl ltr ins', false)
+    const old = typeof box.base.snippet === 'object'
+      ? box.base.snippet.node().classed('rtl ltr ins', false)
+      : d3.select()
 
     if (old.node() === this._node.node()) {
       return this.resolveOuter(box, data)

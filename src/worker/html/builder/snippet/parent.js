@@ -1,5 +1,5 @@
-import { select, selectAll } from 'd3-selection'
-import { Node } from './node'
+import * as d3 from 'd3-selection'
+import { Node } from './node.js'
 
 export class Parent extends Node {
   constructor (options = {}) {
@@ -77,7 +77,7 @@ export class Parent extends Node {
 
     this._children.set(key, clone)
 
-    const transition = select(node.node().parentNode)
+    const transition = d3.select(node.node().parentNode)
       .classed('transition')
 
     node.classed('transition', transition)
@@ -94,10 +94,10 @@ export class Parent extends Node {
       return
     }
 
-    children = selectAll(children)
+    children = d3.selectAll(children)
       .classed('out', true)
       .on('transitionend.scola-parent', (datum, index, nodes) => {
-        select(nodes[index]).on('.scola-parent', null)
+        d3.select(nodes[index]).on('.scola-parent', null)
         nodes[index].snippet.remove()
       })
 

@@ -10,6 +10,7 @@
   "rules": {
     "arrow-body-style": "off",
     "class-methods-use-this": "off",
+    "import/extensions": "off",
     "import/no-useless-path-segments": "off",
     "import/prefer-default-export": "off",
     "no-continue": "off",

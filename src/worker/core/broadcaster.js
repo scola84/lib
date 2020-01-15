@@ -1,5 +1,5 @@
-import merge from 'lodash-es/merge'
-import { Worker } from './worker'
+import merge from 'lodash/merge.js'
+import { Worker } from './worker.js'
 
 export class Broadcaster extends Worker {
   constructor (options = {}) {
@@ -43,12 +43,20 @@ export class Broadcaster extends Worker {
       : actBox
 
     if (this._resolve === true) {
-      this.prepare(box)
+      this.prepareBox(box)
     }
 
     for (let i = 0; i < this._downstreams.length; i += 1) {
-      this._downstreams[i].handleAct(box, data)
+      this._downstreams[i].callAct(box, data)
     }
+  }
+
+  decide () {
+    return true
+  }
+
+  err (box, error) {
+    this.act(box, error)
   }
 
   connect (worker = null) {
@@ -65,29 +73,12 @@ export class Broadcaster extends Worker {
     return super.connect(worker)
   }
 
-  find (compare) {
-    if (compare(this) === true) {
-      return this
-    }
-
-    let found = null
-
-    for (let i = 0; i < this._downstreams.length; i += 1) {
-      found = this._downstreams[i].find(compare)
-
-      if (found) {
-        return found
-      }
-    }
-
-    return found
-  }
-
-  prepare (box) {
+  prepareBox (box) {
     merge(box, {
       resolve: {
         [this._name]: {
           count: 0,
+          data: [],
           empty: false,
           total: this._downstreams.length
         }

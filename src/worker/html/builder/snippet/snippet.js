@@ -1,19 +1,10 @@
-import { Builder } from '../../../core'
+import { Builder } from '../../../core/index.js'
 
-let id = 0
+const snippets = new Map()
 
 export class Snippet {
-  static getId () {
-    return id
-  }
-
-  static setId (value) {
-    id = value === undefined ? id + 1 : value
-    return id
-  }
-
-  static attachFactories (target, objects) {
-    Builder.attachFactories(target, objects)
+  static attachFactories (objects) {
+    Reflect.apply(Builder.attachFactories, this, [objects])
   }
 
   constructor (options = {}) {
@@ -115,7 +106,8 @@ export class Snippet {
     return this._id
   }
 
-  setId (value = Snippet.setId()) {
+  setId (value = snippets.size) {
+    snippets.set(value, this)
     this._id = value
     return this
   }
@@ -172,7 +164,7 @@ export class Snippet {
   }
 
   setStorage (value = null) {
-    this._storage = value === null && typeof window !== 'undefined'
+    this._storage = value === null && typeof window === 'object'
       ? window.localStorage
       : value
 
@@ -184,10 +176,10 @@ export class Snippet {
   }
 
   find (compare) {
-    const snippets = []
+    const result = []
 
     if (compare(this) === true) {
-      snippets.push(this)
+      result.push(this)
     }
 
     let snippet = null
@@ -196,11 +188,11 @@ export class Snippet {
       snippet = this._args[i]
 
       if (snippet instanceof Snippet) {
-        snippets.push(...snippet.find(compare))
+        result.push(...snippet.find(compare))
       }
     }
 
-    return snippets
+    return result
   }
 
   hasPermission (box, data) {
@@ -282,3 +274,5 @@ export class Snippet {
     return this.resolveValue(box, data, resolvedObject[name])
   }
 }
+
+Snippet.snippets = snippets

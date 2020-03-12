@@ -20,7 +20,7 @@ export class Grid extends Parent {
   resolveInner (box, data) {
     const [line] = this._args
 
-    const axes = this._builder.selector((snippet) => {
+    const axes = this._origin.selector((snippet) => {
       return snippet instanceof Axis
     }).resolve(null)
 

@@ -1,7 +1,6 @@
-import toPath from 'lodash/toPath.js'
 import mysql from 'mysql'
-import sqlstring from 'sqlstring'
 import { Client } from './client.js'
+import map from '../map/index.js'
 
 export class Mysql extends Client {
   setPool (value = null) {
@@ -18,74 +17,36 @@ export class Mysql extends Client {
     return this
   }
 
-  escape (value, type) {
-    if (type === 'id') {
-      return this.escapeId(value)
-    }
-
-    if (type === 'path') {
-      return this.escapePath(value)
-    }
-
-    if (type === 'value') {
-      return this.escapeValue(value)
-    }
-
-    return value
-  }
-
-  escapeId (value) {
-    return `\`${value.replace(/\./g, '`.`')}\``.replace('.`*`', '.*')
-  }
-
-  escapePath (value) {
-    const path = toPath(value).map((item) => {
-      return item.match(/^\d+$/) === null ? `.${item}` : `[${item}]`
-    })
-
-    return `>'$${path.join('')}'`
-  }
-
-  escapeValue (value) {
-    return sqlstring.escape(value)
-  }
-
   execute (box, data, query, callback) {
-    this.open(box, data, query, (openError, connection, mustRelease = true) => {
+    this.open(box, data, (openError, connection, mustRelease = true) => {
       if (openError !== null) {
         callback(openError)
         return
       }
 
-      const preparedQuery = this.prepareQuery(box, data, query)
-
-      query
-        .getBuilder()
-        .log('info', 'Executing query %s', [preparedQuery], box.rid)
-
-      connection.query(preparedQuery, (error, result) => {
+      connection.query(query, (error, result = []) => {
         if (mustRelease === true) {
           connection.release()
         }
 
         if (error !== null) {
-          error.query = preparedQuery
+          error.query = query
           callback(error)
           return
         }
 
-        callback(null, this.resolveResult(query, result))
+        callback(null, result)
       })
     })
   }
 
-  open (box, data, query, callback) {
+  open (box, data, callback) {
     if (typeof box.connection === 'object') {
       callback(null, box.connection, false)
       return
     }
 
-    const connection = query.getBuilder().getConnection()
+    const connection = this._origin.getConnection()
 
     if (connection !== null) {
       connection(box, data, this._pool, callback)
@@ -106,40 +67,15 @@ export class Mysql extends Client {
     return query.resolve(box, data)
   }
 
-  resolveInsert (query, result) {
-    const key = query.getBuilder().getKey()
-
-    if (key === null) {
-      return result
-    }
-
-    return [result.insertId]
-  }
-
-  resolveResult (query, result) {
-    let resolvedResult = result
-
-    if (query.getBuilder().getType() === 'insert') {
-      resolvedResult = this.resolveInsert(query, resolvedResult)
-    }
-
-    return resolvedResult
-  }
-
   stream (box, data, query, callback) {
-    this.open(box, data, query, (openError, connection) => {
+    this.open(box, data, (openError, connection) => {
       if (openError !== null) {
         callback(openError)
         return
       }
 
-      const preparedQuery = this.prepareQuery(box, data, query)
-      const stream = connection.query(preparedQuery)
+      const stream = connection.query(query)
       let next = null
-
-      query
-        .getBuilder()
-        .log('info', 'Streaming query %s', [preparedQuery], box.rid)
 
       stream.once('end', () => {
         if (next !== null) {
@@ -168,3 +104,5 @@ export class Mysql extends Client {
     })
   }
 }
+
+Mysql.attachFactories(map)

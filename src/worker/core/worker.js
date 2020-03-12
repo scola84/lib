@@ -388,17 +388,17 @@ export class Worker {
   }
 
   resolve (name, box, data, extra = []) {
-    let option = this[`_${name}`]
+    let value = this[`_${name}`]
 
-    if (option === null) {
-      option = this[name](box, data, ...extra)
-    } else if (typeof option === 'function') {
-      option = option(box, data, ...extra)
+    if (value === null) {
+      value = this[name](box, data, ...extra)
+    } else if (typeof value === 'function') {
+      value = value(box, data, ...extra)
     }
 
-    this.log(name, '%j', [option], box.rid)
+    this.log(name, '%j', [value], box.rid)
 
-    return option
+    return value
   }
 }
 

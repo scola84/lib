@@ -35,7 +35,7 @@ export class Route extends Action {
       routeData = data
     ] = this.resolveValue(box, data, this._view)
 
-    route = this._builder.format(this.expand(route), [
+    route = this._origin.format(this.expand(route), [
       box.params,
       routeData
     ])

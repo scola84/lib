@@ -1,3 +1,6 @@
+import camelCase from 'lodash/camelCase.js'
+import { Snippet } from '../snippet/snippet.js'
+
 const alias = {
   '!=': 'notEq',
   '&': 'bitAnd',
@@ -15,15 +18,10 @@ const alias = {
   '>>': 'bitRight',
   '^': 'bitXor',
   '|': 'bitOr',
-  '~': 'bitInv',
-  '->': 'jsonExtract'
+  '~': 'bitInv'
 }
 
-const unspaced = [
-  '->'
-]
-
-const spaced = [
+const list = [
   '!=',
   '&',
   '*',
@@ -41,7 +39,6 @@ const spaced = [
   '^',
   '|',
   '~',
-  '->',
   'AND',
   'AS',
   'BETWEEN',
@@ -49,28 +46,23 @@ const spaced = [
   'IN',
   'IS',
   'LIKE',
-  'MATCH AGAINST',
   'NOT',
   'OR',
-  'OVER',
   'REGEXP',
   'RLIKE',
-  'SOUNDS LIKE',
   'UNION',
   'XOR'
 ]
 
-export default [
-  ...spaced.map((token) => {
-    return {
-      name: alias[token] || token,
-      token: ` ${token} `
+export default list.reduce((object, token) => {
+  return {
+    ...object,
+    [camelCase(alias[token] || token)]: {
+      object: Snippet,
+      options: {
+        infix: ` ${token} `,
+        name: alias[token] || token
+      }
     }
-  }),
-  ...unspaced.map((token) => {
-    return {
-      name: alias[token] || token,
-      token
-    }
-  })
-]
+  }
+}, {})

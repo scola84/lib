@@ -1,5 +1,5 @@
 import { Builder } from '../core/index.js'
-import map from './builder/map/index.js'
+import map from './builder/map/client.js'
 import snippet from './builder/snippet/index.js'
 
 const clients = new Map()
@@ -8,31 +8,37 @@ export class SqlBuilder extends Builder {
   constructor (options = {}) {
     super(options)
 
-    this._connection = null
+    this._build = null
     this._client = null
-    this._key = null
+    this._connection = null
     this._query = null
     this._stream = null
-    this._type = null
 
+    this.setBuild(options.build)
     this.setClient(options.client)
     this.setConnection(options.connection)
-    this.setKey(options.key)
     this.setQuery(options.query)
     this.setStream(options.stream)
-    this.setType(options.type)
   }
 
   getOptions () {
     return {
       ...super.getOptions(),
+      build: this._build,
       client: this._client,
       connection: this._connection,
-      key: this._key,
       query: this._query,
-      stream: this._stream,
-      type: this._type
+      stream: this._stream
     }
+  }
+
+  getBuild () {
+    return this._build
+  }
+
+  setBuild (value = null) {
+    this._build = value
+    return this
   }
 
   getClient () {
@@ -53,24 +59,12 @@ export class SqlBuilder extends Builder {
     return this
   }
 
-  getKey () {
-    return this._key
-  }
-
-  setKey (value = null) {
-    this._key = value
-    return this
-  }
-
   getQuery () {
     return this._query
   }
 
-  setQuery (value = null) {
-    this._query = typeof value === 'function'
-      ? value.call(this, this)
-      : value
-
+  setQuery (value = new Map()) {
+    this._query = value
     return this
   }
 
@@ -83,35 +77,23 @@ export class SqlBuilder extends Builder {
     return this
   }
 
-  getType () {
-    return this._type
-  }
-
-  setType (value = null) {
-    this._type = value
-    return this
-  }
-
   act (box, data) {
-    if (this._query === null) {
-      this._query = this.build(this)
-    }
-
     const client = this.resolveClient(box, data)
+    const query = this.resolveQuery(box, data, client)
     const method = this._stream === true ? 'stream' : 'execute'
 
-    client[method](box, data, this._query, (error, result, last) => {
+    client[method](box, data, query.resolve(box, data), (error, result, last) => {
       if (error !== null) {
         this.fail(box, error)
         return
       }
 
-      this.pass(box, data, result, last)
+      this.pass(box, data, query.merge(box, data, result), last)
     })
   }
 
   build () {
-    return this._query
+    return this.query('SELECT 1')
   }
 
   client () {
@@ -123,35 +105,27 @@ export class SqlBuilder extends Builder {
       return result
     }
 
-    if (this._type === 'insert') {
-      return {
-        [this._key]: result
-      }
-    }
-
-    if (this._type === 'list') {
-      return result
-    }
-
-    if (this._type === 'object') {
-      return result[0]
-    }
-
     return data
   }
 
   resolveClient (box, data) {
     const client = this.resolve('client', box, data)
 
-    if (clients.has(client) === true) {
-      return clients.get(client)
+    if (clients.has(client) === false) {
+      clients.set(client, this[client.split(':').shift()]().pool(client))
     }
 
-    clients.set(client, this[client.split(':').shift()]().pool(client))
-
     return clients.get(client)
+  }
+
+  resolveQuery (box, data, client) {
+    if (this._query.has(client) === false) {
+      this._query.set(client, this.resolve('build', client))
+    }
+
+    return this._query.get(client)
   }
 }
 
 SqlBuilder.snippet = snippet
-SqlBuilder.attachFactories(map)
+SqlBuilder.attachFactories({ map })

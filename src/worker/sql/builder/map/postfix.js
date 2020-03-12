@@ -1,30 +1,31 @@
+import camelCase from 'lodash/camelCase.js'
+import { Snippet } from '../snippet/snippet.js'
+
 const list = [
   'ASC',
   'BINARY',
   'CHAR',
-  'CURRENT ROW',
   'DATE',
   'DATETIME',
   'DECIMAL',
   'DESC',
-  'FOLLOWING',
   'JSON',
   'NCHAR',
-  'PRECEDING',
   'RANGE',
-  'ROWS',
   'SIGNED',
   'TIME',
-  'UNBOUNDED FOLLOWING',
-  'UNBOUNDED PRECEDING',
   'UNSIGNED'
 ]
 
-export default [
-  ...list.map((token) => {
-    return {
-      name: token,
-      token: ` ${token}`
+export default list.reduce((object, token) => {
+  return {
+    ...object,
+    [camelCase(token)]: {
+      object: Snippet,
+      options: {
+        name: token,
+        postfix: ` ${token}`
+      }
     }
-  })
-]
+  }
+}, {})

@@ -21,7 +21,7 @@ export class Checkbox extends Input {
   validateAfter (box, data, error, name, value) {
     const realName = name.split('.').shift()
 
-    const snippets = this._builder
+    const snippets = this._origin
       .selector((snippet) => {
         return snippet instanceof Checkbox &&
           snippet.resolveAttribute(box, data, 'name') === realName

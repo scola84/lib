@@ -68,7 +68,7 @@ export class Plot extends Parent {
   findScale (type) {
     const position = this._data.getPosition()
 
-    const [axis] = this._builder
+    const [axis] = this._origin
       .selector((snippet) => {
         if ((snippet instanceof Axis) === false) {
           return false

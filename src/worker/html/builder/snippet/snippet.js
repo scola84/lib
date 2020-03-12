@@ -9,19 +9,19 @@ export class Snippet {
 
   constructor (options = {}) {
     this._args = null
-    this._builder = null
     this._filter = null
     this._id = null
     this._name = null
+    this._origin = null
     this._parent = null
     this._permit = null
     this._storage = null
 
     this.setArgs(options.args)
-    this.setBuilder(options.builder)
     this.setFilter(options.filter)
     this.setId(options.id)
     this.setName(options.name)
+    this.setOrigin(options.origin)
     this.setParent(options.parent)
     this.setPermit(options.permit)
     this.setStorage(options.storage)
@@ -42,10 +42,10 @@ export class Snippet {
   getOptions () {
     return {
       args: this._args,
-      builder: this._builder,
       filter: this._filter,
       id: this._id,
       name: this._name,
+      origin: this._origin,
       parent: this._parent,
       permit: this._permit,
       storage: this._storage
@@ -74,19 +74,6 @@ export class Snippet {
 
   args (value) {
     return this.setArgs(value)
-  }
-
-  getBuilder () {
-    return this._builder
-  }
-
-  setBuilder (value = null) {
-    this._builder = value
-    return this
-  }
-
-  builder (value) {
-    return this.setBuilder(value)
   }
 
   getFilter () {
@@ -131,6 +118,19 @@ export class Snippet {
 
   node () {
     return this._parent.node()
+  }
+
+  getOrigin () {
+    return this._origin
+  }
+
+  setOrigin (value = null) {
+    this._origin = value
+    return this
+  }
+
+  origin (value) {
+    return this.setOrigin(value)
   }
 
   getParent () {

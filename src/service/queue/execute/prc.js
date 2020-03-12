@@ -216,3 +216,5 @@ broadcaster
 broadcaster
   .connect(nextQueueSelector)
   .connect(runInserter)
+
+trigger.call()

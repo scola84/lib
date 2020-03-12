@@ -63,7 +63,7 @@ export class Hint extends Node {
       ? `input.${value.type}.${value.reason}`
       : this.resolveValue(box, data, this._format)
 
-    const html = this._builder
+    const html = this._origin
       .print()
       .html()
       .format(format)
@@ -82,7 +82,7 @@ export class Hint extends Node {
       .node()
       .attr('multiple')
 
-    const all = this._builder
+    const all = this._origin
       .selector(`input[name="${name}"]`)
       .resolve(null)
 

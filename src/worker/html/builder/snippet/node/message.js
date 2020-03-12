@@ -48,7 +48,7 @@ export class Message extends Node {
       return this._node.classed('in', false)
     }
 
-    const html = this._builder
+    const html = this._origin
       .print()
       .html()
       .format(type)

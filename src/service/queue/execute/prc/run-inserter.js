@@ -1,14 +1,6 @@
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class RunInserter extends SqlBuilder {
-  setKey (value = 'id_run') {
-    return super.setKey(value)
-  }
-
-  setType (value = 'insert') {
-    return super.setType(value)
-  }
-
   build (sb) {
     return sb.query(
       sb.insert(),
@@ -20,7 +12,8 @@ export class RunInserter extends SqlBuilder {
       ).parens(),
       sb.values(
         sb.value((box, data) => data.queue.id_queue)
-      )
+      ),
+      sb.returning('id_run')
     )
   }
 
@@ -28,9 +21,9 @@ export class RunInserter extends SqlBuilder {
     return typeof data.queue === 'object'
   }
 
-  merge (box, data, [idRun]) {
+  merge (box, data, [result = {}]) {
     data.run = {
-      id_run: idRun,
+      id_run: result.id_run,
       total: 0
     }
 

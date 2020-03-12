@@ -206,7 +206,7 @@ export class Scale {
       type: null
     }
 
-    const plots = this._axis.getBuilder().selector((snippet) => {
+    const plots = this._axis.getOrigin().selector((snippet) => {
       return snippet instanceof Plot &&
         snippet.getData().getPosition().indexOf(this._position) > -1
     }).resolve(null)

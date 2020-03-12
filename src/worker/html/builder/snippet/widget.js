@@ -46,7 +46,7 @@ export class Widget extends Action {
   }
 
   create () {
-    const widget = this.build(this._builder)
+    const widget = this.build(this._origin)
 
     if (this._args.length > 0) {
       widget.setArgs(this._args)

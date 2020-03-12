@@ -2,14 +2,6 @@ import omit from 'lodash/omit.js'
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class ItemInserter extends SqlBuilder {
-  setKey (value = 'id_item') {
-    return super.setKey(value)
-  }
-
-  setType (value = 'insert') {
-    return super.setType(value)
-  }
-
   build (sb) {
     return sb.query(
       sb.insert(),
@@ -29,7 +21,8 @@ export class ItemInserter extends SqlBuilder {
         sb.value((box, data) => data.item.name),
         sb.value((box, data) => data.item.object_name),
         sb.value((box, data) => data.item.object_id)
-      )
+      ),
+      sb.returning('id_item')
     )
   }
 
@@ -39,9 +32,9 @@ export class ItemInserter extends SqlBuilder {
       typeof data.run === 'object'
   }
 
-  merge (box, data, [idItem]) {
+  merge (box, data, [result = {}]) {
     return {
-      id_item: idItem,
+      id_item: result.id_item,
       id_queue: data.queue.id_queue,
       id_run: data.run.id_run,
       data_in: omit(data.item, [

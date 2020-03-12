@@ -3,22 +3,22 @@ const snippets = new Map()
 export class Snippet {
   constructor (options = {}) {
     this._args = null
-    this._builder = null
-    this._escape = null
+    this._client = null
     this._id = null
     this._infix = null
     this._name = null
+    this._origin = null
     this._parens = null
     this._permit = null
     this._postfix = null
     this._prefix = null
 
     this.setArgs(options.args)
-    this.setBuilder(options.builder)
-    this.setEscape(options.escape)
+    this.setClient(options.client)
     this.setId(options.id)
     this.setInfix(options.infix)
     this.setName(options.name)
+    this.setOrigin(options.origin)
     this.setParens(options.parens)
     this.setPermit(options.permit)
     this.setPostfix(options.postfix)
@@ -40,11 +40,11 @@ export class Snippet {
   getOptions () {
     return {
       args: this._args,
-      builder: this._builder,
-      escape: this._escape,
+      client: this._client,
       id: this._id,
       infix: this._infix,
       name: this._name,
+      origin: this._origin,
       parens: this._parens,
       permit: this._permit,
       postfix: this._postfix,
@@ -78,30 +78,17 @@ export class Snippet {
     return this.setArgs(value)
   }
 
-  getBuilder () {
-    return this._builder
+  getClient () {
+    return this._client
   }
 
-  setBuilder (value = null) {
-    this._builder = value
+  setClient (value = null) {
+    this._client = value
     return this
   }
 
-  builder (value) {
-    return this.setBuilder(value)
-  }
-
-  getEscape () {
-    return this._escape
-  }
-
-  setEscape (value = null) {
-    this._escape = value
-    return this
-  }
-
-  escape (value) {
-    return this.setEscape(value)
+  client (value) {
+    return this.setClient(value)
   }
 
   getId () {
@@ -142,6 +129,19 @@ export class Snippet {
 
   name (value) {
     return this.setName(value)
+  }
+
+  getOrigin () {
+    return this._origin
+  }
+
+  setOrigin (value = null) {
+    this._origin = value
+    return this
+  }
+
+  origin (value) {
+    return this.setOrigin(value)
   }
 
   getParens () {
@@ -228,6 +228,25 @@ export class Snippet {
     return this.resolveValue(box, data, this._permit)
   }
 
+  merge (box, data, result) {
+    return this.mergeInner(box, data, result)
+  }
+
+  mergeInner (box, data, result) {
+    let merged = result
+    let arg = null
+
+    for (let i = 0; i < this._args.length; i += 1) {
+      arg = this._args[i]
+
+      if (arg instanceof Snippet) {
+        merged = arg.merge(box, data, merged)
+      }
+    }
+
+    return merged
+  }
+
   resolve (box, data) {
     const hasPermission = this.hasPermission(box, data)
 
@@ -242,16 +261,6 @@ export class Snippet {
     string = this.concat(string, this._postfix)
 
     return string
-  }
-
-  resolveEscape (box, data, value) {
-    if (this._escape === null) {
-      return value
-    }
-
-    return this._builder
-      .resolveClient(box, data)
-      .escape(value, this._escape)
   }
 
   resolveInner (box, data) {
@@ -298,10 +307,6 @@ export class Snippet {
 
     if (typeof value === 'object') {
       return this.resolveValue(box, data, JSON.stringify(value))
-    }
-
-    if (typeof value === 'string') {
-      return this.resolveEscape(box, data, value)
     }
 
     if (typeof value === 'function') {

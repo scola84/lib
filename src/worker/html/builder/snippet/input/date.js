@@ -28,7 +28,7 @@ export class Date extends DateTime {
       .fromFormat(value, formatFrom)
       .toISO()
 
-    const text = this._builder
+    const text = this._origin
       .print()
       .format(`%l[${formatTo}]`)
       .values(date)

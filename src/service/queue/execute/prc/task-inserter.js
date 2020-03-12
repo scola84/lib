@@ -1,14 +1,6 @@
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class TaskInserter extends SqlBuilder {
-  setKey (value = 'id_task') {
-    return super.setKey(value)
-  }
-
-  setType (value = 'insert') {
-    return super.setType(value)
-  }
-
   build (sb) {
     return sb.query(
       sb.insert(),
@@ -30,12 +22,13 @@ export class TaskInserter extends SqlBuilder {
         sb.value((box, data) => JSON.stringify(data.data_in)),
         sb.value((box, data) => data.hash),
         sb.value((box, data) => data.name)
-      )
+      ),
+      sb.returning('id_task')
     )
   }
 
-  merge (box, data, [idTask]) {
-    data.id_task = idTask
+  merge (box, data, [result = {}]) {
+    data.id_task = result.id_task
     return data
   }
 }

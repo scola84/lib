@@ -1,5 +1,5 @@
 import { Builder } from '../core/index.js'
-import * as map from './builder/map/index.js'
+import map from './builder/map/index.js'
 
 const clients = new Map()
 
@@ -73,11 +73,9 @@ export class MsgBuilder extends Builder {
   resolveClient (box, data) {
     const client = this.resolve('client', box, data)
 
-    if (clients.has(client) === true) {
-      return clients.get(client)
+    if (clients.has(client) === false) {
+      clients.set(client, this[client.split(':').shift()]().transport(client))
     }
-
-    clients.set(client, this[client.split(':').shift()]().transport(client))
 
     return clients.get(client)
   }

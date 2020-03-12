@@ -97,7 +97,7 @@ export class Request extends Action {
       return
     }
 
-    const call = this._builder
+    const call = this._origin
       .call()
       .name(error.type)
       .act(() => {
@@ -113,7 +113,7 @@ export class Request extends Action {
   resolveResource (box, data, string) {
     let resource = string
 
-    resource = this._builder.format(this.expand(resource), [
+    resource = this._origin.format(this.expand(resource), [
       box.params,
       box.list
     ])

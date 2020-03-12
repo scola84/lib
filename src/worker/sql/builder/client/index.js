@@ -1,2 +1,7 @@
-export * from './mysql.js'
-export * from './postgresql.js'
+import { Mysql } from './mysql.js'
+import { Postgresql } from './postgresql.js'
+
+export default {
+  Mysql,
+  Postgresql
+}

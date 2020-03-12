@@ -1,23 +1,29 @@
+import { Builder } from '../../../core/index.js'
+
 export class Client {
+  static attachFactories (objects) {
+    Reflect.apply(Builder.attachFactories, this, [objects])
+  }
+
   constructor (options = {}) {
-    this._builder = null
+    this._origin = null
     this._pool = null
 
-    this.setBuilder(options.builder)
+    this.setOrigin(options.origin)
     this.setPool(options.pool)
   }
 
-  getBuilder () {
-    return this._builder
+  getOrigin () {
+    return this._origin
   }
 
-  setBuilder (value = null) {
-    this._builder = value
+  setOrigin (value = null) {
+    this._origin = value
     return this
   }
 
-  builder (value) {
-    return this.setBuilder(value)
+  origin (value) {
+    return this.setOrigin(value)
   }
 
   getPool () {

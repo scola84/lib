@@ -203,7 +203,7 @@ export class Print extends Snippet {
     string = this.resolveNested(box, data, string)
 
     try {
-      string = this._builder.format(string, values, locale)
+      string = this._origin.format(string, values, locale)
     } catch (error) {
       string = error.message
     }
@@ -213,7 +213,7 @@ export class Print extends Snippet {
     }
 
     if (this._type === 'html') {
-      string = this._builder.format('%m', [string])
+      string = this._origin.format('%m', [string])
     }
 
     return string

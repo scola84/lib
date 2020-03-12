@@ -12,6 +12,6 @@ const client = Object.keys(clientBase).reduce((master, group) => {
   }, master)
 }, {})
 
-export {
+export default {
   client
 }

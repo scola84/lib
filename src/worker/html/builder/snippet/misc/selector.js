@@ -25,7 +25,7 @@ export class Selector extends Snippet {
   resolveFunction (box, data, query) {
     const result = []
 
-    const snippets = this._builder
+    const snippets = this._origin
       .getView()
       .find(query)
 
@@ -43,7 +43,7 @@ export class Selector extends Snippet {
   resolveString (box, data, query) {
     const result = []
 
-    this._builder
+    this._origin
       .getView()
       .node()
       .selectAll(query)

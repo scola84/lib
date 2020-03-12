@@ -31,7 +31,7 @@ export class Builder extends Worker {
     this.prototype[safeName] = function create (...args) {
       return new O({
         args,
-        builder: this,
+        origin: this,
         ...options
       })
     }

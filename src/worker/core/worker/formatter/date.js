@@ -14,9 +14,9 @@ export function date (value, options, locale) {
     locale: locale.replace('_', '-')
   }
 
-  const date = type === 'dat'
+  const result = type === 'dat'
     ? luxon.DateTime.fromJSDate(new Date(value), loptions)
     : luxon.Duration.fromMillis(value)
 
-  return date.toFormat(fmt)
+  return result.toFormat(fmt)
 }

@@ -75,7 +75,7 @@ export class HttpServer extends Worker {
       request.original.socket.setTimeout(0)
     }
 
-    this.log('info', 'Handling request "%s %s" %j', [
+    this.log('info', 'Handling request "%s %s" %o', [
       request.getMethod(),
       request.original.url,
       request.getHeaders()

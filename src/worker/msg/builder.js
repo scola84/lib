@@ -1,5 +1,5 @@
 import { Builder } from '../core/index.js'
-import map from './builder/map/index.js'
+import map from './builder/map/client.js'
 
 const clients = new Map()
 
@@ -44,17 +44,13 @@ export class MsgBuilder extends Builder {
     const client = this.resolveClient(box, data)
     const message = this.resolveMessage(box, data)
 
-    this.log('info', 'Sending message "%s" %j',
-      [client.constructor.name.toUpperCase(), message], box.rid)
+    this._origin.log('info', 'Sending message %o', [message], box.rid)
 
-    client.send(message, (error, result) => {
+    client.send(box, data, message, (error, result) => {
       if (error !== null) {
         this.fail(box, error)
         return
       }
-
-      this.log('info', 'Sent message "%s" %j',
-        [client.constructor.name.toUpperCase(), result], box.rid)
 
       this.pass(box, data, result)
     })
@@ -81,22 +77,8 @@ export class MsgBuilder extends Builder {
   }
 
   resolveMessage (box, data) {
-    const message = this.resolve('message', box, data)
-
-    if (typeof message.subject === 'string') {
-      message.subject = this.format(message.subject, [message.data], message.locale)
-    }
-
-    if (typeof message.text === 'string') {
-      message.text = this.format(message.text, [message.data], message.locale)
-    }
-
-    if (typeof message.html === 'string') {
-      message.html = this.format(message.html, [message.data], message.locale)
-    }
-
-    return message
+    return this.resolve('message', box, data)
   }
 }
 
-MsgBuilder.attachFactories(map)
+MsgBuilder.attachFactories({ map })

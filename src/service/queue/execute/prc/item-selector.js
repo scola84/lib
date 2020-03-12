@@ -1,8 +1,8 @@
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class ItemSelector extends SqlBuilder {
-  build (sb) {
-    return sb.query((box, data) => {
+  build (sc) {
+    return sc.query((box, data) => {
       return this.format(data.queue.selector_query, [data.previous])
     })
   }

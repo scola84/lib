@@ -23,14 +23,17 @@ export class HttpClient extends Worker {
 
   static request (resource, callback, progress) {
     const client = new HttpClient({
-      progress
+      progress,
+      merge (box, data, decoderData) {
+        return decoderData
+      }
     })
 
     client.connect(new Worker({
-      act: (box, responseData) => {
-        callback(null, responseData)
+      act (box, data) {
+        callback(null, data)
       },
-      err: (box, error) => {
+      err (box, error) {
         callback(error)
       }
     }))
@@ -64,13 +67,13 @@ export class HttpClient extends Worker {
 
     const request = new Request(new fetch.Request(url, init))
 
-    this.log('info', 'Handling request "%s %s" %j', [
+    this.log('info', 'Handling request "%s %s" %o', [
       request.getMethod(),
       request.original.url,
       request.getHeaders()
     ])
 
-    this._progress(box, {
+    this._progress({
       loaded: 1,
       total: 10
     })
@@ -88,7 +91,7 @@ export class HttpClient extends Worker {
   }
 
   handleError (box, data, error, messageData = {}, code = 400) {
-    this._progress(box, {
+    this._progress({
       loaded: 1,
       total: 1
     })
@@ -112,7 +115,7 @@ export class HttpClient extends Worker {
   }
 
   handleResponse (box, data, response) {
-    this.log('info', 'Handling response "%s" %j', [
+    this.log('info', 'Handling response "%s" %o', [
       response.getStatus(),
       response.getHeaders()
     ])
@@ -131,9 +134,9 @@ export class HttpClient extends Worker {
         return
       }
 
-      this.pass(box, decoderData, response, data)
+      this.pass(box, data, decoderData, response)
     }, (loaded) => {
-      this._progress(box, {
+      this._progress({
         loaded,
         total: response.getHeader('Content-Length')
       })

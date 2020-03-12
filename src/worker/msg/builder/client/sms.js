@@ -8,24 +8,32 @@ export class Sms extends Client {
       return this
     }
 
-    const [, name] = this._url.split('@')
-    this._transport = sms[name].create(value)
+    const [, name] = value.split('@')
+    this._transport = new sms[name]({ client: value })
 
     return this
   }
 
-  open (callback) {
+  open (box, data, callback) {
     callback(null, this._transport)
   }
 
-  send (message, callback) {
-    this.open((openError, transport) => {
+  prepare (message) {
+    if (typeof message.text === 'string') {
+      message.text = this._origin.format(message.text, [message], message.locale)
+    }
+
+    return message
+  }
+
+  send (box, data, message, callback) {
+    this.open(box, data, (openError, transport) => {
       if (openError !== null) {
         callback(openError)
         return
       }
 
-      transport.send(message, (sendError, result) => {
+      transport.send(this.prepare(message), (sendError, result) => {
         if (sendError !== null) {
           callback(sendError)
           return

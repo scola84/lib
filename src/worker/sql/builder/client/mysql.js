@@ -63,10 +63,6 @@ export class Mysql extends Client {
     })
   }
 
-  prepareQuery (box, data, query) {
-    return query.resolve(box, data)
-  }
-
   stream (box, data, query, callback) {
     this.open(box, data, (openError, connection) => {
       if (openError !== null) {

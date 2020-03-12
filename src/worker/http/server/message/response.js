@@ -59,7 +59,7 @@ export class Response {
           this.setHeader('Content-Length', buffer.Buffer.byteLength(encoderData))
         }
 
-        this.parent.log('info', 'Writing response headers %j', [this.getHeaders()])
+        this.parent.log('info', 'Writing response headers %o', [this.getHeaders()])
         this.original.writeHead(this.getStatus())
       }
 

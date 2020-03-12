@@ -4,7 +4,6 @@ import {
   HttpServer,
   Queuer,
   Resolver,
-  Slicer,
   Trigger
 } from '../../../worker/api.js'
 
@@ -20,7 +19,9 @@ import {
   ServerQueueSelector,
   ServerResponder,
   ServerStreamer,
+  ServerTaskSlicer,
   TaskInserter,
+  TaskSelector,
   TaskUpdater,
   TriggerQueueSelector,
   TriggerQueueUpdater
@@ -111,7 +112,7 @@ const serverTaskResolver = new Resolver({
   name: 'task'
 })
 
-const serverTaskSlicer = new Slicer({
+const serverTaskSlicer = new ServerTaskSlicer({
   description: 'Slice tasks from request',
   id: 'queue-server-task-slicer',
   name: 'task'
@@ -144,6 +145,12 @@ const taskPusher = new Queuer({
   pusher: true
 })
 
+const taskSelector = new TaskSelector({
+  description: 'Select task definition',
+  id: 'queue-task-selector',
+  client: process.env.QUEUE_DATABASE_CLIENT
+})
+
 const taskUpdater = new TaskUpdater({
   description: 'Update task after execution',
   id: 'queue-task-updater',
@@ -174,7 +181,7 @@ server
   .connect('POST /q/p', serverTaskSlicer)
   .connect(serverQueueSelector
     .bypass(serverTaskResolver))
-  .connect(taskInserter)
+  .connect(taskSelector)
 
 serverRouter
   .connect('GET /q/r', serverStreamListener
@@ -189,12 +196,13 @@ trigger
 
 runInserter
   .connect(itemSelector
-    .bypass(taskInserter))
+    .bypass(taskSelector))
   .connect(runTotalUpdater)
   .connect(itemInserter)
-  .connect(taskInserter)
+  .connect(taskSelector)
 
-taskInserter
+taskSelector
+  .connect(taskInserter)
   .connect(taskPusher)
   .connect(taskUpdater)
 
@@ -211,10 +219,8 @@ broadcaster
 broadcaster
   .connect(nextTaskSlicer
     .bypass(false))
-  .connect(taskInserter)
+  .connect(taskSelector)
 
 broadcaster
   .connect(nextQueueSelector)
   .connect(runInserter)
-
-trigger.call()

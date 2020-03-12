@@ -1,14 +1,7 @@
-/* eslint-disable max-len */
+import camelCase from 'lodash/camelCase.js'
+import { Node } from '../snippet/node.js'
 
-/*
-https://htmlreference.io/
-"{\n'" + Array.from(document.querySelectorAll('.item-name')).map((node) => node.innerText).join("',\n'") + "'\n}"
-
-https://developer.mozilla.org/en-US/docs/Web/SVG/Element
-"[\n'" + Array.from(document.querySelectorAll('.index li code')).map((node) => node.innerText.slice(1, -1)).join("',\n'") + "'\n]"
-*/
-
-export default [
+const list = [
   'a',
   'abbr',
   'address',
@@ -122,7 +115,6 @@ export default [
   'var',
   'video',
   'wbr',
-
   'animate',
   'animateMotion',
   'animateTransform',
@@ -193,3 +185,15 @@ export default [
   'use',
   'view'
 ]
+
+export default list.reduce((object, name) => {
+  return {
+    ...object,
+    [camelCase(name)]: {
+      object: Node,
+      options: {
+        name
+      }
+    }
+  }
+}, {})

@@ -5,31 +5,15 @@ export class Slicer extends Worker {
   constructor (options = {}) {
     super(options)
 
-    this._count = null
     this._resolve = null
-    this._slice = null
-
-    this.setCount(options.count)
     this.setResolve(options.resolve)
-    this.setSlice(options.slice)
   }
 
   getOptions () {
     return {
       ...super.getOptions(),
-      count: this._count,
-      resolve: this._resolve,
-      slice: this._slice
+      resolve: this._resolve
     }
-  }
-
-  getCount () {
-    return this._count
-  }
-
-  setCount (value = 1) {
-    this._count = value
-    return this
   }
 
   getResolve () {
@@ -41,45 +25,26 @@ export class Slicer extends Worker {
     return this
   }
 
-  getSlice () {
-    return this._slice
-  }
-
-  setSlice (value = null) {
-    this._slice = value
-    return this
-  }
-
-  act (actBox, data) {
-    const box = this._wrap === true
-      ? { box: actBox }
-      : actBox
-
-    if (Array.isArray(data) === false) {
-      throw new Error('400 [slicer] Data is not an array')
-    }
-
+  act (box, data) {
     if (this._resolve === true) {
       this.prepareBox(box, data.length)
     }
 
-    if (data.length === 0) {
-      if (this._bypass !== null) {
-        this._bypass.callAct(box, data)
-      }
-    } else if (this._downstream !== null) {
-      for (let i = 0; i < data.length; i += this._count) {
-        this._downstream.callAct(box,
-          this.resolve('slice', box, data, [data, i, i + this._count]))
-      }
+    for (let i = 0; i < data.length; i += 1) {
+      this.log('info', 'Slicing %d/%d', [i + 1, data.length], box.rid)
+      this.pass(box, data[i], i)
     }
   }
 
-  err (actBox, error) {
-    const box = this._wrap === true
-      ? { box: actBox }
-      : actBox
+  decide (box, data, context) {
+    if (context === 'err') {
+      return false
+    }
 
+    return Array.isArray(data) && data.length > 0
+  }
+
+  err (box, error) {
     if (this._resolve === true) {
       this.prepareBox(box, 0)
     }
@@ -87,33 +52,20 @@ export class Slicer extends Worker {
     this.fail(box, error)
   }
 
-  slice (box, data, items, begin, end) {
-    this.log('info', 'Slicing "%d-%d/%d"', [begin, end, items.length], box.rid)
-
-    let slice = items.slice(begin, end)
-
-    if (slice.length === 0) {
-      throw new Error('400 [slicer] Slice is empty')
-    }
-
-    if (this._count === 1) {
-      slice = Object.defineProperty(slice[0], 'index', {
-        configurable: true,
-        value: begin
-      })
-    }
-
-    return slice
+  merge (box, data, index) {
+    return Object.defineProperty(data, 'index', {
+      configurable: true,
+      value: index
+    })
   }
 
-  prepareBox (box, length) {
+  prepareBox (box, total) {
     return merge(box, {
       resolve: {
         [this._name]: {
+          total,
           count: 0,
-          data: [],
-          empty: length === 0,
-          total: Math.ceil(length / this._count)
+          data: []
         }
       }
     })

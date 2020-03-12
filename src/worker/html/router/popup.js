@@ -2,8 +2,20 @@ import * as d3 from 'd3-selection'
 
 export class Popup {
   constructor (options = {}) {
+    this._pop = null
     this._router = null
+
+    this.setPop(options.pop)
     this.setRouter(options.router)
+  }
+
+  getPop () {
+    return this._pop
+  }
+
+  setPop (value = null) {
+    this._pop = value
+    return this
   }
 
   getRouter () {
@@ -16,10 +28,10 @@ export class Popup {
   }
 
   close (box, data) {
-    const base = d3.select(this._router.getBase())
-    const parent = d3.select(this._router.getBase().parentNode)
+    const popup = d3.select(this._router.getBase())
+    const pop = d3.select(this._pop)
 
-    if (parent.classed('in') === false) {
+    if (pop.classed('in') === false) {
       this._router.process(box, data)
       return
     }
@@ -27,53 +39,53 @@ export class Popup {
     d3.select(document).on('keydown.scola-popup', null)
     d3.select('body').classed('popup', false)
 
-    parent.style('width')
+    pop.style('width')
 
-    parent
+    pop
       .classed('in', false)
       .on('click.scola-popup', null)
       .on('transitionend.scola-popup', () => {
-        parent
+        pop
           .classed('open', false)
           .on('.scola-popup', null)
 
         this._router.process(box, data)
       })
 
-    base.classed('move', box.options.imm === false)
-    base.style('width')
+    popup.classed('move', box.options.imm === false)
+    popup.style('width')
 
-    base
+    popup
       .classed('in', false)
       .on('click.scola-popup', null)
 
-    const duration = parseFloat(parent.style('transition-duration'))
+    const duration = parseFloat(pop.style('transition-duration'))
 
     if (duration === 0) {
-      parent.dispatch('transitionend')
+      pop.dispatch('transitionend')
     }
   }
 
   open (box, data) {
-    const base = d3.select(this._router.getBase())
-    const parent = d3.select(this._router.getBase().parentNode)
+    const popup = d3.select(this._router.getBase())
+    const pop = d3.select(this._pop)
 
-    if (parent.classed('in') === true) {
+    if (pop.classed('in') === true) {
       return
     }
 
     d3.select(document).on('keydown.scola-popup', () => {
       if (d3.event.keyCode === 27) {
-        parent.dispatch('click')
+        pop.dispatch('click')
       }
     })
 
     d3.select('body').classed('popup', true)
 
-    parent.classed('open', true)
-    parent.style('width')
+    pop.classed('open', true)
+    pop.style('width')
 
-    parent
+    pop
       .classed('in', true)
       .on('click.scola-popup', () => {
         if (box.options.lck === false) {
@@ -83,10 +95,10 @@ export class Popup {
         }
       })
 
-    base.classed('move', box.options.imm === false)
-    base.style('width')
+    popup.classed('move', box.options.imm === false)
+    popup.style('width')
 
-    base
+    popup
       .classed('in', true)
       .on('click.scola-popup', () => {
         d3.event.stopPropagation()

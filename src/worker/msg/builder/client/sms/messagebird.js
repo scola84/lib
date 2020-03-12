@@ -1,12 +1,6 @@
 import messagebird from 'messagebird'
 
 export class Messagebird {
-  static create (client) {
-    return new Messagebird({
-      client
-    })
-  }
-
   constructor (options = {}) {
     this._client = null
     this.setClient(options.client)

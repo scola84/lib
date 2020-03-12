@@ -79,10 +79,14 @@ export class SqlBuilder extends Builder {
 
   act (box, data) {
     const client = this.resolveClient(box, data)
-    const query = this.resolveQuery(box, data, client)
     const method = this._stream === true ? 'stream' : 'execute'
 
-    client[method](box, data, query.resolve(box, data), (error, result, last) => {
+    const query = this.resolveQuery(box, data, client)
+    const resolvedQuery = query.resolve(box, data)
+
+    this.log('info', 'Querying database (%s) %s', [method, resolvedQuery], box.rid)
+
+    client[method](box, data, resolvedQuery, (error, result, last) => {
       if (error !== null) {
         this.fail(box, error)
         return

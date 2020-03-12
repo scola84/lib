@@ -1,30 +1,30 @@
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class ItemUpdater extends SqlBuilder {
-  build (sb) {
-    return sb.query(
-      sb.update(
-        sb.id('app.queue_run_item')
+  build (sc) {
+    return sc.query(
+      sc.update(
+        sc.id('app.queue_run_item')
       ),
-      sb.set(
-        sb.eq(
-          sb.id('stat_time_updated'),
-          sb.value(() => new Date().toISOString())
+      sc.set(
+        sc.eq(
+          sc.id('stat_time_updated'),
+          sc.value(() => new Date().toISOString())
         ),
-        sb.eq(
-          sb.id('status'),
-          sb.value((box, data) => data.status)
+        sc.eq(
+          sc.id('status'),
+          sc.value((box, data) => data.status)
         )
       ),
-      sb.where(
-        sb.and(
-          sb.eq(
-            sb.id('id_item'),
-            sb.value((box, data) => data.id_item)
+      sc.where(
+        sc.and(
+          sc.eq(
+            sc.id('id_item'),
+            sc.value((box, data) => data.id_item)
           ),
-          sb.eq(
-            sb.id('status'),
-            sb.value('PENDING')
+          sc.eq(
+            sc.id('status'),
+            sc.value('PENDING')
           )
         )
       )

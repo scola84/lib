@@ -20,7 +20,7 @@ export class HttpRouter extends Router {
     let params = null
     let resource = null
 
-    this.log('info', 'Routing request: "%s %s"', [method, url.pathname], box.rid)
+    this.log('info', 'Routing request "%s %s"', [method, url.pathname], box.rid)
 
     for (let i = 0; i < this._resources.length; i += 1) {
       resource = this._resources[i]

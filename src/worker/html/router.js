@@ -1,6 +1,6 @@
 import * as d3 from 'd3-selection'
 import { Router } from '../core/index.js'
-import { Popup, Route } from './router/index.js'
+import { Menu, Popup, Route } from './router/index.js'
 
 const routers = new Map()
 
@@ -37,6 +37,7 @@ export class HtmlRouter extends Router {
     this._base = null
     this._default = null
     this._history = null
+    this._menu = null
     this._popup = null
     this._starter = null
     this._stash = null
@@ -46,6 +47,7 @@ export class HtmlRouter extends Router {
     this.setBase(options.base)
     this.setDefault(options.default)
     this.setHistory(options.history)
+    this.setMenu(options.menu)
     this.setPopup(options.popup)
     this.setStarter(options.starter)
     this.setStash(options.stash)
@@ -61,6 +63,7 @@ export class HtmlRouter extends Router {
       base: this._base,
       default: this._default,
       history: this._history,
+      menu: this._menu,
       popup: this._popup,
       starter: this._starter,
       stash: this._stash,
@@ -91,6 +94,19 @@ export class HtmlRouter extends Router {
     return this._history
   }
 
+  getMenu () {
+    return this._popup
+  }
+
+  setMenu (value = null) {
+    this._menu = new Menu({
+      main: value,
+      router: this
+    })
+
+    return this
+  }
+
   setHistory (value = []) {
     this._history = value
     return this
@@ -106,9 +122,10 @@ export class HtmlRouter extends Router {
   }
 
   setPopup (value = null) {
-    this._popup = value === true
-      ? new Popup({ router: this })
-      : value
+    this._popup = new Popup({
+      pop: value,
+      router: this
+    })
 
     return this
   }

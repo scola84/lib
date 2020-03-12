@@ -219,7 +219,7 @@ export class Queuer extends Worker {
   }
 
   actPusher (box, data) {
-    this.log('info', 'Acting as pusher on %j', [data], box.rid)
+    this.log('info', 'Acting as pusher on %o', [data], box.rid)
 
     const index = typeof data === 'object' && data !== null
       ? data.index
@@ -235,16 +235,16 @@ export class Queuer extends Worker {
   }
 
   actSimple (box, data) {
-    this.log('info', 'Acting as simple queuer on %j', [data], box.rid)
+    this.log('info', 'Acting as simple queuer on %o', [data], box.rid)
 
     this._queue.push((callback) => {
-      this.log('info', 'Handling task %j', [data], box.rid)
+      this.log('info', 'Handling task %o', [data], box.rid)
       this.pass(this.prepareHandlerBox(box, callback), data)
     })
   }
 
   actStreamer (box, data) {
-    this.log('info', 'Acting as streamer on %j', [data], box.rid)
+    this.log('info', 'Acting as streamer on %o', [data], box.rid)
 
     if (this._bypass !== null) {
       this._bypass.callAct(box, data)
@@ -345,7 +345,7 @@ export class Queuer extends Worker {
       resolve: {
         [this._name]: {
           callback,
-          empty: true
+          total: 0
         }
       }
     })
@@ -402,11 +402,6 @@ export class Queuer extends Worker {
 
     if (typeof data.queue !== 'string') {
       callback(new Error('400 [queuer] Queue name is not a string'))
-      return
-    }
-
-    if (typeof data.data_in !== 'object' || data.data_in === null) {
-      callback(new Error('400 [queuer] Task data is not an object'))
       return
     }
 

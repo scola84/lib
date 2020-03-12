@@ -1,12 +1,6 @@
 import twilio from 'twilio'
 
 export class Twilio {
-  static create (client) {
-    return new Twilio({
-      client
-    })
-  }
-
   constructor (options = {}) {
     this._client = null
     this.setClient(options.client)

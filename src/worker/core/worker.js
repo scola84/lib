@@ -30,7 +30,6 @@ export class Worker {
     this._merge = null
     this._name = null
     this._upstream = null
-    this._wrap = null
 
     this.setAct(options.act)
     this.setBypass(options.bypass)
@@ -46,7 +45,6 @@ export class Worker {
     this.setMerge(options.merge)
     this.setName(options.name)
     this.setUpstream(options.upstream)
-    this.setWrap(options.wrap)
   }
 
   getOptions () {
@@ -60,8 +58,7 @@ export class Worker {
       filter: this._filter,
       logger: this._logger,
       merge: this._merge,
-      name: this._name,
-      wrap: this._wrap
+      name: this._name
     }
   }
 
@@ -230,15 +227,6 @@ export class Worker {
     return this
   }
 
-  getWrap () {
-    return this._wrap
-  }
-
-  setWrap (value = false) {
-    this._wrap = value
-    return this
-  }
-
   act (box, data) {
     if (this._act !== null) {
       this._act(box, data)
@@ -371,7 +359,7 @@ export class Worker {
       return
     }
 
-    this.log('pass', '%j', [data], box.rid)
+    this.log('pass', '%o', [merged], box.rid)
     this._downstream.callAct(box, merged)
   }
 
@@ -393,10 +381,10 @@ export class Worker {
     if (value === null) {
       value = this[name](box, data, ...extra)
     } else if (typeof value === 'function') {
-      value = value(box, data, ...extra)
+      value = value.call(this, box, data, ...extra)
     }
 
-    this.log(name, '%j', [value], box.rid)
+    this.log(name, '%o', [value], box.rid)
 
     return value
   }

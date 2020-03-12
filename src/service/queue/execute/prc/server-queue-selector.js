@@ -1,26 +1,26 @@
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class ServerQueueSelector extends SqlBuilder {
-  build (sb) {
-    return sb.query(
-      sb.select(
-        sb.id(
+  build (sc) {
+    return sc.query(
+      sc.select(
+        sc.id(
           'id_queue',
           'name'
         )
       ),
-      sb.from(
-        sb.id('app.queue')
+      sc.from(
+        sc.id('app.queue')
       ),
-      sb.where(
-        sb.and(
-          sb.eq(
-            sb.id('name'),
-            sb.value((box, data) => data.queue)
+      sc.where(
+        sc.and(
+          sc.eq(
+            sc.id('name'),
+            sc.value((box, data) => data.queue)
           ),
-          sb.eq(
-            sb.id('scope'),
-            sb.value('global')
+          sc.eq(
+            sc.id('scope'),
+            sc.value('global')
           )
         )
       )

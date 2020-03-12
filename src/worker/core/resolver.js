@@ -35,32 +35,28 @@ export class Resolver extends Worker {
       }
     }
 
-    if (this._collect === true) {
-      if (resolve.empty === false) {
+    if (resolve.total > 0) {
+      resolve.count += 1
+
+      this.log('info', 'Resolving %d/%d', [resolve.count, resolve.total], box.rid)
+
+      if (this._collect === true) {
         const index = Number.isInteger(data.index) === true
           ? data.index
           : resolve.data.length
 
         resolve.data[index] = data
       }
+
+      if ((resolve.count % resolve.total) > 0) {
+        return
+      }
     }
 
-    if (resolve.empty === false) {
-      resolve.count += 1
-      this.log('info', 'Resolving "%s/%s"', [resolve.count, resolve.total], box.rid)
-    }
-
-    if (resolve.empty === true || (resolve.count % resolve.total) === 0) {
-      const newBox = this._wrap === true
-        ? box.box
-        : box
-
-      const newData = this._collect === true && resolve.empty === false
-        ? resolve.data
-        : data
-
-      this.pass(newBox, newData)
-    }
+    this.pass(
+      box,
+      this._collect === true && resolve.total > 0 ? resolve.data : data
+    )
   }
 
   decide (box) {

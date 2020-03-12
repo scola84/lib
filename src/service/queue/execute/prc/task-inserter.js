@@ -1,29 +1,31 @@
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class TaskInserter extends SqlBuilder {
-  build (sb) {
-    return sb.query(
-      sb.insert(),
-      sb.into(
-        sb.id('app.queue_run_item_task')
+  build (sc) {
+    return sc.query(
+      sc.insert(),
+      sc.into(
+        sc.id('app.queue_run_item_task')
       ),
-      sb.id(
+      sc.id(
         'id_item',
         'id_queue',
         'id_run',
         'data_in',
         'hash',
-        'name'
+        'name',
+        'settings'
       ).parens(),
-      sb.values(
-        sb.value((box, data) => data.id_item),
-        sb.value((box, data) => data.id_queue),
-        sb.value((box, data) => data.id_run),
-        sb.value((box, data) => JSON.stringify(data.data_in)),
-        sb.value((box, data) => data.hash),
-        sb.value((box, data) => data.name)
+      sc.values(
+        sc.value((box, data) => data.id_item),
+        sc.value((box, data) => data.id_queue),
+        sc.value((box, data) => data.id_run),
+        sc.value((box, data) => JSON.stringify(data.data_in)),
+        sc.value((box, data) => data.hash),
+        sc.value((box, data) => data.name),
+        sc.value((box, data) => data.settings)
       ),
-      sb.returning('id_task')
+      sc.returning('id_task')
     )
   }
 

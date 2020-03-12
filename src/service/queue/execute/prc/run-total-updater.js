@@ -1,25 +1,25 @@
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class RunTotalUpdater extends SqlBuilder {
-  build (sb) {
-    return sb.query(
-      sb.update(
-        sb.id('app.queue_run')
+  build (sc) {
+    return sc.query(
+      sc.update(
+        sc.id('app.queue_run')
       ),
-      sb.set(
-        sb.eq(
-          sb.id('stat_time_updated'),
-          sb.value(() => new Date().toISOString())
+      sc.set(
+        sc.eq(
+          sc.id('stat_time_updated'),
+          sc.value(() => new Date().toISOString())
         ),
-        sb.eq(
-          sb.id('stat_count_total'),
-          sb.value((box, data) => data.run.total)
+        sc.eq(
+          sc.id('stat_count_total'),
+          sc.value((box, data) => data.run.total)
         )
       ),
-      sb.where(
-        sb.eq(
-          sb.id('id_run'),
-          sb.value((box, data) => data.run.id_run)
+      sc.where(
+        sc.eq(
+          sc.id('id_run'),
+          sc.value((box, data) => data.run.id_run)
         )
       )
     )

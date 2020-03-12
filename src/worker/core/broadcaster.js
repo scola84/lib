@@ -37,11 +37,7 @@ export class Broadcaster extends Worker {
     return this
   }
 
-  act (actBox, data) {
-    const box = this._wrap === true
-      ? { box: actBox }
-      : actBox
-
+  act (box, data) {
     if (this._resolve === true) {
       this.prepareBox(box)
     }
@@ -79,7 +75,6 @@ export class Broadcaster extends Worker {
         [this._name]: {
           count: 0,
           data: [],
-          empty: false,
           total: this._downstreams.length
         }
       }

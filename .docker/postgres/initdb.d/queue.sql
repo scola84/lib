@@ -21,21 +21,13 @@ CREATE TABLE "app"."queue" (
   PRIMARY KEY ("id_queue")
 );
 
-CREATE TABLE "app"."queue_group" (
-  "id_queue" BIGINT NOT NULL,
-  "id_group" BIGINT NOT NULL,
-  PRIMARY KEY ("id_queue", "id_group")
-);
-
 CREATE TABLE "app"."queue_task" (
   "id_task" BIGSERIAL,
   "id_queue" BIGINT NOT NULL,
   "stat_time_created" TIMESTAMP NOT NULL DEFAULT NOW(),
   "stat_time_updated" TIMESTAMP NOT NULL DEFAULT NOW(),
-  "assign_id_group" BIGINT,
-  "assign_id_user" BIGINT,
   "name" VARCHAR(255) NOT NULL,
-  "settings" JSON,
+  "settings" TEXT,
   "timeout_action" VARCHAR(255),
   "timeout_after" VARCHAR(255),
   PRIMARY KEY ("id_task"),
@@ -77,13 +69,12 @@ CREATE TABLE "app"."queue_run_item_task" (
   "id_run" BIGINT,
   "stat_time_created" TIMESTAMP NOT NULL DEFAULT NOW(),
   "stat_time_updated" TIMESTAMP NOT NULL DEFAULT NOW(),
-  "assign_id_group" BIGINT,
-  "assign_id_user" BIGINT,
   "data_in" TEXT,
   "data_out" TEXT,
   "error" TEXT,
   "hash" CHAR(128),
   "name" VARCHAR(255) NOT NULL,
+  "settings" TEXT,
   "status" STATUS NOT NULL DEFAULT 'PENDING',
   PRIMARY KEY ("id_task"),
   FOREIGN KEY ("id_queue") REFERENCES "app"."queue" ("id_queue"),

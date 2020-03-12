@@ -1,19 +1,19 @@
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class RunInserter extends SqlBuilder {
-  build (sb) {
-    return sb.query(
-      sb.insert(),
-      sb.into(
-        sb.id('app.queue_run')
+  build (sc) {
+    return sc.query(
+      sc.insert(),
+      sc.into(
+        sc.id('app.queue_run')
       ),
-      sb.id(
+      sc.id(
         'id_queue'
       ).parens(),
-      sb.values(
-        sb.value((box, data) => data.queue.id_queue)
+      sc.values(
+        sc.value((box, data) => data.queue.id_queue)
       ),
-      sb.returning('id_run')
+      sc.returning('id_run')
     )
   }
 

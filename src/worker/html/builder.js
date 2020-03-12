@@ -11,15 +11,28 @@ export class HtmlBuilder extends Builder {
   constructor (options = {}) {
     super(options)
 
+    this._build = null
     this._view = null
+
+    this.setBuild(options.build)
     this.setView(options.view)
   }
 
   getOptions () {
     return {
       ...super.getOptions(),
+      build: this._build,
       view: this._view
     }
+  }
+
+  getBuild () {
+    return this._build
+  }
+
+  setBuild (value = null) {
+    this._build = value
+    return this
   }
 
   getNode () {
@@ -35,28 +48,20 @@ export class HtmlBuilder extends Builder {
   }
 
   setView (value = null) {
-    this._view = typeof value === 'function'
-      ? value.call(this, this)
-      : value
-
-    if (this._view) {
-      this._view.setParent(this)
-    }
-
+    this._view = value
     return this
   }
 
   act (box, data) {
-    if (this._view === null) {
-      this._view = this.build(this)
-    }
+    this
+      .resolveView()
+      .resolve(box, data)
 
-    this._view.resolve(box, data)
     this.pass(box, data)
   }
 
   build () {
-    return this._view
+    return this.div()
   }
 
   querySelector (...args) {
@@ -65,6 +70,15 @@ export class HtmlBuilder extends Builder {
 
   querySelectorAll (...args) {
     return d3.selectAll(...args)
+  }
+
+  resolveView () {
+    if (this._view === null) {
+      this._view = this.resolve('build', this)
+      this._view.setParent(this)
+    }
+
+    return this._view
   }
 }
 

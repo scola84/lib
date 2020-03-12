@@ -35,7 +35,7 @@ export class JsonCodec extends Codec {
   }
 
   stringifyError (value) {
-    const match = value.message.match(/(\d{3})?([^[]*(\[(.+)\]))?\s?(.*)/)
+    const match = value.message.match(/(\d{3})?(\s*(\[(.+)\]))?\s*(.*)/)
 
     const [, code = '500', , , type, message] = match || []
 

@@ -2,27 +2,27 @@ import omit from 'lodash/omit.js'
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class ItemInserter extends SqlBuilder {
-  build (sb) {
-    return sb.query(
-      sb.insert(),
-      sb.into(
-        sb.id('app.queue_run_item')
+  build (sc) {
+    return sc.query(
+      sc.insert(),
+      sc.into(
+        sc.id('app.queue_run_item')
       ),
-      sb.id(
+      sc.id(
         'id_queue',
         'id_run',
         'name',
         'object_name',
         'object_id'
       ).parens(),
-      sb.values(
-        sb.value((box, data) => data.queue.id_queue),
-        sb.value((box, data) => data.run.id_run),
-        sb.value((box, data) => data.item.name),
-        sb.value((box, data) => data.item.object_name),
-        sb.value((box, data) => data.item.object_id)
+      sc.values(
+        sc.value((box, data) => data.queue.id_queue),
+        sc.value((box, data) => data.run.id_run),
+        sc.value((box, data) => data.item.name),
+        sc.value((box, data) => data.item.object_name),
+        sc.value((box, data) => data.item.object_id)
       ),
-      sb.returning('id_item')
+      sc.returning('id_item')
     )
   }
 
@@ -32,9 +32,9 @@ export class ItemInserter extends SqlBuilder {
       typeof data.run === 'object'
   }
 
-  merge (box, data, [result = {}]) {
+  merge (box, data, [item = {}]) {
     return {
-      id_item: result.id_item,
+      id_item: item.id_item,
       id_queue: data.queue.id_queue,
       id_run: data.run.id_run,
       data_in: omit(data.item, [
@@ -46,6 +46,7 @@ export class ItemInserter extends SqlBuilder {
       name: 'main',
       queue: data.queue.name,
       result: 'return',
+      settings: {},
       status: 'PENDING'
     }
   }

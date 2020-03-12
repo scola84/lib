@@ -1,10 +1,10 @@
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class NextQueueSelector extends SqlBuilder {
-  build (sb) {
-    return sb.query(
-      sb.select(
-        sb.id(
+  build (sc) {
+    return sc.query(
+      sc.select(
+        sc.id(
           'queue.id_queue',
           'queue.name',
           'queue.selector_client',
@@ -15,32 +15,32 @@ export class NextQueueSelector extends SqlBuilder {
           'queue.trigger_schedule_next'
         )
       ),
-      sb.from(
-        sb.id('app.queue_run')
+      sc.from(
+        sc.id('app.queue_run')
       ),
-      sb.inner(),
-      sb.join(
-        sb.id('app.queue')
+      sc.inner(),
+      sc.join(
+        sc.id('app.queue')
       ),
-      sb.on(
-        sb.eq(
-          sb.id('queue_run.id_queue'),
-          sb.id('queue.trigger_id_queue')
+      sc.on(
+        sc.eq(
+          sc.id('queue_run.id_queue'),
+          sc.id('queue.trigger_id_queue')
         )
       ),
-      sb.where(
-        sb.and(
-          sb.eq(
-            sb.id('queue_run.id_run'),
-            sb.value((box, data) => data.id_run)
+      sc.where(
+        sc.and(
+          sc.eq(
+            sc.id('queue_run.id_run'),
+            sc.value((box, data) => data.id_run)
           ),
-          sb.eq(
-            sb.plus(
-              sb.id('queue_run.stat_count_failure'),
-              sb.id('queue_run.stat_count_success'),
-              sb.id('queue_run.stat_count_timeout')
+          sc.eq(
+            sc.plus(
+              sc.id('queue_run.stat_count_failure'),
+              sc.id('queue_run.stat_count_success'),
+              sc.id('queue_run.stat_count_timeout')
             ),
-            sb.id('queue_run.stat_count_total')
+            sc.id('queue_run.stat_count_total')
           )
         )
       )

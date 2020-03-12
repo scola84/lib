@@ -1,17 +1,13 @@
-import * as action from '../snippet/action/index.js'
-import * as event from '../snippet/event/index.js'
-import * as graph from '../snippet/graph/index.js'
-import * as input from '../snippet/input/index.js'
-import * as misc from '../snippet/misc/index.js'
-import * as node from '../snippet/node/index.js'
-import * as widget from '../snippet/widget/index.js'
+import camelCase from 'lodash/camelCase.js'
+import base from '../snippet/index.js'
 
-export default {
-  action,
-  event,
-  graph,
-  input,
-  misc,
-  node,
-  widget
-}
+export default Object.keys(base).reduce((master, group) => {
+  return Object.keys(base[group]).reduce((object, name) => {
+    return {
+      ...object,
+      [camelCase(name)]: {
+        object: base[group][name]
+      }
+    }
+  }, master)
+}, {})

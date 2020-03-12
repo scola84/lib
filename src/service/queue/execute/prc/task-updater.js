@@ -5,56 +5,56 @@ export class TaskUpdater extends SqlBuilder {
     return super.setCodec(value)
   }
 
-  build (sb) {
-    return sb.query(
-      sb.update(
-        sb.id('app.queue_run_item_task')
+  build (sc) {
+    return sc.query(
+      sc.update(
+        sc.id('app.queue_run_item_task')
       ),
-      sb.set(
-        sb.eq(
-          sb.id('stat_time_updated'),
-          sb.value(() => new Date().toISOString())
+      sc.set(
+        sc.eq(
+          sc.id('stat_time_updated'),
+          sc.value(() => new Date().toISOString())
         ),
-        sb.eq(
-          sb.id('data_out'),
+        sc.eq(
+          sc.id('data_out'),
           (box, data) => {
             if (typeof data.data_out === 'object' && data.data_out !== null) {
-              return sb.value(this._codec.stringify(data.data_out))
+              return sc.value(this._codec.stringify(data.data_out))
             }
 
-            return sb.id('data_out')
+            return sc.id('data_out')
           }
         ),
-        sb.eq(
-          sb.id('error'),
+        sc.eq(
+          sc.id('error'),
           (box, data) => {
             if (data.error instanceof Error) {
-              return sb.value(this._codec.stringify(data.error))
+              return sc.value(this._codec.stringify(data.error))
             }
 
-            return sb.id('error')
+            return sc.id('error')
           }
         ),
-        sb.eq(
-          sb.id('status'),
+        sc.eq(
+          sc.id('status'),
           (box, data) => {
             if (typeof data.status === 'string') {
-              return sb.value(data.status)
+              return sc.value(data.status)
             }
 
-            return sb.id('status')
+            return sc.id('status')
           }
         )
       ),
-      sb.where(
-        sb.and(
-          sb.eq(
-            sb.id('id_task'),
-            sb.value((box, data) => data.id_task)
+      sc.where(
+        sc.and(
+          sc.eq(
+            sc.id('id_task'),
+            sc.value((box, data) => data.id_task)
           ),
-          sb.eq(
-            sb.id('status'),
-            sb.value('PENDING')
+          sc.eq(
+            sc.id('status'),
+            sc.value('PENDING')
           )
         )
       )

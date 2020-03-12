@@ -60,7 +60,7 @@ export class Request {
         return
       }
 
-      this.parent.log('info', 'Writing request headers %j', [this.original.headers])
+      this.parent.log('info', 'Writing request headers %o', [this.original.headers])
       this.parent.log('info', 'Writing request body %s', [encoderData])
 
       fetch(this.original, {

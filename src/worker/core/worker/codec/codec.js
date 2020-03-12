@@ -17,7 +17,11 @@ export class Codec {
 
   decode (readable, callback = () => {}, progress = () => {}) {
     if (typeof readable.body === 'object') {
-      this.decodeReader(readable.body.getReader(), callback, progress)
+      if (typeof readable.body.getReader === 'function') {
+        this.decodeReader(readable.body.getReader(), callback, progress)
+      } else {
+        this.decodeStream(readable.body, callback, progress)
+      }
     } else {
       this.decodeStream(readable, callback, progress)
     }

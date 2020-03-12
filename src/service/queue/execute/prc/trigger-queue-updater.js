@@ -2,15 +2,15 @@ import cron from 'cron-parser'
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class TriggerQueueUpdater extends SqlBuilder {
-  build (sb) {
-    return sb.query(
-      sb.update(
-        sb.id('app.queue')
+  build (sc) {
+    return sc.query(
+      sc.update(
+        sc.id('app.queue')
       ),
-      sb.set(
-        sb.eq(
-          sb.id('trigger_schedule_next'),
-          sb.value((box, data) => {
+      sc.set(
+        sc.eq(
+          sc.id('trigger_schedule_next'),
+          sc.value((box, data) => {
             return cron
               .parseExpression(data.queue.trigger_schedule)
               .next()
@@ -18,10 +18,10 @@ export class TriggerQueueUpdater extends SqlBuilder {
           })
         )
       ),
-      sb.where(
-        sb.eq(
-          sb.id('id_queue'),
-          sb.value((box, data) => data.queue.id_queue)
+      sc.where(
+        sc.eq(
+          sc.id('id_queue'),
+          sc.value((box, data) => data.queue.id_queue)
         )
       )
     )

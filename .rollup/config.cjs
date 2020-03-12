@@ -65,9 +65,7 @@ module.exports = {
         replacement: 'readable-stream'
       }]
     }),
-    commonjs({
-      'd3-format': 'default'
-    }),
+    commonjs(),
     css({
       extract: './dist/css/gui.css',
       minimize: watch === undefined

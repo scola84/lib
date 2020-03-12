@@ -20,12 +20,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   menu
     .setBase(document.querySelector('.app>.menu'))
+    .setMenu(document.querySelector('.app>.main'))
     .setName('menu')
     .start()
 
   pop
     .setBase(document.querySelector('.pop>.up'))
+    .setPopup(document.querySelector('.pop'))
     .setName('pop')
-    .setPopup(true)
     .start()
 })

@@ -1,10 +1,10 @@
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class TriggerQueueSelector extends SqlBuilder {
-  build (sb) {
-    return sb.query(
-      sb.select(
-        sb.id(
+  build (sc) {
+    return sc.query(
+      sc.select(
+        sc.id(
           'id_queue',
           'name',
           'selector_client',
@@ -15,23 +15,23 @@ export class TriggerQueueSelector extends SqlBuilder {
           'trigger_schedule_next'
         )
       ),
-      sb.from(
-        sb.id('app.queue')
+      sc.from(
+        sc.id('app.queue')
       )
       // ,
-      // sb.where(
-      //   sb.and(
-      //     sb.lt(
-      //       sb.id('trigger_schedule_next'),
-      //       sb.value(() => new Date().toISOString())
+      // sc.where(
+      //   sc.and(
+      //     sc.lt(
+      //       sc.id('trigger_schedule_next'),
+      //       sc.value(() => new Date().toISOString())
       //     ),
-      //     sb.lt(
-      //       sb.id('trigger_schedule_begin'),
-      //       sb.value(() => new Date().toISOString())
+      //     sc.lt(
+      //       sc.id('trigger_schedule_begin'),
+      //       sc.value(() => new Date().toISOString())
       //     ),
-      //     sb.gt(
-      //       sb.id('trigger_schedule_end'),
-      //       sb.value(() => new Date().toISOString())
+      //     sc.gt(
+      //       sc.id('trigger_schedule_end'),
+      //       sc.value(() => new Date().toISOString())
       //     )
       //   )
       // )

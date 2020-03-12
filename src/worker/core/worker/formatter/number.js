@@ -1,12 +1,8 @@
-import module from 'module'
-import * as d3_import from 'd3-format'
+import d3 from 'd3-format/dist/d3-format.js'
 import math from 'math-expression-evaluator'
 
-const d3_require = typeof module === 'undefined'
-  ? {} : module.createRequire(`${import.meta.url}`)('d3-format')
-
 const definitions = {
-  nl_NL: (d3_import.formatLocale || d3_require.formatLocale)({
+  nl_NL: d3.formatLocale({
     decimal: ',',
     thousands: '.',
     grouping: [3],
@@ -16,17 +12,17 @@ const definitions = {
 
 math.addToken(
   Object
-  .getOwnPropertyNames(Math)
-  .filter((name) => {
-    return typeof Math[name] === 'function' && Math[name].length > 0
-  }).map((name) => {
-    return {
-      type: [0, 8, 12][Math[name].length - 1],
-      token: name,
-      show: name,
-      value: (...args) => Math[name](...args)
-    }
-  })
+    .getOwnPropertyNames(Math)
+    .filter((name) => {
+      return typeof Math[name] === 'function' && Math[name].length > 0
+    }).map((name) => {
+      return {
+        type: [0, 8, 12][Math[name].length - 1],
+        token: name,
+        show: name,
+        value: (...args) => Math[name](...args)
+      }
+    })
 )
 
 export function number (value, options, locale) {
@@ -36,9 +32,9 @@ export function number (value, options, locale) {
 
   const {
     expr = 'n',
-      val = '',
-      sep = '',
-      spec = 'f'
+    val = '',
+    sep = '',
+    spec = 'f'
   } = options
 
   const formatter = val === ''

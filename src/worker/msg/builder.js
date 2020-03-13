@@ -46,7 +46,7 @@ export class MsgBuilder extends Builder {
 
     this._origin.log('info', 'Sending message %o', [message], box.rid)
 
-    client.send(box, data, message, (error, result) => {
+    client.sendMessage(message, (error, result) => {
       if (error !== null) {
         this.fail(box, error)
         return
@@ -67,13 +67,16 @@ export class MsgBuilder extends Builder {
   }
 
   resolveClient (box, data) {
-    const client = this.resolve('client', box, data)
+    const dsn = this.resolve('client', box, data)
 
-    if (clients.has(client) === false) {
-      clients.set(client, this[client.split(':').shift()]().transport(client))
+    if (clients.has(dsn) === false) {
+      clients.set(
+        dsn,
+        this[dsn.split(':').shift()]().setTransport(dsn)
+      )
     }
 
-    return clients.get(client)
+    return clients.get(dsn)
   }
 
   resolveMessage (box, data) {

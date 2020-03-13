@@ -67,7 +67,7 @@ export class HttpClient extends Worker {
 
     const request = new Request(new fetch.Request(url, init))
 
-    this.log('info', 'Handling request "%s %s" %o', [
+    this.log('info', 'Handling request %o %o %o', [
       request.getMethod(),
       request.original.url,
       request.getHeaders()
@@ -115,7 +115,7 @@ export class HttpClient extends Worker {
   }
 
   handleResponse (box, data, response) {
-    this.log('info', 'Handling response "%s" %o', [
+    this.log('info', 'Handling response %o %o', [
       response.getStatus(),
       response.getHeaders()
     ])

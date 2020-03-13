@@ -51,7 +51,7 @@ export class NextQueueSelector extends SqlBuilder {
     return typeof data.id_run === 'number'
   }
 
-  merge (box, data, queue) {
+  merge (box, data, { row: queue }) {
     return {
       queue,
       previous: {

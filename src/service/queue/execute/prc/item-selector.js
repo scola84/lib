@@ -20,7 +20,7 @@ export class ItemSelector extends SqlBuilder {
       typeof data.queue.selector_query === 'string'
   }
 
-  merge (box, data, item, last) {
+  merge (box, data, { row: item, last }) {
     return {
       item,
       last,

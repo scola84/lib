@@ -1,20 +1,22 @@
 import { Dialect } from '../dialect.js'
 
 export class Returning extends Dialect {
-  mergeMysql (box, data, result) {
-    if (result.insertId === undefined) {
+  mergeMysql (box, data, result = { rows: [] }) {
+    if (result.rows.insertId === undefined) {
       return result
     }
 
-    const [id] = this._args
+    const id = this.resolveValue(box, data, this._args[0])
 
     if (typeof id !== 'string') {
       return result
     }
 
-    return [{
+    result.rows = [{
       [id]: result.insertId
     }]
+
+    return result
   }
 
   resolveMysql () {

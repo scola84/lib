@@ -29,8 +29,8 @@ export class TaskInserter extends SqlBuilder {
     )
   }
 
-  merge (box, data, [result = {}]) {
-    data.id_task = result.id_task
+  merge (box, data, { rows: [task = {}] }) {
+    data.id_task = task.id_task
     return data
   }
 }

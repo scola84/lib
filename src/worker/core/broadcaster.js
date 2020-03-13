@@ -39,7 +39,7 @@ export class Broadcaster extends Worker {
 
   act (box, data) {
     if (this._resolve === true) {
-      this.prepareBox(box)
+      this.prepareBoxResolve(box)
     }
 
     for (let i = 0; i < this._downstreams.length; i += 1) {
@@ -69,8 +69,12 @@ export class Broadcaster extends Worker {
     return super.connect(worker)
   }
 
-  prepareBox (box) {
-    merge(box, {
+  prepareBoxResolve (box) {
+    if (box.resolve !== undefined && box.resolve[this._name] !== undefined) {
+      throw new Error(`Resolve for '${this._name}' is defined`)
+    }
+
+    return merge(box, {
       resolve: {
         [this._name]: {
           count: 0,

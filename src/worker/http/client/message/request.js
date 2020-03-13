@@ -52,7 +52,7 @@ export class Request {
     const type = this.getType()
     const codec = this.parent.getCodec(type)
 
-    this.parent.log('info', 'Encoding request as "%s"', [codec.getType()])
+    this.parent.log('info', 'Encoding request as %o', [codec.getType()])
 
     codec.encode(this.original, body, (encoderError, encoderData) => {
       if (encoderError !== null) {

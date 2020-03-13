@@ -44,7 +44,7 @@ export class Response {
     const type = this.getType()
     const codec = this.parent.getCodec(type)
 
-    this.parent.log('info', 'Encoding response as "%s"', [codec.getType()])
+    this.parent.log('info', 'Encoding response as %o', [codec.getType()])
 
     codec.encode(this.original, body, (encoderError, encoderData) => {
       if (encoderError !== null) {

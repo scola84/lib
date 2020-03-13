@@ -70,7 +70,7 @@ export class Slice extends Snippet {
       Number.isInteger(offset) === false ||
       count > this._max
     ) {
-      throw new Error(`400 [slice] Slice parameters "${count},${offset}" are invalid`)
+      throw new Error(`400 [slice] Slice parameters '${count},${offset}' are invalid`)
     }
 
     return this.resolveParens(`${count} OFFSET ${offset}`, this._parens)

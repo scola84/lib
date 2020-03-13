@@ -74,8 +74,9 @@ export class HtmlBuilder extends Builder {
 
   resolveView () {
     if (this._view === null) {
-      this._view = this.resolve('build', this)
-      this._view.setParent(this)
+      this._view = this
+        .resolve('build', this)
+        .setParent(this)
     }
 
     return this._view

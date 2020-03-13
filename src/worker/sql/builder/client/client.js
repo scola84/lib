@@ -39,11 +39,7 @@ export class Client {
     return this.setPool(value)
   }
 
-  close () {}
+  executeQuery () {}
 
-  escape () {}
-
-  execute () {}
-
-  stream () {}
+  streamQuery () {}
 }

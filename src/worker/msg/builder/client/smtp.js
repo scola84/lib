@@ -16,11 +16,11 @@ export class Smtp extends Client {
     return this
   }
 
-  open (box, data, callback) {
+  connectClient (callback) {
     callback(null, this._transport)
   }
 
-  prepare (message) {
+  prepareMessage (message) {
     if (typeof message.subject === 'string') {
       message.subject = this._origin.format(message.subject, [message], message.locale)
     }
@@ -36,14 +36,14 @@ export class Smtp extends Client {
     return message
   }
 
-  send (box, data, message, callback) {
-    this.open((openError, transport) => {
-      if (openError !== null) {
-        callback(openError)
+  sendMessage (message, callback) {
+    this.connectClient((connectError, connection) => {
+      if (connectError !== null) {
+        callback(connectError)
         return
       }
 
-      transport.sendMail(this.prepare(message), (error, result) => {
+      connection.sendMail(this.prepareMessage(message), (error, result) => {
         if (error !== null) {
           callback(error)
           return

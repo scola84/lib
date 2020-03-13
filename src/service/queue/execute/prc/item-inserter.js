@@ -32,7 +32,7 @@ export class ItemInserter extends SqlBuilder {
       typeof data.run === 'object'
   }
 
-  merge (box, data, [item = {}]) {
+  merge (box, data, { rows: [item = {}] }) {
     return {
       id_item: item.id_item,
       id_queue: data.queue.id_queue,

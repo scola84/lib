@@ -25,8 +25,9 @@ export class Trigger extends Worker {
   }
 
   setInterval (value = null) {
+    this.log('info', 'Setting interval to %o', [value])
+
     if (this._interval !== null) {
-      this.log('info', 'Changing interval to "%s"', [value])
       clearInterval(this._interval)
     }
 
@@ -47,8 +48,9 @@ export class Trigger extends Worker {
   }
 
   setSchedule (value = null) {
+    this.log('info', 'Setting schedule to %o', [value])
+
     if (this._schedule !== null) {
-      this.log('info', 'Changing schedule to "%s"', [value])
       this._schedule.stop()
     }
 

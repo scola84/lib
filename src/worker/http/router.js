@@ -20,7 +20,7 @@ export class HttpRouter extends Router {
     let params = null
     let resource = null
 
-    this.log('info', 'Routing request "%s %s"', [method, url.pathname], box.rid)
+    this.log('info', 'Routing request %o %o', [method, url.pathname], box.rid)
 
     for (let i = 0; i < this._resources.length; i += 1) {
       resource = this._resources[i]
@@ -78,10 +78,10 @@ export class HttpRouter extends Router {
 
   handleMethodError (box, data, methods, method) {
     box.server[this._name].response.setHeader('Allow', methods)
-    this.fail(box, new Error(`405 [router] Method "${method}" is not allowed`))
+    this.fail(box, new Error(`405 [router] Method '${method}' is not allowed`))
   }
 
   handlePathError (box, data, path) {
-    this.fail(box, new Error(`404 [router] Resource "${path}" is not found`))
+    this.fail(box, new Error(`404 [router] Resource '${path}' is not found`))
   }
 }

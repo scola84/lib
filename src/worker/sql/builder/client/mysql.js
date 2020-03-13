@@ -17,39 +17,9 @@ export class Mysql extends Client {
     return this
   }
 
-  execute (box, data, query, callback) {
-    this.open(box, data, (openError, connection, mustRelease = true) => {
-      if (openError !== null) {
-        callback(openError)
-        return
-      }
-
-      connection.query(query, (error, result = []) => {
-        if (mustRelease === true) {
-          connection.release()
-        }
-
-        if (error !== null) {
-          error.query = query
-          callback(error)
-          return
-        }
-
-        callback(null, result)
-      })
-    })
-  }
-
-  open (box, data, callback) {
-    if (typeof box.connection === 'object') {
-      callback(null, box.connection, false)
-      return
-    }
-
-    const connection = this._origin.getConnection()
-
-    if (connection !== null) {
-      connection(box, data, this._pool, callback)
+  connectClient (box, callback) {
+    if (box.sql !== undefined && box.sql.connection !== undefined) {
+      callback(null, box.sql.connection)
       return
     }
 
@@ -63,40 +33,107 @@ export class Mysql extends Client {
     })
   }
 
-  stream (box, data, query, callback) {
-    this.open(box, data, (openError, connection) => {
-      if (openError !== null) {
-        callback(openError)
+  disconnectClient (box, query, connection, callback) {
+    if (query.getParent().getRelease() === false) {
+      box.sql = { connection }
+      callback()
+      return
+    }
+
+    delete box.sql
+
+    connection.release()
+    callback()
+  }
+
+  returnQuery (box, data, query, callback) {
+    let string = null
+
+    try {
+      string = query.resolve(box, data)
+    } catch (resolveError) {
+      callback(resolveError)
+      return
+    }
+
+    query
+      .getParent()
+      .log('info', 'Executing MySQL query %s', [string], box.rid)
+
+    this.connectClient(box, (connectError, connection) => {
+      if (connectError !== null) {
+        callback(connectError)
         return
       }
 
-      const stream = connection.query(query)
-      let next = null
+      connection.query(string, (error, rows = []) => {
+        this.disconnectClient(box, query, connection, () => {
+          callback(error, { rows })
+        })
+      })
+    })
+  }
 
-      stream.once('end', () => {
-        if (next !== null) {
-          callback(null, next, true)
+  streamQuery (box, data, query, callback) {
+    let string = null
+
+    try {
+      string = query.resolve(box, data)
+    } catch (resolveError) {
+      callback(resolveError)
+      return
+    }
+
+    query
+      .getParent()
+      .log('info', 'Streaming MySQL query %s', [string], box.rid)
+
+    this.connectClient(box, (connectError, connection) => {
+      if (connectError !== null) {
+        callback(connectError)
+        return
+      }
+
+      const stream = connection.query(string).stream()
+
+      this.streamQueryEvents(box, query, stream, (error, result = {}) => {
+        if (result.last === false) {
+          callback(error, result)
+          return
         }
 
-        next = null
-        stream.removeAllListeners()
-        connection.release()
+        this.disconnectClient(box, query, connection, () => {
+          if (result.row !== null) {
+            callback(error, result)
+          }
+        })
       })
+    })
+  }
 
-      stream.once('error', (error) => {
-        next = null
-        callback(error)
-        stream.removeAllListeners()
-        connection.release()
-      })
+  streamQueryEvents (box, query, stream, callback) {
+    if (query.getParent().getThrottle() === true) {
+      query.getParent().prepareBoxThrottle(box, stream)
+    }
 
-      stream.on('result', (row) => {
-        if (next !== null) {
-          callback(null, next, false)
-        }
+    let next = null
 
-        next = row
-      })
+    stream.once('end', () => {
+      callback(null, { last: true, row: next })
+      stream.removeAllListeners()
+    })
+
+    stream.once('error', (error) => {
+      callback(error, { last: true, row: null })
+      stream.removeAllListeners()
+    })
+
+    stream.on('data', (row) => {
+      if (next !== null) {
+        callback(null, { last: false, row: next })
+      }
+
+      next = row
     })
   }
 }

@@ -37,7 +37,7 @@ export class Response {
     const type = this.getType()
     const codec = this.parent.getCodec(type)
 
-    this.parent.log('info', 'Decoding response as "%s"', [codec.getType()])
+    this.parent.log('info', 'Decoding response as %o', [codec.getType()])
 
     codec.decode(this.original, callback, progress)
   }

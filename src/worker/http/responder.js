@@ -6,7 +6,7 @@ export class HttpResponder extends Worker {
     const { body = null, end = true, headers = {} } = data
 
     if (request.getMethod() === 'GET' && body === null) {
-      this.err(box, new Error(`404 [responder] Resource "${request.original.url}" is not found`))
+      this.err(box, new Error(`404 [responder] Resource '${request.original.url}' is not found`))
       return
     }
 

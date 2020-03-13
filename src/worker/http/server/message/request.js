@@ -45,7 +45,7 @@ export class Request {
     const type = this.getType()
     const codec = this.parent.getCodec(type)
 
-    this.parent.log('info', 'Decoding request as "%s"', [codec.getType()])
+    this.parent.log('info', 'Decoding request as %o', [codec.getType()])
 
     codec.decode(this.original, callback, progress)
   }

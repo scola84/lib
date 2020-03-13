@@ -12,18 +12,22 @@ export class Queuer extends Worker {
     this._client = null
     this._expire = null
     this._handler = null
+    this._highWaterMark = null
     this._pusher = null
     this._queue = null
     this._streamer = null
+    this._throttle = null
     this._unsaturated = null
 
     this.setBoxes(options.boxes)
     this.setClient(options.client)
     this.setExpire(options.expire)
     this.setHandler(options.handler)
+    this.setHighWaterMark(options.highWaterMark)
     this.setPusher(options.pusher)
     this.setQueue(options.queue)
     this.setStreamer(options.streamer)
+    this.setThrottle(options.throttle)
     this.setUnsaturated(options.unsaturated)
   }
 
@@ -34,9 +38,11 @@ export class Queuer extends Worker {
       client: this._client,
       expire: this._expire,
       handler: this._handler,
+      highWaterMark: this._highWaterMark,
       pusher: this._pusher,
       queue: this._queue,
       streamer: this._streamer,
+      throttle: this._throttle,
       unsaturated: this._unsaturated
     }
   }
@@ -55,8 +61,9 @@ export class Queuer extends Worker {
   }
 
   setClient (value = 'redis://redis') {
+    this.log('info', 'Setting client to %o', [value])
+
     if (this._client !== null) {
-      this.log('info', 'Changing client to "%s"', [value])
       this._client.quit()
       this._client.sub.quit()
     }
@@ -119,6 +126,15 @@ export class Queuer extends Worker {
     return this
   }
 
+  getHighWaterMark () {
+    return this._highWaterMark
+  }
+
+  setHighWaterMark (value = Infinity) {
+    this._highWaterMark = value
+    return this
+  }
+
   getPusher () {
     return this._pusher
   }
@@ -131,12 +147,14 @@ export class Queuer extends Worker {
     }
 
     this._client.sub.on('message', (channel, tid) => {
+      this.throttleResume()
+
       if (channel === 'return') {
         this.handleResult(tid)
       }
     })
 
-    this._client.sub.subscribe('return')
+    this._client.sub.subscribe('return', 'stream')
     return this
   }
 
@@ -191,6 +209,15 @@ export class Queuer extends Worker {
     return this
   }
 
+  getThrottle () {
+    return this._throttle
+  }
+
+  setThrottle (value = []) {
+    this._throttle = value
+    return this
+  }
+
   getUnsatured () {
     return this._unsaturated
   }
@@ -212,10 +239,15 @@ export class Queuer extends Worker {
     }
 
     if (this._handler === true) {
+      this.actHandler()
       return
     }
 
     this.actSimple(box, data)
+  }
+
+  actHandler () {
+    this.handleTask()
   }
 
   actPusher (box, data) {
@@ -239,7 +271,7 @@ export class Queuer extends Worker {
 
     this._queue.push((callback) => {
       this.log('info', 'Handling task %o', [data], box.rid)
-      this.pass(this.prepareHandlerBox(box, callback), data)
+      this.pass(this.prepareBoxResolve(box, callback), data)
     })
   }
 
@@ -254,6 +286,14 @@ export class Queuer extends Worker {
     this.pass(box, data)
   }
 
+  createBoxPusher (box) {
+    return {
+      bid: box.bid,
+      rid: box.rid,
+      sid: box.sid
+    }
+  }
+
   defineIndex (data, index = 0, enumerable = false) {
     return Object.defineProperty(data, 'index', {
       configurable: true,
@@ -263,7 +303,7 @@ export class Queuer extends Worker {
   }
 
   handleResult (tid) {
-    this.log('info', 'Handling result "%s"', [tid])
+    this.log('info', 'Handling result %o', [tid])
 
     const [bid, index] = tid.split(':')
 
@@ -331,16 +371,20 @@ export class Queuer extends Worker {
 
         this.log('info', 'Handling task %s', [string], box.rid)
 
-        const newBox = this.prepareHandlerBox(box, (error, result = data) => {
+        this.prepareBoxResolve(box, (error, result = data) => {
           this.pushResult(error, result, box, callback)
         })
 
-        this.pass(newBox, data)
+        this.pass(box, data)
       })
     })
   }
 
-  prepareHandlerBox (box, callback) {
+  prepareBoxResolve (box, callback) {
+    if (box.resolve !== undefined && box.resolve[this._name] !== undefined) {
+      throw new Error(`Resolve for '${this._name}' is defined`)
+    }
+
     return merge(box, {
       resolve: {
         [this._name]: {
@@ -349,25 +393,6 @@ export class Queuer extends Worker {
         }
       }
     })
-  }
-
-  preparePusherBox (box) {
-    let newBox = box
-
-    if (typeof newBox.bid !== 'string') {
-      newBox = {
-        bid: randomBytes(32).toString('hex'),
-        origin: this
-      }
-
-      this._boxes.set(newBox.bid, newBox)
-    }
-
-    return {
-      bid: newBox.bid,
-      rid: newBox.rid,
-      sid: newBox.sid
-    }
   }
 
   pushResult (error, data, box, callback) {
@@ -417,22 +442,57 @@ export class Queuer extends Worker {
       }
 
       if (channels.length === 0) {
-        callback(new Error(`404 [queuer] Queue "${data.queue}" is not found`))
+        callback(new Error(`404 [queuer] Queue '${data.queue}' is not found`))
         return
       }
 
-      const string = this._codec.stringify({
-        box: this.preparePusherBox(box),
-        data: this.defineIndex(data, data.index, true)
+      this._client.llen(data.queue, (lenError, length) => {
+        if (lenError !== null) {
+          callback(lenError)
+          return
+        }
+
+        if (typeof box.bid !== 'string') {
+          box.bid = randomBytes(32).toString('hex')
+          box.origin = this
+          this._boxes.set(box.bid, box)
+        }
+
+        if (length >= this._highWaterMark) {
+          this.throttlePause(box)
+        }
+
+        const string = this._codec.stringify({
+          box: this.createBoxPusher(box),
+          data: this.defineIndex(data, data.index, true)
+        })
+
+        this.log('info', 'Pushing task %s', [string], box.rid)
+
+        this._client
+          .multi()
+          .lpush(data.queue, string)
+          .publish(data.queue, 1)
+          .exec(callback)
       })
+    })
+  }
 
-      this.log('info', 'Pushing task %s', [string], box.rid)
+  throttlePause (box) {
+    if (box.throttle === undefined || box.throttle[this._name] === undefined) {
+      return
+    }
 
-      this._client
-        .multi()
-        .lpush(data.queue, string)
-        .publish(data.queue, 1)
-        .exec(callback)
+    this.log('info', 'Pausing queue inflow %o', [this._name], box.rid)
+    box.throttle[this._name].pause()
+    this._throttle.push(box)
+  }
+
+  throttleResume () {
+    this._throttle = this._throttle.filter((box) => {
+      this.log('info', 'Resuming queue inflow %o', [this._name], box.rid)
+      box.throttle[this._name].resume()
+      return false
     })
   }
 }

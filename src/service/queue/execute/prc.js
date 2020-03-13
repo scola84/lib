@@ -4,7 +4,8 @@ import {
   HttpServer,
   Queuer,
   Resolver,
-  Trigger
+  Trigger,
+  Worker
 } from '../../../worker/api.js'
 
 import {
@@ -27,6 +28,8 @@ import {
   TriggerQueueUpdater
 } from './prc/index.js'
 
+// Worker.Logger.set('default', 'devout')
+
 const broadcaster = new Broadcaster({
   description: 'Broadcast task results',
   id: 'queue-broadcaster',
@@ -43,7 +46,9 @@ const itemSelector = new ItemSelector({
   description: 'Select items for run',
   id: 'queue-item-selector',
   client: process.env.QUEUE_DATABASE_CLIENT,
-  stream: true
+  name: 'queue',
+  result: 'stream',
+  throttle: true
 })
 
 const itemUpdater = new ItemUpdater({
@@ -56,7 +61,7 @@ const nextQueueSelector = new NextQueueSelector({
   description: 'Select queues to run after task execution',
   id: 'queue-next-queue-selector',
   client: process.env.QUEUE_DATABASE_CLIENT,
-  stream: true
+  result: 'stream'
 })
 
 const nextTaskSlicer = new NextTaskSlicer({
@@ -86,7 +91,9 @@ const runTotalUpdater = new RunTotalUpdater({
 const server = new HttpServer({
   description: 'Serve queue resources',
   id: 'queue-server',
-  server: process.env.QUEUE_HTTP_SERVER
+  name: 'queue',
+  server: process.env.QUEUE_HTTP_SERVER,
+  throttle: true
 })
 
 const serverQueueSelector = new ServerQueueSelector({
@@ -97,25 +104,27 @@ const serverQueueSelector = new ServerQueueSelector({
 
 const serverResponder = new ServerResponder({
   description: 'Send task results to client',
-  id: 'queue-server-responder'
+  id: 'queue-server-responder',
+  name: 'queue'
 })
 
 const serverRouter = new HttpRouter({
   description: 'Route requests to queue resources',
-  id: 'queue-server-router'
+  id: 'queue-server-router',
+  name: 'queue'
 })
 
 const serverTaskResolver = new Resolver({
   description: 'Resolve task slices',
   id: 'queue-server-task-resolver',
   collect: true,
-  name: 'task'
+  name: 'queue'
 })
 
 const serverTaskSlicer = new ServerTaskSlicer({
   description: 'Slice tasks from request',
   id: 'queue-server-task-slicer',
-  name: 'task'
+  name: 'queue'
 })
 
 const serverStreamListener = new Queuer({
@@ -128,7 +137,8 @@ const serverStreamListener = new Queuer({
 
 const serverStreamer = new ServerStreamer({
   description: 'Stream task results to client',
-  id: 'queue-server-streamer'
+  id: 'queue-server-streamer',
+  name: 'queue'
 })
 
 const taskInserter = new TaskInserter({
@@ -142,6 +152,8 @@ const taskPusher = new Queuer({
   id: 'queue-task-pusher',
   boxes: server.getBoxes(),
   client: process.env.QUEUE_QUEUER_CLIENT,
+  highWaterMark: process.env.QUEUE_HIGH_WATER_MARK,
+  name: 'queue',
   pusher: true
 })
 
@@ -167,7 +179,7 @@ const triggerQueueSelector = new TriggerQueueSelector({
   description: 'Select queues to run',
   id: 'queue-trigger-queue-selector',
   client: process.env.QUEUE_DATABASE_CLIENT,
-  stream: true
+  result: 'stream'
 })
 
 const triggerQueueUpdater = new TriggerQueueUpdater({
@@ -224,3 +236,7 @@ broadcaster
 broadcaster
   .connect(nextQueueSelector)
   .connect(runInserter)
+
+if (process.env.QUEUE_HTTP_SERVER === undefined) {
+  trigger.call()
+}

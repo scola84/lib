@@ -27,7 +27,7 @@ export class Slicer extends Worker {
 
   act (box, data) {
     if (this._resolve === true) {
-      this.prepareBox(box, data.length)
+      this.prepareBoxResolve(box, data.length)
     }
 
     for (let i = 0; i < data.length; i += 1) {
@@ -46,7 +46,7 @@ export class Slicer extends Worker {
 
   err (box, error) {
     if (this._resolve === true) {
-      this.prepareBox(box, 0)
+      this.prepareBoxResolve(box, 0)
     }
 
     this.fail(box, error)
@@ -59,7 +59,11 @@ export class Slicer extends Worker {
     })
   }
 
-  prepareBox (box, total) {
+  prepareBoxResolve (box, total) {
+    if (box.resolve !== undefined && box.resolve[this._name] !== undefined) {
+      throw new Error(`Resolve for '${this._name}' is defined`)
+    }
+
     return merge(box, {
       resolve: {
         [this._name]: {

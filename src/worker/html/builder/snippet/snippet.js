@@ -52,6 +52,19 @@ export class Snippet {
     }
   }
 
+  getArg (index) {
+    return this._args[index]
+  }
+
+  setArg (index, value) {
+    this.args[index] = value
+    return this
+  }
+
+  arg (index, value) {
+    return this.setArg(index, value)
+  }
+
   getArgs () {
     return this._args
   }

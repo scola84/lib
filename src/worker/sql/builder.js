@@ -1,3 +1,4 @@
+import merge from 'lodash/merge.js'
 import { Builder } from '../core/index.js'
 import map from './builder/map/client.js'
 import snippet from './builder/snippet/index.js'
@@ -12,13 +13,17 @@ export class SqlBuilder extends Builder {
     this._client = null
     this._connection = null
     this._query = null
-    this._stream = null
+    this._release = null
+    this._result = null
+    this._throttle = null
 
     this.setBuild(options.build)
     this.setClient(options.client)
     this.setConnection(options.connection)
     this.setQuery(options.query)
-    this.setStream(options.stream)
+    this.setRelease(options.release)
+    this.setResult(options.result)
+    this.setThrottle(options.throttle)
   }
 
   getOptions () {
@@ -28,7 +33,9 @@ export class SqlBuilder extends Builder {
       client: this._client,
       connection: this._connection,
       query: this._query,
-      stream: this._stream
+      release: this._release,
+      result: this._result,
+      throttle: this._throttle
     }
   }
 
@@ -68,36 +75,53 @@ export class SqlBuilder extends Builder {
     return this
   }
 
-  getStream () {
-    return this._stream
+  getRelease () {
+    return this._release
   }
 
-  setStream (value = false) {
-    this._stream = value
+  setRelease (value = true) {
+    this._release = value
+    return this
+  }
+
+  getResult () {
+    return this._result
+  }
+
+  setResult (value = 'return') {
+    this._result = value
+    return this
+  }
+
+  getThrottle () {
+    return this._throttle
+  }
+
+  setThrottle (value = false) {
+    this._throttle = value
     return this
   }
 
   act (box, data) {
     const client = this.resolveClient(box, data)
-    const method = this._stream === true ? 'stream' : 'execute'
-
     const query = this.resolveQuery(box, data, client)
-    const resolvedQuery = query.resolve(box, data)
 
-    this.log('info', 'Querying database (%s) %s', [method, resolvedQuery], box.rid)
-
-    client[method](box, data, resolvedQuery, (error, result, last) => {
+    client[`${this._result}Query`](box, data, query, (error, result) => {
       if (error !== null) {
         this.fail(box, error)
         return
       }
 
-      this.pass(box, data, query.merge(box, data, result), last)
+      this.pass(
+        this._result === 'stream' ? { ...box } : box,
+        data,
+        query.merge(box, data, result)
+      )
     })
   }
 
-  build () {
-    return this.query('SELECT 1')
+  build (sc) {
+    return sc.query('SELECT 1')
   }
 
   client () {
@@ -105,26 +129,51 @@ export class SqlBuilder extends Builder {
   }
 
   merge (box, data, result) {
-    if (this._stream === true) {
-      return result
+    if (this._result === 'stream') {
+      return result.row
     }
 
     return data
   }
 
-  resolveClient (box, data) {
-    const client = this.resolve('client', box, data)
-
-    if (clients.has(client) === false) {
-      clients.set(client, this[client.split(':').shift()]().pool(client))
+  prepareBoxThrottle (box, stream) {
+    if (box.throttle !== undefined && box.throttle[this._name] !== undefined) {
+      throw new Error(`Throttle for '${this._name}' is defined`)
     }
 
-    return clients.get(client)
+    return merge(box, {
+      throttle: {
+        [this._name]: {
+          pause: () => {
+            stream.pause()
+          },
+          resume: () => {
+            stream.resume()
+          }
+        }
+      }
+    })
+  }
+
+  resolveClient (box, data) {
+    const dsn = this.resolve('client', box, data)
+
+    if (clients.has(dsn) === false) {
+      clients.set(
+        dsn,
+        this[dsn.split(':').shift()]().setPool(dsn)
+      )
+    }
+
+    return clients.get(dsn)
   }
 
   resolveQuery (box, data, client) {
     if (this._query.has(client) === false) {
-      this._query.set(client, this.resolve('build', client))
+      this._query.set(
+        client,
+        this.resolve('build', client).setParent(this)
+      )
     }
 
     return this._query.get(client)

@@ -9,6 +9,7 @@ export class Snippet {
     this._name = null
     this._origin = null
     this._parens = null
+    this._parent = null
     this._permit = null
     this._postfix = null
     this._prefix = null
@@ -20,6 +21,7 @@ export class Snippet {
     this.setName(options.name)
     this.setOrigin(options.origin)
     this.setParens(options.parens)
+    this.setParent(options.parent)
     this.setPermit(options.permit)
     this.setPostfix(options.postfix)
     this.setPrefix(options.prefix)
@@ -46,6 +48,7 @@ export class Snippet {
       name: this._name,
       origin: this._origin,
       parens: this._parens,
+      parent: this._parent,
       permit: this._permit,
       postfix: this._postfix,
       prefix: this._prefix
@@ -71,7 +74,18 @@ export class Snippet {
 
   setArgs (value = []) {
     this._args = value
+
+    for (let i = 0; i < this._args.length; i += 1) {
+      if (this._args[i] instanceof Snippet) {
+        this._args[i].setParent(this)
+      }
+    }
+
     return this
+  }
+
+  append (...args) {
+    return this.setArgs(this._args.concat(args))
   }
 
   args (value) {
@@ -155,6 +169,19 @@ export class Snippet {
 
   parens () {
     return this.setParens(true)
+  }
+
+  getParent () {
+    return this._parent
+  }
+
+  setParent (value = null) {
+    this._parent = value
+    return this
+  }
+
+  parent (value) {
+    return this.setParent(value)
   }
 
   getPermit () {

@@ -14,11 +14,11 @@ export class Sms extends Client {
     return this
   }
 
-  open (box, data, callback) {
+  connectClient (callback) {
     callback(null, this._transport)
   }
 
-  prepare (message) {
+  prepareMessage (message) {
     if (typeof message.text === 'string') {
       message.text = this._origin.format(message.text, [message], message.locale)
     }
@@ -26,14 +26,14 @@ export class Sms extends Client {
     return message
   }
 
-  send (box, data, message, callback) {
-    this.open(box, data, (openError, transport) => {
-      if (openError !== null) {
-        callback(openError)
+  sendMessage (message, callback) {
+    this.connectClient((connectError, connection) => {
+      if (connectError !== null) {
+        callback(connectError)
         return
       }
 
-      transport.send(this.prepare(message), (sendError, result) => {
+      connection.send(this.prepareMessage(message), (sendError, result) => {
         if (sendError !== null) {
           callback(sendError)
           return

@@ -21,9 +21,9 @@ export class RunInserter extends SqlBuilder {
     return typeof data.queue === 'object'
   }
 
-  merge (box, data, [result = {}]) {
+  merge (box, data, { rows: [run = {}] }) {
     data.run = {
-      id_run: result.id_run,
+      id_run: run.id_run,
       total: 0
     }
 

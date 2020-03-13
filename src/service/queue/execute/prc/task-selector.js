@@ -26,7 +26,7 @@ export class TaskSelector extends SqlBuilder {
     )
   }
 
-  merge (box, data, [task = null]) {
+  merge (box, data, { rows: [task = null] }) {
     if (task === null) {
       return data
     }

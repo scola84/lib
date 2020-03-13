@@ -88,7 +88,7 @@ export class Worker {
 
   setCache (value = 'default') {
     if (this._cache !== null) {
-      this.log('info', 'Changing cache to "%s"', [value])
+      this.log('info', 'Setting cache to %o', [value])
     }
 
     this._cache = Cache.get(value)
@@ -103,7 +103,7 @@ export class Worker {
 
   setCodec (value = 'default') {
     if (this._codec !== null) {
-      this.log('info', 'Changing codec to "%s"', [value])
+      this.log('info', 'Setting codec to %o', [value])
     }
 
     this._codec = Codec.get(value)
@@ -161,12 +161,12 @@ export class Worker {
 
   setId (value = workers.size) {
     if (this._id !== null) {
-      this.log('info', 'Changing id to "%s"', [value])
+      this.log('info', 'Setting id to %o', [value])
       workers.delete(this._id)
     }
 
     if (workers.has(value) === true) {
-      throw new Error(`Worker "${value}" exists`)
+      throw new Error(`Worker '${value}' is defined`)
     }
 
     workers.set(value, this)
@@ -183,7 +183,7 @@ export class Worker {
 
   setLogger (value = 'default') {
     if (this._logger !== null) {
-      this.log('info', 'Changing logger to "%s"', [value])
+      this.log('info', 'Setting logger to %o', [value])
     }
 
     this._logger = Logger.get(value)
@@ -191,7 +191,7 @@ export class Worker {
   }
 
   callLoggerId (name, id) {
-    this.log('info', 'Changing logger id (%s)', [name])
+    this.log('info', 'Setting logger id (%o)', [name])
     this._logger.callId(name, id)
     return this
   }
@@ -211,7 +211,7 @@ export class Worker {
 
   setName (value = 'default') {
     if (this._name !== null) {
-      this.log('info', 'Changing name "%s" to "%s"', [this._name, value])
+      this.log('info', 'Setting name %o to %o', [this._name, value])
     }
 
     this._name = value

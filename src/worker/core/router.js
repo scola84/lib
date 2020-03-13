@@ -32,14 +32,14 @@ export class Router extends Worker {
   act (box, data) {
     const route = this.resolve('route', box, data)
 
-    this.log('info', 'Routing to "%s"', [route], box.rid)
+    this.log('info', 'Routing to %o', [route], box.rid)
 
     if (this._downstreams[route] instanceof Worker) {
       this._downstreams[route].callAct(box, data)
     } else if (this._bypass !== null) {
       this._bypass.callAct(box, data)
     } else {
-      throw new Error(`404 [router] Route "${route}" is not found`)
+      throw new Error(`404 [router] Route '${route}' is not found`)
     }
   }
 

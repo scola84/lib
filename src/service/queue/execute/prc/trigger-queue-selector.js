@@ -38,7 +38,7 @@ export class TriggerQueueSelector extends SqlBuilder {
     )
   }
 
-  merge (box, data, queue) {
+  merge (box, data, { row: queue }) {
     return {
       queue
     }

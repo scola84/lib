@@ -33,5 +33,5 @@ export class Client {
     return this.setTransport(value)
   }
 
-  send () {}
+  sendMessage () {}
 }

@@ -21,7 +21,7 @@ export class Grid extends Parent {
     const [line] = this._args
 
     const axes = this._origin.selector((snippet) => {
-      return snippet instanceof Axis
+      return this.isInstance(snippet, Axis) === true
     }).resolve(null)
 
     let distance = null

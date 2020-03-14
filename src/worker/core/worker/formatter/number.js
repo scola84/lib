@@ -1,4 +1,6 @@
 import d3 from 'd3-format/dist/d3-format.js'
+import isFunction from 'lodash/isFunction.js'
+import isNil from 'lodash/isNil.js'
 import math from 'math-expression-evaluator'
 
 const definitions = {
@@ -14,7 +16,7 @@ math.addToken(
   Object
     .getOwnPropertyNames(Math)
     .filter((name) => {
-      return typeof Math[name] === 'function' && Math[name].length > 0
+      return isFunction(Math[name]) === true && Math[name].length > 0
     }).map((name) => {
       return {
         type: [0, 8, 12][Math[name].length - 1],
@@ -26,7 +28,7 @@ math.addToken(
 )
 
 export function number (value, options, locale) {
-  if (value === undefined || value === null) {
+  if (isNil(value) === true) {
     return ''
   }
 

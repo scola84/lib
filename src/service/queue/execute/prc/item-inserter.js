@@ -1,3 +1,4 @@
+import isPlainObject from 'lodash/isPlainObject.js'
 import omit from 'lodash/omit.js'
 import { SqlBuilder } from '../../../../worker/api.js'
 
@@ -27,9 +28,9 @@ export class ItemInserter extends SqlBuilder {
   }
 
   decide (box, data) {
-    return typeof data.item === 'object' &&
-      typeof data.queue === 'object' &&
-      typeof data.run === 'object'
+    return isPlainObject(data.item) === true &&
+      isPlainObject(data.queue) === true &&
+      isPlainObject(data.run) === true
   }
 
   merge (box, data, { rows: [item = {}] }) {

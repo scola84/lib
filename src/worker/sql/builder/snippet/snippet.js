@@ -1,3 +1,7 @@
+import isFunction from 'lodash/isFunction.js'
+import isNil from 'lodash/isNil.js'
+import isPlainObject from 'lodash/isPlainObject.js'
+
 const snippets = new Map()
 
 export class Snippet {
@@ -31,7 +35,7 @@ export class Snippet {
     const options = this.getOptions()
 
     options.args = options.args.map((snippet) => {
-      return snippet instanceof Snippet
+      return this.isInstance(snippet) === true
         ? snippet.clone()
         : snippet
     })
@@ -76,7 +80,7 @@ export class Snippet {
     this._args = value
 
     for (let i = 0; i < this._args.length; i += 1) {
-      if (this._args[i] instanceof Snippet) {
+      if (this.isInstance(this._args[i]) === true) {
         this._args[i].setParent(this)
       }
     }
@@ -243,7 +247,7 @@ export class Snippet {
     for (let i = 0; i < this._args.length; i += 1) {
       snippet = this._args[i]
 
-      if (snippet instanceof Snippet) {
+      if (this.isInstance(snippet) === true) {
         result.push(...snippet.find(compare))
       }
     }
@@ -253,6 +257,10 @@ export class Snippet {
 
   hasPermission (box, data) {
     return this.resolveValue(box, data, this._permit)
+  }
+
+  isInstance (object, O = Snippet) {
+    return object instanceof O
   }
 
   merge (box, data, result) {
@@ -266,7 +274,7 @@ export class Snippet {
     for (let i = 0; i < this._args.length; i += 1) {
       arg = this._args[i]
 
-      if (arg instanceof Snippet) {
+      if (this.isInstance(arg) === true) {
         merged = arg.merge(box, data, merged)
       }
     }
@@ -324,19 +332,19 @@ export class Snippet {
   }
 
   resolveValue (box, data, value) {
-    if (value === undefined || value === null) {
+    if (isNil(value) === true) {
       return 'NULL'
     }
 
-    if (value instanceof Snippet) {
+    if (this.isInstance(value) === true) {
       return this.resolveValue(box, data, value.resolve(box, data))
     }
 
-    if (typeof value === 'object') {
+    if (isPlainObject(value) === true) {
       return this.resolveValue(box, data, JSON.stringify(value))
     }
 
-    if (typeof value === 'function') {
+    if (isFunction(value) === true) {
       return this.resolveValue(box, data, value(box, data))
     }
 

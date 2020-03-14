@@ -1,4 +1,5 @@
 import IBAN from 'iban'
+import isObject from 'lodash/isObject.js'
 import { Input } from '../input.js'
 
 export class Iban extends Input {
@@ -21,7 +22,7 @@ export class Iban extends Input {
 
     const specification = IBAN.countries[country]
 
-    if (typeof specification !== 'object') {
+    if (isObject(specification) === false) {
       return this.setError(error, name, value, 'type')
     }
 

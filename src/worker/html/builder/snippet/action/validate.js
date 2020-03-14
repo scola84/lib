@@ -9,7 +9,7 @@ export class Validate extends Action {
   }
 
   resolveValidate (box, data, snippet) {
-    const snippets = snippet.find((s) => s instanceof Input)
+    const snippets = snippet.find((s) => this.isInstance(s, Input) === true)
     const error = {}
 
     for (let i = 0; i < snippets.length; i += 1) {

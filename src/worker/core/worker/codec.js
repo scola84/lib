@@ -1,3 +1,5 @@
+import isObject from 'lodash/isObject.js'
+import isString from 'lodash/isString.js'
 import { codec } from './codec/index.js'
 
 export class Codec {
@@ -6,14 +8,14 @@ export class Codec {
   }
 
   static set (type, object) {
-    codec[type] = typeof object === 'string'
-      ? codec[object]
-      : object
+    codec[type] = isObject(object) === true
+      ? object
+      : codec[object]
   }
 }
 
-if (typeof process === 'object') {
-  if (typeof process.env.CODEC_DEFAULT === 'string') {
+if (isObject(process) === true) {
+  if (isString(process.env.CODEC_DEFAULT) === true) {
     Codec.set('default', process.env.CODEC_DEFAULT)
   }
 }

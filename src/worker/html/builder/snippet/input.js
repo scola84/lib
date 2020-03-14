@@ -1,3 +1,5 @@
+import isArray from 'lodash/isArray.js'
+import isNil from 'lodash/isNil.js'
 import set from 'lodash/set.js'
 import { Node } from './node.js'
 
@@ -112,9 +114,7 @@ export class Input extends Node {
       this.setValue(data, name, cleanValue)
     }
 
-    const isEmpty = this.isEmpty(cleanValue)
-
-    if (isEmpty === true) {
+    if (cleanValue === '' || isNil(cleanValue) === true) {
       if (this._default === null) {
         this.setValue(data, name, null)
         return
@@ -154,33 +154,19 @@ export class Input extends Node {
     return value <= parseFloat(max)
   }
 
-  isDefined (value, required) {
-    if (required === null) {
-      return true
-    }
-
-    return this.isEmpty(value) === false
-  }
-
-  isEmpty (value) {
-    return value === undefined ||
-      value === null ||
-      value === ''
-  }
-
   isMultiple (value, multiple) {
     if (multiple === null) {
       return true
     }
 
-    return Array.isArray(value) === true
+    return isArray(value) === true
   }
 
   resolveClean (box, data) {
     const name = this.resolveAttribute(box, data, 'name')
     const value = data[name]
 
-    if (Array.isArray(value) === false) {
+    if (isArray(value) === false) {
       this.cleanBefore(box, data, name, value)
       return
     }
@@ -200,7 +186,7 @@ export class Input extends Node {
       return this.setError(error, name, value, 'array')
     }
 
-    if (Array.isArray(value) === false) {
+    if (isArray(value) === false) {
       return this.validateBefore(box, data, error, name, value)
     }
 
@@ -233,11 +219,11 @@ export class Input extends Node {
   validateInput (box, data, error, name, value) {
     const required = this.resolveAttribute(box, data, 'required')
 
-    if (this.isDefined(value, required) === false) {
-      return this.setError(error, name, value, 'required')
-    }
+    if (value === '' || isNil(value) === true) {
+      if (required === true) {
+        return this.setError(error, name, value, 'required')
+      }
 
-    if (this.isEmpty(value) === true) {
       return null
     }
 

@@ -1,6 +1,7 @@
 import * as d3 from 'd3-selection'
 import { Router } from '../core/index.js'
 import { Menu, Popup, Route } from './router/index.js'
+import { Snippet } from './builder/snippet/snippet.js'
 
 const routers = new Map()
 
@@ -41,7 +42,6 @@ export class HtmlRouter extends Router {
     this._popup = null
     this._starter = null
     this._stash = null
-    this._storage = null
     this._user = null
 
     this.setBase(options.base)
@@ -51,7 +51,6 @@ export class HtmlRouter extends Router {
     this.setPopup(options.popup)
     this.setStarter(options.starter)
     this.setStash(options.stash)
-    this.setStorage(options.storage)
     this.setUser(options.user)
 
     this.loadHistory()
@@ -67,7 +66,6 @@ export class HtmlRouter extends Router {
       popup: this._popup,
       starter: this._starter,
       stash: this._stash,
-      storage: this._storage,
       user: this._user
     }
   }
@@ -79,6 +77,10 @@ export class HtmlRouter extends Router {
   setBase (value = null) {
     this._base = value
     return this
+  }
+
+  setCache (value = 'local') {
+    super.setCache(value)
   }
 
   getDefault () {
@@ -148,18 +150,6 @@ export class HtmlRouter extends Router {
     return this
   }
 
-  getStorage () {
-    return this._storage
-  }
-
-  setStorage (value = null) {
-    this._storage = value === null && typeof window === 'object'
-      ? window.localStorage
-      : value
-
-    return this
-  }
-
   getUser () {
     return this._user
   }
@@ -193,7 +183,7 @@ export class HtmlRouter extends Router {
 
   loadHistory () {
     this._history = JSON
-      .parse(this._storage.getItem(`route-${this._name}`) || '[]')
+      .parse(this._cache.get(`route-${this._name}`) || '[]')
       .map((route) => Route.parse(route))
   }
 
@@ -215,18 +205,18 @@ export class HtmlRouter extends Router {
 
     if (box.path !== null) {
       box = this.processRoute(box, routes, box)
-    } else if (typeof routes[this._name] === 'object') {
+    } else if (this.isInstance(routes[this._name], Route) === true) {
       box = this.processRoute(box, routes, routes[this._name])
     }
 
-    if (typeof this._downstreams[box.path] !== 'object') {
+    if (this.isInstance(this._downstreams[box.path]) === false) {
       box = this.processDefault(box, routes)
     }
 
     this.formatHash(routes)
     this.processForward(box)
 
-    if (typeof this._downstreams[box.path] === 'object') {
+    if (this.isInstance(this._downstreams[box.path]) === true) {
       if (this._popup !== null) {
         this._popup.open(box, data)
       }
@@ -275,7 +265,7 @@ export class HtmlRouter extends Router {
       return box
     }
 
-    if (typeof this._base.snippet === 'object') {
+    if (this.isInstance(this._base.snippet, Snippet) === true) {
       this._base.snippet.remove()
       delete this._base.snippet
     }
@@ -335,7 +325,7 @@ export class HtmlRouter extends Router {
   }
 
   saveHistory () {
-    this._storage.setItem(`route-${this._name}`, JSON.stringify(this._history))
+    this._cache.set(`route-${this._name}`, JSON.stringify(this._history))
   }
 
   start (...args) {
@@ -354,7 +344,7 @@ export class HtmlRouter extends Router {
   stash () {
     const routes = HtmlRouter.parseHash()
 
-    if (typeof routes[this._name] === 'object') {
+    if (this.isInstance(routes[this._name], Route) === true) {
       this._stash = routes[this._name]
     }
 

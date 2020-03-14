@@ -23,7 +23,7 @@ export class Checkbox extends Input {
 
     const snippets = this._origin
       .selector((snippet) => {
-        return snippet instanceof Checkbox &&
+        return this.isInstance(snippet, Checkbox) &&
           snippet.resolveAttribute(box, data, 'name') === realName
       })
       .resolve(null)

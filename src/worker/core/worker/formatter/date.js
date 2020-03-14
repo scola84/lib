@@ -1,7 +1,8 @@
+import isNil from 'lodash/isNil.js'
 import luxon from 'luxon'
 
 export function date (value, options, locale) {
-  if (value === undefined || value === null) {
+  if (isNil(value) === true) {
     return ''
   }
 

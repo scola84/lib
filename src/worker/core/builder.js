@@ -1,3 +1,4 @@
+import isFunction from 'lodash/isFunction.js'
 import { Worker } from './worker.js'
 
 export class Builder extends Worker {
@@ -12,23 +13,30 @@ export class Builder extends Worker {
       names = Object.keys(objects[group])
 
       for (let j = 0; j < names.length; j += 1) {
-        Reflect.apply(Builder.attachFactory, this,
-          [objects[group][names[j]], group, names[j]])
+        Reflect.apply(
+          Builder.attachFactory,
+          this,
+          [
+            objects[group][names[j]],
+            group,
+            names[j]
+          ]
+        )
       }
     }
   }
 
-  static attachFactory (object, group, name, safe = false) {
+  static attachFactory (object, group, name) {
     const {
       object: O,
       options
     } = object
 
-    const safeName = safe === false && this.prototype[name] === undefined
+    const realName = isFunction(this.prototype[name]) === false
       ? name
       : group + name
 
-    this.prototype[safeName] = function create (...args) {
+    this.prototype[realName] = function create (...args) {
       return new O({
         args,
         origin: this,

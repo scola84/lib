@@ -1,3 +1,4 @@
+import isString from 'lodash/isString.js'
 import { HttpClient } from '../../../../http/index.js'
 import { Action } from '../action.js'
 
@@ -65,7 +66,7 @@ export class Request extends Action {
   resolveAfter (box, data) {
     let resource = this.resolveValue(box, data, this._resource)
 
-    if (typeof resource === 'string') {
+    if (isString(resource) === true) {
       resource = this.resolveResource(box, data, resource)
     }
 
@@ -74,7 +75,7 @@ export class Request extends Action {
       delete box.multipart
     }
 
-    if (typeof box.authorization === 'string') {
+    if (isString(box.authorization) === true) {
       resource.headers.Authorization = box.authorization
       delete box.authorization
     }
@@ -125,7 +126,7 @@ export class Request extends Action {
   }
 
   resolveResponse (box, error, data) {
-    if (error !== null) {
+    if (this.isInstance(error, Error) === true) {
       this.resolveError(box, error, data)
       return
     }

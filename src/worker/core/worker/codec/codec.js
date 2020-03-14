@@ -1,3 +1,7 @@
+import isArray from 'lodash/isArray.js'
+import isFunction from 'lodash/isFunction.js'
+import isNil from 'lodash/isNil.js'
+import isObject from 'lodash/isObject.js'
 import buffer from 'buffer/index.js'
 
 export class Codec {
@@ -16,8 +20,8 @@ export class Codec {
   }
 
   decode (readable, callback = () => {}, progress = () => {}) {
-    if (typeof readable.body === 'object') {
-      if (typeof readable.body.getReader === 'function') {
+    if (isObject(readable.body) === true) {
+      if (isFunction(readable.body.getReader) === true) {
         this.decodeReader(readable.body.getReader(), callback, progress)
       } else {
         this.decodeStream(readable.body, callback, progress)
@@ -35,7 +39,7 @@ export class Codec {
 
     let data = buffer.Buffer.concat(buffers)
 
-    data = typeof TextDecoder === 'object'
+    data = isObject(TextDecoder) === true
       ? new TextDecoder().decode(data)
       : data
 
@@ -47,7 +51,7 @@ export class Codec {
   }
 
   decodeReader (reader, callback, progress) {
-    if (Array.isArray(reader.buffers) === false) {
+    if (isArray(reader.buffers) === false) {
       reader.buffers = []
     }
 
@@ -77,7 +81,7 @@ export class Codec {
   }
 
   encode (writable, data, callback) {
-    if (data === null || data === undefined) {
+    if (isNil(data) === true) {
       callback(null, data)
       return
     }

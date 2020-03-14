@@ -1,5 +1,6 @@
 import assignWith from 'lodash/assignWith.js'
 import defaultsDeep from 'lodash/defaultsDeep.js'
+import isPlainObject from 'lodash/isPlainObject.js'
 import qs from 'qs'
 
 export class Route {
@@ -8,12 +9,8 @@ export class Route {
       return route
     }
 
-    if (typeof route === 'object' && route !== null) {
+    if (isPlainObject(route) === true) {
       return new Route(route)
-    }
-
-    if (typeof route !== 'string') {
-      return route
     }
 
     const [splitPath, splitName = ''] = route.split('@')

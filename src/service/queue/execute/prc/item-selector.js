@@ -1,3 +1,5 @@
+import isPlainObject from 'lodash/isPlainObject.js'
+import isString from 'lodash/isString.js'
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class ItemSelector extends SqlBuilder {
@@ -8,7 +10,7 @@ export class ItemSelector extends SqlBuilder {
   }
 
   client (box, data) {
-    if (typeof data.queue.selector_query === 'string') {
+    if (isString(data.queue.selector_query) === true) {
       return this.format(data.queue.selector_client)
     }
 
@@ -16,8 +18,8 @@ export class ItemSelector extends SqlBuilder {
   }
 
   decide (box, data) {
-    return typeof data.queue === 'object' &&
-      typeof data.queue.selector_query === 'string'
+    return isPlainObject(data.queue) === true &&
+      isString(data.queue.selector_query) === true
   }
 
   merge (box, data, { row: item, last }) {

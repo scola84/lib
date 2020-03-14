@@ -1,4 +1,4 @@
-import merge from 'lodash/merge.js'
+import isObject from 'lodash/isObject.js'
 import { Builder } from '../core/index.js'
 import map from './builder/map/client.js'
 import snippet from './builder/snippet/index.js'
@@ -107,7 +107,7 @@ export class SqlBuilder extends Builder {
     const query = this.resolveQuery(box, data, client)
 
     client[`${this._result}Query`](box, data, query, (error, result) => {
-      if (error !== null) {
+      if (this.isInstance(error, Error) === true) {
         this.fail(box, error)
         return
       }
@@ -137,22 +137,20 @@ export class SqlBuilder extends Builder {
   }
 
   prepareBoxThrottle (box, stream) {
-    if (box.throttle !== undefined && box.throttle[this._name] !== undefined) {
+    if (isObject(box[`throttle.${this._name}`]) === true) {
       throw new Error(`Throttle for '${this._name}' is defined`)
     }
 
-    return merge(box, {
-      throttle: {
-        [this._name]: {
-          pause: () => {
-            stream.pause()
-          },
-          resume: () => {
-            stream.resume()
-          }
-        }
+    box[`throttle.${this._name}`] = {
+      pause: () => {
+        stream.pause()
+      },
+      resume: () => {
+        stream.resume()
       }
-    })
+    }
+
+    return box
   }
 
   resolveClient (box, data) {

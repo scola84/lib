@@ -1,3 +1,5 @@
+import isArray from 'lodash/isArray.js'
+import isFunction from 'lodash/isFunction.js'
 import { Cache } from './worker/cache.js'
 import { Codec } from './worker/codec.js'
 import { Formatter } from './worker/formatter.js'
@@ -254,7 +256,7 @@ export class Worker {
       if (this.resolve('decide', box, data, ['act']) === true) {
         this.act(box, this.resolve('filter', box, data))
       } else if (this._bypass !== null) {
-        if (this._bypass instanceof Worker) {
+        if (this.isInstance(this._bypass) === true) {
           this._bypass.callAct(box, data)
         }
       } else if (this._downstream !== null) {
@@ -271,7 +273,7 @@ export class Worker {
       if (this.resolve('decide', box, error, ['err']) === true) {
         this.err(box, error)
       } else if (this._bypass !== null) {
-        if (this._bypass instanceof Worker) {
+        if (this.isInstance(this._bypass, Worker)) {
           this._bypass.callErr(box, error)
         }
       } else if (this._downstream !== null) {
@@ -287,7 +289,7 @@ export class Worker {
       return this
     }
 
-    if (Array.isArray(worker) === true) {
+    if (isArray(worker) === true) {
       this.connect(worker[0])
       return worker[1]
     }
@@ -330,6 +332,10 @@ export class Worker {
     return Formatter.format(string, args, locale)
   }
 
+  isInstance (object, O = Worker) {
+    return object instanceof O
+  }
+
   log (type, message, args, rid) {
     this._logger.log(this._id, type, message, args, rid)
     return this
@@ -340,7 +346,7 @@ export class Worker {
   }
 
   pass (box, data, ...extra) {
-    if (data instanceof Error) {
+    if (this.isInstance(data, Error) === true) {
       this.fail(box, data)
       return
     }
@@ -380,7 +386,7 @@ export class Worker {
 
     if (value === null) {
       value = this[name](box, data, ...extra)
-    } else if (typeof value === 'function') {
+    } else if (isFunction(value) === true) {
       value = value.call(this, box, data, ...extra)
     }
 

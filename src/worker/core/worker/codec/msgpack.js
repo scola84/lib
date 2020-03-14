@@ -1,3 +1,4 @@
+import isObject from 'lodash/isObject.js'
 import msgpack from 'msgpack-lite'
 import { Codec } from './codec.js'
 
@@ -7,7 +8,7 @@ export class MsgpackCodec extends Codec {
   }
 
   parse (data) {
-    if (typeof msgpack === 'object') {
+    if (isObject(msgpack) === true) {
       return msgpack.decode(data)
     }
 
@@ -15,7 +16,7 @@ export class MsgpackCodec extends Codec {
   }
 
   stringify (data) {
-    if (typeof msgpack === 'object') {
+    if (isObject(msgpack) === true) {
       return msgpack.encode(data)
     }
 

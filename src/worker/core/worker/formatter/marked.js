@@ -1,15 +1,15 @@
 import dompurify from 'dompurify'
+import isNil from 'lodash/isNil.js'
+import isObject from 'lodash/isObject.js'
 import markdown from 'marked'
 import jsdom from 'jsdom'
 
 const sanitizer = dompurify(
-  typeof window === 'object'
-    ? window
-    : new jsdom.JSDOM().window
+  isObject(window) === true ? window : new jsdom.JSDOM().window
 )
 
 export function marked (value, options) {
-  if (value === undefined || value === null) {
+  if (isNil(value) === true) {
     return ''
   }
 

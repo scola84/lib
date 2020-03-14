@@ -1,3 +1,5 @@
+import isUndefined from 'lodash/isUndefined.js'
+
 export class Dummy {
   constructor () {
     this._attributes = {}
@@ -6,7 +8,7 @@ export class Dummy {
 
   attr (key, value = null) {
     if (value === null) {
-      return this._attributes[key] === undefined
+      return isUndefined(this._attributes[key]) === true
         ? null
         : this._attributes[key]
     }
@@ -29,7 +31,7 @@ export class Dummy {
         return this.attr(key)
       }
 
-      return this._properties[key] === undefined
+      return isUndefined(this._properties[key]) === true
         ? null
         : this._properties[key]
     }

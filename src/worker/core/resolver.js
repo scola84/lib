@@ -1,3 +1,5 @@
+import isFunction from 'lodash/isFunction.js'
+import isPlainObject from 'lodash/isPlainObject.js'
 import { Worker } from './worker.js'
 
 export class Resolver extends Worker {
@@ -25,10 +27,10 @@ export class Resolver extends Worker {
   }
 
   act (box, data) {
-    const resolve = box.resolve[this._name]
+    const resolve = box[`resolve.${this._name}`]
 
-    if (typeof resolve.callback === 'function') {
-      if (data instanceof Error) {
+    if (isFunction(resolve.callback) === true) {
+      if (this.isInstance(data, Error) === true) {
         resolve.callback(data)
       } else {
         resolve.callback(null, data)
@@ -60,8 +62,7 @@ export class Resolver extends Worker {
   }
 
   decide (box) {
-    return typeof box.resolve === 'object' &&
-      typeof box.resolve[this._name] === 'object'
+    return isPlainObject(box[`resolve.${this._name}`]) === true
   }
 
   err (box, error) {

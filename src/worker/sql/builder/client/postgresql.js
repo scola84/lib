@@ -1,9 +1,10 @@
+import isObject from 'lodash/isObject.js'
 import pg from 'pg'
 import PgQueryStream from 'pg-query-stream'
 import { Client } from './client.js'
 import map from '../map/index.js'
 
-if (typeof pg === 'object') {
+if (isObject(pg) === true) {
   pg.types.setTypeParser(20, (value) => parseInt(value, 10))
   pg.types.setTypeParser(1082, (value) => value)
   pg.types.setTypeParser(1114, (value) => value)
@@ -29,13 +30,13 @@ export class Postgresql extends Client {
   }
 
   connectClient (box, callback) {
-    if (box.sql !== undefined && box.sql.connection !== undefined) {
-      callback(null, box.sql.connection)
+    if (isObject(box['sql.connection']) === true) {
+      callback(null, box['sql.connection'])
       return
     }
 
     this._pool.connect((error, poolConnection) => {
-      if (error instanceof Error) {
+      if (this.isInstance(error, Error) === true) {
         callback(error)
         return
       }
@@ -46,12 +47,12 @@ export class Postgresql extends Client {
 
   disconnectClient (box, query, connection, callback) {
     if (query.getParent().getRelease() === false) {
-      box.sql = { connection }
+      box['sql.connection'] = connection
       callback()
       return
     }
 
-    delete box.sql
+    delete box['sql.connection']
     connection.release()
     callback()
   }
@@ -71,14 +72,14 @@ export class Postgresql extends Client {
       .log('info', 'Executing PostgreSQL query %s', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if (connectError !== null) {
+      if (this.isInstance(connectError, Error) === true) {
         callback(connectError)
         return
       }
 
-      connection.query(string, (error, result = { rows: [] }) => {
+      connection.query(string, (queryError, result = { rows: [] }) => {
         this.disconnectClient(box, query, connection, () => {
-          callback(error, result)
+          callback(queryError, result)
         })
       })
     })
@@ -99,22 +100,22 @@ export class Postgresql extends Client {
       .log('info', 'Streaming PostgreSQL query %s', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if (connectError !== null) {
+      if (this.isInstance(connectError, Error) === true) {
         callback(connectError)
         return
       }
 
       const stream = connection.query(new PgQueryStream(string))
 
-      this.streamQueryEvents(box, query, stream, (error, result = {}) => {
+      this.streamQueryEvents(box, query, stream, (streamError, result = {}) => {
         if (result.last === false) {
-          callback(error, result)
+          callback(streamError, result)
           return
         }
 
         this.disconnectClient(box, query, connection, () => {
           if (result.row !== null) {
-            callback(error, result)
+            callback(streamError, result)
           }
         })
       })

@@ -1,3 +1,7 @@
+import get from 'lodash/get.js'
+import isArray from 'lodash/isArray.js'
+import isPlainObject from 'lodash/isPlainObject.js'
+import isString from 'lodash/isString'
 import merge from 'lodash/merge.js'
 import { HtmlBuilder } from '../../../builder.js'
 import { Snippet } from '../snippet.js'
@@ -48,11 +52,8 @@ export class Print extends Snippet {
   }
 
   static findString (path, locale = slocale) {
-    const string = `${locale}.${path}`.split('.').reduce((v, k) => {
-      return v === undefined ? v : v[k]
-    }, strings)
-
-    return string === undefined ? null : string
+    const string = get(strings, `${locale}.${path}`)
+    return isString(string) === true ? string : null
   }
 
   constructor (options = {}) {
@@ -112,7 +113,7 @@ export class Print extends Snippet {
   }
 
   setPrefix (value = []) {
-    this._prefix = Array.isArray(value) === true
+    this._prefix = isArray(value) === true
       ? value
       : [value]
 
@@ -185,7 +186,7 @@ export class Print extends Snippet {
     const locale = this.resolveValue(box, data, this._locale)
     let values = this.resolveValue(box, data, this._values)
 
-    if (Array.isArray(values) === false) {
+    if (isArray(values) === false) {
       values = [values]
     }
 
@@ -195,7 +196,7 @@ export class Print extends Snippet {
       string = format
     }
 
-    if (typeof string === 'object') {
+    if (isPlainObject(string) === true) {
       string = string[values[0]] || string.d
     }
 

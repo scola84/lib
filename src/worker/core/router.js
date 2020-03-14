@@ -1,3 +1,6 @@
+import isArray from 'lodash/isArray.js'
+import isPlainObject from 'lodash/isPlainObject.js'
+import isString from 'lodash/isString.js'
 import { Worker } from './worker.js'
 
 export class Router extends Worker {
@@ -34,7 +37,7 @@ export class Router extends Worker {
 
     this.log('info', 'Routing to %o', [route], box.rid)
 
-    if (this._downstreams[route] instanceof Worker) {
+    if (this.isInstance(this._downstreams[route]) === true) {
       this._downstreams[route].callAct(box, data)
     } else if (this._bypass !== null) {
       this._bypass.callAct(box, data)
@@ -48,7 +51,7 @@ export class Router extends Worker {
       return this
     }
 
-    if (Array.isArray(worker) === true) {
+    if (isArray(worker) === true) {
       this.connect(name, worker[0])
       return worker[1]
     }
@@ -58,8 +61,8 @@ export class Router extends Worker {
   }
 
   route (box, data) {
-    if (typeof data === 'object' && data !== null) {
-      if (typeof data.name === 'string') {
+    if (isPlainObject(data) === true) {
+      if (isString(data.name) === true) {
         return data.name
       }
     }

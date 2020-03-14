@@ -45,7 +45,9 @@ export class SessionCache extends Cache {
   }
 
   get (key, callback) {
-    callback(null, this._client.getItem(key))
+    const value = this._client.getItem(key)
+    callback(null, value)
+    return value
   }
 
   increment (key, value, callback = () => {}, ttl = null) {

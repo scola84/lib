@@ -1,4 +1,5 @@
 import * as d3 from 'd3-selection'
+import isArray from 'lodash/isArray.js'
 import { Node } from './node.js'
 
 export class Parent extends Node {
@@ -67,7 +68,7 @@ export class Parent extends Node {
 
     let node = clone.resolve(box, data)
 
-    if (Array.isArray(node) === true) {
+    if (isArray(node) === true) {
       [node] = node
     }
 

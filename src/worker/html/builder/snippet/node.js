@@ -1,4 +1,5 @@
 import * as d3 from 'd3-selection'
+import isString from 'lodash/isString.js'
 import { Snippet } from './snippet.js'
 import { Dummy } from '../helper/index.js'
 
@@ -12,7 +13,7 @@ export class Node extends Snippet {
     this.setNode(options.node)
     this.setTransform(options.transform)
 
-    if (typeof options.class === 'string') {
+    if (isString(options.class) === true) {
       this.class(options.class)
     }
   }
@@ -26,7 +27,7 @@ export class Node extends Snippet {
   }
 
   setId (value) {
-    if (typeof value === 'string') {
+    if (isString(value) === true) {
       return this.attributes({
         id: value
       })

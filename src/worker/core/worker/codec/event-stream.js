@@ -1,3 +1,4 @@
+import isString from 'lodash/isString.js'
 import { JsonCodec } from './json.js'
 
 export class EventStreamCodec extends JsonCodec {
@@ -17,7 +18,7 @@ export class EventStreamCodec extends JsonCodec {
 
       if (name === '') {
         continue
-      } else if (typeof event[name] === 'string') {
+      } else if (isString(event[name]) === true) {
         event[name] += `\n${value.trim()}`
       } else {
         event[name] = value.trim()

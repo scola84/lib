@@ -32,7 +32,7 @@ export class Twilio {
     }
 
     this._client.messages.create(sms, (error, result) => {
-      if (error !== null) {
+      if (this.isInstance(error, Error) === true) {
         callback(error)
         return
       }

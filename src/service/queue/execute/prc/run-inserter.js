@@ -1,3 +1,4 @@
+import isPlainObject from 'lodash/isPlainObject.js'
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class RunInserter extends SqlBuilder {
@@ -18,7 +19,7 @@ export class RunInserter extends SqlBuilder {
   }
 
   decide (box, data) {
-    return typeof data.queue === 'object'
+    return isPlainObject(data.queue) === true
   }
 
   merge (box, data, { rows: [run = {}] }) {

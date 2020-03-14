@@ -1,8 +1,9 @@
+import isPlainObject from 'lodash/isPlainObject.js'
 import { Worker } from '../core/index.js'
 
 export class HttpResponder extends Worker {
   act (box, data) {
-    const { request, response } = box.server[this._name]
+    const { request, response } = box[`server.${this._name}`]
     const { body = null, end = true, headers = {} } = data
 
     if (request.getMethod() === 'GET' && body === null) {
@@ -26,12 +27,11 @@ export class HttpResponder extends Worker {
   }
 
   decide (box) {
-    return typeof box.server === 'object' &&
-      typeof box.server[this._name] === 'object'
+    return isPlainObject(box[`server.${this._name}`]) === true
   }
 
   err (box, error) {
-    const { response } = box.server[this._name]
+    const { response } = box[`server.${this._name}`]
     const match = error.message.match(/^(\d{3})/)
     const [, code = '500'] = match || []
 

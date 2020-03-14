@@ -1,10 +1,11 @@
 import fetch from 'node-fetch'
+import isPlainObject from 'lodash/isPlainObject.js'
 import { Worker } from '../core/index.js'
 import { Request } from './client/message/index.js'
 
 export class HttpClient extends Worker {
   static parse (resource) {
-    if (typeof resource === 'object' && resource !== null) {
+    if (isPlainObject(resource) === true) {
       return resource
     }
 
@@ -81,7 +82,7 @@ export class HttpClient extends Worker {
     request.parent = this
 
     request.send(body, (requestError, response) => {
-      if (requestError !== null) {
+      if (this.isInstance(requestError, Error) === true) {
         this.handleError(box, data, requestError)
         return
       }
@@ -103,7 +104,7 @@ export class HttpClient extends Worker {
     failError.original = data
     failError.type = code
 
-    if (typeof failError.data.data === 'object') {
+    if (isPlainObject(failError.data.data) === true) {
       failError.data = failError.data.data
     }
 
@@ -123,7 +124,7 @@ export class HttpClient extends Worker {
     response.parent = this
 
     response.decode((decoderError, decoderData) => {
-      if (decoderError !== null) {
+      if (this.isInstance(decoderError, Error) === true) {
         this.handleError(box, data, decoderError, decoderData)
         return
       }

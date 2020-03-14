@@ -1,3 +1,7 @@
+import isArray from 'lodash/isArray.js'
+import isObject from 'lodash/isObject.js'
+import isPlainObject from 'lodash/isPlainObject.js'
+import isString from 'lodash/isString.js'
 import { Node } from '../node.js'
 
 export class Hint extends Node {
@@ -31,18 +35,18 @@ export class Hint extends Node {
   }
 
   resolveAfter (box, data) {
-    if (typeof data === 'object' && data !== null) {
+    if (isObject(data) === false) {
       return this.resolveEmpty()
     }
 
-    if (typeof data.data !== 'object' || data.data === null) {
+    if (isPlainObject(data.data) === false) {
       return this.resolveEmpty()
     }
 
     const parent = this._node.node().parentNode
     let input = parent.querySelector('input, select, textarea')
 
-    if (input === null || typeof input.snippet !== 'object') {
+    if (input === null || this.isInstance(input.snippet) === false) {
       return this.resolveEmpty()
     }
 
@@ -51,11 +55,11 @@ export class Hint extends Node {
     let name = input.node().attr('name')
     let value = data.data[name]
 
-    if (Array.isArray(value) === true) {
+    if (isArray(value) === true) {
       [name, value] = this.resolveArray(box, data, input, name, value)
     }
 
-    if (typeof value !== 'object' || typeof value.reason !== 'string') {
+    if (isPlainObject(value) === false || isString(value.reason) === false) {
       return this.resolveEmpty()
     }
 
@@ -86,7 +90,7 @@ export class Hint extends Node {
       .selector(`input[name="${name}"]`)
       .resolve(null)
 
-    const resolvedValue = typeof multiple !== 'string'
+    const resolvedValue = isString(multiple) === false
       ? value[all.indexOf(input)]
       : value.reduce((a, v) => v, {})
 

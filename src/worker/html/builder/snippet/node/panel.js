@@ -11,7 +11,7 @@ export class Panel extends Node {
     const effect = ['rtl', 'ltr', 'ins']
       .find((name) => box.options[name] === true) || 'none'
 
-    const old = typeof box.base.snippet === 'object'
+    const old = this.isInstance(box.base.snippet, Panel) === true
       ? box.base.snippet.node()
       : d3.select(document.body)
 
@@ -38,7 +38,7 @@ export class Panel extends Node {
   }
 
   resolveBefore (box, data) {
-    const old = typeof box.base.snippet === 'object'
+    const old = this.isInstance(box.base.snippet, Panel) === true
       ? box.base.snippet.node().classed('rtl ltr ins', false)
       : d3.select()
 

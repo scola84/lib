@@ -1,3 +1,4 @@
+import isArray from 'lodash/isArray.js'
 import { Snippet } from '../snippet.js'
 
 export class Order extends Snippet {
@@ -84,11 +85,11 @@ export class Order extends Snippet {
     let order = this.resolveValue(box, data, this._order)
     let by = this.resolveValue(box, data, this._by)
 
-    if (Array.isArray(order) === false) {
+    if (isArray(order) === false) {
       order = [order]
     }
 
-    if (Array.isArray(by) === false) {
+    if (isArray(by) === false) {
       by = [by]
     }
 

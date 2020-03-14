@@ -1,4 +1,6 @@
 import defaultsDeep from 'lodash/defaultsDeep.js'
+import isBoolean from 'lodash/isBoolean.js'
+import isString from 'lodash/isString.js'
 import { Node } from '../node.js'
 
 export class Search extends Node {
@@ -84,11 +86,11 @@ export class Search extends Node {
   }
 
   resolveBefore (box, data) {
-    if (typeof box.input === 'string') {
+    if (isString(box.input) === true) {
       return this.resolveInput(box, data)
     }
 
-    if (typeof box.toggle === 'boolean') {
+    if (isBoolean(box.toggle) === true) {
       return this.resolveToggle(box, data)
     }
 
@@ -97,9 +99,9 @@ export class Search extends Node {
 
   resolveInput (box) {
     if (box.input === '') {
-      this._storage.removeItem(`search-${this._id}`)
+      this._parent.getCache().delete(`search-${this._id}`)
     } else {
-      this._storage.setItem(`search-${this._id}`, box.input)
+      this._parent.getCache().set(`search-${this._id}`, box.input)
     }
 
     box.list.search = this.formatSearch(box.input)
@@ -111,7 +113,7 @@ export class Search extends Node {
   }
 
   resolveSearch (box, data) {
-    const value = this._storage.getItem(`search-${this._id}`)
+    const value = this._parent.getCache().get(`search-${this._id}`)
 
     if (value !== null) {
       this._node.classed('in', true)

@@ -1,3 +1,6 @@
+import isArray from 'lodash/isArray.js'
+import isFunction from 'lodash/isFunction.js'
+import isNil from 'lodash/isNil.js'
 import { Builder } from '../../../core/index.js'
 
 const snippets = new Map()
@@ -15,7 +18,6 @@ export class Snippet {
     this._origin = null
     this._parent = null
     this._permit = null
-    this._storage = null
 
     this.setArgs(options.args)
     this.setFilter(options.filter)
@@ -24,14 +26,13 @@ export class Snippet {
     this.setOrigin(options.origin)
     this.setParent(options.parent)
     this.setPermit(options.permit)
-    this.setStorage(options.storage)
   }
 
   clone () {
     const options = this.getOptions()
 
     options.args = options.args.map((snippet) => {
-      return snippet instanceof Snippet
+      return this.isInstance(snippet) === true
         ? snippet.clone()
         : snippet
     })
@@ -47,8 +48,7 @@ export class Snippet {
       name: this._name,
       origin: this._origin,
       parent: this._parent,
-      permit: this._permit,
-      storage: this._storage
+      permit: this._permit
     }
   }
 
@@ -73,7 +73,7 @@ export class Snippet {
     this._args = value
 
     for (let i = 0; i < this._args.length; i += 1) {
-      if (this._args[i] instanceof Snippet) {
+      if (this.isInstance(this._args[i]) === true) {
         this._args[i].setParent(this)
       }
     }
@@ -172,22 +172,6 @@ export class Snippet {
     return this.setPermit(value)
   }
 
-  getStorage () {
-    return this._storage
-  }
-
-  setStorage (value = null) {
-    this._storage = value === null && typeof window === 'object'
-      ? window.localStorage
-      : value
-
-    return this
-  }
-
-  storage (value) {
-    return this.setStorage(value)
-  }
-
   find (compare) {
     const result = []
 
@@ -200,7 +184,7 @@ export class Snippet {
     for (let i = 0; i < this._args.length; i += 1) {
       snippet = this._args[i]
 
-      if (snippet instanceof Snippet) {
+      if (this.isInstance(snippet) === true) {
         result.push(...snippet.find(compare))
       }
     }
@@ -210,6 +194,10 @@ export class Snippet {
 
   hasPermission (box, data) {
     return this.resolveValue(box, data, this._permit)
+  }
+
+  isInstance (object, O = Snippet) {
+    return object instanceof O
   }
 
   remove () {
@@ -263,19 +251,19 @@ export class Snippet {
   }
 
   resolveValue (box, data, value) {
-    if (value === undefined || value === null) {
+    if (isNil(value) === true) {
       return value
     }
 
-    if (value instanceof Snippet) {
+    if (this.isInstance(value) === true) {
       return this.resolveValue(box, data, value.resolve(box, data))
     }
 
-    if (Array.isArray(value) === true) {
+    if (isArray(value) === true) {
       return value.map((v) => this.resolveValue(box, data, v))
     }
 
-    if (typeof value === 'function') {
+    if (isFunction(value) === true) {
       return this.resolveValue(box, data, value(box, data))
     }
 

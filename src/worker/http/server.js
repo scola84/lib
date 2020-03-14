@@ -1,5 +1,5 @@
 import http from 'http'
-import merge from 'lodash/merge.js'
+import isObject from 'lodash/isObject.js'
 import { randomBytes } from 'crypto'
 import { Worker } from '../core/index.js'
 import { Request, Response } from './server/message/index.js'
@@ -111,7 +111,7 @@ export class HttpServer extends Worker {
     response.parent = this
 
     request.decode((decoderError, decoderData) => {
-      if (decoderError !== null) {
+      if (this.isInstance(decoderError, Error) === true) {
         this.fail(box, decoderError)
         return
       }
@@ -121,36 +121,32 @@ export class HttpServer extends Worker {
   }
 
   prepareBoxServer (box, request, response) {
-    if (box.server !== undefined && box.server[this._name] !== undefined) {
+    if (isObject(box[`server.${this._name}`]) === true) {
       throw new Error(`Server for '${this._name}' is defined`)
     }
 
-    return merge(box, {
-      server: {
-        [this._name]: {
-          request,
-          response
-        }
-      }
-    })
+    box[`server.${this._name}`] = {
+      request,
+      response
+    }
+
+    return box
   }
 
   prepareBoxThrottle (box, setServerValue) {
-    if (box.throttle !== undefined && box.throttle[this._name] !== undefined) {
+    if (isObject(box[`throttle.${this._name}`]) === true) {
       throw new Error(`Throttle for '${this._name}' is defined`)
     }
 
-    return merge(box, {
-      throttle: {
-        [this._name]: {
-          pause: () => {
-            this.setServer(null)
-          },
-          resume: () => {
-            this.setServer(setServerValue)
-          }
-        }
+    box[`throttle.${this._name}`] = {
+      pause: () => {
+        this.setServer(null)
+      },
+      resume: () => {
+        this.setServer(setServerValue)
       }
-    })
+    }
+
+    return box
   }
 }

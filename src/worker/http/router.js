@@ -1,3 +1,4 @@
+import isPlainObject from 'lodash/isPlainObject'
 import { Router } from '../core/index.js'
 
 export class HttpRouter extends Router {
@@ -11,7 +12,7 @@ export class HttpRouter extends Router {
       this._resources = this.createResources()
     }
 
-    const { request } = box.server[this._name]
+    const { request } = box[`server.${this._name}`]
 
     const method = request.getMethod()
     const url = request.getUrl()
@@ -48,8 +49,7 @@ export class HttpRouter extends Router {
       return false
     }
 
-    return typeof box.server === 'object' &&
-      typeof box.server[this._name] === 'object'
+    return isPlainObject(box[`server.${this._name}`]) === true
   }
 
   createResources () {
@@ -77,7 +77,7 @@ export class HttpRouter extends Router {
   }
 
   handleMethodError (box, data, methods, method) {
-    box.server[this._name].response.setHeader('Allow', methods)
+    box[`server.${this._name}`].response.setHeader('Allow', methods)
     this.fail(box, new Error(`405 [router] Method '${method}' is not allowed`))
   }
 

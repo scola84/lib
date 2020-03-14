@@ -1,3 +1,4 @@
+import isPlainObject from 'lodash/isPlainObject.js'
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class RunTotalUpdater extends SqlBuilder {
@@ -26,7 +27,7 @@ export class RunTotalUpdater extends SqlBuilder {
   }
 
   decide (box, data) {
-    if (typeof data.run === 'object') {
+    if (isPlainObject(data.run) === true) {
       data.run.total += 1
       return data.last === true
     }

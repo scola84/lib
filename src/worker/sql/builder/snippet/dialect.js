@@ -1,3 +1,4 @@
+import isString from 'lodash/isString.js'
 import { Snippet } from './snippet.js'
 
 export class Dialect extends Snippet {
@@ -15,7 +16,7 @@ export class Dialect extends Snippet {
   }
 
   resolveValue (box, data, value) {
-    if (typeof value === 'string') {
+    if (isString(value) === false) {
       return this[`resolve${this._origin.constructor.name}`](box, data, value)
     }
 

@@ -1,4 +1,5 @@
 import * as d3 from 'd3-selection'
+import isString from 'lodash/isString.js'
 import { Event } from '../event.js'
 
 export class Input extends Event {
@@ -15,7 +16,7 @@ export class Input extends Event {
     const minLength = node.attr('minlength')
     const value = node.property('value')
 
-    if (typeof minLength === 'string') {
+    if (isString(minLength) === true) {
       if (value.length >= parseFloat(minLength) || value.length === 0) {
         box.input = value
         this.pass(box, data)

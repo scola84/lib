@@ -1,3 +1,4 @@
+import isObject from 'lodash/isObject'
 import mysql from 'mysql'
 import { Client } from './client.js'
 import map from '../map/index.js'
@@ -18,13 +19,13 @@ export class Mysql extends Client {
   }
 
   connectClient (box, callback) {
-    if (box.sql !== undefined && box.sql.connection !== undefined) {
-      callback(null, box.sql.connection)
+    if (isObject(box['sql.connection']) === true) {
+      callback(null, box['sql.connection'])
       return
     }
 
     this._pool.getConnection((error, poolConnection) => {
-      if (error !== null) {
+      if (this.isInstance(error, Error) === true) {
         callback(error)
         return
       }
@@ -35,13 +36,12 @@ export class Mysql extends Client {
 
   disconnectClient (box, query, connection, callback) {
     if (query.getParent().getRelease() === false) {
-      box.sql = { connection }
+      box['sql.connection'] = connection
       callback()
       return
     }
 
-    delete box.sql
-
+    delete box['sql.connection']
     connection.release()
     callback()
   }
@@ -61,14 +61,14 @@ export class Mysql extends Client {
       .log('info', 'Executing MySQL query %s', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if (connectError !== null) {
+      if (this.isInstance(connectError, Error) === true) {
         callback(connectError)
         return
       }
 
-      connection.query(string, (error, rows = []) => {
+      connection.query(string, (queryError, rows = []) => {
         this.disconnectClient(box, query, connection, () => {
-          callback(error, { rows })
+          callback(queryError, { rows })
         })
       })
     })
@@ -89,22 +89,22 @@ export class Mysql extends Client {
       .log('info', 'Streaming MySQL query %s', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if (connectError !== null) {
+      if (this.isInstance(connectError, Error) === true) {
         callback(connectError)
         return
       }
 
       const stream = connection.query(string).stream()
 
-      this.streamQueryEvents(box, query, stream, (error, result = {}) => {
+      this.streamQueryEvents(box, query, stream, (streamError, result = {}) => {
         if (result.last === false) {
-          callback(error, result)
+          callback(streamError, result)
           return
         }
 
         this.disconnectClient(box, query, connection, () => {
           if (result.row !== null) {
-            callback(error, result)
+            callback(streamError, result)
           }
         })
       })

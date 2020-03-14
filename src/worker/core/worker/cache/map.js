@@ -50,7 +50,9 @@ export class MapCache extends Cache {
   }
 
   get (key, callback) {
-    callback(null, this._client.get(key))
+    const value = this._client.get(key)
+    callback(null, value)
+    return value
   }
 
   increment (key, value, callback = () => {}, ttl = null) {

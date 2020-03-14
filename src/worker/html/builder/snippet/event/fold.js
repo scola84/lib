@@ -1,4 +1,5 @@
 import * as d3 from 'd3-selection'
+import isElement from 'lodash/isElement.js'
 import { Event } from '../event.js'
 
 export class Fold extends Event {
@@ -103,7 +104,7 @@ export class Fold extends Event {
   }
 
   load (box, data, snippet) {
-    const isFolded = Boolean(Number(this._storage.getItem(`fold-${this._id}`)))
+    const isFolded = JSON.parse(this._parent.getCache().get(`fold-${this._id}`))
 
     snippet
       .node()
@@ -131,7 +132,7 @@ export class Fold extends Event {
       .node()
       .classed('folded')
 
-    this._storage.setItem(`fold-${this._id}`, Number(isFolded))
+    this._parent.getCache().set(`fold-${this._id}`, JSON.stringify(isFolded))
   }
 
   show (snippets, isImmediate) {
@@ -140,8 +141,8 @@ export class Fold extends Event {
     for (let i = snippets.length - 1; i >= 0; i -= 1) {
       item = snippets[i].node()
 
-      if (typeof item.parent === 'object') {
-        if (typeof item.next === 'object') {
+      if (isElement(item.parent) === true) {
+        if (isElement(item.next) === true) {
           item.parent.insertBefore(item.node(), item.next)
         } else {
           item.parent.appendChild(item.node())

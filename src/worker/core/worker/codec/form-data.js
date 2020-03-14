@@ -1,5 +1,8 @@
 import Busboy from 'busboy'
 import fs from 'fs-extra'
+import isArray from 'lodash/isArray.js'
+import isNil from 'lodash/isNil.js'
+import isUndefined from 'lodash/isUndefined.js'
 import merge from 'lodash/merge.js'
 import { randomBytes } from 'crypto'
 import { Codec } from './codec.js'
@@ -97,7 +100,7 @@ export class FormDataCodec extends Codec {
       name = keys[i]
       value = data[name]
 
-      if (Array.isArray(value) === false) {
+      if (isArray(value) === false) {
         value = [value]
       }
 
@@ -110,7 +113,7 @@ export class FormDataCodec extends Codec {
   }
 
   prepareValue (value) {
-    if (value === null || value === undefined) {
+    if (isNil(value) === true) {
       return ''
     }
 
@@ -118,12 +121,12 @@ export class FormDataCodec extends Codec {
   }
 
   setValue (data, name, value) {
-    if (data[name] === undefined) {
+    if (isUndefined(data[name]) === true) {
       data[name] = value
       return
     }
 
-    if (Array.isArray(data[name]) === true) {
+    if (isArray(data[name]) === true) {
       data[name] = data[name].concat(value)
     } else {
       data[name] = [data[name], value]

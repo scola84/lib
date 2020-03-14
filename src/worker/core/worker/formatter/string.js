@@ -1,5 +1,7 @@
+import isNil from 'lodash/isNil.js'
+
 export function string (value) {
-  if (value === undefined || value === null) {
+  if (isNil(value) === true) {
     return ''
   }
 

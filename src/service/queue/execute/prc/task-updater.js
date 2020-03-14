@@ -1,3 +1,5 @@
+import isPlainObject from 'lodash/isPlainObject.js'
+import isString from 'lodash/isString.js'
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class TaskUpdater extends SqlBuilder {
@@ -18,7 +20,7 @@ export class TaskUpdater extends SqlBuilder {
         sc.eq(
           sc.id('data_out'),
           (box, data) => {
-            if (typeof data.data_out === 'object' && data.data_out !== null) {
+            if (isPlainObject(data.data_out) === true) {
               return sc.value(this._codec.stringify(data.data_out))
             }
 
@@ -28,7 +30,7 @@ export class TaskUpdater extends SqlBuilder {
         sc.eq(
           sc.id('error'),
           (box, data) => {
-            if (data.error instanceof Error) {
+            if (this.isInstance(data.error, Error) === true) {
               return sc.value(this._codec.stringify(data.error))
             }
 
@@ -38,7 +40,7 @@ export class TaskUpdater extends SqlBuilder {
         sc.eq(
           sc.id('status'),
           (box, data) => {
-            if (typeof data.status === 'string') {
+            if (isString(data.status) === true) {
               return sc.value(data.status)
             }
 
@@ -63,7 +65,7 @@ export class TaskUpdater extends SqlBuilder {
 
   decide (box, data) {
     if (data.status === 'PENDING') {
-      data.status = data.error instanceof Error
+      data.status = this.isInstance(data.error, Error) === true
         ? 'FAILURE'
         : 'SUCCESS'
     }

@@ -1,4 +1,5 @@
 import cookieParser from 'cookie'
+import isString from 'lodash/isString.js'
 import typeParser from 'content-type'
 import urlParser from 'url-parse'
 
@@ -20,7 +21,7 @@ export class Request {
   }
 
   getHeader (name) {
-    return typeof this.original.headers[name] === 'string'
+    return isString(this.original.headers[name]) === true
       ? this.original.headers[name]
       : this.original.headers[name.toLowerCase()]
   }

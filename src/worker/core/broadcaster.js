@@ -1,4 +1,5 @@
-import merge from 'lodash/merge.js'
+import isArray from 'lodash/isArray.js'
+import isObject from 'lodash/isObject'
 import { Worker } from './worker.js'
 
 export class Broadcaster extends Worker {
@@ -60,7 +61,7 @@ export class Broadcaster extends Worker {
       return this
     }
 
-    if (Array.isArray(worker) === true) {
+    if (isArray(worker) === true) {
       this.connect(worker[0])
       return worker[1]
     }
@@ -70,18 +71,16 @@ export class Broadcaster extends Worker {
   }
 
   prepareBoxResolve (box) {
-    if (box.resolve !== undefined && box.resolve[this._name] !== undefined) {
+    if (isObject(box[`resolve.${this._name}`]) === true) {
       throw new Error(`Resolve for '${this._name}' is defined`)
     }
 
-    return merge(box, {
-      resolve: {
-        [this._name]: {
-          count: 0,
-          data: [],
-          total: this._downstreams.length
-        }
-      }
-    })
+    box[`resolve.${this._name}`] = {
+      count: 0,
+      data: [],
+      total: this._downstreams.length
+    }
+
+    return box
   }
 }

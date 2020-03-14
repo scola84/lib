@@ -1,3 +1,4 @@
+import isFunction from 'lodash/isFunction.js'
 import { Action } from '../action.js'
 
 const handlers = {}
@@ -33,12 +34,12 @@ export class Call extends Action {
   }
 
   resolveAfter (box, data) {
-    if (typeof handlers[this._name] !== 'object') {
+    if (isFunction(handlers[this._name]) === false) {
       return
     }
 
-    handlers[this._name].handle(box, data, (error) => {
-      if (error !== null) {
+    handlers[this._name](box, data, (error) => {
+      if (this.isInstance(error, Error) === true) {
         this.fail(box, error)
       } else {
         this.pass(box, data)

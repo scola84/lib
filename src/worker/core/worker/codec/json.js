@@ -1,4 +1,5 @@
 import http from 'http'
+import isString from 'lodash/isString.js'
 import { Codec } from './codec.js'
 
 export class JsonCodec extends Codec {
@@ -16,8 +17,8 @@ export class JsonCodec extends Codec {
 
   parseError (value) {
     const error = new Error(
-      (typeof value.code === 'string' ? `${value.code} ` : '') +
-      (typeof value.type === 'string' ? `[${value.type}] ` : '') +
+      (isString(value.code) === true ? `${value.code} ` : '') +
+      (isString(value.type) === true ? `[${value.type}] ` : '') +
       value.message
     )
 

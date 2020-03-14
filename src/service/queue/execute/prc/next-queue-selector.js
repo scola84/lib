@@ -1,3 +1,4 @@
+import isFinite from 'lodash/isFinite.js'
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class NextQueueSelector extends SqlBuilder {
@@ -48,7 +49,7 @@ export class NextQueueSelector extends SqlBuilder {
   }
 
   decide (box, data) {
-    return typeof data.id_run === 'number'
+    return isFinite(data.id_run) === true
   }
 
   merge (box, data, { row: queue }) {

@@ -1,8 +1,9 @@
+import isArray from 'lodash/isArray.js'
 import { Slicer } from '../../../../worker/api.js'
 
 export class NextTaskSlicer extends Slicer {
   decide (box, data) {
-    return Array.isArray(data.next) === true &&
+    return isArray(data.next) === true &&
       data.status === 'PENDING'
   }
 

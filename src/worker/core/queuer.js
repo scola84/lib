@@ -1,7 +1,9 @@
 import createQueue from 'async/queue.js'
-import merge from 'lodash/merge.js'
+import isPlainObject from 'lodash/isPlainObject.js'
+import isString from 'lodash/isString.js'
 import { randomBytes } from 'crypto'
 import RedisClient from 'ioredis'
+import isObject from 'lodash/isObject'
 import { Worker } from './worker.js'
 
 export class Queuer extends Worker {
@@ -253,12 +255,10 @@ export class Queuer extends Worker {
   actPusher (box, data) {
     this.log('info', 'Acting as pusher on %o', [data], box.rid)
 
-    const index = typeof data === 'object' && data !== null
-      ? data.index
-      : 0
+    const index = isPlainObject(data) ? data.index : 0
 
     this.pushTask(box, data, (error) => {
-      if (error !== null) {
+      if (this.isInstance(error, Error) === true) {
         this.pass(box, Object.assign(data, { error }))
       } else if (data.result !== 'return') {
         this.pass(box, this.defineIndex({}, index))
@@ -322,14 +322,14 @@ export class Queuer extends Worker {
       .get(tid)
       .del(tid)
       .exec((execError, [getResult]) => {
-        if (execError !== null) {
+        if (this.isInstance(execError, Error) === true) {
           this.fail(box, this.defineIndex({ error: execError }, index))
           return
         }
 
         const [getError, string] = getResult
 
-        if (getError !== null) {
+        if (this.isInstance(getError, Error) === true) {
           this.fail(box, this.defineIndex({ error: getError }, index))
           return
         }
@@ -353,7 +353,7 @@ export class Queuer extends Worker {
 
     this._queue.push((callback) => {
       this._client.rpop(this._name, (popError, string) => {
-        if (popError !== null) {
+        if (this.isInstance(popError, Error) === true) {
           callback(popError)
           return
         }
@@ -381,18 +381,16 @@ export class Queuer extends Worker {
   }
 
   prepareBoxResolve (box, callback) {
-    if (box.resolve !== undefined && box.resolve[this._name] !== undefined) {
+    if (isObject(box[`resolve.${this._name}`]) === true) {
       throw new Error(`Resolve for '${this._name}' is defined`)
     }
 
-    return merge(box, {
-      resolve: {
-        [this._name]: {
-          callback,
-          total: 0
-        }
-      }
-    })
+    box[`resolve.${this._name}`] = {
+      callback,
+      total: 0
+    }
+
+    return box
   }
 
   pushResult (error, data, box, callback) {
@@ -420,12 +418,12 @@ export class Queuer extends Worker {
   }
 
   pushTask (box, data, callback = () => {}) {
-    if (typeof data !== 'object' || data === null) {
+    if (isPlainObject(data) === false) {
       callback(new Error('400 [queuer] Data is not an object'))
       return
     }
 
-    if (typeof data.queue !== 'string') {
+    if (isString(data.queue) === false) {
       callback(new Error('400 [queuer] Queue name is not a string'))
       return
     }
@@ -436,7 +434,7 @@ export class Queuer extends Worker {
     }
 
     this._client.pubsub('channels', data.queue, (pubsubError, channels) => {
-      if (pubsubError !== null) {
+      if (this.isInstance(pubsubError, Error) === true) {
         callback(pubsubError)
         return
       }
@@ -447,12 +445,12 @@ export class Queuer extends Worker {
       }
 
       this._client.llen(data.queue, (lenError, length) => {
-        if (lenError !== null) {
+        if (this.isInstance(lenError, Error) === true) {
           callback(lenError)
           return
         }
 
-        if (typeof box.bid !== 'string') {
+        if (isString(box.bid) === false) {
           box.bid = randomBytes(32).toString('hex')
           box.origin = this
           this._boxes.set(box.bid, box)
@@ -479,19 +477,19 @@ export class Queuer extends Worker {
   }
 
   throttlePause (box) {
-    if (box.throttle === undefined || box.throttle[this._name] === undefined) {
+    if (isObject(box[`throttle.${this._name}`]) === false) {
       return
     }
 
-    this.log('info', 'Pausing queue inflow %o', [this._name], box.rid)
-    box.throttle[this._name].pause()
+    this.log('info', 'Pausing inflow for queue %o', [this._name], box.rid)
+    box[`throttle.${this._name}`].pause()
     this._throttle.push(box)
   }
 
   throttleResume () {
     this._throttle = this._throttle.filter((box) => {
-      this.log('info', 'Resuming queue inflow %o', [this._name], box.rid)
-      box.throttle[this._name].resume()
+      this.log('info', 'Resuming inflow for queue %o', [this._name], box.rid)
+      box[`throttle.${this._name}`].resume()
       return false
     })
   }

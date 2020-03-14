@@ -1,3 +1,4 @@
+import isUndefined from 'lodash/isUndefined.js'
 import { Data } from './data.js'
 
 export class Cumulate extends Data {
@@ -5,7 +6,7 @@ export class Cumulate extends Data {
     const exogenous = this._exogenous(datum)
     const endogenous = this._endogenous(datum)
 
-    if (result.data[exogenous] === undefined) {
+    if (isUndefined(result.data[exogenous]) === true) {
       result.data[exogenous] = []
       result.keys.push(exogenous)
       result.type = 'cumulate'
@@ -15,7 +16,7 @@ export class Cumulate extends Data {
     const index = set.length
     const previousKey = result.keys[result.keys.length - 2]
 
-    const previous = previousKey === undefined
+    const previous = isUndefined(previousKey) === true
       ? [0, 0]
       : result.data[previousKey][index]
 

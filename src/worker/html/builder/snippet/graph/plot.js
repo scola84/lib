@@ -70,7 +70,7 @@ export class Plot extends Parent {
 
     const [axis] = this._origin
       .selector((snippet) => {
-        if ((snippet instanceof Axis) === false) {
+        if (this.isInstance(snippet, Axis) === false) {
           return false
         }
 

@@ -1,3 +1,4 @@
+import isFunction from 'lodash/isFunction'
 import { Snippet } from '../snippet.js'
 
 export class Selector extends Snippet {
@@ -15,7 +16,7 @@ export class Selector extends Snippet {
   resolveAfter (box, data) {
     const [query] = this._args
 
-    if (typeof query === 'function') {
+    if (isFunction(query === 'function')) {
       return this.resolveFunction(box, data, query)
     }
 

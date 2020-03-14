@@ -1,3 +1,5 @@
+import isObject from 'lodash/isObject.js'
+import isString from 'lodash/isString.js'
 import { cache } from './cache/index.js'
 
 export class Cache {
@@ -6,22 +8,22 @@ export class Cache {
   }
 
   static set (type, object) {
-    cache[type] = typeof object === 'string'
-      ? cache[object]
-      : object
+    cache[type] = isObject(object) === true
+      ? object
+      : cache[object]
   }
 }
 
-if (typeof process === 'object') {
-  if (typeof process.env.CACHE_DEFAULT === 'string') {
+if (isObject(process) === true) {
+  if (isString(process.env.CACHE_DEFAULT) === true) {
     Cache.set('default', process.env.CACHE_DEFAULT)
   }
 
-  if (typeof process.env.CACHE_REDIS === 'string') {
+  if (isString(process.env.CACHE_REDIS) === true) {
     Cache.get('redis').setClient(process.env.CACHE_REDIS)
   }
 
-  if (typeof process.env.CACHE_MEMCACHED === 'string') {
+  if (isString(process.env.CACHE_MEMCACHED) === true) {
     Cache.get('memcached').setClient(process.env.CACHE_MEMCACHED)
   }
 }

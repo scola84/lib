@@ -1,4 +1,5 @@
 import buffer from 'buffer/index.js'
+import isString from 'lodash/isString.js'
 import typeParser from 'content-type'
 
 export class Response {
@@ -37,7 +38,7 @@ export class Response {
   }
 
   send (body, end = true, callback = () => {}) {
-    if (typeof this.getHeader('Content-Type') !== 'string') {
+    if (isString(this.getHeader('Content-Type')) === false) {
       this.setHeader('Content-Type', 'application/json')
     }
 
@@ -47,7 +48,7 @@ export class Response {
     this.parent.log('info', 'Encoding response as %o', [codec.getType()])
 
     codec.encode(this.original, body, (encoderError, encoderData) => {
-      if (encoderError !== null) {
+      if (this.isInstance(encoderError, Error) === true) {
         callback(encoderError)
         return
       }

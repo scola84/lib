@@ -1,3 +1,4 @@
+import isString from 'lodash/isString.js'
 import { Client } from './client.js'
 import * as sms from './sms/index.js'
 
@@ -19,7 +20,7 @@ export class Sms extends Client {
   }
 
   prepareMessage (message) {
-    if (typeof message.text === 'string') {
+    if (isString(message.text) === true) {
       message.text = this._origin.format(message.text, [message], message.locale)
     }
 
@@ -28,13 +29,13 @@ export class Sms extends Client {
 
   sendMessage (message, callback) {
     this.connectClient((connectError, connection) => {
-      if (connectError !== null) {
+      if (this.isInstance(connectError, Error) === true) {
         callback(connectError)
         return
       }
 
       connection.send(this.prepareMessage(message), (sendError, result) => {
-        if (sendError !== null) {
+        if (this.isInstance(sendError, Error) === true) {
           callback(sendError)
           return
         }

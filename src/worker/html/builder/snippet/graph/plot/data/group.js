@@ -1,3 +1,4 @@
+import isUndefined from 'lodash/isUndefined.js'
 import { Data } from './data.js'
 
 export class Group extends Data {
@@ -32,7 +33,7 @@ export class Group extends Data {
     const exogenous = this._exogenous(datum)
     const endogenous = this._endogenous(datum)
 
-    if (result.data[exogenous] === undefined) {
+    if (isUndefined(result.data[exogenous]) === true) {
       result.data[exogenous] = []
       result.keys.push(exogenous)
       result.type = 'group'

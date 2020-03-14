@@ -1,4 +1,7 @@
 import get from 'lodash/get.js'
+import isFunction from 'lodash/isFunction.js'
+import isString from 'lodash/isString.js'
+import isUndefined from 'lodash/isUndefined.js'
 import qs from 'qs'
 import { formatter } from './formatter/index.js'
 
@@ -27,15 +30,15 @@ export class Formatter {
         decoder: (v) => v
       })
 
-      if (typeof position === 'string') {
+      if (isString(position) === true) {
         value = args[position - 1]
-      } else if (typeof name === 'string') {
-        value = args.reduce(Formatter.reduce(name), undefined)
+      } else if (isString(name) === true) {
+        value = args.reduce(Formatter.reducer(name), undefined)
       } else {
         value = args[i]
       }
 
-      if (typeof formatter[type] === 'function') {
+      if (isFunction(formatter[type]) === true) {
         value = formatter[type](value, options, locale)
       }
 
@@ -45,9 +48,9 @@ export class Formatter {
     return result
   }
 
-  static reduce (name) {
+  static reducer (name) {
     return (value, arg) => {
-      return value === undefined
+      return isUndefined(value) === true
         ? get(arg, name)
         : value
     }

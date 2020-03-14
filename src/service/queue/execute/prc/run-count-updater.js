@@ -1,3 +1,4 @@
+import isFinite from 'lodash/isFinite.js'
 import { SqlBuilder } from '../../../../worker/api.js'
 
 export class RunCountUpdater extends SqlBuilder {
@@ -29,7 +30,7 @@ export class RunCountUpdater extends SqlBuilder {
   }
 
   decide (box, data) {
-    return typeof data.id_run === 'number' &&
+    return isFinite(data.id_run) === true &&
       (data.status === 'FAILURE' ||
         data.status === 'SUCCESS')
   }

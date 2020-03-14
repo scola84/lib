@@ -1,3 +1,5 @@
+import isObject from 'lodash/isObject.js'
+import isString from 'lodash/isString.js'
 import { logger } from './logger/index.js'
 
 export class Logger {
@@ -6,18 +8,18 @@ export class Logger {
   }
 
   static set (type, object) {
-    logger[type] = typeof object === 'string'
-      ? logger[object]
-      : object
+    logger[type] = isObject(object) === true
+      ? object
+      : logger[object]
   }
 }
 
-if (typeof process === 'object') {
-  if (typeof process.env.LOGGER_DEFAULT === 'string') {
+if (isObject(process) === true) {
+  if (isString(process.env.LOGGER_DEFAULT) === true) {
     Logger.set('default', process.env.LOGGER_DEFAULT)
   }
 
-  if (typeof process.env.LOGGER_REDIS === 'string') {
+  if (isString(process.env.LOGGER_REDIS) === true) {
     Logger.get('redis').setClient(process.env.LOGGER_REDIS)
   }
 }

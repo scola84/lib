@@ -1,3 +1,4 @@
+import isNil from 'lodash/isNil.js'
 import { Input } from '../input.js'
 
 export class File extends Input {
@@ -10,7 +11,7 @@ export class File extends Input {
   }
 
   isAcceptable (value, accept) {
-    if (accept === null || accept === undefined) {
+    if (isNil(accept) === true) {
       return true
     }
 

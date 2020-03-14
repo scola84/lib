@@ -4,8 +4,7 @@ import {
   HttpServer,
   Queuer,
   Resolver,
-  Trigger,
-  Worker
+  Trigger
 } from '../../../worker/api.js'
 
 import {
@@ -27,8 +26,6 @@ import {
   TriggerQueueSelector,
   TriggerQueueUpdater
 } from './prc/index.js'
-
-// Worker.Logger.set('default', 'devout')
 
 const broadcaster = new Broadcaster({
   description: 'Broadcast task results',

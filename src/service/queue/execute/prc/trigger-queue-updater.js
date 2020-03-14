@@ -1,3 +1,5 @@
+import isPlainObject from 'lodash/isPlainObject.js'
+import isString from 'lodash/isString.js'
 import cron from 'cron-parser'
 import { SqlBuilder } from '../../../../worker/api.js'
 
@@ -28,7 +30,7 @@ export class TriggerQueueUpdater extends SqlBuilder {
   }
 
   decide (box, data) {
-    return typeof data.queue === 'object' &&
-      data.queue.trigger_schedule === 'string'
+    return isPlainObject(data.queue) &&
+      isString(data.queue.trigger_schedule)
   }
 }

@@ -1,3 +1,4 @@
+import isString from 'lodash/isString.js'
 import trim from 'lodash/trim.js'
 import { Snippet } from '../snippet.js'
 
@@ -108,7 +109,7 @@ export class Search extends Snippet {
     let match = []
     let string = ''
 
-    if (typeof search === 'string') {
+    if (isString(search) === true) {
       match = search.match(/[^"\s]+|"[^"]+"/g) || []
     }
 

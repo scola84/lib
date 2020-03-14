@@ -1,3 +1,4 @@
+import isFunction from 'lodash/isFunction.js'
 import { Plot } from '../../plot.js'
 
 export class Scale {
@@ -207,7 +208,7 @@ export class Scale {
     }
 
     const plots = this._axis.getOrigin().selector((snippet) => {
-      return snippet instanceof Plot &&
+      return this.isInstance(snippet, Plot) === true &&
         snippet.getData().getPosition().indexOf(this._position) > -1
     }).resolve(null)
 
@@ -319,7 +320,7 @@ export class Scale {
   }
 
   resolveValue (arg, value) {
-    if (typeof value === 'function') {
+    if (isFunction(value) === true) {
       return this.resolveValue(arg, value(arg))
     }
 

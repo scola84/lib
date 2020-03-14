@@ -1,4 +1,5 @@
 import typeParser from 'content-type'
+import isString from 'lodash/isString.js'
 import fetch from 'node-fetch'
 import { Response } from './response.js'
 
@@ -45,7 +46,7 @@ export class Request {
   }
 
   send (body, callback) {
-    if (typeof this.getHeader('Content-Type') !== 'string') {
+    if (isString(this.getHeader('Content-Type')) === false) {
       this.setHeader('Content-Type', 'application/json')
     }
 
@@ -55,7 +56,7 @@ export class Request {
     this.parent.log('info', 'Encoding request as %o', [codec.getType()])
 
     codec.encode(this.original, body, (encoderError, encoderData) => {
-      if (encoderError !== null) {
+      if (this.isInstance(encoderError, Error) === true) {
         callback(encoderError)
         return
       }

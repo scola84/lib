@@ -1,3 +1,4 @@
+import isString from 'lodash/isString.js'
 import nodemailer from 'nodemailer'
 import { Client } from './client.js'
 
@@ -21,15 +22,15 @@ export class Smtp extends Client {
   }
 
   prepareMessage (message) {
-    if (typeof message.subject === 'string') {
+    if (isString(message.subject) === true) {
       message.subject = this._origin.format(message.subject, [message], message.locale)
     }
 
-    if (typeof message.text === 'string') {
+    if (isString(message.text) === true) {
       message.text = this._origin.format(message.text, [message], message.locale)
     }
 
-    if (typeof message.html === 'string') {
+    if (isString(message.html) === true) {
       message.html = this._origin.format(message.html, [message], message.locale)
     }
 
@@ -38,14 +39,14 @@ export class Smtp extends Client {
 
   sendMessage (message, callback) {
     this.connectClient((connectError, connection) => {
-      if (connectError !== null) {
+      if (this.isInstance(connectError, Error) === true) {
         callback(connectError)
         return
       }
 
-      connection.sendMail(this.prepareMessage(message), (error, result) => {
-        if (error !== null) {
-          callback(error)
+      connection.sendMail(this.prepareMessage(message), (sendError, result) => {
+        if (this.isInstance(sendError, Error) === true) {
+          callback(sendError)
           return
         }
 

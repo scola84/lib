@@ -1,3 +1,4 @@
+import isArray from 'lodash/isArray.js'
 import { Parent } from '../parent.js'
 
 export class List extends Parent {
@@ -76,7 +77,7 @@ export class List extends Parent {
       ? this._filter(box, data)
       : data
 
-    newData = Array.isArray(newData) === true
+    newData = isArray(newData) === true
       ? newData
       : []
 

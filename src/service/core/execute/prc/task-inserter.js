@@ -25,7 +25,9 @@ export class TaskInserter extends SqlBuilder {
         sc.value((box, data) => data.name),
         sc.value((box, data) => data.settings)
       ),
-      sc.returning('id_task')
+      sc.returning(
+        sc.id('id_task')
+      )
     )
   }
 

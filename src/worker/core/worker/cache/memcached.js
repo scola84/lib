@@ -2,7 +2,7 @@ import MemcachedClient from 'memcached'
 import { Cache } from './cache.js'
 
 export class MemcachedCache extends Cache {
-  setClient (value = 'memcached:11211') {
+  setClient (value = null) {
     if (this._client !== null) {
       this._client.quit()
     }
@@ -28,11 +28,11 @@ export class MemcachedCache extends Cache {
     this._client.decr(key, value, callback)
   }
 
-  delete (key, callback) {
+  delete (key, callback = () => {}) {
     this._client.del(key, callback)
   }
 
-  get (key, callback) {
+  get (key, callback = () => {}) {
     this._client.get(key, callback)
   }
 

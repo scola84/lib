@@ -24,7 +24,7 @@ export class Submit extends Event {
 
       newData[key] = value
 
-      if (this.isInstance(value, window.File) === true) {
+      if ((value instanceof window.File) === true) {
         box.multipart = true
       }
     }

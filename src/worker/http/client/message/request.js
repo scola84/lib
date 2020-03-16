@@ -56,7 +56,7 @@ export class Request {
     this.parent.log('info', 'Encoding request as %o', [codec.getType()])
 
     codec.encode(this.original, body, (encoderError, encoderData) => {
-      if (this.isInstance(encoderError, Error) === true) {
+      if ((encoderError instanceof Error) === true) {
         callback(encoderError)
         return
       }

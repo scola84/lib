@@ -208,7 +208,7 @@ export class Scale {
     }
 
     const plots = this._axis.getOrigin().selector((snippet) => {
-      return this.isInstance(snippet, Plot) === true &&
+      return (snippet instanceof Plot) === true &&
         snippet.getData().getPosition().indexOf(this._position) > -1
     }).resolve(null)
 

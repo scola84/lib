@@ -111,7 +111,7 @@ export class HttpServer extends Worker {
     response.parent = this
 
     request.decode((decoderError, decoderData) => {
-      if (this.isInstance(decoderError, Error) === true) {
+      if ((decoderError instanceof Error) === true) {
         this.fail(box, decoderError)
         return
       }

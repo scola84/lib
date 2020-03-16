@@ -30,7 +30,7 @@ export class TaskUpdater extends SqlBuilder {
         sc.eq(
           sc.id('error'),
           (box, data) => {
-            if (this.isInstance(data.error, Error) === true) {
+            if ((data.error instanceof Error) === true) {
               return sc.value(this._codec.stringify(data.error))
             }
 
@@ -65,7 +65,7 @@ export class TaskUpdater extends SqlBuilder {
 
   decide (box, data) {
     if (data.status === 'PENDING') {
-      data.status = this.isInstance(data.error, Error) === true
+      data.status = (data.error instanceof Error) === true
         ? 'FAILURE'
         : 'SUCCESS'
     }

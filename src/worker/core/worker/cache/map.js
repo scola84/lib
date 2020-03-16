@@ -1,21 +1,6 @@
 import { Cache } from './cache.js'
 
 export class MapCache extends Cache {
-  constructor () {
-    super()
-    this.setClient()
-  }
-
-  setClient (value = new Map()) {
-    if (value === null) {
-      this._client = null
-      return this
-    }
-
-    this._client = value
-    return this
-  }
-
   add (key, value, callback = () => {}, ttl = null) {
     if (this._client.has(key) === true) {
       callback(null)
@@ -44,12 +29,12 @@ export class MapCache extends Cache {
     callback(null)
   }
 
-  delete (key, callback) {
+  delete (key, callback = () => {}) {
     this._client.delete(key)
     callback(null)
   }
 
-  get (key, callback) {
+  get (key, callback = () => {}) {
     const value = this._client.get(key)
     callback(null, value)
     return value

@@ -37,7 +37,7 @@ export class Router extends Worker {
 
     this.log('info', 'Routing to %o', [route], box.rid)
 
-    if (this.isInstance(this._downstreams[route]) === true) {
+    if ((this._downstreams[route] instanceof Worker) === true) {
       this._downstreams[route].callAct(box, data)
     } else if (this._bypass !== null) {
       this._bypass.callAct(box, data)

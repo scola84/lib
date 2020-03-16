@@ -1,14 +1,12 @@
-import { LocalCache } from './local.js'
 import { MapCache } from './map.js'
 import { MemcachedCache } from './memcached.js'
 import { RedisCache } from './redis.js'
-import { SessionCache } from './session.js'
+import { WindowCache } from './window.js'
 
 export const cache = {
-  default: new MapCache(),
-  local: new LocalCache(),
+  local: new WindowCache(),
   map: new MapCache(),
   memcached: new MemcachedCache(),
   redis: new RedisCache(),
-  session: new SessionCache()
+  session: new WindowCache()
 }

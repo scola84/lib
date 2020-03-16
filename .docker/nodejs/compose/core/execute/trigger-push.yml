@@ -1,12 +1,12 @@
 version: "3.7"
 services:
-  queue-serve-result:
+  queue-trigger-push:
     image: "node:13-alpine"
     command: yarn start:dev
     env_file:
       - $PWD/.env
     environment:
-      - NODE_SCRIPT=./node_modules/@scola/lib/src/service/queue/execute/prc.js
+      - NODE_SCRIPT=./node_modules/@scola/lib/src/service/core/execute/prc.js
     restart: always
     volumes:
       - $PWD/node_modules/:/www/nodejs/node_modules/

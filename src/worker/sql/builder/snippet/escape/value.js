@@ -3,11 +3,11 @@ import sqlstring from 'sqlstring'
 import { Dialect } from '../dialect.js'
 
 export class Value extends Dialect {
-  resolveMysql (box, data, value) {
+  resolveValueMysql (box, data, value) {
     return sqlstring.escape(value)
   }
 
-  resolvePostgresql (box, data, value) {
+  resolveValuePostgresql (box, data, value) {
     return pgString.dollarQuotedString(value)
   }
 }

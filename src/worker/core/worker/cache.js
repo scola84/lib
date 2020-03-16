@@ -14,7 +14,10 @@ export class Cache {
   }
 }
 
-if (isObject(process) === true) {
+Cache.set('default', 'map')
+Cache.get('map').setClient(new Map())
+
+if (typeof process === 'object') {
   if (isString(process.env.CACHE_DEFAULT) === true) {
     Cache.set('default', process.env.CACHE_DEFAULT)
   }
@@ -26,4 +29,9 @@ if (isObject(process) === true) {
   if (isString(process.env.CACHE_MEMCACHED) === true) {
     Cache.get('memcached').setClient(process.env.CACHE_MEMCACHED)
   }
+}
+
+if (typeof window === 'object') {
+  Cache.get('local').setClient(window.localStorage)
+  Cache.get('session').setClient(window.sessionStorage)
 }

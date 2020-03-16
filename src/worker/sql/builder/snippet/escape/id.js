@@ -1,11 +1,11 @@
 import { Dialect } from '../dialect.js'
 
 export class Id extends Dialect {
-  resolveMysql (box, data, value) {
+  resolveValueMysql (box, data, value) {
     return `\`${value.replace(/\./g, '`.`')}\``.replace('.`*`', '.*')
   }
 
-  resolvePostgresql (box, data, value) {
+  resolveValuePostgresql (box, data, value) {
     return `"${value.replace(/\./g, '"."')}"`.replace('."*"', '.*')
   }
 }

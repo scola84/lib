@@ -39,7 +39,7 @@ export class Call extends Action {
     }
 
     handlers[this._name](box, data, (error) => {
-      if (this.isInstance(error, Error) === true) {
+      if ((error instanceof Error) === true) {
         this.fail(box, error)
       } else {
         this.pass(box, data)

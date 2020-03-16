@@ -1,9 +1,9 @@
 import createQueue from 'async/queue.js'
+import isObject from 'lodash/isObject.js'
 import isPlainObject from 'lodash/isPlainObject.js'
 import isString from 'lodash/isString.js'
 import { randomBytes } from 'crypto'
 import RedisClient from 'ioredis'
-import isObject from 'lodash/isObject'
 import { Worker } from './worker.js'
 
 export class Queuer extends Worker {
@@ -77,14 +77,6 @@ export class Queuer extends Worker {
 
     const client = new RedisClient(value)
     client.sub = new RedisClient(value)
-
-    client.on('error', (error) => {
-      this.log('fail', '', [error])
-    })
-
-    client.sub.on('error', (error) => {
-      this.log('fail', '', [error])
-    })
 
     this.setHandler(this._handler)
     this.setPusher(this._pusher)
@@ -258,7 +250,7 @@ export class Queuer extends Worker {
     const index = isPlainObject(data) ? data.index : 0
 
     this.pushTask(box, data, (error) => {
-      if (this.isInstance(error, Error) === true) {
+      if ((error instanceof Error) === true) {
         this.pass(box, Object.assign(data, { error }))
       } else if (data.result !== 'return') {
         this.pass(box, this.defineIndex({}, index))
@@ -322,14 +314,14 @@ export class Queuer extends Worker {
       .get(tid)
       .del(tid)
       .exec((execError, [getResult]) => {
-        if (this.isInstance(execError, Error) === true) {
+        if ((execError instanceof Error) === true) {
           this.fail(box, this.defineIndex({ error: execError }, index))
           return
         }
 
         const [getError, string] = getResult
 
-        if (this.isInstance(getError, Error) === true) {
+        if ((getError instanceof Error) === true) {
           this.fail(box, this.defineIndex({ error: getError }, index))
           return
         }
@@ -353,7 +345,7 @@ export class Queuer extends Worker {
 
     this._queue.push((callback) => {
       this._client.rpop(this._name, (popError, string) => {
-        if (this.isInstance(popError, Error) === true) {
+        if ((popError instanceof Error) === true) {
           callback(popError)
           return
         }
@@ -434,7 +426,7 @@ export class Queuer extends Worker {
     }
 
     this._client.pubsub('channels', data.queue, (pubsubError, channels) => {
-      if (this.isInstance(pubsubError, Error) === true) {
+      if ((pubsubError instanceof Error) === true) {
         callback(pubsubError)
         return
       }
@@ -445,7 +437,7 @@ export class Queuer extends Worker {
       }
 
       this._client.llen(data.queue, (lenError, length) => {
-        if (this.isInstance(lenError, Error) === true) {
+        if ((lenError instanceof Error) === true) {
           callback(lenError)
           return
         }

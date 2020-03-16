@@ -1,4 +1,4 @@
-import isPlainObject from 'lodash/isPlainObject'
+import isPlainObject from 'lodash/isPlainObject.js'
 import { Router } from '../core/index.js'
 
 export class HttpRouter extends Router {

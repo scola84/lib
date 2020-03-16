@@ -14,7 +14,9 @@ export class RunInserter extends SqlBuilder {
       sc.values(
         sc.value((box, data) => data.queue.id_queue)
       ),
-      sc.returning('id_run')
+      sc.returning(
+        sc.id('id_run')
+      )
     )
   }
 

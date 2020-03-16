@@ -14,7 +14,9 @@ export class Codec {
   }
 }
 
-if (isObject(process) === true) {
+Codec.set('default', 'application/octet-stream')
+
+if (typeof process === 'object') {
   if (isString(process.env.CODEC_DEFAULT) === true) {
     Codec.set('default', process.env.CODEC_DEFAULT)
   }

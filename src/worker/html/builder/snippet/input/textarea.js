@@ -57,8 +57,7 @@ export class Textarea extends Input {
 
     pre.append('br')
 
-    const style = window
-      .getComputedStyle(this._node.node())
+    const style = window.getComputedStyle(this._node.node())
 
     wrapper
       .style('display', 'flex')

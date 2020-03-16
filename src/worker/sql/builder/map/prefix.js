@@ -8,7 +8,6 @@ const list = [
   'DISTINCT',
   'FROM',
   'GROUP BY',
-  'HAVING',
   'INNER',
   'INSERT',
   'INTO',

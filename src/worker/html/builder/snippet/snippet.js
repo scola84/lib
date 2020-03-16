@@ -32,7 +32,7 @@ export class Snippet {
     const options = this.getOptions()
 
     options.args = options.args.map((snippet) => {
-      return this.isInstance(snippet) === true
+      return (snippet instanceof Snippet) === true
         ? snippet.clone()
         : snippet
     })
@@ -73,7 +73,7 @@ export class Snippet {
     this._args = value
 
     for (let i = 0; i < this._args.length; i += 1) {
-      if (this.isInstance(this._args[i]) === true) {
+      if ((this._args[i] instanceof Snippet) === true) {
         this._args[i].setParent(this)
       }
     }
@@ -184,7 +184,7 @@ export class Snippet {
     for (let i = 0; i < this._args.length; i += 1) {
       snippet = this._args[i]
 
-      if (this.isInstance(snippet) === true) {
+      if ((snippet instanceof Snippet) === true) {
         result.push(...snippet.find(compare))
       }
     }
@@ -194,10 +194,6 @@ export class Snippet {
 
   hasPermission (box, data) {
     return this.resolveValue(box, data, this._permit)
-  }
-
-  isInstance (object, O = Snippet) {
-    return object instanceof O
   }
 
   remove () {
@@ -255,7 +251,7 @@ export class Snippet {
       return value
     }
 
-    if (this.isInstance(value) === true) {
+    if ((value instanceof Snippet) === true) {
       return this.resolveValue(box, data, value.resolve(box, data))
     }
 

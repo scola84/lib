@@ -14,7 +14,9 @@ export class Listener {
   }
 }
 
-if (isObject(process) === true) {
+if (typeof process === 'object') {
+  Listener.set('default', 'redis')
+
   if (isString(process.env.LISTENER_DEFAULT) === true) {
     Listener.set('default', process.env.LISTENER_DEFAULT)
   }

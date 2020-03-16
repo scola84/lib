@@ -1,10 +1,8 @@
-/* eslint-disable no-console */
-
 import RedisClient from 'ioredis'
 import { Cache } from './cache.js'
 
 export class RedisCache extends Cache {
-  setClient (value = 'redis://redis') {
+  setClient (value = null) {
     if (this._client !== null) {
       this._client.quit()
     }
@@ -15,11 +13,6 @@ export class RedisCache extends Cache {
     }
 
     this._client = new RedisClient(value)
-
-    this._client.on('error', (error) => {
-      console.log(error.message)
-    })
-
     return this
   }
 
@@ -59,11 +52,11 @@ export class RedisCache extends Cache {
     command.exec(callback)
   }
 
-  delete (key, callback) {
+  delete (key, callback = () => {}) {
     this._client.delete(key, callback)
   }
 
-  get (key, callback) {
+  get (key, callback = () => {}) {
     this._client.get(key, callback)
   }
 

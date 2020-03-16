@@ -107,7 +107,7 @@ export class SqlBuilder extends Builder {
     const query = this.resolveQuery(box, data, client)
 
     client[`${this._result}Query`](box, data, query, (error, result) => {
-      if (this.isInstance(error, Error) === true) {
+      if ((error instanceof Error) === true) {
         this.fail(box, error)
         return
       }

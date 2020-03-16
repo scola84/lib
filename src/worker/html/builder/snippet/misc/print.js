@@ -1,7 +1,7 @@
 import get from 'lodash/get.js'
 import isArray from 'lodash/isArray.js'
 import isPlainObject from 'lodash/isPlainObject.js'
-import isString from 'lodash/isString'
+import isString from 'lodash/isString.js'
 import merge from 'lodash/merge.js'
 import { HtmlBuilder } from '../../../builder.js'
 import { Snippet } from '../snippet.js'

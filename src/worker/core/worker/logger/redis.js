@@ -1,20 +1,9 @@
-/* eslint-disable no-console */
-
 import RedisClient from 'ioredis'
 import util from 'util'
 import { Logger } from './logger.js'
 
 export class RedisLogger extends Logger {
-  constructor () {
-    super()
-    this._client = null
-  }
-
-  getClient () {
-    return this._client
-  }
-
-  setClient (value = 'redis://redis') {
+  setClient (value = null) {
     if (this._client !== null) {
       this._client.quit()
     }
@@ -25,11 +14,6 @@ export class RedisLogger extends Logger {
     }
 
     this._client = new RedisClient(value)
-
-    this._client.on('error', (error) => {
-      console.log(error.message)
-    })
-
     return this
   }
 

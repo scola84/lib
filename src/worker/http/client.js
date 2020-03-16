@@ -82,7 +82,7 @@ export class HttpClient extends Worker {
     request.parent = this
 
     request.send(body, (requestError, response) => {
-      if (this.isInstance(requestError, Error) === true) {
+      if ((requestError instanceof Error) === true) {
         this.handleError(box, data, requestError)
         return
       }
@@ -124,7 +124,7 @@ export class HttpClient extends Worker {
     response.parent = this
 
     response.decode((decoderError, decoderData) => {
-      if (this.isInstance(decoderError, Error) === true) {
+      if ((decoderError instanceof Error) === true) {
         this.handleError(box, data, decoderError, decoderData)
         return
       }

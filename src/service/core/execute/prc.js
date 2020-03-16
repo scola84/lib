@@ -176,6 +176,7 @@ const triggerQueueSelector = new TriggerQueueSelector({
   description: 'Select queues to run',
   id: 'queue-trigger-queue-selector',
   client: process.env.QUEUE_DATABASE_CLIENT,
+  regexp: process.env.QUEUE_TRIGGER_REGEXP,
   result: 'stream'
 })
 

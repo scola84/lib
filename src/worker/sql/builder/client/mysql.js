@@ -1,4 +1,4 @@
-import isObject from 'lodash/isObject'
+import isObject from 'lodash/isObject.js'
 import mysql from 'mysql'
 import { Client } from './client.js'
 import map from '../map/index.js'
@@ -25,7 +25,7 @@ export class Mysql extends Client {
     }
 
     this._pool.getConnection((error, poolConnection) => {
-      if (this.isInstance(error, Error) === true) {
+      if ((error instanceof Error) === true) {
         callback(error)
         return
       }
@@ -61,7 +61,7 @@ export class Mysql extends Client {
       .log('info', 'Executing MySQL query %s', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if (this.isInstance(connectError, Error) === true) {
+      if ((connectError instanceof Error) === true) {
         callback(connectError)
         return
       }
@@ -89,7 +89,7 @@ export class Mysql extends Client {
       .log('info', 'Streaming MySQL query %s', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if (this.isInstance(connectError, Error) === true) {
+      if ((connectError instanceof Error) === true) {
         callback(connectError)
         return
       }
@@ -133,7 +133,7 @@ export class Mysql extends Client {
         callback(null, { last: false, row: next })
       }
 
-      next = row
+      next = { ...row }
     })
   }
 }

@@ -21,11 +21,11 @@ export class Returning extends Dialect {
     return result
   }
 
-  resolveMysql () {
+  resolveValueMysql () {
     return ''
   }
 
-  resolvePostgresql (box, data, value) {
+  resolveValuePostgresql (box, data, value) {
     return `RETURNING ${value}`
   }
 }

@@ -39,13 +39,13 @@ export class Smtp extends Client {
 
   sendMessage (message, callback) {
     this.connectClient((connectError, connection) => {
-      if (this.isInstance(connectError, Error) === true) {
+      if ((connectError instanceof Error) === true) {
         callback(connectError)
         return
       }
 
       connection.sendMail(this.prepareMessage(message), (sendError, result) => {
-        if (this.isInstance(sendError, Error) === true) {
+        if ((sendError instanceof Error) === true) {
           callback(sendError)
           return
         }

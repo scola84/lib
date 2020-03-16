@@ -256,7 +256,7 @@ export class Worker {
       if (this.resolve('decide', box, data, ['act']) === true) {
         this.act(box, this.resolve('filter', box, data))
       } else if (this._bypass !== null) {
-        if (this.isInstance(this._bypass) === true) {
+        if ((this._bypass instanceof Worker) === true) {
           this._bypass.callAct(box, data)
         }
       } else if (this._downstream !== null) {
@@ -273,7 +273,7 @@ export class Worker {
       if (this.resolve('decide', box, error, ['err']) === true) {
         this.err(box, error)
       } else if (this._bypass !== null) {
-        if (this.isInstance(this._bypass, Worker)) {
+        if ((this._bypass instanceof Worker) === true) {
           this._bypass.callErr(box, error)
         }
       } else if (this._downstream !== null) {
@@ -332,10 +332,6 @@ export class Worker {
     return Formatter.format(string, args, locale)
   }
 
-  isInstance (object, O = Worker) {
-    return object instanceof O
-  }
-
   log (type, message, args, rid) {
     this._logger.log(this._id, type, message, args, rid)
     return this
@@ -346,7 +342,7 @@ export class Worker {
   }
 
   pass (box, data, ...extra) {
-    if (this.isInstance(data, Error) === true) {
+    if ((data instanceof Error) === true) {
       this.fail(box, data)
       return
     }

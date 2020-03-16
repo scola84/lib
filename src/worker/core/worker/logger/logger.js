@@ -1,10 +1,21 @@
 export class Logger {
-  constructor () {
+  constructor (options = {}) {
+    this._client = null
     this._ids = null
     this._types = null
 
-    this.setIds()
-    this.setTypes()
+    this.setClient(options.client)
+    this.setIds(options.ids)
+    this.setTypes(options.types)
+  }
+
+  getClient () {
+    return this._client
+  }
+
+  setClient (value = null) {
+    this._client = value
+    return this
   }
 
   getIds () {

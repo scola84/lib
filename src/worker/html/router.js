@@ -1,5 +1,5 @@
 import * as d3 from 'd3-selection'
-import { Router } from '../core/index.js'
+import { Router, Worker } from '../core/index.js'
 import { Menu, Popup, Route } from './router/index.js'
 import { Snippet } from './builder/snippet/snippet.js'
 
@@ -205,18 +205,18 @@ export class HtmlRouter extends Router {
 
     if (box.path !== null) {
       box = this.processRoute(box, routes, box)
-    } else if (this.isInstance(routes[this._name], Route) === true) {
+    } else if ((routes[this._name] instanceof Route) === true) {
       box = this.processRoute(box, routes, routes[this._name])
     }
 
-    if (this.isInstance(this._downstreams[box.path]) === false) {
+    if ((this._downstreams[box.path] instanceof Worker) === false) {
       box = this.processDefault(box, routes)
     }
 
     this.formatHash(routes)
     this.processForward(box)
 
-    if (this.isInstance(this._downstreams[box.path]) === true) {
+    if ((this._downstreams[box.path] instanceof Worker) === true) {
       if (this._popup !== null) {
         this._popup.open(box, data)
       }
@@ -265,7 +265,7 @@ export class HtmlRouter extends Router {
       return box
     }
 
-    if (this.isInstance(this._base.snippet, Snippet) === true) {
+    if ((this._base.snippet instanceof Snippet) === true) {
       this._base.snippet.remove()
       delete this._base.snippet
     }
@@ -344,7 +344,7 @@ export class HtmlRouter extends Router {
   stash () {
     const routes = HtmlRouter.parseHash()
 
-    if (this.isInstance(routes[this._name], Route) === true) {
+    if ((routes[this._name] instanceof Route) === true) {
       this._stash = routes[this._name]
     }
 

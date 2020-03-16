@@ -1,11 +1,9 @@
-/* eslint-disable no-console */
-
 import RedisClient from 'ioredis'
 import { Worker } from '../../worker.js'
 import { Listener } from './listener.js'
 
 export class RedisListener extends Listener {
-  setClient (value = 'redis://redis') {
+  setClient (value = null) {
     if (this._client !== null) {
       this._client.quit()
     }
@@ -17,15 +15,11 @@ export class RedisListener extends Listener {
 
     this._client = new RedisClient(value)
 
-    this._client.on('error', (error) => {
-      console.log(error.message)
-    })
-
     this._client.on('message', (channel, message) => {
       try {
         this.call(JSON.parse(message))
       } catch (error) {
-        console.log(`${error.message} ${message}`, error)
+        new Worker().log('fail', '', [error])
       }
     })
 

@@ -23,7 +23,9 @@ export class ItemInserter extends SqlBuilder {
         sc.value((box, data) => data.item.object_name),
         sc.value((box, data) => data.item.object_id)
       ),
-      sc.returning('id_item')
+      sc.returning(
+        sc.id('id_item')
+      )
     )
   }
 

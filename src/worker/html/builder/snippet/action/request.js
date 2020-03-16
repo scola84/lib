@@ -126,7 +126,7 @@ export class Request extends Action {
   }
 
   resolveResponse (box, error, data) {
-    if (this.isInstance(error, Error) === true) {
+    if ((error instanceof Error) === true) {
       this.resolveError(box, error, data)
       return
     }

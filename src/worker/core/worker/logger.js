@@ -14,7 +14,12 @@ export class Logger {
   }
 }
 
-if (isObject(process) === true) {
+Logger.set('default', 'prdout')
+Logger.get('devout').setClient(console)
+Logger.get('prdout').setClient(console)
+Logger.get('prdout').setTypes('fail')
+
+if (typeof process === 'object') {
   if (isString(process.env.LOGGER_DEFAULT) === true) {
     Logger.set('default', process.env.LOGGER_DEFAULT)
   }

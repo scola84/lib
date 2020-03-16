@@ -31,7 +31,9 @@ export class JsonCodec extends Codec {
 
   stringify (data) {
     return JSON.stringify(data, (key, value) => {
-      return value instanceof Error ? this.stringifyError(value) : value
+      return value instanceof Error
+        ? this.stringifyError(value)
+        : value
     })
   }
 

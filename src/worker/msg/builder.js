@@ -47,7 +47,7 @@ export class MsgBuilder extends Builder {
     this._origin.log('info', 'Sending message %o', [message], box.rid)
 
     client.sendMessage(message, (error, result) => {
-      if (this.isInstance(error, Error) === true) {
+      if ((error instanceof Error) === true) {
         this.fail(box, error)
         return
       }

@@ -30,7 +30,7 @@ export class Resolver extends Worker {
     const resolve = box[`resolve.${this._name}`]
 
     if (isFunction(resolve.callback) === true) {
-      if (this.isInstance(data, Error) === true) {
+      if ((data instanceof Error) === true) {
         resolve.callback(data)
       } else {
         resolve.callback(null, data)

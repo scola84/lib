@@ -1,5 +1,5 @@
 import isArray from 'lodash/isArray.js'
-import isObject from 'lodash/isObject'
+import isObject from 'lodash/isObject.js'
 import { Worker } from './worker.js'
 
 export class Broadcaster extends Worker {

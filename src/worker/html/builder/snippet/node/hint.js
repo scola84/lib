@@ -46,7 +46,7 @@ export class Hint extends Node {
     const parent = this._node.node().parentNode
     let input = parent.querySelector('input, select, textarea')
 
-    if (input === null || this.isInstance(input.snippet) === false) {
+    if (input === null || (input.snippet instanceof Node) === false) {
       return this.resolveEmpty()
     }
 

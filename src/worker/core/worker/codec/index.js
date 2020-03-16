@@ -23,6 +23,4 @@ export const codec = objects.reduce((result, object) => {
     ...result,
     [object.getType()]: object
   }
-}, {
-  default: objects[5]
-})
+}, {})

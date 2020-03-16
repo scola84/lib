@@ -1,13 +1,17 @@
 export class Cache {
-  constructor () {
+  constructor (options = {}) {
     this._client = null
+    this.setClient(options.client)
   }
 
   getClient () {
     return this._client
   }
 
-  setClient () {}
+  setClient (value = null) {
+    this._client = value
+    return this
+  }
 
   add () {}
 

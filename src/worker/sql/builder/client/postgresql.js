@@ -4,7 +4,7 @@ import PgQueryStream from 'pg-query-stream'
 import { Client } from './client.js'
 import map from '../map/index.js'
 
-if (isObject(pg) === true) {
+if (typeof pg === 'object') {
   pg.types.setTypeParser(20, (value) => parseInt(value, 10))
   pg.types.setTypeParser(1082, (value) => value)
   pg.types.setTypeParser(1114, (value) => value)
@@ -36,7 +36,7 @@ export class Postgresql extends Client {
     }
 
     this._pool.connect((error, poolConnection) => {
-      if (this.isInstance(error, Error) === true) {
+      if ((error instanceof Error) === true) {
         callback(error)
         return
       }
@@ -72,7 +72,7 @@ export class Postgresql extends Client {
       .log('info', 'Executing PostgreSQL query %s', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if (this.isInstance(connectError, Error) === true) {
+      if ((connectError instanceof Error) === true) {
         callback(connectError)
         return
       }
@@ -100,7 +100,7 @@ export class Postgresql extends Client {
       .log('info', 'Streaming PostgreSQL query %s', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if (this.isInstance(connectError, Error) === true) {
+      if ((connectError instanceof Error) === true) {
         callback(connectError)
         return
       }

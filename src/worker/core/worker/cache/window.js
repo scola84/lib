@@ -1,16 +1,6 @@
 import { Cache } from './cache.js'
 
-export class SessionCache extends Cache {
-  setClient (value = window.sessionStorage) {
-    if (value === null) {
-      this._client = null
-      return this
-    }
-
-    this._client = value
-    return this
-  }
-
+export class WindowCache extends Cache {
   add (key, value, callback = () => {}, ttl = null) {
     if (this._client.getItem(key) === null) {
       callback(null)
@@ -39,12 +29,12 @@ export class SessionCache extends Cache {
     callback(null)
   }
 
-  delete (key, callback) {
+  delete (key, callback = () => {}) {
     this._client.removeItem(key)
     callback(null)
   }
 
-  get (key, callback) {
+  get (key, callback = () => {}) {
     const value = this._client.getItem(key)
     callback(null, value)
     return value

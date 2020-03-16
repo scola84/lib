@@ -3,18 +3,17 @@ import { Snippet } from '../snippet/snippet.js'
 
 const list = [
   'ASC',
-  'BINARY',
+  'BIT',
+  'BOOLEAN',
   'CHAR',
   'DATE',
-  'DATETIME',
   'DECIMAL',
   'DESC',
-  'JSON',
-  'NCHAR',
-  'RANGE',
-  'SIGNED',
+  'INTEGER',
+  'TEXT',
   'TIME',
-  'UNSIGNED'
+  'TIMESTAMP',
+  'VARCHAR'
 ]
 
 export default list.reduce((object, token) => {

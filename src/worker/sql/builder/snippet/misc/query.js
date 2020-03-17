@@ -1,7 +1,3 @@
-import { Snippet } from '../snippet.js'
+import { String } from './string.js'
 
-export class Query extends Snippet {
-  setInfix (value = ' ') {
-    super.setInfix(value)
-  }
-}
+export class Query extends String {}

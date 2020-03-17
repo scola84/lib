@@ -1,6 +1,5 @@
 import isFunction from 'lodash/isFunction.js'
 import isNil from 'lodash/isNil.js'
-import isPlainObject from 'lodash/isPlainObject.js'
 
 const snippets = new Map()
 
@@ -346,10 +345,6 @@ export class Snippet {
 
     if ((value instanceof Snippet) === true) {
       return this.resolveValue(box, data, value.resolve(box, data))
-    }
-
-    if (isPlainObject(value) === true) {
-      return this.resolveValue(box, data, JSON.stringify(value))
     }
 
     if (isFunction(value) === true) {

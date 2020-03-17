@@ -1,19 +1,33 @@
 import camelCase from 'lodash/camelCase.js'
 import { Snippet } from '../snippet/snippet.js'
 
-const list = [
-  'ASC',
-  'BIT',
-  'BOOLEAN',
-  'CHAR',
+const date = [
   'DATE',
-  'DECIMAL',
-  'DESC',
-  'INTEGER',
-  'TEXT',
   'TIME',
-  'TIMESTAMP',
-  'VARCHAR'
+  'TIMESTAMP'
+]
+
+const numeric = [
+  'DECIMAL',
+  'INTEGER',
+  'NUMERIC'
+]
+const order = [
+  'ASC',
+  'DESC'
+]
+
+const string = [
+  'BINARY',
+  'CHAR',
+  'TEXT'
+]
+
+const list = [
+  ...order,
+  ...date,
+  ...numeric,
+  ...string
 ]
 
 export default list.reduce((object, token) => {

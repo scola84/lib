@@ -248,15 +248,11 @@ export class Snippet {
 
   resolveValue (box, data, value) {
     if (isNil(value) === true) {
-      return value
+      return null
     }
 
     if ((value instanceof Snippet) === true) {
       return this.resolveValue(box, data, value.resolve(box, data))
-    }
-
-    if (isArray(value) === true) {
-      return value.map((v) => this.resolveValue(box, data, v))
     }
 
     if (isFunction(value) === true) {
@@ -264,11 +260,6 @@ export class Snippet {
     }
 
     return value
-  }
-
-  resolveObject (box, data, object, name) {
-    const resolvedObject = this.resolveValue(box, data, object)
-    return this.resolveValue(box, data, resolvedObject[name])
   }
 }
 

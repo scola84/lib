@@ -1,4 +1,5 @@
-import isString from 'lodash/isString.js'
+import isFunction from 'lodash/isFunction.js'
+import isNil from 'lodash/isNil.js'
 import { Snippet } from './snippet.js'
 
 export class Dialect extends Snippet {
@@ -15,12 +16,12 @@ export class Dialect extends Snippet {
     return result
   }
 
-  resolveDialect (name, box, data, value) {
+  resolveFunction (name, box, data, value) {
     return this[`${name}${this._origin.constructor.name}`](box, data, value)
   }
 
   resolveInfix (box, data) {
-    return this.resolveDialect('resolveInfix', box, data)
+    return this.resolveFunction('resolveInfix', box, data)
   }
 
   resolveInfixMysql () {
@@ -32,11 +33,19 @@ export class Dialect extends Snippet {
   }
 
   resolveValue (box, data, value) {
-    if (isString(value) === true) {
-      return this.resolveDialect('resolveValue', box, data, value)
+    if (isNil(value) === true) {
+      return 'NULL'
     }
 
-    return super.resolveValue(box, data, value)
+    if ((value instanceof Snippet) === true) {
+      return this.resolveValue(box, data, value.resolve(box, data))
+    }
+
+    if (isFunction(value) === true) {
+      return this.resolveValue(box, data, value(box, data))
+    }
+
+    return this.resolveFunction('resolveValue', box, data, value)
   }
 
   resolveValueMysql (box, data, value) {
@@ -48,7 +57,7 @@ export class Dialect extends Snippet {
   }
 
   resolvePostfix (box, data) {
-    return this.resolveDialect('resolvePostfix', box, data)
+    return this.resolveFunction('resolvePostfix', box, data)
   }
 
   resolvePostfixMysql () {
@@ -60,7 +69,7 @@ export class Dialect extends Snippet {
   }
 
   resolvePrefix (box, data) {
-    return this.resolveDialect('resolvePrefix', box, data)
+    return this.resolveFunction('resolvePrefix', box, data)
   }
 
   resolvePrefixMysql () {

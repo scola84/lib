@@ -6495,10 +6495,10 @@ libnpx@^10.2.2:
     y18n "^4.0.0"
     yargs "^11.0.0"
 
-libphonenumber-js@^1.7.46:
-  version "1.7.46"
-  resolved "https://registry.yarnpkg.com/libphonenumber-js/-/libphonenumber-js-1.7.46.tgz#72e5bc1337ec3898e8a00971161fa16cb542ccf9"
-  integrity sha512-NrNz2+OW/7lb4HnKDbcYOMCY0SOzCa7EHFY0hHeHl9JMJmpvTmonPaLiMAE1M+K1HWCsXtGdDj9AkOmr5DKqIQ==
+libphonenumber-js@^1.7.47:
+  version "1.7.47"
+  resolved "https://registry.yarnpkg.com/libphonenumber-js/-/libphonenumber-js-1.7.47.tgz#0ca1c75144db0431a80466a37a683e31e099adcd"
+  integrity sha512-ICw2Rb+KxPAoeKedwXFmFvweP1ncZg32leYbhk68wrGkZstobKQZvxQ7cqdOJRx2m2j/R0VHE6A4sgobqH+6Gg==
   dependencies:
     minimist "^1.2.0"
     xml2js "^0.4.17"
@@ -9456,10 +9456,10 @@ rollup-plugin-livereload@^1.0.4:
   dependencies:
     livereload "0.8.0 || ^0.8.2"
 
-rollup-plugin-postcss@^2.4.1:
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/rollup-plugin-postcss/-/rollup-plugin-postcss-2.4.1.tgz#c6ba84dea7a29ed00ce5ddf0d333f9efd96283df"
-  integrity sha512-wlx8V/ic0bTlVXITWKyhDRuOyQiIdVewM2+KP+tKu2Y9j559uoTsk9F6oXFvyaXA5LiYv3VuOH7cjhRHLR2Ocg==
+rollup-plugin-postcss@^2.5.0:
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/rollup-plugin-postcss/-/rollup-plugin-postcss-2.5.0.tgz#54ef2487cda498d8bca69aaca3b55b30dee0106b"
+  integrity sha512-tBba0iMOY+eH1bP2rUhO/WK45uTRdRbuM5yWViO7tUChUrgA+JSQJscpCpStebPZoFxRwfkJRk2PZHd1q+JY2A==
   dependencies:
     chalk "^2.4.2"
     concat-with-sourcemaps "^1.0.5"
@@ -9493,10 +9493,10 @@ rollup-pluginutils@^2.0.1, rollup-pluginutils@^2.8.1:
   dependencies:
     estree-walker "^0.6.1"
 
-rollup@^2.0.6:
-  version "2.0.6"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.0.6.tgz#865d6bb15a28cff3429ea1dc57236013661cb9de"
-  integrity sha512-P42IlI6a/bxh52ed8hEXXe44LcHfep2f26OZybMJPN1TTQftibvQEl3CWeOmJrzqGbFxOA000QXDWO9WJaOQpA==
+rollup@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.1.0.tgz#552e248e397a06b9c6db878c0564ca4ee06729c9"
+  integrity sha512-gfE1455AEazVVTJoeQtcOq/U6GSxwoj4XPSWVsuWmgIxj7sBQNLDOSA82PbdMe+cP8ql8fR1jogPFe8Wg8g4SQ==
   optionalDependencies:
     fsevents "~2.1.2"
 

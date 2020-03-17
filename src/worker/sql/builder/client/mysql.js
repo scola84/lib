@@ -116,24 +116,28 @@ export class Mysql extends Client {
       query.getParent().prepareBoxThrottle(box, stream)
     }
 
+    let first = true
     let next = null
+    let total = 0
 
     stream.once('end', () => {
-      callback(null, { last: true, row: next })
+      callback(null, { first, total, last: true, row: next })
       stream.removeAllListeners()
     })
 
     stream.once('error', (error) => {
-      callback(error, { last: true, row: null })
+      callback(error, { first, total, last: true, row: null })
       stream.removeAllListeners()
     })
 
     stream.on('data', (row) => {
       if (next !== null) {
-        callback(null, { last: false, row: next })
+        callback(null, { first, total, last: false, row: next })
+        first = false
       }
 
       next = { ...row }
+      total += 1
     })
   }
 }

@@ -247,13 +247,13 @@ export class Queuer extends Worker {
   actPusher (box, data) {
     this.log('info', 'Acting as pusher on %o', [data], box.rid)
 
-    const index = isPlainObject(data) ? data.index : 0
-
     this.pushTask(box, data, (error) => {
       if ((error instanceof Error) === true) {
         this.pass(box, Object.assign(data, { error }))
       } else if (data.result !== 'return') {
-        this.pass(box, this.defineIndex({}, index))
+        if ((this._bypass instanceof Worker) === true) {
+          this._bypass.callAct(box, data)
+        }
       }
     })
   }
@@ -286,14 +286,6 @@ export class Queuer extends Worker {
     }
   }
 
-  defineIndex (data, index = 0, enumerable = false) {
-    return Object.defineProperty(data, 'index', {
-      configurable: true,
-      enumerable,
-      value: Number(index)
-    })
-  }
-
   handleResult (tid) {
     this.log('info', 'Handling result %o', [tid])
 
@@ -315,22 +307,20 @@ export class Queuer extends Worker {
       .del(tid)
       .exec((execError, [getResult]) => {
         if ((execError instanceof Error) === true) {
-          this.fail(box, this.defineIndex({ error: execError }, index))
+          this.fail(box, { index, error: execError })
           return
         }
 
         const [getError, string] = getResult
 
         if ((getError instanceof Error) === true) {
-          this.fail(box, this.defineIndex({ error: getError }, index))
+          this.fail(box, { index, error: getError })
           return
         }
 
-        const data = this._codec.parse(string)
-
         this.log('info', 'Handling result %s', [string], box.rid)
 
-        this.pass(box, this.defineIndex(data, data.index))
+        this.pass(box, this._codec.parse(string))
       })
   }
 
@@ -453,8 +443,8 @@ export class Queuer extends Worker {
         }
 
         const string = this._codec.stringify({
-          box: this.createBoxPusher(box),
-          data: this.defineIndex(data, data.index, true)
+          data,
+          box: this.createBoxPusher(box)
         })
 
         this.log('info', 'Pushing task %s', [string], box.rid)

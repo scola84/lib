@@ -1,31 +1,56 @@
 import camelCase from 'lodash/camelCase.js'
 import { Snippet } from '../snippet/snippet.js'
 
-const list = [
-  'ALL',
-  'CROSS',
-  'DELETE',
+const control = [
   'DISTINCT',
   'FROM',
   'GROUP BY',
-  'INNER',
-  'INSERT',
   'INTO',
+  'LIMIT',
+  'ORDER BY',
+  'SET',
+  'USING',
+  'WHERE'
+]
+
+const cte = [
+  'RECURSIVE',
+  'WITH'
+]
+
+const join = [
+  'CROSS',
+  'INNER',
   'JOIN',
   'LEFT',
-  'LIMIT',
   'NATURAL',
   'ON',
-  'ORDER BY',
   'OUTER',
+  'RIGHT'
+]
+
+const logic = [
+  'CASE',
+  'ELSE',
+  'END',
+  'THEN',
+  'WHEN'
+]
+
+const operation = [
+  'DELETE',
+  'INSERT',
   'REPLACE',
-  'RIGHT',
   'SELECT',
-  'SET',
-  'UPDATE',
-  'USING',
-  'WITH',
-  'WHERE'
+  'UPDATE'
+]
+
+const list = [
+  ...control,
+  ...cte,
+  ...join,
+  ...logic,
+  ...operation
 ]
 
 export default list.reduce((object, token) => {

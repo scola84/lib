@@ -1,40 +1,75 @@
 import camelCase from 'lodash/camelCase.js'
 import { Snippet } from '../snippet/snippet.js'
 
-const list = [
-  'ABS',
+const aggregation = [
   'AVG',
-  'CAST',
-  'CEIL',
+  'COUNT',
+  'MAX',
+  'MIN',
+  'STDDEV_POP',
+  'STDDEV_SAMP',
+  'SUM',
+  'VAR_POP',
+  'VAR_SAMP'
+]
+
+const control = [
+  'VALUES'
+]
+
+const logic = [
   'COALESCE',
+  'ISEMPTY',
+  'NULLIF'
+]
+
+const number = [
+  'ABS',
+  'CEIL',
+  'FLOOR',
+  'POWER',
+  'RAND',
+  'ROUND',
+  'SIGN',
+  'SQRT',
+  'TRUNCATE'
+]
+
+const string = [
   'CONCAT',
   'CONCAT_WS',
   'CONTAINS',
-  'COUNT',
-  'FLOOR',
-  'ISEMPTY',
   'LEFT',
   'LENGTH',
   'LOWER',
   'LPAD',
   'LTRIM',
-  'MAX',
-  'MIN',
-  'NULLIF',
-  'POWER',
   'RIGHT',
-  'ROUND',
   'RPAD',
   'RTRIM',
-  'STDDEV_POP',
-  'STDDEV_SAMP',
   'SUBSTRING',
-  'SUM',
   'TRIM',
-  'UPPER',
-  'VALUES',
-  'VAR_POP',
-  'VAR_SAMP'
+  'UPPER'
+]
+
+const subquery = [
+  'ALL',
+  'EXISTS',
+  'IN'
+]
+
+const type = [
+  'CAST'
+]
+
+const list = [
+  ...aggregation,
+  ...control,
+  ...logic,
+  ...number,
+  ...string,
+  ...subquery,
+  ...type
 ]
 
 export default list.reduce((object, token) => {

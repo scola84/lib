@@ -54,10 +54,8 @@ export class Slicer extends Worker {
   }
 
   merge (box, data, index) {
-    return Object.defineProperty(data, 'index', {
-      configurable: true,
-      value: index
-    })
+    data.index = index
+    return data
   }
 
   prepareBoxResolve (box, total) {

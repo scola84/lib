@@ -15,28 +15,44 @@ const alias = {
   '>=': 'gtEq'
 }
 
-const list = [
+const control = [
+  'AS',
+  'UNION'
+]
+
+const comparison = [
   '!=',
-  '*',
-  '+',
-  '-',
-  '/',
   '<',
   '<=',
   '<=>',
   '=',
   '>',
   '>=',
-  'AND',
-  'AS',
   'BETWEEN',
-  'IN',
   'IS',
-  'LIKE',
+  'LIKE'
+]
+
+const logic = [
+  'AND',
   'NOT',
   'OR',
-  'UNION',
   'XOR'
+]
+
+const math = [
+  '*',
+  '+',
+  '-',
+  '/',
+  'DIV'
+]
+
+const list = [
+  ...control,
+  ...comparison,
+  ...logic,
+  ...math
 ]
 
 export default list.reduce((object, token) => {

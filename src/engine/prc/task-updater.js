@@ -10,7 +10,7 @@ export class TaskUpdater extends SqlBuilder {
       sc.set(
         sc.eq(
           sc.id('stat_time_task_updated'),
-          sc.value(() => new Date().toISOString())
+          sc.value(() => this.date().toISO())
         ),
         sc.eq(
           sc.id('data_out'),
@@ -26,7 +26,7 @@ export class TaskUpdater extends SqlBuilder {
           sc.id('error'),
           (box, data) => {
             if ((data.error instanceof Error) === true) {
-              return sc.value(data.error)
+              return sc.value(this.error(data.error))
             }
 
             return sc.id('error')

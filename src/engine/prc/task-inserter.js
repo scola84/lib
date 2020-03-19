@@ -1,3 +1,4 @@
+import isFinite from 'lodash/isFinite.js'
 import { SqlBuilder } from '../../worker/api.js'
 
 export class TaskInserter extends SqlBuilder {
@@ -31,6 +32,10 @@ export class TaskInserter extends SqlBuilder {
         sc.id('id_task')
       )
     )
+  }
+
+  decide (box, data) {
+    return isFinite(data.id_queue) === true
   }
 
   merge (box, data, { rows: [task = {}] }) {

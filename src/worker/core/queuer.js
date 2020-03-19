@@ -1,4 +1,5 @@
 import createQueue from 'async/queue.js'
+import http from 'http'
 import isObject from 'lodash/isObject.js'
 import isPlainObject from 'lodash/isPlainObject.js'
 import isString from 'lodash/isString.js'
@@ -249,7 +250,7 @@ export class Queuer extends Worker {
 
     this.pushTask(box, data, (error) => {
       if ((error instanceof Error) === true) {
-        this.pass(box, Object.assign(data, { error }))
+        this.pass(box, Object.assign(data, { error, index: data.index }))
       } else if (data.result !== 'return') {
         if ((this._bypass instanceof Worker) === true) {
           this._bypass.callAct(box, data)
@@ -307,20 +308,23 @@ export class Queuer extends Worker {
       .del(tid)
       .exec((execError, [getResult]) => {
         if ((execError instanceof Error) === true) {
-          this.fail(box, { index, error: execError })
+          this.fail(box, Object.assign(execError, index))
           return
         }
 
         const [getError, string] = getResult
 
         if ((getError instanceof Error) === true) {
-          this.fail(box, { index, error: getError })
+          this.fail(box, Object.assign(getError, index))
           return
         }
 
         this.log('info', 'Handling result %s', [string], box.rid)
 
-        this.pass(box, this._codec.parse(string))
+        const data = this._codec.parse(string)
+        data.error = this.error(data.error)
+
+        this.pass(box, data)
       })
   }
 
@@ -381,7 +385,7 @@ export class Queuer extends Worker {
       return
     }
 
-    data.error = error
+    data.error = this.error(error, http.STATUS_CODES)
 
     const tid = data.result === 'stream'
       ? `${box.sid}:${data.index}`

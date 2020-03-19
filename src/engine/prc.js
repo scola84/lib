@@ -1,6 +1,5 @@
 import {
   Broadcaster,
-  HttpRouter,
   HttpServer,
   Queuer,
   Resolver,
@@ -19,9 +18,10 @@ import {
   RunTriggerItemSelector,
   RunTriggerRunSelector,
   ServerQueueSelector,
-  ServerResponder,
   ServerResultComposer,
-  ServerStreamer,
+  ServerResultResponder,
+  ServerResultStreamer,
+  ServerRouter,
   ServerTaskSlicer,
   TaskComposer,
   TaskInserter,
@@ -184,19 +184,19 @@ const serverResultListener = new Queuer({
   streamer: true
 })
 
-const serverResultResponder = new ServerResponder({
+const serverResultResponder = new ServerResultResponder({
   description: 'Send task results to client',
   id: 'engine-server-responder',
   name: 'queue'
 })
 
-const serverResultStreamer = new ServerStreamer({
+const serverResultStreamer = new ServerResultStreamer({
   description: 'Stream task results to client',
   id: 'engine-server-streamer',
   name: 'queue'
 })
 
-const serverRouter = new HttpRouter({
+const serverRouter = new ServerRouter({
   description: 'Route requests to queue resources',
   id: 'engine-server-router',
   name: 'queue'
@@ -255,7 +255,6 @@ serverRouter
   .connect('POST /q/p', serverTaskSlicer)
   .bypass(serverTaskResolver)
   .connect(serverQueueSelector)
-  .bypass(serverTaskResolver)
   .connect(taskTemplateSelector)
 
 serverRouter
@@ -273,7 +272,7 @@ queueTriggerRunDecider
   .connect(queueTriggerRunInserter)
   .connect(queueTriggerItemSelector)
   .connect(queueTriggerItemInserter)
-  .connect(runStatBeforeUpdater)
+  .connect(queueStatBeforeUpdater)
 
 runTrigger
   .connect(runTriggerRunSelector)
@@ -282,7 +281,7 @@ runTrigger
 runTriggerRunDecider
   .bypass(false)
   .connect(runTriggerItemSelector)
-  .connect(runStatBeforeUpdater)
+  .connect(queueStatBeforeUpdater)
 
 queueStatBeforeUpdater
   .connect(runStatBeforeUpdater)
@@ -303,6 +302,7 @@ taskUpdater
 
 broadcaster
   .connect(serverResultComposer)
+  .bypass(false)
   .connect(serverTaskResolver)
   .connect(serverResultStreamer)
   .connect(serverResultResponder)
@@ -316,3 +316,5 @@ broadcaster
   .connect(nextQueueSelector)
   .bypass(false)
   .connect(queueTriggerRunDecider)
+
+// queueTrigger.call()

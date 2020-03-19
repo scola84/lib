@@ -10,7 +10,7 @@ export class ItemUpdater extends SqlBuilder {
       sc.set(
         sc.eq(
           sc.id('stat_time_item_updated'),
-          sc.value(() => new Date().toISOString())
+          sc.value(() => this.date().toISO())
         ),
         sc.eq(
           sc.id('status'),
@@ -33,6 +33,6 @@ export class ItemUpdater extends SqlBuilder {
   }
 
   decide (box, data) {
-    return isFinite(data.id_item)
+    return isFinite(data.id_item) === true
   }
 }

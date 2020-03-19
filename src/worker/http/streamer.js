@@ -1,10 +1,6 @@
 import { HttpResponder } from './responder.js'
 
 export class HttpStreamer extends HttpResponder {
-  err (box, error) {
-    this.act(box, error)
-  }
-
   filter (box, data) {
     if (data === null) {
       return this.filterHeaders(box)

@@ -43,7 +43,7 @@ export class QueueStatAfterUpdater extends SqlBuilder {
       sc.set(
         sc.eq(
           sc.id('stat_time_queue_updated'),
-          sc.value(() => new Date().toISOString())
+          sc.value(() => this.date().toISO())
         ),
         sc.eq(
           sc.id('stat_count_run_busy'),
@@ -73,6 +73,6 @@ export class QueueStatAfterUpdater extends SqlBuilder {
   }
 
   decide (box, data) {
-    return isFinite(data.id_run)
+    return isFinite(data.id_run) === true
   }
 }

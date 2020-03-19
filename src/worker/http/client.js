@@ -1,5 +1,6 @@
 import fetch from 'node-fetch'
 import isPlainObject from 'lodash/isPlainObject.js'
+import isString from 'lodash/isString.js'
 import { Worker } from '../core/index.js'
 import { Request } from './client/message/index.js'
 
@@ -91,28 +92,23 @@ export class HttpClient extends Worker {
     })
   }
 
-  handleError (box, data, error, messageData = {}, code = 400) {
+  handleError (box, data, error, status = 400) {
     this._progress({
       loaded: 1,
       total: 1
     })
 
-    const failError = new Error(`${code} ${error.message}`.trim())
-
-    failError.code = code
-    failError.data = messageData
-    failError.original = data
-    failError.type = code
-
-    if (isPlainObject(failError.data.data) === true) {
-      failError.data = failError.data.data
+    if (isString(error) === true) {
+      this.fail(box, new Error(`${status}`))
+      return
     }
 
-    if (failError.data.type) {
-      failError.type = failError.data.type
+    if (isPlainObject(error) === true) {
+      this.fail(box, this.error(error))
+      return
     }
 
-    this.fail(box, failError)
+    this.fail(box, error)
   }
 
   handleResponse (box, data, response) {
@@ -125,13 +121,12 @@ export class HttpClient extends Worker {
 
     response.decode((decoderError, decoderData) => {
       if ((decoderError instanceof Error) === true) {
-        this.handleError(box, data, decoderError, decoderData)
+        this.handleError(box, data, decoderError)
         return
       }
 
       if (response.getStatus() >= 400) {
-        this.handleError(box, data, new Error(response.original.statusText || ''),
-          decoderData, response.getStatus())
+        this.handleError(box, data, decoderData, response.getStatus())
         return
       }
 

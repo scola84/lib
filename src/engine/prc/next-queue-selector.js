@@ -10,6 +10,7 @@ export class NextQueueSelector extends SqlBuilder {
           'queue.stat_count_run_busy',
           'queue.stat_count_run_done',
           'queue.name',
+          'queue.cleanup_after',
           'queue.previous_condition',
           'queue.trigger_condition',
           'queue.trigger_cron_expression',
@@ -56,7 +57,7 @@ export class NextQueueSelector extends SqlBuilder {
   }
 
   decide (box, data) {
-    return isFinite(data.id_run)
+    return isFinite(data.id_run) === true
   }
 
   merge (box, data, { row: queue }) {

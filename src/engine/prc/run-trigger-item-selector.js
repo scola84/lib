@@ -5,10 +5,10 @@ export class RunTriggerItemSelector extends SqlBuilder {
     return sc.query(
       sc.select(
         sc.id(
-          'queue_item.id_item',
-          'queue_item.id',
-          'queue_item.name',
-          'queue_item.type'
+          'id_item',
+          'id',
+          'name',
+          'type'
         )
       ),
       sc.from(
@@ -16,7 +16,7 @@ export class RunTriggerItemSelector extends SqlBuilder {
       ),
       sc.where(
         sc.eq(
-          sc.id('queue_item.id_run'),
+          sc.id('id_run'),
           sc.value((box, data) => data.run.id_run)
         )
       )

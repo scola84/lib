@@ -5,8 +5,7 @@ export class ServerQueueSelector extends SqlBuilder {
     return sc.query(
       sc.select(
         sc.id(
-          'id_queue',
-          'name'
+          'id_queue'
         )
       ),
       sc.from(
@@ -27,11 +26,7 @@ export class ServerQueueSelector extends SqlBuilder {
     )
   }
 
-  merge (box, data, { rows: [queue = null] }) {
-    if (queue === null) {
-      throw new Error(`404 Queue '${data.queue}' is not found`)
-    }
-
+  merge (box, data, { rows: [queue = {}] }) {
     data.id_queue = queue.id_queue
     return data
   }

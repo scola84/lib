@@ -10,7 +10,7 @@ export class RunStatAfterUpdater extends SqlBuilder {
       sc.set(
         sc.eq(
           sc.id('stat_time_run_updated'),
-          sc.value(() => new Date().toISOString())
+          sc.value(() => this.date().toISO())
         ),
         sc.eq(
           sc.id((box, data) => `stat_count_item_${data.status.toLowerCase()}`),
@@ -30,6 +30,6 @@ export class RunStatAfterUpdater extends SqlBuilder {
   }
 
   decide (box, data) {
-    return isFinite(data.id_run)
+    return isFinite(data.id_run) === true
   }
 }

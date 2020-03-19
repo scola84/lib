@@ -1,3 +1,4 @@
+import http from 'http'
 import isPlainObject from 'lodash/isPlainObject.js'
 import { Worker } from '../core/index.js'
 
@@ -32,11 +33,11 @@ export class HttpResponder extends Worker {
 
   err (box, error) {
     const { response } = box[`server.${this._name}`]
-    const match = error.message.match(/^(\d{3})/)
-    const [, code = '500'] = match || []
+    const newError = this.error(error, http.STATUS_CODES)
 
-    response.setStatus(code)
-    response.send(error)
+    response
+      .setStatus(newError.code)
+      .send(newError)
 
     this.fail(box, error)
   }

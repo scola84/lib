@@ -1,5 +1,6 @@
 import isArray from 'lodash/isArray.js'
 import isFunction from 'lodash/isFunction.js'
+import luxon from 'luxon'
 import { Cache } from './worker/cache.js'
 import { Codec } from './worker/codec.js'
 import { Formatter } from './worker/formatter.js'
@@ -298,6 +299,12 @@ export class Worker {
     return worker
   }
 
+  date (value = new Date().toISOString()) {
+    return value[0] === 'P'
+      ? luxon.Duration.fromISO(value)
+      : luxon.DateTime.fromISO(value)
+  }
+
   decide (box, data, context) {
     if (context === 'err') {
       return false
@@ -313,6 +320,29 @@ export class Worker {
     }
 
     this.fail(box, error)
+  }
+
+  error (error, map = {}) {
+    if (error === null) {
+      return null
+    }
+
+    if ((error instanceof Error) === false) {
+      return Object.assign(new Error(error.message), error)
+    }
+
+    const [,
+      code = '500', , ,
+      type = null,
+      text = ''
+    ] = error.message.match(/(\d{3})?(\s*(\[(.+)\]))?\s*(.*)/) || []
+
+    return {
+      code,
+      type,
+      data: error.data,
+      message: `${code}${type === null ? '' : ` [${type}]`} ${map[code] || text}`
+    }
   }
 
   fail (box, error) {

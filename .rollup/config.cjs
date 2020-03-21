@@ -26,7 +26,6 @@ const external = [
   'libphonenumber-js',
   'memcached',
   'messagebird',
-  'module',
   'msgpack-lite',
   'mysql',
   'node-cron',

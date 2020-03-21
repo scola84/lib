@@ -13,9 +13,9 @@ export class QueueTriggerRunInserter extends SqlBuilder {
       ).parens(),
       sc.values(
         sc.value((box, data) => data.run.id_queue),
-        sc.value((box, data) => data.run.cleanup_time)
+        sc.value((box, data) => data.queue.cleanup_time)
       ),
-      sc.returning(
+      sc.mergeInserted(
         sc.id('id_run')
       )
     )

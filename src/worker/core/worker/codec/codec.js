@@ -2,10 +2,14 @@ import isArray from 'lodash/isArray.js'
 import isFunction from 'lodash/isFunction.js'
 import isNil from 'lodash/isNil.js'
 import isObject from 'lodash/isObject.js'
+import isUndefined from 'lodash/isUndefined.js'
 import buffer from 'buffer/index.js'
+import { Loader } from '../../../../helper/index.js'
 
-export class Codec {
+export class Codec extends Loader {
   constructor (options = {}) {
+    super(options)
+
     this._type = null
     this.setType(options.type)
   }
@@ -39,9 +43,9 @@ export class Codec {
 
     let data = buffer.Buffer.concat(buffers)
 
-    data = isObject(TextDecoder) === true
-      ? new TextDecoder().decode(data)
-      : data
+    data = typeof TextDecoder === 'undefined'
+      ? data
+      : new TextDecoder().decode(data)
 
     try {
       callback(null, this.parse(data))

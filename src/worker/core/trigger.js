@@ -25,9 +25,8 @@ export class Trigger extends Worker {
   }
 
   setInterval (value = null) {
-    this.log('info', 'Setting interval to %o', [value])
-
     if (this._interval !== null) {
+      this.log('info', 'Setting interval to %o', [value])
       clearInterval(this._interval)
     }
 
@@ -43,14 +42,17 @@ export class Trigger extends Worker {
     return this
   }
 
+  setModules (value = { cron }) {
+    return super.setModules(value)
+  }
+
   getSchedule () {
     return this._schedule
   }
 
   setSchedule (value = null) {
-    this.log('info', 'Setting schedule to %o', [value])
-
     if (this._schedule !== null) {
+      this.log('info', 'Setting schedule to %o', [value])
       this._schedule.stop()
     }
 
@@ -59,7 +61,7 @@ export class Trigger extends Worker {
       return this
     }
 
-    this._schedule = cron.schedule(value, () => {
+    this._schedule = this._modules.cron.schedule(value, () => {
       this.call()
     })
 

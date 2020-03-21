@@ -1,7 +1,7 @@
 import isArray from 'lodash/isArray.js'
-import { Snippet } from '../snippet.js'
+import { SqlSnippet } from '../snippet.js'
 
-export class Order extends Snippet {
+export class Order extends SqlSnippet {
   constructor (options = {}) {
     super(options)
 
@@ -119,6 +119,6 @@ export class Order extends Snippet {
       string = this.resolveValue(box, data, this._default)
     }
 
-    return this.resolveParens(string, this._parens)
+    return this.resolveParens(string)
   }
 }

@@ -2,7 +2,7 @@ import isFinite from 'lodash/isFinite.js'
 import isString from 'lodash/isString.js'
 import { Dialect } from '../dialect.js'
 
-export class Returning extends Dialect {
+export class MergeInserted extends Dialect {
   mergeMysql (box, data, result = { rows: [] }) {
     if (isFinite(result.rows.insertId) === false) {
       return result

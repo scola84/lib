@@ -1,4 +1,3 @@
-import http from 'http'
 import isPlainObject from 'lodash/isPlainObject.js'
 import { Worker } from '../core/index.js'
 
@@ -33,7 +32,7 @@ export class HttpResponder extends Worker {
 
   err (box, error) {
     const { response } = box[`server.${this._name}`]
-    const newError = this.error(error, http.STATUS_CODES)
+    const newError = this.transformError(error)
 
     response
       .setStatus(newError.code)

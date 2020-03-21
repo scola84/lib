@@ -1,5 +1,9 @@
-export class Listener {
+import { Loader } from '../../../../helper/index.js'
+
+export class Listener extends Loader {
   constructor (options = {}) {
+    super(options)
+
     this._client = null
     this._hostname = null
 

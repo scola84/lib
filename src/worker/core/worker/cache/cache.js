@@ -1,5 +1,9 @@
-export class Cache {
+import { Loader } from '../../../../helper/index.js'
+
+export class Cache extends Loader {
   constructor (options = {}) {
+    super(options)
+
     this._client = null
     this.setClient(options.client)
   }

@@ -1,3 +1,4 @@
+import isError from 'lodash/isError.js'
 import isFunction from 'lodash/isFunction.js'
 import { Action } from '../action.js'
 
@@ -39,7 +40,7 @@ export class Call extends Action {
     }
 
     handlers[this._name](box, data, (error) => {
-      if ((error instanceof Error) === true) {
+      if (isError(error) === true) {
         this.fail(box, error)
       } else {
         this.pass(box, data)

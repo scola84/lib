@@ -1,98 +1,33 @@
 import isFunction from 'lodash/isFunction.js'
 import isNil from 'lodash/isNil.js'
+import { Snippet } from '../../../../helper/index.js'
 
-const snippets = new Map()
-
-export class Snippet {
+export class SqlSnippet extends Snippet {
   constructor (options = {}) {
-    this._args = null
+    super(options)
+
     this._client = null
-    this._id = null
     this._infix = null
-    this._name = null
-    this._origin = null
     this._parens = null
-    this._parent = null
-    this._permit = null
     this._postfix = null
     this._prefix = null
 
-    this.setArgs(options.args)
     this.setClient(options.client)
-    this.setId(options.id)
     this.setInfix(options.infix)
-    this.setName(options.name)
-    this.setOrigin(options.origin)
     this.setParens(options.parens)
-    this.setParent(options.parent)
-    this.setPermit(options.permit)
     this.setPostfix(options.postfix)
     this.setPrefix(options.prefix)
   }
 
-  clone () {
-    const options = this.getOptions()
-
-    options.args = options.args.map((snippet) => {
-      return (snippet instanceof Snippet) === true
-        ? snippet.clone()
-        : snippet
-    })
-
-    return new this.constructor(options)
-  }
-
   getOptions () {
     return {
-      args: this._args,
+      ...super.getOptions(),
       client: this._client,
-      id: this._id,
       infix: this._infix,
-      name: this._name,
-      origin: this._origin,
       parens: this._parens,
-      parent: this._parent,
-      permit: this._permit,
       postfix: this._postfix,
       prefix: this._prefix
     }
-  }
-
-  getArg (index) {
-    return this._args[index]
-  }
-
-  setArg (index, value) {
-    this.args[index] = value
-    return this
-  }
-
-  arg (index, value) {
-    return this.setArg(index, value)
-  }
-
-  getArgs () {
-    return this._args
-  }
-
-  setArgs (value = []) {
-    this._args = value
-
-    for (let i = 0; i < this._args.length; i += 1) {
-      if ((this._args[i] instanceof Snippet) === true) {
-        this._args[i].setParent(this)
-      }
-    }
-
-    return this
-  }
-
-  append (...args) {
-    return this.setArgs(this._args.concat(args))
-  }
-
-  args (value) {
-    return this.setArgs(value)
   }
 
   getClient () {
@@ -108,20 +43,6 @@ export class Snippet {
     return this.setClient(value)
   }
 
-  getId () {
-    return this._id
-  }
-
-  setId (value = snippets.size) {
-    snippets.set(value, this)
-    this._id = value
-    return this
-  }
-
-  id (value) {
-    return this.setId(value)
-  }
-
   getInfix () {
     return this._infix
   }
@@ -135,32 +56,6 @@ export class Snippet {
     return this.setInfix(value)
   }
 
-  getName () {
-    return this._name
-  }
-
-  setName (value = null) {
-    this._name = value
-    return this
-  }
-
-  name (value) {
-    return this.setName(value)
-  }
-
-  getOrigin () {
-    return this._origin
-  }
-
-  setOrigin (value = null) {
-    this._origin = value
-    return this
-  }
-
-  origin (value) {
-    return this.setOrigin(value)
-  }
-
   getParens () {
     return this._parens
   }
@@ -172,32 +67,6 @@ export class Snippet {
 
   parens () {
     return this.setParens(true)
-  }
-
-  getParent () {
-    return this._parent
-  }
-
-  setParent (value = null) {
-    this._parent = value
-    return this
-  }
-
-  parent (value) {
-    return this.setParent(value)
-  }
-
-  getPermit () {
-    return this._permit
-  }
-
-  setPermit (value = null) {
-    this._permit = value
-    return this
-  }
-
-  permit (value) {
-    return this.setPermit(value)
   }
 
   getPostfix () {
@@ -234,26 +103,6 @@ export class Snippet {
     return left + right
   }
 
-  find (compare) {
-    const result = []
-
-    if (compare(this) === true) {
-      result.push(this)
-    }
-
-    let snippet = null
-
-    for (let i = 0; i < this._args.length; i += 1) {
-      snippet = this._args[i]
-
-      if ((snippet instanceof Snippet) === true) {
-        result.push(...snippet.find(compare))
-      }
-    }
-
-    return result
-  }
-
   hasPermission (box, data) {
     return this.resolveValue(box, data, this._permit)
   }
@@ -269,7 +118,7 @@ export class Snippet {
     for (let i = 0; i < this._args.length; i += 1) {
       arg = this._args[i]
 
-      if ((arg instanceof Snippet) === true) {
+      if ((arg instanceof SqlSnippet) === true) {
         merged = arg.merge(box, data, merged)
       }
     }
@@ -319,11 +168,11 @@ export class Snippet {
       count += 1
     }
 
-    return this.resolveParens(string, this._parens)
+    return this.resolveParens(string)
   }
 
-  resolveParens (value, addParens) {
-    if (value !== '' && addParens === true) {
+  resolveParens (value) {
+    if (this._parens === true) {
       return `(${value})`
     }
 
@@ -343,7 +192,7 @@ export class Snippet {
       return 'NULL'
     }
 
-    if ((value instanceof Snippet) === true) {
+    if ((value instanceof SqlSnippet) === true) {
       return this.resolveValue(box, data, value.resolve(box, data))
     }
 
@@ -354,5 +203,3 @@ export class Snippet {
     return value
   }
 }
-
-Snippet.snippets = snippets

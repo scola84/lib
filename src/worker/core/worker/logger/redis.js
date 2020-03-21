@@ -1,8 +1,12 @@
-import RedisClient from 'ioredis'
+import Redis from 'ioredis'
 import util from 'util'
 import { Logger } from './logger.js'
 
 export class RedisLogger extends Logger {
+  setModules (value = { Redis }) {
+    return super.setModules(value)
+  }
+
   setClient (value = null) {
     if (this._client !== null) {
       this._client.quit()
@@ -13,7 +17,7 @@ export class RedisLogger extends Logger {
       return this
     }
 
-    this._client = new RedisClient(value)
+    this._client = new this._modules.Redis(value)
     return this
   }
 

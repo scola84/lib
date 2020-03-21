@@ -1,5 +1,9 @@
-export class Client {
+import { Loader } from '../../../../helper/index.js'
+
+export class Client extends Loader {
   constructor (options = {}) {
+    super(options)
+
     this._origin = null
     this._transport = null
 

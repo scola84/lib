@@ -1,5 +1,10 @@
-export class Logger {
+import isError from 'lodash/isError.js'
+import { Loader } from '../../../../helper/index.js'
+
+export class Logger extends Loader {
   constructor (options = {}) {
+    super(options)
+
     this._client = null
     this._ids = null
     this._types = null
@@ -49,7 +54,7 @@ export class Logger {
       return
     }
 
-    if (args[0] instanceof Error) {
+    if (isError(args[0]) === true) {
       if (args[0].logged === true) {
         return
       }

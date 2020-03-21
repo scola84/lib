@@ -1,8 +1,13 @@
+import isError from 'lodash/isError.js'
 import isString from 'lodash/isString.js'
 import nodemailer from 'nodemailer'
 import { Client } from './client.js'
 
 export class Smtp extends Client {
+  setModules (value = { nodemailer }) {
+    return super.setModules(value)
+  }
+
   setTransport (value = null) {
     if (this._transport !== null) {
       this._transport.close()
@@ -13,7 +18,7 @@ export class Smtp extends Client {
       return this
     }
 
-    this._transport = nodemailer.createTransport(value)
+    this._transport = this._modules.nodemailer.createTransport(value)
     return this
   }
 
@@ -39,13 +44,13 @@ export class Smtp extends Client {
 
   sendMessage (message, callback) {
     this.connectClient((connectError, connection) => {
-      if ((connectError instanceof Error) === true) {
+      if (isError(connectError) === true) {
         callback(connectError)
         return
       }
 
       connection.sendMail(this.prepareMessage(message), (sendError, result) => {
-        if ((sendError instanceof Error) === true) {
+        if (isError(sendError) === true) {
           callback(sendError)
           return
         }

@@ -1,5 +1,5 @@
 import camelCase from 'lodash/camelCase.js'
-import { Snippet } from '../snippet/snippet.js'
+import { SqlSnippet } from '../snippet/snippet.js'
 
 const alias = {
   '!=': 'notEq',
@@ -59,7 +59,7 @@ export default list.reduce((object, token) => {
   return {
     ...object,
     [camelCase(alias[token] || token)]: {
-      object: Snippet,
+      object: SqlSnippet,
       options: {
         infix: ` ${token} `,
         name: alias[token] || token

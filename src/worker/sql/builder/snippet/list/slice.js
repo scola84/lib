@@ -1,6 +1,6 @@
-import { Snippet } from '../snippet.js'
+import { SqlSnippet } from '../snippet.js'
 
-export class Slice extends Snippet {
+export class Slice extends SqlSnippet {
   constructor (options = {}) {
     super(options)
 
@@ -73,6 +73,6 @@ export class Slice extends Snippet {
       throw new Error(`400 [slice] Slice parameters '${count},${offset}' are invalid`)
     }
 
-    return this.resolveParens(`${count} OFFSET ${offset}`, this._parens)
+    return this.resolveParens(`${count} OFFSET ${offset}`)
   }
 }

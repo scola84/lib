@@ -4,7 +4,7 @@ import isArray from 'lodash/isArray.js'
 import isNil from 'lodash/isNil.js'
 import isUndefined from 'lodash/isUndefined.js'
 import merge from 'lodash/merge.js'
-import { randomBytes } from 'crypto'
+import crypto from 'crypto'
 import { Codec } from './codec.js'
 
 const coptions = {
@@ -21,6 +21,10 @@ export class FormDataCodec extends Codec {
     return coptions
   }
 
+  setModules (value = { crypto, Busboy, fs }) {
+    return super.setModules(value)
+  }
+
   setType (value = 'multipart/form-data') {
     return super.setType(value)
   }
@@ -34,7 +38,7 @@ export class FormDataCodec extends Codec {
     let formdata = null
 
     try {
-      formdata = new Busboy(options)
+      formdata = new this._modules.Busboy(options)
     } catch (error) {
       callback(new Error(`400 [form-data] ${error.message}`))
       return
@@ -51,10 +55,10 @@ export class FormDataCodec extends Codec {
         name,
         type,
         size: 0,
-        tmppath: coptions.tmpDir + randomBytes(32).toString('hex')
+        tmppath: coptions.tmpDir + this._modules.crypto.randomBytes(32).toString('hex')
       }
 
-      const target = fs.createWriteStream(file.tmppath)
+      const target = this._modules.fs.createWriteStream(file.tmppath)
 
       stream.on('data', (chunk) => {
         file.size += chunk.length

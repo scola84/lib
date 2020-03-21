@@ -1,4 +1,6 @@
+import isError from 'lodash/isError.js'
 import twilio from 'twilio'
+import { Loader } from '../../../../../helper/index.js'
 
 export class Twilio {
   constructor (options = {}) {
@@ -20,8 +22,12 @@ export class Twilio {
       password
     ] = value.match(/^sms:\/\/(.+):(.+)@twilio/) || []
 
-    this._client = twilio(username, password)
+    this._client = this._modules.twilio(username, password)
     return this
+  }
+
+  setModules (value = { twilio }) {
+    return super.setModules(value)
   }
 
   send (message, callback) {
@@ -32,7 +38,7 @@ export class Twilio {
     }
 
     this._client.messages.create(sms, (error, result) => {
-      if ((error instanceof Error) === true) {
+      if (isError(error) === true) {
         callback(error)
         return
       }

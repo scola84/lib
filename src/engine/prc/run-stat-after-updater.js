@@ -10,7 +10,7 @@ export class RunStatAfterUpdater extends SqlBuilder {
       sc.set(
         sc.eq(
           sc.id('stat_time_run_updated'),
-          sc.value(() => this.date().toISO())
+          sc.now()
         ),
         sc.eq(
           sc.id((box, data) => `stat_count_item_${data.status.toLowerCase()}`),

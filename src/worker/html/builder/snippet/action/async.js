@@ -1,3 +1,4 @@
+import isError from 'lodash/isError.js'
 import parallel from 'async/parallel.js'
 import series from 'async/series.js'
 import { Action } from '../action.js'
@@ -56,7 +57,7 @@ export class Async extends Action {
     }
 
     this._handler(fn, (error, results) => {
-      if ((error instanceof Error) === true) {
+      if (isError(error) === true) {
         this.fail(box, error)
       } else {
         this.pass(box, fn.length === 1 ? results[0] : results)

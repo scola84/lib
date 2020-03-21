@@ -1,3 +1,4 @@
+import isError from 'lodash/isError.js'
 import isString from 'lodash/isString.js'
 import { Client } from './client.js'
 import * as sms from './sms/index.js'
@@ -29,13 +30,13 @@ export class Sms extends Client {
 
   sendMessage (message, callback) {
     this.connectClient((connectError, connection) => {
-      if ((connectError instanceof Error) === true) {
+      if (isError(connectError) === true) {
         callback(connectError)
         return
       }
 
       connection.send(this.prepareMessage(message), (sendError, result) => {
-        if ((sendError instanceof Error) === true) {
+        if (isError(sendError) === true) {
           callback(sendError)
           return
         }

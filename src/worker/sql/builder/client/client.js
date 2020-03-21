@@ -1,11 +1,14 @@
+import { Loader } from '../../../../helper/index.js'
 import { Builder } from '../../../core/index.js'
 
-export class Client {
+export class Client extends Loader {
   static attachFactories (objects) {
     Reflect.apply(Builder.attachFactories, this, [objects])
   }
 
   constructor (options = {}) {
+    super(options)
+
     this._origin = null
     this._pool = null
 

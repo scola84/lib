@@ -1,4 +1,4 @@
-import MemcachedClient from 'memcached'
+import Memcached from 'memcached'
 import { Cache } from './cache.js'
 
 export class MemcachedCache extends Cache {
@@ -12,8 +12,12 @@ export class MemcachedCache extends Cache {
       return this
     }
 
-    this._client = new MemcachedClient(value)
+    this._client = new this._modules.Memcached(value)
     return this
+  }
+
+  setModules (value = { Memcached }) {
+    return super.setModules(value)
   }
 
   add (key, value, callback = () => {}, ttl = null) {

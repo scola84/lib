@@ -1,7 +1,11 @@
+import isError from 'lodash/isError.js'
 import messagebird from 'messagebird'
+import { Loader } from '../../../../../helper/index.js'
 
-export class Messagebird {
+export class Messagebird extends Loader {
   constructor (options = {}) {
+    super(options)
+
     this._client = null
     this.setClient(options.client)
   }
@@ -19,8 +23,12 @@ export class Messagebird {
       key
     ] = value.match(/^sms:\/\/(.+):(.+)@messagebird/) || []
 
-    this._client = messagebird(key)
+    this._client = this._modules.messagebird(key)
     return this
+  }
+
+  setModules (value = { messagebird }) {
+    return super.setModules(value)
   }
 
   send (message, callback) {
@@ -33,7 +41,7 @@ export class Messagebird {
     }
 
     this._client.messages.create(sms, (error, result) => {
-      if ((error instanceof Error) === true) {
+      if (isError(error) === true) {
         callback(error)
         return
       }

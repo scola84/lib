@@ -1,8 +1,8 @@
 import isFunction from 'lodash/isFunction.js'
 import isNil from 'lodash/isNil.js'
-import { Snippet } from './snippet.js'
+import { SqlSnippet } from './snippet.js'
 
-export class Dialect extends Snippet {
+export class Dialect extends SqlSnippet {
   merge (box, data, result) {
     return this.mergeInner(box, data,
       this[`merge${this._origin.constructor.name}`](box, data, result))
@@ -37,7 +37,7 @@ export class Dialect extends Snippet {
       return 'NULL'
     }
 
-    if ((value instanceof Snippet) === true) {
+    if ((value instanceof SqlSnippet) === true) {
       return this.resolveValue(box, data, value.resolve(box, data))
     }
 

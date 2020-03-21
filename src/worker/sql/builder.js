@@ -1,3 +1,4 @@
+import isError from 'lodash/isError.js'
 import isObject from 'lodash/isObject.js'
 import { Builder } from '../core/index.js'
 import map from './builder/map/client.js'
@@ -107,7 +108,7 @@ export class SqlBuilder extends Builder {
     const query = this.resolveQuery(box, data, client)
 
     client[`${this._result}Query`](box, data, query, (error, result) => {
-      if ((error instanceof Error) === true) {
+      if (isError(error) === true) {
         this.fail(box, error)
         return
       }

@@ -10,7 +10,7 @@ export class ItemUpdater extends SqlBuilder {
       sc.set(
         sc.eq(
           sc.id('stat_time_item_updated'),
-          sc.value(() => this.date().toISO())
+          sc.now()
         ),
         sc.eq(
           sc.id('status'),

@@ -1,9 +1,14 @@
+import isError from 'lodash/isError.js'
 import isObject from 'lodash/isObject.js'
 import mysql from 'mysql'
 import { Client } from './client.js'
 import map from '../map/index.js'
 
 export class Mysql extends Client {
+  setModules (value = { mysql }) {
+    return super.setModules(value)
+  }
+
   setPool (value = null) {
     if (this._pool !== null) {
       this._pool.end()
@@ -14,7 +19,7 @@ export class Mysql extends Client {
       return this
     }
 
-    this._pool = mysql.createPool(value)
+    this._pool = this._modules.mysql.createPool(value)
     return this
   }
 
@@ -25,7 +30,7 @@ export class Mysql extends Client {
     }
 
     this._pool.getConnection((error, poolConnection) => {
-      if ((error instanceof Error) === true) {
+      if (isError(error) === true) {
         callback(error)
         return
       }
@@ -58,10 +63,10 @@ export class Mysql extends Client {
 
     query
       .getParent()
-      .log('info', 'Executing MySQL query %s', [string], box.rid)
+      .log('info', 'Executing MySQL query %o', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if ((connectError instanceof Error) === true) {
+      if (isError(connectError) === true) {
         callback(connectError)
         return
       }
@@ -86,10 +91,10 @@ export class Mysql extends Client {
 
     query
       .getParent()
-      .log('info', 'Streaming MySQL query %s', [string], box.rid)
+      .log('info', 'Streaming MySQL query %o', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if ((connectError instanceof Error) === true) {
+      if (isError(connectError) === true) {
         callback(connectError)
         return
       }

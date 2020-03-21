@@ -9,13 +9,13 @@ export class RunStatBeforeUpdater extends SqlBuilder {
       sc.set(
         sc.eq(
           sc.id('stat_time_run_updated'),
-          sc.value(() => this.date().toISO())
+          sc.now()
         ),
         sc.eq(
           sc.id('stat_time_item_first'),
           (box, data) => {
             if (data.first === true) {
-              return sc.value(this.date().toISO())
+              return sc.now()
             }
 
             return sc.id('stat_time_item_first')
@@ -25,7 +25,7 @@ export class RunStatBeforeUpdater extends SqlBuilder {
           sc.id('stat_time_item_last'),
           (box, data) => {
             if (data.last === true) {
-              return sc.value(this.date().toISO())
+              return sc.now()
             }
 
             return sc.id('stat_time_item_last')

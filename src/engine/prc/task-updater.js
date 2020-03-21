@@ -1,3 +1,4 @@
+import isError from 'lodash/isError.js'
 import isPlainObject from 'lodash/isPlainObject.js'
 import { SqlBuilder } from '../../worker/api.js'
 
@@ -10,7 +11,7 @@ export class TaskUpdater extends SqlBuilder {
       sc.set(
         sc.eq(
           sc.id('stat_time_task_updated'),
-          sc.value(() => this.date().toISO())
+          sc.now()
         ),
         sc.eq(
           sc.id('data_out'),
@@ -25,8 +26,8 @@ export class TaskUpdater extends SqlBuilder {
         sc.eq(
           sc.id('error'),
           (box, data) => {
-            if ((data.error instanceof Error) === true) {
-              return sc.value(this.error(data.error))
+            if (isError(data.error) === true) {
+              return sc.value(this.transformError(data.error))
             }
 
             return sc.id('error')
@@ -53,7 +54,7 @@ export class TaskUpdater extends SqlBuilder {
   }
 
   decide (box, data) {
-    data.status = (data.error instanceof Error) === true
+    data.status = isError(data.error) === true
       ? 'FAILURE'
       : 'SUCCESS'
 

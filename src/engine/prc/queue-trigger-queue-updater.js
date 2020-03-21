@@ -11,13 +11,13 @@ export class QueueTriggerQueueUpdater extends SqlBuilder {
       sc.set(
         sc.eq(
           sc.id('stat_time_queue_updated'),
-          sc.value(() => this.date().toISO())
+          sc.now()
         ),
         sc.eq(
           sc.id('trigger_time'),
           sc.value((box, data) => {
             return cron
-              .parseExpression(data.queue.trigger_cron_expression)
+              .parseExpression(data.queue.trigger_schedule)
               .next()
               .toString()
           })
@@ -33,6 +33,6 @@ export class QueueTriggerQueueUpdater extends SqlBuilder {
   }
 
   decide (box, data) {
-    return isString(data.queue.trigger_cron_expression) === true
+    return isString(data.queue.trigger_schedule) === true
   }
 }

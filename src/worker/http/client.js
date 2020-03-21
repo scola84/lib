@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import isError from 'lodash/isError.js'
 import isPlainObject from 'lodash/isPlainObject.js'
 import isString from 'lodash/isString.js'
 import { Worker } from '../core/index.js'
@@ -50,6 +51,10 @@ export class HttpClient extends Worker {
     this.setProgress(options.progress)
   }
 
+  setModules (value = { fetch, Request }) {
+    return super.setModules(value)
+  }
+
   getProgress () {
     return this._progress
   }
@@ -67,7 +72,9 @@ export class HttpClient extends Worker {
       body: null
     }
 
-    const request = new Request(new fetch.Request(url, init))
+    const request = new this._modules.Request(
+      new this._modules.fetch.Request(url, init)
+    )
 
     this.log('info', 'Handling request %o %o %o', [
       request.getMethod(),
@@ -83,7 +90,7 @@ export class HttpClient extends Worker {
     request.parent = this
 
     request.send(body, (requestError, response) => {
-      if ((requestError instanceof Error) === true) {
+      if (isError(requestError) === true) {
         this.handleError(box, data, requestError)
         return
       }
@@ -104,7 +111,7 @@ export class HttpClient extends Worker {
     }
 
     if (isPlainObject(error) === true) {
-      this.fail(box, this.error(error))
+      this.fail(box, this.transformError(error))
       return
     }
 
@@ -120,7 +127,7 @@ export class HttpClient extends Worker {
     response.parent = this
 
     response.decode((decoderError, decoderData) => {
-      if ((decoderError instanceof Error) === true) {
+      if (isError(decoderError) === true) {
         this.handleError(box, data, decoderError)
         return
       }

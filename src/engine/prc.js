@@ -1,12 +1,17 @@
 import {
   Broadcaster,
+  HttpRouter,
   HttpServer,
   Queuer,
   Resolver,
+  Slicer,
   Trigger
 } from '../worker/api.js'
 
 import {
+  CleanupTriggerItemDeleter,
+  CleanupTriggerRunDeleter,
+  CleanupTriggerTaskDeleter,
   ItemUpdater,
   NextQueueSelector,
   NextTaskSlicer,
@@ -21,23 +26,51 @@ import {
   ServerResultComposer,
   ServerResultResponder,
   ServerResultStreamer,
-  ServerRouter,
-  ServerTaskSlicer,
+  ServerTaskFilter,
   TaskComposer,
   TaskInserter,
-  TaskTemplateSelector,
+  TaskMerger,
   TaskUpdater,
   QueueTriggerItemInserter,
   QueueTriggerItemSelector,
   QueueTriggerQueueSelector,
   QueueTriggerQueueUpdater,
-  QueueTriggerRunInserter
+  QueueTriggerRunInserter,
+  TimeoutTriggerItemUpdater,
+  TimeoutTriggerQueueUpdater,
+  TimeoutTriggerRunUpdater,
+  TimeoutTriggerTaskSelector,
+  TimeoutTriggerTaskUpdater
 } from './prc/index.js'
 
 const broadcaster = new Broadcaster({
   description: 'Broadcast task results',
   id: 'engine-broadcaster',
   resolve: false
+})
+
+const cleanupTrigger = new Trigger({
+  description: 'Trigger cleanup',
+  id: 'engine-cleanup-trigger',
+  schedule: process.env.ENGINE_CLEANUP_TRIGGER_SCHEDULE
+})
+
+const cleanupTriggerRunDeleter = new CleanupTriggerRunDeleter({
+  description: 'Delete runs after cleanup trigger',
+  id: 'engine-cleanup-run-deleter',
+  client: process.env.ENGINE_DATABASE_CLIENT
+})
+
+const cleanupTriggerItemDeleter = new CleanupTriggerItemDeleter({
+  description: 'Delete items after cleanup trigger',
+  id: 'engine-cleanup-item-deleter',
+  client: process.env.ENGINE_DATABASE_CLIENT
+})
+
+const cleanupTriggerTaskDeleter = new CleanupTriggerTaskDeleter({
+  description: 'Delete task after cleanup trigger',
+  id: 'engine-cleanup-task-deleter',
+  client: process.env.ENGINE_DATABASE_CLIENT
 })
 
 const itemUpdater = new ItemUpdater({
@@ -49,6 +82,7 @@ const itemUpdater = new ItemUpdater({
 const nextQueueSelector = new NextQueueSelector({
   description: 'Select queues to run after task execution',
   id: 'engine-next-queue-selector',
+  cleanup: process.env.ENGINE_QUEUE_CLEANUP,
   client: process.env.ENGINE_DATABASE_CLIENT,
   result: 'stream'
 })
@@ -87,7 +121,7 @@ const queueTriggerItemSelector = new QueueTriggerItemSelector({
   description: 'Select items for run after queue trigger',
   id: 'engine-queue-trigger-item-selector',
   client: process.env.ENGINE_DATABASE_CLIENT,
-  name: 'queue',
+  name: 'engine',
   result: 'stream',
   throttle: true
 })
@@ -95,6 +129,7 @@ const queueTriggerItemSelector = new QueueTriggerItemSelector({
 const queueTriggerQueueSelector = new QueueTriggerQueueSelector({
   description: 'Select queues to run after queue trigger',
   id: 'engine-queue-trigger-queue-selector',
+  cleanup: process.env.ENGINE_QUEUE_CLEANUP,
   client: process.env.ENGINE_DATABASE_CLIENT,
   regexp: process.env.ENGINE_QUEUE_TRIGGER_REGEXP,
   result: 'stream'
@@ -144,7 +179,7 @@ const runTriggerItemSelector = new RunTriggerItemSelector({
   description: 'Select items for run after run trigger',
   id: 'engine-run-trigger-item-selector',
   client: process.env.ENGINE_DATABASE_CLIENT,
-  name: 'queue',
+  name: 'engine',
   result: 'stream',
   throttle: true
 })
@@ -160,7 +195,7 @@ const runTriggerRunSelector = new RunTriggerRunSelector({
 const server = new HttpServer({
   description: 'Serve queue resources',
   id: 'engine-server',
-  name: 'queue',
+  name: 'engine',
   server: process.env.ENGINE_HTTP_SERVER,
   throttle: true
 })
@@ -187,32 +222,37 @@ const serverResultListener = new Queuer({
 const serverResultResponder = new ServerResultResponder({
   description: 'Send task results to client',
   id: 'engine-server-responder',
-  name: 'queue'
+  name: 'engine'
 })
 
 const serverResultStreamer = new ServerResultStreamer({
   description: 'Stream task results to client',
   id: 'engine-server-streamer',
-  name: 'queue'
+  name: 'engine'
 })
 
-const serverRouter = new ServerRouter({
+const serverRouter = new HttpRouter({
   description: 'Route requests to queue resources',
   id: 'engine-server-router',
-  name: 'queue'
+  name: 'engine'
+})
+
+const serverTaskFilter = new ServerTaskFilter({
+  description: 'Filter tasks from request',
+  id: 'engine-server-task-filter'
 })
 
 const serverTaskResolver = new Resolver({
   description: 'Resolve task slices',
   id: 'engine-server-task-resolver',
   collect: true,
-  name: 'queue'
+  name: 'engine'
 })
 
-const serverTaskSlicer = new ServerTaskSlicer({
+const serverTaskSlicer = new Slicer({
   description: 'Slice tasks from request',
   id: 'engine-server-task-slicer',
-  name: 'queue'
+  name: 'engine'
 })
 
 const taskComposer = new TaskComposer({
@@ -226,20 +266,22 @@ const taskInserter = new TaskInserter({
   client: process.env.ENGINE_DATABASE_CLIENT
 })
 
+const taskMerger = new TaskMerger({
+  description: 'Merge task settings',
+  id: 'engine-task-merger',
+  cleanup: process.env.ENGINE_QUEUE_CLEANUP,
+  client: process.env.ENGINE_DATABASE_CLIENT,
+  timeout: process.env.ENGINE_QUEUE_TIMEOUT
+})
+
 const taskPusher = new Queuer({
   description: 'Push task',
   id: 'engine-task-pusher',
   boxes: server.getBoxes(),
   client: process.env.ENGINE_QUEUER_CLIENT,
   highWaterMark: process.env.ENGINE_HIGH_WATER_MARK,
-  name: 'queue',
+  name: 'engine',
   pusher: true
-})
-
-const taskTemplateSelector = new TaskTemplateSelector({
-  description: 'Select task template',
-  id: 'engine-task-template-selector',
-  client: process.env.ENGINE_DATABASE_CLIENT
 })
 
 const taskUpdater = new TaskUpdater({
@@ -248,19 +290,54 @@ const taskUpdater = new TaskUpdater({
   client: process.env.ENGINE_DATABASE_CLIENT
 })
 
-server
-  .connect(serverRouter)
+const timeoutTrigger = new Trigger({
+  description: 'Trigger timeout',
+  id: 'engine-timeout-trigger',
+  schedule: process.env.ENGINE_TIMEOUT_TRIGGER_SCHEDULE
+})
 
-serverRouter
-  .connect('POST /q/p', serverTaskSlicer)
-  .bypass(serverTaskResolver)
-  .connect(serverQueueSelector)
-  .connect(taskTemplateSelector)
+const timeoutTriggerTaskSelector = new TimeoutTriggerTaskSelector({
+  description: 'Select tasks to be timed out',
+  id: 'engine-timeout-trigger-task-selector',
+  client: process.env.ENGINE_DATABASE_CLIENT,
+  result: 'stream'
+})
 
-serverRouter
-  .connect('GET /q/r', serverResultListener)
-  .bypass(serverResultStreamer)
-  .connect(taskUpdater)
+const timeoutTriggerTaskUpdater = new TimeoutTriggerTaskUpdater({
+  description: 'Update task to be timed out',
+  id: 'engine-timeout-trigger-task-updater',
+  client: process.env.ENGINE_DATABASE_CLIENT
+})
+
+const timeoutTriggerItemUpdater = new TimeoutTriggerItemUpdater({
+  description: 'Update item after task timeout',
+  id: 'engine-timeout-trigger-item-updater',
+  client: process.env.ENGINE_DATABASE_CLIENT
+})
+
+const timeoutTriggerRunUpdater = new TimeoutTriggerRunUpdater({
+  description: 'Update run after task timeout',
+  id: 'engine-timeout-trigger-run-updater',
+  client: process.env.ENGINE_DATABASE_CLIENT
+})
+
+const timeoutTriggerQueueUpdater = new TimeoutTriggerQueueUpdater({
+  description: 'Update queue after task timeout',
+  id: 'engine-timeout-trigger-queue-updater',
+  client: process.env.ENGINE_DATABASE_CLIENT
+})
+
+cleanupTrigger
+  .connect(cleanupTriggerRunDeleter)
+  .connect(cleanupTriggerItemDeleter)
+  .connect(cleanupTriggerTaskDeleter)
+
+timeoutTrigger
+  .connect(timeoutTriggerTaskSelector)
+  .connect(timeoutTriggerTaskUpdater)
+  .connect(timeoutTriggerItemUpdater)
+  .connect(timeoutTriggerRunUpdater)
+  .connect(timeoutTriggerQueueUpdater)
 
 queueTrigger
   .connect(queueTriggerQueueSelector)
@@ -283,12 +360,28 @@ runTriggerRunDecider
   .connect(runTriggerItemSelector)
   .connect(queueStatBeforeUpdater)
 
+server
+  .connect(serverRouter)
+
+serverRouter
+  .connect('POST /q/p', serverTaskFilter)
+  .bypass(serverResultResponder)
+  .connect(serverTaskSlicer)
+  .bypass(serverTaskResolver)
+  .connect(serverQueueSelector)
+  .connect(taskMerger)
+
+serverRouter
+  .connect('GET /q/r', serverResultListener)
+  .bypass(serverResultStreamer)
+  .connect(taskUpdater)
+
 queueStatBeforeUpdater
   .connect(runStatBeforeUpdater)
   .connect(taskComposer)
-  .connect(taskTemplateSelector)
+  .connect(taskMerger)
 
-taskTemplateSelector
+taskMerger
   .connect(taskInserter)
   .connect(taskPusher)
   .bypass(serverResultComposer)
@@ -310,11 +403,9 @@ broadcaster
 broadcaster
   .connect(nextTaskSlicer)
   .bypass(false)
-  .connect(taskTemplateSelector)
+  .connect(taskMerger)
 
 broadcaster
   .connect(nextQueueSelector)
   .bypass(false)
   .connect(queueTriggerRunDecider)
-
-// queueTrigger.call()

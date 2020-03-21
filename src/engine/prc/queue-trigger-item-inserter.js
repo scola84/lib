@@ -11,6 +11,7 @@ export class QueueTriggerItemInserter extends SqlBuilder {
       sc.id(
         'id_queue',
         'id_run',
+        'cleanup_time',
         'id',
         'name',
         'type'
@@ -18,11 +19,12 @@ export class QueueTriggerItemInserter extends SqlBuilder {
       sc.values(
         sc.value((box, data) => data.queue.id_queue),
         sc.value((box, data) => data.run.id_run),
+        sc.value((box, data) => data.queue.cleanup_time),
         sc.value((box, data) => data.item.id),
         sc.value((box, data) => data.item.name),
         sc.value((box, data) => data.item.type)
       ),
-      sc.returning(
+      sc.mergeInserted(
         sc.id('id_item')
       )
     )

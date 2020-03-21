@@ -12,6 +12,7 @@ export class TaskInserter extends SqlBuilder {
         'id_item',
         'id_queue',
         'id_run',
+        'cleanup_time',
         'data_in',
         'hash',
         'name',
@@ -22,13 +23,14 @@ export class TaskInserter extends SqlBuilder {
         sc.value((box, data) => data.id_item),
         sc.value((box, data) => data.id_queue),
         sc.value((box, data) => data.id_run),
+        sc.value((box, data) => data.cleanup_time),
         sc.value((box, data) => data.data_in),
         sc.value((box, data) => data.hash),
         sc.value((box, data) => data.name),
         sc.value((box, data) => data.settings),
         sc.value((box, data) => data.timeout_time)
       ),
-      sc.returning(
+      sc.mergeInserted(
         sc.id('id_task')
       )
     )

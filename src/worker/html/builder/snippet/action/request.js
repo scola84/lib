@@ -1,3 +1,4 @@
+import isError from 'lodash/isError.js'
 import isString from 'lodash/isString.js'
 import { HttpClient } from '../../../../http/index.js'
 import { Action } from '../action.js'
@@ -126,7 +127,7 @@ export class Request extends Action {
   }
 
   resolveResponse (box, error, data) {
-    if ((error instanceof Error) === true) {
+    if (isError(error) === true) {
       this.resolveError(box, error, data)
       return
     }

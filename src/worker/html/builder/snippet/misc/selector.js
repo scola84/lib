@@ -1,7 +1,7 @@
 import isFunction from 'lodash/isFunction.js'
-import { Snippet } from '../snippet.js'
+import { HtmlSnippet } from '../snippet.js'
 
-export class Selector extends Snippet {
+export class Selector extends HtmlSnippet {
   find (compare) {
     const snippets = this.resolve(null)
     let result = []

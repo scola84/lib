@@ -1,10 +1,10 @@
+import crypto from 'crypto'
 import createQueue from 'async/queue.js'
-import http from 'http'
+import isError from 'lodash/isError.js'
 import isObject from 'lodash/isObject.js'
 import isPlainObject from 'lodash/isPlainObject.js'
 import isString from 'lodash/isString.js'
-import { randomBytes } from 'crypto'
-import RedisClient from 'ioredis'
+import Redis from 'ioredis'
 import { Worker } from './worker.js'
 
 export class Queuer extends Worker {
@@ -64,9 +64,8 @@ export class Queuer extends Worker {
   }
 
   setClient (value = 'redis://redis') {
-    this.log('info', 'Setting client to %o', [value])
-
     if (this._client !== null) {
+      this.log('info', 'Setting client to %o', [value])
       this._client.quit()
       this._client.sub.quit()
     }
@@ -76,14 +75,13 @@ export class Queuer extends Worker {
       return this
     }
 
-    const client = new RedisClient(value)
-    client.sub = new RedisClient(value)
+    this._client = new this._modules.Redis(value)
+    this._client.sub = new this._modules.Redis(value)
 
     this.setHandler(this._handler)
     this.setPusher(this._pusher)
     this.setStreamer(this._streamer)
 
-    this._client = client
     return this
   }
 
@@ -128,6 +126,10 @@ export class Queuer extends Worker {
   setHighWaterMark (value = Infinity) {
     this._highWaterMark = value
     return this
+  }
+
+  setModules (value = { crypto, Redis }) {
+    return super.setModules(value)
   }
 
   getPusher () {
@@ -249,7 +251,7 @@ export class Queuer extends Worker {
     this.log('info', 'Acting as pusher on %o', [data], box.rid)
 
     this.pushTask(box, data, (error) => {
-      if ((error instanceof Error) === true) {
+      if (isError(error) === true) {
         this.pass(box, Object.assign(data, { error, index: data.index }))
       } else if (data.result !== 'return') {
         if ((this._bypass instanceof Worker) === true) {
@@ -307,22 +309,22 @@ export class Queuer extends Worker {
       .get(tid)
       .del(tid)
       .exec((execError, [getResult]) => {
-        if ((execError instanceof Error) === true) {
+        if (isError(execError) === true) {
           this.fail(box, Object.assign(execError, index))
           return
         }
 
         const [getError, string] = getResult
 
-        if ((getError instanceof Error) === true) {
+        if (isError(getError) === true) {
           this.fail(box, Object.assign(getError, index))
           return
         }
 
-        this.log('info', 'Handling result %s', [string], box.rid)
+        this.log('info', 'Handling result %o', [string], box.rid)
 
         const data = this._codec.parse(string)
-        data.error = this.error(data.error)
+        data.error = this.transformError(data.error)
 
         this.pass(box, data)
       })
@@ -339,7 +341,7 @@ export class Queuer extends Worker {
 
     this._queue.push((callback) => {
       this._client.rpop(this._name, (popError, string) => {
-        if ((popError instanceof Error) === true) {
+        if (isError(popError) === true) {
           callback(popError)
           return
         }
@@ -355,7 +357,7 @@ export class Queuer extends Worker {
           data
         } = this._codec.parse(string)
 
-        this.log('info', 'Handling task %s', [string], box.rid)
+        this.log('info', 'Handling task %o', [string], box.rid)
 
         this.prepareBoxResolve(box, (error, result = data) => {
           this.pushResult(error, result, box, callback)
@@ -385,7 +387,7 @@ export class Queuer extends Worker {
       return
     }
 
-    data.error = this.error(error, http.STATUS_CODES)
+    data.error = this.transformError(error)
 
     const tid = data.result === 'stream'
       ? `${box.sid}:${data.index}`
@@ -393,7 +395,7 @@ export class Queuer extends Worker {
 
     const string = this._codec.stringify(data)
 
-    this.log('info', 'Pushing result %s', [string], box.rid)
+    this.log('info', 'Pushing result %o', [string], box.rid)
 
     this._client
       .multi()
@@ -405,7 +407,12 @@ export class Queuer extends Worker {
 
   pushTask (box, data, callback = () => {}) {
     if (isPlainObject(data) === false) {
-      callback(new Error('400 [queuer] Data is not an object'))
+      callback(new Error('400 [queuer] Task is not an object'))
+      return
+    }
+
+    if (isError(data.error) === true) {
+      callback(data.error)
       return
     }
 
@@ -420,7 +427,7 @@ export class Queuer extends Worker {
     }
 
     this._client.pubsub('channels', data.queue, (pubsubError, channels) => {
-      if ((pubsubError instanceof Error) === true) {
+      if (isError(pubsubError) === true) {
         callback(pubsubError)
         return
       }
@@ -431,13 +438,13 @@ export class Queuer extends Worker {
       }
 
       this._client.llen(data.queue, (lenError, length) => {
-        if ((lenError instanceof Error) === true) {
+        if (isError(lenError) === true) {
           callback(lenError)
           return
         }
 
         if (isString(box.bid) === false) {
-          box.bid = randomBytes(32).toString('hex')
+          box.bid = this._modules.crypto.randomBytes(32).toString('hex')
           box.origin = this
           this._boxes.set(box.bid, box)
         }
@@ -451,7 +458,7 @@ export class Queuer extends Worker {
           box: this.createBoxPusher(box)
         })
 
-        this.log('info', 'Pushing task %s', [string], box.rid)
+        this.log('info', 'Pushing task %o', [string], box.rid)
 
         this._client
           .multi()

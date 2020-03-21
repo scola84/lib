@@ -1,7 +1,7 @@
 import * as d3 from 'd3-selection'
 import { Router, Worker } from '../core/index.js'
 import { Menu, Popup, Route } from './router/index.js'
-import { Snippet } from './builder/snippet/snippet.js'
+import { HtmlSnippet } from './builder/snippet/snippet.js'
 
 const routers = new Map()
 
@@ -265,7 +265,7 @@ export class HtmlRouter extends Router {
       return box
     }
 
-    if ((this._base.snippet instanceof Snippet) === true) {
+    if ((this._base.snippet instanceof HtmlSnippet) === true) {
       this._base.snippet.remove()
       delete this._base.snippet
     }

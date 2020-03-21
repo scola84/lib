@@ -2,6 +2,21 @@ import isFinite from 'lodash/isFinite.js'
 import { SqlBuilder } from '../../worker/api.js'
 
 export class NextQueueSelector extends SqlBuilder {
+  constructor (options = {}) {
+    super(options)
+
+    this._cleanup = null
+    this.setCleanup(options.cleanup)
+  }
+
+  getCleanup () {
+    return this._cleanup
+  }
+
+  setCleanup (value = 'P1W') {
+    this._cleanup = value
+  }
+
   build (sc) {
     return sc.query(
       sc.select(
@@ -13,9 +28,9 @@ export class NextQueueSelector extends SqlBuilder {
           'queue.cleanup_after',
           'queue.previous_condition',
           'queue.trigger_condition',
-          'queue.trigger_cron_expression',
-          'queue.trigger_cron_begin',
-          'queue.trigger_cron_end',
+          'queue.trigger_schedule',
+          'queue.trigger_schedule_begin',
+          'queue.trigger_schedule_end',
           'queue.trigger_selector_client',
           'queue.trigger_selector_query',
           'queue.trigger_time',
@@ -60,12 +75,36 @@ export class NextQueueSelector extends SqlBuilder {
     return isFinite(data.id_run) === true
   }
 
-  merge (box, data, { row: queue }) {
-    return {
-      queue,
-      previous: {
-        id_run: data.id_run
-      }
+  merge (box, data, { row: queue = {} }) {
+    this.mergePrevious(data)
+    this.mergeQueue(data, queue)
+    this.mergeRun(data, queue)
+
+    return data
+  }
+
+  mergePrevious (data) {
+    data.previous = {
+      id_run: data.id_run
+    }
+
+    return data
+  }
+
+  mergeQueue (data, queue) {
+    data.queue = queue
+
+    data.queue.cleanup_time = this
+      .transformDate(queue.cleanup_after || this._cleanup)
+      .toISOString()
+
+    return data
+  }
+
+  mergeRun (data, queue) {
+    data.run = {
+      id_queue: queue.id_queue,
+      total: 0
     }
   }
 }

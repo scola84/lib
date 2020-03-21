@@ -9,7 +9,7 @@ export class QueueStatBeforeUpdater extends SqlBuilder {
       sc.set(
         sc.eq(
           sc.id('stat_time_queue_updated'),
-          sc.value(() => this.date().toISO())
+          sc.now()
         ),
         sc.eq(
           sc.id('stat_count_run_busy'),

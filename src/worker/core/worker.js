@@ -1,6 +1,9 @@
 import isArray from 'lodash/isArray.js'
+import isError from 'lodash/isError.js'
 import isFunction from 'lodash/isFunction.js'
+import isPlainObject from 'lodash/isPlainObject.js'
 import luxon from 'luxon'
+import { Loader } from '../../helper/index.js'
 import { Cache } from './worker/cache.js'
 import { Codec } from './worker/codec.js'
 import { Formatter } from './worker/formatter.js'
@@ -9,7 +12,7 @@ import { Logger } from './worker/logger.js'
 
 const workers = new Map()
 
-export class Worker {
+export class Worker extends Loader {
   static singleton (options = {}) {
     if (workers.has(options.id) === true) {
       return workers.get(options.id)
@@ -19,6 +22,8 @@ export class Worker {
   }
 
   constructor (options = {}) {
+    super(options)
+
     this._act = null
     this._bypass = null
     this._cache = null
@@ -299,12 +304,6 @@ export class Worker {
     return worker
   }
 
-  date (value = new Date().toISOString()) {
-    return value[0] === 'P'
-      ? luxon.Duration.fromISO(value)
-      : luxon.DateTime.fromISO(value)
-  }
-
   decide (box, data, context) {
     if (context === 'err') {
       return false
@@ -320,29 +319,6 @@ export class Worker {
     }
 
     this.fail(box, error)
-  }
-
-  error (error, map = {}) {
-    if (error === null) {
-      return null
-    }
-
-    if ((error instanceof Error) === false) {
-      return Object.assign(new Error(error.message), error)
-    }
-
-    const [,
-      code = '500', , ,
-      type = null,
-      text = ''
-    ] = error.message.match(/(\d{3})?(\s*(\[(.+)\]))?\s*(.*)/) || []
-
-    return {
-      code,
-      type,
-      data: error.data,
-      message: `${code}${type === null ? '' : ` [${type}]`} ${map[code] || text}`
-    }
   }
 
   fail (box, error) {
@@ -372,11 +348,6 @@ export class Worker {
   }
 
   pass (box, data, ...extra) {
-    if ((data instanceof Error) === true) {
-      this.fail(box, data)
-      return
-    }
-
     if (this._downstream === null) {
       return
     }
@@ -388,6 +359,10 @@ export class Worker {
     } catch (tryError) {
       this.log('fail', '', [tryError], box.rid)
       this.callErr(box, tryError)
+    }
+
+    if (isError(merged) === true) {
+      this.fail(box, merged)
       return
     }
 
@@ -419,6 +394,39 @@ export class Worker {
     this.log(name, '%o', [value], box.rid)
 
     return value
+  }
+
+  transformDate (plus = 'P') {
+    return luxon.DateTime
+      .local()
+      .plus(luxon.Duration.fromISO(plus))
+      .toJSDate()
+  }
+
+  transformError (error) {
+    if (error === null) {
+      return null
+    }
+
+    if (isPlainObject(error) === true) {
+      return Object.assign(new Error(error.message), error)
+    }
+
+    let [,
+      code = '500', , ,
+      type = null,
+      text = ''
+    ] = error.message.match(/(\d{3})?(\s*(\[(.+)\]))?\s*(.*)/) || []
+
+    type = type === null ? '' : ` [${type}]`
+    text = code === '400' ? ` ${text}` : ' Internal Server Error'
+
+    return {
+      code,
+      type,
+      data: error.data,
+      message: `${code}${type}${text}`
+    }
   }
 }
 

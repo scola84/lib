@@ -1,5 +1,5 @@
 import camelCase from 'lodash/camelCase.js'
-import { Snippet } from '../snippet/snippet.js'
+import { SqlSnippet } from '../snippet/snippet.js'
 
 const aggregation = [
   'AVG',
@@ -11,6 +11,10 @@ const aggregation = [
   'SUM',
   'VAR_POP',
   'VAR_SAMP'
+]
+
+const date = [
+  'NOW'
 ]
 
 const control = [
@@ -65,6 +69,7 @@ const type = [
 const list = [
   ...aggregation,
   ...control,
+  ...date,
   ...logic,
   ...number,
   ...string,
@@ -76,7 +81,7 @@ export default list.reduce((object, token) => {
   return {
     ...object,
     [camelCase(token)]: {
-      object: Snippet,
+      object: SqlSnippet,
       options: {
         name: token,
         parens: true,

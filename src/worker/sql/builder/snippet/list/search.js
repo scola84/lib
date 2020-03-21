@@ -1,8 +1,8 @@
 import isString from 'lodash/isString.js'
 import trim from 'lodash/trim.js'
-import { Snippet } from '../snippet.js'
+import { SqlSnippet } from '../snippet.js'
 
-export class Search extends Snippet {
+export class Search extends SqlSnippet {
   constructor (options = {}) {
     super(options)
 
@@ -129,6 +129,6 @@ export class Search extends Snippet {
 
     string = string || 'true'
 
-    return this.resolveParens(string, this._parens)
+    return this.resolveParens(string)
   }
 }

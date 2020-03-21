@@ -1,3 +1,4 @@
+import isError from 'lodash/isError.js'
 import isFunction from 'lodash/isFunction.js'
 import isPlainObject from 'lodash/isPlainObject.js'
 import { Worker } from './worker.js'
@@ -30,7 +31,7 @@ export class Resolver extends Worker {
     const resolve = box[`resolve.${this._name}`]
 
     if (isFunction(resolve.callback) === true) {
-      if ((data instanceof Error) === true) {
+      if (isError(data) === true) {
         resolve.callback(data)
       } else {
         resolve.callback(null, data)

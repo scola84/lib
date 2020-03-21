@@ -4,7 +4,7 @@ import isPlainObject from 'lodash/isPlainObject.js'
 import isString from 'lodash/isString.js'
 import merge from 'lodash/merge.js'
 import { HtmlBuilder } from '../../../builder.js'
-import { Snippet } from '../snippet.js'
+import { HtmlSnippet } from '../snippet.js'
 
 const regexpBase = '\\{([^}]+)\\}'
 const regexpGlobal = new RegExp(regexpBase, 'g')
@@ -13,7 +13,7 @@ const regexpSingle = new RegExp(regexpBase)
 let slocale = 'nl_NL'
 let strings = {}
 
-export class Print extends Snippet {
+export class Print extends HtmlSnippet {
   static getLocale () {
     return slocale
   }

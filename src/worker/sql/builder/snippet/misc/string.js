@@ -1,6 +1,6 @@
-import { Snippet } from '../snippet.js'
+import { SqlSnippet } from '../snippet.js'
 
-export class String extends Snippet {
+export class String extends SqlSnippet {
   setInfix (value = ' ') {
     super.setInfix(value)
   }

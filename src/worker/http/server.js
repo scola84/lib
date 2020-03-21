@@ -1,6 +1,7 @@
+import crypto from 'crypto'
 import http from 'http'
+import isError from 'lodash/isError.js'
 import isObject from 'lodash/isObject.js'
-import { randomBytes } from 'crypto'
 import { Worker } from '../core/index.js'
 import { Request, Response } from './server/message/index.js'
 
@@ -26,14 +27,17 @@ export class HttpServer extends Worker {
     return this
   }
 
+  setModules (value = { crypto, http, Request, Response }) {
+    return super.setModules(value)
+  }
+
   getServer () {
     return this._server
   }
 
   setServer (value = null) {
-    this.log('info', 'Setting server to %o', [value])
-
     if (this._server !== null) {
+      this.log('info', 'Setting server to %o', [value])
       this._server.close()
     }
 
@@ -42,10 +46,13 @@ export class HttpServer extends Worker {
       return this
     }
 
-    const server = http.createServer()
+    const server = this._modules.http.createServer()
 
     server.on('request', (request, response) => {
-      this.handleRequest(new Request(request), new Response(response))
+      this.handleRequest(
+        new this._modules.Request(request),
+        new this._modules.Response(response)
+      )
     })
 
     server.keepAliveTimeout = 0
@@ -67,7 +74,7 @@ export class HttpServer extends Worker {
 
   createBoxServer (request) {
     return {
-      bid: randomBytes(32).toString('hex'),
+      bid: this._modules.crypto.randomBytes(32).toString('hex'),
       rid: request.getHeader('x-request-id'),
       sid: request.getCookie('stream-id'),
       origin: this
@@ -111,7 +118,7 @@ export class HttpServer extends Worker {
     response.parent = this
 
     request.decode((decoderError, decoderData) => {
-      if ((decoderError instanceof Error) === true) {
+      if (isError(decoderError) === true) {
         this.fail(box, decoderError)
         return
       }

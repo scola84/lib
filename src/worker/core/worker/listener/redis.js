@@ -1,4 +1,4 @@
-import RedisClient from 'ioredis'
+import Redis from 'ioredis'
 import { Worker } from '../../worker.js'
 import { Listener } from './listener.js'
 
@@ -13,7 +13,7 @@ export class RedisListener extends Listener {
       return this
     }
 
-    this._client = new RedisClient(value)
+    this._client = new this._modules.Redis(value)
 
     this._client.on('message', (channel, message) => {
       try {
@@ -26,6 +26,10 @@ export class RedisListener extends Listener {
     this._client.subscribe('worker')
 
     return this
+  }
+
+  setModules (value = { Redis }) {
+    return super.setModules(value)
   }
 
   call (message) {

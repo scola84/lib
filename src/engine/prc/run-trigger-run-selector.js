@@ -34,7 +34,7 @@ export class RunTriggerRunSelector extends SqlBuilder {
           ),
           sc.lt(
             sc.id('queue_run.trigger_time'),
-            sc.value(() => this.date().toISO())
+            sc.now()
           )
         )
       )

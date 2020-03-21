@@ -38,9 +38,9 @@ export class QueueTriggerQueueSelector extends SqlBuilder {
           'cleanup_after',
           'name',
           'trigger_condition',
-          'trigger_cron_begin',
-          'trigger_cron_end',
-          'trigger_cron_expression',
+          'trigger_schedule',
+          'trigger_schedule_begin',
+          'trigger_schedule_end',
           'trigger_selector_client',
           'trigger_selector_query'
         )
@@ -53,20 +53,22 @@ export class QueueTriggerQueueSelector extends SqlBuilder {
           sc.regexp(
             sc.id('name'),
             () => {
-              return this._regexp === null ? sc.id('name') : sc.value(this._regexp)
+              return this._regexp === null
+                ? sc.id('name')
+                : sc.value(this._regexp)
             }
           ),
           sc.lt(
             sc.id('trigger_time'),
-            sc.value(() => this.date().toISO())
+            sc.now()
           ),
           sc.lt(
-            sc.id('trigger_cron_begin'),
-            sc.value(() => this.date().toISO())
+            sc.id('trigger_schedule_begin'),
+            sc.now()
           ),
           sc.gt(
-            sc.id('trigger_cron_end'),
-            sc.value(() => this.date().toISO())
+            sc.id('trigger_schedule_end'),
+            sc.now()
           )
         )
       )
@@ -77,26 +79,25 @@ export class QueueTriggerQueueSelector extends SqlBuilder {
     return {}
   }
 
-  merge (box, data, { row: queue }) {
+  merge (box, data, { row: queue = {} }) {
     this.mergeQueue(data, queue)
     this.mergeRun(data, queue)
     return data
   }
 
-  mergeQueue (data, queue = {}) {
+  mergeQueue (data, queue) {
     data.queue = queue
+
+    data.queue.cleanup_time = this
+      .transformDate(queue.cleanup_after || this._cleanup)
+      .toISOString()
+
     return data
   }
 
-  mergeRun (data, queue = {}) {
+  mergeRun (data, queue) {
     data.run = {
       id_queue: queue.id_queue,
-      cleanup_time: this
-        .date()
-        .plus(
-          this.date(queue.cleanup_after || this._cleanup)
-        )
-        .toISO(),
       total: 0
     }
 

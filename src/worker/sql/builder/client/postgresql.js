@@ -1,6 +1,7 @@
+import isError from 'lodash/isError.js'
 import isObject from 'lodash/isObject.js'
 import pg from 'pg'
-import PgQueryStream from 'pg-query-stream'
+import Stream from 'pg-query-stream'
 import { Client } from './client.js'
 import map from '../map/index.js'
 
@@ -12,6 +13,10 @@ if (typeof pg === 'object') {
 }
 
 export class Postgresql extends Client {
+  setModules (value = { pg, Stream }) {
+    return super.setModules(value)
+  }
+
   setPool (value = null) {
     if (this._pool !== null) {
       this._pool.end()
@@ -22,7 +27,7 @@ export class Postgresql extends Client {
       return this
     }
 
-    this._pool = new pg.Pool({
+    this._pool = new this._modules.pg.Pool({
       connectionString: value
     })
 
@@ -36,7 +41,7 @@ export class Postgresql extends Client {
     }
 
     this._pool.connect((error, poolConnection) => {
-      if ((error instanceof Error) === true) {
+      if (isError(error) === true) {
         callback(error)
         return
       }
@@ -69,10 +74,10 @@ export class Postgresql extends Client {
 
     query
       .getParent()
-      .log('info', 'Executing PostgreSQL query %s', [string], box.rid)
+      .log('info', 'Executing PostgreSQL query %o', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if ((connectError instanceof Error) === true) {
+      if (isError(connectError) === true) {
         callback(connectError)
         return
       }
@@ -97,15 +102,15 @@ export class Postgresql extends Client {
 
     query
       .getParent()
-      .log('info', 'Streaming PostgreSQL query %s', [string], box.rid)
+      .log('info', 'Streaming PostgreSQL query %o', [string], box.rid)
 
     this.connectClient(box, (connectError, connection) => {
-      if ((connectError instanceof Error) === true) {
+      if (isError(connectError) === true) {
         callback(connectError)
         return
       }
 
-      const stream = connection.query(new PgQueryStream(string))
+      const stream = connection.query(new this._modules.Stream(string))
 
       this.streamQueryEvents(box, query, stream, (streamError, result = {}) => {
         if (result.last === false) {

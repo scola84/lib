@@ -1,4 +1,4 @@
-import RedisClient from 'ioredis'
+import Redis from 'ioredis'
 import { Cache } from './cache.js'
 
 export class RedisCache extends Cache {
@@ -12,8 +12,12 @@ export class RedisCache extends Cache {
       return this
     }
 
-    this._client = new RedisClient(value)
+    this._client = new this._modules.Redis(value)
     return this
+  }
+
+  setModules (value = { Redis }) {
+    return super.setModules(value)
   }
 
   add (key, value, callback = () => {}, ttl = null) {

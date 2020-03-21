@@ -1,11 +1,12 @@
-import fs from 'fs-extra'
+import fsExtra from 'fs-extra'
 
 const files = new Map()
 
 export function file (value = null, options = {}) {
   const {
-    path = value,
+    fs = fsExtra,
     from = 'utf-8',
+    path = value,
     to = 'utf-8'
   } = options
 

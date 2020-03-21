@@ -26,8 +26,13 @@ export class ServerQueueSelector extends SqlBuilder {
     )
   }
 
-  merge (box, data, { rows: [queue = {}] }) {
-    data.id_queue = queue.id_queue
+  merge (box, data, { rows: [queue = null] }) {
+    if (queue === null) {
+      data.error = new Error(`404 [engine] Queue '${data.queue}' is not found`)
+    } else {
+      data.id_queue = queue.id_queue
+    }
+
     return data
   }
 }

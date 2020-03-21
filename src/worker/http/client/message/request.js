@@ -1,11 +1,18 @@
 import typeParser from 'content-type'
+import isError from 'lodash/isError.js'
 import isString from 'lodash/isString.js'
 import fetch from 'node-fetch'
+import { Loader } from '../../../../helper/index.js'
 import { Response } from './response.js'
 
-export class Request {
+export class Request extends Loader {
   constructor (original) {
+    super()
     this.original = original
+  }
+
+  setModules (value = { fetch, Response }) {
+    return super.setModules(value)
   }
 
   getHeaders () {
@@ -56,18 +63,18 @@ export class Request {
     this.parent.log('info', 'Encoding request as %o', [codec.getType()])
 
     codec.encode(this.original, body, (encoderError, encoderData) => {
-      if ((encoderError instanceof Error) === true) {
+      if (isError(encoderError) === true) {
         callback(encoderError)
         return
       }
 
       this.parent.log('info', 'Writing request headers %o', [this.original.headers])
-      this.parent.log('info', 'Writing request body %s', [encoderData])
+      this.parent.log('info', 'Writing request body %o', [encoderData])
 
-      fetch(this.original, {
+      this._modules.fetch.call(window, this.original, {
         body: encoderData
       }).then((response) => {
-        callback(null, new Response(response))
+        callback(null, new this._modules.Response(response))
       }).catch((error) => {
         callback(error)
       })

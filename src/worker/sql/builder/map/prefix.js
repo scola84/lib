@@ -1,5 +1,5 @@
 import camelCase from 'lodash/camelCase.js'
-import { Snippet } from '../snippet/snippet.js'
+import { SqlSnippet } from '../snippet/snippet.js'
 
 const control = [
   'DISTINCT',
@@ -57,7 +57,7 @@ export default list.reduce((object, token) => {
   return {
     ...object,
     [camelCase(token)]: {
-      object: Snippet,
+      object: SqlSnippet,
       options: {
         name: token,
         prefix: `${token} `

@@ -1,6 +1,6 @@
-import { Snippet } from './snippet.js'
+import { HtmlSnippet } from './snippet.js'
 
-export class Action extends Snippet {
+export class Action extends HtmlSnippet {
   constructor (options = {}) {
     super(options)
 

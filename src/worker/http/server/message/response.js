@@ -1,4 +1,5 @@
 import buffer from 'buffer/index.js'
+import isError from 'lodash/isError.js'
 import isString from 'lodash/isString.js'
 import typeParser from 'content-type'
 
@@ -48,7 +49,7 @@ export class Response {
     this.parent.log('info', 'Encoding response as %o', [codec.getType()])
 
     codec.encode(this.original, body, (encoderError, encoderData) => {
-      if ((encoderError instanceof Error) === true) {
+      if (isError(encoderError) === true) {
         callback(encoderError)
         return
       }
@@ -64,7 +65,7 @@ export class Response {
         this.original.writeHead(this.getStatus())
       }
 
-      this.parent.log('info', 'Writing response body %s', [encoderData])
+      this.parent.log('info', 'Writing response body %o', [encoderData])
       this.original.write(encoderData, callback)
 
       if (end === true) {

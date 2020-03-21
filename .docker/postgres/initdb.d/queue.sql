@@ -15,9 +15,9 @@ CREATE TABLE "app"."queue" (
   "previous_id_queue" BIGINT,
   "scope" VARCHAR(255) NOT NULL,
   "trigger_condition" VARCHAR(255),
-  "trigger_cron_begin" TIMESTAMP,
-  "trigger_cron_end" TIMESTAMP,
-  "trigger_cron_expression" VARCHAR(255),
+  "trigger_schedule" VARCHAR(255),
+  "trigger_schedule_begin" TIMESTAMP,
+  "trigger_schedule_end" TIMESTAMP,
   "trigger_selector_client" TEXT,
   "trigger_selector_query" TEXT,
   "trigger_time" TIMESTAMP,
@@ -47,6 +47,7 @@ CREATE TABLE "app"."queue_item" (
   "id_run" BIGINT NOT NULL,
   "stat_time_item_created" TIMESTAMP NOT NULL DEFAULT NOW(),
   "stat_time_item_updated" TIMESTAMP NOT NULL DEFAULT NOW(),
+  "cleanup_time" TIMESTAMP,
   "id" BIGINT,
   "name" VARCHAR(255) NOT NULL,
   "status" STATUS NOT NULL DEFAULT 'PENDING',
@@ -59,10 +60,11 @@ CREATE TABLE "app"."queue_item" (
 CREATE TABLE "app"."queue_task" (
   "id_task" BIGSERIAL,
   "id_item" BIGINT,
-  "id_queue" BIGINT,
+  "id_queue" BIGINT NOT NULL,
   "id_run" BIGINT,
   "stat_time_task_created" TIMESTAMP NOT NULL DEFAULT NOW(),
   "stat_time_task_updated" TIMESTAMP NOT NULL DEFAULT NOW(),
+  "cleanup_time" TIMESTAMP,
   "data_in" TEXT,
   "data_out" TEXT,
   "error" TEXT,
@@ -77,14 +79,13 @@ CREATE TABLE "app"."queue_task" (
   FOREIGN KEY ("id_run") REFERENCES "app"."queue_run" ("id_run")
 );
 
-CREATE TABLE "app"."queue_task_template" (
-  "id_task" BIGSERIAL,
+CREATE TABLE "app"."queue_task_control" (
   "id_queue" BIGINT NOT NULL,
   "stat_time_template_created" TIMESTAMP NOT NULL DEFAULT NOW(),
   "stat_time_template_updated" TIMESTAMP NOT NULL DEFAULT NOW(),
   "name" VARCHAR(255) NOT NULL,
   "settings" TEXT,
   "timeout_after" VARCHAR(255),
-  PRIMARY KEY ("id_task"),
+  PRIMARY KEY ("id_queue", "name"),
   FOREIGN KEY ("id_queue") REFERENCES "app"."queue" ("id_queue")
 );

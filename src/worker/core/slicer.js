@@ -42,7 +42,7 @@ export class Slicer extends Worker {
       return false
     }
 
-    return isArray(data) && data.length > 0
+    return isArray(data) === true && data.length > 0
   }
 
   err (box, error) {

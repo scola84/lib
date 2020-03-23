@@ -1,17 +1,17 @@
 version: "3.7"
 services:
-  engine:
+  mgt:
     image: "node:13-alpine"
     command: yarn start:dev
     env_file:
       - $PWD/.env
     environment:
-      - NODE_SCRIPT=./node_modules/@scola/lib/src/engine/prc.js
+      - NODE_SCRIPT=./node_modules/@scola/lib/src/mgt/prc.js
     networks:
       default:
         aliases:
-          - engine-serve-push
-          - engine-serve-result
+          - mgt-serve-push
+          - mgt-serve-result
     restart: always
     volumes:
       - $PWD/node_modules/:/www/nodejs/node_modules/

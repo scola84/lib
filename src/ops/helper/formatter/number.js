@@ -2,15 +2,7 @@ import d3 from 'd3-format/dist/d3-format.js'
 import isFunction from 'lodash/isFunction.js'
 import isNil from 'lodash/isNil.js'
 import math from 'math-expression-evaluator'
-
-const definitions = {
-  nl_NL: d3.formatLocale({
-    decimal: ',',
-    thousands: '.',
-    grouping: [3],
-    currency: ['€\u00a0', '']
-  })
-}
+import { Formatter } from './formatter.js'
 
 math.addToken(
   Object
@@ -27,32 +19,56 @@ math.addToken(
     })
 )
 
-export function number (value, options, locale) {
-  if (isNil(value) === true) {
-    return ''
+export class NumberFormatter extends Formatter {
+  constructor (options = {}) {
+    super(options)
+
+    this._definitions = null
+    this.setDefinitions(options.definitions)
   }
 
-  const {
-    expr = 'n',
-    val = '',
-    sep = '',
-    spec = 'f'
-  } = options
+  getDefinitions () {
+    return this._definitions
+  }
 
-  const formatter = val === ''
-    ? definitions[locale].format(spec)
-    : definitions[locale].formatPrefix(spec, val)
+  setDefinitions (value = {}) {
+    this._definitions = Object
+      .keys(value)
+      .reduce((result, locale) => {
+        return {
+          ...result,
+          [locale]: d3.formatLocale(value[locale])
+        }
+      }, {})
 
-  let result = expr.replace('n', value)
+    return this
+  }
 
-  result = math.eval(result)
-  result = formatter(result)
+  format (value, options, locale) {
+    if (isNil(value) === true) {
+      return ''
+    }
 
-  result = sep === ''
-    ? result
-    : result.slice(0, -1) + sep + result.slice(-1)
+    const {
+      expr = 'n',
+      val = '',
+      sep = '',
+      spec = 'f'
+    } = options
 
-  return result
+    const formatter = val === ''
+      ? this._definitions[locale].format(spec)
+      : this._definitions[locale].formatPrefix(spec, val)
+
+    let result = expr.replace('n', value)
+
+    result = math.eval(result)
+    result = formatter(result)
+
+    result = sep === ''
+      ? result
+      : result.slice(0, -1) + sep + result.slice(-1)
+
+    return result
+  }
 }
-
-number.definitions = definitions

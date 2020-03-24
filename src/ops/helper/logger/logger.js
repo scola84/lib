@@ -1,4 +1,6 @@
 import isError from 'lodash/isError.js'
+import isNil from 'lodash/isNil.js'
+import minimatch from 'minimatch'
 import { Loader } from '../loader.js'
 
 export class Logger extends Loader {
@@ -6,11 +8,9 @@ export class Logger extends Loader {
     super(options)
 
     this._client = null
-    this._ids = null
     this._types = null
 
     this.setClient(options.client)
-    this.setIds(options.ids)
     this.setTypes(options.types)
   }
 
@@ -23,34 +23,42 @@ export class Logger extends Loader {
     return this
   }
 
-  getIds () {
-    return this._ids
-  }
-
-  setIds (value = '') {
-    this._ids = new Set(value.split(','))
-    return this
-  }
-
-  callId (name, ...args) {
-    return this._ids[name](...args)
-  }
-
   getTypes () {
     return this._types
   }
 
-  setTypes (value = 'decide,fail,filter,info,merge,pass') {
-    this._types = new Set(value.split(','))
+  setTypes (value = '*:fail') {
+    this._types = new Map()
+
+    value.split(';').forEach((globTypes) => {
+      const [glob, types] = globTypes.split(':')
+
+      types.split(',').forEach((type) => {
+        this._types.set(type, (this._types.get(type) || []).concat(glob))
+      })
+    })
+
     return this
   }
 
-  callType (name, ...args) {
-    return this._types[name](...args)
+  check (id, type) {
+    const globs = this._types.get(type)
+
+    if (isNil(globs) === true) {
+      return false
+    }
+
+    for (let i = 0; i < globs.length; i += 1) {
+      if (minimatch(id, globs[i]) === true) {
+        return true
+      }
+    }
+
+    return false
   }
 
-  log (id, type, message, args = [], rid = null) {
-    if (this._types.has(type) === false) {
+  log (id, type, message, args = [], rid = 'log') {
+    if (this.check(id, type) === false) {
       return
     }
 
@@ -62,9 +70,7 @@ export class Logger extends Loader {
       Object.defineProperty(args[0], 'logged', { value: true })
     }
 
-    const prefix = this._ids.has(rid) === true ? rid : 'log'
-
-    this.write(type, `${prefix}:${id}`, message, args)
+    this.write(type, `${rid}:${id}`, message, args)
   }
 
   write () {}

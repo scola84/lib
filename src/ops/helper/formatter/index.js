@@ -1,13 +1,13 @@
-import { date } from './date.js'
-import { file } from './file.js'
-import { marked } from './marked.js'
-import { number } from './number.js'
-import { string } from './string.js'
+import { DateFormatter } from './date.js'
+import { FileFormatter } from './file.js'
+import { MarkedFormatter } from './marked.js'
+import { NumberFormatter } from './number.js'
+import { StringFormatter } from './string.js'
 
 export const formatter = {
-  d: date,
-  f: file,
-  m: marked,
-  n: number,
-  s: string
+  d: new DateFormatter(),
+  f: new FileFormatter(),
+  m: new MarkedFormatter(),
+  n: new NumberFormatter(),
+  s: new StringFormatter()
 }

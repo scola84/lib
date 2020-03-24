@@ -1,3 +1,5 @@
 import { Loader } from '../loader.js'
 
-export class Formatter extends Loader {}
+export class Formatter extends Loader {
+  format () {}
+}

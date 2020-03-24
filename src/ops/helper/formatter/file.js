@@ -1,30 +1,49 @@
-import fsExtra from 'fs-extra'
+import fs from 'fs-extra'
+import { Formatter } from './formatter.js'
 
-const files = new Map()
+export class FileFormatter extends Formatter {
+  constructor (options = {}) {
+    super(options)
 
-export function file (value = null, options = {}) {
-  const {
-    fs = fsExtra,
-    from = 'utf-8',
-    path = value,
-    to = 'utf-8'
-  } = options
-
-  if (path === null) {
-    return ''
+    this._files = null
+    this.setFiles(options.files)
   }
 
-  const key = `${path}:${from}:${to}`
-
-  if (files.has(key) === true) {
-    return files.get(key)
+  getFiles () {
+    return this._files
   }
 
-  const content = fs
-    .readFileSync(path, { encoding: from })
-    .toString(to)
+  setFiles (value = new Map()) {
+    this._files = value
+    return this
+  }
 
-  files.set(key, content)
+  setModules (value = { fs }) {
+    return super.setModules(value)
+  }
 
-  return content
+  format (value = null, options = {}) {
+    const {
+      from = 'utf-8',
+      path = value,
+      to = 'utf-8'
+    } = options
+
+    if (path === null) {
+      return ''
+    }
+
+    const key = `${path}:${from}:${to}`
+
+    if (this._files.has(key) === true) {
+      return this._files.get(key)
+    }
+
+    const content = this._modules.fs
+      .readFileSync(path, { encoding: from })
+      .toString(to)
+
+    this._files.set(key, content)
+    return content
+  }
 }

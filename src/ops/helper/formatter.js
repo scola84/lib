@@ -1,5 +1,4 @@
 import get from 'lodash/get.js'
-import isFunction from 'lodash/isFunction.js'
 import isString from 'lodash/isString.js'
 import isUndefined from 'lodash/isUndefined.js'
 import qs from 'qs'
@@ -38,11 +37,10 @@ export class Formatter {
         value = args[i]
       }
 
-      if (isFunction(formatter[type]) === true) {
-        value = formatter[type](value, options, locale)
-      }
-
-      result = result.replace(match, value)
+      result = result.replace(
+        match,
+        formatter[type].format(value, options, locale)
+      )
     }
 
     return result

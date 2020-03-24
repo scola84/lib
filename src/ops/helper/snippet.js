@@ -167,5 +167,3 @@ export class Snippet extends Loader {
     return result
   }
 }
-
-Snippet.snippets = snippets

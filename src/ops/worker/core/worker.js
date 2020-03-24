@@ -3,14 +3,11 @@ import isError from 'lodash/isError.js'
 import isFunction from 'lodash/isFunction.js'
 import isPlainObject from 'lodash/isPlainObject.js'
 import luxon from 'luxon'
-
-import {
-  Loader,
-  Cache,
-  Codec,
-  Formatter,
-  Logger
-} from '../../helper/index.js'
+import { Loader } from '../../helper/loader.js'
+import { Cache } from '../../helper/cache.js'
+import { Codec } from '../../helper/codec.js'
+import { Formatter } from '../../helper/formatter.js'
+import { Logger } from '../../helper/logger.js'
 
 export const workers = new Map()
 
@@ -189,12 +186,6 @@ export class Worker extends Loader {
     }
 
     this._logger = Logger.get(value)
-    return this
-  }
-
-  callLoggerId (name, id) {
-    this.log('info', 'Setting logger id (%o)', [name])
-    this._logger.callId(name, id)
     return this
   }
 

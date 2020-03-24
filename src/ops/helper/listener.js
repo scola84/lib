@@ -7,7 +7,7 @@ export class Listener {
     return listener[type]
   }
 
-  static set (type, object) {
+  static set (type, object = 'redis') {
     listener[type] = isObject(object) === true
       ? object
       : listener[object]
@@ -15,11 +15,7 @@ export class Listener {
 }
 
 if (typeof process === 'object') {
-  Listener.set('default', 'redis')
-
-  if (isString(process.env.LISTENER_DEFAULT) === true) {
-    Listener.set('default', process.env.LISTENER_DEFAULT)
-  }
+  Listener.set('default', process.env.LISTENER_DEFAULT)
 
   if (isString(process.env.LISTENER_REDIS) === true) {
     Listener.get('redis').setClient(process.env.LISTENER_REDIS)

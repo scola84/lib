@@ -7,20 +7,16 @@ export class Cache {
     return cache[type]
   }
 
-  static set (type, object) {
+  static set (type, object = 'map') {
     cache[type] = isObject(object) === true
       ? object
       : cache[object]
   }
 }
 
-Cache.set('default', 'map')
-Cache.get('map').setClient(new Map())
-
 if (typeof process === 'object') {
-  if (isString(process.env.CACHE_DEFAULT) === true) {
-    Cache.set('default', process.env.CACHE_DEFAULT)
-  }
+  Cache.set('default', process.env.CACHE_DEFAULT)
+  Cache.get('map').setClient(new Map())
 
   if (isString(process.env.CACHE_REDIS) === true) {
     Cache.get('redis').setClient(process.env.CACHE_REDIS)
@@ -32,6 +28,8 @@ if (typeof process === 'object') {
 }
 
 if (typeof window === 'object') {
+  Cache.set('default', window.CACHE_DEFAULT)
   Cache.get('local').setClient(window.localStorage)
+  Cache.get('map').setClient(new Map())
   Cache.get('session').setClient(window.sessionStorage)
 }

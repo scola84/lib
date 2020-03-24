@@ -195,6 +195,7 @@ const runTriggerRunSelector = new RunTriggerRunSelector({
 const server = new HttpServer({
   description: 'Serve queue resources',
   id: 'mgt-server',
+  identifiers: process.env.MGT_HTTP_IDENTIFIERS,
   name: 'mgt',
   server: process.env.MGT_HTTP_SERVER,
   throttle: true

@@ -71,13 +71,15 @@ export class Request extends Loader {
       this.parent.log('info', 'Writing request headers %o', [this.original.headers])
       this.parent.log('info', 'Writing request body %o', [encoderData])
 
-      this._modules.fetch.call(window, this.original, {
-        body: encoderData
-      }).then((response) => {
-        callback(null, new this._modules.Response(response))
-      }).catch((error) => {
-        callback(error)
-      })
+      this
+        .getModule('fetch')
+        .call(window, this.original, {
+          body: encoderData
+        }).then((response) => {
+          callback(null, this.newModule('Response', response))
+        }).catch((error) => {
+          callback(error)
+        })
     })
   }
 }

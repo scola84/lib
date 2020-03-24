@@ -12,4 +12,12 @@ export class Loader {
     this._modules = value
     return this
   }
+
+  getModule (name) {
+    return this._modules[name]
+  }
+
+  newModule (name, ...args) {
+    return new this._modules[name](...args)
+  }
 }

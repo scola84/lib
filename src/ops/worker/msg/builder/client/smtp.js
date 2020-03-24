@@ -18,7 +18,10 @@ export class Smtp extends Client {
       return this
     }
 
-    this._transport = this._modules.nodemailer.createTransport(value)
+    this._transport = this
+      .getModule('nodemailer')
+      .createTransport(value)
+
     return this
   }
 

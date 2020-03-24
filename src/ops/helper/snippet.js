@@ -85,7 +85,7 @@ export class Snippet extends Loader {
     return this._id
   }
 
-  setId (value = snippets.size) {
+  setId (value = String(snippets.size)) {
     snippets.set(value, this)
     this._id = value
     return this

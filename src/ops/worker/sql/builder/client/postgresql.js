@@ -13,7 +13,7 @@ if (typeof pg === 'object') {
 }
 
 export class Postgresql extends Client {
-  setModules (value = { pg, Stream }) {
+  setModules (value = { Pool: pg.Pool, Stream }) {
     return super.setModules(value)
   }
 
@@ -27,7 +27,7 @@ export class Postgresql extends Client {
       return this
     }
 
-    this._pool = new this._modules.pg.Pool({
+    this._pool = this.newModule('Pool', {
       connectionString: value
     })
 
@@ -110,7 +110,7 @@ export class Postgresql extends Client {
         return
       }
 
-      const stream = connection.query(new this._modules.Stream(string))
+      const stream = connection.query(this.newModule('Stream', string))
 
       this.streamQueryEvents(box, query, stream, (streamError, result = {}) => {
         if (result.last === false) {

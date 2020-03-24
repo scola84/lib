@@ -61,9 +61,11 @@ export class Trigger extends Worker {
       return this
     }
 
-    this._schedule = this._modules.cron.schedule(value, () => {
-      this.call()
-    })
+    this._schedule = this
+      .getModule('cron')
+      .schedule(value, () => {
+        this.call()
+      })
 
     return this
   }

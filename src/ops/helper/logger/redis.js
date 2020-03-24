@@ -17,7 +17,7 @@ export class RedisLogger extends Logger {
       return this
     }
 
-    this._client = new this._modules.Redis(value)
+    this._client = this.newModule('Redis', value)
     return this
   }
 

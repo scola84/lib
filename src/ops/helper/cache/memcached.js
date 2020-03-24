@@ -12,7 +12,7 @@ export class MemcachedCache extends Cache {
       return this
     }
 
-    this._client = new this._modules.Memcached(value)
+    this._client = this.newModule('Memcached', value)
     return this
   }
 

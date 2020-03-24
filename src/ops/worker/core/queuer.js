@@ -75,8 +75,8 @@ export class Queuer extends Worker {
       return this
     }
 
-    this._client = new this._modules.Redis(value)
-    this._client.sub = new this._modules.Redis(value)
+    this._client = this.newModule('Redis', value)
+    this._client.sub = this.newModule('Redis', value)
 
     this.setHandler(this._handler)
     this.setPusher(this._pusher)
@@ -265,8 +265,9 @@ export class Queuer extends Worker {
     this.log('info', 'Acting as simple queuer on %o', [data], box.rid)
 
     this._queue.push((callback) => {
-      this.log('info', 'Handling task %o', [data], box.rid)
-      this.pass(this.prepareBoxResolve(box, callback), data)
+      this
+        .log('info', 'Handling task %o', [data], box.rid)
+        .pass(this.prepareBoxResolve(box, callback), data)
     })
   }
 
@@ -290,8 +291,6 @@ export class Queuer extends Worker {
   }
 
   handleResult (tid) {
-    this.log('info', 'Handling result %o', [tid])
-
     const [bid, index] = tid.split(':')
 
     if (this._boxes.has(bid) === false) {
@@ -321,12 +320,12 @@ export class Queuer extends Worker {
           return
         }
 
-        this.log('info', 'Handling result %o', [string], box.rid)
-
         const data = this._codec.parse(string)
         data.error = this.transformError(data.error)
 
-        this.pass(box, data)
+        this
+          .log('info', 'Handling result %o', [string], box.rid)
+          .pass(box, data)
       })
   }
 
@@ -357,13 +356,13 @@ export class Queuer extends Worker {
           data
         } = this._codec.parse(string)
 
-        this.log('info', 'Handling task %o', [string], box.rid)
-
         this.prepareBoxResolve(box, (error, result = data) => {
           this.pushResult(error, result, box, callback)
         })
 
-        this.pass(box, data)
+        this
+          .log('info', 'Handling task %o', [string], box.rid)
+          .pass(box, data)
       })
     })
   }
@@ -444,8 +443,14 @@ export class Queuer extends Worker {
         }
 
         if (isString(box.bid) === false) {
-          box.bid = this._modules.crypto.randomBytes(32).toString('hex')
-          box.origin = this
+          Object.assign(box, {
+            bid: this
+              .getModule('crypto')
+              .randomBytes(32)
+              .toString('hex'),
+            origin: this
+          })
+
           this._boxes.set(box.bid, box)
         }
 

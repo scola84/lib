@@ -23,7 +23,7 @@ export class Messagebird extends Loader {
       key
     ] = value.match(/^sms:\/\/(.+):(.+)@messagebird/) || []
 
-    this._client = this._modules.messagebird(key)
+    this._client = this.getModule('messagebird')(key)
     return this
   }
 

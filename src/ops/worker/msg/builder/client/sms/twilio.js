@@ -24,7 +24,7 @@ export class Twilio extends Loader {
       password
     ] = value.match(/^sms:\/\/(.+):(.+)@twilio/) || []
 
-    this._client = this._modules.twilio(username, password)
+    this._client = this.getModule('twilio')(username, password)
     return this
   }
 

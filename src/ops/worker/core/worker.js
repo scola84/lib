@@ -158,7 +158,7 @@ export class Worker extends Loader {
     return this._id
   }
 
-  setId (value = workers.size) {
+  setId (value = String(workers.size)) {
     if (this._id !== null) {
       this.log('info', 'Setting id to %o', [value])
       workers.delete(this._id)

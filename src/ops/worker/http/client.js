@@ -51,7 +51,7 @@ export class HttpClient extends Worker {
     this.setProgress(options.progress)
   }
 
-  setModules (value = { fetch, Request }) {
+  setModules (value = { FetchRequest: fetch.Request, Request }) {
     return super.setModules(value)
   }
 
@@ -72,8 +72,9 @@ export class HttpClient extends Worker {
       body: null
     }
 
-    const request = new this._modules.Request(
-      new this._modules.fetch.Request(url, init)
+    const request = this.newModule(
+      'Request',
+      this.newModule('FetchRequest', url, init)
     )
 
     this.log('info', 'Handling request %o %o %o', [

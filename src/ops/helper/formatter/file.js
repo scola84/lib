@@ -39,7 +39,8 @@ export class FileFormatter extends Formatter {
       return this._files.get(key)
     }
 
-    const content = this._modules.fs
+    const content = this
+      .getModule('fs')
       .readFileSync(path, { encoding: from })
       .toString(to)
 

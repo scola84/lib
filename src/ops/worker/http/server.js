@@ -10,10 +10,12 @@ export class HttpServer extends Worker {
     super(options)
 
     this._boxes = null
+    this._identifiers = null
     this._server = null
     this._throttle = null
 
     this.setBoxes(options.boxes)
+    this.setIdentifiers(options.identifiers)
     this.setServer(options.server)
     this.setThrottle(options.throttle)
   }
@@ -24,6 +26,15 @@ export class HttpServer extends Worker {
 
   setBoxes (value = new Map()) {
     this._boxes = value
+    return this
+  }
+
+  getIdentifiers () {
+    return this._identifiers
+  }
+
+  setIdentifiers (value = 'rid,sid') {
+    this._identifiers = new Set(value.split(','))
     return this
   }
 
@@ -46,12 +57,14 @@ export class HttpServer extends Worker {
       return this
     }
 
-    const server = this._modules.http.createServer()
+    const server = this
+      .getModule('http')
+      .createServer()
 
     server.on('request', (request, response) => {
       this.handleRequest(
-        new this._modules.Request(request),
-        new this._modules.Response(response)
+        this.newModule('Request', request),
+        this.newModule('Response', response)
       )
     })
 
@@ -73,12 +86,23 @@ export class HttpServer extends Worker {
   }
 
   createBoxServer (request) {
-    return {
-      bid: this._modules.crypto.randomBytes(32).toString('hex'),
-      rid: request.getHeader('x-request-id'),
-      sid: request.getCookie('stream-id'),
+    const box = {
+      bid: this
+        .getModule('crypto')
+        .randomBytes(32)
+        .toString('hex'),
       origin: this
     }
+
+    if (this._identifiers.has('rid') === true) {
+      box.rid = request.getHeader('x-request-id')
+    }
+
+    if (this._identifiers.has('sid') === true) {
+      box.sid = request.getCookie('stream-id')
+    }
+
+    return box
   }
 
   handleRequest (request, response) {

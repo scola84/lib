@@ -38,7 +38,7 @@ export class FormDataCodec extends Codec {
     let formdata = null
 
     try {
-      formdata = new this._modules.Busboy(options)
+      formdata = this.newModule('Busboy', options)
     } catch (error) {
       callback(new Error(`400 [form-data] ${error.message}`))
       return
@@ -51,14 +51,21 @@ export class FormDataCodec extends Codec {
     })
 
     formdata.on('file', (fieldName, stream, name, encoding, type) => {
+      const tmpName = this
+        .getModule('crypto')
+        .randomBytes(32)
+        .toString('hex')
+
       const file = {
         name,
         type,
         size: 0,
-        tmppath: coptions.tmpDir + this._modules.crypto.randomBytes(32).toString('hex')
+        tmppath: coptions.tmpDir + tmpName
       }
 
-      const target = this._modules.fs.createWriteStream(file.tmppath)
+      const target = this
+        .getModule('fs')
+        .createWriteStream(file.tmppath)
 
       stream.on('data', (chunk) => {
         file.size += chunk.length

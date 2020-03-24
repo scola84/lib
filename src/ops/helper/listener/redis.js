@@ -12,7 +12,7 @@ export class RedisListener extends Listener {
       return this
     }
 
-    this._client = new this._modules.Redis(value)
+    this._client = this.newModule('Redis', value)
 
     this._client.on('message', (channel, message) => {
       try {

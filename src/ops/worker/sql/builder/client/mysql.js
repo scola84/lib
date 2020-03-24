@@ -19,7 +19,10 @@ export class Mysql extends Client {
       return this
     }
 
-    this._pool = this._modules.mysql.createPool(value)
+    this._pool = this
+      .getModule('mysql')
+      .createPool(value)
+
     return this
   }
 

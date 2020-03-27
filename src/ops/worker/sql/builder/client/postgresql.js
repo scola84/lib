@@ -1,5 +1,6 @@
 import isError from 'lodash/isError.js'
 import isObject from 'lodash/isObject.js'
+import parser from 'pg-connection-string'
 import pg from 'pg'
 import Stream from 'pg-query-stream'
 import { Client } from './client.js'
@@ -13,7 +14,7 @@ if (typeof pg === 'object') {
 }
 
 export class Postgresql extends Client {
-  setModules (value = { Pool: pg.Pool, Stream }) {
+  setModules (value = { Pool: pg.Pool, Stream, parser }) {
     return super.setModules(value)
   }
 
@@ -27,9 +28,11 @@ export class Postgresql extends Client {
       return this
     }
 
-    this._pool = this.newModule('Pool', {
-      connectionString: value
-    })
+    const config = this
+      .getModule('parser')
+      .parse(value)
+
+    this._pool = this.newModule('Pool', config)
 
     return this
   }

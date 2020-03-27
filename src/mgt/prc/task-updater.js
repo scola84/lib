@@ -53,11 +53,11 @@ export class TaskUpdater extends SqlBuilder {
     )
   }
 
-  decide (box, data) {
+  filter (box, data) {
     data.status = isError(data.error) === true
       ? 'FAILURE'
       : 'SUCCESS'
 
-    return true
+    return data
   }
 }

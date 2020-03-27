@@ -36,6 +36,9 @@ export class HttpClient extends Worker {
       act (box, data) {
         callback(null, data)
       },
+      decide () {
+        return true
+      },
       err (box, error) {
         callback(error)
       }

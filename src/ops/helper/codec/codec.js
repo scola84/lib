@@ -49,7 +49,7 @@ export class Codec extends Loader {
     try {
       callback(null, this.parse(data))
     } catch (error) {
-      callback(error)
+      callback(new Error(`400 ${error.message}`))
     }
   }
 

@@ -30,7 +30,7 @@ export class TimeoutTriggerItemUpdater extends SqlBuilder {
   }
 
   decide (box, data) {
-    return isFinite(data.id_run) === true
+    return isFinite(data.id_item) === true
   }
 
   merge (box, data, result) {

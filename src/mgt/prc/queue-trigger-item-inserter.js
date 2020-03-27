@@ -1,4 +1,3 @@
-import isPlainObject from 'lodash/isPlainObject.js'
 import { SqlBuilder } from '../../ops/api.js'
 
 export class QueueTriggerItemInserter extends SqlBuilder {
@@ -28,12 +27,6 @@ export class QueueTriggerItemInserter extends SqlBuilder {
         sc.id('id_item')
       )
     )
-  }
-
-  decide (box, data) {
-    return isPlainObject(data.item) === true &&
-      isPlainObject(data.queue) === true &&
-      isPlainObject(data.run) === true
   }
 
   merge (box, data, { rows: [item = {}] }) {

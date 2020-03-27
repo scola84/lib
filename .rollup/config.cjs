@@ -33,6 +33,7 @@ const external = [
   'parse5',
   'postal-codes-js',
   'pg',
+  'pg-connection-string',
   'pg-escape',
   'pg-query-stream',
   'sqlstring',

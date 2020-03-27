@@ -87,8 +87,6 @@ export class NextQueueSelector extends SqlBuilder {
     data.previous = {
       id_run: data.id_run
     }
-
-    return data
   }
 
   mergeQueue (data, queue) {
@@ -97,8 +95,6 @@ export class NextQueueSelector extends SqlBuilder {
     data.queue.cleanup_time = this
       .transformDate(queue.cleanup_after || this._cleanup)
       .toISOString()
-
-    return data
   }
 
   mergeRun (data, queue) {

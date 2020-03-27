@@ -16,6 +16,7 @@ export class Logger {
 
 if (typeof process === 'object') {
   Logger.set('default', process.env.LOGGER_DEFAULT)
+  Logger.get('default').setTypes(process.env.LOGGER_TYPES)
   Logger.get('console').setClient(console)
 
   if (isString(process.env.LOGGER_REDIS) === true) {
@@ -25,5 +26,6 @@ if (typeof process === 'object') {
 
 if (typeof window === 'object') {
   Logger.set('default', window.LOGGER_DEFAULT)
+  Logger.get('default').setTypes(window.LOGGER_TYPES)
   Logger.get('console').setClient(console)
 }

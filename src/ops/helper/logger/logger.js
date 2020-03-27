@@ -1,6 +1,6 @@
 import isError from 'lodash/isError.js'
 import isNil from 'lodash/isNil.js'
-import micromatch from 'micromatch'
+import matcher from 'matcher'
 import { Loader } from '../loader.js'
 
 export class Logger extends Loader {
@@ -48,7 +48,7 @@ export class Logger extends Loader {
       return false
     }
 
-    return micromatch.isMatch(id, patterns)
+    return matcher.isMatch(id, patterns)
   }
 
   log (id, type, message, args = [], rid = 'log') {

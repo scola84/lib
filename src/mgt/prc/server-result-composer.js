@@ -1,5 +1,4 @@
 import isArray from 'lodash/isArray.js'
-import isFinite from 'lodash/isFinite.js'
 import { Worker } from '../../ops/api.js'
 
 export class ServerResultComposer extends Worker {
@@ -16,8 +15,7 @@ export class ServerResultComposer extends Worker {
   }
 
   decide (box, data) {
-    return isFinite(data.index) === true &&
-      isArray(data.next) === false
+    return isArray(data.next) === false
   }
 
   err (box, error) {

@@ -25,22 +25,14 @@ export class ServerTaskFilter extends Worker {
       throw new Error('400 [mgt] Queue name is not a string')
     }
 
-    if (isString(data.name) === false) {
-      throw new Error('400 [mgt] Task name is not a string')
-    }
-
-    if (['none', 'return', 'stream'].indexOf(data.result) === -1) {
-      throw new Error('400 [mgt] Task result type is invalid')
-    }
-
     return {
       cleanup_time: null,
       data_in: isPlainObject(data.data_in) ? data.data_in : {},
       data_out: isPlainObject(data.data_out) ? data.data_out : {},
       error: null,
-      name: data.name,
+      name: isString(data.name) ? data.name : 'main',
       queue: data.queue,
-      result: data.result,
+      result: isString(data.result) ? data.result : 'return',
       settings: {},
       status: 'PENDING',
       timeout_time: null

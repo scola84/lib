@@ -68,10 +68,6 @@ export class TaskMerger extends SqlBuilder {
     )
   }
 
-  decide (box, data) {
-    return isFinite(data.id_queue) === true
-  }
-
   merge (box, data, { rows: [control] }) {
     this.mergeSettings(data, control)
     this.mergeCleanup(data, control)
@@ -82,22 +78,17 @@ export class TaskMerger extends SqlBuilder {
 
   mergeSettings (data, control = {}) {
     data.settings = JSON.parse(control.settings || '{}')
-    return data
   }
 
   mergeCleanup (data, control = {}) {
     data.cleanup_time = this
       .transformDate(control.cleanup_after || this._cleanup)
       .toISOString()
-
-    return data
   }
 
   mergeTimeout (data, control = {}) {
     data.timeout_time = this
       .transformDate(control.timeout_after || this._timeout)
       .toISOString()
-
-    return data
   }
 }

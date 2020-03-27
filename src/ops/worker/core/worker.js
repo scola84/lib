@@ -254,6 +254,7 @@ export class Worker extends Loader {
         this._downstream.callAct(box, data)
       }
     } catch (tryError) {
+      tryError.index = isPlainObject(data) ? data.index : undefined
       this.log('fail', '', [tryError], box.rid)
       this.callErr(box, tryError)
     }
@@ -342,8 +343,10 @@ export class Worker extends Loader {
     try {
       merged = this.resolve('merge', box, data, extra)
     } catch (tryError) {
+      tryError.index = isPlainObject(data) ? data.index : undefined
       this.log('fail', '', [tryError], box.rid)
       this.callErr(box, tryError)
+      return
     }
 
     if (isError(merged) === true) {
@@ -397,20 +400,17 @@ export class Worker extends Loader {
       return Object.assign(new Error(error.message), error)
     }
 
-    let [,
+    const [,
       code = '500', , ,
-      type = null,
-      text = ''
+      type,
+      message
     ] = error.message.match(/(\d{3})?(\s*(\[(.+)\]))?\s*(.*)/) || []
-
-    type = type === null ? '' : ` [${type}]`
-    text = code === '400' ? ` ${text}` : ' Internal Server Error'
 
     return {
       code,
       type,
       data: error.data,
-      message: `${code}${type}${text}`
+      message: code === '500' ? 'Internal Server Error' : message
     }
   }
 }

@@ -1,6 +1,6 @@
 import isError from 'lodash/isError.js'
 import isNil from 'lodash/isNil.js'
-import minimatch from 'minimatch'
+import micromatch from 'micromatch'
 import { Loader } from '../loader.js'
 
 export class Logger extends Loader {
@@ -30,11 +30,11 @@ export class Logger extends Loader {
   setTypes (value = '*:fail') {
     this._types = new Map()
 
-    value.split(';').forEach((globTypes) => {
-      const [glob, types] = globTypes.split(':')
+    value.split(';').forEach((patternTypes) => {
+      const [pattern, types] = patternTypes.split(':')
 
       types.split(',').forEach((type) => {
-        this._types.set(type, (this._types.get(type) || []).concat(glob))
+        this._types.set(type, (this._types.get(type) || []).concat(pattern))
       })
     })
 
@@ -42,19 +42,13 @@ export class Logger extends Loader {
   }
 
   check (id, type) {
-    const globs = this._types.get(type)
+    const patterns = this._types.get(type)
 
-    if (isNil(globs) === true) {
+    if (isNil(patterns) === true) {
       return false
     }
 
-    for (let i = 0; i < globs.length; i += 1) {
-      if (minimatch(id, globs[i]) === true) {
-        return true
-      }
-    }
-
-    return false
+    return micromatch.isMatch(id, patterns)
   }
 
   log (id, type, message, args = [], rid = 'log') {

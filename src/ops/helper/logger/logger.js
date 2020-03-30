@@ -34,7 +34,7 @@ export class Logger extends Loader {
       const [pattern, types] = patternTypes.split(':')
 
       types.split(',').forEach((type) => {
-        this._types.set(type, (this._types.get(type) || []).concat(pattern))
+        this._types.set(type, [...(this._types.get(type) || []), pattern])
       })
     })
 
@@ -48,7 +48,13 @@ export class Logger extends Loader {
       return false
     }
 
-    return matcher.isMatch(id, patterns)
+    for (let i = 0; i < patterns.length; i += 1) {
+      if (matcher.isMatch(id, patterns[i]) === true) {
+        return true
+      }
+    }
+
+    return false
   }
 
   log (id, type, message, args = [], rid = 'log') {

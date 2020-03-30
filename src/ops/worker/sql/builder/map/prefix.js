@@ -7,6 +7,7 @@ const control = [
   'GROUP BY',
   'INTO',
   'LIMIT',
+  'OFFSET',
   'ORDER BY',
   'SET',
   'USING',

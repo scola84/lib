@@ -73,6 +73,7 @@ export class QueueStatAfterUpdater extends SqlBuilder {
   }
 
   decide (box, data) {
-    return isFinite(data.id_run) === true
+    return isFinite(data.id_run) === true &&
+      data.status !== 'PENDING'
   }
 }

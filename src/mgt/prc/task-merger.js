@@ -68,6 +68,10 @@ export class TaskMerger extends SqlBuilder {
     )
   }
 
+  decide (box, data) {
+    return isFinite(data.id_task) === false
+  }
+
   merge (box, data, { rows: [control] }) {
     this.mergeSettings(data, control)
     this.mergeCleanup(data, control)

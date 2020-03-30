@@ -37,7 +37,8 @@ export class TaskInserter extends SqlBuilder {
   }
 
   decide (box, data) {
-    return isFinite(data.id_queue) === true
+    return isFinite(data.id_queue) === true &&
+      isFinite(data.id_task) === false
   }
 
   merge (box, data, { rows: [task = {}] }) {

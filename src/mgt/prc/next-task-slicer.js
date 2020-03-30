@@ -4,12 +4,10 @@ import { Slicer } from '../../ops/api.js'
 export class NextTaskSlicer extends Slicer {
   decide (box, data) {
     return isArray(data.next) === true &&
-      data.status === 'SUCCESS'
+      data.status === 'PENDING'
   }
 
   filter (box, data) {
-    box.bid = null
-
     return data.next.map((task) => {
       return {
         id_item: data.id_item,

@@ -35,7 +35,13 @@ export class TaskUpdater extends SqlBuilder {
         ),
         sc.eq(
           sc.id('status'),
-          sc.value((box, data) => data.status)
+          sc.value((box, data) => {
+            if (data.status === 'FAILURE') {
+              return data.status
+            }
+
+            return 'SUCCESS'
+          })
         )
       ),
       sc.where(
@@ -54,9 +60,9 @@ export class TaskUpdater extends SqlBuilder {
   }
 
   filter (box, data) {
-    data.status = isError(data.error) === true
-      ? 'FAILURE'
-      : 'SUCCESS'
+    if (isError(data.error) === true) {
+      data.status = 'FAILURE'
+    }
 
     return data
   }

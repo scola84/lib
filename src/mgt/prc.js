@@ -13,6 +13,7 @@ import {
   CleanupTriggerRunDeleter,
   CleanupTriggerTaskDeleter,
   ItemUpdater,
+  NextBoxer,
   NextQueueSelector,
   NextTaskSlicer,
   QueueStatAfterUpdater,
@@ -79,12 +80,22 @@ const itemUpdater = new ItemUpdater({
   client: process.env.MGT_DATABASE_CLIENT
 })
 
+const nextQueueBoxer = new NextBoxer({
+  description: 'Create new box for next queud',
+  id: 'mgt-next-queue-boxer'
+})
+
 const nextQueueSelector = new NextQueueSelector({
   description: 'Select queues to run after task execution',
   id: 'mgt-next-queue-selector',
   cleanup: process.env.MGT_QUEUE_CLEANUP,
   client: process.env.MGT_DATABASE_CLIENT,
   result: 'stream'
+})
+
+const nextTaskBoxer = new NextBoxer({
+  description: 'Create new box for next task',
+  id: 'mgt-next-task-boxer'
 })
 
 const nextTaskSlicer = new NextTaskSlicer({
@@ -120,7 +131,6 @@ const queueTriggerItemInserter = new QueueTriggerItemInserter({
 const queueTriggerItemSelector = new QueueTriggerItemSelector({
   description: 'Select items for run after queue trigger',
   id: 'mgt-queue-trigger-item-selector',
-  client: process.env.MGT_DATABASE_CLIENT,
   name: 'mgt',
   result: 'stream',
   throttle: true
@@ -404,9 +414,11 @@ broadcaster
 broadcaster
   .connect(nextTaskSlicer)
   .bypass(false)
+  .connect(nextTaskBoxer)
   .connect(taskMerger)
 
 broadcaster
   .connect(nextQueueSelector)
   .bypass(false)
+  .connect(nextQueueBoxer)
   .connect(queueTriggerRunDecider)

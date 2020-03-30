@@ -1,4 +1,3 @@
-import isArray from 'lodash/isArray.js'
 import { Worker } from '../../ops/api.js'
 
 export class ServerResultComposer extends Worker {
@@ -12,10 +11,6 @@ export class ServerResultComposer extends Worker {
         value: data.index
       }
     }))
-  }
-
-  decide (box, data) {
-    return isArray(data.next) === false
   }
 
   err (box, error) {

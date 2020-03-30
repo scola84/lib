@@ -26,11 +26,11 @@ export class QueueTriggerItemSelector extends SqlBuilder {
   }
 
   client (box, data) {
-    if (isString(data.queue.trigger_selector_query) === true) {
+    if (isString(data.queue.trigger_selector_client) === true) {
       return this.format(data.queue.trigger_selector_client)
     }
 
-    return super.client(box, data)
+    return process.env.MGT_DATABASE_CLIENT
   }
 
   merge (box, data, { first, last, total, row: item }) {

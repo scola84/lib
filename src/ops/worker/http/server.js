@@ -122,6 +122,7 @@ export class HttpServer extends Worker {
 
     response.original.socket.once('close', () => {
       response.original.removeAllListeners()
+      delete box[`server.${this._name}`]
       this._boxes.delete(box.bid)
     })
 

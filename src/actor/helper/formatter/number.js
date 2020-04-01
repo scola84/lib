@@ -39,7 +39,14 @@ export class NumberFormatter extends Formatter {
           ...result,
           [locale]: d3.formatLocale(value[locale])
         }
-      }, {})
+      }, {
+        nl_NL: d3.formatLocale({
+          decimal: ',',
+          thousands: '.',
+          grouping: [3],
+          currency: ['€\u00a0', '']
+        })
+      })
 
     return this
   }
@@ -53,7 +60,7 @@ export class NumberFormatter extends Formatter {
       expr = 'n',
       val = '',
       sep = '',
-      spec = 'f'
+      spec = '.0f'
     } = options
 
     const formatter = val === ''

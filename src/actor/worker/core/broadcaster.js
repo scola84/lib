@@ -39,8 +39,9 @@ export class Broadcaster extends Worker {
   }
 
   act (box, data) {
-    if (this._resolve === true) {
-      this.prepareBoxResolve(box)
+    if (this.setUpBoxResolve(box) === false) {
+      this.fail(box, new Error(`Could not set up resolve for '${this._name}'`))
+      return
     }
 
     for (let i = 0; i < this._downstreams.length; i += 1) {
@@ -50,10 +51,6 @@ export class Broadcaster extends Worker {
 
   decide () {
     return true
-  }
-
-  err (box, error) {
-    this.act(box, error)
   }
 
   connect (worker = null) {
@@ -70,9 +67,13 @@ export class Broadcaster extends Worker {
     return super.connect(worker)
   }
 
-  prepareBoxResolve (box) {
+  setUpBoxResolve (box) {
+    if (this._resolve === false) {
+      return true
+    }
+
     if (isObject(box[`resolve.${this._name}`]) === true) {
-      throw new Error(`Resolve for '${this._name}' is defined`)
+      return false
     }
 
     box[`resolve.${this._name}`] = {
@@ -81,6 +82,6 @@ export class Broadcaster extends Worker {
       total: this._downstreams.length
     }
 
-    return box
+    return true
   }
 }

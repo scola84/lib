@@ -1,5 +1,4 @@
 import isError from 'lodash/isError.js'
-import isPlainObject from 'lodash/isPlainObject.js'
 import { SqlBuilder } from '../../actor/api.js'
 
 export class TaskUpdater extends SqlBuilder {
@@ -12,16 +11,6 @@ export class TaskUpdater extends SqlBuilder {
         sc.eq(
           sc.id('stat_time_task_updated'),
           sc.now()
-        ),
-        sc.eq(
-          sc.id('data_out'),
-          (box, data) => {
-            if (isPlainObject(data.data_out) === true) {
-              return sc.value(data.data_out)
-            }
-
-            return sc.id('data_out')
-          }
         ),
         sc.eq(
           sc.id('error'),
@@ -62,6 +51,8 @@ export class TaskUpdater extends SqlBuilder {
   filter (box, data) {
     if (isError(data.error) === true) {
       data.status = 'FAILURE'
+    } else if (data.final === true) {
+      data.status = 'SUCCESS'
     }
 
     return data

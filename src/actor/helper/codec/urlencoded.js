@@ -7,8 +7,8 @@ export class UrlencodedCodec extends Codec {
     return super.setType(value)
   }
 
-  parse (data) {
-    return qs.parse(String(data))
+  parse (data, options) {
+    return qs.parse(String(data), options)
   }
 
   stringify (data) {

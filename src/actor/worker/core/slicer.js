@@ -7,13 +7,17 @@ export class Slicer extends Worker {
     super(options)
 
     this._resolve = null
+    this._slice = null
+
     this.setResolve(options.resolve)
+    this.setSlice(options.slice)
   }
 
   getOptions () {
     return {
       ...super.getOptions(),
-      resolve: this._resolve
+      resolve: this._resolve,
+      slice: this._slice
     }
   }
 
@@ -26,28 +30,41 @@ export class Slicer extends Worker {
     return this
   }
 
-  act (box, data) {
-    if (this._resolve === true) {
-      this.prepareBoxResolve(box, data.length)
-    }
-
-    for (let i = 0; i < data.length; i += 1) {
-      this.log('info', 'Slicing %d/%d', [i + 1, data.length], box.rid)
-      this.pass(box, data[i], i)
-    }
+  getSlice () {
+    return this._slice
   }
 
-  decide (box, data, context) {
-    if (context === 'err') {
-      return false
+  setSlice (value = null) {
+    this._slice = value
+    return this
+  }
+
+  act (box, data) {
+    const slices = this.resolve('slice', box, data)
+
+    if (isArray(slices) === false || slices.length === 0) {
+      if ((this._bypass instanceof Worker) === true) {
+        this._bypass.callAct(box, data)
+      }
+
+      return
     }
 
-    return isArray(data) === true && data.length > 0
+    if (this.setUpBoxResolve(box, data, slices.length) === false) {
+      this.fail(box, new Error(`Could not set up resolve for '${this._name}'`))
+      return
+    }
+
+    for (let i = 0; i < slices.length; i += 1) {
+      this.log('info', 'Slicing %d/%d', [i + 1, slices.length], box.rid)
+      this.pass(box, slices[i], i)
+    }
   }
 
   err (box, error) {
-    if (this._resolve === true) {
-      this.prepareBoxResolve(box, 0)
+    if (this.setUpBoxResolve(box, 0) === false) {
+      this.fail(box, new Error(`Could not set up resolve for '${this._name}'`))
+      return
     }
 
     this.fail(box, error)
@@ -58,17 +75,26 @@ export class Slicer extends Worker {
     return data
   }
 
-  prepareBoxResolve (box, total) {
+  setUpBoxResolve (box, data, total) {
+    if (this._resolve === false) {
+      return true
+    }
+
     if (isObject(box[`resolve.${this._name}`]) === true) {
-      throw new Error(`Resolve for '${this._name}' is defined`)
+      return false
     }
 
     box[`resolve.${this._name}`] = {
+      data,
       total,
-      count: 0,
-      data: []
+      collect: [],
+      count: 0
     }
 
-    return box
+    return true
+  }
+
+  slice (box, data) {
+    return isArray(data) ? data : []
   }
 }

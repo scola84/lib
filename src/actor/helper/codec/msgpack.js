@@ -7,17 +7,17 @@ export class MsgpackCodec extends Codec {
     return super.setType(value)
   }
 
-  parse (data) {
+  parse (data, options) {
     if (isObject(msgpack) === true) {
-      return msgpack.decode(data)
+      return msgpack.decode(data, options)
     }
 
     return data
   }
 
-  stringify (data) {
+  stringify (data, options) {
     if (isObject(msgpack) === true) {
-      return msgpack.encode(data)
+      return msgpack.encode(data, options)
     }
 
     return String(data)

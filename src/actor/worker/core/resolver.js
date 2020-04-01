@@ -46,9 +46,9 @@ export class Resolver extends Worker {
       if (this._collect === true) {
         const index = Number.isInteger(data.index) === true
           ? data.index
-          : resolve.data.length
+          : resolve.collect.length
 
-        resolve.data[index] = data
+        resolve.collect[index] = data
       }
 
       if ((resolve.count % resolve.total) > 0) {
@@ -56,9 +56,13 @@ export class Resolver extends Worker {
       }
     }
 
+    this.tearDownBoxResolve(box)
+
     this.pass(
       box,
-      this._collect === true && resolve.total > 0 ? resolve.data : data
+      this._collect === true && resolve.total > 0
+        ? resolve.collect
+        : resolve.data
     )
   }
 
@@ -68,5 +72,10 @@ export class Resolver extends Worker {
 
   err (box, error) {
     this.act(box, error)
+  }
+
+  tearDownBoxResolve (box) {
+    delete box[`resolve.${this._name}`]
+    return true
   }
 }

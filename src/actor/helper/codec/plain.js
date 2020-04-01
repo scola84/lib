@@ -1,11 +1,11 @@
 import { Codec } from './codec.js'
 
 export class PlainCodec extends Codec {
-  parse (data) {
-    return String(data)
+  setType (value = 'text/plain') {
+    return super.setType(value)
   }
 
-  type () {
-    return 'text/plain'
+  parse (data) {
+    return String(data)
   }
 }

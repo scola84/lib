@@ -19,6 +19,7 @@ const external = [
   '@scola/lib',
   'busboy',
   'crypto',
+  'csv',
   'fs-extra',
   'http',
   'ioredis',

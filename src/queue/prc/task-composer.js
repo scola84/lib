@@ -8,11 +8,11 @@ export class TaskComposer extends Worker {
       id_queue: data.queue.id_queue,
       id_run: data.run.id_run,
       cleanup_time: null,
-      data_in: omit(data.item, [
+      data: omit(data.item, [
         'id_item'
       ]),
-      data_out: {},
       error: null,
+      final: false,
       name: 'main',
       queue: data.queue.name,
       result: 'return',

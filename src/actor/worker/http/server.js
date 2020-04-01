@@ -108,10 +108,14 @@ export class HttpServer extends Worker {
   handleRequest (request, response) {
     const box = this.createBoxServer(request)
 
-    this.prepareBoxServer(box, request, response)
+    if (this.setUpBoxServer(box, request, response) === false) {
+      this.fail(box, new Error(`Could not set up server for '${this._name}'`))
+      return
+    }
 
-    if (this._throttle === true) {
-      this.prepareBoxThrottle(box, this._server.setServerValue)
+    if (this.setUpBoxThrottle(box, this._server.setServerValue) === false) {
+      this.fail(box, new Error(`Could not set up throttle for '${this._name}'`))
+      return
     }
 
     this._boxes.set(box.bid, box)
@@ -152,9 +156,9 @@ export class HttpServer extends Worker {
     })
   }
 
-  prepareBoxServer (box, request, response) {
+  setUpBoxServer (box, request, response) {
     if (isObject(box[`server.${this._name}`]) === true) {
-      throw new Error(`Server for '${this._name}' is defined`)
+      return false
     }
 
     box[`server.${this._name}`] = {
@@ -162,12 +166,16 @@ export class HttpServer extends Worker {
       response
     }
 
-    return box
+    return true
   }
 
-  prepareBoxThrottle (box, setServerValue) {
+  setUpBoxThrottle (box, setServerValue) {
+    if (this._throttle === false) {
+      return true
+    }
+
     if (isObject(box[`throttle.${this._name}`]) === true) {
-      throw new Error(`Throttle for '${this._name}' is defined`)
+      return false
     }
 
     box[`throttle.${this._name}`] = {
@@ -179,6 +187,6 @@ export class HttpServer extends Worker {
       }
     }
 
-    return box
+    return true
   }
 }

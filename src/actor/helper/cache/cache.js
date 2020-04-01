@@ -1,3 +1,4 @@
+import executeMap from 'async/map.js'
 import { Loader } from '../loader.js'
 
 export class Cache extends Loader {
@@ -51,6 +52,16 @@ export class Cache extends Loader {
   setTtl (value = 60 * 60) {
     this._ttl = value
     return this
+  }
+
+  execute (actions, callback) {
+    executeMap(actions, ({ key, name, ttl, value = null }, cb) => {
+      if (value === null) {
+        this[name](key, cb, ttl)
+      } else {
+        this[name](key, value, cb, ttl)
+      }
+    }, callback)
   }
 
   add () {}

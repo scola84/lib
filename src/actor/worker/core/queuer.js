@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import createQueue from 'async/queue.js'
 import isError from 'lodash/isError.js'
+import isNil from 'lodash/isNil.js'
 import isObject from 'lodash/isObject.js'
 import isPlainObject from 'lodash/isPlainObject.js'
 import isString from 'lodash/isString.js'
@@ -14,6 +15,7 @@ export class Queuer extends Worker {
     this._boxes = null
     this._client = null
     this._expire = null
+    this._final = null
     this._handler = null
     this._highWaterMark = null
     this._pusher = null
@@ -40,6 +42,7 @@ export class Queuer extends Worker {
       boxes: this._boxes,
       client: this._client,
       expire: this._expire,
+      final: this._final,
       handler: this._handler,
       highWaterMark: this._highWaterMark,
       pusher: this._pusher,
@@ -95,6 +98,15 @@ export class Queuer extends Worker {
 
   setExpire (value = 60 * 60 * 1000) {
     this._expire = value
+    return this
+  }
+
+  getFinal () {
+    return this._final
+  }
+
+  setFinal (value = []) {
+    this._final = value
     return this
   }
 
@@ -267,7 +279,7 @@ export class Queuer extends Worker {
     this._queue.push((callback) => {
       this
         .log('info', 'Handling task %o', [data], box.rid)
-        .pass(this.prepareBoxResolve(box, callback), data)
+        .pass(this.setUpBoxResolve(box, callback), data)
     })
   }
 
@@ -282,6 +294,23 @@ export class Queuer extends Worker {
     this.pass(box, data)
   }
 
+  checkFinal (data) {
+    if (isNil(data.id) === true) {
+      return true
+    }
+
+    if (this._final.indexOf(data.name) > -1) {
+      this._cache.increment(data.id, 1)
+
+      if (this._cache.get(data.id) === this._final.length) {
+        this._cache.delete(data.id)
+        return true
+      }
+    }
+
+    return false
+  }
+
   createBoxPusher (box) {
     return {
       bid: box.bid,
@@ -291,7 +320,10 @@ export class Queuer extends Worker {
   }
 
   handleResult (tid) {
-    const [bid, index] = tid.split(':')
+    const [
+      bid,
+      index
+    ] = tid.split(':')
 
     if (this._boxes.has(bid) === false) {
       return
@@ -356,28 +388,20 @@ export class Queuer extends Worker {
           data
         } = this._codec.parse(string)
 
-        this.prepareBoxResolve(box, (error, result = data) => {
+        const cb = (error, result = data) => {
           this.pushResult(error, result, box, callback)
-        })
+        }
+
+        if (this.setUpBoxResolve(box, cb) === false) {
+          this.fail(box, new Error(`Could not set up resolve for '${this._name}'`))
+          return
+        }
 
         this
           .log('info', 'Handling task %o', [string], box.rid)
           .pass(box, data)
       })
     })
-  }
-
-  prepareBoxResolve (box, callback) {
-    if (isObject(box[`resolve.${this._name}`]) === true) {
-      throw new Error(`Resolve for '${this._name}' is defined`)
-    }
-
-    box[`resolve.${this._name}`] = {
-      callback,
-      total: 0
-    }
-
-    return box
   }
 
   pushResult (error, data, box, callback) {
@@ -387,6 +411,7 @@ export class Queuer extends Worker {
     }
 
     data.error = this.transformError(error)
+    data.final = this.checkFinal(data)
 
     const tid = data.result === 'stream'
       ? `${box.sid}:${data.index}`
@@ -472,6 +497,19 @@ export class Queuer extends Worker {
           .exec(callback)
       })
     })
+  }
+
+  setUpBoxResolve (box, callback) {
+    if (isObject(box[`resolve.${this._name}`]) === true) {
+      return false
+    }
+
+    box[`resolve.${this._name}`] = {
+      callback,
+      total: 0
+    }
+
+    return true
   }
 
   throttlePause (box) {

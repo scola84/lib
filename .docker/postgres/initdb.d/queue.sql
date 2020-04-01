@@ -49,7 +49,7 @@ CREATE TABLE "app"."queue_item" (
   "stat_time_item_updated" TIMESTAMP NOT NULL DEFAULT NOW(),
   "cleanup_time" TIMESTAMP,
   "id" BIGINT,
-  "name" VARCHAR(255) NOT NULL,
+  "name" VARCHAR(255),
   "status" STATUS NOT NULL DEFAULT 'PENDING',
   "type" VARCHAR(255),
   PRIMARY KEY ("id_item"),

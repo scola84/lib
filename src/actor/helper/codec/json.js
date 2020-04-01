@@ -5,11 +5,11 @@ export class JsonCodec extends Codec {
     return super.setType(value)
   }
 
-  parse (data) {
-    return JSON.parse(String(data))
+  parse (data, reviver) {
+    return JSON.parse(String(data), reviver)
   }
 
-  stringify (data) {
-    return JSON.stringify(data)
+  stringify (data, replacer, space) {
+    return JSON.stringify(data, replacer, space)
   }
 }

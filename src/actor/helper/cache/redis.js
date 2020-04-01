@@ -69,8 +69,12 @@ export class RedisCache extends Cache {
     if (isArray(key) === true) {
       if (key.length === 1) {
         this._client.hgetall(...key, callback)
-      } else {
+      } else if (key.length === 2) {
         this._client.hget(...key, callback)
+      } else if (key.length === 3) {
+        this._client.lrange(...key, callback)
+      } else {
+        callback()
       }
     } else {
       this._client.get(key, callback)

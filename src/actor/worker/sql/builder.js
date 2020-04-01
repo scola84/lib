@@ -107,9 +107,14 @@ export class SqlBuilder extends Builder {
     const client = this.resolveClient(box, data)
     const query = this.resolveQuery(box, data, client)
 
-    client[`${this._result}Query`](box, data, query, (error, result) => {
+    client[`${this._result}Query`](box, data, query, (error, result, stream) => {
       if (isError(error) === true) {
         this.fail(box, error)
+        return
+      }
+
+      if (this.handleStreamResult(box, result, stream) === false) {
+        this.fail(box, new Error(`Could not set up throttle for '${this._name}'`))
         return
       }
 
@@ -125,6 +130,18 @@ export class SqlBuilder extends Builder {
     return 'postgresql://postgres:postgres@postgres'
   }
 
+  handleStreamResult (box, result, stream) {
+    if (result.first === true) {
+      return this.setUpBoxThrottle(box, stream)
+    }
+
+    if (result.last === true) {
+      return this.tearDownBoxThrottle(box)
+    }
+
+    return true
+  }
+
   merge (box, data, result) {
     if (this._result === 'stream') {
       return result.row
@@ -133,9 +150,13 @@ export class SqlBuilder extends Builder {
     return data
   }
 
-  prepareBoxThrottle (box, stream) {
+  setUpBoxThrottle (box, stream) {
+    if (this._throttle === false) {
+      return true
+    }
+
     if (isObject(box[`throttle.${this._name}`]) === true) {
-      throw new Error(`Throttle for '${this._name}' is defined`)
+      return false
     }
 
     box[`throttle.${this._name}`] = {
@@ -147,7 +168,12 @@ export class SqlBuilder extends Builder {
       }
     }
 
-    return box
+    return true
+  }
+
+  tearDownBoxThrottle (box) {
+    delete box[`throttle.${this._name}`]
+    return true
   }
 
   resolveClient (box, data) {

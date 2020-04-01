@@ -27,9 +27,9 @@ export class ServerTaskFilter extends Worker {
 
     return {
       cleanup_time: null,
-      data_in: isPlainObject(data.data_in) ? data.data_in : {},
-      data_out: isPlainObject(data.data_out) ? data.data_out : {},
+      data: isPlainObject(data.data) ? data.data : {},
       error: null,
+      final: false,
       name: isString(data.name) ? data.name : 'main',
       queue: data.queue,
       result: isString(data.result) ? data.result : 'return',

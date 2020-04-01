@@ -3,7 +3,7 @@ import { Worker } from '../../actor/api.js'
 export class ServerResultComposer extends Worker {
   act (box, data) {
     this.pass(box, Object.defineProperties({
-      data_out: data.data_out,
+      data: data.data,
       error: this.transformError(data.error),
       id_task: data.id_task
     }, {

@@ -104,7 +104,7 @@ export class Mysql extends Client {
 
       const stream = connection.query(string).stream()
 
-      this.streamQueryEvents(box, query, stream, (streamError, result = {}) => {
+      this.streamQueryEvents(stream, (streamError, result = {}) => {
         if (result.last === false) {
           callback(streamError, result)
           return
@@ -119,28 +119,24 @@ export class Mysql extends Client {
     })
   }
 
-  streamQueryEvents (box, query, stream, callback) {
-    if (query.getParent().getThrottle() === true) {
-      query.getParent().prepareBoxThrottle(box, stream)
-    }
-
+  streamQueryEvents (stream, callback) {
     let first = true
     let next = null
     let total = 0
 
     stream.once('end', () => {
-      callback(null, { first, total, last: true, row: next })
+      callback(null, { first, total, last: true, row: next }, stream)
       stream.removeAllListeners()
     })
 
     stream.once('error', (error) => {
-      callback(error, { first, total, last: true, row: null })
+      callback(error, { first, total, last: true, row: error }, stream)
       stream.removeAllListeners()
     })
 
     stream.on('data', (row) => {
       if (next !== null) {
-        callback(null, { first, total, last: false, row: next })
+        callback(null, { first, total, last: false, row: next }, stream)
         first = false
       }
 

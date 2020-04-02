@@ -202,12 +202,7 @@ export class Print extends HtmlSnippet {
 
     string = this.resolveValue(box, data, string)
     string = this.resolveNested(box, data, string)
-
-    try {
-      string = this._origin.format(string, values, locale)
-    } catch (error) {
-      string = error.message
-    }
+    string = this._origin.format(string, values, locale)
 
     if (string === format) {
       return ''

@@ -39,7 +39,7 @@ export class Broadcaster extends Worker {
   }
 
   act (box, data) {
-    if (this.setUpBoxResolve(box) === false) {
+    if (this.setUpBoxResolve(box, data) === false) {
       this.fail(box, new Error(`Could not set up resolve for '${this._name}'`))
       return
     }
@@ -67,7 +67,7 @@ export class Broadcaster extends Worker {
     return super.connect(worker)
   }
 
-  setUpBoxResolve (box) {
+  setUpBoxResolve (box, data) {
     if (this._resolve === false) {
       return true
     }
@@ -77,8 +77,9 @@ export class Broadcaster extends Worker {
     }
 
     box[`resolve.${this._name}`] = {
+      collect: [],
       count: 0,
-      data: [],
+      data,
       total: this._downstreams.length
     }
 

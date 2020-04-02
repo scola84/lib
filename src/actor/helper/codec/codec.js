@@ -1,8 +1,9 @@
 import isArray from 'lodash/isArray.js'
+import isError from 'lodash/isError.js'
 import isFunction from 'lodash/isFunction.js'
 import isNil from 'lodash/isNil.js'
 import isObject from 'lodash/isObject.js'
-import buffer from 'buffer/index.js'
+import buffr from 'buffer/index.js'
 import { Loader } from '../loader.js'
 
 export class Codec extends Loader {
@@ -40,17 +41,20 @@ export class Codec extends Loader {
       return
     }
 
-    let data = buffer.Buffer.concat(buffers)
+    let buffer = buffr.Buffer.concat(buffers)
 
-    data = typeof TextDecoder === 'undefined'
-      ? data
-      : new TextDecoder().decode(data)
-
-    try {
-      callback(null, this.parse(data))
-    } catch (error) {
-      callback(new Error(`400 ${error.message}`))
+    if (typeof TextDecoder !== 'undefined') {
+      buffer = new TextDecoder().decode(buffer)
     }
+
+    this.parse(buffer, {}, (error, object) => {
+      if (isError(error) === true) {
+        callback(new Error(`400 ${error.message}`))
+        return
+      }
+
+      callback(null, object)
+    })
   }
 
   decodeReader (reader, callback, progress) {
@@ -65,7 +69,7 @@ export class Codec extends Loader {
       }
 
       reader.buffers.push(chunk)
-      progress(buffer.Buffer.byteLength(chunk))
+      progress(buffr.Buffer.byteLength(chunk))
       this.decodeReader(reader, callback, progress)
     })
   }
@@ -75,7 +79,7 @@ export class Codec extends Loader {
 
     readable.on('data', (chunk) => {
       buffers.push(chunk)
-      progress(buffer.Buffer.byteLength(chunk))
+      progress(buffr.Buffer.byteLength(chunk))
     })
 
     readable.once('end', () => {
@@ -83,24 +87,20 @@ export class Codec extends Loader {
     })
   }
 
-  encode (writable, data, callback) {
-    if (isNil(data) === true) {
-      callback(null, data)
+  encode (writable, object, callback) {
+    if (isNil(object) === true) {
+      callback(null, object)
       return
     }
 
-    try {
-      callback(null, this.stringify(data))
-    } catch (error) {
-      callback(error)
-    }
+    this.stringify(object, {}, callback)
   }
 
-  parse (string) {
-    return string
+  parse (buffer, options, callback) {
+    callback(null, buffer)
   }
 
-  stringify (data) {
-    return data
+  stringify (object, options, callback) {
+    callback(null, String(object))
   }
 }

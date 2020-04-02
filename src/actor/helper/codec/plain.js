@@ -5,7 +5,7 @@ export class PlainCodec extends Codec {
     return super.setType(value)
   }
 
-  parse (data) {
-    return String(data)
+  parse (buffer, options, callback) {
+    callback(null, String(buffer))
   }
 }

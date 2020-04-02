@@ -85,10 +85,10 @@ export class Slicer extends Worker {
     }
 
     box[`resolve.${this._name}`] = {
-      data,
-      total,
       collect: [],
-      count: 0
+      count: 0,
+      data,
+      total
     }
 
     return true

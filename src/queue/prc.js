@@ -416,5 +416,3 @@ broadcaster
   .connect(nextQueueSelector)
   .bypass(false)
   .connect(queueTriggerRunDecider)
-
-queueTrigger.call()

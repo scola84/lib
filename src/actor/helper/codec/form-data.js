@@ -100,8 +100,8 @@ export class FormDataCodec extends Codec {
     readable.pipe(formdata)
   }
 
-  encode (writable, data, callback) {
-    const keys = Object.keys(data)
+  encode (writable, object, callback) {
+    const keys = Object.keys(object)
     const form = new window.FormData()
 
     let name = null
@@ -109,7 +109,7 @@ export class FormDataCodec extends Codec {
 
     for (let i = 0; i < keys.length; i += 1) {
       name = keys[i]
-      value = data[name]
+      value = object[name]
 
       if (isArray(value) === false) {
         value = [value]

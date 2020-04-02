@@ -7,19 +7,29 @@ export class MsgpackCodec extends Codec {
     return super.setType(value)
   }
 
-  parse (data, options) {
-    if (isObject(msgpack) === true) {
-      return msgpack.decode(data, options)
+  parse (buffer, options, callback) {
+    if (isObject(msgpack) === false) {
+      callback(null, buffer)
+      return
     }
 
-    return data
+    try {
+      callback(null, msgpack.decode(buffer, options))
+    } catch (error) {
+      callback(error)
+    }
   }
 
-  stringify (data, options) {
-    if (isObject(msgpack) === true) {
-      return msgpack.encode(data, options)
+  stringify (object, options, callback) {
+    if (isObject(msgpack) === false) {
+      callback(null, String(object))
+      return
     }
 
-    return String(data)
+    try {
+      callback(null, msgpack.encode(object, options))
+    } catch (error) {
+      callback(error)
+    }
   }
 }

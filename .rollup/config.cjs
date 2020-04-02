@@ -32,6 +32,7 @@ const external = [
   'node-cron',
   'nodemailer',
   'parse5',
+  'pdf-lib',
   'postal-codes-js',
   'pg',
   'pg-connection-string',

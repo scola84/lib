@@ -32,7 +32,11 @@ export class QueueTriggerQueueUpdater extends SqlBuilder {
     )
   }
 
-  decide (box, data) {
+  decide (box, data, context) {
+    if (context === 'err') {
+      return false
+    }
+
     return isString(data.queue.trigger_schedule) === true
   }
 }

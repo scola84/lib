@@ -8,10 +8,9 @@ export class NextTaskSlicer extends Slicer {
   }
 
   filter (box, data) {
-    box.bid = null
-
     return data.next.map((task) => {
       return {
+        id: data.id_item,
         id_item: data.id_item,
         id_queue: data.id_queue,
         id_run: data.id_run,

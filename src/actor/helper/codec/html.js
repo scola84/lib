@@ -7,19 +7,29 @@ export class HtmlCodec extends Codec {
     return super.setType(value)
   }
 
-  parse (data, options) {
-    if (isObject(parse5) === true) {
-      return parse5.parse(String(data), options)
+  parse (buffer, options, callback) {
+    if (isObject(parse5) === false) {
+      callback(null, buffer)
+      return
     }
 
-    return data
+    try {
+      callback(null, parse5.parse(String(buffer), options))
+    } catch (error) {
+      callback(error)
+    }
   }
 
-  stringify (data, options) {
-    if (isObject(parse5) === true) {
-      return parse5.serialize(data, options)
+  stringify (object, options, callback) {
+    if (isObject(parse5) === false) {
+      callback(null, String(object))
+      return
     }
 
-    return String(data)
+    try {
+      callback(null, parse5.serialize(object, options))
+    } catch (error) {
+      callback(error)
+    }
   }
 }

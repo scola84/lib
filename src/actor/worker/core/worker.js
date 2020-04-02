@@ -321,7 +321,11 @@ export class Worker extends Loader {
   }
 
   format (string, args, locale) {
-    return Formatter.format(string, args, locale)
+    try {
+      return Formatter.format(string, args, locale)
+    } catch (error) {
+      return error.message
+    }
   }
 
   log (type, message, args, rid) {

@@ -7,19 +7,23 @@ export class UrlencodedCodec extends Codec {
     return super.setType(value)
   }
 
-  parse (data, options) {
-    return qs.parse(String(data), options)
+  parse (buffer, options, callback) {
+    try {
+      callback(null, qs.parse(String(buffer), options))
+    } catch (error) {
+      callback(error)
+    }
   }
 
-  stringify (data) {
+  stringify (object, options, callback) {
     const params = new url.URLSearchParams()
-    const keys = Object.keys(data)
+    const keys = Object.keys(object)
 
     for (let i = 0, key; i < keys.length; i += 1) {
       key = keys[i]
-      params.append(keys[i], data[key])
+      params.append(keys[i], object[key])
     }
 
-    return params
+    callback(null, params)
   }
 }

@@ -27,6 +27,7 @@ export class Queuer extends Worker {
     this.setBoxes(options.boxes)
     this.setClient(options.client)
     this.setExpire(options.expire)
+    this.setFinal(options.final)
     this.setHandler(options.handler)
     this.setHighWaterMark(options.highWaterMark)
     this.setPusher(options.pusher)
@@ -106,7 +107,10 @@ export class Queuer extends Worker {
   }
 
   setFinal (value = []) {
-    this._final = value
+    this._final = isString(value)
+      ? [value]
+      : value
+
     return this
   }
 
@@ -277,9 +281,14 @@ export class Queuer extends Worker {
     this.log('info', 'Acting as simple queuer on %o', [data], box.rid)
 
     this._queue.push((callback) => {
+      if (this.setUpBoxResolve(box, data, callback) === false) {
+        this.fail(box, new Error(`Could not set up resolve for '${this._name}'`))
+        return
+      }
+
       this
         .log('info', 'Handling task %o', [data], box.rid)
-        .pass(this.setUpBoxResolve(box, callback), data)
+        .pass(box, data)
     })
   }
 
@@ -296,6 +305,10 @@ export class Queuer extends Worker {
 
   checkFinal (data) {
     if (isNil(data.id) === true) {
+      return true
+    }
+
+    if (this._final.length === 0) {
       return true
     }
 
@@ -352,12 +365,18 @@ export class Queuer extends Worker {
           return
         }
 
-        const data = this._codec.parse(string)
-        data.error = this.transformError(data.error)
+        this._codec.parse(string, {}, (parseError, parseData) => {
+          if (isError(parseError) === true) {
+            this.fail(box, Object.assign(parseError, index))
+            return
+          }
 
-        this
-          .log('info', 'Handling result %o', [string], box.rid)
-          .pass(box, data)
+          parseData.error = this.transformError(parseData.error)
+
+          this
+            .log('info', 'Handling result %o', [string], box.rid)
+            .pass(box, parseData)
+        })
       })
   }
 
@@ -383,23 +402,25 @@ export class Queuer extends Worker {
           return
         }
 
-        const {
-          box,
-          data
-        } = this._codec.parse(string)
+        this._codec.parse(string, {}, (parseError, { box, data }) => {
+          if (isError(parseError) === true) {
+            callback(parseError)
+            return
+          }
 
-        const cb = (error, result = data) => {
-          this.pushResult(error, result, box, callback)
-        }
+          const cb = (error, result = data) => {
+            this.pushResult(error, result, box, callback)
+          }
 
-        if (this.setUpBoxResolve(box, cb) === false) {
-          this.fail(box, new Error(`Could not set up resolve for '${this._name}'`))
-          return
-        }
+          if (this.setUpBoxResolve(box, null, cb) === false) {
+            this.fail(box, new Error(`Could not set up resolve for '${this._name}'`))
+            return
+          }
 
-        this
-          .log('info', 'Handling task %o', [string], box.rid)
-          .pass(box, data)
+          this
+            .log('info', 'Handling task %o', [string], box.rid)
+            .pass(box, data)
+        })
       })
     })
   }
@@ -417,16 +438,21 @@ export class Queuer extends Worker {
       ? `${box.sid}:${data.index}`
       : `${box.bid}:${data.index}`
 
-    const string = this._codec.stringify(data)
+    this._codec.stringify(data, {}, (stringifyError, stringifyData) => {
+      if (isError(stringifyError) === true) {
+        callback(stringifyError)
+        return
+      }
 
-    this.log('info', 'Pushing result %o', [string], box.rid)
+      this.log('info', 'Pushing result %o', [stringifyData], box.rid)
 
-    this._client
-      .multi()
-      .set(tid, string)
-      .pexpire(tid, this._expire)
-      .publish(data.result, tid)
-      .exec(callback)
+      this._client
+        .multi()
+        .set(tid, stringifyData)
+        .pexpire(tid, this._expire)
+        .publish(data.result, tid)
+        .exec(callback)
+    })
   }
 
   pushTask (box, data, callback = () => {}) {
@@ -483,29 +509,37 @@ export class Queuer extends Worker {
           this.throttlePause(box)
         }
 
-        const string = this._codec.stringify({
+        const object = {
           data,
           box: this.createBoxPusher(box)
+        }
+
+        this._codec.stringify(object, {}, (stringifyError, stringifyData) => {
+          if (isError(stringifyError) === true) {
+            callback(stringifyError)
+            return
+          }
+
+          this.log('info', 'Pushing task %o', [stringifyData], box.rid)
+
+          this._client
+            .multi()
+            .lpush(data.queue, stringifyData)
+            .publish(data.queue, 1)
+            .exec(callback)
         })
-
-        this.log('info', 'Pushing task %o', [string], box.rid)
-
-        this._client
-          .multi()
-          .lpush(data.queue, string)
-          .publish(data.queue, 1)
-          .exec(callback)
       })
     })
   }
 
-  setUpBoxResolve (box, callback) {
+  setUpBoxResolve (box, data, callback) {
     if (isObject(box[`resolve.${this._name}`]) === true) {
       return false
     }
 
     box[`resolve.${this._name}`] = {
       callback,
+      data,
       total: 0
     }
 

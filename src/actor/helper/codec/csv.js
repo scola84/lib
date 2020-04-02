@@ -1,4 +1,5 @@
-import csv from 'csv/lib/sync.js'
+import csv from 'csv'
+import isObject from 'lodash/isObject.js'
 import { Codec } from './codec.js'
 
 export class CsvCodec extends Codec {
@@ -6,11 +7,21 @@ export class CsvCodec extends Codec {
     return super.setType(value)
   }
 
-  parse (data, options) {
-    return csv.parse(data, options)
+  parse (buffer, options = {}, callback = () => {}) {
+    if (isObject(csv) === false) {
+      callback(null, buffer)
+      return
+    }
+
+    csv.parse(buffer, options, callback)
   }
 
-  stringify (data, options) {
-    return csv.stringify(data, options)
+  stringify (array, options = {}, callback = () => {}) {
+    if (isObject(csv) === false) {
+      callback(null, String(array))
+      return
+    }
+
+    csv.stringify(array, options, callback)
   }
 }

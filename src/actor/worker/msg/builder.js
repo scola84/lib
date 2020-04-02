@@ -45,7 +45,7 @@ export class MsgBuilder extends Builder {
     const client = this.resolveClient(box, data)
     const message = this.resolveMessage(box, data)
 
-    this._origin.log('info', 'Sending message %o', [message], box.rid)
+    this.log('info', 'Sending message %o', [message], box.rid)
 
     client.sendMessage(message, (error, result) => {
       if (isError(error) === true) {

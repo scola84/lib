@@ -59,6 +59,10 @@ export class NextQueueSelector extends SqlBuilder {
             sc.value((box, data) => data.id_run)
           ),
           sc.eq(
+            sc.id('queue_run.stat_id_item_updated'),
+            sc.value((box, data) => data.id_item)
+          ),
+          sc.eq(
             sc.plus(
               sc.id('queue_run.stat_count_item_failure'),
               sc.id('queue_run.stat_count_item_success'),
@@ -72,7 +76,8 @@ export class NextQueueSelector extends SqlBuilder {
   }
 
   decide (box, data) {
-    return isFinite(data.id_run) === true
+    return isFinite(data.id_run) === true &&
+      data.status !== 'PENDING'
   }
 
   merge (box, data, { row: queue = {} }) {

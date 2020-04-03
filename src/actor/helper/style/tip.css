@@ -1,0 +1,16 @@
+.tip {
+  background: black;
+  color: white;
+  margin: -0.5em 0 0;
+  opacity: 0;
+  padding: 0.5em;
+  position: absolute;
+}
+
+.tip.in {
+  opacity: 1;
+}
+
+.tip.out {
+  opacity: 0;
+}

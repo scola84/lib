@@ -1,0 +1,162 @@
+/* App */
+
+.aero .app {
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.aero .app>* {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 48em) {
+  .aero .app>.menu {
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Dialog */
+
+.aero .modal>.dialog {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  padding: 0.5em;
+}
+
+.aero .modal>.dialog>.body {
+  background: whitesmoke;
+  padding: 0.5em;
+}
+
+.aero .modal>.dialog>.body input {
+  margin: 0.5em 0 0;
+}
+
+.aero .modal>.dialog>.footer {
+  background: whitesmoke;
+  padding: 0 0 0.5em;
+}
+
+.aero .modal>.dialog>.header>.title {
+  padding: 0 0 0.5em;
+  text-shadow: 0 0 9px white;
+}
+
+/* Group */
+
+.aero .group {
+  padding-bottom: 0.5em;
+}
+
+@media not all and (max-width: 48em) {
+  .aero .panel:not(.outset-x) .group {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+}
+
+.aero .group>.title:not(:empty) {
+  padding-top: 0.555em;
+}
+
+/* Panel */
+
+.aero .menu+*>.panel>.header {
+  opacity: 1;
+  transition: opacity 0.25s;
+}
+
+.aero .menu.in+*>.panel>.header {
+  opacity: 0;
+}
+
+.aero .panel {
+  opacity: 1;
+}
+
+.aero .panel.old {
+  opacity: 0;
+}
+
+.aero .panel>* {
+  margin-left: 0.5em;
+}
+
+.aero :last-child>.panel>* {
+  margin-right: 0.5em;
+}
+
+.aero .panel>:last-child {
+  margin-bottom: 0.5em;
+}
+
+.aero .panel>.body,
+.aero .panel>.footer {
+  background: whitesmoke;
+}
+
+.aero .panel>.body {
+  padding-top: 0.5em;
+}
+
+.aero .panel>*>.bar>.center>.title {
+  text-shadow: 0 0 9px white;
+}
+
+.aero .panel>*>.bar .button {
+  text-shadow: 0 0 9px #fff
+}
+
+.aero .panel>.header>.bar {
+  margin-left: -0.5em;
+  margin-right: -0.5em;
+}
+
+.aero .panel>.header>.message {
+  opacity: 0;
+}
+
+.aero .panel>.header>.message.in {
+  opacity: 1;
+}
+
+.aero .panel>.header>.search {
+  opacity: 0;
+}
+
+.aero .panel>.header>.search.in {
+  opacity: 1;
+}
+
+.aero .panel>.header>.search {
+  margin-bottom: -4em;
+  top: -4em;
+}
+
+.aero .panel>.header>.search:before {
+  top: 1em;
+}
+
+.aero .panel>.header>.search input {
+  margin: 0.75em 1em;
+}
+
+/* Pop */
+
+.aero .pop>.up {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.aero .app.in+.pop>.up {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+@media (max-width: 48em) {
+  .aero.popup .app.in {
+    opacity: 0;
+  }
+
+  .aero .app.in+.pop>.up {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}

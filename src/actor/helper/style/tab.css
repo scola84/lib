@@ -1,0 +1,27 @@
+.tab {
+  border: 1px solid black;
+  border-radius: 0.25em;
+  color: black;
+  display: flex;
+}
+
+.tab>* {
+  flex: 1;
+  font-size: 0.9em;
+  padding: 0.25em 0.5em;
+  text-align: center;
+}
+
+.tab>.selected {
+  background: black;
+  color: white;
+}
+
+.tab *+* {
+  border-left: 1px solid black;
+}
+
+*[dir='rtl'] .tab *+* {
+  border-left: none;
+  border-right: 1px solid black;
+}

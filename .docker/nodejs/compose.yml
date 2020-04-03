@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+  queue:
+    image: "node:13-alpine"
+    command: yarn start:dev
+    env_file:
+      - $PWD/.env
+    environment:
+      - NODE_SCRIPT=./node_modules/@scola/lib/src/queue/prc.js
+    networks:
+      default:
+        aliases:
+          - queue-serve-push
+          - queue-serve-result
+    restart: always
+    volumes:
+      - $PWD/node_modules/:/www/nodejs/node_modules/
+      - $PWD/package.json:/www/nodejs/package.json
+    working_dir: /www/nodejs/

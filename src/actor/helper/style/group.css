@@ -1,0 +1,98 @@
+/* Body */
+
+.group>.body {
+  overflow: hidden;
+}
+
+.group>.body {
+  border-top: 1px solid lightgrey;
+}
+
+.group>.body:not(:empty) {
+  border-bottom: 1px solid lightgrey;
+}
+
+@media not all and (max-width: 48em) {
+  .panel:not(.outset-x) .group>.body {
+    border: none;
+  }
+}
+
+/* Comment */
+
+.group>.comment {
+  color: darkgrey;
+  display: flex;
+  font-size: 0.9em;
+  line-height: 1.5em;
+  padding: 0.75em 1em 0;
+}
+
+/* Hint */
+
+.group>.hint:not(:empty) {
+  padding: 0 1.111em 0.555em;
+}
+
+/* Title */
+
+.group>.title:not(:empty) {
+  color: darkgrey;
+  display: flex;
+  font-size: 0.9em;
+  justify-content: space-between;
+  padding: 0 1.111em 0.555em;
+  text-transform: uppercase;
+}
+
+@media not all and (max-width: 48em) {
+  .panel:not(.outset-x) .group>.title {
+    pointer-events: none;
+  }
+}
+
+.group>.title:not(:empty) * {
+  font-size: inherit;
+  text-transform: inherit;
+}
+
+.group>.title.fold:after {
+  font-family: Ionicons;
+  font-size: 1.25em;
+  margin-left: auto;
+  transition: transform 0.25s ease-in-out;
+  width: 0.5em;
+}
+
+*[dir='rtl'] .group>.title.fold:after {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.group>.title.fold.all:after {
+  content: '\f3d0';
+}
+
+.group.folded>.title.fold.all:after {
+  transform: rotate(-90deg);
+}
+
+@media not all and (max-width: 48em) {
+  .panel:not(.outset-x) .group>.title.fold.all:after {
+    content: '';
+  }
+}
+
+.group>.title.fold.some:after {
+  content: '\f1fc';
+}
+
+.group.folded>.title.fold.some:after {
+  content: '\f102';
+}
+
+@media not all and (max-width: 48em) {
+  .panel:not(.outset-x) .group>.title.fold.some:after {
+    content: '';
+  }
+}

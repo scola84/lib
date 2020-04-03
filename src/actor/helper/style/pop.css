@@ -1,0 +1,47 @@
+.pop {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  bottom: 0;
+  display: none;
+  justify-content: center;
+  left: 0;
+  opacity: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+}
+
+.app:not(.in)+.pop {
+  background: none;
+}
+
+.pop.in {
+  opacity: 1;
+}
+
+.pop.open {
+  display: flex;
+  z-index: 3;
+}
+
+.pop>.up {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.pop>.up.move {
+  top: 100%;
+}
+
+.pop>.up.move.in {
+  top: 0;
+}
+
+@media (min-width: 48em) and (min-height: 34em) {
+  .pop>.up {
+    height: 34em;
+    width: 34em;
+  }
+}

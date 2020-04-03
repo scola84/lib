@@ -1,0 +1,43 @@
+.form .item .input,
+.form .item input,
+.form .item select,
+.form .item textarea {
+  background: none;
+  border: 0;
+  min-width: 0;
+}
+
+.form .item input,
+.form .item textarea {
+  flex: 1;
+}
+
+.form .item input[type='checkbox'],
+.form .item input[type='date'],
+.form .item input[type='month'],
+.form .item input[type='radio'],
+.form .item input[type='time'] {
+  flex: none;
+}
+
+.form .item input[type='checkbox']:not(:first-child),
+.form .item input[type='radio']:not(:first-child) {
+  margin-left: 0;
+}
+
+.form .item .label:first-child {
+  flex: none;
+}
+
+.form .item .hint {
+  margin-top: -2.5em;
+  opacity: 0;
+  padding-left: 1.111em;
+  padding-right: 1.111em;
+  width: 100%;
+}
+
+.form .item .hint.in {
+  margin-top: -0.25em;
+  opacity: 1;
+}

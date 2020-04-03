@@ -1,0 +1,181 @@
+/* App */
+
+.ios .app {
+  border-radius: 1em;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.outset-x.ios .app,
+.outset-y.ios .app {
+  border-radius: 0;
+}
+
+@media (max-width: 64em) {
+  .ios .app {
+    border-radius: 0;
+  }
+}
+
+@media (max-height: 48em) {
+  .ios .app {
+    border-radius: 0;
+  }
+}
+
+.ios .app>.main {
+  background: whitesmoke;
+}
+
+.ios .app>.menu {
+  background: whitesmoke;
+  border-right: 1px solid lightgrey;
+}
+
+*[dir='rtl'] .ios .app>.menu {
+  border-left: 1px solid lightgrey;
+  border-right: 0;
+}
+
+/* Dialog */
+
+.ios .modal>.dialog {
+  border-radius: 1em;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.ios .modal>.dialog>* {
+  background: whitesmoke;
+}
+
+.ios .modal>.dialog>.body {
+  padding: 0 0.5em 0.5em;
+}
+
+.ios .modal>.dialog>.body input {
+  margin: 1em 0 0.5em;
+}
+
+.ios .modal>.dialog>.footer {
+  padding: 0 0 1em;
+}
+
+.ios .modal>.dialog>.header {
+  padding-top: 1em;
+}
+
+.ios .modal>.dialog>.header>.title {
+  font-weight: bold;
+}
+
+/* Dom */
+
+body.ios {
+  background: lightgrey;
+}
+
+/* Graph */
+
+@media not all and (max-width: 48em) {
+  .ios .panel:not(.outset-x) .graph {
+    border-radius: 0.5em;
+  }
+}
+
+/* Group */
+
+.ios .group {
+  padding-bottom: 1em;
+}
+
+@media not all and (max-width: 48em) {
+  .ios .panel:not(.outset-x) .group {
+    padding-left: 1em;
+    padding-right: 1em;
+  }
+}
+
+/* Item */
+
+@media not all and (max-width: 48em) {
+  .ios .panel:not(.outset-x) .item:first-child {
+    border-top-left-radius: 0.5em;
+    border-top-right-radius: 0.5em;
+  }
+
+  .ios .panel:not(.outset-x) .item:last-child {
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
+  }
+}
+
+/* Log control */
+
+@media not all and (max-width: 48em) {
+  .ios .panel:not(.outset-x) .log-control {
+    border-radius: 0.5em;
+  }
+}
+
+/* Metric */
+
+.ios .metric {
+  border-radius: 0.5em;
+}
+
+/* Panel */
+
+.ios .panel {
+  background: whitesmoke;
+}
+
+.ios .panel {
+  box-shadow: 0 0 15px darkgrey;
+}
+
+.ios .panel>*>.bar {
+  background: #fafafa;
+}
+
+.ios .panel>.body {
+  padding-top: 1em;
+}
+
+.ios .panel>*>.bar>.center>.title {
+  font-weight: bold;
+}
+
+.ios .panel>.header>.search {
+  margin-bottom: -3.25em;
+  top: -3.25em;
+  z-index: 1;
+}
+
+@media (-webkit-min-device-pixel-ratio: 2) {
+  .ios .panel>.header>.search {
+    margin-top: -1px;
+  }
+}
+
+.ios .panel>.header>.search:before {
+  top: 0.35em;
+}
+
+.ios .panel>.header>.search input {
+  margin: 0 1em 0.75em;
+}
+
+/* Pop */
+
+@media (min-width: 48em) and (min-height: 34em) {
+  .ios .pop>.up {
+    border-radius: 1em;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Tip */
+
+.ios .tip {
+  border-radius: 0.3em;
+}

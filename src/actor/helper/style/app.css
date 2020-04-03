@@ -1,0 +1,70 @@
+.app {
+  display: flex;
+  height: 48em;
+  opacity: 0;
+  overflow: hidden;
+  width: 64em;
+}
+
+.app.in {
+  opacity: 1;
+}
+
+.outset-x .app {
+  width: 100%;
+}
+
+.outset-y .app {
+  height: 100%;
+}
+
+@media (max-width: 64em) {
+  .app {
+    height: 100%;
+    width: 100%;
+  }
+}
+
+@media (max-height: 48em) {
+  .app {
+    height: 100%;
+  }
+}
+
+.app>* {
+  overflow: hidden;
+}
+
+.app>.main {
+  flex: 1 1 auto;
+  height: 100%;
+  position: relative;
+}
+
+.app>.menu {
+  height: 100%;
+  position: relative;
+  width: 21.333em;
+}
+
+@media (max-width: 48em) {
+  .app>.menu {
+    left: -100%;
+    max-width: 85%;
+    position: absolute;
+    z-index: 3;
+  }
+
+  .app>.menu.in {
+    left: 0;
+  }
+
+  *[dir='rtl'] .app>.menu {
+    left: 0;
+    right: -100%;
+  }
+
+  *[dir='rtl'] .app>.menu.in {
+    right: 0;
+  }
+}

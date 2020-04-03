@@ -1,0 +1,50 @@
+.modal {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  opacity: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 4;
+}
+
+.modal.in {
+  opacity: 1;
+}
+
+.modal>.dialog {
+  text-align: center;
+  width: 18em;
+}
+
+.modal>.dialog>.body {
+  text-align: center;
+}
+
+.modal>.dialog>.body>* {
+  font-size: 0.9em;
+}
+
+.modal>.dialog>.body input {
+  background: white;
+  border: 1px solid lightgrey;
+  text-align: center;
+  width: 100%;
+}
+
+.modal>.dialog>.footer {
+  display: flex;
+  justify-content: space-around;
+}
+
+.modal>.dialog>.footer>button:last-child {
+  font-weight: bold;
+}
+
+.modal>.dialog>.footer>button:active {
+  opacity: 0.5;
+}

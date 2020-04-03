@@ -1,0 +1,34 @@
+.ion-ios-brush:before,
+.ion-ios-lock:before,
+.ion-ios-square:before,
+.ion-ios-unlock:before {
+  font-size: 1em !important;
+}
+
+.ion-ios-refresh:before,
+.ion-ios-search:before {
+  font-size: 1.5em !important;
+}
+
+.ion-ios-list:before,
+.ion-ios-log-out:before {
+  font-size: 1.75em !important;
+}
+
+.ion-ios-log-out,
+*[dir='rtl'] .ion-ios-arrow-back,
+*[dir='rtl'] .ion-ios-arrow-forward {
+  transform: rotate(180deg);
+}
+
+.item>.buttoyn.add {
+  color: green;
+}
+
+.item>.button.edit {
+  color: black;
+}
+
+.item>.button.delete {
+  color: red;
+}

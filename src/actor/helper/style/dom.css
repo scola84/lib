@@ -1,0 +1,149 @@
+* {
+  box-sizing: border-box;
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  line-height: 1.5em;
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+}
+
+body {
+  align-items: center;
+  cursor: default;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  margin: 0;
+  position: absolute;
+  width: 100%;
+}
+
+body>video {
+  height: auto;
+  position: fixed;
+  width: auto;
+  z-index: -100;
+}
+
+@media not all and (max-width: 64em) {
+  body>video {
+    z-index: -1000;
+  }
+}
+
+button {
+  background: none;
+  border: 0;
+  color: inherit;
+  font-size: inherit;
+  padding: 0;
+  text-align: start;
+  text-shadow: inherit;
+  user-select: text;
+}
+
+@media not all and (max-width: 64em) {
+
+  button:focus,
+  input:focus,
+  label:focus,
+  select:focus,
+  textarea:focus {
+    outline: 1px dotted black;
+  }
+}
+
+fieldset,
+form {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+p {
+  margin: 0;
+}
+
+select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 #000;
+}
+
+.click,
+.click * {
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
+
+.hint:not(:empty) {
+  color: red;
+  font-size: 0.9em;
+}
+
+.loading.in {
+  animation: spin 1s infinite linear;
+  border: 1px solid grey;
+  border-radius: 50%;
+  border-right: none;
+  flex: none;
+  height: 1.5em;
+  margin: 1em auto;
+  position: relative;
+  top: -0.5em;
+  width: 1.5em;
+}
+
+.message:not(:empty) {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  padding: 0.5em;
+  text-align: center;
+}
+
+.transition {
+  transition: all 0.25s ease-in-out;
+}
+
+:focus {
+  outline: none;
+}
+
+::-moz-focus-inner {
+  border: 0;
+}
+
+@keyframes spin {
+  from {
+    transform: scale(1) rotate(0deg);
+  }
+
+  to {
+    transform: scale(1) rotate(360deg);
+  }
+}
+
+@media not all and (max-width: 48em) {
+  .button.show-menu {
+    display: none !important;
+  }
+}
+
+@media (-webkit-min-device-pixel-ratio: 2) {
+
+  *,
+  *:before {
+    border-width: 0.5px !important;
+  }
+}

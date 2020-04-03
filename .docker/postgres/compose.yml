@@ -1,0 +1,10 @@
+version: "3.7"
+services:
+  postgres:
+    image: "postgres:12-alpine"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    restart: always
+    volumes:
+      - $PWD/node_modules/@scola/lib/.docker/postgres/initdb.d/queue.sql:/docker-entrypoint-initdb.d/1-scola-queue.sql

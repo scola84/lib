@@ -1,7 +1,0 @@
-export * from './axis.js'
-export * from './circle.js'
-export * from './grid.js'
-export * from './path.js'
-export * from './plot.js'
-export * from './rect.js'
-export * from './tick.js'

@@ -1,7 +1,7 @@
 import isError from 'lodash/isError.js'
 import isFunction from 'lodash/isFunction.js'
 import { Builder } from '../core/index.js'
-import map from './builder/map/client.js'
+import { map as clientMap } from './builder/client/index.js'
 
 const clients = new Map()
 
@@ -102,4 +102,4 @@ export class MsgBuilder extends Builder {
   }
 }
 
-MsgBuilder.attachFactories({ map })
+MsgBuilder.attachFactories({ clientMap })

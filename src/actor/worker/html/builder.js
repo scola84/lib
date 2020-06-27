@@ -1,7 +1,7 @@
 import * as d3 from 'd3-selection'
 import { Builder } from '../core/index.js'
-import map from './builder/map/index.js'
-import snippet from './builder/snippet/index.js'
+import snippet from './builder/tool/snippet/index.js'
+import toolMap from './builder/tool/index.js'
 
 export class HtmlBuilder extends Builder {
   static querySelector (...args) {
@@ -84,4 +84,4 @@ export class HtmlBuilder extends Builder {
 }
 
 HtmlBuilder.snippet = snippet
-HtmlBuilder.attachFactories(map)
+HtmlBuilder.attachFactories(toolMap)

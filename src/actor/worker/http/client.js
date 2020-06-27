@@ -6,7 +6,7 @@ import isString from 'lodash/isString.js'
 import qs from 'qs'
 import { Builder } from '../core/index.js'
 import { Request } from './client/message/index.js'
-import map from './client/map/auth.js'
+import { map as authMap } from './client/auth/index.js'
 
 export class HttpClient extends Builder {
   static parse (resource) {
@@ -228,4 +228,4 @@ export class HttpClient extends Builder {
   }
 }
 
-HttpClient.attachFactories({ map })
+HttpClient.attachFactories({ authMap })

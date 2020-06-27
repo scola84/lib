@@ -1,8 +1,8 @@
 import isError from 'lodash/isError.js'
 import isFunction from 'lodash/isFunction.js'
 import { Builder } from '../core/index.js'
-import map from './builder/map/client.js'
-import snippet from './builder/snippet/index.js'
+import { map as clientMap } from './builder/client/index.js'
+import snippet from './builder/tool/snippet/index.js'
 
 const clients = new Map()
 
@@ -211,4 +211,4 @@ export class SqlBuilder extends Builder {
 }
 
 SqlBuilder.snippet = snippet
-SqlBuilder.attachFactories({ map })
+SqlBuilder.attachFactories({ clientMap })

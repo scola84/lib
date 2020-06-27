@@ -2,8 +2,8 @@ import isArray from 'lodash/isArray.js'
 import isError from 'lodash/isError.js'
 import isObject from 'lodash/isObject.js'
 import mysql from 'mysql'
+import toolMap from '../tool/index.js'
 import { Client } from './client.js'
-import map from '../map/index.js'
 
 export class Mysql extends Client {
   setModules (value = { mysql }) {
@@ -62,4 +62,4 @@ export class Mysql extends Client {
   }
 }
 
-Mysql.attachFactories(map)
+Mysql.attachFactories(toolMap)

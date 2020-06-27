@@ -11,10 +11,6 @@ export class Request extends Loader {
     this.original = original
   }
 
-  setModules (value = { fetch, Response }) {
-    return super.setModules(value)
-  }
-
   getHeaders () {
     return this.original.headers
   }
@@ -50,6 +46,10 @@ export class Request extends Loader {
 
   getMethod () {
     return this.original.method
+  }
+
+  setModules (value = { fetch, Response }) {
+    return super.setModules(value)
   }
 
   getType () {

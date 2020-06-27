@@ -1,7 +1,7 @@
 import * as d3 from 'd3-selection'
 import { Router, Worker } from '../core/index.js'
 import { Menu, Popup, Route } from './router/index.js'
-import { HtmlSnippet } from './builder/snippet/snippet.js'
+import { HtmlSnippet } from './builder/tool/snippet/snippet.js'
 
 const routers = new Map()
 

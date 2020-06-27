@@ -3,7 +3,7 @@ import isError from 'lodash/isError.js'
 import isNil from 'lodash/isNil.js'
 import typeParser from 'content-type'
 import { Builder } from '../core/index.js'
-import map from './builder/map/type.js'
+import { map as typeMap } from './builder/type/index.js'
 
 export class FileBuilder extends Builder {
   constructor (options = {}) {
@@ -88,4 +88,4 @@ export class FileBuilder extends Builder {
   }
 }
 
-FileBuilder.attachFactories({ map })
+FileBuilder.attachFactories({ typeMap })

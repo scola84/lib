@@ -3,8 +3,8 @@ import isObject from 'lodash/isObject.js'
 import parser from 'pg-connection-string'
 import pg from 'pg'
 import Stream from 'pg-query-stream'
+import toolMap from '../tool/index.js'
 import { Client } from './client.js'
-import map from '../map/index.js'
 
 if (typeof pg === 'object') {
   pg.types.setTypeParser(20, (value) => parseInt(value, 10))
@@ -72,4 +72,4 @@ export class Postgresql extends Client {
   }
 }
 
-Postgresql.attachFactories(map)
+Postgresql.attachFactories(toolMap)

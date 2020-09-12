@@ -44,7 +44,7 @@
     "msgpack-lite": "^0.1.26",
     "mysql": "^2.18.1",
     "node-cron": "^2.0.3",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "nodemailer": "^6.4.6",
     "parse5": "^5.1.1",
     "pdf-lib": "^1.4.1",

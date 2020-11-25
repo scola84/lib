@@ -53,8 +53,8 @@
     "node": ">=14"
   },
   "files": [
-    "./dist",
-    "./types"
+    "dist",
+    "types"
   ],
   "license": "MIT",
   "main": "./dist/server/cjs.js",

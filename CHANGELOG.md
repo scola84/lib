@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/scola84/lib/compare/v1.0.0...v2.0.0) (2020-11-25)
+
+
+### Build System
+
+* **npm:** bump version to trigger new release ([3c1b8dd](https://github.com/scola84/lib/commit/3c1b8ddffec1c2d3ef630b5f99d8ee198c32e4d7))
+
+
+### BREAKING CHANGES
+
+* **npm:** Bumping in the previous commit did not work.
+
 # 1.0.0 (2020-11-25)
 
 

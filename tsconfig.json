@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "module": "ES6",
+    "moduleResolution": "node",
+    "noEmit": true,
+    "plugins": [
+      {
+        "name": "ts-lit-plugin"
+      }
+    ],
+    "rootDir": "./src",
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "target": "ES6"
+  },
+  "include": [
+    "./src/**/*.ts"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+    "pre-commit": "yarn lint:dev && yarn test",
+    "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true"
+  }
+}

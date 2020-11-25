@@ -1,0 +1,7 @@
+{
+  "htmlWhitespaceSensitivity": "ignore",
+  "jsxBracketSameLine": false,
+  "printWidth": 100,
+  "semi": false,
+  "trailingComma": "none"
+}

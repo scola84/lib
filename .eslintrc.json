@@ -65,6 +65,7 @@
       "error",
       "consistent"
     ],
+    "capitalized-comments": "off",
     "class-methods-use-this": "off",
     "complexity": "off",
     "func-style": [
@@ -83,6 +84,8 @@
     "max-lines-per-function": "off",
     "max-params": "off",
     "max-statements": "off",
+    "multiline-comment-style": "off",
+    "multiline-ternary": "off",
     "no-await-in-loop": "off",
     "no-extra-parens": "off",
     "no-multiple-empty-lines": [

@@ -24,6 +24,7 @@ export interface QueueManagerOptions {
 
 export interface QueueMessage {
   id: number
+  name: string
   payload: unknown
 }
 
@@ -48,6 +49,7 @@ export class QueueManager {
     try {
       const {
         id,
+        name,
         payload
       } = JSON.parse(message) as QueueMessage
 
@@ -55,7 +57,8 @@ export class QueueManager {
         .find(Queue, {
           relations: ['tasks'],
           where: {
-            id
+            id,
+            name
           }
         })
         .then((queues) => {

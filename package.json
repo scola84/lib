@@ -1,6 +1,6 @@
 {
   "author": "M.C. van den Boogaart <scola@kvdb.name>",
-  "browser": "./dist/client/umd.js",
+  "browser": "dist/client/umd.js",
   "dependencies": {
     "cron-parser": "^2.18.0",
     "intl-messageformat": "^9.3.19",
@@ -57,7 +57,7 @@
     "types"
   ],
   "license": "MIT",
-  "main": "./dist/server/cjs.js",
+  "main": "dist/server/cjs.js",
   "name": "@scola/lib",
   "repository": "github:scola84/lib",
   "scripts": {
@@ -69,6 +69,6 @@
     "start:dev": "onchange -i -k ${NODE_SCRIPT} -- yarn start",
     "test": "jest --bail --passWithNoTests"
   },
-  "types": "./types/index.d.ts",
+  "types": "types/index.d.ts",
   "version": "2.0.0"
 }

@@ -9,7 +9,7 @@ import typescript from '@rollup/plugin-typescript'
 import pkg from './package.json'
 
 export default [{
-  input: './src/client/index.ts',
+  input: 'src/client/index.ts',
   output: {
     file: 'dist/client/umd.js',
     format: 'umd',
@@ -30,7 +30,7 @@ export default [{
     typescript(),
     process.argv.includes('-w') ? {} : gzip(),
     process.argv.includes('-w') ? {} : terser.terser(),
-    !process.argv.includes('-l') ? {} : livereload('./dist/client/umd.js')
+    !process.argv.includes('-l') ? {} : livereload('dist/client/umd.js')
   ]
 }, {
   external: (id) => {
@@ -40,9 +40,9 @@ export default [{
         return id.includes(dependency)
       })
   },
-  input: './src/server/index.ts',
+  input: 'src/server/index.ts',
   output: [{
-    dir: './',
+    dir: '.',
     entryFileNames: 'dist/server/cjs.js',
     format: 'cjs'
   }],
@@ -54,7 +54,7 @@ export default [{
     }),
     typescript({
       declaration: true,
-      declarationDir: './types'
+      declarationDir: 'types'
     })
   ]
 }]

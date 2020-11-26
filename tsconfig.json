@@ -11,12 +11,12 @@
         "name": "ts-lit-plugin"
       }
     ],
-    "rootDir": "./src",
+    "rootDir": "src",
     "strict": true,
     "strictPropertyInitialization": false,
     "target": "ES6"
   },
   "include": [
-    "./src/**/*.ts"
+    "src/**/*.ts"
   ]
 }

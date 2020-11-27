@@ -1,4 +1,4 @@
-name: Release package
+name: Release
 
 on:
   push:
@@ -11,28 +11,27 @@ env:
 
 jobs:
   release:
-    name: Release package
     runs-on: ubuntu-18.04
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Setup node
+      - name: Setup
         uses: actions/setup-node@v1
         with:
           node-version: 14
 
-      - name: Install dependencies
+      - name: Install
         run: yarn install --frozen-lockfile
 
-      - name: Lint src
+      - name: Lint
         run: yarn lint
 
-      - name: Test src
+      - name: Test
         run: yarn test
 
-      - name: Build dist
-        run: yarn build
+      - name: Bundle
+        run: yarn bundle
 
       - name: Release
         run: yarn semantic-release

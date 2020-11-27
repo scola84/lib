@@ -61,8 +61,8 @@
   "name": "@scola/lib",
   "repository": "github:scola84/lib",
   "scripts": {
-    "build": "rollup -c",
-    "build:dev": "yarn build -m -w",
+    "bundle": "rollup -c",
+    "bundle:dev": "yarn bundle -m -w",
     "lint": "tsc && lit-analyzer --strict src && eslint src",
     "lint:dev": "yarn lint --fix && git add src",
     "start": "node ${NODE_SCRIPT}",

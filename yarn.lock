@@ -4413,21 +4413,21 @@ inquirer@6.5.2:
     strip-ansi "^5.1.0"
     through "^2.3.6"
 
-intl-messageformat-parser@6.0.17:
-  version "6.0.17"
-  resolved "https://registry.yarnpkg.com/intl-messageformat-parser/-/intl-messageformat-parser-6.0.17.tgz#8861294d54184cae2dc950f512c97784fac22c40"
-  integrity sha512-YLzTGKk+tXm0tuEuaATJjVl4C9HNjwC4VslrWQI9vQez1z7czbdmbNQD4ftXiAMLy/Pla+UxyH4jZt9UzI8Y4w==
+intl-messageformat-parser@6.0.18:
+  version "6.0.18"
+  resolved "https://registry.yarnpkg.com/intl-messageformat-parser/-/intl-messageformat-parser-6.0.18.tgz#bf2855b82b0749e1f34e452f0a15d08d3277c8c7"
+  integrity sha512-vLjACEunfi5uSUCWFLOR4PXQ9DGLpED3tM7o9zsYsOvjl0VIheoxyG0WZXnsnhn+S+Zu158M6CkuHXeNZfKRRg==
   dependencies:
     "@formatjs/ecma402-abstract" "1.5.0"
     tslib "^2.0.1"
 
-intl-messageformat@^9.3.19:
-  version "9.3.19"
-  resolved "https://registry.yarnpkg.com/intl-messageformat/-/intl-messageformat-9.3.19.tgz#c4fc4d40e9736e5f5ccd4c2656acf63cf533c8f6"
-  integrity sha512-QUo4w7XjHzwUBPe3TWjh2UoQ6H/zLiMlL0rYHSXeBRjDd2QLez9ZvuPtAHfkmBUxr3l548dVVylh6v/2I7vSYw==
+intl-messageformat@^9.3.20:
+  version "9.3.20"
+  resolved "https://registry.yarnpkg.com/intl-messageformat/-/intl-messageformat-9.3.20.tgz#87ec7e5f7a0f5d13157dc8bed88fe37b4c57b2a1"
+  integrity sha512-jmpjYHE076J/0CIofrPhtUC4LfmsAhuv4JMQxytl2KJd2bim+3+gQJh+Z1vyHUzcj4fIHdt388ZGchb8f0NwOA==
   dependencies:
     fast-memoize "^2.5.2"
-    intl-messageformat-parser "6.0.17"
+    intl-messageformat-parser "6.0.18"
     tslib "^2.0.1"
 
 into-stream@^5.0.0:
@@ -5609,7 +5609,7 @@ lines-and-columns@^1.1.6:
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.1.6.tgz#1c00c743b433cd0a4e80758f7b64a57440d9ff00"
   integrity sha1-HADHQ7QzzQpOgHWPe2SldEDZ/wA=
 
-lit-analyzer@1.2.1:
+lit-analyzer@1.2.1, lit-analyzer@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/lit-analyzer/-/lit-analyzer-1.2.1.tgz#725331a4019ae870dd631d4dd709d39a237161ea"
   integrity sha512-OEARBhDidyaQENavLbzpTKbEmu5rnAI+SdYsH4ia1BlGlLiqQXoym7uH1MaRPtwtUPbkhUfT4OBDZ+74VHc3Cg==
@@ -7196,11 +7196,6 @@ prepend-http@^1.0.1:
   resolved "https://registry.yarnpkg.com/prepend-http/-/prepend-http-1.0.4.tgz#d4f4562b0ce3696e41ac52d0e002e57a635dc6dc"
   integrity sha1-1PRWKwzjaW5BrFLQ4ALlemNdxtw=
 
-prettier@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.2.0.tgz#8a03c7777883b29b37fb2c4348c66a78e980418b"
-  integrity sha512-yYerpkvseM4iKD/BXLYUkQV5aKt4tQPqaGW6EsZjzyu0r7sVZZNPJW4Y8MyKmicp6t42XUPcBVA+H6sB3gqndw==
-
 pretty-format@^26.6.2:
   version "26.6.2"
   resolved "https://registry.yarnpkg.com/pretty-format/-/pretty-format-26.6.2.tgz#e35c2705f14cb7fe2fe94fa078345b444120fc93"
@@ -7821,10 +7816,10 @@ rollup-pluginutils@^2.8.2:
   dependencies:
     estree-walker "^0.6.1"
 
-rollup@^2.33.3:
-  version "2.33.3"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.33.3.tgz#ae72ce31f992b09a580072951bfea76e9df17342"
-  integrity sha512-RpayhPTe4Gu/uFGCmk7Gp5Z9Qic2VsqZ040G+KZZvsZYdcuWaJg678JeDJJvJeEQXminu24a2au+y92CUWVd+w==
+rollup@^2.34.0:
+  version "2.34.0"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.34.0.tgz#ecc7f1d4ce2cb88bb51bec2f56b984f3c35b8271"
+  integrity sha512-dW5iLvttZzdVehjEuNJ1bWvuMEJjOWGmnuFS82WeKHTGXDkRHQeq/ExdifkSyJv9dLcR86ysKRmrIDyR6O0X8g==
   optionalDependencies:
     fsevents "~2.1.2"
 

@@ -23,9 +23,9 @@ export interface QueueManagerOptions {
 }
 
 export interface QueueMessage {
-  id: number
-  name: string
-  payload: unknown
+  id?: number
+  name?: string
+  payload?: unknown
 }
 
 export class QueueManager {
@@ -53,13 +53,16 @@ export class QueueManager {
         payload
       } = JSON.parse(message) as QueueMessage
 
+      if (id === undefined && name === undefined) {
+        return
+      }
+
       this.entityManager
         .find(Queue, {
           relations: ['tasks'],
-          where: {
-            id,
-            name
-          }
+          where: id === undefined
+            ? { name }
+            : { id }
         })
         .then((queues) => {
           queues.forEach((queue) => {

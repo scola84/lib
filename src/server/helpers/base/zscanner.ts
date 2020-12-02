@@ -30,9 +30,9 @@ export class ZScanner extends Readable {
 
     const {
       client,
-      count,
-      cursor,
-      del,
+      count = 1000,
+      cursor = '0',
+      del = false,
       key
     } = options
 
@@ -45,29 +45,29 @@ export class ZScanner extends Readable {
     }
 
     this.client = new Redis(client)
-    this.count = count ?? 1000
-    this.cursor = cursor ?? '0'
-    this.del = del ?? false
+    this.count = count
+    this.cursor = cursor
+    this.del = del
     this.key = key
   }
 
-  public _destroy (): void {
+  public async _destroy (): Promise<void> {
     if (this.del) {
-      this.client
-        .del(this.key)
-        .catch((error) => {
-          this.emit('error', new Error(`Del error: ${String(error)}`))
-        })
+      try {
+        await this.client.del(this.key)
+      } catch (error: unknown) {
+        this.emit('error', new Error(`Del error: ${String(error)}`))
+      }
     }
   }
 
-  public _read (): void {
+  public async _read (): Promise<void> {
     if (this.data.length > 0) {
       this.push(this.data.splice(0, 2))
     } else if (this.cursor === '-1') {
       this.push(null)
     } else {
-      this.readData()
+      await this.readData()
     }
   }
 
@@ -84,14 +84,11 @@ export class ZScanner extends Readable {
     }
   }
 
-  protected readData (): void {
-    this.client
-      .zscan(this.key, this.cursor, 'COUNT', this.count)
-      .then(([cursor, data]) => {
-        this.handleScan(cursor, data)
-      })
-      .catch((error) => {
-        this.emit('error', new Error(`Scan error: ${String(error)}`))
-      })
+  protected async readData (): Promise<void> {
+    try {
+      this.handleScan(...(await this.client.zscan(this.key, this.cursor, 'COUNT', this.count)))
+    } catch (error: unknown) {
+      this.emit('error', new Error(`Scan error: ${String(error)}`))
+    }
   }
 }

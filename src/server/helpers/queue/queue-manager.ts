@@ -98,7 +98,7 @@ export class QueueManager {
       })
   }
 
-  public start (): void {
+  public start (call = false): void {
     const {
       entityManager,
       filter,
@@ -128,6 +128,10 @@ export class QueueManager {
 
     if (this.listenerClient !== undefined) {
       this.startListener(this.listenerClient)
+    }
+
+    if (call) {
+      this.callSchedule()
     }
   }
 

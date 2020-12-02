@@ -64,7 +64,7 @@
     "bundle": "rollup -c",
     "bundle:dev": "yarn bundle -m -w",
     "lint": "tsc && lit-analyzer --strict src && eslint src",
-    "lint:dev": "yarn lint --fix && git add src",
+    "lint:dev": "yarn lint --fix && git update-index --again",
     "test": "jest --bail --passWithNoTests"
   },
   "types": "types/index.d.ts",

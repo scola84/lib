@@ -102,16 +102,16 @@ export class TaskRunner extends Duplex {
 
   public start (): void {
     const {
-      block,
-      consumer,
-      count,
+      block = 1000,
+      consumer = process.env.HOSTNAME ?? '',
+      count = 1,
       entityManager,
       group,
       logger,
       maxLength,
       name,
       queueClient,
-      xid
+      xid = '>'
     } = this.options
 
     if (name === undefined) {
@@ -126,14 +126,14 @@ export class TaskRunner extends Duplex {
       this.entityManager = getManager(entityManager)
     }
 
-    this.block = block ?? 1000
-    this.consumer = consumer ?? process.env.HOSTNAME ?? ''
-    this.count = count ?? 1
+    this.block = block
+    this.consumer = consumer
+    this.count = count
     this.group = group ?? name
     this.name = name
     this.readClient = new Redis(queueClient)
     this.writeClient = new Redis(queueClient)
-    this.xid = xid ?? '>'
+    this.xid = xid
 
     this.logger = logger?.child({
       name,

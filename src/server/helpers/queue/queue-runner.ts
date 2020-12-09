@@ -112,17 +112,16 @@ export class QueueRunner extends Writable {
       ? payload
       : []
 
-    const stream = await getConnection(queue.connection)
-      .createQueryRunner()
-      .stream(queue.query, parameters)
+    const queryRunner = getConnection(queue.connection).createQueryRunner()
+    const stream = await queryRunner.stream(queue.query, parameters)
 
     stream
       .once('error', (error) => {
-        stream.removeAllListeners()
+        queryRunner.release().catch(() => {})
         this.logger?.error({ context: 'run' }, String(error))
       })
       .once('end', () => {
-        stream.removeAllListeners()
+        queryRunner.release().catch(() => {})
         stream.unpipe(this)
       })
       .pipe(this)

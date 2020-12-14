@@ -67,9 +67,7 @@ export class TaskRunner extends Duplex {
     }
   }
 
-  public _read (): void {
-    //
-  }
+  public _read (): void {}
 
   public async _write (taskRun: TaskRun, encoding: string, callback: () => void): Promise<void> {
     this.logger?.debug('Finish task %o', taskRun.item.payload)

@@ -116,7 +116,7 @@ export class QueueRunner extends Writable {
     const stream = await queryRunner.stream(queue.query, parameters)
 
     stream
-      .once('error', (error) => {
+      .once('error', (error: unknown) => {
         queryRunner.release().catch(() => {})
         this.logger?.error({ context: 'run' }, String(error))
       })

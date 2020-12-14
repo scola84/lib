@@ -69,7 +69,7 @@ export class QueueManager {
             this.run(queue, payload, false)
           })
         })
-        .catch((error: Error) => {
+        .catch((error: unknown) => {
           this.logger?.error({ context: 'listener-find' }, String(error))
         })
     } catch (error: unknown) {
@@ -93,7 +93,7 @@ export class QueueManager {
           this.run(queue)
         })
       })
-      .catch((error: Error) => {
+      .catch((error: unknown) => {
         this.logger?.error({ context: 'schedule' }, String(error))
       })
   }
@@ -141,7 +141,7 @@ export class QueueManager {
 
     runner
       .run(queue, payload)
-      .catch((error: Error) => {
+      .catch((error: unknown) => {
         this.logger?.error({ context: 'run' }, String(error))
       })
 
@@ -156,7 +156,7 @@ export class QueueManager {
           id: queue.id
         })
         .execute()
-        .catch((error: Error) => {
+        .catch((error: unknown) => {
           this.logger?.error({ context: 'cron' }, String(error))
         })
     }
@@ -170,7 +170,7 @@ export class QueueManager {
           this.callListener(message)
         })
       })
-      .catch((error: Error) => {
+      .catch((error: unknown) => {
         this.logger?.error({ context: 'listener-message' }, String(error))
       })
   }

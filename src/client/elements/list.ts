@@ -229,7 +229,7 @@ export class ListElement extends RequestElement {
     }
   }
 
-  protected finishError (error: Error): void {
+  protected finishError (error: unknown): void {
     super.finishError(error)
     this.finishEmpty()
   }

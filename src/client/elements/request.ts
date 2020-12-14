@@ -209,7 +209,7 @@ export class RequestElement extends NodeElement {
 
   protected dispatchAuth (request: Request): void {
     this.dispatchEvent(new CustomEvent<AuthEvent['detail']>('scola-auth', {
-      detail: (authError?: Error): void => {
+      detail: (authError?: unknown): void => {
         if (authError instanceof Error) {
           this.finishError(authError)
           return
@@ -247,7 +247,7 @@ export class RequestElement extends NodeElement {
 
         await this.finish()
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         this.finishError(error)
       })
   }
@@ -281,11 +281,11 @@ export class RequestElement extends NodeElement {
     }
   }
 
-  protected finishError (error: Error): void {
+  protected finishError (error: unknown): void {
     this.code = 'ERR_REQUEST_FETCH'
     this.started = false
 
-    if (error.name !== 'AbortError') {
+    if (error instanceof Error && error.name !== 'AbortError') {
       this.dispatchLog()
     }
   }

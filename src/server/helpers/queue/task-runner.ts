@@ -102,7 +102,7 @@ export class TaskRunner extends Duplex {
 
   public start (): void {
     const {
-      block = 1000,
+      block = 60 * 60 * 1000,
       consumer = process.env.HOSTNAME ?? '',
       count = 1,
       entityManager,
@@ -146,11 +146,11 @@ export class TaskRunner extends Duplex {
 
     this
       .createGroup()
-      .then(async () => {
-        await this.readTaskRuns()
+      .then(() => {
+        this.startReadTaskRuns()
       })
-      .catch((error) => {
-        this.logger?.error({ context: 'start' }, String(error))
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'group' }, String(error))
       })
   }
 
@@ -240,13 +240,13 @@ export class TaskRunner extends Duplex {
     ) as Array<[string, string[] | null]> | null
 
     if (result === null || result[0][1] === null) {
-      await this.readTaskRuns()
+      this.startReadTaskRuns()
       return
     }
 
     if (result[0][1].length === 0) {
       this.xid = '>'
-      await this.readTaskRuns()
+      this.startReadTaskRuns()
       return
     }
 
@@ -260,7 +260,7 @@ export class TaskRunner extends Duplex {
       this.xid = xid
     }
 
-    await this.readTaskRuns()
+    this.startReadTaskRuns()
   }
 
   protected async runNextQueues (queueRun: QueueRun, taskRun: TaskRun): Promise<void> {
@@ -279,6 +279,14 @@ export class TaskRunner extends Duplex {
         payload: [queueRun.id]
       }))
     }
+  }
+
+  protected startReadTaskRuns (): void {
+    this
+      .readTaskRuns()
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'run' }, String(error))
+      })
   }
 
   protected async updateItemState (item: Item): Promise<void> {

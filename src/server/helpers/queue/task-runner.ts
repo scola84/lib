@@ -145,7 +145,11 @@ export class TaskRunner extends Duplex {
     this
       .createGroup()
       .then(() => {
-        this.startReadTaskRuns()
+        this
+          .readTaskRuns()
+          .catch((error: unknown) => {
+            this.logger?.error({ context: 'run' }, String(error))
+          })
       })
       .catch((error: unknown) => {
         this.logger?.error({ context: 'group' }, String(error))
@@ -224,41 +228,36 @@ export class TaskRunner extends Duplex {
   }
 
   protected async readTaskRuns (): Promise<void> {
-    const result = await this.readClient.xreadgroup(
-      'GROUP',
-      this.group,
-      this.consumer,
-      'COUNT',
-      this.count,
-      'BLOCK',
-      this.block,
-      'STREAMS',
-      this.name,
-      this.xid
-    ) as Array<[string, string[] | null]> | null
+    for (;;) {
+      const result = await this.readClient.xreadgroup(
+        'GROUP',
+        this.group,
+        this.consumer,
+        'COUNT',
+        this.count,
+        'BLOCK',
+        this.block,
+        'STREAMS',
+        this.name,
+        this.xid
+      ) as Array<[string, string[] | null]> | null
 
-    if (result === null || result[0][1] === null) {
-      this.startReadTaskRuns()
-      return
-    }
+      const items = result?.[0][1] ?? []
 
-    if (result[0][1].length === 0) {
-      this.xid = '>'
-      this.startReadTaskRuns()
-      return
-    }
-
-    for (const [xid, [type, value]] of result[0][1]) {
-      if (type === 'payload') {
-        this.pushPayload(value, xid)
+      if (items.length === 0) {
+        this.xid = '>'
       } else {
-        await this.pushItem(value, xid)
+        for (const [xid, [type, value]] of items) {
+          if (type === 'payload') {
+            this.pushPayload(value, xid)
+          } else {
+            await this.pushItem(value, xid)
+          }
+
+          this.xid = xid
+        }
       }
-
-      this.xid = xid
     }
-
-    this.startReadTaskRuns()
   }
 
   protected async runNextQueues (queueRun: QueueRun, taskRun: TaskRun): Promise<void> {
@@ -277,14 +276,6 @@ export class TaskRunner extends Duplex {
         payload: [queueRun.id]
       }))
     }
-  }
-
-  protected startReadTaskRuns (): void {
-    this
-      .readTaskRuns()
-      .catch((error: unknown) => {
-        this.logger?.error({ context: 'run' }, String(error))
-      })
   }
 
   protected async updateItemState (item: Item): Promise<void> {

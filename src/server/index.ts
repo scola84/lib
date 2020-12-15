@@ -1,5 +1,4 @@
 import 'reflect-metadata'
-import 'source-map-support/register'
 export * from 'typeorm'
 export * from './entities'
 export * from './helpers'

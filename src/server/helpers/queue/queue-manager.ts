@@ -1,7 +1,7 @@
 import {
-  LessThan,
+  LessThanOrEqual,
   Like,
-  MoreThan,
+  MoreThanOrEqual,
   getManager
 } from 'typeorm'
 
@@ -83,9 +83,9 @@ export class QueueManager {
         relations: ['tasks'],
         where: {
           name: Like(`%${this.filter ?? ''}%`),
-          scheduleBegin: LessThan(date),
-          scheduleEnd: MoreThan(date),
-          scheduleNext: LessThan(date)
+          scheduleBegin: LessThanOrEqual(date),
+          scheduleEnd: MoreThanOrEqual(date),
+          scheduleNext: LessThanOrEqual(date)
         }
       })
       .then((queues) => {

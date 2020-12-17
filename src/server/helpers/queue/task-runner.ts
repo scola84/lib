@@ -246,16 +246,16 @@ export class TaskRunner extends Duplex {
 
       if (items.length === 0) {
         this.xid = '>'
-      } else {
-        for (const [xid, [type, value]] of items) {
-          if (type === 'payload') {
-            this.pushPayload(value, xid)
-          } else {
-            await this.pushItem(value, xid)
-          }
+      }
 
-          this.xid = xid
+      for (const [xid, [type, value]] of items) {
+        if (type === 'payload') {
+          this.pushPayload(value, xid)
+        } else {
+          await this.pushItem(value, xid)
         }
+
+        this.xid = xid
       }
     }
   }

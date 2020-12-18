@@ -1,3 +1,20 @@
+# [3.0.0](https://github.com/scola84/lib/compare/v2.2.3...v3.0.0) (2020-12-18)
+
+
+### Bug Fixes
+
+* **queue:** handle stream end/error properly ([0f08e40](https://github.com/scola84/lib/commit/0f08e40da68588b5b0c6bd1b69a80fa14bace964))
+
+
+### Performance Improvements
+
+* replace ioredis with redis ([6ac7712](https://github.com/scola84/lib/commit/6ac7712c3683afbabab2b6b1754ecb613cfa0c36))
+
+
+### BREAKING CHANGES
+
+* The interfaces of the classes using redis have changed.
+
 ## [2.2.3](https://github.com/scola84/lib/compare/v2.2.2...v2.2.3) (2020-12-15)
 
 

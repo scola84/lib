@@ -34,6 +34,8 @@ export class QueueRunner extends Writable {
 
   public entityManager?: EntityManager
 
+  public errored: Error | null
+
   public logger?: FastifyLoggerInstance
 
   public maxLength?: number
@@ -46,6 +48,7 @@ export class QueueRunner extends Writable {
 
   public constructor (options?: Partial<QueueRunnerOptions>) {
     super({
+      autoDestroy: false,
       objectMode: true
     })
 
@@ -116,15 +119,22 @@ export class QueueRunner extends Writable {
     const queryRunner = getConnection(queue.connection).createQueryRunner()
     const stream = await queryRunner.stream(queue.query, parameters)
 
+    function handleEnd (): void {
+      queryRunner.release().catch(() => {})
+      stream.removeListener('error', handleError)
+    }
+
+    const handleError = (error: unknown): void => {
+      queryRunner.release().catch(() => {})
+      stream.removeListener('end', handleEnd)
+      stream.unpipe(this)
+      stream.destroy()
+      this.logger?.error({ context: 'read' }, String(error))
+    }
+
     stream
-      .once('error', (error: unknown) => {
-        queryRunner.release().catch(() => {})
-        this.logger?.error({ context: 'run' }, String(error))
-      })
-      .once('end', () => {
-        queryRunner.release().catch(() => {})
-        stream.unpipe(this)
-      })
+      .once('error', handleError)
+      .once('end', handleEnd)
       .pipe(this)
   }
 
@@ -156,6 +166,7 @@ export class QueueRunner extends Writable {
 
     this.on('error', (error) => {
       this.logger?.error({ context: 'write' }, String(error))
+      this.errored = null
     })
   }
 

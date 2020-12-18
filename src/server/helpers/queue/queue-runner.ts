@@ -15,17 +15,18 @@ import {
   getManager
 } from 'typeorm'
 
+import type { ClientOpts } from 'redis'
 import type { EntityManager } from 'typeorm'
 import type { FastifyLoggerInstance } from 'fastify'
-import Redis from 'ioredis'
-import type { RedisOptions } from 'ioredis'
+import type { WrappedNodeRedisClient } from 'handy-redis'
 import { Writable } from 'stream'
+import { createNodeRedisClient } from 'handy-redis'
 
 export interface QueueRunnerOptions {
   entityManager: string
   logger: FastifyLoggerInstance
   maxLength: number
-  queueClient: RedisOptions
+  queueClient: ClientOpts
 }
 
 export class QueueRunner extends Writable {
@@ -35,11 +36,11 @@ export class QueueRunner extends Writable {
 
   public logger?: FastifyLoggerInstance
 
-  public maxLength: string[]
+  public maxLength?: number
 
   public options: Partial<QueueRunnerOptions>
 
-  public queueClient: Redis.Redis
+  public queueClient: WrappedNodeRedisClient
 
   public queueRun: QueueRun
 
@@ -143,13 +144,18 @@ export class QueueRunner extends Writable {
       this.entityManager = getManager(entityManager)
     }
 
-    this.maxLength = maxLength === undefined
-      ? []
-      : ['MAXLEN', '~', String(maxLength)]
-    this.queueClient = new Redis(queueClient)
+    if (maxLength !== undefined) {
+      this.maxLength = maxLength
+    }
+
+    this.queueClient = createNodeRedisClient(queueClient)
 
     this.logger = logger?.child({
       source: 'queue-runner'
+    })
+
+    this.on('error', (error) => {
+      this.logger?.error({ context: 'write' }, String(error))
     })
   }
 
@@ -201,24 +207,32 @@ export class QueueRunner extends Writable {
     const name = `${this.queueRun.name}-${nextTaskRun.name}`
 
     await this.entityManager?.save(item)
-    await this.queueClient.xadd(name, ...this.maxLength, '*', [
-      'taskRunId',
-      nextTaskRun.id
-    ])
+
+    if (this.maxLength === undefined) {
+      await this.queueClient.xadd(name, '*', ['taskRunId', String(nextTaskRun.id)])
+    } else {
+      await this.queueClient.xadd(
+        name,
+        ['MAXLEN', ['~', this.maxLength]],
+        '*',
+        ['taskRunId', String(nextTaskRun.id)]
+      )
+    }
 
     this.logger?.debug({ name }, 'Enqueue task %o', item.payload)
   }
 
   protected async writePayload (payload: unknown): Promise<void> {
-    await this.queueClient.xadd(
-      this.queueRun.name,
-      ...this.maxLength,
-      '*',
-      [
-        'payload',
-        JSON.stringify(payload)
-      ]
-    )
+    if (this.maxLength === undefined) {
+      await this.queueClient.xadd(this.queueRun.name, '*', ['payload', JSON.stringify(payload)])
+    } else {
+      await this.queueClient.xadd(
+        this.queueRun.name,
+        ['MAXLEN', ['~', this.maxLength]],
+        '*',
+        ['payload', JSON.stringify(payload)]
+      )
+    }
 
     this.logger?.debug({ name: this.queueRun.name }, 'Enqueue task %o', payload)
   }

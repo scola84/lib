@@ -5,19 +5,20 @@ import {
   getManager
 } from 'typeorm'
 
+import type { ClientOpts } from 'redis'
 import type { EntityManager } from 'typeorm'
 import type { FastifyLoggerInstance } from 'fastify'
 import { Queue } from '../../entities'
 import { QueueRunner } from '../../helpers'
-import Redis from 'ioredis'
-import type { RedisOptions } from 'ioredis'
+import type { WrappedNodeRedisClient } from 'handy-redis'
+import { createNodeRedisClient } from 'handy-redis'
 import { parseExpression } from 'cron-parser'
 import { scheduleJob } from 'node-schedule'
 
 export interface QueueManagerOptions {
   entityManager: string
   filter: string
-  listenerClient: RedisOptions
+  listenerClient: ClientOpts
   logger: FastifyLoggerInstance
   schedule: string
 }
@@ -33,7 +34,7 @@ export class QueueManager {
 
   public filter?: string
 
-  public listenerClient?: Redis.Redis
+  public listenerClient?: WrappedNodeRedisClient
 
   public logger?: FastifyLoggerInstance
 
@@ -108,7 +109,7 @@ export class QueueManager {
     } = this.options
 
     if (listenerClient !== undefined) {
-      this.listenerClient = new Redis(listenerClient)
+      this.listenerClient = createNodeRedisClient(listenerClient)
     }
 
     if (entityManager !== undefined) {
@@ -162,11 +163,11 @@ export class QueueManager {
     }
   }
 
-  protected startListener (client: Redis.Redis): void {
+  protected startListener (client: WrappedNodeRedisClient): void {
     client
       .subscribe('queue')
       .then(() => {
-        client.on('message', (channel, message) => {
+        client.nodeRedis.on('message', (channel, message) => {
           this.callListener(message)
         })
       })

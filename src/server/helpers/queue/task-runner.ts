@@ -10,11 +10,12 @@ import {
   getManager
 } from 'typeorm'
 
+import type { ClientOpts } from 'redis'
 import { Duplex } from 'stream'
 import type { EntityManager } from 'typeorm'
 import type { FastifyLoggerInstance } from 'fastify'
-import Redis from 'ioredis'
-import type { RedisOptions } from 'ioredis'
+import type { WrappedNodeRedisClient } from 'handy-redis'
+import { createNodeRedisClient } from 'handy-redis'
 
 export interface TaskRunnerOptions {
   block: number
@@ -25,7 +26,7 @@ export interface TaskRunnerOptions {
   logger: FastifyLoggerInstance
   maxLength: number
   name: string
-  queueClient: RedisOptions
+  queueClient: ClientOpts
   xid: string
 }
 
@@ -50,9 +51,9 @@ export class TaskRunner extends Duplex {
 
   public options: Partial<TaskRunnerOptions>
 
-  public readClient: Redis.Redis
+  public readClient: WrappedNodeRedisClient
 
-  public writeClient: Redis.Redis
+  public writeClient: WrappedNodeRedisClient
 
   public xid: string
 
@@ -129,8 +130,8 @@ export class TaskRunner extends Duplex {
     this.count = count
     this.group = group ?? name
     this.name = name
-    this.readClient = new Redis(queueClient)
-    this.writeClient = new Redis(queueClient)
+    this.readClient = createNodeRedisClient(queueClient)
+    this.writeClient = createNodeRedisClient(queueClient)
     this.xid = xid
 
     this.logger = logger?.child({
@@ -168,7 +169,7 @@ export class TaskRunner extends Duplex {
 
     if (nextTaskRun instanceof TaskRun) {
       const name = `${taskRun.queueRun.name}-${nextTaskRun.name}`
-      await this.writeClient.xadd(name, ...this.maxLength, '*', ['taskRunId', nextTaskRun.id])
+      await this.writeClient.xadd(name, '*', ['taskRunId', String(nextTaskRun.id)])
       this.logger?.debug({ name }, 'Enqueue task %o', taskRun.item.payload)
     } else {
       await this.updateQueueRunState(taskRun.queueRun, taskRun)
@@ -178,17 +179,17 @@ export class TaskRunner extends Duplex {
 
   protected async createGroup (): Promise<void> {
     try {
-      const infoGroups = await this.readClient.xinfo('GROUPS', this.name) as []
+      const infoGroups = await this.readClient.xinfo(['GROUPS', this.name]) as []
       const exists = infoGroups.some((infoGroup: unknown[]) => {
         return infoGroup[1] === this.group
       })
 
       if (!exists) {
-        await this.readClient.xgroup('CREATE', this.name, this.group, '$')
+        await this.readClient.xgroup([['CREATE', [this.name, this.group]], '$'])
       }
     } catch (error: unknown) {
       if (error instanceof Error && error.message === 'ERR no such key') {
-        await this.readClient.xgroup('CREATE', this.name, this.group, '$', 'MKSTREAM')
+        await this.readClient.xgroup([['CREATE', [this.name, this.group]], '$', 'MKSTREAM'])
         return
       }
 
@@ -230,15 +231,11 @@ export class TaskRunner extends Duplex {
   protected async readTaskRuns (): Promise<void> {
     for (;;) {
       const result = await this.readClient.xreadgroup(
-        'GROUP',
-        this.group,
-        this.consumer,
-        'COUNT',
-        this.count,
-        'BLOCK',
-        this.block,
+        ['GROUP', [this.group, this.consumer]],
+        ['COUNT', this.count],
+        ['BLOCK', this.block],
         'STREAMS',
-        this.name,
+        [this.name],
         this.xid
       ) as Array<[string, string[] | null]> | null
 

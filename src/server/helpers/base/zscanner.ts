@@ -1,21 +1,22 @@
+import type { ClientOpts } from 'redis'
 import { Readable } from 'stream'
-import Redis from 'ioredis'
-import type { RedisOptions } from 'ioredis'
+import type { WrappedNodeRedisClient } from 'handy-redis'
+import { createNodeRedisClient } from 'handy-redis'
 
 export interface ZScannerOptions {
-  client: RedisOptions
+  client: ClientOpts
   count: number
-  cursor: string
+  cursor: number
   del: boolean
   key: string
 }
 
 export class ZScanner extends Readable {
-  public client: Redis.Redis
+  public client: WrappedNodeRedisClient
 
   public count: number
 
-  public cursor: string
+  public cursor: number
 
   public data: string[] = []
 
@@ -31,7 +32,7 @@ export class ZScanner extends Readable {
     const {
       client,
       count = 1000,
-      cursor = '0',
+      cursor = 0,
       del = false,
       key
     } = options
@@ -44,7 +45,7 @@ export class ZScanner extends Readable {
       throw new Error('Key is undefined')
     }
 
-    this.client = new Redis(client)
+    this.client = createNodeRedisClient(client)
     this.count = count
     this.cursor = cursor
     this.del = del
@@ -64,20 +65,18 @@ export class ZScanner extends Readable {
   public async _read (): Promise<void> {
     if (this.data.length > 0) {
       this.push(this.data.splice(0, 2))
-    } else if (this.cursor === '-1') {
+    } else if (this.cursor === -1) {
       this.push(null)
     } else {
       await this.readData()
     }
   }
 
-  protected handleScan (cursor: string, data: string[]): void {
+  protected handleScan (cursor: number, data: string[]): void {
     this.data = data
 
     if (this.data.length > 0) {
-      this.cursor = cursor === '0'
-        ? '-1'
-        : cursor
+      this.cursor = cursor === 0 ? -1 : cursor
       this.push(this.data.splice(0, 2))
     } else {
       this.push(null)
@@ -86,7 +85,9 @@ export class ZScanner extends Readable {
 
   protected async readData (): Promise<void> {
     try {
-      this.handleScan(...(await this.client.zscan(this.key, this.cursor, 'COUNT', this.count)))
+      const [cursor, data] = await this.client
+        .zscan(this.key, this.cursor, ['COUNT', this.count]) as [number, string[]]
+      this.handleScan(cursor, data)
     } catch (error: unknown) {
       this.emit('error', new Error(`Scan error: ${String(error)}`))
     }

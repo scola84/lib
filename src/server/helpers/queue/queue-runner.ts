@@ -1,38 +1,30 @@
-import {
+import type {
   Item,
   Queue,
   QueueRun,
   TaskRun
 } from '../../entities'
 
-import type {
-  Task,
-  TaskRunOptions
-} from '../../entities'
-
-import {
-  getConnection,
-  getManager
-} from 'typeorm'
-
 import type { ClientOpts } from 'redis'
-import type { EntityManager } from 'typeorm'
 import type { FastifyLoggerInstance } from 'fastify'
+import type { IDatabase } from 'pg-promise'
+import type { Readable } from 'stream'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { Writable } from 'stream'
 import { createNodeRedisClient } from 'handy-redis'
 
 export interface QueueRunnerOptions {
-  entityManager: string
+  database: IDatabase<unknown>
   logger: FastifyLoggerInstance
   maxLength: number
   queueClient: ClientOpts
+  stream: (queue: Queue, parameters: unknown[]) => Promise<Readable>
 }
 
 export class QueueRunner extends Writable {
   public static options?: Partial<QueueRunnerOptions>
 
-  public entityManager?: EntityManager
+  public database?: IDatabase<unknown>
 
   public errored: Error | null
 
@@ -45,6 +37,8 @@ export class QueueRunner extends Writable {
   public queueClient: WrappedNodeRedisClient
 
   public queueRun: QueueRun
+
+  public stream: (queue: Queue, parameters: unknown[]) => Promise<Readable>
 
   public constructor (options?: Partial<QueueRunnerOptions>) {
     super({
@@ -63,7 +57,7 @@ export class QueueRunner extends Writable {
       await this.updateQueueRunTotal(this.queueRun)
       await this.runNextQueues(this.queueRun)
     } catch (error: unknown) {
-      this.logger?.error({ context: '_final' }, String(error))
+      this.logger?.error({ context: 'final' }, String(error))
     }
 
     callback()
@@ -71,9 +65,12 @@ export class QueueRunner extends Writable {
 
   public async _write (payload: unknown, encoding: string, callback: () => void): Promise<void> {
     try {
-      const item = new Item()
-      item.payload = payload
-      item.queueRun = this.queueRun
+      const item: Item = {
+        code: 'pending',
+        payload,
+        queueRun: this.queueRun,
+        queue_run_id: this.queueRun.id
+      }
 
       if (Array.isArray(item.queueRun.taskRuns)) {
         await this.writeItem(item)
@@ -83,29 +80,52 @@ export class QueueRunner extends Writable {
 
       this.queueRun.total += 1
     } catch (error: unknown) {
-      this.logger?.error({ context: '_write' }, String(error))
+      this.logger?.error({ context: 'write' }, String(error))
     }
 
     callback()
   }
 
   public async run (queue: Queue, payload?: unknown): Promise<void> {
-    this.queueRun = new QueueRun()
-    this.queueRun.name = queue.name
-    this.queueRun.queue = queue
+    const item = {
+      payload,
+      queueRun: this.queueRun
+    }
 
-    if (Array.isArray(queue.tasks) && queue.tasks.length > 0) {
-      this.queueRun.taskRuns = queue.tasks.map((task) => {
+    this.queueRun = {
+      name: queue.name,
+      queue,
+      taskRuns: queue.tasks?.map((task) => {
         return {
+          code: 'pending',
+          item,
           name: task.name,
-          options: this.createOptions(task),
+          options: task.options,
           order: task.order,
           queueRun: this.queueRun
         }
-      })
+      }),
+      total: 0
     }
 
-    await this.entityManager?.save(this.queueRun)
+    const { id = '0' } = await this.database
+      ?.one<QueueRun>(`
+        INSERT INTO queue_run
+          (created, err, name, ok, total, updated, queue_id)
+        VALUES
+          (NOW(), 0, $(name), 0, 0, NOW(), $(queue_id))
+        RETURNING
+          id
+      `, {
+        name: this.queueRun.name,
+        queue_id: this.queueRun.queue.id
+      })
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'run-insert-queue-run' }, String(error))
+        return undefined
+      }) ?? {}
+
+    this.queueRun.id = id
 
     if (queue.query === null || queue.connection === null) {
       this.write(payload)
@@ -116,20 +136,27 @@ export class QueueRunner extends Writable {
       ? payload
       : []
 
-    const queryRunner = getConnection(queue.connection).createQueryRunner()
-    const stream = await queryRunner.stream(queue.query, parameters)
+    const stream = await this
+      .stream(queue, parameters)
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'run-stream-request' }, String(error))
+        return undefined
+      })
 
-    function handleEnd (): void {
-      queryRunner.release().catch(() => {})
+    if (stream === undefined) {
+      return
+    }
+
+    // eslint-disable-next-line func-style
+    const handleEnd = (): void => {
       stream.removeListener('error', handleError)
     }
 
     const handleError = (error: unknown): void => {
-      queryRunner.release().catch(() => {})
       stream.removeListener('end', handleEnd)
       stream.unpipe(this)
       stream.destroy()
-      this.logger?.error({ context: 'read' }, String(error))
+      this.logger?.error({ context: 'run-stream-handle' }, String(error))
     }
 
     stream
@@ -140,18 +167,23 @@ export class QueueRunner extends Writable {
 
   public start (): void {
     const {
-      entityManager,
+      database,
       logger,
       maxLength,
-      queueClient
+      queueClient,
+      stream
     } = this.options
 
     if (queueClient === undefined) {
       throw new Error('Queue client is undefined')
     }
 
-    if (entityManager !== undefined) {
-      this.entityManager = getManager(entityManager)
+    if (stream === undefined) {
+      throw new Error('Stream is undefined')
+    }
+
+    if (database !== undefined) {
+      this.database = database
     }
 
     if (maxLength !== undefined) {
@@ -159,92 +191,166 @@ export class QueueRunner extends Writable {
     }
 
     this.queueClient = createNodeRedisClient(queueClient)
+    this.stream = stream
 
     this.logger = logger?.child({
       source: 'queue-runner'
     })
 
-    this.on('error', (error) => {
-      this.logger?.error({ context: 'write' }, String(error))
+    this.on('error', (error: unknown) => {
+      this.logger?.error({ context: 'self' }, String(error))
       this.errored = null
     })
   }
 
-  protected createOptions (task: Task): TaskRunOptions {
-    return task.options?.reduce((options, { name, value }) => {
-      return Object.assign(options, {
-        [name]: value
-      })
-    }, {}) ?? {}
-  }
-
   protected async runNextQueues (queueRun: QueueRun): Promise<void> {
-    const nextQueues = await this.entityManager
-      ?.createQueryBuilder()
-      .select('queue')
-      .from(Queue, 'queue')
-      .innerJoin('queue_run', 'queueRun', 'queueRun.queueId = queue.previousQueueId')
-      .where('queueRun.id = :id', queueRun)
-      .andWhere('queueRun.ok + queueRun.err = queueRun.total')
-      .getMany() ?? []
+    const nextQueues = await this.database
+      ?.manyOrNone<Queue>(`
+        SELECT queue.id
+        FROM queue
+        LEFT JOIN queue_run ON queue.previous_queue_id = queue_run.queue_id
+        WHERE queue_run.id = $(queue_run_id)
+        AND queue_run.ok + queue_run.err = queue_run.total
+      `, {
+        queue_run_id: queueRun.id
+      })
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'run-next-queues-select' }, String(error))
+        return []
+      }) ?? []
 
-    for (const { name } of nextQueues) {
-      await this.queueClient.publish('queue', JSON.stringify({
-        name,
-        payload: [queueRun.id]
+    Promise
+      .all(nextQueues.map(async ({ id }) => {
+        await this.queueClient.publish('queue', JSON.stringify({
+          id,
+          payload: [queueRun.id]
+        }))
       }))
-    }
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'run-next-queues-publish' }, String(error))
+      })
   }
 
   protected async updateQueueRunTotal (queueRun: QueueRun): Promise<void> {
-    await this.entityManager
-      ?.createQueryBuilder()
-      .update(QueueRun)
-      .set({
+    await this.database
+      ?.none(`
+        UPDATE queue_run
+        SET
+          total = $(total),
+          updated = NOW()
+        WHERE id = $(queue_run_id)
+      `, {
+        queue_run_id: queueRun.id,
         total: queueRun.total
       })
-      .where({
-        id: queueRun.id
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'update-queue-run-total' }, String(error))
       })
-      .execute()
   }
 
   protected async writeItem (item: Item): Promise<void> {
-    item.taskRuns = this.queueRun.taskRuns?.map((taskRun) => {
-      return Object.assign(new TaskRun(), taskRun)
-    })
+    let nextTaskRunId = '0'
+    let nextTaskRunName = ''
 
-    const [nextTaskRun] = item.taskRuns ?? []
-    const name = `${this.queueRun.name}-${nextTaskRun.name}`
+    await this.database
+      ?.tx(async (task) => {
+        const { id: itemId } = await task
+          .one<Item>(`
+            INSERT INTO item (code, created, payload, updated, queue_run_id)
+            VALUES ($(code), NOW(), $(payload), NOW(), $(queue_run_id))
+            RETURNING id
+          `, {
+            code: item.code,
+            payload: item.payload,
+            queue_run_id: item.queueRun.id
+          })
+          .catch((error: unknown) => {
+            this.logger?.error({ context: 'write-item-insert-item' }, String(error))
+            return { id: '0' }
+          })
 
-    await this.entityManager?.save(item)
+        task
+          .batch(this.queueRun.taskRuns?.map(async (taskRun) => {
+            return await task
+              .one<TaskRun>(`
+                INSERT INTO task_run (code, created, name, options, "order", updated,
+                  item_id, queue_run_id)
+                VALUES ($(code), NOW(), $(name), $(options), $(order), NOW(),
+                  $(item_id), $(queue_run_id))
+                RETURNING id
+              `, {
+                code: taskRun.code,
+                item_id: itemId,
+                name: taskRun.name,
+                options: taskRun.options,
+                order: taskRun.order,
+                queue_run_id: this.queueRun.id
+              })
+              .then(({ id: taskRunId }) => {
+                if (taskRun.order === 1) {
+                  nextTaskRunId = taskRunId ?? '0'
+                  nextTaskRunName = `${this.queueRun.name}-${taskRun.name}`
+                }
+                return taskRun
+              })
+              .catch((error: unknown) => {
+                this.logger?.error({ context: 'write-item-insert-task-run' }, String(error))
+              })
+          }) ?? [])
+          .catch((error: unknown) => {
+            this.logger?.error({ context: 'write-item-batch' }, String(error))
+          })
+      })
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'write-item-tx' }, String(error))
+      })
 
     if (this.maxLength === undefined) {
-      await this.queueClient.xadd(name, '*', ['taskRunId', String(nextTaskRun.id)])
+      this.queueClient
+        .xadd(
+          nextTaskRunName,
+          '*',
+          ['taskRunId', String(nextTaskRunId)]
+        )
+        .catch((error: unknown) => {
+          this.logger?.error({ context: 'write-item-xadd' }, String(error))
+        })
     } else {
-      await this.queueClient.xadd(
-        name,
-        ['MAXLEN', ['~', this.maxLength]],
-        '*',
-        ['taskRunId', String(nextTaskRun.id)]
-      )
+      this.queueClient
+        .xadd(
+          nextTaskRunName,
+          ['MAXLEN', ['~', this.maxLength]],
+          '*',
+          ['taskRunId', String(nextTaskRunId)]
+        )
+        .catch((error: unknown) => {
+          this.logger?.error({ context: 'write-item-xadd' }, String(error))
+        })
     }
-
-    this.logger?.debug({ name }, 'Enqueue task %o', item.payload)
   }
 
   protected async writePayload (payload: unknown): Promise<void> {
     if (this.maxLength === undefined) {
-      await this.queueClient.xadd(this.queueRun.name, '*', ['payload', JSON.stringify(payload)])
+      await this.queueClient
+        .xadd(
+          this.queueRun.name,
+          '*',
+          ['payload', JSON.stringify(payload)]
+        )
+        .catch((error: unknown) => {
+          this.logger?.error({ context: 'write-payload-xadd' }, String(error))
+        })
     } else {
-      await this.queueClient.xadd(
-        this.queueRun.name,
-        ['MAXLEN', ['~', this.maxLength]],
-        '*',
-        ['payload', JSON.stringify(payload)]
-      )
+      await this.queueClient
+        .xadd(
+          this.queueRun.name,
+          ['MAXLEN', ['~', this.maxLength]],
+          '*',
+          ['payload', JSON.stringify(payload)]
+        )
+        .catch((error: unknown) => {
+          this.logger?.error({ context: 'write-payload-xadd' }, String(error))
+        })
     }
-
-    this.logger?.debug({ name: this.queueRun.name }, 'Enqueue task %o', payload)
   }
 }

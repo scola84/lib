@@ -1,48 +1,14 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn
-} from 'typeorm'
+import type { Queue } from './queue'
 
-import { Queue } from './queue'
-import { TaskOption } from './task-option'
+export type TaskOptions = Record<string, unknown>
 
-@Entity()
-export class Task {
-  @CreateDateColumn()
-  public created: Date
-
-  @PrimaryGeneratedColumn()
-  public id: number
-
-  @Column()
-  public name: string
-
-  @OneToMany(() => {
-    return TaskOption
-  }, (options) => {
-    return options.task
-  }, {
-    cascade: true
-  })
-  public options?: TaskOption[]
-
-  @Column({
-    type: 'integer'
-  })
-  public order = 1
-
-  @ManyToOne(() => {
-    return Queue
-  }, (queue) => {
-    return queue.tasks
-  })
-  public queue: Queue
-
-  @UpdateDateColumn()
-  public updated: Date
+export interface Task {
+  created?: Date
+  id?: string
+  name: string
+  options: TaskOptions
+  order: number
+  queue: Queue
+  queue_id?: string
+  updated?: Date
 }

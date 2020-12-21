@@ -1,19 +1,14 @@
-import {
+import type {
   Item,
   Queue,
   QueueRun,
   TaskRun
 } from '../../entities'
 
-import {
-  MoreThan,
-  getManager
-} from 'typeorm'
-
 import type { ClientOpts } from 'redis'
 import { Duplex } from 'stream'
-import type { EntityManager } from 'typeorm'
 import type { FastifyLoggerInstance } from 'fastify'
+import type { IDatabase } from 'pg-promise'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createNodeRedisClient } from 'handy-redis'
 
@@ -21,10 +16,9 @@ export interface TaskRunnerOptions {
   block: number
   consumer: string
   count: number
-  entityManager: string
+  database: IDatabase<unknown>
   group: string
   logger: FastifyLoggerInstance
-  maxLength: number
   name: string
   queueClient: ClientOpts
   xid: string
@@ -39,13 +33,11 @@ export class TaskRunner extends Duplex {
 
   public count: number
 
-  public entityManager?: EntityManager
+  public database?: IDatabase<unknown>
 
   public group: string
 
   public logger?: FastifyLoggerInstance
-
-  public maxLength: string[]
 
   public name: string
 
@@ -71,19 +63,19 @@ export class TaskRunner extends Duplex {
   public _read (): void {}
 
   public async _write (taskRun: TaskRun, encoding: string, callback: () => void): Promise<void> {
-    this.logger?.debug('Finish task %o', taskRun.item.payload)
-
     try {
-      taskRun.code = taskRun.code === 'pending'
-        ? 'ok'
-        : taskRun.code
+      taskRun.code = taskRun.code === 'pending' ? 'ok' : taskRun.code
       taskRun.item.code = taskRun.code
 
       await this.updateTaskRunAfter(taskRun)
       await this.updateItemState(taskRun.item)
 
-      if (taskRun.xid !== null) {
-        await this.writeClient.xack(this.name, this.group, taskRun.xid)
+      if (typeof taskRun.xid === 'string') {
+        await this.writeClient
+          .xack(this.name, this.group, taskRun.xid)
+          .catch((error: unknown) => {
+            this.logger?.error({ context: 'write-ack' }, String(error))
+          })
       }
 
       if (taskRun.code === 'ok') {
@@ -93,7 +85,7 @@ export class TaskRunner extends Duplex {
         await this.runNextQueues(taskRun.queueRun, taskRun)
       }
     } catch (error: unknown) {
-      this.logger?.error({ context: '_write' }, String(error))
+      this.logger?.error({ context: 'write' }, String(error))
     }
 
     callback()
@@ -104,10 +96,9 @@ export class TaskRunner extends Duplex {
       block = 60 * 60 * 1000,
       consumer = process.env.HOSTNAME ?? '',
       count = 1,
-      entityManager,
+      database,
       group,
       logger,
-      maxLength,
       name,
       queueClient,
       xid = '>'
@@ -121,8 +112,8 @@ export class TaskRunner extends Duplex {
       throw new Error('Queue client is undefined')
     }
 
-    if (entityManager !== undefined) {
-      this.entityManager = getManager(entityManager)
+    if (database !== undefined) {
+      this.database = database
     }
 
     this.block = block
@@ -139,41 +130,42 @@ export class TaskRunner extends Duplex {
       source: 'task-runner'
     })
 
-    this.maxLength = maxLength === undefined
-      ? []
-      : ['MAXLEN', '~', String(maxLength)]
-
     this
       .createGroup()
       .then(() => {
         this
           .readTaskRuns()
           .catch((error: unknown) => {
-            this.logger?.error({ context: 'run' }, String(error))
+            this.logger?.error({ context: 'run-read-task-runs' }, String(error))
           })
       })
       .catch((error: unknown) => {
-        this.logger?.error({ context: 'group' }, String(error))
+        this.logger?.error({ context: 'run-create-group' }, String(error))
       })
   }
 
   protected async addNextTaskRun (taskRun: TaskRun): Promise<void> {
-    const nextTaskRun = await this.entityManager?.findOne(TaskRun, {
-      where: {
-        item: {
-          id: taskRun.item.id
-        },
-        order: MoreThan(taskRun.order)
-      }
-    })
+    const nextTaskRun = await this.database
+      ?.oneOrNone<TaskRun>(`
+        SElECT *
+        FROM task_run
+        WHERE item_id = $(item_id)
+        AND "order" > $(order)
+        LIMIT 1
+      `, {
+        item_id: taskRun.item.id,
+        order: taskRun.order
+      })
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'add-next-task-run' }, String(error))
+      })
 
-    if (nextTaskRun instanceof TaskRun) {
-      const name = `${taskRun.queueRun.name}-${nextTaskRun.name}`
-      await this.writeClient.xadd(name, '*', ['taskRunId', String(nextTaskRun.id)])
-      this.logger?.debug({ name }, 'Enqueue task %o', taskRun.item.payload)
-    } else {
+    if (nextTaskRun === null || nextTaskRun === undefined) {
       await this.updateQueueRunState(taskRun.queueRun, taskRun)
       await this.runNextQueues(taskRun.queueRun, taskRun)
+    } else {
+      const name = `${taskRun.queueRun.name}-${nextTaskRun.name}`
+      await this.writeNextTaskRun(name, nextTaskRun.id)
     }
   }
 
@@ -197,141 +189,210 @@ export class TaskRunner extends Duplex {
     }
   }
 
-  protected async pushItem (itemId: string, xid: string): Promise<void> {
-    const taskRun = await this.entityManager?.findOne(TaskRun, itemId, {
-      relations: [
-        'item',
-        'queueRun'
-      ]
-    })
+  protected async pushItem (taskRunId: string, xid: string): Promise<void> {
+    const taskRun = await this.selectTaskRun(taskRunId)
 
-    if (taskRun instanceof TaskRun) {
-      taskRun.started = new Date()
+    if (taskRun !== undefined) {
       taskRun.xid = xid
-
       await this.updateTaskRunBefore(taskRun)
-
-      this.logger?.debug('Start task %o', taskRun.item.payload)
       this.push(taskRun)
     }
   }
 
   protected pushPayload (payload: unknown, xid: string): void {
-    const item = new Item()
-    item.payload = payload
+    const queueRun = {
+      name: '',
+      queue: {
+        name: ''
+      },
+      total: 0
+    }
 
-    const taskRun = new TaskRun()
-    taskRun.item = item
-    taskRun.xid = xid
+    const taskRun: TaskRun = {
+      code: 'pending',
+      item: {
+        payload,
+        queueRun
+      },
+      name: this.name,
+      options: {},
+      order: 1,
+      queueRun,
+      xid
+    }
 
-    this.logger?.debug('Start task %o', payload)
     this.push(taskRun)
   }
 
   protected async readTaskRuns (): Promise<void> {
     for (;;) {
-      const result = await this.readClient.xreadgroup(
-        ['GROUP', [this.group, this.consumer]],
-        ['COUNT', this.count],
-        ['BLOCK', this.block],
-        'STREAMS',
-        [this.name],
-        this.xid
-      ) as Array<[string, string[] | null]> | null
+      try {
+        const result = await this.readClient.xreadgroup(
+          ['GROUP', [this.group, this.consumer]],
+          ['COUNT', this.count],
+          ['BLOCK', this.block],
+          'STREAMS',
+          [this.name],
+          this.xid
+        ) as Array<[string, string[] | null]> | null
 
-      const items = result?.[0][1] ?? []
+        const items = result?.[0][1] ?? []
 
-      if (items.length === 0) {
-        this.xid = '>'
-      }
-
-      for (const [xid, [type, value]] of items) {
-        if (type === 'payload') {
-          this.pushPayload(value, xid)
-        } else {
-          await this.pushItem(value, xid)
+        if (items.length === 0) {
+          this.xid = '>'
         }
 
-        this.xid = xid
+        for (const [xid, [type, value]] of items) {
+          if (type === 'payload') {
+            this.pushPayload(value, xid)
+          } else {
+            await this.pushItem(value, xid)
+          }
+
+          this.xid = xid
+        }
+      } catch (error: unknown) {
+        this.logger?.error({ context: 'read-task-runs' }, String(error))
       }
     }
   }
 
   protected async runNextQueues (queueRun: QueueRun, taskRun: TaskRun): Promise<void> {
-    const nextQueues = await this.entityManager
-      ?.createQueryBuilder()
-      .select('queue')
-      .from(Queue, 'queue')
-      .innerJoin('queue_run', 'queueRun', 'queueRun.queueId = queue.previousQueueId')
-      .where('queueRun.id = :id', taskRun.queueRun)
-      .andWhere('queueRun.ok + queueRun.err = queueRun.total')
-      .getMany() ?? []
+    const nextQueues = await this.database
+      ?.manyOrNone<Queue>(`
+        SELECT queue.id
+        FROM queue
+        LEFT JOIN queue_run ON queue.previous_queue_id = queue_run.queue_id
+        WHERE queue_run.id = $(queue_run_id)
+        AND queue_run.ok + queue_run.err = queue_run.total
+      `, {
+        queue_run_id: queueRun.id
+      })
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'run-next-queues-select' }, String(error))
+        return []
+      }) ?? []
 
-    for (const { id } of nextQueues) {
-      await this.writeClient.publish('queue', JSON.stringify({
-        id,
-        payload: [queueRun.id]
+    Promise
+      .all(nextQueues.map(async ({ id }) => {
+        await this.writeClient.publish('queue', JSON.stringify({
+          id,
+          payload: [queueRun.id]
+        }))
       }))
-    }
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'run-next-queues-publish' }, String(error))
+      })
+  }
+
+  protected async selectTaskRun (taskRunId: string): Promise<TaskRun | undefined> {
+    return await this.database?.task<TaskRun>(async (task): Promise<TaskRun> => {
+      const taskRun = await task.one<TaskRun>(`
+        SELECT *
+        FROM task_run
+        WHERE id = $(task_run_id)
+      `, {
+        task_run_id: taskRunId
+      })
+
+      taskRun.item = await task.one<Item>(`
+        SELECT *
+        FROM item
+        WHERE id = $(item_id)
+      `, {
+        item_id: taskRun.item_id
+      })
+
+      taskRun.queueRun = await task.one<QueueRun>(`
+        SELECT *
+        FROM queue_run
+        WHERE id = $(queue_run_id)
+      `, {
+        queue_run_id: taskRun.queue_run_id
+      })
+
+      return taskRun
+    }).catch((error: unknown) => {
+      this.logger?.error({ context: 'select-task-run' }, String(error))
+      return undefined
+    })
   }
 
   protected async updateItemState (item: Item): Promise<void> {
-    await this.entityManager
-      ?.createQueryBuilder()
-      .update(Item)
-      .set({
-        code: item.code
+    await this.database
+      ?.none(`
+        UPDATE item
+        SET
+          code = $(code),
+          updated = NOW()
+        WHERE id = $(item_id)
+      `, {
+        code: item.code,
+        item_id: item.id
+      }).catch((error: unknown) => {
+        this.logger?.error({ context: 'update-item-state' }, String(error))
       })
-      .where({
-        id: item.id
-      })
-      .execute()
   }
 
   protected async updateQueueRunState (queueRun: QueueRun, taskRun: TaskRun): Promise<void> {
-    const field = taskRun.code === 'ok'
-      ? 'ok'
-      : 'err'
+    const field = taskRun.code === 'ok' ? 'ok' : 'err'
 
-    await this.entityManager
-      ?.createQueryBuilder()
-      .update(QueueRun)
-      .set({
-        [field]: () => {
-          return `${field} + 1`
-        }
+    await this.database
+      ?.none(`
+        UPDATE queue_run
+        SET
+          ${field} = ${field} + 1,
+          updated = NOW()
+        WHERE id = $(queue_run_id)
+      `, {
+        queue_run_id: queueRun.id
       })
-      .where({
-        id: queueRun.id
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'update-queue-run-state' }, String(error))
       })
-      .execute()
   }
 
   protected async updateTaskRunAfter (taskRun: TaskRun): Promise<void> {
-    await this.entityManager
-      ?.createQueryBuilder()
-      .update(TaskRun)
-      .set({
+    await this.database
+      ?.none(`
+        UPDATE task_run
+        SET
+          code = $(code), reason = $(reason),
+          updated = NOW()
+        WHERE id = $(task_run_id)
+      `, {
         code: taskRun.code,
-        reason: taskRun.reason
+        reason: taskRun.reason,
+        task_run_id: taskRun.id
       })
-      .where({
-        id: taskRun.id
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'update-task-run-after' }, String(error))
       })
-      .execute()
   }
 
   protected async updateTaskRunBefore (taskRun: TaskRun): Promise<void> {
-    await this.entityManager
-      ?.createQueryBuilder()
-      .update(TaskRun)
-      .set({
-        started: taskRun.started,
+    await this.database
+      ?.none(`
+        UPDATE task_run
+        SET
+          started = NOW(),
+          updated = NOW(),
+          xid = $(xid)
+        WHERE id = $(task_run_id)
+      `, {
+        task_run_id: taskRun.id,
         xid: taskRun.xid
       })
-      .where({
-        id: taskRun.id
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'update-task-run-before' }, String(error))
       })
-      .execute()
+  }
+
+  protected async writeNextTaskRun (name: string, id?: string): Promise<void> {
+    await this.writeClient
+      .xadd(name, '*', ['taskRunId', String(id)])
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'write-next-task-run' }, String(error))
+      })
   }
 }

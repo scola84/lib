@@ -1,25 +1,18 @@
-import {
-  LessThanOrEqual,
-  Like,
-  MoreThanOrEqual,
-  getManager
-} from 'typeorm'
-
+import type { IDatabase, ITask } from 'pg-promise'
+import type { Queue, Task } from '../../entities'
 import type { ClientOpts } from 'redis'
-import type { EntityManager } from 'typeorm'
 import type { FastifyLoggerInstance } from 'fastify'
-import { Queue } from '../../entities'
-import { QueueRunner } from '../../helpers'
+import { QueueRunner } from '../../helpers/queue/queue-runner'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createNodeRedisClient } from 'handy-redis'
 import { parseExpression } from 'cron-parser'
 import { scheduleJob } from 'node-schedule'
 
 export interface QueueManagerOptions {
-  entityManager: string
   filter: string
   listenerClient: ClientOpts
   logger: FastifyLoggerInstance
+  database: IDatabase<unknown>
   schedule: string
 }
 
@@ -30,7 +23,7 @@ export interface QueueMessage {
 }
 
 export class QueueManager {
-  public entityManager: EntityManager
+  public database?: IDatabase<unknown>
 
   public filter?: string
 
@@ -46,7 +39,7 @@ export class QueueManager {
     this.options = options
   }
 
-  public callListener (message: string): void {
+  public async callListener (message: string): Promise<void> {
     try {
       const {
         id,
@@ -54,54 +47,35 @@ export class QueueManager {
         payload
       } = JSON.parse(message) as QueueMessage
 
-      if (id === undefined && name === undefined) {
-        return
+      let queues: Queue[] = []
+
+      if (id !== undefined) {
+        queues = await this.selectQueuesById(id)
+      } else if (name !== undefined) {
+        queues = await this.selectQueuesByName(name)
       }
 
-      this.entityManager
-        .find(Queue, {
-          relations: ['tasks'],
-          where: id === undefined
-            ? { name }
-            : { id }
-        })
-        .then((queues) => {
-          queues.forEach((queue) => {
-            this.run(queue, payload, false)
-          })
-        })
-        .catch((error: unknown) => {
-          this.logger?.error({ context: 'listener-find' }, String(error))
-        })
+      for (const queue of queues) {
+        this.run(queue, payload, false)
+      }
     } catch (error: unknown) {
-      this.logger?.error({ context: 'listener-parse' }, String(error))
+      this.logger?.error({ context: 'call-listener' }, String(error))
     }
   }
 
-  public callSchedule (date = new Date()): void {
-    this.entityManager
-      .find(Queue, {
-        relations: ['tasks'],
-        where: {
-          name: Like(`%${this.filter ?? ''}%`),
-          scheduleBegin: LessThanOrEqual(date),
-          scheduleEnd: MoreThanOrEqual(date),
-          scheduleNext: LessThanOrEqual(date)
-        }
-      })
-      .then((queues) => {
-        queues.forEach((queue) => {
-          this.run(queue)
-        })
-      })
-      .catch((error: unknown) => {
-        this.logger?.error({ context: 'schedule' }, String(error))
-      })
+  public async callSchedule (date = new Date()): Promise<void> {
+    try {
+      for (const queue of await this.selectQueuesBySchedule(date)) {
+        this.run(queue)
+      }
+    } catch (error: unknown) {
+      this.logger?.error({ context: 'call-schedule' }, String(error))
+    }
   }
 
   public start (call = false): void {
     const {
-      entityManager,
+      database,
       filter,
       listenerClient,
       logger,
@@ -112,8 +86,8 @@ export class QueueManager {
       this.listenerClient = createNodeRedisClient(listenerClient)
     }
 
-    if (entityManager !== undefined) {
-      this.entityManager = getManager(entityManager)
+    if (database !== undefined) {
+      this.database = database
     }
 
     this.filter = filter
@@ -132,7 +106,9 @@ export class QueueManager {
     }
 
     if (call) {
-      this.callSchedule()
+      this
+        .callSchedule()
+        .catch(() => {})
     }
   }
 
@@ -146,21 +122,142 @@ export class QueueManager {
         this.logger?.error({ context: 'run' }, String(error))
       })
 
-    if (queue.schedule !== null && scheduleNext) {
-      this.entityManager
-        .createQueryBuilder()
-        .update(Queue)
-        .set({
-          scheduleNext: parseExpression(queue.schedule).next()
+    if (typeof queue.schedule === 'string' && scheduleNext) {
+      this.database
+        ?.query(`
+          UPDATE queue
+          SET 
+            schedule_next = $(next),
+            updated = NOW()
+          WHERE id = $(queue_id)
+        `, {
+          next: parseExpression(queue.schedule).next(),
+          queue_id: queue.id
         })
-        .where({
-          id: queue.id
-        })
-        .execute()
         .catch((error: unknown) => {
-          this.logger?.error({ context: 'cron' }, String(error))
+          this.logger?.error({ context: 'run-update-queue' }, String(error))
         })
     }
+  }
+
+  protected async selectQueuesById (id: number): Promise<Queue[]> {
+    return await this.database?.task<Queue[]>(async (task) => {
+      return await task
+        .map<Promise<Queue>>(`
+          SELECT *
+          FROM queue
+          WHERE id = $(queue_id)
+        `, {
+          queue_id: id
+        }, async (queue: Queue) => {
+          await this.selectTasks(task, queue)
+          return queue
+        })
+        .then(async (data) => {
+          return await task
+            .batch(data)
+            .catch((error: unknown) => {
+              this.logger?.error({ context: 'select-queues-by-id-batch' }, String(error))
+              return []
+            })
+        })
+        .catch((error: unknown) => {
+          this.logger?.error({ context: 'select-queues-by-id-map' }, String(error))
+          return []
+        })
+    }).catch((error: unknown) => {
+      this.logger?.error({ context: 'select-queues-id-task' }, String(error))
+      return []
+    }) ?? []
+  }
+
+  protected async selectQueuesByName (name: string): Promise<Queue[]> {
+    return await this.database?.task<Queue[]>(async (task) => {
+      return await task
+        .map<Promise<Queue>>(`
+          SELECT *
+          FROM queue
+          WHERE name = $(name)
+        `, {
+          name
+        }, async (queue: Queue) => {
+          await this.selectTasks(task, queue)
+          return queue
+        })
+        .then(async (queries) => {
+          return await task
+            .batch(queries)
+            .catch((error: unknown) => {
+              this.logger?.error({ context: 'select-queues-by-name-batch' }, String(error))
+              return []
+            })
+        })
+        .catch((error: unknown) => {
+          this.logger?.error({ context: 'select-queues-by-name-map' }, String(error))
+          return []
+        })
+    }).catch((error: unknown) => {
+      this.logger?.error({ context: 'select-queues-by-name-task' }, String(error))
+      return []
+    }) ?? []
+  }
+
+  protected async selectQueuesBySchedule (date: Date): Promise<Queue[]> {
+    return await this.database?.task<Queue[]>(async (task) => {
+      return await task
+        .map<Promise<Queue>>(`
+          SELECT *
+          FROM queue
+          WHERE name LIKE $(name)
+          AND schedule_begin <= $(date)
+          AND schedule_end >= $(date)
+          AND schedule_next <= $(date)
+        `, {
+          date,
+          name: `%${this.filter ?? ''}%`
+        }, async (queue: Queue) => {
+          await this.selectTasks(task, queue)
+          return queue
+        })
+        .then(async (data) => {
+          return await task
+            .batch(data)
+            .catch((error: unknown) => {
+              this.logger?.error({ context: 'select-queues-by-schedule-batch' }, String(error))
+              return []
+            })
+        })
+        .catch((error: unknown) => {
+          this.logger?.error({ context: 'select-queues-by-schedule-map' }, String(error))
+          return []
+        })
+    }).catch((error: unknown) => {
+      this.logger?.error({ context: 'select-queues-by-schedule-task' }, String(error))
+      return []
+    }) ?? []
+  }
+
+  protected async selectTasks (task: ITask<unknown>, queue: Queue): Promise<void> {
+    await task
+      .any<Task>(`
+        SELECT
+          *,
+          (
+            SELECT COALESCE(JSON_OBJECT_AGG(task_option.name, task_option.value), '{}'::JSON)
+            FROM task_option 
+            WHERE task_option.id = task.id
+          ) AS options
+        FROM task
+        WHERE queue_id = $(queue_id)
+      `, {
+        queue_id: queue.id
+      })
+      .then((tasks) => {
+        queue.tasks = tasks
+      })
+      .catch((error: unknown) => {
+        this.logger?.error({ context: 'select-tasks' }, String(error))
+      })
   }
 
   protected startListener (client: WrappedNodeRedisClient): void {
@@ -168,17 +265,23 @@ export class QueueManager {
       .subscribe('queue')
       .then(() => {
         client.nodeRedis.on('message', (channel, message) => {
-          this.callListener(message)
+          this
+            .callListener(message)
+            .catch(() => {})
         })
       })
       .catch((error: unknown) => {
-        this.logger?.error({ context: 'listener-message' }, String(error))
+        this.logger?.error({ context: 'start-listener' }, String(error))
       })
   }
 
   protected startSchedule (schedule: string): void {
     scheduleJob(schedule, (date) => {
-      this.callSchedule(date)
+      this
+        .callSchedule(date)
+        .catch((error: unknown) => {
+          this.logger?.error({ context: 'start-schedule' }, String(error))
+        })
     })
   }
 }

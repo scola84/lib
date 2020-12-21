@@ -93,7 +93,7 @@ export class TaskRunner extends Duplex {
 
   public start (): void {
     const {
-      block = 60 * 60 * 1000,
+      block = 5 * 60 * 1000,
       consumer = process.env.HOSTNAME ?? '',
       count = 1,
       database,

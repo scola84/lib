@@ -147,9 +147,9 @@ export class QueueRunner extends Writable {
       return
     }
 
-    // eslint-disable-next-line func-style
     const handleEnd = (): void => {
       stream.removeListener('error', handleError)
+      this.queueClient.quit().catch(() => {})
     }
 
     const handleError = (error: unknown): void => {
@@ -157,6 +157,7 @@ export class QueueRunner extends Writable {
       stream.unpipe(this)
       stream.destroy()
       this.logger?.error({ context: 'run-stream-handle' }, String(error))
+      this.queueClient.quit().catch(() => {})
     }
 
     stream

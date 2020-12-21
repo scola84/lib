@@ -9,10 +9,10 @@ import { parseExpression } from 'cron-parser'
 import { scheduleJob } from 'node-schedule'
 
 export interface QueueManagerOptions {
-  filter: string
-  listenerClient: ClientOpts
-  logger: FastifyLoggerInstance
   database: IDatabase<unknown>
+  filter: string
+  logger: FastifyLoggerInstance
+  queueClient: ClientOpts
   schedule: string
 }
 
@@ -27,11 +27,11 @@ export class QueueManager {
 
   public filter?: string
 
-  public listenerClient?: WrappedNodeRedisClient
-
   public logger?: FastifyLoggerInstance
 
   public options: Partial<QueueManagerOptions>
+
+  public queueClient?: WrappedNodeRedisClient
 
   public schedule?: string
 
@@ -77,13 +77,13 @@ export class QueueManager {
     const {
       database,
       filter,
-      listenerClient,
       logger,
+      queueClient,
       schedule
     } = this.options
 
-    if (listenerClient !== undefined) {
-      this.listenerClient = createNodeRedisClient(listenerClient)
+    if (queueClient !== undefined) {
+      this.queueClient = createNodeRedisClient(queueClient)
     }
 
     if (database !== undefined) {
@@ -101,8 +101,8 @@ export class QueueManager {
       this.startSchedule(this.schedule)
     }
 
-    if (this.listenerClient !== undefined) {
-      this.startListener(this.listenerClient)
+    if (this.queueClient !== undefined) {
+      this.startListener(this.queueClient)
     }
 
     if (call) {

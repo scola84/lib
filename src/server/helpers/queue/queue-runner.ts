@@ -147,22 +147,30 @@ export class QueueRunner extends Writable {
       return
     }
 
-    const handleEnd = (): void => {
-      stream.removeListener('error', handleError)
+    const handleFinish = (): void => {
+      removeListeners()
       this.queueClient.quit().catch(() => {})
     }
 
     const handleError = (error: unknown): void => {
-      stream.removeListener('end', handleEnd)
+      removeListeners()
+      this.queueClient.quit().catch(() => {})
       stream.unpipe(this)
       stream.destroy()
       this.logger?.error({ context: 'run-stream-handle' }, String(error))
-      this.queueClient.quit().catch(() => {})
     }
 
+    const removeListeners = (): void => {
+      stream.removeListener('error', handleError)
+      this.removeListener('error', handleError)
+      this.removeListener('finish', handleFinish)
+    }
+
+    stream.once('error', handleError)
+    this.once('error', handleError)
+    this.once('finish', handleFinish)
+
     stream
-      .once('error', handleError)
-      .once('end', handleEnd)
       .pipe(this)
   }
 

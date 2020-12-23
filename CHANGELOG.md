@@ -1,3 +1,15 @@
+# [4.1.0](https://github.com/scola84/lib/compare/v4.0.1...v4.1.0) (2020-12-23)
+
+
+### Bug Fixes
+
+* **queue:** correctly select task options ([4bbed74](https://github.com/scola84/lib/commit/4bbed7432d53cd9df259a6ef3c795743486dd9bd))
+
+
+### Features
+
+* **queue:** allow task options to be typed ([31ff8f1](https://github.com/scola84/lib/commit/31ff8f10c9e1a19c64fd35679db824a967443c37))
+
 ## [4.0.1](https://github.com/scola84/lib/compare/v4.0.0...v4.0.1) (2020-12-22)
 
 

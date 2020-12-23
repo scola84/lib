@@ -60,6 +60,8 @@ export class ZScanner extends Readable {
         this.emit('error', new Error(`Del error: ${String(error)}`))
       }
     }
+
+    await this.client.quit().catch(() => {})
   }
 
   public async _read (): Promise<void> {

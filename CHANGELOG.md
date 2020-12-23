@@ -1,3 +1,10 @@
+## [4.1.1](https://github.com/scola84/lib/compare/v4.1.0...v4.1.1) (2020-12-23)
+
+
+### Bug Fixes
+
+* **base:** close client of zscanner ([00d1119](https://github.com/scola84/lib/commit/00d1119831c81aba6ad0ae049e464b5c3c1c8eab))
+
 # [4.1.0](https://github.com/scola84/lib/compare/v4.0.1...v4.1.0) (2020-12-23)
 
 

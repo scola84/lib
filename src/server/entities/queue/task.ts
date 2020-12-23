@@ -1,12 +1,10 @@
 import type { Queue } from './queue'
 
-export type TaskOptions = Record<string, unknown>
-
-export interface Task {
+export interface Task<Options = Record<string, unknown>> {
   created?: Date
   id?: string
   name: string
-  options: TaskOptions
+  options: Options
   order: number
   queue: Queue
   queue_id?: string

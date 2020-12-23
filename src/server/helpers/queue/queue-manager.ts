@@ -240,13 +240,11 @@ export class QueueManager {
   protected async selectTasks (task: ITask<unknown>, queue: Queue): Promise<void> {
     await task
       .any<Task>(`
-        SELECT
-          *,
-          (
-            SELECT COALESCE(JSON_OBJECT_AGG(task_option.name, task_option.value), '{}'::JSON)
-            FROM task_option 
-            WHERE task_option.id = task.id
-          ) AS options
+        SELECT *, (
+          SELECT COALESCE(JSON_OBJECT_AGG(task_option.name, task_option.value), '{}'::JSON)
+          FROM task_option
+          WHERE task_option.task_id = task.id
+        ) AS options
         FROM task
         WHERE queue_id = $(queue_id)
       `, {

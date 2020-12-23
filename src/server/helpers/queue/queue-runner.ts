@@ -110,12 +110,9 @@ export class QueueRunner extends Writable {
 
     const { id = '0' } = await this.database
       ?.one<QueueRun>(`
-        INSERT INTO queue_run
-          (created, err, name, ok, total, updated, queue_id)
-        VALUES
-          (NOW(), 0, $(name), 0, 0, NOW(), $(queue_id))
-        RETURNING
-          id
+        INSERT INTO queue_run (created, err, name, ok, total, updated, queue_id)
+        VALUES (NOW(), 0, $(name), 0, 0, NOW(), $(queue_id))
+        RETURNING id
       `, {
         name: this.queueRun.name,
         queue_id: this.queueRun.queue.id
@@ -154,9 +151,9 @@ export class QueueRunner extends Writable {
 
     const handleError = (error: unknown): void => {
       removeListeners()
-      this.queueClient.quit().catch(() => {})
       stream.unpipe(this)
       stream.destroy()
+      this.queueClient.quit().catch(() => {})
       this.logger?.error({ context: 'run-stream-handle' }, String(error))
     }
 

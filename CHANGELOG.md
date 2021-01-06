@@ -1,3 +1,10 @@
+## [5.0.1](https://github.com/scola84/lib/compare/v5.0.0...v5.0.1) (2021-01-06)
+
+
+### Bug Fixes
+
+* **deps:** add missing redis dependency ([cc33e00](https://github.com/scola84/lib/commit/cc33e008c3ea932ad5b5715c666a2d3049e7b5f8))
+
 # [5.0.0](https://github.com/scola84/lib/compare/v4.1.1...v5.0.0) (2021-01-06)
 
 

@@ -53,6 +53,10 @@
     "@typescript-eslint/no-extra-parens": "off",
     "@typescript-eslint/no-type-alias": "off",
     "@typescript-eslint/prefer-readonly-parameter-types": "off",
+    "@typescript-eslint/return-await": [
+      "error",
+      "in-try-catch"
+    ],
     "arrow-body-style": [
       "error",
       "always"
@@ -87,6 +91,15 @@
     "multiline-comment-style": "off",
     "multiline-ternary": "off",
     "no-await-in-loop": "off",
+    "no-continue": "off",
+    "no-underscore-dangle": [
+      "error",
+      {
+        "allow": [
+          "_read"
+        ]
+      }
+    ],
     "no-extra-parens": "off",
     "no-multiple-empty-lines": [
       "error",

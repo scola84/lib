@@ -44,10 +44,10 @@ export interface LogEvent extends CustomEvent {
 }
 
 export interface NodeEvent extends CustomEvent {
-  detail: {
+  detail: null | {
     origin?: HTMLElement
     target?: string
-  } | null
+  }
 }
 
 export interface Presets {
@@ -1188,7 +1188,7 @@ export class NodeElement extends LitElement {
     attribute: 'inner-width',
     reflect: true
   })
-  public innerWidth: 'large' | 'medium' | 'medium-auto' | 'small'
+  public innerWidth: 'large' | 'medium-auto' | 'medium' | 'small'
 
   @property()
   public is?: string
@@ -1350,7 +1350,7 @@ export class NodeElement extends LitElement {
   @query('slot[name="suffix"]', true)
   protected suffixSlotElement?: HTMLSlotElement
 
-  protected easingIds: Record<string, number | null> = {}
+  protected easingIds: Record<string, null | number> = {}
 
   protected handleScrollBound: () => void
 
@@ -1474,9 +1474,7 @@ export class NodeElement extends LitElement {
     }
 
     const frame = (time: number): void => {
-      start = start === -1
-        ? time
-        : start
+      start = start === -1 ? time : start
 
       if (time - start >= duration) {
         resolve({
@@ -1571,9 +1569,7 @@ export class NodeElement extends LitElement {
           last = Date.now()
         }
         tid = 0
-      }, once
-        ? duration
-        : duration - diff)
+      }, once ? duration : duration - diff)
     }
   }
 }

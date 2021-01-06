@@ -177,9 +177,7 @@ export class ClipElement extends NodeElement {
       ? this.determineInnerPropertyValue(this.defaultSlotElement)
       : 0
 
-    to = Number.isNaN(to)
-      ? 0
-      : to
+    to = Number.isNaN(to) ? 0 : to
 
     this.ease(0, to, ({ done, value }) => {
       this.defaultSlotElement?.style.setProperty(name, `-${value}px`)
@@ -208,10 +206,7 @@ export class ClipElement extends NodeElement {
 
     const name = this.determineOuterPropertyName(element)
     let to = this.determineOuterPropertyValue(element)
-
-    to = Number.isNaN(to)
-      ? 0
-      : to
+    to = Number.isNaN(to) ? 0 : to
 
     this.ease(0, to, ({ done, value }) => {
       element.style.setProperty(name, `-${value}px`)
@@ -237,13 +232,8 @@ export class ClipElement extends NodeElement {
   ): void {
     const contentElements = Array.from(this.contentElements)
 
-    const dimensionName = this.flow === 'row'
-      ? 'width'
-      : 'height'
-
-    const scrollName = this.flow === 'row'
-      ? 'scrollLeft'
-      : 'scrollTop'
+    const dimensionName = this.flow === 'row' ? 'width' : 'height'
+    const scrollName = this.flow === 'row' ? 'scrollLeft' : 'scrollTop'
 
     const from = this.defaultSlotElement instanceof HTMLSlotElement
       ? this.defaultSlotElement[scrollName]
@@ -252,9 +242,7 @@ export class ClipElement extends NodeElement {
     const to =
       contentElements.indexOf(element) *
       element.getBoundingClientRect()[dimensionName] *
-      (this.dir === 'rtl'
-        ? -1
-        : 1)
+      (this.dir === 'rtl' ? -1 : 1)
 
     contentElements.forEach((contentElement) => {
       contentElement.hidden = contentElement !== element
@@ -367,9 +355,7 @@ export class ClipElement extends NodeElement {
     const countNotHidden = Array.from(this.contentElements).reduce(
       (count, contentElement): number => {
         return contentElement instanceof ClipElement
-          ? count + (contentElement.defaultSlotElement?.hidden === true
-            ? 0
-            : 1)
+          ? count + (contentElement.defaultSlotElement?.hidden === true ? 0 : 1)
           : count
       },
       0
@@ -413,13 +399,9 @@ export class ClipElement extends NodeElement {
 
     switch (slotName) {
       case 'after':
-        return this.dir === 'rtl'
-          ? 'margin-left'
-          : 'margin-right'
+        return this.dir === 'rtl' ? 'margin-left' : 'margin-right'
       case 'before':
-        return this.dir === 'rtl'
-          ? 'margin-right'
-          : 'margin-left'
+        return this.dir === 'rtl' ? 'margin-right' : 'margin-left'
       case 'footer':
         return 'margin-bottom'
       case 'header':
@@ -454,13 +436,9 @@ export class ClipElement extends NodeElement {
       case 'column-before':
         return 'margin-top'
       case 'row-after':
-        return this.dir === 'rtl'
-          ? 'margin-left'
-          : 'margin-right'
+        return this.dir === 'rtl' ? 'margin-left' : 'margin-right'
       case 'row-before':
-        return this.dir === 'rtl'
-          ? 'margin-right'
-          : 'margin-left'
+        return this.dir === 'rtl' ? 'margin-right' : 'margin-left'
       default:
         return ''
     }

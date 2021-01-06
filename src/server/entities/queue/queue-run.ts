@@ -1,17 +1,13 @@
-import type { Item } from './item'
 import type { Queue } from './queue'
-import type { TaskRun } from './task-run'
 
 export interface QueueRun {
-  created?: Date
-  err?: number
-  id?: string
-  items?: Item[]
+  aggr_err: number
+  aggr_ok: number
+  aggr_total: number
+  date_created?: Date
+  date_updated?: Date
+  fkey_queue_id: string
+  id: string
   name: string
-  ok?: number
   queue: Queue
-  queue_id?: string
-  taskRuns?: TaskRun[]
-  total: number
-  updated?: Date
 }

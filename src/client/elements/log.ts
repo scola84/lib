@@ -172,10 +172,7 @@ export class LogElement extends NodeElement {
 
     this.showLog(log)
 
-    const timeout = log.timeout ?? (this.timeout === 0
-      ? 3000
-      : this.timeout)
-
+    const timeout = log.timeout ?? (this.timeout === 0 ? 3000 : this.timeout)
     this.timeoutId = window.setTimeout(this.showNext.bind(this), timeout)
   }
 

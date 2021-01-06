@@ -38,23 +38,23 @@ declare global {
 }
 
 export interface ListFilterEvent extends NodeEvent {
-  detail: {
+  detail: null | {
     filterName?: string
     filterValue?: string
     origin?: HTMLElement
     target?: string
-  } | null
+  }
 }
 
 export type ListItem = Record<string, unknown>
 
 export interface ListOrderEvent extends NodeEvent {
-  detail: {
+  detail: null | {
     orderCol?: string
     orderDir?: string
     origin?: HTMLElement
     target?: string
-  } | null
+  }
 }
 
 export interface ListResult extends NodeResult {
@@ -365,8 +365,6 @@ export class ListElement extends RequestElement {
 
   protected setSearch (): void {
     const search = this.searchElement?.getValue()
-    this.search = search === ''
-      ? undefined
-      : search
+    this.search = search === '' ? undefined : search
   }
 }

@@ -142,9 +142,7 @@ export class PickerElement extends InputElement {
 
       valueElement.data = {
         blue,
-        count: hex === ''
-          ? 0
-          : 1,
+        count: hex === '' ? 0 : 1,
         green,
         hex,
         red

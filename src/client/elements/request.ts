@@ -32,18 +32,18 @@ declare global {
 }
 
 export interface RequestFinishEvent {
-  detail: {
+  detail: null | {
     code?: string
     data?: unknown
     origin: HTMLElement
-  } | null
+  }
 }
 
 export interface RequestReadEvent {
-  detail: {
+  detail: null | {
     buffer: Uint8Array | undefined
     origin: HTMLElement
-  } | null
+  }
 }
 
 @customElement('scola-request')
@@ -254,12 +254,8 @@ export class RequestElement extends NodeElement {
 
   protected async finish (): Promise<void> {
     const status = this.response?.status ?? 200
-
-    this.code = status < 400
-      ? `OK_${status}`
-      : `ERR_RESPONSE_${status}`
-
     const contentLength = this.response?.headers.get('Content-Length')
+    this.code = status < 400 ? `OK_${status}` : `ERR_${status}`
 
     if (contentLength !== null && contentLength !== undefined) {
       this.indeterminate = false

@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import Format from 'intl-messageformat'
 
 export class Formatter {
@@ -19,7 +21,6 @@ export class Formatter {
     try {
       return String(new Format(Formatter.strings?.[lang]?.[code] ?? '', lang).format(data))
     } catch (error: unknown) {
-      // eslint-disable-next-line no-console
       console.error(error)
       return code
     }

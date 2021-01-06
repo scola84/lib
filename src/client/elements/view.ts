@@ -406,17 +406,9 @@ export class ViewElement extends ClipElement {
   }
 
   protected setScroll (element: HTMLElement): void {
-    const dimensionName = this.flow === 'row'
-      ? 'width'
-      : 'height'
-
-    const scrollFactor = this.dir === 'rtl'
-      ? -1
-      : 1
-
-    const scrollName = this.flow === 'row'
-      ? 'scrollLeft'
-      : 'scrollTop'
+    const dimensionName = this.flow === 'row' ? 'width' : 'height'
+    const scrollFactor = this.dir === 'rtl' ? -1 : 1
+    const scrollName = this.flow === 'row' ? 'scrollLeft' : 'scrollTop'
 
     const style = window.getComputedStyle(element)
     const scrollDelta = scrollFactor * parseFloat(style[dimensionName])

@@ -63,9 +63,7 @@ export class FormElement extends RequestElement {
   }
 
   protected getValues (): FormData | URLSearchParams {
-    const data = this.hasFiles
-      ? new FormData()
-      : new URLSearchParams()
+    const data = this.hasFiles ? new FormData() : new URLSearchParams()
 
     Array
       .from(this.inputElements)

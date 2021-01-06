@@ -298,11 +298,8 @@ export class ProgressElement extends NodeElement {
     const cf = this.radius * 2 * Math.PI
     const to = cf - element.loaded / element.total * cf
     const { from = cf } = this
+    const duration = from <= to ? 0 : this.duration
     this.from = to
-
-    const duration = from <= to
-      ? 0
-      : this.duration
 
     this.ease(from, to, ({ done, value }) => {
       this.circleElement?.style.setProperty('stroke-dashoffset', `${value}px`)
@@ -321,11 +318,8 @@ export class ProgressElement extends NodeElement {
   protected observedUpdatedRect (element: RequestElement): void {
     const to = Math.round(element.loaded / element.total * 100)
     const { from = 0 } = this
+    const duration = from >= to ? 0 : this.duration
     this.from = to
-
-    const duration = from >= to
-      ? 0
-      : this.duration
 
     this.ease(from, to, ({ done, value }) => {
       this.rectangleElement?.setAttribute('width', `${value}%`)

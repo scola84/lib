@@ -1,27 +1,23 @@
-import type {
-  Item,
-  Queue,
-  QueueRun,
-  TaskRun
-} from '../../entities'
-
-import type { ClientOpts } from 'redis'
+import type { Item, Queue, QueueRun, TaskRun } from '../../entities'
 import { Duplex } from 'stream'
+import type { DuplexOptions } from 'stream'
 import type { FastifyLoggerInstance } from 'fastify'
-import type { IDatabase } from 'pg-promise'
+import type { PostgresqlDatabase } from '../sql/postgresql'
+import type { Queuer } from './queuer'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createNodeRedisClient } from 'handy-redis'
 
-export interface TaskRunnerOptions {
+export interface TaskRunnerOptions extends DuplexOptions {
   block: number
+  channel: string
   consumer: string
-  count: number
-  database: IDatabase<unknown>
+  database: PostgresqlDatabase
   group: string
   logger: FastifyLoggerInstance
+  maxLength: number
   name: string
-  queueClient: ClientOpts
-  xid: string
+  queue: WrappedNodeRedisClient
+  queuer: Queuer
 }
 
 export class TaskRunner extends Duplex {
@@ -29,370 +25,330 @@ export class TaskRunner extends Duplex {
 
   public block: number
 
+  public channel: string
+
   public consumer: string
 
-  public count: number
+  public data: TaskRun[] = []
 
-  public database?: IDatabase<unknown>
+  public database: PostgresqlDatabase
 
   public group: string
 
   public logger?: FastifyLoggerInstance
 
+  public maxLength: number
+
   public name: string
 
   public options: Partial<TaskRunnerOptions>
 
-  public readClient: WrappedNodeRedisClient
+  public pending = 0
 
-  public writeClient: WrappedNodeRedisClient
+  public queue: WrappedNodeRedisClient
 
-  public xid: string
+  public queueRead: WrappedNodeRedisClient
 
-  public constructor (options?: Partial<TaskRunnerOptions>) {
+  public xid = '0-0'
+
+  public constructor (options: Partial<TaskRunnerOptions>) {
     super({
-      objectMode: true
+      objectMode: true,
+      ...options
     })
 
-    this.options = {
-      ...TaskRunner.options,
-      ...options
-    }
-  }
-
-  public _read (): void {}
-
-  public async _write (taskRun: TaskRun, encoding: string, callback: () => void): Promise<void> {
-    try {
-      taskRun.code = taskRun.code === 'pending' ? 'ok' : taskRun.code
-      taskRun.item.code = taskRun.code
-
-      await this.updateTaskRunAfter(taskRun)
-      await this.updateItemState(taskRun.item)
-
-      if (typeof taskRun.xid === 'string') {
-        await this.writeClient
-          .xack(this.name, this.group, taskRun.xid)
-          .catch((error: unknown) => {
-            this.logger?.error({ context: 'write-ack' }, String(error))
-          })
-      }
-
-      if (taskRun.code === 'ok') {
-        await this.addNextTaskRun(taskRun)
-      } else {
-        await this.updateQueueRunState(taskRun.queueRun, taskRun)
-        await this.runNextQueues(taskRun.queueRun, taskRun)
-      }
-    } catch (error: unknown) {
-      this.logger?.error({ context: 'write' }, String(error))
-    }
-
-    callback()
-  }
-
-  public start (): void {
     const {
       block = 5 * 60 * 1000,
+      channel = 'queue',
       consumer = process.env.HOSTNAME ?? '',
-      count = 1,
       database,
       group,
       logger,
+      maxLength = 1024 * 1024,
       name,
-      queueClient,
-      xid = '>'
-    } = this.options
+      queue,
+      queuer
+    } = {
+      ...TaskRunner.options,
+      ...options
+    }
+
+    if (database === undefined) {
+      throw new Error('Database is undefined')
+    }
 
     if (name === undefined) {
       throw new Error('Name is undefined')
     }
 
-    if (queueClient === undefined) {
-      throw new Error('Queue client is undefined')
-    }
-
-    if (database !== undefined) {
-      this.database = database
+    if (queue === undefined) {
+      throw new Error('Queue is undefined')
     }
 
     this.block = block
+    this.channel = channel
     this.consumer = consumer
-    this.count = count
+    this.database = database
     this.group = group ?? name
+    this.logger = logger?.child({ name, source: 'task-runner' })
+    this.maxLength = maxLength
     this.name = name
-    this.readClient = createNodeRedisClient(queueClient)
-    this.writeClient = createNodeRedisClient(queueClient)
-    this.xid = xid
+    this.queue = queue
+    this.queueRead = createNodeRedisClient(queue.nodeRedis.duplicate())
 
-    this.logger = logger?.child({
-      name,
-      source: 'task-runner'
-    })
+    queuer?.add(this)
+  }
+
+  public _read (size: number): void {
+    if (this.data.length > 0) {
+      this.push(this.data.shift())
+      return
+    }
 
     this
-      .createGroup()
+      .readTaskRuns(size)
       .then(() => {
-        this
-          .readTaskRuns()
-          .catch((error: unknown) => {
-            this.logger?.error({ context: 'run-read-task-runs' }, String(error))
-          })
+        this._read(size)
       })
-      .catch((error: unknown) => {
-        this.logger?.error({ context: 'run-create-group' }, String(error))
+      .catch(async (error: unknown) => {
+        const message = String(error)
+        const createGroup = message
+          .toLowerCase()
+          .includes('no such key')
+
+        if (createGroup) {
+          await this.createGroup()
+          this._read(size)
+        } else {
+          this.logger?.error({ context: 'read' }, String(error))
+        }
       })
   }
 
-  protected async addNextTaskRun (taskRun: TaskRun): Promise<void> {
-    const nextTaskRun = await this.database
-      ?.oneOrNone<TaskRun>(`
-        SElECT *
-        FROM task_run
-        WHERE item_id = $(item_id)
-        AND "order" > $(order)
-        LIMIT 1
-      `, {
-        item_id: taskRun.item.id,
-        order: taskRun.order
+  public _write (taskRun: TaskRun, encoding: string, callback: () => void): void {
+    this
+      .writeTaskRun(taskRun)
+      .then(() => {
+        callback()
       })
       .catch((error: unknown) => {
-        this.logger?.error({ context: 'add-next-task-run' }, String(error))
+        this.logger?.error({ context: 'write' }, String(error))
+        callback()
       })
+  }
 
-    if (nextTaskRun === null || nextTaskRun === undefined) {
-      await this.updateQueueRunState(taskRun.queueRun, taskRun)
-      await this.runNextQueues(taskRun.queueRun, taskRun)
-    } else {
-      const name = `${taskRun.queueRun.name}-${nextTaskRun.name}`
-      await this.writeNextTaskRun(name, nextTaskRun.id)
+  public async stop (): Promise<void> {
+    this.queueRead.end()
+
+    while (this.pending > 0) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100)
+      })
     }
   }
 
   protected async createGroup (): Promise<void> {
     try {
-      const infoGroups = await this.readClient.xinfo(['GROUPS', this.name]) as []
-      const exists = infoGroups.some((infoGroup: unknown[]) => {
-        return infoGroup[1] === this.group
-      })
-
-      if (!exists) {
-        await this.readClient.xgroup([['CREATE', [this.name, this.group]], '$'])
-      }
+      await this.queueRead.xgroup([['CREATE', [this.name, this.group]], '$', 'MKSTREAM'])
     } catch (error: unknown) {
-      if (error instanceof Error && error.message === 'ERR no such key') {
-        await this.readClient.xgroup([['CREATE', [this.name, this.group]], '$', 'MKSTREAM'])
-        return
-      }
-
-      throw error
+      this.logger?.error({ context: 'create-group' }, String(error))
     }
   }
 
-  protected async pushItem (taskRunId: string, xid: string): Promise<void> {
-    const taskRun = await this.selectTaskRun(taskRunId)
+  protected async readTaskRuns (size: number): Promise<void> {
+    const result = await this.queueRead.xreadgroup(
+      ['GROUP', [this.group, this.consumer]],
+      ['COUNT', size],
+      ['BLOCK', this.block],
+      'STREAMS',
+      [this.name],
+      this.xid
+    ) as Array<[string, string[] | null]> | null
 
-    if (taskRun !== undefined) {
-      taskRun.xid = xid
-      await this.updateTaskRunBefore(taskRun)
-      this.push(taskRun)
-    }
-  }
+    const items = result?.[0][1] ?? []
 
-  protected pushPayload (payload: unknown, xid: string): void {
-    const queueRun = {
-      name: '',
-      queue: {
-        name: ''
-      },
-      total: 0
+    if (items.length === 0) {
+      this.xid = '>'
+      return
     }
 
-    const taskRun: TaskRun = {
-      code: 'pending',
-      item: {
-        payload,
-        queueRun
-      },
-      name: this.name,
-      options: {},
-      order: 1,
-      queueRun,
-      xid
-    }
+    const connection = await this.database.connect()
 
-    this.push(taskRun)
-  }
+    try {
+      for (const [xid, [, value]] of items) {
+        const taskRun = await connection.selectOne<TaskRun>(`
+          SELECT
+            fkey_item_id,
+            fkey_queue_run_id,
+            id,
+            code,
+            name,
+            options,
+            "order",
+            reason,
+            result,
+            xid
+          FROM task_run
+          WHERE id = $(id)
+        `, {
+          id: value
+        })
 
-  protected async readTaskRuns (): Promise<void> {
-    for (;;) {
-      try {
-        const result = await this.readClient.xreadgroup(
-          ['GROUP', [this.group, this.consumer]],
-          ['COUNT', this.count],
-          ['BLOCK', this.block],
-          'STREAMS',
-          [this.name],
-          this.xid
-        ) as Array<[string, string[] | null]> | null
-
-        const items = result?.[0][1] ?? []
-
-        if (items.length === 0) {
-          this.xid = '>'
+        if (taskRun === undefined) {
+          continue
         }
 
-        for (const [xid, [type, value]] of items) {
-          if (type === 'payload') {
-            this.pushPayload(value, xid)
-          } else {
-            await this.pushItem(value, xid)
-          }
+        const item = await connection.selectOne<Item>(`
+          SELECT
+            fkey_queue_run_id,
+            id,
+            code,
+            payload
+          FROM item
+          WHERE id = $(id)
+        `, {
+          id: taskRun.fkey_item_id
+        })
 
-          this.xid = xid
+        if (item === undefined) {
+          continue
         }
-      } catch (error: unknown) {
-        this.logger?.error({ context: 'read-task-runs' }, String(error))
+
+        const queueRun = await connection.selectOne<QueueRun>(`
+          SELECT
+            fkey_queue_id,
+            id,
+            name
+          FROM queue_run
+          WHERE id = $(id)
+        `, {
+          id: taskRun.fkey_queue_run_id
+        })
+
+        if (queueRun === undefined) {
+          continue
+        }
+
+        taskRun.item = item
+        taskRun.queueRun = queueRun
+        taskRun.xid = xid
+
+        await connection.query(`
+          UPDATE task_run
+          SET
+            date_started = NOW(),
+            date_updated = NOW(),
+            xid = $(xid)
+          WHERE id = $(id)
+        `, {
+          id: taskRun.id,
+          xid: taskRun.xid
+        })
+
+        this.data.push(taskRun)
+        this.pending += 1
+        this.xid = this.xid === '>' ? '>' : xid
       }
+    } finally {
+      connection.release()
     }
   }
 
-  protected async runNextQueues (queueRun: QueueRun, taskRun: TaskRun): Promise<void> {
-    const nextQueues = await this.database
-      ?.manyOrNone<Queue>(`
-        SELECT queue.id
-        FROM queue
-        LEFT JOIN queue_run ON queue.previous_queue_id = queue_run.queue_id
-        WHERE queue_run.id = $(queue_run_id)
-        AND queue_run.ok + queue_run.err = queue_run.total
-      `, {
-        queue_run_id: queueRun.id
-      })
-      .catch((error: unknown) => {
-        this.logger?.error({ context: 'run-next-queues-select' }, String(error))
-        return []
-      }) ?? []
+  protected async writeTaskRun (taskRun: TaskRun): Promise<void> {
+    const connection = await this.database.connect()
 
-    Promise
-      .all(nextQueues.map(async ({ id }) => {
-        await this.writeClient.publish('queue', JSON.stringify({
-          id,
-          payload: [queueRun.id]
-        }))
-      }))
-      .catch((error: unknown) => {
-        this.logger?.error({ context: 'run-next-queues-publish' }, String(error))
-      })
-  }
+    try {
+      taskRun.code = taskRun.code === 'pending' ? 'ok' : taskRun.code
+      taskRun.item.code = taskRun.code
 
-  protected async selectTaskRun (taskRunId: string): Promise<TaskRun | undefined> {
-    return await this.database?.task<TaskRun>(async (task): Promise<TaskRun> => {
-      const taskRun = await task.one<TaskRun>(`
-        SELECT *
-        FROM task_run
-        WHERE id = $(task_run_id)
-      `, {
-        task_run_id: taskRunId
-      })
-
-      taskRun.item = await task.one<Item>(`
-        SELECT *
-        FROM item
-        WHERE id = $(item_id)
-      `, {
-        item_id: taskRun.item_id
-      })
-
-      taskRun.queueRun = await task.one<QueueRun>(`
-        SELECT *
-        FROM queue_run
-        WHERE id = $(queue_run_id)
-      `, {
-        queue_run_id: taskRun.queue_run_id
-      })
-
-      return taskRun
-    }).catch((error: unknown) => {
-      this.logger?.error({ context: 'select-task-run' }, String(error))
-      return undefined
-    })
-  }
-
-  protected async updateItemState (item: Item): Promise<void> {
-    await this.database
-      ?.none(`
-        UPDATE item
-        SET
-          code = $(code),
-          updated = NOW()
-        WHERE id = $(item_id)
-      `, {
-        code: item.code,
-        item_id: item.id
-      }).catch((error: unknown) => {
-        this.logger?.error({ context: 'update-item-state' }, String(error))
-      })
-  }
-
-  protected async updateQueueRunState (queueRun: QueueRun, taskRun: TaskRun): Promise<void> {
-    const field = taskRun.code === 'ok' ? 'ok' : 'err'
-
-    await this.database
-      ?.none(`
-        UPDATE queue_run
-        SET
-          ${field} = ${field} + 1,
-          updated = NOW()
-        WHERE id = $(queue_run_id)
-      `, {
-        queue_run_id: queueRun.id
-      })
-      .catch((error: unknown) => {
-        this.logger?.error({ context: 'update-queue-run-state' }, String(error))
-      })
-  }
-
-  protected async updateTaskRunAfter (taskRun: TaskRun): Promise<void> {
-    await this.database
-      ?.none(`
+      await connection.query(`
         UPDATE task_run
         SET
-          code = $(code), reason = $(reason),
-          updated = NOW()
-        WHERE id = $(task_run_id)
+          date_updated = NOW(),
+          code = $(code),
+          reason = $(reason),
+          result = $(result)
+        WHERE id = $(id)
       `, {
         code: taskRun.code,
+        id: taskRun.id,
         reason: taskRun.reason,
-        task_run_id: taskRun.id
+        result: taskRun.result
       })
-      .catch((error: unknown) => {
-        this.logger?.error({ context: 'update-task-run-after' }, String(error))
-      })
-  }
 
-  protected async updateTaskRunBefore (taskRun: TaskRun): Promise<void> {
-    await this.database
-      ?.none(`
-        UPDATE task_run
+      await connection.query(`
+        UPDATE item
         SET
-          started = NOW(),
-          updated = NOW(),
-          xid = $(xid)
-        WHERE id = $(task_run_id)
+          date_updated = NOW(),
+          code = $(code)
+        WHERE id = $(id)
       `, {
-        task_run_id: taskRun.id,
-        xid: taskRun.xid
+        code: taskRun.item.code,
+        id: taskRun.item.id
       })
-      .catch((error: unknown) => {
-        this.logger?.error({ context: 'update-task-run-before' }, String(error))
-      })
-  }
 
-  protected async writeNextTaskRun (name: string, id?: string): Promise<void> {
-    await this.writeClient
-      .xadd(name, '*', ['taskRunId', String(id)])
-      .catch((error: unknown) => {
-        this.logger?.error({ context: 'write-next-task-run' }, String(error))
-      })
+      if (typeof taskRun.xid === 'string') {
+        await this.queue.xack(this.name, this.group, taskRun.xid)
+      }
+
+      let nextTaskRun = null
+
+      if (taskRun.code === 'ok') {
+        nextTaskRun = await connection.selectOne<Pick<TaskRun, 'id' | 'name'>>(`
+          SELECT
+            id,
+            name
+          FROM task_run
+          WHERE fkey_item_id = $(fkey_item_id)
+          AND "order" > $(order)
+          LIMIT 1
+        `, {
+          fkey_item_id: taskRun.item.id,
+          order: taskRun.order
+        }) ?? null
+      }
+
+      if (nextTaskRun === null) {
+        const field = taskRun.code === 'ok' ? 'ok' : 'err'
+
+        await connection.query(`
+          UPDATE queue_run
+          SET
+            aggr_${field} = aggr_${field} + 1,
+            date_updated = NOW()
+          WHERE id = $(id)
+        `, {
+          id: taskRun.queueRun.id
+        })
+
+        const queues = await connection.select<Queue[]>(`
+          SELECT queue.id
+          FROM queue
+          LEFT JOIN queue_run
+          ON queue.fkey_queue_id = queue_run.fkey_queue_id
+          WHERE queue_run.id = $(queue_run_id)
+          AND queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
+        `, {
+          queue_run_id: taskRun.queueRun.id
+        })
+
+        for (const { id } of queues) {
+          await this.queue.publish(this.channel, JSON.stringify({
+            id,
+            parameters: [taskRun.queueRun.id]
+          }))
+        }
+      } else {
+        await this.queue.xadd(
+          `${taskRun.queueRun.name}-${nextTaskRun.name}`,
+          ['MAXLEN', ['~', this.maxLength]],
+          '*',
+          ['taskRunId', String(nextTaskRun.id)]
+        )
+      }
+    } finally {
+      this.pending -= 1
+      connection.release()
+    }
   }
 }

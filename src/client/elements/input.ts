@@ -23,11 +23,11 @@ declare global {
 }
 
 export interface InputEvent {
-  detail: {
+  detail: null | {
     origin: InputElement
-    text?: string | null
+    text?: null | string
     value?: string
-  } | null
+  }
 }
 
 @customElement('scola-input')

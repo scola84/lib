@@ -37,7 +37,7 @@ export default [{
     return Object
       .keys(pkg.dependencies)
       .some((dependency) => {
-        return id.includes(dependency)
+        return id.startsWith(dependency)
       })
   },
   input: 'src/server/index.ts',

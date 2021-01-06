@@ -32,13 +32,13 @@ export type HorizontalFrom =
 
 export type HorizontalTo =
   | 'center'
-  | 'start'
-  | 'start-at-end'
-  | 'end'
   | 'end-at-start'
+  | 'end'
   | 'screen-center'
   | 'screen-end'
   | 'screen-start'
+  | 'start-at-end'
+  | 'start'
 
 export type VerticalFrom =
   | 'screen-bottom'
@@ -46,14 +46,14 @@ export type VerticalFrom =
   | 'screen-top'
 
 export type VerticalTo =
-  | 'bottom'
   | 'bottom-at-top'
+  | 'bottom'
   | 'center'
-  | 'top'
-  | 'top-at-bottom'
   | 'screen-bottom'
   | 'screen-center'
   | 'screen-top'
+  | 'top-at-bottom'
+  | 'top'
 
 export interface DialogFrom {
   horizontal?: HorizontalFrom
@@ -510,14 +510,10 @@ export class DialogElement extends NodeElement {
         left = (appWidth - elementWidth) / 2
         break
       case 'screen-end':
-        left += this.dir === 'rtl'
-          ? -elementWidth
-          : appWidth + elementWidth
+        left += this.dir === 'rtl' ? -elementWidth : appWidth + elementWidth
         break
       case 'screen-start':
-        left += this.dir === 'rtl'
-          ? appWidth + elementWidth
-          : -elementWidth
+        left += this.dir === 'rtl' ? appWidth + elementWidth : -elementWidth
         break
       default:
         break
@@ -573,37 +569,25 @@ export class DialogElement extends NodeElement {
         left += -(elementWidth - anchorWidth) / 2
         break
       case 'start':
-        left += this.dir === 'rtl'
-          ? -elementWidth + anchorWidth
-          : 0
+        left += this.dir === 'rtl' ? -elementWidth + anchorWidth : 0
         break
       case 'start-at-end':
-        left += this.dir === 'rtl'
-          ? -elementWidth
-          : anchorWidth
+        left += this.dir === 'rtl' ? -elementWidth : anchorWidth
         break
       case 'end':
-        left += this.dir === 'rtl'
-          ? 0
-          : -elementWidth + anchorWidth
+        left += this.dir === 'rtl' ? 0 : -elementWidth + anchorWidth
         break
       case 'end-at-start':
-        left += this.dir === 'rtl'
-          ? anchorWidth
-          : -elementWidth
+        left += this.dir === 'rtl' ? anchorWidth : -elementWidth
         break
       case 'screen-center':
         left = (appWidth - elementWidth) / 2
         break
       case 'screen-end':
-        left = this.dir === 'rtl'
-          ? 0
-          : appWidth - elementWidth
+        left = this.dir === 'rtl' ? 0 : appWidth - elementWidth
         break
       case 'screen-start':
-        left = this.dir === 'rtl'
-          ? appWidth - elementWidth
-          : 0
+        left = this.dir === 'rtl' ? appWidth - elementWidth : 0
         break
       default:
         break
@@ -646,7 +630,7 @@ export class DialogElement extends NodeElement {
   protected async easeOpacity (from: number, to: number, duration?: number): Promise<unknown> {
     const { assignedElement } = this
 
-    return await new Promise<unknown>((resolve) => {
+    return new Promise<unknown>((resolve) => {
       this.ease(from, to, ({ done, value }) => {
         assignedElement?.style.setProperty('opacity', `${value}`)
 

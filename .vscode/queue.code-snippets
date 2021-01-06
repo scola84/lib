@@ -1,0 +1,40 @@
+{
+  "queue": {
+    "body": [
+      "import type { TaskRun } from '@scola/lib'",
+      "import { TaskRunner } from '@scola/lib'",
+      "import { Transform } from 'stream'",
+      "",
+      "interface Payload {",
+      "",
+      "}",
+      "",
+      "export function $1 (): void {",
+      "  const runner = new TaskRunner({",
+      "    name: '$2'",
+      "  })",
+      "",
+      "  const processor = new Transform({",
+      "    objectMode: true,",
+      "    transform (run: TaskRun<Payload>, encoding, callback): void {",
+      "      if (run.code !== 'pending') {",
+      "        callback(null, run)",
+      "        return",
+      "      }",
+      "",
+      "      callback(null, run)",
+      "    }",
+      "  })",
+      "",
+      "  runner",
+      "    .pipe(processor)",
+      "    .pipe(runner)",
+      "    .start()",
+      "}",
+      ""
+    ],
+    "description": "Run queue task",
+    "prefix": "queue",
+    "scope": "typescript"
+  }
+}

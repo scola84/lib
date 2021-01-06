@@ -51,9 +51,7 @@ export class FormatElement extends NodeElement {
   public render (): TemplateResult {
     const code = this.code?.toLowerCase() ?? ''
     const data = this.data ?? this.dataset
-    const lang = this.lang === ''
-      ? undefined
-      : this.lang
+    const lang = this.lang === '' ? undefined : this.lang
 
     return html`
       <slot name="body">

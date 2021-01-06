@@ -1,19 +1,16 @@
-import type { QueueRun } from './queue-run'
 import type { Task } from './task'
 
 export interface Queue {
-  connection?: string | null
-  created?: Date
-  id?: string
+  date_created?: Date
+  date_updated?: Date
+  fkey_queue_id: null | string
+  id: string
+  connection: null | string
   name: string
-  previousQueue?: Queue
-  previous_queue_id?: string | null
-  queueRuns?: QueueRun[]
-  query?: string | null
-  schedule?: string | null
-  scheduleBegin?: Date | null
-  scheduleEnd?: Date | null
-  scheduleNext?: Date | null
-  tasks?: Task[]
-  updated?: Date
+  query: null | string
+  schedule: null | string
+  schedule_begin: Date | null
+  schedule_end: Date | null
+  schedule_next: Date | null
+  tasks: Task[]
 }

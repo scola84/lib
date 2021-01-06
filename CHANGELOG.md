@@ -1,3 +1,17 @@
+# [5.0.0](https://github.com/scola84/lib/compare/v4.1.1...v5.0.0) (2021-01-06)
+
+
+### Features
+
+* rewrite database and queue management ([8451e15](https://github.com/scola84/lib/commit/8451e1507474242a9f704ec0e51004b80105351f))
+
+
+### BREAKING CHANGES
+
+* Use a self-written database wrapper for consistent
+connection management. Improve queue management by batching write
+operations and many other small changes.
+
 ## [4.1.1](https://github.com/scola84/lib/compare/v4.1.0...v4.1.1) (2020-12-23)
 
 

@@ -68,5 +68,5 @@
     "test": "jest --bail --passWithNoTests"
   },
   "types": "types/index.d.ts",
-  "version": "4.1.1"
+  "version": "5.0.0"
 }

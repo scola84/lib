@@ -8,6 +8,8 @@ export interface QueueRun {
   date_updated?: Date
   fkey_queue_id: string
   id: string
+  code: string
   name: string
+  reason: null | string
   queue: Queue
 }

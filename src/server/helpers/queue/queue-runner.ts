@@ -87,10 +87,12 @@ export class QueueRunner {
       aggr_err: 0,
       aggr_ok: 0,
       aggr_total: 0,
+      code: 'pending',
       fkey_queue_id: queue.id,
       id: queueRunId,
       name: queue.name,
-      queue
+      queue,
+      reason: null
     }
 
     const database = this.databases[queue.connection ?? '']
@@ -104,41 +106,45 @@ export class QueueRunner {
     const inserter = new Transform({
       objectMode: true,
       transform: async (payload: unknown, encoding, callback) => {
-        const { id: itemId } = await connection.insertOne(`
-          INSERT INTO item (fkey_queue_run_id, payload)
-          VALUES ($(fkey_queue_run_id), $(payload))
-          RETURNING id
-        `, {
-          fkey_queue_run_id: queueRun.id,
-          payload
-        })
-
-        const firstTask = {
-          name: '',
-          value: ['', '']
-        }
-
-        for (const task of queueRun.queue.tasks) {
-          const { id: taskRunId = '0' } = await connection.insertOne(`
-            INSERT INTO task_run (fkey_item_id, fkey_queue_run_id, name, options, "order")
-            VALUES ($(fkey_item_id), $(fkey_queue_run_id), $(name), $(options), $(order))
+        try {
+          const { id: itemId } = await connection.insertOne(`
+            INSERT INTO item (fkey_queue_run_id, payload)
+            VALUES ($(fkey_queue_run_id), $(payload))
             RETURNING id
           `, {
-            fkey_item_id: itemId,
             fkey_queue_run_id: queueRun.id,
-            name: task.name,
-            options: task.options,
-            order: task.order
+            payload
           })
 
-          if (task.order === 1) {
-            firstTask.name = `${queueRun.name}-${task.name}`
-            firstTask.value = ['taskRunId', String(taskRunId)]
+          const firstTask = {
+            name: '',
+            value: ['', '']
           }
-        }
 
-        queueRun.aggr_total += 1
-        callback(null, firstTask)
+          for (const task of queueRun.queue.tasks) {
+            const { id: taskRunId = '0' } = await connection.insertOne(`
+              INSERT INTO task_run (fkey_item_id, fkey_queue_run_id, name, options, "order")
+              VALUES ($(fkey_item_id), $(fkey_queue_run_id), $(name), $(options), $(order))
+              RETURNING id
+            `, {
+              fkey_item_id: itemId,
+              fkey_queue_run_id: queueRun.id,
+              name: task.name,
+              options: task.options,
+              order: task.order
+            })
+
+            if (task.order === 1) {
+              firstTask.name = `${queueRun.name}-${task.name}`
+              firstTask.value = ['taskRunId', String(taskRunId)]
+            }
+          }
+
+          queueRun.aggr_total += 1
+          callback(null, firstTask)
+        } catch (error: unknown) {
+          callback(new Error(`Transform error: ${String(error)}`))
+        }
       }
     })
 
@@ -153,6 +159,7 @@ export class QueueRunner {
         await connection.query(`
           UPDATE queue_run
           SET
+            code = 'ok',
             date_updated = NOW(),
             aggr_total = $(aggr_total)
           WHERE id = $(id)
@@ -179,8 +186,21 @@ export class QueueRunner {
           }))
         }
       })
-      .catch((error) => {
-        this.logger?.error({ context: 'run' }, String(error))
+      .catch(async (error) => {
+        await connection.query(`
+          UPDATE queue_run
+          SET
+            code = 'err',
+            date_updated = NOW(),
+            reason = $(reason)
+          WHERE id = $(id)
+        `, {
+          id: queueRun.id,
+          reason: String(error)
+        })
+      })
+      .catch((updateError: unknown) => {
+        this.logger?.error({ context: 'run' }, String(updateError))
       })
       .finally(() => {
         connection.release()

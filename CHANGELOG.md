@@ -1,3 +1,15 @@
+# [6.0.0](https://github.com/scola84/lib/compare/v5.0.1...v6.0.0) (2021-01-07)
+
+
+### Features
+
+* **queue:** catch and store queue runner errors ([8a14bdd](https://github.com/scola84/lib/commit/8a14bdd2412f22701f46b9ebfa92ba4b48854b29))
+
+
+### BREAKING CHANGES
+
+* **queue:** The queue_run table now contains a code and reason column.
+
 ## [5.0.1](https://github.com/scola84/lib/compare/v5.0.0...v5.0.1) (2021-01-06)
 
 

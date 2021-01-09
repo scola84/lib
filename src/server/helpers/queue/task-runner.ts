@@ -100,8 +100,15 @@ export class TaskRunner extends Duplex {
   }
 
   public _read (size: number): void {
-    if (this.data.length > 0) {
-      this.push(this.data.shift())
+    const taskRun = this.data.shift()
+
+    if (taskRun !== undefined) {
+      this
+        .pushTaskRun(taskRun)
+        .catch((error: unknown) => {
+          this.logger?.error({ context: 'read' }, String(error))
+        })
+
       return
     }
 
@@ -153,6 +160,22 @@ export class TaskRunner extends Duplex {
     } catch (error: unknown) {
       this.logger?.error({ context: 'create-group' }, String(error))
     }
+  }
+
+  protected async pushTaskRun (taskRun: TaskRun): Promise<void> {
+    await this.database.query(`
+      UPDATE task_run
+      SET
+        date_started = NOW(),
+        date_updated = NOW(),
+        xid = $(xid)
+      WHERE id = $(id)
+    `, {
+      id: taskRun.id,
+      xid: taskRun.xid
+    })
+
+    this.push(taskRun)
   }
 
   protected async readTaskRuns (size: number): Promise<void> {
@@ -236,7 +259,7 @@ export class TaskRunner extends Duplex {
         await connection.query(`
           UPDATE task_run
           SET
-            date_started = NOW(),
+            date_queued = NOW(),
             date_updated = NOW(),
             xid = $(xid)
           WHERE id = $(id)

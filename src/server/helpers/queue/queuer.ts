@@ -207,7 +207,7 @@ export class Queuer {
         WHERE name ~ $(names)
         AND schedule_begin <= $(date)
         AND (schedule_end >= $(date) OR schedule_end IS NULL)
-        AND schedule_next <= $(date)
+        AND (schedule_next <= $(date) OR schedule_next IS NULL)
       `, {
         date,
         names: `${this.names}`

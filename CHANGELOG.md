@@ -1,3 +1,15 @@
+# [6.1.0](https://github.com/scola84/lib/compare/v6.0.0...v6.1.0) (2021-01-09)
+
+
+### Bug Fixes
+
+* **queue:** allow schedule next to be null ([6df5008](https://github.com/scola84/lib/commit/6df5008130e1875fb1ae64abef4d0b3349f8cba7))
+
+
+### Features
+
+* **queue:** distinguish queued and started date in task runner ([995c8d2](https://github.com/scola84/lib/commit/995c8d288781676e06b07b5e8d6aa2d9d4a272bc))
+
 # [6.0.0](https://github.com/scola84/lib/compare/v5.0.1...v6.0.0) (2021-01-07)
 
 

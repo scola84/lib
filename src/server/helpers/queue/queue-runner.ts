@@ -156,7 +156,7 @@ export class QueueRunner {
 
     await pipeline(reader, inserter, xadder)
       .then(async () => {
-        await connection.query(`
+        await connection.update(`
           UPDATE queue_run
           SET
             code = 'ok',
@@ -187,7 +187,7 @@ export class QueueRunner {
         }
       })
       .catch(async (error) => {
-        await connection.query(`
+        await connection.update(`
           UPDATE queue_run
           SET
             code = 'err',

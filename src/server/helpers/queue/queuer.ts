@@ -215,7 +215,7 @@ export class Queuer {
 
       for (const queue of queues) {
         if (typeof queue.schedule === 'string') {
-          await connection.query(`
+          await connection.update(`
             UPDATE queue
             SET schedule_next = $(next)
             WHERE id = $(id)

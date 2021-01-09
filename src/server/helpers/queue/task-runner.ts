@@ -163,7 +163,7 @@ export class TaskRunner extends Duplex {
   }
 
   protected async pushTaskRun (taskRun: TaskRun): Promise<void> {
-    await this.database.query(`
+    await this.database.update(`
       UPDATE task_run
       SET
         date_started = NOW(),
@@ -256,7 +256,7 @@ export class TaskRunner extends Duplex {
         taskRun.queueRun = queueRun
         taskRun.xid = xid
 
-        await connection.query(`
+        await connection.update(`
           UPDATE task_run
           SET
             date_queued = NOW(),
@@ -284,7 +284,7 @@ export class TaskRunner extends Duplex {
       taskRun.code = taskRun.code === 'pending' ? 'ok' : taskRun.code
       taskRun.item.code = taskRun.code
 
-      await connection.query(`
+      await connection.update(`
         UPDATE task_run
         SET
           date_updated = NOW(),
@@ -299,7 +299,7 @@ export class TaskRunner extends Duplex {
         result: taskRun.result
       })
 
-      await connection.query(`
+      await connection.update(`
         UPDATE item
         SET
           date_updated = NOW(),
@@ -334,7 +334,7 @@ export class TaskRunner extends Duplex {
       if (nextTaskRun === null) {
         const field = taskRun.code === 'ok' ? 'ok' : 'err'
 
-        await connection.query(`
+        await connection.update(`
           UPDATE queue_run
           SET
             aggr_${field} = aggr_${field} + 1,

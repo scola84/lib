@@ -1,3 +1,21 @@
+# [7.0.0](https://github.com/scola84/lib/compare/v6.1.0...v7.0.0) (2021-01-12)
+
+
+### Bug Fixes
+
+* **queue:** order task runs to determine next task run ([9ccdde7](https://github.com/scola84/lib/commit/9ccdde747bbd70292aa7cda4a37c16a4012e68eb))
+
+
+### Features
+
+* **queue:** save task run consumer ([6805d65](https://github.com/scola84/lib/commit/6805d65a4e3e4a6c3411f409f723efd2fb194a2e))
+* **sql:** add DSN parser for PostgreSQL ([2a17a15](https://github.com/scola84/lib/commit/2a17a1596edf16f09e53ac46a37710710ede7249))
+
+
+### BREAKING CHANGES
+
+* **sql:** Use uppercase letter for the acronym "DSN".
+
 # [6.1.0](https://github.com/scola84/lib/compare/v6.0.0...v6.1.0) (2021-01-09)
 
 

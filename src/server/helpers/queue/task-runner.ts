@@ -326,6 +326,7 @@ export class TaskRunner extends Duplex {
           FROM task_run
           WHERE fkey_item_id = $(fkey_item_id)
           AND "order" > $(order)
+          ORDER BY "order" ASC
           LIMIT 1
         `, {
           fkey_item_id: taskRun.item.id,

@@ -19,9 +19,9 @@ export interface TaskRun<
   name: string
   options: Options
   order: number
-  reason: null | string
+  reason: string | null
   result: Result
-  xid: null | string
+  xid: string | null
   item: Item<Payload>
   queueRun: QueueRun
 }

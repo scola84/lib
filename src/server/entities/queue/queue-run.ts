@@ -10,6 +10,6 @@ export interface QueueRun {
   id: string
   code: string
   name: string
-  reason: null | string
+  reason: string | null
   queue: Queue
 }

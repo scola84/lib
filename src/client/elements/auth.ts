@@ -5,5 +5,5 @@ declare global {
 }
 
 export interface AuthEvent extends CustomEvent {
-  detail: null | ((error?: Error) => void)
+  detail: ((error?: Error) => void) | null
 }

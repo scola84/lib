@@ -32,18 +32,18 @@ declare global {
 }
 
 export interface RequestFinishEvent {
-  detail: null | {
+  detail: {
     code?: string
     data?: unknown
     origin: HTMLElement
-  }
+  } | null
 }
 
 export interface RequestReadEvent {
-  detail: null | {
+  detail: {
     buffer: Uint8Array | undefined
     origin: HTMLElement
-  }
+  } | null
 }
 
 @customElement('scola-request')

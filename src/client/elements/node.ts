@@ -44,10 +44,10 @@ export interface LogEvent extends CustomEvent {
 }
 
 export interface NodeEvent extends CustomEvent {
-  detail: null | {
+  detail: {
     origin?: HTMLElement
     target?: string
-  }
+  } | null
 }
 
 export interface Presets {
@@ -1350,7 +1350,7 @@ export class NodeElement extends LitElement {
   @query('slot[name="suffix"]', true)
   protected suffixSlotElement?: HTMLSlotElement
 
-  protected easingIds: Record<string, null | number> = {}
+  protected easingIds: Record<string, number | null> = {}
 
   protected handleScrollBound: () => void
 

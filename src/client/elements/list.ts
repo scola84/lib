@@ -38,23 +38,23 @@ declare global {
 }
 
 export interface ListFilterEvent extends NodeEvent {
-  detail: null | {
+  detail: {
     filterName?: string
     filterValue?: string
     origin?: HTMLElement
     target?: string
-  }
+  } | null
 }
 
 export type ListItem = Record<string, unknown>
 
 export interface ListOrderEvent extends NodeEvent {
-  detail: null | {
+  detail: {
     orderCol?: string
     orderDir?: string
     origin?: HTMLElement
     target?: string
-  }
+  } | null
 }
 
 export interface ListResult extends NodeResult {

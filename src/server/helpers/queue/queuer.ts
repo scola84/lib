@@ -210,7 +210,7 @@ export class Queuer {
         AND (schedule_next <= $(date) OR schedule_next IS NULL)
       `, {
         date,
-        names: `${this.names}`
+        names: this.names
       })
 
       for (const queue of queues) {

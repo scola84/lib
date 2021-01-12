@@ -168,9 +168,11 @@ export class TaskRunner extends Duplex {
       SET
         date_started = NOW(),
         date_updated = NOW(),
+        consumer = $(consumer),
         xid = $(xid)
       WHERE id = $(id)
     `, {
+      consumer: this.consumer,
       id: taskRun.id,
       xid: taskRun.xid
     })

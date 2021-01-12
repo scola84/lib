@@ -1,3 +1,10 @@
+## [7.0.1](https://github.com/scola84/lib/compare/v7.0.0...v7.0.1) (2021-01-12)
+
+
+### Bug Fixes
+
+* **sql:** pase DSN as connectionString in PostgreSQL ([0ce5dc5](https://github.com/scola84/lib/commit/0ce5dc5b10a839a44713269149c8d47da109801d))
+
 # [7.0.0](https://github.com/scola84/lib/compare/v6.1.0...v7.0.0) (2021-01-12)
 
 

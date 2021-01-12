@@ -3,6 +3,10 @@
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
+    "lib": [
+      "DOM",
+      "ES2020"
+    ],
     "module": "ES6",
     "moduleResolution": "node",
     "noEmit": true,

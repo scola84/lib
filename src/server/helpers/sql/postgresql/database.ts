@@ -14,15 +14,9 @@ export class PostgresqlDatabase extends Database {
   }
 
   public static parseDSN (dsn: string): IConnectionParameters {
-    const url = new URL(dsn)
-
     return {
-      database: url.pathname.slice(1),
-      host: url.hostname,
-      password: unescape(url.password),
-      port: Number(url.port),
-      user: url.username,
-      ...Object.fromEntries(url.searchParams)
+      connectionString: dsn,
+      ...Object.fromEntries(new URL(dsn).searchParams)
     }
   }
 

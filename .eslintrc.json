@@ -52,6 +52,8 @@
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-extra-parens": "off",
     "@typescript-eslint/no-type-alias": "off",
+    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/object-curly-spacing": "off",
     "@typescript-eslint/prefer-readonly-parameter-types": "off",
     "@typescript-eslint/return-await": [
       "error",

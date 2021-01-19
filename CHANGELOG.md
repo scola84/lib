@@ -1,3 +1,10 @@
+# [7.1.0](https://github.com/scola84/lib/compare/v7.0.1...v7.1.0) (2021-01-19)
+
+
+### Features
+
+* **intl:** add static format function ([fcc82bb](https://github.com/scola84/lib/commit/fcc82bbdda8655c737b98e9a1644f237d014e34c))
+
 ## [7.0.1](https://github.com/scola84/lib/compare/v7.0.0...v7.0.1) (2021-01-12)
 
 

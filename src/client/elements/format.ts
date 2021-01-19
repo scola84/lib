@@ -28,6 +28,14 @@ export class FormatElement extends NodeElement {
   })
   public data?: Record<string, unknown>
 
+  public static format<Data = Record<string, unknown>> (
+    string: string,
+    data?: Data,
+    lang?: string
+  ): string {
+    return String(new Format(string, lang).format(data))
+  }
+
   public static lookup (text: string, lang = FormatElement.lang): string | undefined {
     const strings = FormatElement.strings?.[lang] ?? {}
 
@@ -38,12 +46,14 @@ export class FormatElement extends NodeElement {
       })
   }
 
-  public format (code: string, data?: Record<string, unknown>, lang = FormatElement.lang): string {
+  public format<Data = Record<string, unknown>> (
+    code: string,
+    data?: Data,
+    lang = FormatElement.lang
+  ): string {
     try {
-      return String(new Format(FormatElement.strings?.[lang]?.[code] ?? '', lang).format(data))
+      return FormatElement.format(FormatElement.strings?.[lang]?.[code] ?? '', data, lang)
     } catch (error: unknown) {
-      // eslint-disable-next-line no-console
-      console.error(error)
       return code
     }
   }

@@ -80,7 +80,7 @@ export abstract class Database {
     }
   }
 
-  public async stream (query: string, values: unknown): Promise<Readable> {
+  public async stream (query: string, values: unknown = []): Promise<Readable> {
     const connection = await this.connect()
     const stream = await connection.stream(query, values)
 

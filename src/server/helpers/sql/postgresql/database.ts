@@ -14,10 +14,17 @@ export class PostgresqlDatabase extends Database {
   }
 
   public static parseDSN (dsn: string): IConnectionParameters {
-    return {
-      connectionString: dsn,
-      ...Object.fromEntries(new URL(dsn).searchParams)
+    const url = new URL(dsn)
+
+    const options: IConnectionParameters = {
+      connectionString: dsn
     }
+
+    for (const [key, value] of url.searchParams.entries()) {
+      options[key as keyof IConnectionParameters] = value
+    }
+
+    return options
   }
 
   public async connect (): Promise<PostgresqlConnection> {

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import commonjs from '@rollup/plugin-commonjs'
 import gzip from 'rollup-plugin-gzip'
 import livereload from 'rollup-plugin-livereload'
@@ -27,7 +28,10 @@ export default [{
         removeViewBox: false
       }]
     }),
-    typescript(),
+    typescript({
+      declaration: true,
+      declarationDir: 'types'
+    }),
     process.argv.includes('-w') ? {} : gzip(),
     process.argv.includes('-w') ? {} : terser.terser(),
     !process.argv.includes('-l') ? {} : livereload('dist/client/umd.js')

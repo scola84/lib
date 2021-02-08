@@ -16,14 +16,19 @@ export class MysqlDatabase extends Database {
   public static parseDSN (dsn: string): PoolOptions {
     const url = new URL(dsn)
 
-    return {
+    const options: PoolOptions = {
       database: url.pathname.slice(1),
       host: url.hostname,
       password: unescape(url.password),
       port: Number(url.port),
-      user: url.username,
-      ...Object.fromEntries(url.searchParams)
+      user: url.username
     }
+
+    for (const [key, value] of url.searchParams.entries()) {
+      options[key as keyof PoolOptions] = value
+    }
+
+    return options
   }
 
   public async connect (): Promise<MysqlConnection> {

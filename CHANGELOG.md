@@ -1,3 +1,11 @@
+## [7.1.1](https://github.com/scola84/lib/compare/v7.1.0...v7.1.1) (2021-02-08)
+
+
+### Bug Fixes
+
+* **sql:** add missing default value ([eb15193](https://github.com/scola84/lib/commit/eb15193546ef9e4a841387d90f41f941a44a177a))
+* **stream:** add data listener to always trigger stream ([dd370a3](https://github.com/scola84/lib/commit/dd370a364b23454367892325c747a1b6a9c42cb8))
+
 # [7.1.0](https://github.com/scola84/lib/compare/v7.0.1...v7.1.0) (2021-01-19)
 
 

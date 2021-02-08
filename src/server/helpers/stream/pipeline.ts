@@ -7,16 +7,25 @@ export async function pipeline (...streams: Array<Readable | Transform | Writabl
       let stream = null
 
       for (stream of streams) {
-        const listener = listeners.get(stream)
-        listeners.delete(stream)
+        const dataListener = dataListeners.get(stream)
+        const errorListener = errorListeners.get(stream)
 
-        if (listener !== undefined) {
-          stream.removeListener('error', listener)
+        dataListeners.delete(stream)
+        errorListeners.delete(stream)
+
+        if (dataListener !== undefined) {
+          stream.removeListener('data', dataListener)
+        }
+
+        if (errorListener !== undefined) {
+          stream.removeListener('error', errorListener)
         }
       }
 
       stream?.removeListener('finish', handleFinish)
     }
+
+    function handleData (): void {}
 
     function handleError (index: number, error: Error): void {
       for (const stream of streams) {
@@ -32,7 +41,9 @@ export async function pipeline (...streams: Array<Readable | Transform | Writabl
       resolve()
     }
 
-    const listeners = new Map<Stream, (error: Error) => void>()
+    const dataListeners = new Map<Stream, () => void>()
+    const errorListeners = new Map<Stream, (error: Error) => void>()
+
     let previous = null
 
     for (const stream of streams) {
@@ -40,13 +51,17 @@ export async function pipeline (...streams: Array<Readable | Transform | Writabl
         throw new Error(`Cannot pipe a Writable (stream[${streams.indexOf(previous)}])`)
       }
 
-      const listener = handleError.bind(stream, streams.indexOf(stream))
-      listeners.set(stream, listener)
-      stream.on('error', listener)
+      const errorListener = handleError.bind(stream, streams.indexOf(stream))
+      errorListeners.set(stream, errorListener)
+      stream.on('error', errorListener)
 
       if (previous !== null && (stream instanceof Transform || stream instanceof Writable)) {
         previous.pipe(stream)
       }
+
+      const dataListener = handleData.bind(stream)
+      dataListeners.set(stream, dataListener)
+      stream.on('data', dataListener)
 
       previous = stream
     }

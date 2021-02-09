@@ -65,7 +65,6 @@
     "bundle:dev": "yarn bundle -m -w",
     "lint": "tsc -p src/client && tsc -p src/server && lit-analyzer src/client --strict && eslint src",
     "lint:dev": "yarn lint --fix && git update-index --again",
-    "postinstall": "git config core.hooksPath .githooks",
     "test": "jest --bail --passWithNoTests"
   },
   "types": "types/index.d.ts",

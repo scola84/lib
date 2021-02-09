@@ -37,7 +37,6 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^5.0.0",
-    "husky": "^4.3.8",
     "jest": "^26.6.3",
     "lit-analyzer": "^1.2.1",
     "rollup": "^2.38.5",
@@ -66,6 +65,7 @@
     "bundle:dev": "yarn bundle -m -w",
     "lint": "tsc -p src/client && tsc -p src/server && lit-analyzer src/client --strict && eslint src",
     "lint:dev": "yarn lint --fix && git update-index --again",
+    "postinstall": "git config core.hooksPath .githooks",
     "test": "jest --bail --passWithNoTests"
   },
   "types": "types/index.d.ts",

@@ -29,7 +29,6 @@
       "  runner",
       "    .pipe(processor)",
       "    .pipe(runner)",
-      "    .start()",
       "}",
       ""
     ],

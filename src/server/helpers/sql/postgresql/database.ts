@@ -8,7 +8,7 @@ import postgres from 'pg-promise'
 export class PostgresqlDatabase extends Database {
   public readonly pool: IDatabase<unknown>
 
-  public constructor (options: IConnectionParameters | string) {
+  public constructor (options: IConnectionParameters | string = {}) {
     super()
     this.pool = postgres()(options)
   }

@@ -8,7 +8,7 @@ import { unescape } from 'querystring'
 export class MysqlDatabase extends Database {
   public readonly pool: Pool
 
-  public constructor (options: PoolOptions) {
+  public constructor (options: PoolOptions = {}) {
     super()
     this.pool = createPool(options)
   }

@@ -93,6 +93,7 @@
     "multiline-comment-style": "off",
     "multiline-ternary": "off",
     "no-await-in-loop": "off",
+    "node/no-callback-literal": "off",
     "no-continue": "off",
     "no-underscore-dangle": [
       "error",

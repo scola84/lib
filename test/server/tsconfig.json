@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "es6"
+    ],
+    "rootDir": "../"
+  },
+  "extends": "../../tsconfig.json",
+  "include": [
+    "**/*.ts"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "dom"
+    ],
+    "rootDir": "../"
+  },
+  "extends": "../../tsconfig.json",
+  "include": [
+    "**/*.ts"
+  ],
+  "plugins": [
+    {
+      "name": "ts-lit-plugin"
+    }
+  ]
+}

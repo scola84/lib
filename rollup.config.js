@@ -1,5 +1,6 @@
 /* eslint-disable */
 import commonjs from '@rollup/plugin-commonjs'
+import copy from 'rollup-plugin-copy'
 import gzip from 'rollup-plugin-gzip'
 import livereload from 'rollup-plugin-livereload'
 import minify from 'rollup-plugin-minify-html-literals'
@@ -47,13 +48,20 @@ export default [{
       })
   },
   input: 'src/server/index.ts',
-  output: [{
+  output: {
     dir: '.',
     entryFileNames: 'dist/server/cjs.js',
     format: 'cjs'
-  }],
+  },
   plugins: [
     commonjs(),
+    copy({
+      targets: [{
+        rename: 'index.d.ts',
+        src: 'src/index.ts',
+        dest: 'types'
+      }]
+    }),
     minify(),
     resolve({
       mainFields: ['main', 'module']

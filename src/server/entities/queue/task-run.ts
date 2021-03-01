@@ -12,9 +12,9 @@ export interface TaskRun<
   date_created?: Date
   date_started?: Date | null
   date_updated?: Date
-  fkey_item_id: string
-  fkey_queue_run_id: string
-  id: string
+  fkey_item_id: number | string
+  fkey_queue_run_id: number | string
+  id: number | string
   code: string
   name: string
   options: Options

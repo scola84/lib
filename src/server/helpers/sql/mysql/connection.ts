@@ -16,12 +16,12 @@ export class MysqlConnection implements Connection {
 
   public async insert (query: string, values: unknown = []): Promise<InsertResult[]> {
     const result = await this.query<ResultSetHeader>(query, values)
-    return [{ id: String(result.insertId) }]
+    return [{ id: result.insertId }]
   }
 
   public async insertOne (query: string, values: unknown = []): Promise<InsertResult> {
     const result = await this.query<ResultSetHeader>(query, values)
-    return { id: String(result.insertId) }
+    return { id: result.insertId }
   }
 
   public async query<T>(query: string, values: unknown = []): Promise<T> {

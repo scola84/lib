@@ -6,8 +6,8 @@ export interface QueueRun {
   aggr_total: number
   date_created?: Date
   date_updated?: Date
-  fkey_queue_id: string
-  id: string
+  fkey_queue_id: number | string
+  id: number | string
   code: string
   name: string
   reason: string | null

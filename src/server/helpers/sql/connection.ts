@@ -5,7 +5,7 @@ export interface DeleteResult {
 }
 
 export interface InsertResult {
-  id: string
+  id: number | string
 }
 
 export interface UpdateResult {

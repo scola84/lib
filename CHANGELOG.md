@@ -1,3 +1,22 @@
+# [8.0.0](https://github.com/scola84/lib/compare/v7.1.1...v8.0.0) (2021-03-01)
+
+
+### Bug Fixes
+
+* type database ids as number too ([b2b0c16](https://github.com/scola84/lib/commit/b2b0c16acd8cbf3c5e386a406055b33f3c9ec880))
+* **sql:** default Database constructor options ([949eb8b](https://github.com/scola84/lib/commit/949eb8b8959fe951d1ccc0eb02ebe78a0ed2b9b6))
+
+
+### Features
+
+* **queue:** move task options to task table ([9951018](https://github.com/scola84/lib/commit/9951018cf1fa51ce63e3db19df23c7af9abc5d48))
+
+
+### BREAKING CHANGES
+
+* **queue:** Task options no longer have their own table,
+but instead can be defined in a column in the task table.
+
 ## [7.1.1](https://github.com/scola84/lib/compare/v7.1.0...v7.1.1) (2021-02-08)
 
 

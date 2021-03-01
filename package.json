@@ -76,5 +76,5 @@
     "test:dev": "mocha -r ts-node/register -w --recursive --watch-files 'src/**/*.ts' 'test/**/*.ts'"
   },
   "types": "types/index.d.ts",
-  "version": "7.1.1"
+  "version": "8.0.0"
 }

@@ -17,7 +17,7 @@ export interface TaskRun<
   id: number | string
   code: string
   name: string
-  options: Options
+  options: Options | null
   order: number
   reason: string | null
   result: Result

@@ -170,12 +170,8 @@ export class Queuer {
           fkey_queue_id,
           id,
           name,
-          "order",
-          (
-            SELECT COALESCE(JSON_OBJECT_AGG(task_option.name, task_option.value), '{}'::JSON)
-            FROM task_option
-            WHERE task_option.fkey_task_id = task.id
-          ) AS options
+          options,
+          "order"
         FROM task
         WHERE task.fkey_queue_id = $(fkey_queue_id)
       `, {
@@ -230,12 +226,8 @@ export class Queuer {
             fkey_queue_id,
             id,
             name,
-            "order",
-            (
-              SELECT COALESCE(JSON_OBJECT_AGG(task_option.name, task_option.value), '{}'::JSON)
-              FROM task_option
-              WHERE task_option.fkey_task_id = task.id
-            ) AS options
+            options,
+            "order"
           FROM task
           WHERE task.fkey_queue_id = $(fkey_queue_id)
         `, {

@@ -6,6 +6,6 @@ export interface Task<Options = TaskOptions> {
   fkey_queue_id: number | string
   id: number | string
   name: string
-  options: Options
+  options: Options | null
   order: number
 }

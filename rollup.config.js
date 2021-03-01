@@ -12,7 +12,8 @@ import pkg from './package.json'
 export default [{
   input: 'src/client/index.ts',
   output: {
-    file: 'dist/client/umd.js',
+    dir: '.',
+    entryFileNames: 'dist/client/umd.js',
     format: 'umd',
     name: pkg.name.replace(/\W+/g, '')
   },
@@ -30,7 +31,8 @@ export default [{
     }),
     typescript({
       declaration: true,
-      declarationDir: 'types'
+      declarationDir: 'types',
+      tsconfig: 'src/client/tsconfig.json'
     }),
     process.argv.includes('-w') ? {} : gzip(),
     process.argv.includes('-w') ? {} : terser.terser(),
@@ -58,7 +60,8 @@ export default [{
     }),
     typescript({
       declaration: true,
-      declarationDir: 'types'
+      declarationDir: 'types',
+      tsconfig: 'src/server/tsconfig.json'
     })
   ]
 }]

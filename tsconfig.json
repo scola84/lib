@@ -6,7 +6,6 @@
     "moduleResolution": "node",
     "skipLibCheck": true,
     "noEmit": true,
-    "rootDir": "src",
     "strict": true,
     "strictPropertyInitialization": false,
     "target": "ES6"

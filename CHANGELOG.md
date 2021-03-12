@@ -1,3 +1,18 @@
+# [9.0.0](https://github.com/scola84/lib/compare/v8.0.0...v9.0.0) (2021-03-12)
+
+
+### Features
+
+* implement TaskRunner and RouteHandler as base classes ([c0e7c37](https://github.com/scola84/lib/commit/c0e7c37bd0108734e99ac87c90fc51c655d060c6))
+
+
+### BREAKING CHANGES
+
+* The architecture has changed completely.
+TaskRunners can be used standalone now and RouteHandlers
+can be used to implement routes on a Fastify server.
+The ServiceManager starts and stops services.
+
 # [8.0.0](https://github.com/scola84/lib/compare/v7.1.1...v8.0.0) (2021-03-01)
 
 

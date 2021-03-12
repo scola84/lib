@@ -2,7 +2,7 @@ import type { Connection, DeleteResult, InsertResult, UpdateResult } from './con
 import type { Readable } from 'stream'
 
 export abstract class Database {
-  public async delete (query: string, values: unknown = []): Promise<DeleteResult> {
+  public async delete (query: string, values: unknown[] = []): Promise<DeleteResult> {
     const connection = await this.connect()
 
     try {
@@ -15,7 +15,7 @@ export abstract class Database {
     }
   }
 
-  public async insert (query: string, values: unknown = []): Promise<InsertResult[]> {
+  public async insert (query: string, values: unknown[] = []): Promise<InsertResult[]> {
     const connection = await this.connect()
 
     try {
@@ -28,7 +28,7 @@ export abstract class Database {
     }
   }
 
-  public async insertOne (query: string, values: unknown = []): Promise<InsertResult> {
+  public async insertOne (query: string, values: unknown[] = []): Promise<InsertResult> {
     const connection = await this.connect()
 
     try {
@@ -41,7 +41,7 @@ export abstract class Database {
     }
   }
 
-  public async query<T>(query: string, values: unknown = []): Promise<T> {
+  public async query<T>(query: string, values: unknown[] = []): Promise<T> {
     const connection = await this.connect()
 
     try {
@@ -54,7 +54,7 @@ export abstract class Database {
     }
   }
 
-  public async select<T>(query: string, values: unknown = []): Promise<T> {
+  public async select<T>(query: string, values: unknown[] = []): Promise<T> {
     const connection = await this.connect()
 
     try {
@@ -67,7 +67,7 @@ export abstract class Database {
     }
   }
 
-  public async selectOne<T>(query: string, values: unknown = []): Promise<T | undefined> {
+  public async selectOne<T>(query: string, values: unknown[] = []): Promise<T | undefined> {
     const connection = await this.connect()
 
     try {
@@ -80,7 +80,7 @@ export abstract class Database {
     }
   }
 
-  public async stream (query: string, values: unknown = []): Promise<Readable> {
+  public async stream (query: string, values: unknown[] = []): Promise<Readable> {
     const connection = await this.connect()
     const stream = await connection.stream(query, values)
 
@@ -91,7 +91,7 @@ export abstract class Database {
     return stream
   }
 
-  public async update (query: string, values: unknown = []): Promise<UpdateResult> {
+  public async update (query: string, values: unknown[] = []): Promise<UpdateResult> {
     const connection = await this.connect()
 
     try {

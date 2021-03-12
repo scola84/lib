@@ -19,7 +19,7 @@ export class ServerError {
     }
   }
 
-  public normalize (
+  protected normalize (
     data: Record<string, unknown>,
     result: ValidationResult
   ): Record<string, unknown> {
@@ -35,7 +35,7 @@ export class ServerError {
     return data
   }
 
-  public normalizeDefault (
+  protected normalizeDefault (
     data: Record<string, unknown>,
     { dataPath, keyword, params }: ValidationResult
   ): void {
@@ -44,7 +44,7 @@ export class ServerError {
     }
   }
 
-  public normalizeRequired (
+  protected normalizeRequired (
     data: Record<string, unknown>,
     { params }: ValidationResult
   ): void {

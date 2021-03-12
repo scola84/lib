@@ -1,4 +1,5 @@
 import type { Readable } from 'stream'
+import type tokens from './tokens'
 
 export interface DeleteResult {
   count: number
@@ -13,21 +14,23 @@ export interface UpdateResult {
 }
 
 export interface Connection {
-  delete: (query: string, values: unknown) => Promise<DeleteResult>
+  tokens: tokens
 
-  insert: (query: string, values: unknown) => Promise<InsertResult[]>
+  delete: (query: string, values: unknown[]) => Promise<DeleteResult>
 
-  insertOne: (query: string, values: unknown) => Promise<InsertResult>
+  insert: (query: string, values: unknown[]) => Promise<InsertResult[]>
 
-  query: <T> (query: string, values: unknown) => Promise<T>
+  insertOne: (query: string, values: unknown[]) => Promise<InsertResult>
+
+  query: <T> (query: string, values: unknown[]) => Promise<T>
 
   release: () => void
 
-  select: <T>(query: string, values: unknown) => Promise<T>
+  select: <T>(query: string, values: unknown[]) => Promise<T>
 
-  selectOne: <T>(query: string, values: unknown) => Promise<T | undefined>
+  selectOne: <T>(query: string, values: unknown[]) => Promise<T | undefined>
 
-  stream: (query: string, values: unknown) => Promise<Readable>
+  stream: (query: string, values: unknown[]) => Promise<Readable>
 
-  update: (query: string, values: unknown) => Promise<UpdateResult>
+  update: (query: string, values: unknown[]) => Promise<UpdateResult>
 }

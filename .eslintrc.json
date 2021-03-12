@@ -82,6 +82,7 @@
       "error",
       "consistent"
     ],
+    "id-length": "off",
     "max-len": [
       "error",
       100
@@ -114,9 +115,17 @@
     ],
     "no-ternary": "off",
     "no-undefined": "off",
+    "prefer-destructuring": [
+      "error",
+      {
+        "object": true,
+        "array": false
+      }
+    ],
     "quote-props": [
       "error",
       "consistent"
-    ]
+    ],
+    "require-atomic-updates": "off"
   }
 }

@@ -1,67 +1,70 @@
+import type { DuplexOptions, Readable, Transform, Writable } from 'stream'
 import type { Item, Queue, QueueRun, TaskRun } from '../../entities'
-import { Duplex } from 'stream'
-import type { DuplexOptions } from 'stream'
-import type { FastifyLoggerInstance } from 'fastify'
-import type { PostgresqlDatabase } from '../sql/postgresql'
+import type { Database } from '../sql'
+import type { Logger } from 'pino'
 import type { Queuer } from './queuer'
 import type { WrappedNodeRedisClient } from 'handy-redis'
-import { createNodeRedisClient } from 'handy-redis'
+import fastq from 'fastq'
+import handyRedis from 'handy-redis'
+import { pipeline } from '../stream'
 
 export interface TaskRunnerOptions extends DuplexOptions {
   block: number
   channel: string
+  concurrency: number | string
   consumer: string
-  database: PostgresqlDatabase
+  database: Database
   group: string
-  logger: FastifyLoggerInstance
+  logger: Logger
   maxLength: number
   name: string
   queue: WrappedNodeRedisClient
   queuer: Queuer
 }
 
-export class TaskRunner extends Duplex {
+export abstract class TaskRunner {
   public static options?: Partial<TaskRunnerOptions>
 
   public block: number
 
   public channel: string
 
+  public concurrency: number
+
   public consumer: string
 
   public data: TaskRun[] = []
 
-  public database: PostgresqlDatabase
+  public database: Database
 
   public group: string
 
-  public logger?: FastifyLoggerInstance
+  public lib = {
+    fastq,
+    handyRedis
+  }
+
+  public logger: Logger
 
   public maxLength: number
 
   public name: string
 
-  public options: Partial<TaskRunnerOptions>
-
-  public pending = 0
-
   public queue: WrappedNodeRedisClient
 
-  public queueRead: WrappedNodeRedisClient
+  public queueRead?: WrappedNodeRedisClient
+
+  public queuer: fastq.queue
 
   public xid = '0-0'
 
   public constructor (options: Partial<TaskRunnerOptions>) {
-    super({
-      objectMode: true,
-      ...options
-    })
-
     const {
       block = 5 * 60 * 1000,
       channel = 'queue',
       consumer = process.env.HOSTNAME ?? '',
       database,
+      concurrency = process.env.QUEUE_CONCURRENCY ?? 1,
       group,
       logger,
       maxLength = 1024 * 1024,
@@ -77,6 +80,10 @@ export class TaskRunner extends Duplex {
       throw new Error('Database is undefined')
     }
 
+    if (logger === undefined) {
+      throw new Error('Logger is undefined')
+    }
+
     if (name === undefined) {
       throw new Error('Name is undefined')
     }
@@ -87,67 +94,51 @@ export class TaskRunner extends Duplex {
 
     this.block = block
     this.channel = channel
+    this.concurrency = Number(concurrency)
     this.consumer = consumer
     this.database = database
     this.group = group ?? name
-    this.logger = logger?.child({ name, source: 'task-runner' })
+    this.logger = logger.child({ name })
     this.maxLength = maxLength
     this.name = name
     this.queue = queue
-    this.queueRead = createNodeRedisClient(queue.nodeRedis.duplicate())
 
     queuer?.add(this)
   }
 
-  public _read (size: number): void {
-    const taskRun = this.data.shift()
-
-    if (taskRun !== undefined) {
-      this
-        .pushTaskRun(taskRun)
-        .catch((error: unknown) => {
-          this.logger?.error({ context: 'read' }, String(error))
-        })
-
-      return
-    }
-
-    this
-      .readTaskRuns(size)
-      .then(() => {
-        this._read(size)
-      })
-      .catch(async (error: unknown) => {
-        const message = String(error)
-        const createGroup = message
-          .toLowerCase()
-          .includes('no such key')
-
-        if (createGroup) {
-          await this.createGroup()
-          this._read(size)
-        } else {
-          this.logger?.error({ context: 'read' }, String(error))
-        }
-      })
+  public async pipeline (...streams: Array<Readable | Transform | Writable>): Promise<void> {
+    return pipeline(...streams)
   }
 
-  public _write (taskRun: TaskRun, encoding: string, callback: () => void): void {
-    this
-      .writeTaskRun(taskRun)
-      .then(() => {
-        callback()
-      })
-      .catch((error: unknown) => {
-        this.logger?.error({ context: 'write' }, String(error))
-        callback()
-      })
+  public start (): void {
+    this.logger.info({
+      block: this.block,
+      channel: this.channel,
+      concurrency: this.concurrency,
+      consumer: this.consumer,
+      group: this.group,
+      maxLength: this.maxLength
+    }, 'Starting')
+
+    this.queuer = this.lib.fastq.promise<unknown, TaskRun>(async (taskRun) => {
+      return this.handleTaskRun(taskRun)
+    }, this.concurrency)
+
+    this.queuer.empty = () => {
+      this.read()
+    }
+
+    this.queueRead = this.lib.handyRedis.createNodeRedisClient(this.queue.nodeRedis.duplicate())
+    this.read()
   }
 
   public async stop (): Promise<void> {
-    this.queueRead.end()
+    this.logger.info('Stopping')
 
-    while (this.pending > 0) {
+    await this.delConsumer()
+    this.queueRead?.end()
+
+    while (this.queuer.length() > 0) {
       await new Promise((resolve) => {
         setTimeout(resolve, 100)
       })
@@ -156,9 +147,32 @@ export class TaskRunner extends Duplex {
 
   protected async createGroup (): Promise<void> {
     try {
-      await this.queueRead.xgroup([['CREATE', [this.name, this.group]], '$', 'MKSTREAM'])
+      await this.queue.xgroup([['CREATE', [this.name, this.group]], '$', 'MKSTREAM'])
     } catch (error: unknown) {
-      this.logger?.error({ context: 'create-group' }, String(error))
+      this.logger.error({ context: 'create-group' }, String(error))
+    }
+  }
+
+  protected async delConsumer (): Promise<void> {
+    try {
+      await this.queue.xgroup(['DELCONSUMER', [this.name, this.group, this.consumer]])
+    } catch (error: unknown) {
+      this.logger.error({ context: 'del-consumer' }, String(error))
+    }
+  }
+
+  protected async handleTaskRun (taskRun: TaskRun): Promise<void> {
+    try {
+      await this.pushTaskRun(taskRun)
+    } catch (error: unknown) {
+      taskRun.code = 'err'
+      taskRun.reason = String(error)
+    } finally {
+      try {
+        await this.writeTaskRun(taskRun)
+      } catch (error: unknown) {
+        this.logger.error({ context: 'handle-task-run' }, String(error))
+      }
     }
   }
 
@@ -166,31 +180,52 @@ export class TaskRunner extends Duplex {
     await this.database.update(`
       UPDATE task_run
       SET
+        consumer = $1,
         date_started = NOW(),
         date_updated = NOW(),
-        consumer = $(consumer),
-        xid = $(xid)
-      WHERE id = $(id)
-    `, {
-      consumer: this.consumer,
-      id: taskRun.id,
-      xid: taskRun.xid
-    })
+        xid = $2
+      WHERE id = $3
+    `, [
+      this.consumer,
+      taskRun.xid,
+      taskRun.id
+    ])
 
-    this.push(taskRun)
+    if (taskRun.code === 'pending') {
+      await this.run(taskRun)
+    }
   }
 
-  protected async readTaskRuns (size: number): Promise<void> {
-    const result = await this.queueRead.xreadgroup(
+  protected read (): void {
+    this
+      .readTaskRuns()
+      .then(() => {
+        if (this.queuer.length() === 0) {
+          this.read()
+        }
+      })
+      .catch(async (error: unknown) => {
+        if ((/no such key/ui).test(String(error))) {
+          await this.createGroup()
+          this.read()
+          return
+        }
+
+        this.logger.error({ context: 'read' }, String(error))
+      })
+  }
+
+  protected async readTaskRuns (): Promise<void> {
+    const envelope = await this.queueRead?.xreadgroup(
       ['GROUP', [this.group, this.consumer]],
-      ['COUNT', size],
+      ['COUNT', this.concurrency],
       ['BLOCK', this.block],
       'STREAMS',
       [this.name],
       this.xid
     ) as Array<[string, string[] | null]> | null
 
-    const items = result?.[0][1] ?? []
+    const items = envelope?.[0][1] ?? []
 
     if (items.length === 0) {
       this.xid = '>'
@@ -203,21 +238,21 @@ export class TaskRunner extends Duplex {
       for (const [xid, [, value]] of items) {
         const taskRun = await connection.selectOne<TaskRun>(`
           SELECT
+            code,
             fkey_item_id,
             fkey_queue_run_id,
             id,
-            code,
             name,
+            number,
             options,
-            "order",
             reason,
             result,
             xid
           FROM task_run
-          WHERE id = $(id)
-        `, {
-          id: value
-        })
+          WHERE id = $1
+        `, [
+          value
+        ])
 
         if (taskRun === undefined) {
           continue
@@ -225,15 +260,15 @@ export class TaskRunner extends Duplex {
 
         const item = await connection.selectOne<Item>(`
           SELECT
+            code,
             fkey_queue_run_id,
             id,
-            code,
             payload
           FROM item
-          WHERE id = $(id)
-        `, {
-          id: taskRun.fkey_item_id
-        })
+          WHERE id = $1
+        `, [
+          taskRun.fkey_item_id
+        ])
 
         if (item === undefined) {
           continue
@@ -245,10 +280,10 @@ export class TaskRunner extends Duplex {
             id,
             name
           FROM queue_run
-          WHERE id = $(id)
-        `, {
-          id: taskRun.fkey_queue_run_id
-        })
+          WHERE id = $1
+        `, [
+          taskRun.fkey_queue_run_id
+        ])
 
         if (queueRun === undefined) {
           continue
@@ -263,15 +298,14 @@ export class TaskRunner extends Duplex {
           SET
             date_queued = NOW(),
             date_updated = NOW(),
-            xid = $(xid)
-          WHERE id = $(id)
-        `, {
-          id: taskRun.id,
-          xid: taskRun.xid
-        })
+            xid = $1
+          WHERE id = $2
+        `, [
+          taskRun.xid,
+          taskRun.id
+        ])
 
-        this.data.push(taskRun)
-        this.pending += 1
+        this.queuer.push(taskRun)
         this.xid = this.xid === '>' ? '>' : xid
       }
     } finally {
@@ -289,28 +323,28 @@ export class TaskRunner extends Duplex {
       await connection.update(`
         UPDATE task_run
         SET
+          code = $1,
           date_updated = NOW(),
-          code = $(code),
-          reason = $(reason),
-          result = $(result)
-        WHERE id = $(id)
-      `, {
-        code: taskRun.code,
-        id: taskRun.id,
-        reason: taskRun.reason,
-        result: taskRun.result
-      })
+          reason = $2,
+          result = $3
+        WHERE id = $4
+      `, [
+        taskRun.code,
+        taskRun.reason,
+        JSON.stringify(taskRun.result),
+        taskRun.id
+      ])
 
       await connection.update(`
         UPDATE item
         SET
-          date_updated = NOW(),
-          code = $(code)
-        WHERE id = $(id)
-      `, {
-        code: taskRun.item.code,
-        id: taskRun.item.id
-      })
+          code = $1,
+          date_updated = NOW()
+        WHERE id = $2
+      `, [
+        taskRun.item.code,
+        taskRun.item.id
+      ])
 
       if (typeof taskRun.xid === 'string') {
         await this.queue.xack(this.name, this.group, taskRun.xid)
@@ -324,14 +358,14 @@ export class TaskRunner extends Duplex {
             id,
             name
           FROM task_run
-          WHERE fkey_item_id = $(fkey_item_id)
-          AND "order" > $(order)
-          ORDER BY "order" ASC
+          WHERE fkey_item_id = $1
+          AND number > $2
+          ORDER BY number ASC
           LIMIT 1
-        `, {
-          fkey_item_id: taskRun.item.id,
-          order: taskRun.order
-        }) ?? null
+        `, [
+          taskRun.item.id,
+          taskRun.number
+        ]) ?? null
       }
 
       if (nextTaskRun === null) {
@@ -342,21 +376,21 @@ export class TaskRunner extends Duplex {
           SET
             aggr_${field} = aggr_${field} + 1,
             date_updated = NOW()
-          WHERE id = $(id)
-        `, {
-          id: taskRun.queueRun.id
-        })
+          WHERE id = $1
+        `, [
+          taskRun.queueRun.id
+        ])
 
         const queues = await connection.select<Queue[]>(`
           SELECT queue.id
           FROM queue
           LEFT JOIN queue_run
           ON queue.fkey_queue_id = queue_run.fkey_queue_id
-          WHERE queue_run.id = $(queue_run_id)
+          WHERE queue_run.id = $1
           AND queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
-        `, {
-          queue_run_id: taskRun.queueRun.id
-        })
+        `, [
+          taskRun.queueRun.id
+        ])
 
         for (const { id } of queues) {
           await this.queue.publish(this.channel, JSON.stringify({
@@ -373,8 +407,9 @@ export class TaskRunner extends Duplex {
         )
       }
     } finally {
-      this.pending -= 1
       connection.release()
     }
   }
+
+  protected abstract run (taskRun: TaskRun): Promise<void>
 }

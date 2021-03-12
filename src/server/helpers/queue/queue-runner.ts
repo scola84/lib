@@ -1,17 +1,16 @@
 import type { Queue, QueueRun } from '../../entities'
 import type { Database } from '../sql'
-import type { FastifyLoggerInstance } from 'fastify'
-import type { PostgresqlDatabase } from '../sql/postgresql'
+import type { Logger } from 'pino'
 import { Transform } from 'stream'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { XAdder } from '../redis'
 import { pipeline } from '../stream'
 
 export interface QueueRunnerOptions {
-  database: PostgresqlDatabase
+  database: Database
   databases: Record<string, Database | undefined>
   highWaterMark: number
-  logger: FastifyLoggerInstance
+  logger: Logger
   maxLength: number
   queue: WrappedNodeRedisClient
 }
@@ -19,7 +18,7 @@ export interface QueueRunnerOptions {
 export class QueueRunner {
   public static options?: Partial<QueueRunnerOptions>
 
-  public database: PostgresqlDatabase
+  public database: Database
 
   public databases: Record<string, Database | undefined>
 
@@ -27,7 +26,7 @@ export class QueueRunner {
 
   public highWaterMark?: number
 
-  public logger?: FastifyLoggerInstance
+  public logger: Logger
 
   public maxLength: number
 
@@ -56,6 +55,10 @@ export class QueueRunner {
       throw new Error('Databases are undefined')
     }
 
+    if (logger === undefined) {
+      throw new Error('Logger is undefined')
+    }
+
     if (queue === undefined) {
       throw new Error('Queue is undefined')
     }
@@ -63,31 +66,37 @@ export class QueueRunner {
     this.database = database
     this.databases = databases
     this.highWaterMark = highWaterMark
+    this.logger = logger.child({ name: 'queue-runner' })
     this.maxLength = maxLength
     this.queue = queue
+  }
 
-    this.logger = logger?.child({
-      source: 'queue-runner'
+  public createAdder (): XAdder {
+    return new XAdder({
+      highWaterMark: this.highWaterMark,
+      maxLength: this.maxLength,
+      queue: this.queue
     })
   }
 
   public async run (queue: Queue, parameters: unknown[] = []): Promise<void> {
     const connection = await this.database.connect()
 
-    const { id: queueRunId = '0' } = await connection.insertOne(`
-      INSERT INTO queue_run (fkey_queue_id, name)
-      VALUES ($(fkey_queue_id), $(name))
-      RETURNING id
-    `, {
-      fkey_queue_id: queue.id,
-      name: queue.name
-    })
+    const { id: queueRunId = 0 } = await connection.insertOne(`
+      INSERT INTO queue_run (fkey_queue_id,name)
+      VALUES ($1,$2)
+    `, [
+      queue.id,
+      queue.name
+    ])
 
     const queueRun: QueueRun = {
       aggr_err: 0,
       aggr_ok: 0,
       aggr_total: 0,
       code: 'pending',
+      date_created: new Date(),
+      date_updated: new Date(),
       fkey_queue_id: queue.id,
       id: queueRunId,
       name: queue.name,
@@ -101,20 +110,17 @@ export class QueueRunner {
       throw new Error('Database is undefined')
     }
 
-    const reader = await database.stream(queue.query ?? '', parameters)
-
     const inserter = new Transform({
       objectMode: true,
       transform: async (payload: unknown, encoding, callback) => {
         try {
           const { id: itemId } = await connection.insertOne(`
-            INSERT INTO item (fkey_queue_run_id, payload)
-            VALUES ($(fkey_queue_run_id), $(payload))
-            RETURNING id
-          `, {
-            fkey_queue_run_id: queueRun.id,
-            payload
-          })
+            INSERT INTO item (fkey_queue_run_id,payload)
+            VALUES ($1,$2)
+          `, [
+            queueRun.id,
+            JSON.stringify(payload)
+          ])
 
           const firstTask = {
             name: '',
@@ -123,18 +129,17 @@ export class QueueRunner {
 
           for (const task of queueRun.queue.tasks) {
             const { id: taskRunId = '0' } = await connection.insertOne(`
-              INSERT INTO task_run (fkey_item_id, fkey_queue_run_id, name, options, "order")
-              VALUES ($(fkey_item_id), $(fkey_queue_run_id), $(name), $(options), $(order))
-              RETURNING id
-            `, {
-              fkey_item_id: itemId,
-              fkey_queue_run_id: queueRun.id,
-              name: task.name,
-              options: task.options,
-              order: task.order
-            })
+              INSERT INTO task_run (fkey_item_id,fkey_queue_run_id,name,number,options)
+              VALUES ($1,$2,$3,$4,$5)
+            `, [
+              itemId,
+              queueRun.id,
+              task.name,
+              task.number,
+              JSON.stringify(task.options)
+            ])
 
-            if (task.order === 1) {
+            if (task.number === 1) {
               firstTask.name = `${queueRun.name}-${task.name}`
               firstTask.value = ['taskRunId', String(taskRunId)]
             }
@@ -148,62 +153,59 @@ export class QueueRunner {
       }
     })
 
-    const xadder = new XAdder({
-      highWaterMark: this.highWaterMark,
-      maxLength: this.maxLength,
-      queue: this.queue
-    })
+    const reader = await database.stream(queue.query ?? '', parameters)
+    const xadder = this.createAdder()
 
-    await pipeline(reader, inserter, xadder)
-      .then(async () => {
-        await connection.update(`
-          UPDATE queue_run
-          SET
-            code = 'ok',
-            date_updated = NOW(),
-            aggr_total = $(aggr_total)
-          WHERE id = $(id)
-        `, {
-          aggr_total: queueRun.aggr_total,
-          id: queueRun.id
-        })
+    try {
+      await pipeline(reader, inserter, xadder)
 
-        const queues = await connection.select<Queue[]>(`
-          SELECT queue.id
-          FROM queue
-          LEFT JOIN queue_run
-          ON queue.fkey_queue_id = queue_run.fkey_queue_id
-          WHERE queue_run.id = $(queue_run_id)
-          AND queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
-        `, {
-          queue_run_id: queueRun.id
-        })
+      await connection.update(`
+        UPDATE queue_run
+        SET
+          aggr_total = $1,
+          code = 'ok',
+          date_updated = NOW()
+        WHERE id = $2
+      `, [
+        queueRun.aggr_total,
+        queueRun.id
+      ])
 
-        for (const { id } of queues) {
-          await this.queue.publish('queue', JSON.stringify({
-            id,
-            parameters: [queueRun.id]
-          }))
-        }
-      })
-      .catch(async (error) => {
+      const queues = await connection.select<Queue[]>(`
+        SELECT queue.id
+        FROM queue
+        LEFT JOIN queue_run
+        ON queue.fkey_queue_id = queue_run.fkey_queue_id
+        WHERE queue_run.id = $1
+        AND queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
+      `, [
+        queueRun.id
+      ])
+
+      for (const { id } of queues) {
+        await this.queue.publish('queue', JSON.stringify({
+          id,
+          parameters: [queueRun.id]
+        }))
+      }
+    } catch (error: unknown) {
+      try {
         await connection.update(`
           UPDATE queue_run
           SET
             code = 'err',
             date_updated = NOW(),
-            reason = $(reason)
-          WHERE id = $(id)
-        `, {
-          id: queueRun.id,
-          reason: String(error)
-        })
-      })
-      .catch((updateError: unknown) => {
-        this.logger?.error({ context: 'run' }, String(updateError))
-      })
-      .finally(() => {
-        connection.release()
-      })
+            reason = $1
+          WHERE id = $2
+        `, [
+          String(error),
+          queueRun.id
+        ])
+      } catch (updateError: unknown) {
+        this.logger.error({ context: 'run' }, String(updateError))
+      }
+    } finally {
+      connection.release()
+    }
   }
 }

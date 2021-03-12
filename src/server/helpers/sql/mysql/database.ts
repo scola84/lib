@@ -8,8 +8,13 @@ import { unescape } from 'querystring'
 export class MysqlDatabase extends Database {
   public readonly pool: Pool
 
-  public constructor (options: PoolOptions = {}) {
+  public constructor (rawOptions: PoolOptions | string = {}) {
     super()
+
+    const options = typeof rawOptions === 'string'
+      ? MysqlDatabase.parseDSN(rawOptions)
+      : rawOptions
+
     this.pool = createPool(options)
   }
 

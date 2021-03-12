@@ -8,8 +8,13 @@ import postgres from 'pg-promise'
 export class PostgresqlDatabase extends Database {
   public readonly pool: IDatabase<unknown>
 
-  public constructor (options: IConnectionParameters | string = {}) {
+  public constructor (rawOptions: IConnectionParameters | string = {}) {
     super()
+
+    const options = typeof rawOptions === 'string'
+      ? PostgresqlDatabase.parseDSN(rawOptions)
+      : rawOptions
+
     this.pool = postgres()(options)
   }
 

@@ -1,8 +1,8 @@
 import type { Task } from './task'
 
 export interface Queue {
-  date_created?: Date
-  date_updated?: Date
+  date_created: Date
+  date_updated: Date
   fkey_queue_id: number | string | null
   id: number | string
   connection: string | null

@@ -3,30 +3,35 @@ import type { IClient } from 'pg-promise/typescript/pg-subset'
 import type { IConnected } from 'pg-promise'
 import PgQueryStream from 'pg-query-stream'
 import type { Readable } from 'stream'
+import tokens from './tokens'
 
 export class PostgresqlConnection implements Connection {
   public connection: IConnected<unknown, IClient>
 
-  public constructor (connection: IConnected<unknown, IClient>) {
-    this.connection = connection
+  public tokens = tokens
+
+  public constructor (connection?: IConnected<unknown, IClient>) {
+    if (connection !== undefined) {
+      this.connection = connection
+    }
   }
 
-  public async delete (query: string, values: unknown = []): Promise<DeleteResult> {
+  public async delete (query: string, values: unknown[] = []): Promise<DeleteResult> {
     await this.query(query, values)
     return { count: 0 }
   }
 
-  public async insert (query: string, values: unknown = []): Promise<InsertResult[]> {
-    const result = await this.query<InsertResult[]>(query, values)
+  public async insert (query: string, values: unknown[] = []): Promise<InsertResult[]> {
+    const result = await this.query<InsertResult[]>(...this.transformInsert(query, values))
     return result
   }
 
-  public async insertOne (query: string, values: unknown = []): Promise<InsertResult> {
-    const result = await this.query<InsertResult[]>(query, values)
+  public async insertOne (query: string, values: unknown[] = []): Promise<InsertResult> {
+    const result = await this.query<InsertResult[]>(...this.transformInsert(query, values))
     return result[0]
   }
 
-  public async query<T = unknown>(query: string, values: unknown = []): Promise<T> {
+  public async query<T = unknown>(query: string, values: unknown[]): Promise<T> {
     return this.connection.query<T>(query, values)
   }
 
@@ -34,16 +39,16 @@ export class PostgresqlConnection implements Connection {
     this.connection.done()
   }
 
-  public async select<T>(query: string, values: unknown = []): Promise<T> {
+  public async select<T>(query: string, values: unknown[] = []): Promise<T> {
     return this.query<T>(query, values)
   }
 
-  public async selectOne<T>(query: string, values: unknown = []): Promise<T | undefined> {
+  public async selectOne<T>(query: string, values: unknown[] = []): Promise<T | undefined> {
     const result = await this.query<T[]>(query, values)
     return result[0]
   }
 
-  public async stream (query: string, values: unknown = []): Promise<Readable> {
+  public async stream (query: string, values: unknown[] = []): Promise<Readable> {
     return new Promise((resolve, reject) => {
       this.connection.stream(new PgQueryStream(query, values as []), (stream) => {
         resolve(stream as Readable)
@@ -54,7 +59,11 @@ export class PostgresqlConnection implements Connection {
     })
   }
 
-  public async update (query: string, values: unknown = []): Promise<UpdateResult> {
+  public transformInsert (query: string, values: unknown[]): [string, unknown[]] {
+    return [`${query} RETURNING id`, values]
+  }
+
+  public async update (query: string, values: unknown[] = []): Promise<UpdateResult> {
     await this.query(query, values)
     return { count: 0 }
   }

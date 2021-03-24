@@ -1,4 +1,8 @@
+/coverage
+/data
 /dist
 /node_modules
 /types
+.env
+TODO.md
 yarn-error.log

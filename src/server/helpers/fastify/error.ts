@@ -5,10 +5,7 @@ export class ServerError {
 
   public data: Record<string, unknown> = {}
 
-  public constructor (
-    code?: string,
-    validation?: ValidationResult[]
-  ) {
+  public constructor (code?: string, validation?: ValidationResult[]) {
     if (Array.isArray(validation)) {
       this.code = 'ERR_INPUT_INVALID'
       this.data = validation.reduce((data, result) => {
@@ -19,10 +16,7 @@ export class ServerError {
     }
   }
 
-  protected normalize (
-    data: Record<string, unknown>,
-    result: ValidationResult
-  ): Record<string, unknown> {
+  protected normalize (data: Record<string, unknown>, result: ValidationResult): Record<string, unknown> {
     switch (result.keyword) {
       case 'required':
         this.normalizeRequired(data, result)
@@ -35,19 +29,13 @@ export class ServerError {
     return data
   }
 
-  protected normalizeDefault (
-    data: Record<string, unknown>,
-    { dataPath, keyword, params }: ValidationResult
-  ): void {
+  protected normalizeDefault (data: Record<string, unknown>, { dataPath, keyword, params }: ValidationResult): void {
     data[dataPath.slice(1)] = {
       code: `ERR_INPUT_${String(params[keyword]).toUpperCase()}`
     }
   }
 
-  protected normalizeRequired (
-    data: Record<string, unknown>,
-    { params }: ValidationResult
-  ): void {
+  protected normalizeRequired (data: Record<string, unknown>, { params }: ValidationResult): void {
     data[String(params.missingProperty)] = {
       code: 'ERR_INPUT_REQUIRED'
     }

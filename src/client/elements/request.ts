@@ -1,14 +1,5 @@
-import type {
-  LogEvent,
-  NodeEvent,
-  NodeResult
-} from './node'
-
-import {
-  customElement,
-  property
-} from 'lit-element'
-
+import type { LogEvent, NodeEvent, NodeResult } from './node'
+import { customElement, property } from 'lit-element'
 import type { AuthEvent } from './auth'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit-element'

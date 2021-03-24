@@ -1,19 +1,6 @@
-import type {
-  NodeEvent,
-  NodeResult
-} from './node'
-
-import type {
-  PropertyValues,
-  TemplateResult
-} from 'lit-element'
-
-import {
-  customElement,
-  html,
-  property
-} from 'lit-element'
-
+import type { NodeEvent, NodeResult } from './node'
+import type { PropertyValues, TemplateResult } from 'lit-element'
+import { customElement, html, property } from 'lit-element'
 import type { InputElement } from './input'
 import { NodeElement } from './node'
 import { RequestElement } from './request'

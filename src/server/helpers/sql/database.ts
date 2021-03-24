@@ -2,87 +2,75 @@ import type { Connection, DeleteResult, InsertResult, UpdateResult } from './con
 import type { Readable } from 'stream'
 
 export abstract class Database {
-  public async delete (query: string, values: unknown[] = []): Promise<DeleteResult> {
+  public async delete<V> (query: string, values: Partial<V>): Promise<DeleteResult> {
     const connection = await this.connect()
 
     try {
-      const result = await connection.delete(query, values)
-      connection.release()
+      const result = await connection.delete<V>(query, values)
       return result
-    } catch (error: unknown) {
+    } finally {
       connection.release()
-      throw error
     }
   }
 
-  public async insert (query: string, values: unknown[] = []): Promise<InsertResult[]> {
+  public async insert <V, R = number>(query: string, values: Partial<V>): Promise<Array<InsertResult<R>>> {
     const connection = await this.connect()
 
     try {
-      const result = await connection.insert(query, values)
-      connection.release()
+      const result = await connection.insert<V, R>(query, values)
       return result
-    } catch (error: unknown) {
+    } finally {
       connection.release()
-      throw error
     }
   }
 
-  public async insertOne (query: string, values: unknown[] = []): Promise<InsertResult> {
+  public async insertOne<V, R = number> (query: string, values: Partial<V>): Promise<InsertResult<R>> {
     const connection = await this.connect()
 
     try {
-      const result = await connection.insertOne(query, values)
-      connection.release()
+      const result = await connection.insertOne<V, R>(query, values)
       return result
-    } catch (error: unknown) {
+    } finally {
       connection.release()
-      throw error
     }
   }
 
-  public async query<T>(query: string, values: unknown[] = []): Promise<T> {
+  public async query<V, R>(query: string, values: Partial<V>): Promise<R> {
     const connection = await this.connect()
 
     try {
-      const result = await connection.query<T>(query, values)
-      connection.release()
+      const result = await connection.query<V, R>(query, values)
       return result
-    } catch (error: unknown) {
+    } finally {
       connection.release()
-      throw error
     }
   }
 
-  public async select<T>(query: string, values: unknown[] = []): Promise<T> {
+  public async select<V, R>(query: string, values: Partial<V>): Promise<R> {
     const connection = await this.connect()
 
     try {
-      const result = await connection.select<T>(query, values)
-      connection.release()
+      const result = await connection.select<V, R>(query, values)
       return result
-    } catch (error: unknown) {
+    } finally {
       connection.release()
-      throw error
     }
   }
 
-  public async selectOne<T>(query: string, values: unknown[] = []): Promise<T | undefined> {
+  public async selectOne<V, R>(query: string, values: Partial<V>): Promise<R | undefined> {
     const connection = await this.connect()
 
     try {
-      const result = await connection.selectOne<T>(query, values)
-      connection.release()
+      const result = await connection.selectOne<V, R>(query, values)
       return result
-    } catch (error: unknown) {
+    } finally {
       connection.release()
-      throw error
     }
   }
 
-  public async stream (query: string, values: unknown[] = []): Promise<Readable> {
+  public async stream<V> (query: string, values: Partial<V>): Promise<Readable> {
     const connection = await this.connect()
-    const stream = await connection.stream(query, values)
+    const stream = await connection.stream<V>(query, values)
 
     stream.once('close', () => {
       connection.release()
@@ -91,16 +79,14 @@ export abstract class Database {
     return stream
   }
 
-  public async update (query: string, values: unknown[] = []): Promise<UpdateResult> {
+  public async update<V> (query: string, values: Partial<V>): Promise<UpdateResult> {
     const connection = await this.connect()
 
     try {
-      const result = await connection.update(query, values)
-      connection.release()
+      const result = await connection.update<V>(query, values)
       return result
-    } catch (error: unknown) {
+    } finally {
       connection.release()
-      throw error
     }
   }
 

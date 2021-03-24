@@ -5,11 +5,7 @@ export class Formatter {
 
   public static strings?: Record<string, Record<string, string> | undefined>
 
-  public static format<Data = Record<string, unknown>> (
-    string: string,
-    data?: Data,
-    lang?: string
-  ): string {
+  public static format<Data = Record<string, unknown>> (string: string, data?: Data, lang?: string): string {
     return String(new Format(string, lang).format(data))
   }
 
@@ -23,11 +19,7 @@ export class Formatter {
       })
   }
 
-  public format<Data = Record<string, unknown>> (
-    code: string,
-    data?: Data,
-    lang = Formatter.lang
-  ): string {
+  public format<Data = Record<string, unknown>> (code: string, data?: Data, lang = Formatter.lang): string {
     try {
       return Formatter.format(Formatter.strings?.[lang]?.[code] ?? '', data, lang)
     } catch (error: unknown) {

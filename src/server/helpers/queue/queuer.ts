@@ -5,9 +5,9 @@ import type { Logger } from 'pino'
 import { QueueRunner } from '../../helpers/queue/queue-runner'
 import type { TaskRunner } from './task-runner'
 import type { WrappedNodeRedisClient } from 'handy-redis'
-import handyRedis from 'handy-redis'
-import nodeSchedule from 'node-schedule'
+import { createNodeRedisClient } from 'handy-redis'
 import { parseExpression } from 'cron-parser'
+import { scheduleJob } from 'node-schedule'
 
 export interface QueuerOptions {
   channel: string
@@ -15,7 +15,7 @@ export interface QueuerOptions {
   databases: Record<string, Database | undefined>
   logger: Logger
   names: string
-  queue: WrappedNodeRedisClient
+  queueWriter: WrappedNodeRedisClient
   schedule: string
 }
 
@@ -33,65 +33,56 @@ export class Queuer {
 
   public job?: Job
 
-  public lib = {
-    handyRedis,
-    nodeSchedule
-  }
-
   public logger: Logger
 
   public names: string
 
-  public options: Partial<QueuerOptions>
-
-  public queue: WrappedNodeRedisClient
-
-  public queueRead?: WrappedNodeRedisClient
+  public queueReader?: WrappedNodeRedisClient
 
   public queueRunners: Set<QueueRunner> = new Set()
+
+  public queueWriter: WrappedNodeRedisClient
 
   public schedule: string
 
   public taskRunners: Set<TaskRunner> = new Set()
 
   public constructor (options: Partial<QueuerOptions> = {}) {
-    const {
-      channel = 'queue',
-      database,
-      databases,
-      logger,
-      names = process.env.QUEUE_NAMES ?? '.',
-      queue,
-      schedule = process.env.QUEUE_SCHEDULE ?? '* * * * *'
-    } = options
-
-    if (database === undefined) {
-      throw new Error('Database is undefined')
+    if (options.database === undefined) {
+      throw new Error('Option "database" is undefined')
     }
 
-    if (databases === undefined) {
-      throw new Error('Databases are undefined')
+    if (options.databases === undefined) {
+      throw new Error('Option "databases" is undefined')
     }
 
-    if (logger === undefined) {
-      throw new Error('Logger is undefined')
+    if (options.logger === undefined) {
+      throw new Error('Option "logger is undefined')
     }
 
-    if (queue === undefined) {
-      throw new Error('Queue is undefined')
+    if (options.queueWriter === undefined) {
+      throw new Error('Option "queueWriter" is undefined')
     }
 
-    this.channel = channel
-    this.database = database
-    this.databases = databases
-    this.logger = logger.child({ name: 'queuer' })
-    this.names = names
-    this.queue = queue
-    this.schedule = schedule
+    this.channel = options.channel ?? 'queue'
+    this.database = options.database
+    this.databases = options.databases
+    this.logger = options.logger.child({ name: 'queuer' })
+    this.names = options.names ?? process.env.QUEUE_NAMES ?? '.'
+    this.queueWriter = options.queueWriter
+    this.schedule = options.schedule ?? process.env.QUEUE_SCHEDULE ?? '* * * * *'
   }
 
   public add (taskRunner: TaskRunner): void {
     this.taskRunners.add(taskRunner)
+  }
+
+  public createJob (name: string, callback: (date: Date) => void): Job {
+    return scheduleJob(name, callback)
+  }
+
+  public createQueueReader (): WrappedNodeRedisClient {
+    return createNodeRedisClient(this.queueWriter.nodeRedis.duplicate())
   }
 
   public createRunner (): QueueRunner {
@@ -99,12 +90,12 @@ export class Queuer {
       database: this.database,
       databases: this.databases,
       logger: this.logger,
-      queue: this.queue
+      queueWriter: this.queueWriter
     })
   }
 
   public setup (): void {
-    this.queueRead = this.lib.handyRedis.createNodeRedisClient(this.queue.nodeRedis.duplicate())
+    this.queueReader = this.createQueueReader()
   }
 
   public async start (ids = process.env.QUEUE_IDS): Promise<void> {
@@ -126,8 +117,8 @@ export class Queuer {
     this.logger.info('Stopping')
     this.job?.cancel()
 
-    await this.queueRead?.unsubscribe('queue')
-    await this.queueRead?.quit()
+    await this.queueReader?.unsubscribe('queue')
+    await this.queueReader?.quit()
 
     for (const taskRunner of this.taskRunners) {
       await taskRunner.stop()
@@ -139,7 +130,7 @@ export class Queuer {
       })
     }
 
-    await this.queue.quit()
+    await this.queueWriter.quit()
   }
 
   protected async run (queue: Queue, parameters?: unknown[]): Promise<void> {
@@ -162,39 +153,29 @@ export class Queuer {
         parameters
       } = JSON.parse(message) as QueuerMessage
 
-      const queue = await connection.selectOne<Queue>(`
-        SELECT
-          connection,
-          fkey_queue_id,
-          id,
-          name,
-          query,
-          schedule,
-          schedule_begin,
-          schedule_end,
-          schedule_next
+      if (id === undefined) {
+        return
+      }
+
+      const queue = await connection.selectOne<Queue, Queue>(`
+        SELECT *
         FROM queue
-        WHERE id = $1
-      `, [
+        WHERE id = $(id)
+      `, {
         id
-      ])
+      })
 
       if (queue === undefined) {
         return
       }
 
-      queue.tasks = await this.database.select<Task[]>(`
-        SELECT
-          fkey_queue_id,
-          id,
-          name,
-          number,
-          options
+      queue.tasks = await this.database.select<Queue, Task[]>(`
+        SELECT *
         FROM task
-        WHERE fkey_queue_id = $1
-      `, [
-        queue.id
-      ])
+        WHERE fkey_queue_id = $(id)
+      `, {
+        id: queue.id
+      })
 
       await this.run(queue, parameters)
     } finally {
@@ -206,51 +187,39 @@ export class Queuer {
     const connection = await this.database.connect()
 
     try {
-      const queues = await connection.select<Queue[]>(`
-        SELECT
-          connection,
-          fkey_queue_id,
-          id,
-          name,
-          query,
-          schedule,
-          schedule_begin,
-          schedule_end,
-          schedule_next
+      const queues = await connection.select<Queue & { date: Date}, Queue[]>(`
+        SELECT *
         FROM queue
-        WHERE name ${connection.tokens.regexp} $1
-        AND schedule_begin <= $2
-        AND (schedule_end >= $2 OR schedule_end IS NULL)
-        AND (schedule_next <= $2 OR schedule_next IS NULL)
-      `, [
-        this.names,
-        date
-      ])
+        WHERE name ${connection.tokens.regexp} $(name)
+        AND schedule_begin <= $(date)
+        AND (schedule_end >= $(date) OR schedule_end IS NULL)
+        AND (schedule_next <= $(date) OR schedule_next IS NULL)
+      `, {
+        date,
+        name: this.names
+      })
 
       for (const queue of queues) {
         if (typeof queue.schedule === 'string') {
-          await connection.update(`
+          await connection.update<Queue>(`
             UPDATE queue
-            SET schedule_next = $1
-            WHERE id = $2
-          `, [
-            parseExpression(queue.schedule).next(),
-            queue.id
-          ])
+            SET schedule_next = $(schedule_next)
+            WHERE id = $(id)
+          `, {
+            id: queue.id,
+            schedule_next: parseExpression(queue.schedule)
+              .next()
+              .toDate()
+          })
         }
 
-        queue.tasks = await connection.select<Task[]>(`
-          SELECT
-            fkey_queue_id,
-            id,
-            name,
-            number,
-            options
+        queue.tasks = await connection.select<Task, Task[]>(`
+          SELECT *
           FROM task
-          WHERE fkey_queue_id = $1
-        `, [
-          queue.id
-        ])
+          WHERE fkey_queue_id = $(fkey_queue_id)
+        `, {
+          fkey_queue_id: queue.id
+        })
 
         await this.run(queue)
       }
@@ -260,7 +229,7 @@ export class Queuer {
   }
 
   protected async startListener (channel: string): Promise<void> {
-    this.queueRead?.nodeRedis.on('message', (chnl, message) => {
+    this.queueReader?.nodeRedis.on('message', (chnl, message) => {
       this
         .runListener(message)
         .catch((error: unknown) => {
@@ -268,11 +237,11 @@ export class Queuer {
         })
     })
 
-    await this.queueRead?.subscribe(channel)
+    await this.queueReader?.subscribe(channel)
   }
 
   protected startSchedule (schedule: string): void {
-    this.job = this.lib.nodeSchedule.scheduleJob(schedule, (date) => {
+    this.job = this.createJob(schedule, (date) => {
       this
         .runSchedule(date)
         .catch((error: unknown) => {

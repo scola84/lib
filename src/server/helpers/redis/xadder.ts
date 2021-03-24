@@ -10,7 +10,7 @@ export interface XAdderItem {
 
 export interface XAdderOptions extends WritableOptions {
   maxLength: number
-  queue: WrappedNodeRedisClient
+  queueWriter: WrappedNodeRedisClient
 }
 
 export class XAdder extends Writable {
@@ -20,7 +20,7 @@ export class XAdder extends Writable {
 
   public maxLength: number
 
-  public queue: WrappedNodeRedisClient
+  public queueWriter: WrappedNodeRedisClient
 
   public constructor (options: Partial<XAdderOptions>) {
     super({
@@ -28,18 +28,13 @@ export class XAdder extends Writable {
       ...options
     })
 
-    const {
-      maxLength = 1024 * 1024,
-      queue
-    } = options
-
-    if (queue === undefined) {
-      throw new Error('Queue is undefined')
+    if (options.queueWriter === undefined) {
+      throw new Error('Option "queueWriter" is undefined')
     }
 
-    this.maxLength = maxLength
-    this.queue = queue
-    this.batch = this.queue.batch()
+    this.maxLength = options.maxLength ?? 1024 * 1024
+    this.queueWriter = options.queueWriter
+    this.batch = this.queueWriter.batch()
   }
 
   public _final (callback: (error?: Error) => void): void {
@@ -71,7 +66,7 @@ export class XAdder extends Writable {
     const { batch } = this
 
     if (restart) {
-      this.batch = this.queue.batch()
+      this.batch = this.queueWriter.batch()
       this.count = 0
     }
 

@@ -1,12 +1,15 @@
 import type { DuplexOptions, Readable, Transform, Writable } from 'stream'
 import type { Item, Queue, QueueRun, TaskRun } from '../../entities'
+import Ajv from 'ajv'
 import type { Database } from '../sql'
 import type { Logger } from 'pino'
+import type { ObjectSchema } from 'fluent-json-schema'
 import type { Queuer } from './queuer'
 import type { WrappedNodeRedisClient } from 'handy-redis'
-import fastq from 'fastq'
-import handyRedis from 'handy-redis'
+import { createNodeRedisClient } from 'handy-redis'
+import type { queue as fastq } from 'fastq'
 import { pipeline } from '../stream'
+import { promise } from 'fastq'
 
 export interface TaskRunnerOptions extends DuplexOptions {
   block: number
@@ -18,8 +21,10 @@ export interface TaskRunnerOptions extends DuplexOptions {
   logger: Logger
   maxLength: number
   name: string
-  queue: WrappedNodeRedisClient
+  queueWriter: WrappedNodeRedisClient
   queuer: Queuer
+  schema: Record<string, ObjectSchema>
+  xid: string
 }
 
 export abstract class TaskRunner {
@@ -33,16 +38,9 @@ export abstract class TaskRunner {
 
   public consumer: string
 
-  public data: TaskRun[] = []
-
   public database: Database
 
   public group: string
-
-  public lib = {
-    fastq,
-    handyRedis
-  }
 
   public logger: Logger
 
@@ -50,60 +48,80 @@ export abstract class TaskRunner {
 
   public name: string
 
-  public queue: WrappedNodeRedisClient
+  public queue?: fastq
 
-  public queueRead?: WrappedNodeRedisClient
+  public queueReader?: WrappedNodeRedisClient
 
-  public queuer: fastq.queue
+  public queueWriter: WrappedNodeRedisClient
 
-  public xid = '0-0'
+  public schema: Record<string, ObjectSchema>
 
-  public constructor (options: Partial<TaskRunnerOptions>) {
-    const {
-      block = 5 * 60 * 1000,
-      channel = 'queue',
-      consumer = process.env.HOSTNAME ?? '',
-      database,
-      concurrency = process.env.QUEUE_CONCURRENCY ?? 1,
-      group,
-      logger,
-      maxLength = 1024 * 1024,
-      name,
-      queue,
-      queuer
-    } = {
+  public validator?: Ajv
+
+  public xid: string
+
+  public constructor (coptions: Partial<TaskRunnerOptions>) {
+    const options = {
       ...TaskRunner.options,
-      ...options
+      ...coptions
     }
 
-    if (database === undefined) {
-      throw new Error('Database is undefined')
+    if (options.database === undefined) {
+      throw new Error('Option "database" is undefined')
     }
 
-    if (logger === undefined) {
-      throw new Error('Logger is undefined')
+    if (options.logger === undefined) {
+      throw new Error('Option "logger" is undefined')
     }
 
-    if (name === undefined) {
-      throw new Error('Name is undefined')
+    if (options.name === undefined) {
+      throw new Error('Option "name is undefined')
     }
 
-    if (queue === undefined) {
-      throw new Error('Queue is undefined')
+    if (options.queueWriter === undefined) {
+      throw new Error('Option "queueWriter" is undefined')
     }
 
-    this.block = block
-    this.channel = channel
-    this.concurrency = Number(concurrency)
-    this.consumer = consumer
-    this.database = database
-    this.group = group ?? name
-    this.logger = logger.child({ name })
-    this.maxLength = maxLength
-    this.name = name
-    this.queue = queue
+    this.block = options.block ?? 5 * 60 * 1000
+    this.channel = options.channel ?? 'queue'
+    this.concurrency = Number(options.concurrency ?? process.env.QUEUE_CONCURRENCY ?? 1)
+    this.consumer = options.consumer ?? process.env.HOSTNAME ?? ''
+    this.database = options.database
+    this.group = options.group ?? options.name
+    this.logger = options.logger.child({ name: options.name })
+    this.maxLength = options.maxLength ?? 1024 * 1024
+    this.name = options.name
+    this.queueWriter = options.queueWriter
+    this.schema = options.schema ?? {}
+    this.xid = options.xid ?? '0-0'
 
-    queuer?.add(this)
+    options.queuer?.add(this)
+  }
+
+  public createQueue (): fastq {
+    const queuer = promise<unknown, TaskRun>(async (taskRun) => {
+      return this.handleTaskRun(taskRun)
+    }, this.concurrency)
+
+    queuer.empty = () => {
+      this.read()
+    }
+
+    return queuer
+  }
+
+  public createQueueReader (): WrappedNodeRedisClient {
+    return createNodeRedisClient(this.queueWriter.nodeRedis.duplicate())
+  }
+
+  public createValidator (): Ajv {
+    const validator = new Ajv()
+
+    for (const name of Object.keys(this.schema)) {
+      validator.addSchema(this.schema[name].valueOf(), name)
+    }
+
+    return validator
   }
 
   public async pipeline (...streams: Array<Readable | Transform | Writable>): Promise<void> {
@@ -120,15 +138,10 @@ export abstract class TaskRunner {
       maxLength: this.maxLength
     }, 'Starting')
 
-    this.queuer = this.lib.fastq.promise<unknown, TaskRun>(async (taskRun) => {
-      return this.handleTaskRun(taskRun)
-    }, this.concurrency)
+    this.queue = this.createQueue()
+    this.queueReader = this.createQueueReader()
+    this.validator = this.createValidator()
 
-    this.queuer.empty = () => {
-      this.read()
-    }
-
-    this.queueRead = this.lib.handyRedis.createNodeRedisClient(this.queue.nodeRedis.duplicate())
     this.read()
   }
 
@@ -136,18 +149,27 @@ export abstract class TaskRunner {
     this.logger.info('Stopping')
 
     await this.delConsumer()
-    this.queueRead?.end()
+    this.queueReader?.end()
 
-    while (this.queuer.length() > 0) {
+    while (this.queue?.length() !== 0) {
       await new Promise((resolve) => {
         setTimeout(resolve, 100)
       })
     }
   }
 
+  public validate (name: string, data: unknown): void {
+    const schema = this.validator?.getSchema(name)
+
+    if (schema?.(data) === false) {
+      const error = schema.errors?.[0]
+      throw new Error(`${name}${error?.dataPath ?? ''} ${error?.message ?? ''}`)
+    }
+  }
+
   protected async createGroup (): Promise<void> {
     try {
-      await this.queue.xgroup([['CREATE', [this.name, this.group]], '$', 'MKSTREAM'])
+      await this.queueWriter.xgroup([['CREATE', [this.name, this.group]], '$', 'MKSTREAM'])
     } catch (error: unknown) {
       this.logger.error({ context: 'create-group' }, String(error))
     }
@@ -155,7 +177,7 @@ export abstract class TaskRunner {
 
   protected async delConsumer (): Promise<void> {
     try {
-      await this.queue.xgroup(['DELCONSUMER', [this.name, this.group, this.consumer]])
+      await this.queueWriter.xgroup(['DELCONSUMER', [this.name, this.group, this.consumer]])
     } catch (error: unknown) {
       this.logger.error({ context: 'del-consumer' }, String(error))
     }
@@ -177,21 +199,23 @@ export abstract class TaskRunner {
   }
 
   protected async pushTaskRun (taskRun: TaskRun): Promise<void> {
-    await this.database.update(`
+    await this.database.update<TaskRun>(`
       UPDATE task_run
       SET
-        consumer = $1,
+        consumer = $(consumer),
         date_started = NOW(),
         date_updated = NOW(),
-        xid = $2
-      WHERE id = $3
-    `, [
-      this.consumer,
-      taskRun.xid,
-      taskRun.id
-    ])
+        xid = $(xid)
+      WHERE id = $(id)
+    `, {
+      consumer: this.consumer,
+      id: taskRun.id,
+      xid: taskRun.xid
+    })
 
     if (taskRun.code === 'pending') {
+      this.validate('options', taskRun.options)
+      this.validate('payload', taskRun.item.payload)
       await this.run(taskRun)
     }
   }
@@ -200,7 +224,7 @@ export abstract class TaskRunner {
     this
       .readTaskRuns()
       .then(() => {
-        if (this.queuer.length() === 0) {
+        if (this.queue?.length() === 0) {
           this.read()
         }
       })
@@ -216,7 +240,7 @@ export abstract class TaskRunner {
   }
 
   protected async readTaskRuns (): Promise<void> {
-    const envelope = await this.queueRead?.xreadgroup(
+    const envelope = await this.queueReader?.xreadgroup(
       ['GROUP', [this.group, this.consumer]],
       ['COUNT', this.concurrency],
       ['BLOCK', this.block],
@@ -236,54 +260,37 @@ export abstract class TaskRunner {
 
     try {
       for (const [xid, [, value]] of items) {
-        const taskRun = await connection.selectOne<TaskRun>(`
-          SELECT
-            code,
-            fkey_item_id,
-            fkey_queue_run_id,
-            id,
-            name,
-            number,
-            options,
-            reason,
-            result,
-            xid
+        const taskRun = await connection.selectOne<TaskRun, TaskRun>(`
+          SELECT *
           FROM task_run
-          WHERE id = $1
-        `, [
-          value
-        ])
+          WHERE id = $(id)
+        `, {
+          id: Number(value)
+        })
 
         if (taskRun === undefined) {
           continue
         }
 
-        const item = await connection.selectOne<Item>(`
-          SELECT
-            code,
-            fkey_queue_run_id,
-            id,
-            payload
+        const item = await connection.selectOne<Item, Item>(`
+          SELECT *
           FROM item
-          WHERE id = $1
-        `, [
-          taskRun.fkey_item_id
-        ])
+          WHERE id = $(id)
+        `, {
+          id: taskRun.fkey_item_id
+        })
 
         if (item === undefined) {
           continue
         }
 
-        const queueRun = await connection.selectOne<QueueRun>(`
-          SELECT
-            fkey_queue_id,
-            id,
-            name
+        const queueRun = await connection.selectOne<QueueRun, QueueRun>(`
+          SELECT *
           FROM queue_run
-          WHERE id = $1
-        `, [
-          taskRun.fkey_queue_run_id
-        ])
+          WHERE id = $(id)
+        `, {
+          id: taskRun.fkey_queue_run_id
+        })
 
         if (queueRun === undefined) {
           continue
@@ -293,19 +300,19 @@ export abstract class TaskRunner {
         taskRun.queueRun = queueRun
         taskRun.xid = xid
 
-        await connection.update(`
+        await connection.update<TaskRun>(`
           UPDATE task_run
           SET
             date_queued = NOW(),
             date_updated = NOW(),
-            xid = $1
-          WHERE id = $2
-        `, [
-          taskRun.xid,
-          taskRun.id
-        ])
+            xid = $(xid)
+          WHERE id = $(id)
+        `, {
+          id: taskRun.id,
+          xid: taskRun.xid
+        })
 
-        this.queuer.push(taskRun)
+        this.queue?.push(taskRun)
         this.xid = this.xid === '>' ? '>' : xid
       }
     } finally {
@@ -320,86 +327,85 @@ export abstract class TaskRunner {
       taskRun.code = taskRun.code === 'pending' ? 'ok' : taskRun.code
       taskRun.item.code = taskRun.code
 
-      await connection.update(`
+      await connection.update<TaskRun | { result: string }>(`
         UPDATE task_run
         SET
-          code = $1,
+          code = $(code),
           date_updated = NOW(),
-          reason = $2,
-          result = $3
-        WHERE id = $4
-      `, [
-        taskRun.code,
-        taskRun.reason,
-        JSON.stringify(taskRun.result),
-        taskRun.id
-      ])
+          reason = $(reason),
+          result = $(result)
+        WHERE id = $(id)
+      `, {
+        code: taskRun.code,
+        id: taskRun.id,
+        reason: taskRun.reason,
+        result: JSON.stringify(taskRun.result)
+      })
 
-      await connection.update(`
+      await connection.update<Item>(`
         UPDATE item
         SET
-          code = $1,
+          code = $(code),
           date_updated = NOW()
-        WHERE id = $2
-      `, [
-        taskRun.item.code,
-        taskRun.item.id
-      ])
+        WHERE id = $(id)
+      `, {
+        code: taskRun.item.code,
+        id: taskRun.item.id
+      })
 
       if (typeof taskRun.xid === 'string') {
-        await this.queue.xack(this.name, this.group, taskRun.xid)
+        await this.queueWriter.xack(this.name, this.group, taskRun.xid)
       }
 
       let nextTaskRun = null
 
       if (taskRun.code === 'ok') {
-        nextTaskRun = await connection.selectOne<Pick<TaskRun, 'id' | 'name'>>(`
-          SELECT
-            id,
-            name
-          FROM task_run
-          WHERE fkey_item_id = $1
-          AND number > $2
-          ORDER BY number ASC
-          LIMIT 1
-        `, [
-          taskRun.item.id,
-          taskRun.number
-        ]) ?? null
+        nextTaskRun = await connection
+          .selectOne<TaskRun, TaskRun>(`
+            SELECT *
+            FROM task_run
+            WHERE fkey_item_id = $(fkey_item_id)
+            AND number > $(number)
+            ORDER BY number ASC
+            LIMIT 1
+          `, {
+            fkey_item_id: taskRun.item.id,
+            number: taskRun.number
+          }) ?? null
       }
 
       if (nextTaskRun === null) {
         const field = taskRun.code === 'ok' ? 'ok' : 'err'
 
-        await connection.update(`
+        await connection.update<QueueRun>(`
           UPDATE queue_run
           SET
             aggr_${field} = aggr_${field} + 1,
             date_updated = NOW()
-          WHERE id = $1
-        `, [
-          taskRun.queueRun.id
-        ])
+          WHERE id = $(id)
+        `, {
+          id: taskRun.queueRun.id
+        })
 
-        const queues = await connection.select<Queue[]>(`
+        const queues = await connection.select<QueueRun, Queue[]>(`
           SELECT queue.id
           FROM queue
-          LEFT JOIN queue_run
+          JOIN queue_run
           ON queue.fkey_queue_id = queue_run.fkey_queue_id
-          WHERE queue_run.id = $1
+          WHERE queue_run.id = $(id)
           AND queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
-        `, [
-          taskRun.queueRun.id
-        ])
+        `, {
+          id: taskRun.queueRun.id
+        })
 
         for (const { id } of queues) {
-          await this.queue.publish(this.channel, JSON.stringify({
+          await this.queueWriter.publish(this.channel, JSON.stringify({
             id,
             parameters: [taskRun.queueRun.id]
           }))
         }
       } else {
-        await this.queue.xadd(
+        await this.queueWriter.xadd(
           `${taskRun.queueRun.name}-${nextTaskRun.name}`,
           ['MAXLEN', ['~', this.maxLength]],
           '*',

@@ -1,18 +1,5 @@
-import type {
-  CSSResult,
-  PropertyValues,
-  TemplateResult
-} from 'lit-element'
-
-import {
-  css,
-  customElement,
-  html,
-  property,
-  query,
-  svg
-} from 'lit-element'
-
+import type { CSSResult, PropertyValues, TemplateResult } from 'lit-element'
+import { css, customElement, html, property, query, svg } from 'lit-element'
 import { NodeElement } from './node'
 import type { RequestElement } from './request'
 

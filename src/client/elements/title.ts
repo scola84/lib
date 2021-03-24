@@ -1,14 +1,5 @@
-import type {
-  PropertyValues,
-  TemplateResult
-} from 'lit-element'
-
-import {
-  customElement,
-  html,
-  property
-} from 'lit-element'
-
+import type { PropertyValues, TemplateResult } from 'lit-element'
+import { customElement, html, property } from 'lit-element'
 import { NodeElement } from './node'
 import type { ViewElement } from './view'
 

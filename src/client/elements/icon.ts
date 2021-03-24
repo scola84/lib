@@ -1,15 +1,5 @@
-import type {
-  CSSResult,
-  TemplateResult
-} from 'lit-element'
-
-import {
-  css,
-  customElement,
-  html,
-  property
-} from 'lit-element'
-
+import type { CSSResult, TemplateResult } from 'lit-element'
+import { css, customElement, html, property } from 'lit-element'
 import { NodeElement } from './node'
 import { unsafeSVG } from 'lit-html/directives/unsafe-svg'
 

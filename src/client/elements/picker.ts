@@ -1,13 +1,5 @@
-import type {
-  CSSResult,
-  PropertyValues
-} from 'lit-element'
-
-import {
-  css,
-  customElement
-} from 'lit-element'
-
+import type { CSSResult, PropertyValues } from 'lit-element'
+import { css, customElement } from 'lit-element'
 import { FormatElement } from './format'
 import { InputElement } from './input'
 import { NodeElement } from './node'

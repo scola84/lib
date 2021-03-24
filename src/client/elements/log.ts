@@ -1,21 +1,6 @@
-import type {
-  CSSResult,
-  PropertyValues,
-  TemplateResult
-} from 'lit-element'
-
-import type {
-  Log,
-  NodeEvent
-} from './node'
-
-import {
-  css,
-  customElement,
-  html,
-  property
-} from 'lit-element'
-
+import type { CSSResult, PropertyValues, TemplateResult } from 'lit-element'
+import type { Log, NodeEvent } from './node'
+import { css, customElement, html, property } from 'lit-element'
 import { NodeElement } from './node'
 
 declare global {

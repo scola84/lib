@@ -1,17 +1,5 @@
-import type {
-  CSSResult,
-  PropertyValues,
-  TemplateResult
-} from 'lit-element'
-
-import {
-  LitElement,
-  css,
-  customElement,
-  html,
-  property,
-  query
-} from 'lit-element'
+import type { CSSResult, PropertyValues, TemplateResult } from 'lit-element'
+import { LitElement, css, customElement, html, property, query } from 'lit-element'
 
 declare global {
   interface HTMLElementEventMap {

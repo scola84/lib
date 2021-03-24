@@ -19,13 +19,11 @@ export interface ServiceManagerOptions {
 }
 
 export class ServiceManager {
-  public lib = {
-    process
-  }
-
   public logger: Logger
 
   public names: string[] | string
+
+  public process: NodeJS.Process
 
   public queuer?: Queuer
 
@@ -38,31 +36,25 @@ export class ServiceManager {
   public types: string[] | string
 
   public constructor (options: Partial<ServiceManagerOptions> = {}) {
-    const {
-      names = process.env.SERVICE_NAMES?.split(':') ?? '*',
-      logger,
-      queuer,
-      server,
-      services,
-      signal = 'SIGTERM',
-      types = process.env.SERVICE_TYPES?.split(':') ?? '*'
-    } = options
-
-    if (logger === undefined) {
-      throw new Error('Logger is undefined')
+    if (options.logger === undefined) {
+      throw new Error('Option "logger" is undefined')
     }
 
-    if (services === undefined) {
-      throw new Error('Services are undefined')
+    if (options.services === undefined) {
+      throw new Error('Option "services" is undefined')
     }
 
-    this.names = names
-    this.logger = logger.child({ name: 'service-manager' })
-    this.queuer = queuer
-    this.server = server
-    this.services = services
-    this.signal = signal
-    this.types = types
+    this.names = options.names ?? process.env.SERVICE_NAMES?.split(':') ?? '*'
+    this.logger = options.logger.child({ name: 'service-manager' })
+    this.queuer = options.queuer
+    this.server = options.server
+    this.services = options.services
+    this.signal = options.signal ?? 'SIGTERM'
+    this.types = options.types ?? process.env.SERVICE_TYPES?.split(':') ?? '*'
+  }
+
+  public createProcess (): NodeJS.Process {
+    return process
   }
 
   public start (): void {
@@ -71,6 +63,8 @@ export class ServiceManager {
       signal: this.signal,
       types: this.types
     }, 'Starting')
+
+    this.process = this.createProcess()
 
     if (isMatch('server', this.types)) {
       this.server?.setup()
@@ -97,11 +91,11 @@ export class ServiceManager {
       ])
       .catch((error) => {
         this.logger.error(String(error))
-        this.lib.process.exit()
+        this.process.exit()
       })
 
     if (this.signal !== null) {
-      this.lib.process.on(this.signal, () => {
+      this.process.on(this.signal, () => {
         this.stop()
       })
     }
@@ -114,11 +108,11 @@ export class ServiceManager {
         isMatch('queuer', this.types) ? this.queuer?.stop() : null
       ])
       .then(() => {
-        this.lib.process.exit()
+        this.process.exit()
       })
       .catch((error) => {
         this.logger.error(String(error))
-        this.lib.process.exit()
+        this.process.exit()
       })
   }
 }

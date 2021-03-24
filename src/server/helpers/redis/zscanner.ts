@@ -6,7 +6,7 @@ export interface ZScannerOptions extends ReadableOptions {
   cursor: string
   del: boolean
   key: string
-  queue: WrappedNodeRedisClient
+  queueWriter: WrappedNodeRedisClient
 }
 
 export class ZScanner extends Readable {
@@ -18,7 +18,7 @@ export class ZScanner extends Readable {
 
   public key: string
 
-  public queue: WrappedNodeRedisClient
+  public queueWriter: WrappedNodeRedisClient
 
   public constructor (options: Partial<ZScannerOptions>) {
     super({
@@ -26,25 +26,18 @@ export class ZScanner extends Readable {
       ...options
     })
 
-    const {
-      cursor = '0',
-      del = false,
-      key,
-      queue
-    } = options
-
-    if (key === undefined) {
-      throw new Error('Key is undefined')
+    if (options.key === undefined) {
+      throw new Error('Option "key" is undefined')
     }
 
-    if (queue === undefined) {
-      throw new Error('Queue is undefined')
+    if (options.queueWriter === undefined) {
+      throw new Error('Option "queueWriter" is undefined')
     }
 
-    this.cursor = cursor
-    this.del = del
-    this.key = key
-    this.queue = queue
+    this.cursor = options.cursor ?? '0'
+    this.del = options.del ?? false
+    this.key = options.key
+    this.queueWriter = options.queueWriter
   }
 
   public _destroy (error: Error, callback: (error?: Error) => void): void {
@@ -53,7 +46,7 @@ export class ZScanner extends Readable {
       return
     }
 
-    this.queue
+    this.queueWriter
       .del(this.key)
       .then(() => {
         callback(error)
@@ -80,7 +73,7 @@ export class ZScanner extends Readable {
   }
 
   protected readData (size: number): void {
-    this.queue
+    this.queueWriter
       .zscan(this.key, Number(this.cursor), ['COUNT', size])
       .then((result) => {
         this.handleScan(size, ...result as [string, string[]])

@@ -16,41 +16,41 @@ export class PostgresqlConnection implements Connection {
     }
   }
 
-  public async delete (query: string, values: unknown[] = []): Promise<DeleteResult> {
+  public async delete<V> (query: string, values: Partial<V>): Promise<DeleteResult> {
     await this.query(query, values)
     return { count: 0 }
   }
 
-  public async insert (query: string, values: unknown[] = []): Promise<InsertResult[]> {
-    const result = await this.query<InsertResult[]>(...this.transformInsert(query, values))
+  public async insert<V, R = number> (query: string, values: Partial<V>): Promise<Array<InsertResult<R>>> {
+    const result = await this.query<V, Array<InsertResult<R>>>(...this.transformInsert(query, values))
     return result
   }
 
-  public async insertOne (query: string, values: unknown[] = []): Promise<InsertResult> {
-    const result = await this.query<InsertResult[]>(...this.transformInsert(query, values))
+  public async insertOne<V, R = number> (query: string, values: Partial<V>): Promise<InsertResult<R>> {
+    const result = await this.query<V, Array<InsertResult<R>>>(...this.transformInsert(query, values))
     return result[0]
   }
 
-  public async query<T = unknown>(query: string, values: unknown[]): Promise<T> {
-    return this.connection.query<T>(query, values)
+  public async query<V, R>(query: string, values: Partial<V>): Promise<R> {
+    return this.connection.query<R>(query, values)
   }
 
   public release (): void {
     this.connection.done()
   }
 
-  public async select<T>(query: string, values: unknown[] = []): Promise<T> {
-    return this.query<T>(query, values)
+  public async select<V, R>(query: string, values: Partial<V>): Promise<R> {
+    return this.query<V, R>(query, values)
   }
 
-  public async selectOne<T>(query: string, values: unknown[] = []): Promise<T | undefined> {
-    const result = await this.query<T[]>(query, values)
+  public async selectOne<V, R>(query: string, values: Partial<V>): Promise<R | undefined> {
+    const result = await this.query<V, R[]>(query, values)
     return result[0]
   }
 
-  public async stream (query: string, values: unknown[] = []): Promise<Readable> {
+  public async stream<V> (query: string, values: Partial<V>): Promise<Readable> {
     return new Promise((resolve, reject) => {
-      this.connection.stream(new PgQueryStream(query, values as []), (stream) => {
+      this.connection.stream(new PgQueryStream(query, values as unknown as []), (stream) => {
         resolve(stream as Readable)
       }).catch((error: unknown) => {
         this.release()
@@ -59,11 +59,11 @@ export class PostgresqlConnection implements Connection {
     })
   }
 
-  public transformInsert (query: string, values: unknown[]): [string, unknown[]] {
+  public transformInsert<V> (query: string, values: V): [string, V] {
     return [`${query} RETURNING id`, values]
   }
 
-  public async update (query: string, values: unknown[] = []): Promise<UpdateResult> {
+  public async update<V> (query: string, values: V): Promise<UpdateResult> {
     await this.query(query, values)
     return { count: 0 }
   }

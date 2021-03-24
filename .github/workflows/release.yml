@@ -28,7 +28,7 @@ jobs:
         run: yarn lint
 
       - name: Test
-        run: yarn test
+        run: yarn test --maxWorkers=4
 
       - name: Bundle
         run: yarn bundle

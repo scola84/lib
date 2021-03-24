@@ -14,24 +14,23 @@ export class MysqlConnection implements Connection {
     }
   }
 
-  public async delete (query: string, values: unknown[] = []): Promise<DeleteResult> {
-    const result = await this.query<ResultSetHeader>(query, values)
+  public async delete<V> (query: string, values: Partial<V>): Promise<DeleteResult> {
+    const result = await this.query<V, ResultSetHeader>(query, values)
     return { count: result.affectedRows }
   }
 
-  public async insert (query: string, values: unknown[] = []): Promise<InsertResult[]> {
-    const result = await this.query<ResultSetHeader>(query, values)
+  public async insert<V, R = number> (query: string, values: Partial<V>): Promise<Array<InsertResult<R>>> {
+    const result = await this.query<V, { insertId: R }>(query, values)
     return [{ id: result.insertId }]
   }
 
-  public async insertOne (query: string, values: unknown[] = []): Promise<InsertResult> {
-    const result = await this.query<ResultSetHeader>(query, values)
+  public async insertOne<V, R = number> (query: string, values: Partial<V>): Promise<InsertResult<R>> {
+    const result = await this.query<V, { insertId: R }>(query, values)
     return { id: result.insertId }
   }
 
-  public async query<T>(query: string, values: unknown[] = []): Promise<T> {
-    const [result] = await this.connection
-      .query(...this.transformPlaceholders(query, values)) as unknown as [T]
+  public async query<V, R>(query: string, values: Partial<V>): Promise<R> {
+    const [result] = await this.connection.query(...this.transformParameters(query, values as unknown as [])) as unknown as [R]
     return result
   }
 
@@ -39,37 +38,69 @@ export class MysqlConnection implements Connection {
     this.connection.release()
   }
 
-  public async select<T>(query: string, values: unknown[] = []): Promise<T> {
-    return this.query<T>(query, values)
+  public async select<V, R>(query: string, values: Partial<V>): Promise<R> {
+    return this.query<V, R>(query, values)
   }
 
-  public async selectOne<T>(query: string, values: unknown[] = []): Promise<T | undefined> {
-    const result = await this.query<T[]>(query, values)
+  public async selectOne<V, R>(query: string, values: Partial<V>): Promise<R | undefined> {
+    const result = await this.query<V, R[]>(query, values)
     return result[0]
   }
 
-  public async stream (query: string, values: unknown = []): Promise<Readable> {
+  public async stream<V> (query: string, values: Partial<V>): Promise<Readable> {
     const stream = this.connection.connection
-      .query(query, values)
+      .query(...this.transformParameters(query, values as unknown as []))
       .stream()
 
     return Promise.resolve(stream)
   }
 
-  public transformPlaceholders (rawQuery: string, rawValues: unknown[] = []): [string, unknown[]] {
+  public transformParameters (rawQuery: string, rawValues: Record<string, unknown> | unknown[]): [string, unknown[]] {
+    if (rawValues instanceof Array) {
+      return this.transformParametersArray(rawQuery, rawValues)
+    }
+
+    return this.transformParametersObject(rawQuery, rawValues)
+  }
+
+  public async update<V> (query: string, values: Partial<V>): Promise<UpdateResult> {
+    const result = await this.query<V, ResultSetHeader>(query, values)
+    return { count: result.affectedRows }
+  }
+
+  protected transformParametersArray (rawQuery: string, rawValues: unknown[]): [string, unknown[]] {
     return [
       rawQuery
         .replace(/\$\d+/gu, '?'),
       rawQuery
         .match(/\$\d+/gu)
         ?.map((index) => {
-          return rawValues[Number(index.slice(1)) - 1]
+          const value = rawValues[Number(index.slice(1)) - 1]
+
+          if (value === undefined) {
+            throw new Error(`Parameter "${index}" is undefined`)
+          }
+
+          return value
         }) ?? rawValues
     ]
   }
 
-  public async update (query: string, values: unknown[] = []): Promise<UpdateResult> {
-    const result = await this.query<ResultSetHeader>(query, values)
-    return { count: result.affectedRows }
+  protected transformParametersObject (rawQuery: string, rawValues: Record<string, unknown>): [string, unknown[]] {
+    return [
+      rawQuery
+        .replace(/\$\(\w+\)/gu, '?'),
+      rawQuery
+        .match(/\$\(\w+\)/gu)
+        ?.map((index) => {
+          const value = rawValues[index.slice(2, -1)]
+
+          if (value === undefined) {
+            throw new Error(`Parameter "${index}" is undefined`)
+          }
+
+          return value
+        }) ?? Object.values(rawValues)
+    ]
   }
 }

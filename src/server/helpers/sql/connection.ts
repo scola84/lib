@@ -5,8 +5,8 @@ export interface DeleteResult {
   count: number
 }
 
-export interface InsertResult {
-  id: number | string
+export interface InsertResult<R = number> {
+  id: R
 }
 
 export interface UpdateResult {
@@ -16,21 +16,21 @@ export interface UpdateResult {
 export interface Connection {
   tokens: tokens
 
-  delete: (query: string, values: unknown[]) => Promise<DeleteResult>
+  delete: <V> (query: string, values: Partial<V>) => Promise<DeleteResult>
 
-  insert: (query: string, values: unknown[]) => Promise<InsertResult[]>
+  insert: <V, R = number> (query: string, values: Partial<V>) => Promise<Array<InsertResult<R>>>
 
-  insertOne: (query: string, values: unknown[]) => Promise<InsertResult>
+  insertOne: <V, R = number> (query: string, values: Partial<V>) => Promise<InsertResult<R>>
 
-  query: <T> (query: string, values: unknown[]) => Promise<T>
+  query: <V, R> (query: string, values: Partial<V>) => Promise<R>
 
   release: () => void
 
-  select: <T>(query: string, values: unknown[]) => Promise<T>
+  select: <V, R> (query: string, values: Partial<V>) => Promise<R>
 
-  selectOne: <T>(query: string, values: unknown[]) => Promise<T | undefined>
+  selectOne: <V, R> (query: string, values: Partial<V>) => Promise<R | undefined>
 
-  stream: (query: string, values: unknown[]) => Promise<Readable>
+  stream: <V> (query: string, values: Partial<V>) => Promise<Readable>
 
-  update: (query: string, values: unknown[]) => Promise<UpdateResult>
+  update: <V> (query: string, values: Partial<V>) => Promise<UpdateResult>
 }

@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyServerOptions } from 'fastify'
+import type { FastifyInstance, FastifyPluginCallback, FastifyServerOptions } from 'fastify'
 import type { Logger } from 'pino'
 import { ServerError } from './error'
 import { fastify } from 'fastify'
@@ -17,13 +17,6 @@ export class Server {
 
   public fastify: FastifyInstance
 
-  public lib = {
-    fastify,
-    fastifyCookie,
-    fastifyFormbody,
-    fastifyMultipart
-  }
-
   public logger: Logger
 
   public options: FastifyServerOptions
@@ -31,24 +24,18 @@ export class Server {
   public port: number
 
   public constructor (options: Partial<ServerOptions> = {}) {
-    const {
-      address = '0.0.0.0',
-      logger,
-      port = 3000
-    } = options
-
-    if (logger === undefined) {
-      throw new Error('Logger is undefined')
+    if (options.logger === undefined) {
+      throw new Error('Option "logger" is undefined')
     }
 
-    this.address = address
-    this.logger = logger.child({ name: 'server' })
+    this.address = options.address ?? '0.0.0.0'
+    this.logger = options.logger.child({ name: 'server' })
     this.options = options
-    this.port = port
+    this.port = options.port ?? 3000
   }
 
-  public setup (): void {
-    this.fastify = this.lib.fastify({
+  public createFastify (): FastifyInstance {
+    return fastify({
       ajv: {
         customOptions: {
           allErrors: true,
@@ -57,6 +44,22 @@ export class Server {
       },
       ...this.options
     })
+  }
+
+  public createFastifyCookie (): FastifyPluginCallback {
+    return fastifyCookie
+  }
+
+  public createFastifyFormbody (): FastifyPluginCallback {
+    return fastifyFormbody
+  }
+
+  public createFastifyMultipart (): FastifyPluginCallback {
+    return fastifyMultipart
+  }
+
+  public setup (): void {
+    this.fastify = this.createFastify()
 
     this.fastify.addHook('preSerialization', (request, reply, data, done) => {
       done(null, reply.statusCode >= 400 ? data : {
@@ -90,9 +93,9 @@ export class Server {
     }, 'Starting')
 
     return Promise.all([
-      this.fastify.register(this.lib.fastifyCookie),
-      this.fastify.register(this.lib.fastifyFormbody),
-      this.fastify.register(this.lib.fastifyMultipart),
+      this.fastify.register(this.createFastifyCookie()),
+      this.fastify.register(this.createFastifyFormbody()),
+      this.fastify.register(this.createFastifyMultipart()),
       this.fastify.listen(this.port, this.address)
     ])
   }

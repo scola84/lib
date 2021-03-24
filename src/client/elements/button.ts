@@ -1,14 +1,5 @@
-import type {
-  CSSResult,
-  PropertyValues
-} from 'lit-element'
-
-import {
-  css,
-  customElement,
-  property
-} from 'lit-element'
-
+import type { CSSResult, PropertyValues } from 'lit-element'
+import { css, customElement, property } from 'lit-element'
 import { ClipElement } from './clip'
 import { NodeElement } from './node'
 import type { NodeEvent } from './node'

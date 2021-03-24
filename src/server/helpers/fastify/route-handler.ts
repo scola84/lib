@@ -1,4 +1,4 @@
-import type { FastifyReply, FastifyRequest, RouteOptions } from 'fastify'
+import type { FastifyReply, FastifyRequest, FastifySchema, RouteOptions } from 'fastify'
 import type { Logger } from 'pino'
 import type { Server } from './server'
 
@@ -16,40 +16,29 @@ export abstract class RouteHandler {
 
   public options: Partial<RouteOptions>
 
+  public schema: FastifySchema
+
   public server: Server
 
   public url: RouteOptions['url']
 
-  public constructor (options: Partial<RouteHandlerOptions>) {
-    const {
-      logger,
-      method,
-      server,
-      url
-    } = {
+  public constructor (coptions: Partial<RouteHandlerOptions>) {
+    const options = {
       ...RouteHandler.options,
-      ...options
+      ...coptions
     }
 
-    if (logger === undefined) {
-      throw new Error('Logger is undefined')
+    if (options.logger === undefined) {
+      throw new Error('Option "logger" is undefined')
     }
 
-    if (server === undefined) {
-      throw new Error('Server is undefined')
+    if (options.server === undefined) {
+      throw new Error('Option "server" is undefined')
     }
 
-    if (method !== undefined) {
-      this.method = method
-    }
-
-    if (url !== undefined) {
-      this.url = url
-    }
-
-    this.logger = logger.child({ name: url })
+    this.logger = options.logger.child({ name: options.url })
     this.options = options
-    this.server = server
+    this.server = options.server
   }
 
   public start (): void {
@@ -59,10 +48,11 @@ export abstract class RouteHandler {
     }, 'Starting')
 
     this.server.fastify.route({
-      ...this.options,
       handler: this.route.bind(this),
       method: this.method,
-      url: this.url
+      schema: this.schema,
+      url: this.url,
+      ...this.options
     })
   }
 

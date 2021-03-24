@@ -83,10 +83,7 @@
       "consistent"
     ],
     "id-length": "off",
-    "max-len": [
-      "error",
-      100
-    ],
+    "max-len": "off",
     "max-lines": "off",
     "max-lines-per-function": "off",
     "max-params": "off",

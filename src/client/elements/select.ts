@@ -1,17 +1,5 @@
-import type {
-  CSSResult,
-  PropertyValues,
-  TemplateResult
-} from 'lit-element'
-
-import {
-  css,
-  customElement,
-  html,
-  property,
-  query
-} from 'lit-element'
-
+import type { CSSResult, PropertyValues, TemplateResult } from 'lit-element'
+import { css, customElement, html, property, query } from 'lit-element'
 import { InputElement } from './input'
 import type { InputEvent } from './input'
 

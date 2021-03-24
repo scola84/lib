@@ -1,3 +1,15 @@
+# [10.0.0](https://github.com/scola84/lib/compare/v9.0.0...v10.0.0) (2021-03-24)
+
+
+### Features
+
+* implement tests and redesign several components accordingly ([960c075](https://github.com/scola84/lib/commit/960c075ef64f7def07f0cfff7d2c91b49ca45ae7))
+
+
+### BREAKING CHANGES
+
+* Many improvements.
+
 # [9.0.0](https://github.com/scola84/lib/compare/v8.0.0...v9.0.0) (2021-03-12)
 
 

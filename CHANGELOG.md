@@ -1,3 +1,16 @@
+# [11.0.0](https://github.com/scola84/lib/compare/v10.0.0...v11.0.0) (2021-03-26)
+
+
+### Features
+
+* **queue:** remove name, number and options from TaskRun ([4eea9c1](https://github.com/scola84/lib/commit/4eea9c117757768337c79dff66e1472053c3bd96))
+
+
+### BREAKING CHANGES
+
+* **queue:** TaskRun no longer has an options object,
+it is available on Task, which no is set on TaskRun (as "task").
+
 # [10.0.0](https://github.com/scola84/lib/compare/v9.0.0...v10.0.0) (2021-03-24)
 
 

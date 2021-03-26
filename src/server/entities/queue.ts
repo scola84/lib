@@ -1,7 +1,7 @@
-import type { Queue as QueueQueueRunBase } from './base'
+import type { Queue as QueueBase } from './base'
 import type { Task } from './task'
 
-export interface Queue extends Required<QueueQueueRunBase> {
+export interface Queue extends Required<QueueBase> {
   tasks: Task[]
 }
 

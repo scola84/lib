@@ -1,5 +1,5 @@
 import type { DuplexOptions, Readable, Transform, Writable } from 'stream'
-import type { Item, Queue, QueueRun, TaskRun } from '../../entities'
+import type { Item, Queue, QueueRun, Task, TaskRun } from '../../entities'
 import Ajv from 'ajv'
 import type { Database } from '../sql'
 import type { Logger } from 'pino'
@@ -214,7 +214,7 @@ export abstract class TaskRunner {
     })
 
     if (taskRun.code === 'pending') {
-      this.validate('options', taskRun.options)
+      this.validate('options', taskRun.task.options)
       this.validate('payload', taskRun.item.payload)
       await this.run(taskRun)
     }
@@ -296,8 +296,21 @@ export abstract class TaskRunner {
           continue
         }
 
+        const task = await connection.selectOne<Task, Task>(`
+          SELECT *
+          FROM task
+          WHERE id = $(id)
+        `, {
+          id: taskRun.fkey_task_id
+        })
+
+        if (task === undefined) {
+          continue
+        }
+
         taskRun.item = item
         taskRun.queueRun = queueRun
+        taskRun.task = task
         taskRun.xid = xid
 
         await connection.update<TaskRun>(`
@@ -361,16 +374,19 @@ export abstract class TaskRunner {
 
       if (taskRun.code === 'ok') {
         nextTaskRun = await connection
-          .selectOne<TaskRun, TaskRun>(`
-            SELECT *
+          .selectOne<Task & TaskRun, Task & TaskRun>(`
+            SELECT
+              task_run.id,
+              task.name
             FROM task_run
+            JOIN task ON task_run.fkey_task_id = task.id
             WHERE fkey_item_id = $(fkey_item_id)
-            AND number > $(number)
-            ORDER BY number ASC
+            AND task.number > $(number)
+            ORDER BY task.number ASC
             LIMIT 1
           `, {
             fkey_item_id: taskRun.item.id,
-            number: taskRun.number
+            number: taskRun.task.number
           }) ?? null
       }
 

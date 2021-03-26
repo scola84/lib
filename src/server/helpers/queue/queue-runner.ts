@@ -118,14 +118,12 @@ export class QueueRunner {
 
           for (const task of queueRun.queue.tasks) {
             const { id: taskRunId = '0' } = await connection.insertOne<TaskRun | { options: string }>(`
-              INSERT INTO task_run (fkey_item_id,fkey_queue_run_id,name,number,options)
-              VALUES ($(fkey_item_id),$(fkey_queue_run_id),$(name),$(number),$(options))
+              INSERT INTO task_run (fkey_item_id,fkey_queue_run_id,fkey_task_id)
+              VALUES ($(fkey_item_id),$(fkey_queue_run_id),$(fkey_task_id))
             `, {
               fkey_item_id: itemId,
               fkey_queue_run_id: queueRun.id,
-              name: task.name,
-              number: task.number,
-              options: JSON.stringify(task.options)
+              fkey_task_id: task.id
             })
 
             if (task.number === 1) {

@@ -5,12 +5,10 @@ export interface TaskRun {
   date_updated?: Date
   fkey_item_id: number
   fkey_queue_run_id: number
+  fkey_task_id: number
   id?: number
   code?: string
   consumer: string | null
-  name: string
-  options: unknown
-  number: number
   reason: string | null
   result?: unknown
   xid: string | null

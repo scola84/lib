@@ -1,3 +1,10 @@
+## [11.0.2](https://github.com/scola84/lib/compare/v11.0.1...v11.0.2) (2021-03-27)
+
+
+### Bug Fixes
+
+* **deps:** add missing dependency ([08424af](https://github.com/scola84/lib/commit/08424af14de21e778e09d7083002dda2f624dafa))
+
 ## [11.0.1](https://github.com/scola84/lib/compare/v11.0.0...v11.0.1) (2021-03-27)
 
 

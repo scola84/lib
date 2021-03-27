@@ -28,8 +28,8 @@ describe('MysqlConnection', () => {
       const connection = new MysqlConnection()
       const [query, values] = connection.transformParameters(rawQuery, rawValues)
 
-      expect(query).to.be.equal(expectedQuery)
-      expect(values).to.be.deep.equal(expectedValues)
+      expect(query).equal(expectedQuery)
+      expect(values).deep.equal(expectedValues)
     })
 
     it('transform object parameters from $(n) to ?', () => {
@@ -61,8 +61,8 @@ describe('MysqlConnection', () => {
       const connection = new MysqlConnection()
       const [query, values] = connection.transformParameters(rawQuery, rawValues)
 
-      expect(query).to.be.equal(expectedQuery)
-      expect(values).to.be.deep.equal(expectedValues)
+      expect(query).equal(expectedQuery)
+      expect(values).deep.equal(expectedValues)
     })
   })
 })

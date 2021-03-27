@@ -5,6 +5,7 @@
   },
   "browser": "dist/client/umd.js",
   "dependencies": {
+    "@formatjs/icu-messageformat-parser": "^0.2.1",
     "@rmp135/sql-ts": "^1.8.2",
     "@types/micromatch": "^4.0.1",
     "@types/mysql": "^2.15.18",

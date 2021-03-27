@@ -540,6 +540,22 @@
   dependencies:
     tslib "^2.1.0"
 
+"@formatjs/icu-messageformat-parser@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@formatjs/icu-messageformat-parser/-/icu-messageformat-parser-0.2.1.tgz#662dfddee9eecc47271be4827ba8310bb4f4a015"
+  integrity sha512-ALVcQRhDuzpVZdCITwse+OQ+ow+K5QWWD5pSHuCZ798jTQJYK1gUvgHm/p6Y6WmP+jl/fk96oeUOs2fgkiyBYA==
+  dependencies:
+    "@formatjs/ecma402-abstract" "1.6.4"
+    "@formatjs/icu-skeleton-parser" "1.1.0"
+    tslib "^2.1.0"
+
+"@formatjs/icu-skeleton-parser@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@formatjs/icu-skeleton-parser/-/icu-skeleton-parser-1.1.0.tgz#4d63c14b785c43f616fbee3ba766bc8f654c8193"
+  integrity sha512-Wm61/f0bsWr6CTYLmh9BgDv0VQTNhLB0Nu5Xif/Vw5pQ5xtA/13Si0f/xT9aTeEQwUnv6VdfbFkQRdEGPx68Yg==
+  dependencies:
+    "@formatjs/ecma402-abstract" "1.6.4"
+
 "@iarna/cli@^1.2.0":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@iarna/cli/-/cli-1.2.0.tgz#0f7af5e851afe895104583c4ca07377a8094d641"

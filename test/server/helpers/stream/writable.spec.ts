@@ -22,7 +22,7 @@ describe('Writable', () => {
     const test = new Test()
 
     test.on('error', (error) => {
-      expect(error.message).to.equal('error message')
+      expect(error.message).equal('error message')
       done()
     })
 

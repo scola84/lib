@@ -163,7 +163,7 @@ export abstract class TaskRunner {
 
     if (schema?.(data) === false) {
       const error = schema.errors?.[0]
-      throw new Error(`${name}${error?.dataPath ?? ''} ${error?.message ?? ''}`)
+      throw new Error(`${name}${error?.instancePath ?? ''} ${error?.message ?? ''}`)
     }
   }
 

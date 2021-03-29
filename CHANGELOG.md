@@ -1,3 +1,10 @@
+## [11.0.5](https://github.com/scola84/lib/compare/v11.0.4...v11.0.5) (2021-03-29)
+
+
+### Bug Fixes
+
+* **cli:** reference to cli in package.json ([bf5a286](https://github.com/scola84/lib/commit/bf5a286d4c7df952e5d16c9183f943f4b83f9f1d))
+
 ## [11.0.4](https://github.com/scola84/lib/compare/v11.0.3...v11.0.4) (2021-03-29)
 
 

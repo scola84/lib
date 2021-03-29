@@ -1,3 +1,10 @@
+## [11.0.6](https://github.com/scola84/lib/compare/v11.0.5...v11.0.6) (2021-03-29)
+
+
+### Bug Fixes
+
+* **cli:** sort entity properties in sql-ts ([649fd1d](https://github.com/scola84/lib/commit/649fd1d99e8b8901bb49ebbd102b94d117718fa7))
+
 ## [11.0.5](https://github.com/scola84/lib/compare/v11.0.4...v11.0.5) (2021-03-29)
 
 

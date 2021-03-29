@@ -1,7 +1,7 @@
 {
   "author": "M.C. van den Boogaart <scola@kvdb.name>",
   "bin": {
-    "scola": ".bin/cli.js"
+    "scola": "bin/cli.js"
   },
   "browser": "dist/client/umd.js",
   "dependencies": {

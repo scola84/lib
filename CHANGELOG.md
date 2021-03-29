@@ -1,3 +1,10 @@
+## [11.0.3](https://github.com/scola84/lib/compare/v11.0.2...v11.0.3) (2021-03-29)
+
+
+### Bug Fixes
+
+* **cli:** move .bin to bin ([ef4ed3d](https://github.com/scola84/lib/commit/ef4ed3d0d7ac14e0a3cbc00fa978aa14dc1e1e17))
+
 ## [11.0.2](https://github.com/scola84/lib/compare/v11.0.1...v11.0.2) (2021-03-27)
 
 

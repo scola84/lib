@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable */
 
 const fs = require('fs')
 const path = require('path')
@@ -60,6 +61,15 @@ if (command === 'sql-ts') {
     })
     .then((database) => {
       fs.mkdirSync(options.path, { recursive: true })
+      return database
+    })
+    .then((database) => {
+      for (const table of database.tables) {
+        table.columns.sort((a, b) => {
+          return a.propertyName > b.propertyName ? 1 : -1
+        })
+      }
+
       return database
     })
     .then((database) => {

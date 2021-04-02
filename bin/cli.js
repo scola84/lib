@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable */
+/* eslint-disable no-console */
 
 const fs = require('fs')
 const path = require('path')
@@ -23,17 +23,17 @@ if (command === 'sql-ts') {
 
   if (options.driver === '') {
     console.log('scola: provide a driver with --driver (see http://knexjs.org/#Installation-node)')
-    return
+    process.exit()
   }
 
   if (options.dsn === '') {
     console.log('scola: provide a source DSN with --dsn')
-    return
+    process.exit()
   }
 
   if (options.path === '') {
     console.log('scola: provide a target directory with --path')
-    return
+    process.exit()
   }
 
   options.path = `${path.resolve(options.path)}/`
@@ -51,6 +51,7 @@ if (command === 'sql-ts') {
     .toObject({
       client: options.driver,
       connection: options.dsn,
+      // eslint-disable-next-line no-template-curly-in-string
       interfaceNameFormat: '${table}',
       tableNameCasing: 'pascal',
       typeMap: {
@@ -91,11 +92,16 @@ if (command === 'sql-ts') {
       return database
     })
     .then((database) => {
+      const exports = database.tables
+        .map((table) => {
+          return `export * from './${table.name.replace('_', '-')}'`
+        })
+        .sort()
+        .join('\n')
+
       fs.writeFileSync(
         `${options.path}index.ts`,
-        `${database.tables.map((table) => {
-          return `export * from './${table.name.replace('_', '-')}'`
-        }).sort().join('\n')}\n`
+        `${exports}\n`
       )
     })
     .catch((error) => {

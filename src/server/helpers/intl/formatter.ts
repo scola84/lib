@@ -9,13 +9,13 @@ export class Formatter {
     return String(new Format(string, lang).format(data))
   }
 
-  public static lookup (text: string, lang = Formatter.lang): string | undefined {
+  public static lookup (string: string, lang = Formatter.lang): string | undefined {
     const strings = Formatter.strings[lang] ?? {}
 
     return Object
       .keys(strings)
       .find((code) => {
-        return strings[code].toLowerCase() === text.toLowerCase()
+        return strings[code].toLowerCase() === string.toLowerCase()
       })
   }
 

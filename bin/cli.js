@@ -10,17 +10,52 @@ const { URL } = require('url')
 const logger = console
 
 commander
+  .command('dc-reload <container>')
+  .description('Reloads a Docker service')
+  .action((service) => {
+    child.execSync([
+      'docker-compose rm',
+      '--force',
+      '--stop',
+      service
+    ].join(' '), {
+      stdio: 'inherit'
+    })
+
+    child.execSync([
+      'docker-compose up',
+      '--detach',
+      service
+    ].join(' '), {
+      stdio: 'inherit'
+    })
+  })
+
+commander
   .command('sql-clean')
   .description('Cleans up data and diff dumps')
   .action(() => {
+    const dirs = [
+      'data',
+      'diff'
+    ]
+
     const protocols = [
       'mysql',
       'postgres'
     ]
 
     for (const protocol of protocols) {
-      child.execSync(`rm -rf .deploy/${protocol}/initdb.d/data`)
-      child.execSync(`rm -rf .deploy/${protocol}/initdb.d/diff`)
+      for (const dir of dirs) {
+        child.execSync([
+          'rm',
+          '--force',
+          '--recursive',
+          `.deploy/${protocol}/initdb.d/${dir}`
+        ].join(' '), {
+          stdio: 'inherit'
+        })
+      }
     }
   })
 
@@ -46,6 +81,7 @@ commander
           return `--ignore-table ${database}.${table}`
         })
         .join(' ')
+
       const include = (options.include ?? []).join(' ')
 
       child.execSync([

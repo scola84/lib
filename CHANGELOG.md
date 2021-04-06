@@ -1,3 +1,15 @@
+# [12.0.0](https://github.com/scola84/lib/compare/v11.2.1...v12.0.0) (2021-04-06)
+
+
+### Features
+
+* **sql:** make connection release async ([99393f0](https://github.com/scola84/lib/commit/99393f02eeb6162faec8424d7216c5e90798933a))
+
+
+### BREAKING CHANGES
+
+* **sql:** The release method now returns a Promise.
+
 ## [11.2.1](https://github.com/scola84/lib/compare/v11.2.0...v11.2.1) (2021-04-06)
 
 

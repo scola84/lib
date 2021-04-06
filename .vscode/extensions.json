@@ -2,6 +2,7 @@
   "recommendations": [
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
+    "foxundermoon.shell-format",
     "runem.lit-plugin",
     "ryanluker.vscode-coverage-gutters"
   ]

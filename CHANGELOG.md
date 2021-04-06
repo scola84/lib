@@ -1,3 +1,10 @@
+## [11.2.1](https://github.com/scola84/lib/compare/v11.2.0...v11.2.1) (2021-04-06)
+
+
+### Bug Fixes
+
+* **deps:** update dependencies ([08eb3ab](https://github.com/scola84/lib/commit/08eb3ab5880c09fade14695c5e58fbc84ed05018))
+
 # [11.2.0](https://github.com/scola84/lib/compare/v11.1.0...v11.2.0) (2021-04-06)
 
 

@@ -1,3 +1,11 @@
+# [11.1.0](https://github.com/scola84/lib/compare/v11.0.6...v11.1.0) (2021-04-06)
+
+
+### Features
+
+* **cli:** add database commands to CLI ([be1386e](https://github.com/scola84/lib/commit/be1386e522539fc29b4b2676bc9677ac073978db))
+* **cli:** implement as commander ([ccf17a7](https://github.com/scola84/lib/commit/ccf17a7a10e71f6633e0a7cda5e03db464932ea0))
+
 ## [11.0.6](https://github.com/scola84/lib/compare/v11.0.5...v11.0.6) (2021-03-29)
 
 

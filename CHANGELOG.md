@@ -1,3 +1,10 @@
+# [11.2.0](https://github.com/scola84/lib/compare/v11.1.0...v11.2.0) (2021-04-06)
+
+
+### Features
+
+* **cli:** add command to reload a Docker service ([0398d8e](https://github.com/scola84/lib/commit/0398d8ea7057a3e55affca442e792d723821b823))
+
 # [11.1.0](https://github.com/scola84/lib/compare/v11.0.6...v11.1.0) (2021-04-06)
 
 

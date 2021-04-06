@@ -9,7 +9,7 @@ export abstract class Database {
       const result = await connection.delete<V>(query, values)
       return result
     } finally {
-      connection.release()
+      await connection.release()
     }
   }
 
@@ -20,7 +20,7 @@ export abstract class Database {
       const result = await connection.insert<V, R>(query, values)
       return result
     } finally {
-      connection.release()
+      await connection.release()
     }
   }
 
@@ -31,7 +31,7 @@ export abstract class Database {
       const result = await connection.insertOne<V, R>(query, values)
       return result
     } finally {
-      connection.release()
+      await connection.release()
     }
   }
 
@@ -42,7 +42,7 @@ export abstract class Database {
       const result = await connection.query<V, R>(query, values)
       return result
     } finally {
-      connection.release()
+      await connection.release()
     }
   }
 
@@ -53,7 +53,7 @@ export abstract class Database {
       const result = await connection.select<V, R>(query, values)
       return result
     } finally {
-      connection.release()
+      await connection.release()
     }
   }
 
@@ -64,7 +64,7 @@ export abstract class Database {
       const result = await connection.selectOne<V, R>(query, values)
       return result
     } finally {
-      connection.release()
+      await connection.release()
     }
   }
 
@@ -73,7 +73,9 @@ export abstract class Database {
     const stream = await connection.stream<V>(query, values)
 
     stream.once('close', () => {
-      connection.release()
+      connection
+        .release()
+        .catch(() => {})
     })
 
     return stream
@@ -86,7 +88,7 @@ export abstract class Database {
       const result = await connection.update<V>(query, values)
       return result
     } finally {
-      connection.release()
+      await connection.release()
     }
   }
 

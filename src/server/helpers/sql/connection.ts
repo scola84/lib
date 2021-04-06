@@ -24,7 +24,7 @@ export interface Connection {
 
   query: <V, R> (query: string, values: Partial<V>) => Promise<R>
 
-  release: () => void
+  release: () => Promise<void>
 
   select: <V, R> (query: string, values: Partial<V>) => Promise<R>
 

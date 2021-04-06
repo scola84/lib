@@ -329,7 +329,7 @@ export abstract class TaskRunner {
         this.xid = this.xid === '>' ? '>' : xid
       }
     } finally {
-      connection.release()
+      await connection.release()
     }
   }
 
@@ -429,7 +429,7 @@ export abstract class TaskRunner {
         )
       }
     } finally {
-      connection.release()
+      await connection.release()
     }
   }
 

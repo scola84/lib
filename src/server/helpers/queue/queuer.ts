@@ -179,7 +179,7 @@ export class Queuer {
 
       await this.run(queue, parameters)
     } finally {
-      connection.release()
+      await connection.release()
     }
   }
 
@@ -224,7 +224,7 @@ export class Queuer {
         await this.run(queue)
       }
     } finally {
-      connection.release()
+      await connection.release()
     }
   }
 

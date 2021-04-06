@@ -35,12 +35,8 @@ export class PostgresqlConnection implements Connection {
     return this.connection.query<R>(query, values)
   }
 
-  public release (): void {
-    const done = this.connection.done()
-
-    if (done instanceof Promise) {
-      done.catch(() => {})
-    }
+  public async release (): Promise<void> {
+    return this.connection.done()
   }
 
   public async select<V, R>(query: string, values: Partial<V>): Promise<R> {
@@ -56,8 +52,8 @@ export class PostgresqlConnection implements Connection {
     return new Promise((resolve, reject) => {
       this.connection.stream(new PgQueryStream(query, values as unknown as []), (stream) => {
         resolve(stream as Readable)
-      }).catch((error: unknown) => {
-        this.release()
+      }).catch(async (error: unknown) => {
+        await this.release()
         reject(error)
       })
     })

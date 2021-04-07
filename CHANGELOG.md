@@ -1,3 +1,15 @@
+# [13.0.0](https://github.com/scola84/lib/compare/v12.0.0...v13.0.0) (2021-04-07)
+
+
+### Bug Fixes
+
+* **sql:** make connection release sync again ([27b238f](https://github.com/scola84/lib/commit/27b238fc901ff3260ae1a06b660a94b0af2dee44))
+
+
+### BREAKING CHANGES
+
+* **sql:** Connection release method is now sync.
+
 # [12.0.0](https://github.com/scola84/lib/compare/v11.2.1...v12.0.0) (2021-04-06)
 
 

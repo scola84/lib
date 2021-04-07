@@ -34,9 +34,8 @@ export class MysqlConnection implements Connection {
     return result
   }
 
-  public async release (): Promise<void> {
+  public release (): void {
     this.connection.release()
-    return Promise.resolve()
   }
 
   public async select<V, R>(query: string, values: Partial<V>): Promise<R> {

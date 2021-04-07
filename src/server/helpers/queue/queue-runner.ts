@@ -192,7 +192,7 @@ export class QueueRunner {
         this.logger.error({ context: 'run' }, String(updateError))
       }
     } finally {
-      await connection.release()
+      connection.release()
     }
   }
 }

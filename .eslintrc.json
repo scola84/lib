@@ -199,6 +199,12 @@
         ],
         "no-ternary": "off",
         "no-undefined": "off",
+        "no-void": [
+          "error",
+          {
+            "allowAsStatement": true
+          }
+        ],
         "prefer-destructuring": [
           "error",
           {

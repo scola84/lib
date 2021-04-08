@@ -75,7 +75,7 @@ commander
 
     fs.mkdirSync(path.dirname(targetFile), { recursive: true })
 
-    if (protocol === 'mysql') {
+    if (protocol.includes('mysql')) {
       const exclude = (options.exclude ?? [])
         .map((table) => {
           return `--ignore-table ${database}.${table}`
@@ -88,7 +88,7 @@ commander
         `docker exec ${container} mysqldump`,
         '--compact',
         exclude,
-        `--host ${url.host}`,
+        `--host ${url.hostname}`,
         '--no-create-info',
         url.password ? `--password=${url.password}` : '',
         url.port ? `--port ${url.port}` : '',
@@ -101,7 +101,7 @@ commander
       })
     }
 
-    if (protocol === 'postgres') {
+    if (protocol.includes('postgres')) {
       const exclude = (options.exclude ?? [])
         .map((table) => {
           return `--exclude-table ${table}`
@@ -115,12 +115,14 @@ commander
         .join(' ')
 
       child.execSync([
-        `docker exec ${container} pg_dump`,
+        'docker exec',
+        url.password ? `--env PGPASSWORD=${url.password}` : '',
+        `${container} pg_dump`,
         '--column-inserts',
         '--data-only',
         exclude,
         '--format p',
-        `--host ${url.host}`,
+        `--host ${url.hostname}`,
         include,
         url.port ? `--port ${url.port}` : '',
         '--rows-per-insert 99',
@@ -184,7 +186,7 @@ commander
 
     fs.mkdirSync(path.dirname(targetFile), { recursive: true })
 
-    if (protocol === 'mysql') {
+    if (protocol.includes('mysql')) {
       const exclude = (options.exclude ?? [])
         .map((table) => {
           return `--ignore-table ${database}.${table}`
@@ -195,7 +197,7 @@ commander
         `docker exec ${container} mysqldump`,
         '--compact',
         exclude,
-        `--host ${url.host}`,
+        `--host ${url.hostname}`,
         '--no-data',
         url.password ? `--password=${url.password}` : '',
         url.port ? `--port ${url.port}` : '',
@@ -207,7 +209,7 @@ commander
       })
     }
 
-    if (protocol === 'postgres') {
+    if (protocol.includes('postgres')) {
       const exclude = (options.exclude ?? [])
         .map((table) => {
           return `--exclude-table ${table}`
@@ -221,10 +223,12 @@ commander
         .join(' ')
 
       child.execSync([
-        `docker exec ${container} pg_dump`,
+        'docker exec',
+        url.password ? `--env PGPASSWORD=${url.password}` : '',
+        `${container} pg_dump`,
         exclude,
         '--format p',
-        `--host ${url.host}`,
+        `--host ${url.hostname}`,
         include,
         '--no-owner',
         url.port ? `--port ${url.port}` : '',

@@ -1,3 +1,22 @@
+# [14.0.0](https://github.com/scola84/lib/compare/v13.0.0...v14.0.0) (2021-04-08)
+
+
+### Bug Fixes
+
+* **cli:** pass password to pg_dump through env var ([000dd13](https://github.com/scola84/lib/commit/000dd13248b1b798ae1f9092f8b0ff9436838b23))
+
+
+### Features
+
+* **queue:** ensure next queue is triggered only once ([8708ba5](https://github.com/scola84/lib/commit/8708ba55a8aee7282b7d94e0728a544d82f5c879))
+
+
+### BREAKING CHANGES
+
+* **queue:** The queue_run table now contains a
+reference to the last item which updated the aggr/date
+of the queue_run.
+
 # [13.0.0](https://github.com/scola84/lib/compare/v12.0.0...v13.0.0) (2021-04-07)
 
 

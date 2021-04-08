@@ -397,9 +397,11 @@ export abstract class TaskRunner {
           UPDATE queue_run
           SET
             aggr_${field} = aggr_${field} + 1,
-            date_updated = NOW()
+            date_updated = NOW(),
+            fkey_item_id = $(fkey_item_id)
           WHERE id = $(id)
         `, {
+          fkey_item_id: taskRun.item.id,
           id: taskRun.queueRun.id
         })
 
@@ -409,8 +411,10 @@ export abstract class TaskRunner {
           JOIN queue_run
           ON queue.fkey_queue_id = queue_run.fkey_queue_id
           WHERE queue_run.id = $(id)
+          AND queue_run.fkey_item_id = $(fkey_item_id)
           AND queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
         `, {
+          fkey_item_id: taskRun.item.id,
           id: taskRun.queueRun.id
         })
 
@@ -425,7 +429,7 @@ export abstract class TaskRunner {
           `${taskRun.queueRun.name}-${nextTaskRun.name}`,
           ['MAXLEN', ['~', this.maxLength]],
           '*',
-          ['taskRunId', String(nextTaskRun.id)]
+          ['id', String(nextTaskRun.id)]
         )
       }
     } finally {

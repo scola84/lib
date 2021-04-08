@@ -1,4 +1,6 @@
 export interface TaskRun {
+  code?: string
+  consumer: string | null
   date_created?: Date
   date_queued: Date | null
   date_started: Date | null
@@ -7,8 +9,6 @@ export interface TaskRun {
   fkey_queue_run_id: number
   fkey_task_id: number
   id?: number
-  code?: string
-  consumer: string | null
   reason: string | null
   result?: unknown
   xid: string | null

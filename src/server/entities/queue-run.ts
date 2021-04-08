@@ -15,6 +15,7 @@ export function createQueueRun (): QueueRun {
     code: 'pending',
     date_created: new Date(),
     date_updated: new Date(),
+    fkey_item_id: null,
     fkey_queue_id: 0,
     id: 0,
     name: 'name',

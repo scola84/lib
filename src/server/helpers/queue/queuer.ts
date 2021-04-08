@@ -98,7 +98,7 @@ export class Queuer {
     this.queueReader = this.createQueueReader()
   }
 
-  public async start (ids = process.env.QUEUE_IDS): Promise<void> {
+  public async start (): Promise<void> {
     this.logger.info({
       channel: this.channel,
       names: this.names,
@@ -107,10 +107,6 @@ export class Queuer {
 
     this.startSchedule(this.schedule)
     await this.startListener(this.channel)
-
-    for (const id of ids?.split(',') ?? []) {
-      await this.runListener(`{"id": ${id}}`)
-    }
   }
 
   public async stop (): Promise<void> {

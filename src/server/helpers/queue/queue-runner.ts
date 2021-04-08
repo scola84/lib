@@ -69,9 +69,7 @@ export class QueueRunner {
   }
 
   public async run (queue: Queue, parameters: unknown[] = []): Promise<void> {
-    const connection = await this.database.connect()
-
-    const { id: queueRunId = 0 } = await connection.insertOne<QueueRun>(`
+    const { id: queueRunId = 0 } = await this.database.insertOne<QueueRun>(`
       INSERT INTO queue_run (fkey_queue_id,name)
       VALUES ($(fkey_queue_id),$(name))
     `, {
@@ -86,6 +84,7 @@ export class QueueRunner {
       code: 'pending',
       date_created: new Date(),
       date_updated: new Date(),
+      fkey_item_id: null,
       fkey_queue_id: queue.id,
       id: queueRunId,
       name: queue.name,
@@ -99,51 +98,53 @@ export class QueueRunner {
       throw new Error('Database is undefined')
     }
 
-    const inserter = new Transform({
-      objectMode: true,
-      transform: async (payload: unknown, encoding, callback) => {
-        try {
-          const { id: itemId } = await connection.insertOne<Item | { payload: string }>(`
-            INSERT INTO item (fkey_queue_run_id,payload)
-            VALUES ($(fkey_queue_run_id),$(payload))
-          `, {
-            fkey_queue_run_id: queueRun.id,
-            payload: JSON.stringify(payload)
-          })
-
-          const firstTask = {
-            name: '',
-            value: ['', '']
-          }
-
-          for (const task of queueRun.queue.tasks) {
-            const { id: taskRunId = '0' } = await connection.insertOne<TaskRun | { options: string }>(`
-              INSERT INTO task_run (fkey_item_id,fkey_queue_run_id,fkey_task_id)
-              VALUES ($(fkey_item_id),$(fkey_queue_run_id),$(fkey_task_id))
-            `, {
-              fkey_item_id: itemId,
-              fkey_queue_run_id: queueRun.id,
-              fkey_task_id: task.id
-            })
-
-            if (task.number === 1) {
-              firstTask.name = `${queueRun.name}-${task.name}`
-              firstTask.value = ['taskRunId', String(taskRunId)]
-            }
-          }
-
-          queueRun.aggr_total += 1
-          callback(null, firstTask)
-        } catch (error: unknown) {
-          callback(new Error(`Transform error: ${String(error)}`))
-        }
-      }
-    })
-
-    const reader = await database.stream(queue.query ?? '', parameters)
-    const xadder = this.createAdder()
+    const connection = await this.database.connect()
 
     try {
+      const inserter = new Transform({
+        objectMode: true,
+        transform: async (payload: unknown, encoding, callback) => {
+          try {
+            const { id: itemId } = await connection.insertOne<Item | { payload: string }>(`
+              INSERT INTO item (fkey_queue_run_id,payload)
+              VALUES ($(fkey_queue_run_id),$(payload))
+            `, {
+              fkey_queue_run_id: queueRun.id,
+              payload: JSON.stringify(payload)
+            })
+
+            const firstTask = {
+              name: '',
+              value: ['', '']
+            }
+
+            for (const task of queueRun.queue.tasks) {
+              const { id: taskRunId = '0' } = await connection.insertOne<TaskRun | { options: string }>(`
+                INSERT INTO task_run (fkey_item_id,fkey_queue_run_id,fkey_task_id)
+                VALUES ($(fkey_item_id),$(fkey_queue_run_id),$(fkey_task_id))
+            `, {
+                fkey_item_id: itemId,
+                fkey_queue_run_id: queueRun.id,
+                fkey_task_id: task.id
+              })
+
+              if (task.number === 1) {
+                firstTask.name = `${queueRun.name}-${task.name}`
+                firstTask.value = ['id', String(taskRunId)]
+              }
+            }
+
+            queueRun.aggr_total += 1
+            callback(null, firstTask)
+          } catch (error: unknown) {
+            callback(new Error(`Transform error: ${String(error)}`))
+          }
+        }
+      })
+
+      const reader = await database.stream(queue.query ?? '', parameters)
+      const xadder = this.createAdder()
+
       await pipeline(reader, inserter, xadder)
 
       await connection.update<QueueRun>(`

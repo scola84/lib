@@ -15,22 +15,13 @@ export interface UpdateResult {
 
 export interface Connection {
   tokens: tokens
-
   delete: <V> (query: string, values: Partial<V>) => Promise<DeleteResult>
-
   insert: <V, R = number> (query: string, values: Partial<V>) => Promise<Array<InsertResult<R>>>
-
   insertOne: <V, R = number> (query: string, values: Partial<V>) => Promise<InsertResult<R>>
-
   query: <V, R> (query: string, values: Partial<V>) => Promise<R>
-
   release: () => void
-
   select: <V, R> (query: string, values: Partial<V>) => Promise<R>
-
   selectOne: <V, R> (query: string, values: Partial<V>) => Promise<R | undefined>
-
   stream: <V> (query: string, values: Partial<V>) => Promise<Readable>
-
   update: <V> (query: string, values: Partial<V>) => Promise<UpdateResult>
 }

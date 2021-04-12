@@ -43,7 +43,6 @@ export async function pipeline (...streams: Array<Readable | Transform | Writabl
 
     const dataListeners = new Map<Stream, () => void>()
     const errorListeners = new Map<Stream, (error: Error) => void>()
-
     let previous = null
 
     for (const stream of streams) {
@@ -52,6 +51,7 @@ export async function pipeline (...streams: Array<Readable | Transform | Writabl
       }
 
       const errorListener = handleError.bind(stream, streams.indexOf(stream))
+
       errorListeners.set(stream, errorListener)
       stream.on('error', errorListener)
 
@@ -60,6 +60,7 @@ export async function pipeline (...streams: Array<Readable | Transform | Writabl
       }
 
       const dataListener = handleData.bind(stream)
+
       dataListeners.set(stream, dataListener)
       stream.on('data', dataListener)
 

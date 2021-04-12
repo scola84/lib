@@ -147,7 +147,6 @@ export abstract class TaskRunner {
 
   public async stop (): Promise<void> {
     this.logger.info('Stopping')
-
     await this.delConsumer()
     this.queueReader?.end()
 

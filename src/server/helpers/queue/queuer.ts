@@ -112,7 +112,6 @@ export class Queuer {
   public async stop (): Promise<void> {
     this.logger.info('Stopping')
     this.job?.cancel()
-
     await this.queueReader?.unsubscribe('queue')
     await this.queueReader?.quit()
 

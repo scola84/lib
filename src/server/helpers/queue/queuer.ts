@@ -185,10 +185,15 @@ export class Queuer {
       const queues = await connection.select<Queue & { date: Date}, Queue[]>(`
         SELECT *
         FROM queue
-        WHERE name ${connection.tokens.regexp} $(name)
-        AND schedule_begin <= $(date)
-        AND (schedule_end >= $(date) OR schedule_end IS NULL)
-        AND (schedule_next <= $(date) OR schedule_next IS NULL)
+        WHERE
+          name ${connection.tokens.regexp} $(name) AND
+          schedule_begin <= $(date) AND (
+            schedule_end >= $(date) OR
+            schedule_end IS NULL
+          ) AND (
+            schedule_next <= $(date) OR
+            schedule_next IS NULL
+          )
       `, {
         date,
         name: this.names

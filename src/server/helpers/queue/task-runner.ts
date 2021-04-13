@@ -379,8 +379,9 @@ export abstract class TaskRunner {
               task.name
             FROM task_run
             JOIN task ON task_run.fkey_task_id = task.id
-            WHERE fkey_item_id = $(fkey_item_id)
-            AND task.number > $(number)
+            WHERE
+              fkey_item_id = $(fkey_item_id) AND
+              task.number > $(number)
             ORDER BY task.number ASC
             LIMIT 1
           `, {
@@ -407,11 +408,11 @@ export abstract class TaskRunner {
         const queues = await connection.select<QueueRun, Queue[]>(`
           SELECT queue.id
           FROM queue
-          JOIN queue_run
-          ON queue.fkey_queue_id = queue_run.fkey_queue_id
-          WHERE queue_run.id = $(id)
-          AND queue_run.fkey_item_id = $(fkey_item_id)
-          AND queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
+          JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
+          WHERE
+            queue_run.id = $(id) AND
+            queue_run.fkey_item_id = $(fkey_item_id) AND
+            queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
         `, {
           fkey_item_id: taskRun.item.id,
           id: taskRun.queueRun.id

@@ -70,8 +70,13 @@ export class QueueRunner {
 
   public async run (queue: Queue, parameters: unknown[] = []): Promise<void> {
     const { id: queueRunId = 0 } = await this.database.insertOne<QueueRun>(`
-      INSERT INTO queue_run (fkey_queue_id,name)
-      VALUES ($(fkey_queue_id),$(name))
+      INSERT INTO queue_run (
+        fkey_queue_id,
+        name
+      ) VALUES (
+        $(fkey_queue_id),
+        $(name)
+      )
     `, {
       fkey_queue_id: queue.id,
       name: queue.name
@@ -106,8 +111,13 @@ export class QueueRunner {
         transform: async (payload: unknown, encoding, callback) => {
           try {
             const { id: itemId } = await connection.insertOne<Item | { payload: string }>(`
-              INSERT INTO item (fkey_queue_run_id,payload)
-              VALUES ($(fkey_queue_run_id),$(payload))
+              INSERT INTO item (
+                fkey_queue_run_id,
+                payload
+              ) VALUES (
+                $(fkey_queue_run_id),
+                $(payload)
+              )
             `, {
               fkey_queue_run_id: queueRun.id,
               payload: JSON.stringify(payload)
@@ -120,8 +130,15 @@ export class QueueRunner {
 
             for (const task of queueRun.queue.tasks) {
               const { id: taskRunId = '0' } = await connection.insertOne<TaskRun | { options: string }>(`
-                INSERT INTO task_run (fkey_item_id,fkey_queue_run_id,fkey_task_id)
-                VALUES ($(fkey_item_id),$(fkey_queue_run_id),$(fkey_task_id))
+                INSERT INTO task_run (
+                  fkey_item_id,
+                  fkey_queue_run_id,
+                  fkey_task_id
+                ) VALUES (
+                  $(fkey_item_id),
+                  $(fkey_queue_run_id),
+                  $(fkey_task_id)
+                )
             `, {
                 fkey_item_id: itemId,
                 fkey_queue_run_id: queueRun.id,
@@ -162,10 +179,10 @@ export class QueueRunner {
       const queues = await connection.select<QueueRun, Queue[]>(`
         SELECT queue.id
         FROM queue
-        JOIN queue_run
-        ON queue.fkey_queue_id = queue_run.fkey_queue_id
-        WHERE queue_run.id = $(id)
-        AND queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
+        JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
+        WHERE
+          queue_run.id = $(id) AND
+          queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
       `, {
         id: queueRun.id
       })

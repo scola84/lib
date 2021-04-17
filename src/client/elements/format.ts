@@ -18,7 +18,7 @@ declare global {
 export class FormatElement extends NodeElement {
   public static lang = 'nl'
 
-  public static strings?: Record<string, Record<string, string> | undefined>
+  public static strings: Record<string, Record<string, string> | undefined> = {}
 
   @property()
   public code?: string
@@ -28,44 +28,32 @@ export class FormatElement extends NodeElement {
   })
   public data?: Record<string, unknown>
 
-  public static format<Data = Record<string, unknown>> (
-    string: string,
-    data?: Data,
-    lang?: string
-  ): string {
-    return String(new Format(string, lang).format(data))
+  public format (string: string, language = FormatElement.lang, data?: Record<string, unknown>): string {
+    try {
+      return String(new Format(FormatElement.strings[language]?.[string] ?? string, language).format(data))
+    } catch (error: unknown) {
+      return string
+    }
   }
 
-  public static lookup (text: string, lang = FormatElement.lang): string | undefined {
-    const strings = FormatElement.strings?.[lang] ?? {}
+  public lookup (string: string, language = FormatElement.lang): string | undefined {
+    const strings = FormatElement.strings[language] ?? {}
 
     return Object
       .keys(strings)
       .find((code) => {
-        return strings[code].toLowerCase() === text.toLowerCase()
+        return strings[code].toLowerCase() === string.toLowerCase()
       })
-  }
-
-  public format<Data = Record<string, unknown>> (
-    code: string,
-    data?: Data,
-    lang = FormatElement.lang
-  ): string {
-    try {
-      return FormatElement.format(FormatElement.strings?.[lang]?.[code] ?? '', data, lang)
-    } catch (error: unknown) {
-      return code
-    }
   }
 
   public render (): TemplateResult {
     const code = this.code?.toLowerCase() ?? ''
     const data = this.data ?? this.dataset
-    const lang = this.lang === '' ? undefined : this.lang
+    const language = this.lang === '' ? undefined : this.lang
 
     return html`
       <slot name="body">
-        <slot>${this.format(code, data, lang)}</slot>
+        <slot>${this.format(code, language, data)}</slot>
       </slot>
     `
   }

@@ -7,15 +7,15 @@ import fastifyFormbody from 'fastify-formbody'
 import fastifyMultipart from 'fastify-multipart'
 
 export interface ServerOptions extends FastifyServerOptions {
-  address: string
+  address?: string
   logger: Logger
-  port: number
+  port?: number
 }
 
 export class Server {
   public address: string
 
-  public fastify: FastifyInstance
+  public fastify?: FastifyInstance
 
   public logger: Logger
 
@@ -23,11 +23,7 @@ export class Server {
 
   public port: number
 
-  public constructor (options: Partial<ServerOptions> = {}) {
-    if (options.logger === undefined) {
-      throw new Error('Option "logger" is undefined')
-    }
-
+  public constructor (options: ServerOptions) {
     this.address = options.address ?? '0.0.0.0'
     this.logger = options.logger.child({ name: 'server' })
     this.options = options
@@ -61,8 +57,8 @@ export class Server {
   public setup (): void {
     this.fastify = this.createFastify()
 
-    this.fastify.addHook('preSerialization', (request, reply, data, done) => {
-      done(null, reply.statusCode >= 400 ? data : {
+    this.fastify.addHook('preSerialization', (request, reply, data, finish) => {
+      finish(null, reply.statusCode >= 400 ? data : {
         code: 'OK',
         data
       })
@@ -90,18 +86,22 @@ export class Server {
     this.logger.info({
       address: this.address,
       port: this.port
-    }, 'Starting')
+    }, 'Starting server')
 
     return Promise.all([
-      this.fastify.register(this.createFastifyCookie()),
-      this.fastify.register(this.createFastifyFormbody()),
-      this.fastify.register(this.createFastifyMultipart()),
-      this.fastify.listen(this.port, this.address)
+      this.fastify?.register(this.createFastifyCookie()),
+      this.fastify?.register(this.createFastifyFormbody()),
+      this.fastify?.register(this.createFastifyMultipart()),
+      this.fastify?.listen(this.port, this.address)
     ])
   }
 
   public async stop (): Promise<unknown> {
-    this.logger.info('Stopping')
-    return this.fastify.close()
+    this.logger.info({
+      address: this.address,
+      port: this.port
+    }, 'Stopping server')
+
+    return this.fastify?.close()
   }
 }

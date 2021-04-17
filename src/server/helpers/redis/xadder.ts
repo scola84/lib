@@ -10,7 +10,7 @@ export interface XAdderItem {
 
 export interface XAdderOptions extends WritableOptions {
   maxLength: number
-  queueWriter: WrappedNodeRedisClient
+  store: WrappedNodeRedisClient
 }
 
 export class XAdder extends Writable {
@@ -20,32 +20,48 @@ export class XAdder extends Writable {
 
   public maxLength: number
 
-  public queueWriter: WrappedNodeRedisClient
+  public store: WrappedNodeRedisClient
 
-  public constructor (options: Partial<XAdderOptions>) {
+  public constructor (options: XAdderOptions) {
     super({
       objectMode: true,
       ...options
     })
 
-    if (options.queueWriter === undefined) {
-      throw new Error('Option "queueWriter" is undefined')
-    }
-
-    this.maxLength = options.maxLength ?? 1024 * 1024
-    this.queueWriter = options.queueWriter
-    this.batch = this.queueWriter.batch()
+    this.maxLength = options.maxLength
+    this.store = options.store
+    this.batch = this.store.batch()
   }
 
-  public _final (callback: (error?: Error) => void): void {
-    if (this.count > 0) {
-      this.exec(callback, false)
-    } else {
-      callback()
+  public async _final (finish: (error?: Error) => void): Promise<void> {
+    try {
+      if (this.count > 0) {
+        await this.exec()
+        finish()
+      } else {
+        finish()
+      }
+    } catch (error: unknown) {
+      finish(error as Error)
     }
   }
 
-  public _write (item: XAdderItem, encoding: string, callback: (error?: Error) => void): void {
+  public async _write (item: XAdderItem, encoding: string, finish: (error?: Error) => void): Promise<void> {
+    try {
+      this.add(item)
+
+      if (this.count === this.writableHighWaterMark) {
+        await this.exec()
+        finish()
+      } else {
+        finish()
+      }
+    } catch (error: unknown) {
+      finish(error as Error)
+    }
+  }
+
+  protected add (item: XAdderItem): void {
     this.batch.xadd(
       item.name,
       ['MAXLEN', ['~', this.maxLength]],
@@ -54,29 +70,13 @@ export class XAdder extends Writable {
     )
 
     this.count += 1
-
-    if (this.count === this.writableHighWaterMark) {
-      this.exec(callback)
-    } else {
-      callback()
-    }
   }
 
-  protected exec (callback: (error?: Error) => void, restart = true): void {
+  protected async exec (): Promise<[]> {
     const { batch } = this
+    this.batch = this.store.batch()
+    this.count = 0
 
-    if (restart) {
-      this.batch = this.queueWriter.batch()
-      this.count = 0
-    }
-
-    batch
-      .exec()
-      .then(() => {
-        callback()
-      })
-      .catch((error: unknown) => {
-        callback(new Error(`Add error: ${String(error)}`))
-      })
+    return batch.exec()
   }
 }

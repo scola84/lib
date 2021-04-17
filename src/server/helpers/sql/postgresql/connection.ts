@@ -36,7 +36,7 @@ export class PostgresqlConnection implements Connection {
   }
 
   public release (): void {
-    void this.connection.done()
+    return this.connection.done() as undefined
   }
 
   public async select<V, R>(query: string, values: Partial<V>): Promise<R> {

@@ -372,42 +372,16 @@ export class DialogElement extends NodeElement {
     window.removeEventListener('resize', this.handleResizeBound)
     window.removeEventListener('scola-scroll', this.handleScrollBound)
 
-    const from = {
-      horizontal: this.hfrom,
-      vertical: this.vfrom
-    }
-
-    if (
-      this.htoReal !== this.hto &&
-      this.vtoReal !== this.hto &&
-      this.htoReal?.includes('screen') !== undefined &&
-      this.vtoReal?.includes('screen') !== undefined
-    ) {
-      from.horizontal = this.hfromScreen ?? from.horizontal
-      from.vertical = this.vfromScreen ?? from.vertical
-    }
-
     const {
-      left = '0',
-      top = '0'
-    } = this.assignedElement instanceof HTMLElement
-      ? window.getComputedStyle(this.assignedElement)
-      : {}
-
-    const toPosition = {
-      left: parseFloat(left),
-      top: parseFloat(top)
-    }
-
-    const fromPosition = from.horizontal === undefined
-      ? toPosition
-      : this.calculateFromPosition(from)
+      from,
+      to
+    } = this.calculateHidePositions()
 
     const easings = [
-      this.easePosition(toPosition, fromPosition, duration)
+      this.easePosition(to, from, duration)
     ]
 
-    if (this.isSame(toPosition, fromPosition)) {
+    if (this.isSame(to, from)) {
       easings.push(this.easeOpacity(1, 0, duration))
     }
 
@@ -432,49 +406,16 @@ export class DialogElement extends NodeElement {
 
     this.toggleAttribute('hidden', false)
 
-    const from = {
-      horizontal: this.hfrom,
-      vertical: this.vfrom
-    }
-
-    const to = {
-      horizontal: this.hto,
-      vertical: this.vto
-    }
-
-    let toPosition = this.findToPosition(to)
-
-    if ((
-      to.horizontal !== this.hto &&
-      to.horizontal?.includes('screen') !== undefined
-    ) || (
-      to.vertical !== this.vto &&
-      to.vertical?.includes('screen') !== undefined
-    )) {
-      to.horizontal = this.htoScreen ?? to.horizontal
-      to.vertical = this.vtoScreen ?? to.vertical
-      toPosition = this.findToPosition(to)
-      from.horizontal = this.hfromScreen ?? from.horizontal
-      from.vertical = this.vfromScreen ?? from.vertical
-    }
-
-    if (to.horizontal !== undefined) {
-      this.htoReal = to.horizontal
-    }
-
-    if (to.vertical !== undefined) {
-      this.vtoReal = to.vertical
-    }
-
-    const fromPosition = from.horizontal === undefined || from.vertical === undefined
-      ? toPosition
-      : this.calculateFromPosition(from)
+    const {
+      from,
+      to
+    } = this.calculateShowPositions()
 
     const easings = [
-      this.easePosition(fromPosition, toPosition, duration)
+      this.easePosition(from, to, duration)
     ]
 
-    if (this.isSame(toPosition, fromPosition)) {
+    if (this.isSame(to, from)) {
       easings.push(this.easeOpacity(0, 1, duration))
     }
 
@@ -539,80 +480,170 @@ export class DialogElement extends NodeElement {
     }
   }
 
+  protected calculateHidePositions (): { from: DialogPosition, to: DialogPosition } {
+    const from = {
+      horizontal: this.hfrom,
+      vertical: this.vfrom
+    }
+
+    if (
+      this.htoReal !== this.hto &&
+      this.vtoReal !== this.hto &&
+      this.htoReal?.includes('screen') !== undefined &&
+      this.vtoReal?.includes('screen') !== undefined
+    ) {
+      from.horizontal = this.hfromScreen ?? from.horizontal
+      from.vertical = this.vfromScreen ?? from.vertical
+    }
+
+    const {
+      left = '0',
+      top = '0'
+    } = this.assignedElement instanceof HTMLElement
+      ? window.getComputedStyle(this.assignedElement)
+      : {}
+
+    const toPosition = {
+      left: parseFloat(left),
+      top: parseFloat(top)
+    }
+
+    const fromPosition = from.horizontal === undefined
+      ? toPosition
+      : this.calculateFromPosition(from)
+
+    return {
+      from: fromPosition,
+      to: toPosition
+    }
+  }
+
+  protected calculateShowPositions (): { from: DialogPosition, to: DialogPosition } {
+    const from = {
+      horizontal: this.hfrom,
+      vertical: this.vfrom
+    }
+
+    const to = {
+      horizontal: this.hto,
+      vertical: this.vto
+    }
+
+    let toPosition = this.findToPosition(to)
+
+    if ((
+      to.horizontal !== this.hto &&
+      to.horizontal?.includes('screen') !== undefined
+    ) || (
+      to.vertical !== this.vto &&
+      to.vertical?.includes('screen') !== undefined
+    )) {
+      to.horizontal = this.htoScreen ?? to.horizontal
+      to.vertical = this.vtoScreen ?? to.vertical
+      toPosition = this.findToPosition(to)
+      from.horizontal = this.hfromScreen ?? from.horizontal
+      from.vertical = this.vfromScreen ?? from.vertical
+    }
+
+    if (to.horizontal !== undefined) {
+      this.htoReal = to.horizontal
+    }
+
+    if (to.vertical !== undefined) {
+      this.vtoReal = to.vertical
+    }
+
+    const fromPosition = from.horizontal === undefined || from.vertical === undefined
+      ? toPosition
+      : this.calculateFromPosition(from)
+
+    return {
+      from: fromPosition,
+      to: toPosition
+    }
+  }
+
   protected calculateToPosition (to: DialogTo): DialogPosition {
-    const {
-      height: appHeight = Infinity,
-      width: appWidth = Infinity
-    } = document
-      .querySelector<AppElement>('scola-app')
-      ?.getBoundingClientRect() ?? {}
+    const appElement = document.querySelector<AppElement>('scola-app')
+    const app = appElement?.getBoundingClientRect()
+    const element = this.assignedElement?.getBoundingClientRect()
+    const anchor = this.anchorElement?.getBoundingClientRect()
 
-    const {
-      height: elementHeight = 0,
-      width: elementWidth = 0
-    } = this.assignedElement
-      ?.getBoundingClientRect() ?? {}
+    if (
+      app === undefined ||
+      element === undefined ||
+      anchor === undefined
+    ) {
+      return {
+        left: 0,
+        top: 0
+      }
+    }
 
-    const {
-      height: anchorHeight = 0,
-      left: anchorLeft = 0,
-      top: anchorTop = 0,
-      width: anchorWidth = 0
-    } = this.anchorElement
-      ?.getBoundingClientRect() ?? {}
+    return {
+      left: this.calculateToPositionLeft(to, app, element, anchor),
+      top: this.calculateToPositionTop(to, app, element, anchor)
+    }
+  }
 
-    let left = anchorLeft
-    let top = anchorTop + anchorHeight
+  protected calculateToPositionLeft (to: DialogTo, app: DOMRect, element: DOMRect, anchor: DOMRect): number {
+    let { left } = anchor
 
     switch (to.horizontal) {
       case 'center':
-        left += -(elementWidth - anchorWidth) / 2
+        left += -(element.width - anchor.width) / 2
         break
       case 'start':
-        left += this.dir === 'rtl' ? -elementWidth + anchorWidth : 0
+        left += this.dir === 'rtl' ? -element.width + anchor.width : 0
         break
       case 'start-at-end':
-        left += this.dir === 'rtl' ? -elementWidth : anchorWidth
+        left += this.dir === 'rtl' ? -element.width : anchor.width
         break
       case 'end':
-        left += this.dir === 'rtl' ? 0 : -elementWidth + anchorWidth
+        left += this.dir === 'rtl' ? 0 : -element.width + anchor.width
         break
       case 'end-at-start':
-        left += this.dir === 'rtl' ? anchorWidth : -elementWidth
+        left += this.dir === 'rtl' ? anchor.width : -element.width
         break
       case 'screen-center':
-        left = (appWidth - elementWidth) / 2
+        left = (app.width - element.width) / 2
         break
       case 'screen-end':
-        left = this.dir === 'rtl' ? 0 : appWidth - elementWidth
+        left = this.dir === 'rtl' ? 0 : app.width - element.width
         break
       case 'screen-start':
-        left = this.dir === 'rtl' ? appWidth - elementWidth : 0
+        left = this.dir === 'rtl' ? app.width - element.width : 0
         break
       default:
         break
     }
 
+    return left
+  }
+
+  protected calculateToPositionTop (to: DialogTo, app: DOMRect, element: DOMRect, anchor: DOMRect): number {
+    let top = anchor.top + anchor.height
+
     switch (to.vertical) {
       case 'bottom':
-        top += -elementHeight
+        top += -element.height
         break
       case 'bottom-at-top':
-        top += -elementHeight - anchorHeight
+        top += -element.height - anchor.height
         break
       case 'center':
-        top += -(elementHeight + anchorHeight) / 2
+        top += -(element.height + anchor.height) / 2
         break
       case 'top':
-        top += -anchorHeight
+        top += -anchor.height
         break
       case 'top-at-bottom':
         break
       case 'screen-bottom':
-        top = appHeight - elementHeight
+        top = app.height - element.height
         break
       case 'screen-center':
-        top = (appHeight - elementHeight) / 2
+        top = (app.height - element.height) / 2
         break
       case 'screen-top':
         top = 0
@@ -621,10 +652,7 @@ export class DialogElement extends NodeElement {
         break
     }
 
-    return {
-      left,
-      top
-    }
+    return top
   }
 
   protected async easeOpacity (from: number, to: number, duration?: number): Promise<unknown> {
@@ -644,11 +672,7 @@ export class DialogElement extends NodeElement {
     })
   }
 
-  protected async easePosition (
-    from: DialogPosition,
-    to: DialogPosition,
-    duration?: number
-  ): Promise<unknown> {
+  protected async easePosition (from: DialogPosition, to: DialogPosition, duration?: number): Promise<unknown> {
     const { assignedElement } = this
 
     const leftPromise = new Promise<unknown>((resolve) => {

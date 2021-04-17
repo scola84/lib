@@ -5,25 +5,21 @@ export class Formatter {
 
   public static strings: Record<string, Record<string, string> | undefined> = {}
 
-  public static format (string: string, data?: Record<string, unknown>, lang?: string): string {
-    return String(new Format(string, lang).format(data))
+  public format (string: string, language = Formatter.lang, data?: Record<string, unknown>): string {
+    try {
+      return String(new Format(Formatter.strings[language]?.[string] ?? string, language).format(data))
+    } catch (error: unknown) {
+      return string
+    }
   }
 
-  public static lookup (string: string, lang = Formatter.lang): string | undefined {
-    const strings = Formatter.strings[lang] ?? {}
+  public lookup (string: string, language = Formatter.lang): string | undefined {
+    const strings = Formatter.strings[language] ?? {}
 
     return Object
       .keys(strings)
       .find((code) => {
         return strings[code].toLowerCase() === string.toLowerCase()
       })
-  }
-
-  public format (code: string, data: Record<string, unknown> | null = null, lang = Formatter.lang): string {
-    try {
-      return Formatter.format(Formatter.strings[lang]?.[code] ?? code, data ?? {}, lang)
-    } catch (error: unknown) {
-      return code
-    }
   }
 }

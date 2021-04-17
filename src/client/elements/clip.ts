@@ -159,10 +159,7 @@ export class ClipElement extends NodeElement {
     element.hidden = true
   }
 
-  public hideInner (
-    duration = this.innerDuration,
-    callback = (): void => {}
-  ): void {
+  public hideInner (duration = this.innerDuration, callback = (): void => {}): void {
     const name = this.determineInnerPropertyName()
 
     let to = this.defaultSlotElement instanceof HTMLSlotElement
@@ -187,11 +184,7 @@ export class ClipElement extends NodeElement {
     })
   }
 
-  public hideOuter (
-    element: HTMLElement,
-    duration = this.outerDuration,
-    callback = (): void => {}
-  ): void {
+  public hideOuter (element: HTMLElement, duration = this.outerDuration, callback = (): void => {}): void {
     if (window.getComputedStyle(element).position === 'relative') {
       this.setZIndexRelative(element)
     }
@@ -217,11 +210,7 @@ export class ClipElement extends NodeElement {
     })
   }
 
-  public showContent (
-    element: HTMLElement,
-    duration = this.contentDuration,
-    callback = (): void => {}
-  ): void {
+  public showContent (element: HTMLElement, duration = this.contentDuration, callback = (): void => {}): void {
     const contentElements = Array.from(this.contentElements)
 
     const dimensionName = this.flow === 'row' ? 'width' : 'height'
@@ -254,10 +243,7 @@ export class ClipElement extends NodeElement {
     })
   }
 
-  public showInner (
-    duration = this.innerDuration,
-    callback = (): void => {}
-  ): void {
+  public showInner (duration = this.innerDuration, callback = (): void => {}): void {
     this.defaultSlotElement?.style.removeProperty('display')
 
     const name = this.determineInnerPropertyName()
@@ -281,11 +267,7 @@ export class ClipElement extends NodeElement {
     }
   }
 
-  public showOuter (
-    element: HTMLElement,
-    duration = this.outerDuration,
-    callback = (): void => {}
-  ): void {
+  public showOuter (element: HTMLElement, duration = this.outerDuration, callback = (): void => {}): void {
     element.style.removeProperty('display')
 
     const name = this.determineOuterPropertyName(element)

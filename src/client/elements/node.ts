@@ -1436,12 +1436,7 @@ export class NodeElement extends LitElement {
     })
   }
 
-  protected ease (
-    from: number,
-    to: number,
-    resolve: ({ value, done }: { value: number, done: boolean }) => void,
-    { duration = 250, name }: { duration?: number, name?: string } = {}
-  ): void {
+  protected ease (from: number, to: number, resolve: ({ value, done }: { value: number, done: boolean }) => void, { duration = 250, name }: { duration?: number, name?: string } = {}): void {
     let easingId = null
     let start = -1
 
@@ -1456,9 +1451,7 @@ export class NodeElement extends LitElement {
 
     // @see https://easings.net/#easeInOutQuint
     function easeInOutQuint (value: number): number {
-      return value < 0.5
-        ? 16 * value ** 5
-        : 1 - (-2 * value + 2) ** 5 / 2
+      return value < 0.5 ? 16 * value ** 5 : 1 - (-2 * value + 2) ** 5 / 2
     }
 
     const frame = (time: number): void => {
@@ -1529,10 +1522,7 @@ export class NodeElement extends LitElement {
     return true
   }
 
-  protected throttle (
-    resolve: () => void,
-    { duration = 250, once = false, trail = true } = {}
-  ): () => void {
+  protected throttle (resolve: () => void, { duration = 250, once = false, trail = true } = {}): () => void {
     let diff = 0
     let last = 0
     let tid = 0

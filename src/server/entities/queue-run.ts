@@ -7,7 +7,7 @@ export interface QueueRun extends Required<QueueRunBase> {
   queue: Queue
 }
 
-export function createQueueRun (): QueueRun {
+export function createQueueRun (id = 0, queue?: Queue): QueueRun {
   return {
     aggr_err: 0,
     aggr_ok: 0,
@@ -16,10 +16,10 @@ export function createQueueRun (): QueueRun {
     date_created: new Date(),
     date_updated: new Date(),
     fkey_item_id: null,
-    fkey_queue_id: 0,
-    id: 0,
-    name: 'name',
-    queue: createQueue(),
+    fkey_queue_id: queue?.id ?? 0,
+    id,
+    name: queue?.name ?? 'name',
+    queue: queue ?? createQueue(),
     reason: null
   }
 }

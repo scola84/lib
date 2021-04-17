@@ -3,83 +3,63 @@ import type { ReadableOptions } from 'stream'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 
 export interface ZScannerOptions extends ReadableOptions {
-  cursor: string
-  del: boolean
+  delete?: boolean
   key: string
-  queueWriter: WrappedNodeRedisClient
+  store: WrappedNodeRedisClient
 }
 
 export class ZScanner extends Readable {
-  public cursor: string
+  public cursor = 0
 
-  public data: string[] = []
-
-  public del: boolean
+  public delete: boolean
 
   public key: string
 
-  public queueWriter: WrappedNodeRedisClient
+  public store: WrappedNodeRedisClient
 
-  public constructor (options: Partial<ZScannerOptions>) {
+  public constructor (options: ZScannerOptions) {
     super({
       objectMode: true,
       ...options
     })
 
-    if (options.key === undefined) {
-      throw new Error('Option "key" is undefined')
-    }
-
-    if (options.queueWriter === undefined) {
-      throw new Error('Option "queueWriter" is undefined')
-    }
-
-    this.cursor = options.cursor ?? '0'
-    this.del = options.del ?? false
+    this.delete = options.delete ?? false
     this.key = options.key
-    this.queueWriter = options.queueWriter
+    this.store = options.store
   }
 
-  public _destroy (error: Error, callback: (error?: Error) => void): void {
-    if (this.del) {
-      callback()
-      return
-    }
-
-    this.queueWriter
-      .del(this.key)
-      .then(() => {
-        callback(error)
-      })
-      .catch(() => {
-        callback(error)
-      })
-  }
-
-  public _read (size: number): void {
-    if (this.data.length > 0) {
-      this.push(this.data.splice(0, 2))
-    } else if (this.cursor === '-1') {
-      this.push(null)
-    } else {
-      this.readData(size)
+  public async _destroy (error: Error, finish: (error?: Error) => void): Promise<void> {
+    try {
+      if (this.delete) {
+        await this.store.del(this.key)
+        finish(error)
+      } else {
+        finish(error)
+      }
+    } catch (deleteError: unknown) {
+      finish(deleteError as Error)
     }
   }
 
-  protected handleScan (size: number, cursor: string, data: string[]): void {
-    this.data = data
-    this.cursor = cursor === '0' ? '-1' : cursor
-    this._read(size)
-  }
+  public async _read (size: number): Promise<void> {
+    try {
+      const [cursor, data] = await this.store.zscan(
+        this.key,
+        Number(this.cursor),
+        ['COUNT', size]
+      ) as [string, string[]]
 
-  protected readData (size: number): void {
-    this.queueWriter
-      .zscan(this.key, Number(this.cursor), ['COUNT', size])
-      .then((result) => {
-        this.handleScan(size, ...result as [string, string[]])
-      })
-      .catch((error: unknown) => {
-        this.destroy(new Error(`Scan error: ${String(error)}`))
-      })
+      this.cursor = Number(cursor)
+
+      while (data.length > 0) {
+        this.push(data.splice(0, 2))
+      }
+
+      if (this.cursor === 0) {
+        this.push(null)
+      }
+    } catch (error: unknown) {
+      this.destroy(error as Error)
+    }
   }
 }

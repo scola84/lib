@@ -27,36 +27,20 @@
         ],
         "capitalized-comments": "off",
         "class-methods-use-this": "off",
-        "complexity": "off",
         "func-style": [
           "error",
           "declaration"
         ],
-        "function-call-argument-newline": [
-          "error",
-          "consistent"
-        ],
-        "id-length": "off",
+        "function-call-argument-newline": "off",
         "max-len": "off",
         "max-lines": "off",
-        "max-lines-per-function": "off",
         "max-params": "off",
         "max-statements": "off",
         "multiline-comment-style": "off",
         "multiline-ternary": "off",
-        "no-await-in-loop": "off",
-        "node/no-callback-literal": "off",
-        "no-continue": "off",
-        "no-magic-numbers": "off",
-        "no-underscore-dangle": [
-          "error",
-          {
-            "allow": [
-              "_read"
-            ]
-          }
-        ],
+        "no-empty-function": "off",
         "no-extra-parens": "off",
+        "no-magic-numbers": "off",
         "no-multiple-empty-lines": [
           "error",
           {
@@ -67,11 +51,10 @@
         ],
         "no-ternary": "off",
         "no-undefined": "off",
-        "prefer-destructuring": [
+        "no-unused-vars": [
           "error",
           {
-            "object": true,
-            "array": false
+            "vars": "local"
           }
         ],
         "quote-props": [
@@ -134,11 +117,10 @@
             }
           }
         ],
-        "@typescript-eslint/no-magic-numbers": "off",
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-extra-parens": "off",
+        "@typescript-eslint/no-magic-numbers": "off",
         "@typescript-eslint/no-type-alias": "off",
-        "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/object-curly-spacing": "off",
         "@typescript-eslint/prefer-readonly-parameter-types": "off",
         "@typescript-eslint/return-await": [
@@ -159,36 +141,20 @@
         ],
         "capitalized-comments": "off",
         "class-methods-use-this": "off",
-        "complexity": "off",
         "func-style": [
           "error",
           "declaration"
         ],
-        "function-call-argument-newline": [
-          "error",
-          "consistent"
-        ],
-        "id-length": "off",
+        "function-call-argument-newline": "off",
         "max-len": "off",
         "max-lines": "off",
-        "max-lines-per-function": "off",
         "max-params": "off",
         "max-statements": "off",
         "multiline-comment-style": "off",
         "multiline-ternary": "off",
-        "no-await-in-loop": "off",
-        "node/no-callback-literal": "off",
-        "no-continue": "off",
-        "no-magic-numbers": "off",
-        "no-underscore-dangle": [
-          "error",
-          {
-            "allow": [
-              "_read"
-            ]
-          }
-        ],
+        "no-empty-function": "off",
         "no-extra-parens": "off",
+        "no-magic-numbers": "off",
         "no-multiple-empty-lines": [
           "error",
           {
@@ -199,17 +165,10 @@
         ],
         "no-ternary": "off",
         "no-undefined": "off",
-        "no-void": [
+        "no-unused-vars": [
           "error",
           {
-            "allowAsStatement": true
-          }
-        ],
-        "prefer-destructuring": [
-          "error",
-          {
-            "object": true,
-            "array": false
+            "vars": "local"
           }
         ],
         "quote-props": [

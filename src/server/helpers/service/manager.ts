@@ -10,16 +10,16 @@ export type Services = Record<string, {
 
 export interface ServiceManagerOptions {
   names?: string[] | string
-  logger: Logger
+  logger?: Logger
   queuer?: Queuer
   server?: Server
   services: Services
-  signal: string | null
+  signal?: string | null
   types?: string[] | string
 }
 
 export class ServiceManager {
-  public logger: Logger
+  public logger?: Logger
 
   public names: string[] | string
 
@@ -35,17 +35,9 @@ export class ServiceManager {
 
   public types: string[] | string
 
-  public constructor (options: Partial<ServiceManagerOptions> = {}) {
-    if (options.logger === undefined) {
-      throw new Error('Option "logger" is undefined')
-    }
-
-    if (options.services === undefined) {
-      throw new Error('Option "services" is undefined')
-    }
-
+  public constructor (options: ServiceManagerOptions) {
     this.names = options.names ?? process.env.SERVICE_NAMES?.split(':') ?? '*'
-    this.logger = options.logger.child({ name: 'service-manager' })
+    this.logger = options.logger?.child({ name: 'service-manager' })
     this.queuer = options.queuer
     this.server = options.server
     this.services = options.services
@@ -58,7 +50,7 @@ export class ServiceManager {
   }
 
   public start (): void {
-    this.logger.info({
+    this.logger?.info({
       names: this.names,
       signal: this.signal,
       types: this.types
@@ -90,7 +82,7 @@ export class ServiceManager {
         isMatch('queuer', this.types) ? this.queuer?.start() : null
       ])
       .catch((error) => {
-        this.logger.error(String(error))
+        this.logger?.error(String(error))
         this.process.exit()
       })
 
@@ -107,11 +99,10 @@ export class ServiceManager {
         isMatch('server', this.types) ? this.server?.stop() : null,
         isMatch('queuer', this.types) ? this.queuer?.stop() : null
       ])
-      .then(() => {
-        this.process.exit()
-      })
       .catch((error) => {
-        this.logger.error(String(error))
+        this.logger?.error(String(error))
+      })
+      .finally(() => {
         this.process.exit()
       })
   }

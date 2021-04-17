@@ -1,7 +1,7 @@
+import type { Connection, Database, UpdateResult } from '../sql'
 import type { DuplexOptions, Readable, Transform, Writable } from 'stream'
 import type { Item, Queue, QueueRun, Task, TaskRun } from '../../entities'
 import Ajv from 'ajv'
-import type { Database } from '../sql'
 import type { Logger } from 'pino'
 import type { ObjectSchema } from 'fluent-json-schema'
 import type { Queuer } from './queuer'
@@ -10,6 +10,7 @@ import { createNodeRedisClient } from 'handy-redis'
 import type { queue as fastq } from 'fastq'
 import { pipeline } from '../stream'
 import { promise } from 'fastq'
+import waitUntil from 'async-wait-until'
 
 export interface TaskRunnerOptions extends DuplexOptions {
   block: number
@@ -18,12 +19,12 @@ export interface TaskRunnerOptions extends DuplexOptions {
   consumer: string
   database: Database
   group: string
-  logger: Logger
+  logger?: Logger
   maxLength: number
   name: string
-  queueWriter: WrappedNodeRedisClient
   queuer: Queuer
   schema: Record<string, ObjectSchema>
+  store: WrappedNodeRedisClient
   xid: string
 }
 
@@ -42,7 +43,7 @@ export abstract class TaskRunner {
 
   public group: string
 
-  public logger: Logger
+  public logger?: Logger
 
   public maxLength: number
 
@@ -50,11 +51,11 @@ export abstract class TaskRunner {
 
   public queue?: fastq
 
-  public queueReader?: WrappedNodeRedisClient
-
-  public queueWriter: WrappedNodeRedisClient
-
   public schema: Record<string, ObjectSchema>
+
+  public store: WrappedNodeRedisClient
+
+  public storeDuplicate?: WrappedNodeRedisClient
 
   public validator?: Ajv
 
@@ -70,16 +71,12 @@ export abstract class TaskRunner {
       throw new Error('Option "database" is undefined')
     }
 
-    if (options.logger === undefined) {
-      throw new Error('Option "logger" is undefined')
-    }
-
     if (options.name === undefined) {
       throw new Error('Option "name is undefined')
     }
 
-    if (options.queueWriter === undefined) {
-      throw new Error('Option "queueWriter" is undefined')
+    if (options.store === undefined) {
+      throw new Error('Option "store" is undefined')
     }
 
     this.block = options.block ?? 5 * 60 * 1000
@@ -88,11 +85,11 @@ export abstract class TaskRunner {
     this.consumer = options.consumer ?? process.env.HOSTNAME ?? ''
     this.database = options.database
     this.group = options.group ?? options.name
-    this.logger = options.logger.child({ name: options.name })
+    this.logger = options.logger?.child({ name: options.name })
     this.maxLength = options.maxLength ?? 1024 * 1024
     this.name = options.name
-    this.queueWriter = options.queueWriter
     this.schema = options.schema ?? {}
+    this.store = options.store
     this.xid = options.xid ?? '0-0'
 
     options.queuer?.add(this)
@@ -110,8 +107,8 @@ export abstract class TaskRunner {
     return queuer
   }
 
-  public createQueueReader (): WrappedNodeRedisClient {
-    return createNodeRedisClient(this.queueWriter.nodeRedis.duplicate())
+  public createStoreDuplicate (): WrappedNodeRedisClient {
+    return createNodeRedisClient(this.store.nodeRedis.duplicate())
   }
 
   public createValidator (): Ajv {
@@ -129,32 +126,37 @@ export abstract class TaskRunner {
   }
 
   public start (): void {
-    this.logger.info({
+    this.logger?.info({
       block: this.block,
       channel: this.channel,
       concurrency: this.concurrency,
       consumer: this.consumer,
       group: this.group,
       maxLength: this.maxLength
-    }, 'Starting')
+    }, 'Starting task runner')
 
     this.queue = this.createQueue()
-    this.queueReader = this.createQueueReader()
+    this.storeDuplicate = this.createStoreDuplicate()
     this.validator = this.createValidator()
 
     this.read()
   }
 
   public async stop (): Promise<void> {
-    this.logger.info('Stopping')
-    await this.delConsumer()
-    this.queueReader?.end()
+    this.logger?.info({
+      connected: [
+        this.store.nodeRedis.connected,
+        this.storeDuplicate?.nodeRedis.connected
+      ],
+      queue: this.queue?.length()
+    }, 'Stopping task runner')
 
-    while (this.queue?.length() !== 0) {
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100)
-      })
-    }
+    await this.delConsumer()
+    this.storeDuplicate?.end()
+
+    await waitUntil(() => {
+      return this.queue?.length() === 0
+    })
   }
 
   public validate (name: string, data: unknown): void {
@@ -168,54 +170,73 @@ export abstract class TaskRunner {
 
   protected async createGroup (): Promise<void> {
     try {
-      await this.queueWriter.xgroup([['CREATE', [this.name, this.group]], '$', 'MKSTREAM'])
+      await this.store.xgroup([['CREATE', [this.name, this.group]], '$', 'MKSTREAM'])
     } catch (error: unknown) {
-      this.logger.error({ context: 'create-group' }, String(error))
+      this.logger?.error({ context: 'create-group' }, String(error))
     }
   }
 
   protected async delConsumer (): Promise<void> {
     try {
-      await this.queueWriter.xgroup(['DELCONSUMER', [this.name, this.group, this.consumer]])
+      await this.store.xgroup(['DELCONSUMER', [this.name, this.group, this.consumer]])
     } catch (error: unknown) {
-      this.logger.error({ context: 'del-consumer' }, String(error))
+      this.logger?.error({ context: 'del-consumer' }, String(error))
+    }
+  }
+
+  protected async finishTaskRun (taskRun: TaskRun): Promise<void> {
+    const connection = await this.database.connect()
+
+    try {
+      taskRun.code = taskRun.code === 'pending' ? 'ok' : taskRun.code
+      taskRun.item.code = taskRun.code
+
+      await this.updateTaskRunOnFinish(connection, taskRun)
+      await this.updateItem(connection, taskRun)
+
+      if (taskRun.xid !== null) {
+        await this.store.xack(this.name, this.group, taskRun.xid)
+      }
+
+      const nextTaskRun = taskRun.code === 'ok'
+        ? await this.selectTaskRunOnFinish(connection, taskRun)
+        : undefined
+
+      if (nextTaskRun === undefined) {
+        await this.updateQueueRun(connection, taskRun)
+        const queues = await this.selectQueues(connection, taskRun)
+
+        await Promise.all(queues.map(async ({ id }) => {
+          await this.store.publish(this.channel, JSON.stringify({
+            id,
+            parameters: [taskRun.queueRun.id]
+          }))
+        }))
+      } else {
+        await this.store.xadd(
+          `${taskRun.queueRun.name}-${nextTaskRun.name}`,
+          ['MAXLEN', ['~', this.maxLength]],
+          '*',
+          ['id', String(nextTaskRun.id)]
+        )
+      }
+    } finally {
+      connection.release()
     }
   }
 
   protected async handleTaskRun (taskRun: TaskRun): Promise<void> {
     try {
-      await this.pushTaskRun(taskRun)
+      await this.startTaskRun(taskRun)
     } catch (error: unknown) {
       taskRun.code = 'err'
       taskRun.reason = String(error)
     } finally {
       try {
-        await this.writeTaskRun(taskRun)
+        await this.finishTaskRun(taskRun)
       } catch (error: unknown) {
-        this.logger.error({ context: 'handle-task-run' }, String(error))
+        this.logger?.error({ context: 'handle-task-run' }, String(error))
       }
-    }
-  }
-
-  protected async pushTaskRun (taskRun: TaskRun): Promise<void> {
-    await this.database.update<TaskRun>(`
-      UPDATE task_run
-      SET
-        consumer = $(consumer),
-        date_started = NOW(),
-        date_updated = NOW(),
-        xid = $(xid)
-      WHERE id = $(id)
-    `, {
-      consumer: this.consumer,
-      id: taskRun.id,
-      xid: taskRun.xid
-    })
-
-    if (taskRun.code === 'pending') {
-      this.validate('options', taskRun.task.options)
-      this.validate('payload', taskRun.item.payload)
-      await this.run(taskRun)
     }
   }
 
@@ -234,21 +255,23 @@ export abstract class TaskRunner {
           return
         }
 
-        this.logger.error({ context: 'read' }, String(error))
+        this.logger?.error({ context: 'read' }, String(error))
       })
   }
 
-  protected async readTaskRuns (): Promise<void> {
-    const envelope = await this.queueReader?.xreadgroup(
+  protected async readGroup (): Promise<Array<[string, string[] | null]> | null> {
+    return this.storeDuplicate?.xreadgroup(
       ['GROUP', [this.group, this.consumer]],
       ['COUNT', this.concurrency],
       ['BLOCK', this.block],
       'STREAMS',
       [this.name],
       this.xid
-    ) as Array<[string, string[] | null]> | null
+    ) as Promise<Array<[string, string[] | null]> | null>
+  }
 
-    const items = envelope?.[0][1] ?? []
+  protected async readTaskRuns (): Promise<void> {
+    const items = (await this.readGroup())?.[0][1] ?? []
 
     if (items.length === 0) {
       this.xid = '>'
@@ -257,184 +280,200 @@ export abstract class TaskRunner {
 
     const connection = await this.database.connect()
 
-    try {
-      for (const [xid, [, value]] of items) {
-        const taskRun = await connection.selectOne<TaskRun, TaskRun>(`
-          SELECT *
-          FROM task_run
-          WHERE id = $(id)
-        `, {
-          id: Number(value)
-        })
+    await Promise.all(items.map(async ([xid, [, id]]): Promise<void> => {
+      try {
+        const taskRun = await this.selectTaskRunOnRead(connection, Number(id))
 
-        if (taskRun === undefined) {
-          continue
+        if (taskRun !== undefined) {
+          const [
+            item,
+            queueRun,
+            task
+          ] = await Promise.all([
+            this.selectItem(connection, taskRun),
+            this.selectQueueRun(connection, taskRun),
+            this.selectTask(connection, taskRun)
+          ])
+
+          if (
+            item !== undefined &&
+            queueRun !== undefined &&
+            task !== undefined
+          ) {
+            taskRun.item = item
+            taskRun.queueRun = queueRun
+            taskRun.task = task
+            taskRun.xid = xid
+
+            await this.updateTaskRunOnRead(connection, taskRun)
+            this.queue?.push(taskRun)
+
+            this.xid = this.xid === '>' ? '>' : xid
+          }
         }
-
-        const item = await connection.selectOne<Item, Item>(`
-          SELECT *
-          FROM item
-          WHERE id = $(id)
-        `, {
-          id: taskRun.fkey_item_id
-        })
-
-        if (item === undefined) {
-          continue
-        }
-
-        const queueRun = await connection.selectOne<QueueRun, QueueRun>(`
-          SELECT *
-          FROM queue_run
-          WHERE id = $(id)
-        `, {
-          id: taskRun.fkey_queue_run_id
-        })
-
-        if (queueRun === undefined) {
-          continue
-        }
-
-        const task = await connection.selectOne<Task, Task>(`
-          SELECT *
-          FROM task
-          WHERE id = $(id)
-        `, {
-          id: taskRun.fkey_task_id
-        })
-
-        if (task === undefined) {
-          continue
-        }
-
-        taskRun.item = item
-        taskRun.queueRun = queueRun
-        taskRun.task = task
-        taskRun.xid = xid
-
-        await connection.update<TaskRun>(`
-          UPDATE task_run
-          SET
-            date_queued = NOW(),
-            date_updated = NOW(),
-            xid = $(xid)
-          WHERE id = $(id)
-        `, {
-          id: taskRun.id,
-          xid: taskRun.xid
-        })
-
-        this.queue?.push(taskRun)
-        this.xid = this.xid === '>' ? '>' : xid
+      } catch (error: unknown) {
+        this.logger?.error({ context: 'read-task-runs' }, String(error))
       }
-    } finally {
-      connection.release()
+    }))
+
+    connection.release()
+  }
+
+  protected async selectItem (connection: Connection, taskRun: TaskRun): Promise<Item | undefined> {
+    return connection.selectOne<Item, Item>(`
+      SELECT *
+      FROM item
+      WHERE id = $(id)
+    `, {
+      id: taskRun.fkey_item_id
+    })
+  }
+
+  protected async selectQueueRun (connection: Connection, taskRun: TaskRun): Promise<QueueRun | undefined> {
+    return connection.selectOne<QueueRun, QueueRun>(`
+      SELECT *
+      FROM queue_run
+      WHERE id = $(id)
+    `, {
+      id: taskRun.fkey_queue_run_id
+    })
+  }
+
+  protected async selectQueues (connection: Connection, taskRun: TaskRun): Promise<Queue[]> {
+    return connection.select<QueueRun, Queue[]>(`
+      SELECT queue.id
+      FROM queue
+      JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
+      WHERE
+        queue_run.id = $(id) AND
+        queue_run.fkey_item_id = $(fkey_item_id) AND
+        queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
+    `, {
+      fkey_item_id: taskRun.item.id,
+      id: taskRun.queueRun.id
+    })
+  }
+
+  protected async selectTask (connection: Connection, taskRun: TaskRun): Promise<Task | undefined> {
+    return connection.selectOne<Task, Task>(`
+      SELECT *
+      FROM task
+      WHERE id = $(id)
+    `, {
+      id: taskRun.fkey_task_id
+    })
+  }
+
+  protected async selectTaskRunOnFinish (connection: Connection, taskRun: TaskRun): Promise<Task & TaskRun | undefined> {
+    return connection.selectOne<Task & TaskRun, Task & TaskRun>(`
+      SELECT
+        task_run.id,
+        task.name
+      FROM task_run
+      JOIN task ON task_run.fkey_task_id = task.id
+      WHERE
+        fkey_item_id = $(fkey_item_id) AND
+        task.number > $(number)
+      ORDER BY task.number ASC
+      LIMIT 1
+    `, {
+      fkey_item_id: taskRun.item.id,
+      number: taskRun.task.number
+    })
+  }
+
+  protected async selectTaskRunOnRead (connection: Connection, id: number): Promise<TaskRun | undefined> {
+    return connection.selectOne<TaskRun, TaskRun>(`
+      SELECT *
+      FROM task_run
+      WHERE id = $(id)
+    `, {
+      id
+    })
+  }
+
+  protected async startTaskRun (taskRun: TaskRun): Promise<void> {
+    await this.updateTaskRunOnStart(taskRun)
+
+    if (taskRun.code === 'pending') {
+      this.validate('options', taskRun.task.options)
+      this.validate('payload', taskRun.item.payload)
+      await this.run(taskRun)
     }
   }
 
-  protected async writeTaskRun (taskRun: TaskRun): Promise<void> {
-    const connection = await this.database.connect()
+  protected async updateItem (connection: Connection, taskRun: TaskRun): Promise<UpdateResult> {
+    return connection.update<Item>(`
+      UPDATE item
+      SET
+        code = $(code),
+        date_updated = NOW()
+      WHERE id = $(id)
+    `, {
+      code: taskRun.item.code,
+      id: taskRun.item.id
+    })
+  }
 
-    try {
-      taskRun.code = taskRun.code === 'pending' ? 'ok' : taskRun.code
-      taskRun.item.code = taskRun.code
+  protected async updateQueueRun (connection: Connection, taskRun: TaskRun): Promise<UpdateResult> {
+    return connection.update<QueueRun>(`
+      UPDATE queue_run
+      SET
+        aggr_${taskRun.code} = aggr_${taskRun.code} + 1,
+        date_updated = NOW(),
+        fkey_item_id = $(fkey_item_id)
+      WHERE id = $(id)
+    `, {
+      fkey_item_id: taskRun.item.id,
+      id: taskRun.queueRun.id
+    })
+  }
 
-      await connection.update<TaskRun | { result: string }>(`
-        UPDATE task_run
-        SET
-          code = $(code),
-          date_updated = NOW(),
-          reason = $(reason),
-          result = $(result)
-        WHERE id = $(id)
-      `, {
-        code: taskRun.code,
-        id: taskRun.id,
-        reason: taskRun.reason,
-        result: JSON.stringify(taskRun.result)
-      })
+  protected async updateTaskRunOnFinish (connection: Connection, taskRun: TaskRun): Promise<UpdateResult> {
+    return connection.update<TaskRun | { result: string }>(`
+      UPDATE task_run
+      SET
+        code = $(code),
+        date_updated = NOW(),
+        reason = $(reason),
+        result = $(result)
+      WHERE id = $(id)
+    `, {
+      code: taskRun.code,
+      id: taskRun.id,
+      reason: taskRun.reason,
+      result: JSON.stringify(taskRun.result)
+    })
+  }
 
-      await connection.update<Item>(`
-        UPDATE item
-        SET
-          code = $(code),
-          date_updated = NOW()
-        WHERE id = $(id)
-      `, {
-        code: taskRun.item.code,
-        id: taskRun.item.id
-      })
+  protected async updateTaskRunOnRead (connection: Connection, taskRun: TaskRun): Promise<UpdateResult> {
+    return connection.update<TaskRun>(`
+      UPDATE task_run
+      SET
+        date_queued = NOW(),
+        date_updated = NOW(),
+        xid = $(xid)
+      WHERE id = $(id)
+    `, {
+      id: taskRun.id,
+      xid: taskRun.xid
+    })
+  }
 
-      if (typeof taskRun.xid === 'string') {
-        await this.queueWriter.xack(this.name, this.group, taskRun.xid)
-      }
-
-      let nextTaskRun = null
-
-      if (taskRun.code === 'ok') {
-        nextTaskRun = await connection
-          .selectOne<Task & TaskRun, Task & TaskRun>(`
-            SELECT
-              task_run.id,
-              task.name
-            FROM task_run
-            JOIN task ON task_run.fkey_task_id = task.id
-            WHERE
-              fkey_item_id = $(fkey_item_id) AND
-              task.number > $(number)
-            ORDER BY task.number ASC
-            LIMIT 1
-          `, {
-            fkey_item_id: taskRun.item.id,
-            number: taskRun.task.number
-          }) ?? null
-      }
-
-      if (nextTaskRun === null) {
-        const field = taskRun.code === 'ok' ? 'ok' : 'err'
-
-        await connection.update<QueueRun>(`
-          UPDATE queue_run
-          SET
-            aggr_${field} = aggr_${field} + 1,
-            date_updated = NOW(),
-            fkey_item_id = $(fkey_item_id)
-          WHERE id = $(id)
-        `, {
-          fkey_item_id: taskRun.item.id,
-          id: taskRun.queueRun.id
-        })
-
-        const queues = await connection.select<QueueRun, Queue[]>(`
-          SELECT queue.id
-          FROM queue
-          JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
-          WHERE
-            queue_run.id = $(id) AND
-            queue_run.fkey_item_id = $(fkey_item_id) AND
-            queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
-        `, {
-          fkey_item_id: taskRun.item.id,
-          id: taskRun.queueRun.id
-        })
-
-        for (const { id } of queues) {
-          await this.queueWriter.publish(this.channel, JSON.stringify({
-            id,
-            parameters: [taskRun.queueRun.id]
-          }))
-        }
-      } else {
-        await this.queueWriter.xadd(
-          `${taskRun.queueRun.name}-${nextTaskRun.name}`,
-          ['MAXLEN', ['~', this.maxLength]],
-          '*',
-          ['id', String(nextTaskRun.id)]
-        )
-      }
-    } finally {
-      connection.release()
-    }
+  protected async updateTaskRunOnStart (taskRun: TaskRun): Promise<UpdateResult> {
+    return this.database.update<TaskRun>(`
+      UPDATE task_run
+      SET
+        consumer = $(consumer),
+        date_started = NOW(),
+        date_updated = NOW(),
+        xid = $(xid)
+      WHERE id = $(id)
+    `, {
+      consumer: this.consumer,
+      id: taskRun.id,
+      xid: taskRun.xid
+    })
   }
 
   protected abstract run (taskRun: TaskRun): Promise<void>

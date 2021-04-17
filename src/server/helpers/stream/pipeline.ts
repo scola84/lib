@@ -1,72 +1,41 @@
-import type { Readable, Stream } from 'stream'
 import { Transform, Writable } from 'stream'
+import type { Readable } from 'stream'
 
 export async function pipeline (...streams: Array<Readable | Transform | Writable>): Promise<void> {
   await new Promise<void>((resolve, reject) => {
-    function removeListeners (): void {
-      let stream = null
+    streams
+      .reduce((previous: Readable | Transform | Writable | null, current, index) => {
+        if (previous instanceof Writable && !(previous instanceof Transform)) {
+          for (const stream of streams) {
+            stream.removeAllListeners()
+          }
 
-      for (stream of streams) {
-        const dataListener = dataListeners.get(stream)
-        const errorListener = errorListeners.get(stream)
-
-        dataListeners.delete(stream)
-        errorListeners.delete(stream)
-
-        if (dataListener !== undefined) {
-          stream.removeListener('data', dataListener)
+          throw new Error(`Stream error (${index}): Cannot pipe a Writable`)
         }
 
-        if (errorListener !== undefined) {
-          stream.removeListener('error', errorListener)
+        current
+          .on('data', () => {})
+          .on('error', (error: Error) => {
+            for (const stream of streams) {
+              stream.destroy()
+              stream.removeAllListeners()
+            }
+
+            reject(new Error(`Stream error (${index}): ${String(error)}`))
+          })
+
+        if (current instanceof Transform || current instanceof Writable) {
+          previous?.pipe(current)
         }
-      }
 
-      stream?.removeListener('finish', handleFinish)
-    }
+        return current
+      }, null)
+      ?.once('finish', () => {
+        for (const stream of streams) {
+          stream.removeAllListeners()
+        }
 
-    function handleData (): void {}
-
-    function handleError (index: number, error: Error): void {
-      for (const stream of streams) {
-        stream.destroy()
-      }
-
-      removeListeners()
-      reject(new Error(`stream(${index}): ${String(error)}`))
-    }
-
-    function handleFinish (): void {
-      removeListeners()
-      resolve()
-    }
-
-    const dataListeners = new Map<Stream, () => void>()
-    const errorListeners = new Map<Stream, (error: Error) => void>()
-    let previous = null
-
-    for (const stream of streams) {
-      if (previous instanceof Writable && !(previous instanceof Transform)) {
-        throw new Error(`Cannot pipe a Writable (stream[${streams.indexOf(previous)}])`)
-      }
-
-      const errorListener = handleError.bind(stream, streams.indexOf(stream))
-
-      errorListeners.set(stream, errorListener)
-      stream.on('error', errorListener)
-
-      if (previous !== null && (stream instanceof Transform || stream instanceof Writable)) {
-        previous.pipe(stream)
-      }
-
-      const dataListener = handleData.bind(stream)
-
-      dataListeners.set(stream, dataListener)
-      stream.on('data', dataListener)
-
-      previous = stream
-    }
-
-    previous?.once('finish', handleFinish)
+        resolve()
+      })
   })
 }

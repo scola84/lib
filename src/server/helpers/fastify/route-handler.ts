@@ -10,7 +10,7 @@ export interface RouteHandlerOptions extends RouteOptions {
 export abstract class RouteHandler {
   public static options?: Partial<RouteHandlerOptions>
 
-  public logger: Logger
+  public logger?: Logger
 
   public method: RouteOptions['method']
 
@@ -28,26 +28,22 @@ export abstract class RouteHandler {
       ...coptions
     }
 
-    if (options.logger === undefined) {
-      throw new Error('Option "logger" is undefined')
-    }
-
     if (options.server === undefined) {
       throw new Error('Option "server" is undefined')
     }
 
-    this.logger = options.logger.child({ name: options.url })
+    this.logger = options.logger?.child({ name: options.url })
     this.options = options
     this.server = options.server
   }
 
   public start (): void {
-    this.logger.info({
+    this.logger?.info({
       method: this.method,
       url: this.url
-    }, 'Starting')
+    }, 'Starting route handler')
 
-    this.server.fastify.route({
+    this.server.fastify?.route({
       handler: this.route.bind(this),
       method: this.method,
       schema: this.schema,

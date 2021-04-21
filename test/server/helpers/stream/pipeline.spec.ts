@@ -43,7 +43,7 @@ async function aReadableFails (): Promise<void> {
     expect(transform.listeners('error').length).equal(0)
     expect(writable.listeners('data').length).equal(0)
     expect(writable.listeners('error').length).equal(0)
-    expect(String(error)).equal('Error: stream(0): Error: readable error')
+    expect(String(error)).match(/readable error/u)
   }
 }
 
@@ -76,7 +76,7 @@ async function aTransformFails (): Promise<void> {
     expect(transform.listeners('error').length).equal(0)
     expect(writable.listeners('data').length).equal(0)
     expect(writable.listeners('error').length).equal(0)
-    expect(String(error)).equal('Error: stream(1): Error: transform error')
+    expect(String(error)).match(/transform error/u)
   }
 }
 
@@ -109,7 +109,7 @@ async function aWritableFails (): Promise<void> {
     expect(transform.listeners('error').length).equal(0)
     expect(writable.listeners('data').length).equal(0)
     expect(writable.listeners('error').length).equal(0)
-    expect(String(error)).equal('Error: stream(2): Error: writable error')
+    expect(String(error)).match(/writable error/u)
   }
 }
 
@@ -141,7 +141,7 @@ async function streamsAreProvidedInAWrongOrder (): Promise<void> {
     expect(transform.listeners('error').length).equal(0)
     expect(writable.listeners('data').length).equal(0)
     expect(writable.listeners('error').length).equal(0)
-    expect(String(error)).equal('Error: stream(1): Cannot pipe a Writable')
+    expect(String(error)).match(/Cannot pipe a Writable/u)
   }
 }
 

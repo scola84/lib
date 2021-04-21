@@ -1,3 +1,20 @@
+# [15.0.0](https://github.com/scola84/lib/compare/v14.0.0...v15.0.0) (2021-04-21)
+
+
+### Bug Fixes
+
+* **test:** wrong expectation of error message ([799f9ab](https://github.com/scola84/lib/commit/799f9ab71945f24cf9eca5cf4d1b55051563bf55))
+
+
+### Code Refactoring
+
+* enforce stricter ESLint rules ([4695c1e](https://github.com/scola84/lib/commit/4695c1e7effaa07bd09cfa89a87931b81e286963))
+
+
+### BREAKING CHANGES
+
+* Some property names have changed.
+
 # [14.0.0](https://github.com/scola84/lib/compare/v13.0.0...v14.0.0) (2021-04-08)
 
 

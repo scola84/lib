@@ -1,3 +1,11 @@
+## [15.0.1](https://github.com/scola84/lib/compare/v15.0.0...v15.0.1) (2021-04-22)
+
+
+### Bug Fixes
+
+* **service:** manager should listen to stop signal only once ([ba277c8](https://github.com/scola84/lib/commit/ba277c898825ed6d1765b24c9bc96750a54f2073))
+* **stream:** error message format ([03e7d70](https://github.com/scola84/lib/commit/03e7d703eaedab676bf942e8e07a31b6f921d9c7))
+
 # [15.0.0](https://github.com/scola84/lib/compare/v14.0.0...v15.0.0) (2021-04-21)
 
 

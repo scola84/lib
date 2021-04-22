@@ -14,7 +14,7 @@ export interface ServiceManagerOptions {
   queuer?: Queuer
   server?: Server
   services: Services
-  signal?: string | null
+  signal?: NodeJS.Signals | null
   types?: string[] | string
 }
 
@@ -23,7 +23,7 @@ export class ServiceManager {
 
   public names: string[] | string
 
-  public process: NodeJS.Process
+  public process = process
 
   public queuer?: Queuer
 
@@ -31,7 +31,7 @@ export class ServiceManager {
 
   public services: Services
 
-  public signal: string | null
+  public signal: NodeJS.Signals | null
 
   public types: string[] | string
 
@@ -45,18 +45,12 @@ export class ServiceManager {
     this.types = options.types ?? process.env.SERVICE_TYPES?.split(':') ?? '*'
   }
 
-  public createProcess (): NodeJS.Process {
-    return process
-  }
-
   public start (): void {
     this.logger?.info({
       names: this.names,
       signal: this.signal,
       types: this.types
-    }, 'Starting')
-
-    this.process = this.createProcess()
+    }, 'Starting service manager')
 
     if (isMatch('server', this.types)) {
       this.server?.setup()
@@ -87,13 +81,19 @@ export class ServiceManager {
       })
 
     if (this.signal !== null) {
-      this.process.on(this.signal, () => {
+      this.process.once(this.signal, () => {
         this.stop()
       })
     }
   }
 
   public stop (): void {
+    this.logger?.info({
+      names: this.names,
+      signal: this.signal,
+      types: this.types
+    }, 'Stopping service manager')
+
     Promise
       .all([
         isMatch('server', this.types) ? this.server?.stop() : null,

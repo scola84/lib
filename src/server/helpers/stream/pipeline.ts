@@ -10,7 +10,7 @@ export async function pipeline (...streams: Array<Readable | Transform | Writabl
             stream.removeAllListeners()
           }
 
-          throw new Error(`Stream error (${index}): Cannot pipe a Writable`)
+          throw new Error('Cannot pipe a Writable')
         }
 
         current
@@ -21,7 +21,7 @@ export async function pipeline (...streams: Array<Readable | Transform | Writabl
               stream.removeAllListeners()
             }
 
-            reject(new Error(`Stream error (${index}): ${String(error)}`))
+            reject(new Error(`Stream #${index} failed: ${error.message}`))
           })
 
         if (current instanceof Transform || current instanceof Writable) {

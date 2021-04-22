@@ -18,7 +18,7 @@ describe('pipeline', () => {
 async function aReadableFails (): Promise<void> {
   const readable = new Readable({
     read () {
-      this.destroy(new Error('readable error'))
+      this.destroy(new Error('Readable error'))
     }
   })
 
@@ -43,7 +43,7 @@ async function aReadableFails (): Promise<void> {
     expect(transform.listeners('error').length).equal(0)
     expect(writable.listeners('data').length).equal(0)
     expect(writable.listeners('error').length).equal(0)
-    expect(String(error)).match(/readable error/u)
+    expect(String(error)).match(/Readable error/u)
   }
 }
 
@@ -57,7 +57,7 @@ async function aTransformFails (): Promise<void> {
 
   const transform = new Transform({
     transform (chunk, encoding, callback: (error?: Error) => void) {
-      callback(new Error('transform error'))
+      callback(new Error('Transform error'))
     }
   })
 
@@ -76,7 +76,7 @@ async function aTransformFails (): Promise<void> {
     expect(transform.listeners('error').length).equal(0)
     expect(writable.listeners('data').length).equal(0)
     expect(writable.listeners('error').length).equal(0)
-    expect(String(error)).match(/transform error/u)
+    expect(String(error)).match(/Transform error/u)
   }
 }
 
@@ -96,7 +96,7 @@ async function aWritableFails (): Promise<void> {
 
   const writable = new Writable({
     write (chunk, encoding, callback: (error?: Error) => void) {
-      callback(new Error('writable error'))
+      callback(new Error('Writable error'))
     }
   })
 
@@ -109,7 +109,7 @@ async function aWritableFails (): Promise<void> {
     expect(transform.listeners('error').length).equal(0)
     expect(writable.listeners('data').length).equal(0)
     expect(writable.listeners('error').length).equal(0)
-    expect(String(error)).match(/writable error/u)
+    expect(String(error)).match(/Writable error/u)
   }
 }
 

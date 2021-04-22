@@ -28,7 +28,7 @@ jobs:
         run: yarn lint
 
       - name: Test
-        run: yarn test --maxWorkers=4  --testTimeout=60000
+        run: yarn test
 
       - name: Bundle
         run: yarn bundle

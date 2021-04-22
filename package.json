@@ -89,7 +89,7 @@
     "bundle:dev": "yarn bundle --sourcemap --watch",
     "lint": "tsc --project src/client && tsc --project src/server && lit-analyzer src/client --strict && eslint bin src test",
     "lint:dev": "yarn lint --fix && git update-index --again",
-    "test": "jest --preset ts-jest",
+    "test": "jest --maxWorkers 4 --preset ts-jest --testTimeout 60000",
     "test:cov": "yarn test --collectCoverage",
     "test:dev": "yarn test --watch"
   },

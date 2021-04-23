@@ -6,6 +6,7 @@ import type { WrappedNodeRedisClient } from 'handy-redis'
 import { XAdder } from '../redis'
 import { createQueueRun } from '../../entities'
 import { pipeline } from '../stream'
+import { sql } from '../sql'
 
 export interface QueueRunnerOptions {
   database: Database
@@ -109,7 +110,7 @@ export class QueueRunner {
   }
 
   protected async insertItem (connection: Connection, queueRun: QueueRun, payload: unknown): Promise<InsertResult> {
-    return connection.insertOne<Item>(`
+    return connection.insertOne<Item>(sql`
       INSERT INTO item (
         fkey_queue_run_id,
         payload
@@ -124,7 +125,7 @@ export class QueueRunner {
   }
 
   protected async insertQueueRun (connection: Connection, queue: Queue): Promise<InsertResult> {
-    return connection.insertOne<QueueRun>(`
+    return connection.insertOne<QueueRun>(sql`
       INSERT INTO queue_run (
         fkey_queue_id,
         name
@@ -139,7 +140,7 @@ export class QueueRunner {
   }
 
   protected async insertTaskRun (connection: Connection, queueRunId: number, itemId: number, taskId: number): Promise<InsertResult> {
-    return connection.insertOne<TaskRun>(`
+    return connection.insertOne<TaskRun>(sql`
       INSERT INTO task_run (
         fkey_item_id,
         fkey_queue_run_id,
@@ -157,7 +158,7 @@ export class QueueRunner {
   }
 
   protected async selectQueues (connection: Connection, queueRun: QueueRun): Promise<Queue[]> {
-    return connection.select<QueueRun, Queue[]>(`
+    return connection.select<QueueRun, Queue[]>(sql`
       SELECT queue.id
       FROM queue
       JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
@@ -170,7 +171,7 @@ export class QueueRunner {
   }
 
   protected async updateQueueRunErr (connection: Connection, queueRun: QueueRun, error: Error): Promise<UpdateResult> {
-    return connection.update<QueueRun>(`
+    return connection.update<QueueRun>(sql`
       UPDATE queue_run
       SET
         code = 'err',
@@ -184,7 +185,7 @@ export class QueueRunner {
   }
 
   protected async updateQueueRunOk (connection: Connection, queueRun: QueueRun): Promise<UpdateResult> {
-    return connection.update<QueueRun>(`
+    return connection.update<QueueRun>(sql`
       UPDATE queue_run
       SET
         aggr_total = $(aggr_total),

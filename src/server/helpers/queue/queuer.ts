@@ -8,6 +8,7 @@ import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createNodeRedisClient } from 'handy-redis'
 import { parseExpression } from 'cron-parser'
 import { scheduleJob } from 'node-schedule'
+import { sql } from '../sql'
 import waitUntil from 'async-wait-until'
 
 export interface QueuerOptions {
@@ -188,7 +189,7 @@ export class Queuer {
   }
 
   protected async selectQueue (connection: Connection, id: number): Promise<Queue | undefined> {
-    return connection.selectOne<Queue, Queue>(`
+    return connection.selectOne<Queue, Queue>(sql`
       SELECT *
       FROM queue
       WHERE id = $(id)
@@ -198,7 +199,7 @@ export class Queuer {
   }
 
   protected async selectQueues (connection: Connection, date: Date): Promise<Queue[]> {
-    return connection.select<Queue & { date: Date}, Queue[]>(`
+    return connection.select<Queue & { date: Date}, Queue[]>(sql`
       SELECT *
       FROM queue
       WHERE
@@ -217,7 +218,7 @@ export class Queuer {
   }
 
   protected async selectTasks (connection: Connection, id: number): Promise<Task[]> {
-    return connection.select<Task, Task[]>(`
+    return connection.select<Task, Task[]>(sql`
       SELECT *
       FROM task
       WHERE fkey_queue_id = $(fkey_queue_id)
@@ -250,7 +251,7 @@ export class Queuer {
   }
 
   protected async updateQueue (connection: Connection, queue: Queue): Promise<UpdateResult> {
-    return connection.update<Queue>(`
+    return connection.update<Queue>(sql`
       UPDATE queue
       SET schedule_next = $(schedule_next)
       WHERE id = $(id)

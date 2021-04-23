@@ -1,3 +1,15 @@
+# [15.1.0](https://github.com/scola84/lib/compare/v15.0.1...v15.1.0) (2021-04-23)
+
+
+### Bug Fixes
+
+* let connections handle JSON serialization ([d4383b1](https://github.com/scola84/lib/commit/d4383b11d1800bee91817ac7ce3cc393e9801e5d))
+
+
+### Features
+
+* **sql:** add template tag function for syntax highlighting ([d0b5180](https://github.com/scola84/lib/commit/d0b518038b1b2de0fcb718d6758be39dde57d13c))
+
 ## [15.0.1](https://github.com/scola84/lib/compare/v15.0.0...v15.0.1) (2021-04-22)
 
 

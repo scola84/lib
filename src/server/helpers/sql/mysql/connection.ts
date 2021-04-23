@@ -75,13 +75,7 @@ export class MysqlConnection implements Connection {
       rawQuery
         .match(/\$\d+/gu)
         ?.map((index) => {
-          const value = rawValues[Number(index.slice(1)) - 1]
-
-          if (value === undefined) {
-            throw new Error(`Parameter "${index}" is undefined`)
-          }
-
-          return value
+          return this.transformValue(rawValues[Number(index.slice(1)) - 1], index)
         }) ?? rawValues
     ]
   }
@@ -93,14 +87,20 @@ export class MysqlConnection implements Connection {
       rawQuery
         .match(/\$\(\w+\)/gu)
         ?.map((index) => {
-          const value = rawValues[index.slice(2, -1)]
-
-          if (value === undefined) {
-            throw new Error(`Parameter "${index}" is undefined`)
-          }
-
-          return value
+          return this.transformValue(rawValues[index.slice(2, -1)], index)
         }) ?? Object.values(rawValues)
     ]
+  }
+
+  protected transformValue (value: unknown, index: string): unknown {
+    if (value === undefined) {
+      throw new Error(`Parameter "${index}" is undefined`)
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      return JSON.stringify(value)
+    }
+
+    return value
   }
 }

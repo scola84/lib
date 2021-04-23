@@ -442,7 +442,7 @@ export abstract class TaskRunner {
       code: taskRun.code,
       id: taskRun.id,
       reason: taskRun.reason,
-      result: JSON.stringify(taskRun.result)
+      result: taskRun.result
     })
   }
 

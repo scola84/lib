@@ -119,7 +119,7 @@ export class QueueRunner {
       )
     `, {
       fkey_queue_run_id: queueRun.id,
-      payload: JSON.stringify(payload)
+      payload
     })
   }
 

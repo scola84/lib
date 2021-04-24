@@ -3,10 +3,13 @@ import { Database } from '../database'
 import { MysqlConnection } from './connection'
 import { URL } from 'url'
 import { createPool } from 'mysql2/promise'
+import tokens from './tokens'
 import { unescape } from 'querystring'
 
 export class MysqlDatabase extends Database {
-  public readonly pool: Pool
+  public pool: Pool
+
+  public tokens = tokens
 
   public constructor (rawOptions: PoolOptions | string = {}) {
     super()

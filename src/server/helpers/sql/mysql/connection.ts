@@ -1,106 +1,68 @@
-import type { Connection, DeleteResult, InsertResult, UpdateResult } from '../connection'
+import type { DeleteResult, InsertResult, UpdateResult } from '../connection'
 import type { PoolConnection, ResultSetHeader } from 'mysql2/promise'
+import { Connection } from '../connection'
 import type { Readable } from 'stream'
 import tokens from './tokens'
 
-export class MysqlConnection implements Connection {
+export class MysqlConnection extends Connection {
   public connection: PoolConnection
 
   public tokens = tokens
 
-  public constructor (connection?: PoolConnection) {
-    if (connection !== undefined) {
-      this.connection = connection
-    }
+  public constructor (connection: PoolConnection) {
+    super()
+    this.connection = connection
   }
 
-  public async delete<V> (query: string, values: Partial<V>): Promise<DeleteResult> {
+  public async delete<V> (query: string, values?: Partial<V>): Promise<DeleteResult> {
     const result = await this.query<V, ResultSetHeader>(query, values)
     return { count: result.affectedRows }
   }
 
-  public async insert<V, R = number> (query: string, values: Partial<V>): Promise<Array<InsertResult<R>>> {
+  public async insert<V, R = number> (query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {
     const result = await this.query<V, { insertId: R }>(query, values)
     return [{ id: result.insertId }]
   }
 
-  public async insertOne<V, R = number> (query: string, values: Partial<V>): Promise<InsertResult<R>> {
+  public async insertOne<V, R = number> (query: string, values?: Partial<V>): Promise<InsertResult<R>> {
     const result = await this.query<V, { insertId: R }>(query, values)
     return { id: result.insertId }
   }
 
-  public async query<V, R>(query: string, values: Partial<V>): Promise<R> {
-    const [result] = await this.connection.query(...this.transformParameters(query, values as unknown as [])) as unknown as [R]
-    return result
+  public async query<V, R>(query: string, values?: Partial<V>): Promise<R> {
+    const [result] = await this.connection.query(...this.transform(query, values))
+    return result as unknown as R
   }
 
   public release (): void {
     this.connection.release()
   }
 
-  public async select<V, R>(query: string, values: Partial<V>): Promise<R> {
+  public async select<V, R>(query: string, values?: Partial<V>): Promise<R> {
     return this.query<V, R>(query, values)
   }
 
-  public async selectOne<V, R>(query: string, values: Partial<V>): Promise<R | undefined> {
+  public async selectOne<V, R>(query: string, values?: Partial<V>): Promise<R | undefined> {
     const result = await this.query<V, R[]>(query, values)
     return result[0]
   }
 
-  public async stream<V> (query: string, values: Partial<V>): Promise<Readable> {
-    const stream = this.connection.connection
-      .query(...this.transformParameters(query, values as unknown as []))
+  public stream<V> (query: string, values?: Partial<V>): Readable {
+    return this.connection.connection
+      .query(...this.transform(query, values))
       .stream()
-
-    return Promise.resolve(stream)
   }
 
-  public transformParameters (rawQuery: string, rawValues: Record<string, unknown> | unknown[]): [string, unknown[]] {
-    if (rawValues instanceof Array) {
-      return this.transformParametersArray(rawQuery, rawValues)
-    }
-
-    return this.transformParametersObject(rawQuery, rawValues)
-  }
-
-  public async update<V> (query: string, values: Partial<V>): Promise<UpdateResult> {
+  public async update<V> (query: string, values?: Partial<V>): Promise<UpdateResult> {
     const result = await this.query<V, ResultSetHeader>(query, values)
     return { count: result.affectedRows }
   }
 
-  protected transformParametersArray (rawQuery: string, rawValues: unknown[]): [string, unknown[]] {
-    return [
-      rawQuery
-        .replace(/\$\d+/gu, '?'),
-      rawQuery
-        .match(/\$\d+/gu)
-        ?.map((index) => {
-          return this.transformValue(rawValues[Number(index.slice(1)) - 1], index)
-        }) ?? rawValues
-    ]
+  protected transformKey (): string {
+    return '?'
   }
 
-  protected transformParametersObject (rawQuery: string, rawValues: Record<string, unknown>): [string, unknown[]] {
-    return [
-      rawQuery
-        .replace(/\$\(\w+\)/gu, '?'),
-      rawQuery
-        .match(/\$\(\w+\)/gu)
-        ?.map((index) => {
-          return this.transformValue(rawValues[index.slice(2, -1)], index)
-        }) ?? Object.values(rawValues)
-    ]
-  }
-
-  protected transformValue (value: unknown, index: string): unknown {
-    if (value === undefined) {
-      throw new Error(`Parameter "${index}" is undefined`)
-    }
-
-    if (typeof value === 'object' && value !== null) {
-      return JSON.stringify(value)
-    }
-
-    return value
+  protected transformObject (value: unknown): unknown {
+    return Array.isArray(value) || value === null ? value : JSON.stringify(value)
   }
 }

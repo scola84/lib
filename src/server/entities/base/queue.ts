@@ -1,5 +1,5 @@
 export interface Queue {
-  connection: string | null
+  database: string | null
   date_created?: Date
   date_updated?: Date
   fkey_queue_id: number | null

@@ -27,6 +27,11 @@ try {
     throw new Error('error: missing required argument "source"')
   }
 
+  const {
+    exclude,
+    include
+  } = program.opts()
+
   const url = new URL(source)
   const database = url.pathname.slice(1)
   const protocol = url.protocol.slice(0, -1)
@@ -38,7 +43,7 @@ try {
   fs.mkdirSync(path.dirname(targetFile), { recursive: true })
 
   if (protocol.includes('mysql')) {
-    const exclude = (program.exclude ?? [])
+    const excludeFlags = (exclude ?? [])
       .map((table) => {
         return `--ignore-table ${database}.${table}`
       })
@@ -47,7 +52,7 @@ try {
     child.execSync([
     `docker exec ${container} mysqldump`,
     '--compact',
-    exclude,
+    excludeFlags,
     `--host ${url.hostname}`,
     '--no-data',
     url.password ? `--password=${url.password}` : '',
@@ -61,13 +66,13 @@ try {
   }
 
   if (protocol.includes('postgres')) {
-    const exclude = (program.exclude ?? [])
+    const excludeFlags = (exclude ?? [])
       .map((table) => {
         return `--exclude-table ${table}`
       })
       .join(' ')
 
-    const include = (program.include ?? [])
+    const includeFlags = (include ?? [])
       .map((table) => {
         return `--table ${table}`
       })
@@ -77,10 +82,10 @@ try {
       'docker exec',
       url.password ? `--env PGPASSWORD=${url.password}` : '',
     `${container} pg_dump`,
-    exclude,
+    excludeFlags,
     '--format p',
     `--host ${url.hostname}`,
-    include,
+    includeFlags,
     '--no-owner',
     url.port ? `--port ${url.port}` : '',
     '--schema-only',

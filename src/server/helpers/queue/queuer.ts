@@ -1,4 +1,4 @@
-import type { Connection, Database, UpdateResult } from '../sql'
+import type { Database, UpdateResult } from '../sql'
 import type { Queue, Task } from '../../entities'
 import type { Job } from 'node-schedule'
 import type { Logger } from 'pino'
@@ -75,7 +75,7 @@ export class Queuer {
     return scheduleJob(name, callback)
   }
 
-  public createRunner (): QueueRunner {
+  public createQueueRunner (): QueueRunner {
     return new QueueRunner({
       database: this.database,
       databases: this.databases,
@@ -131,65 +131,48 @@ export class Queuer {
   }
 
   protected async run (queue: Queue, parameters?: unknown[]): Promise<void> {
-    const runner = this.createRunner()
-    this.queueRunners.add(runner)
+    const queueRunner = this.createQueueRunner()
+    this.queueRunners.add(queueRunner)
 
     try {
-      await runner.run(queue, parameters)
+      queue.connection = await this.database.connect()
+      await this.updateQueue(queue)
+      queue.tasks = await this.selectTasks(queue) ?? []
+      await queueRunner.run(queue, parameters)
+    } catch (error: unknown) {
+      this.logger.error({ context: 'run' }, String(error))
     } finally {
-      this.queueRunners.delete(runner)
+      this.queueRunners.delete(queueRunner)
+      queue.connection?.release()
+      delete queue.connection
     }
   }
 
   protected async runListener (message: string): Promise<void> {
-    const connection = await this.database.connect()
+    const {
+      id,
+      parameters
+    } = JSON.parse(message) as QueuerMessage
 
-    try {
-      const {
-        id,
-        parameters
-      } = JSON.parse(message) as QueuerMessage
+    if (id !== undefined) {
+      const queue = await this.selectQueue(id)
 
-      if (id !== undefined) {
-        const [
-          queue,
-          tasks
-        ] = await Promise.all([
-          this.selectQueue(connection, id),
-          this.selectTasks(connection, id)
-        ])
-
-        if (queue !== undefined) {
-          queue.tasks = tasks
-          await this.run(queue, parameters)
-        }
+      if (queue !== undefined) {
+        await this.run(queue, parameters)
       }
-    } finally {
-      connection.release()
     }
   }
 
   protected async runSchedule (date = new Date()): Promise<void> {
-    const connection = await this.database.connect()
+    const queues = await this.selectQueues(date)
 
-    try {
-      const queues = await this.selectQueues(connection, date)
-
-      await Promise.all(queues.map(async (queue): Promise<void> => {
-        if (queue.schedule !== null) {
-          await this.updateQueue(connection, queue)
-        }
-
-        queue.tasks = await this.selectTasks(connection, queue.id)
-        await this.run(queue)
-      }))
-    } finally {
-      connection.release()
-    }
+    await Promise.all(queues.map(async (queue): Promise<void> => {
+      await this.run(queue)
+    }))
   }
 
-  protected async selectQueue (connection: Connection, id: number): Promise<Queue | undefined> {
-    return connection.selectOne<Queue, Queue>(sql`
+  protected async selectQueue (id: number): Promise<Queue | undefined> {
+    return this.database.selectOne<Queue, Queue>(sql`
       SELECT *
       FROM queue
       WHERE id = $(id)
@@ -198,12 +181,12 @@ export class Queuer {
     })
   }
 
-  protected async selectQueues (connection: Connection, date: Date): Promise<Queue[]> {
-    return connection.select<Queue & { date: Date}, Queue[]>(sql`
+  protected async selectQueues (date: Date): Promise<Queue[]> {
+    return this.database.select<Queue & { date: Date}, Queue[]>(sql`
       SELECT *
       FROM queue
       WHERE
-        name ${connection.tokens.regexp} $(name) AND
+        name ${this.database.tokens.regexp} $(name) AND
         schedule_begin <= $(date) AND (
           schedule_end >= $(date) OR
           schedule_end IS NULL
@@ -217,14 +200,14 @@ export class Queuer {
     })
   }
 
-  protected async selectTasks (connection: Connection, id: number): Promise<Task[]> {
-    return connection.select<Task, Task[]>(sql`
+  protected async selectTasks (queue: Queue): Promise<Task[] | undefined> {
+    return queue.connection?.select<Task, Task[]>(sql`
       SELECT *
       FROM task
       WHERE fkey_queue_id = $(fkey_queue_id)
       ORDER BY number ASC
     `, {
-      fkey_queue_id: id
+      fkey_queue_id: queue.id
     })
   }
 
@@ -233,7 +216,7 @@ export class Queuer {
       this
         .runListener(message)
         .catch((error: unknown) => {
-          this.logger.error({ context: 'listener' }, String(error))
+          this.logger.error({ context: 'start-listener' }, String(error))
         })
     })
 
@@ -245,21 +228,23 @@ export class Queuer {
       this
         .runSchedule(date)
         .catch((error: unknown) => {
-          this.logger.error({ context: 'schedule' }, String(error))
+          this.logger.error({ context: 'start-schedule' }, String(error))
         })
     })
   }
 
-  protected async updateQueue (connection: Connection, queue: Queue): Promise<UpdateResult> {
-    return connection.update<Queue>(sql`
+  protected async updateQueue (queue: Queue): Promise<UpdateResult | undefined> {
+    return queue.connection?.update<Queue>(sql`
       UPDATE queue
       SET schedule_next = $(schedule_next)
       WHERE id = $(id)
     `, {
       id: queue.id,
-      schedule_next: parseExpression(queue.schedule ?? '')
-        .next()
-        .toDate()
+      schedule_next: queue.schedule === null
+        ? null
+        : parseExpression(queue.schedule)
+          .next()
+          .toDate()
     })
   }
 }

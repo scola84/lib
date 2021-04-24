@@ -27,6 +27,11 @@ try {
     throw new Error('error: missing required argument "source"')
   }
 
+  const {
+    exclude,
+    include
+  } = program.opts()
+
   const url = new URL(source)
   const database = url.pathname.slice(1)
   const protocol = url.protocol.slice(0, -1)
@@ -38,25 +43,25 @@ try {
   fs.mkdirSync(path.dirname(targetFile), { recursive: true })
 
   if (protocol.includes('mysql')) {
-    const exclude = (program.exclude ?? [])
+    const excludeFlag = (exclude ?? [])
       .map((table) => {
         return `--ignore-table ${database}.${table}`
       })
       .join(' ')
 
-    const include = (program.include ?? []).join(' ')
+    const includeFlag = (include ?? []).join(' ')
 
     child.execSync([
         `docker exec ${container} mysqldump`,
         '--compact',
-        exclude,
+        excludeFlag,
         `--host ${url.hostname}`,
         '--no-create-info',
         url.password ? `--password=${url.password}` : '',
         url.port ? `--port ${url.port}` : '',
         url.username ? `--user ${url.username}` : '',
         database,
-        include,
+        includeFlag,
         `> ${targetFile}`
     ].join(' '), {
       stdio: 'inherit'
@@ -64,13 +69,13 @@ try {
   }
 
   if (protocol.includes('postgres')) {
-    const exclude = (program.exclude ?? [])
+    const excludeFlag = (exclude ?? [])
       .map((table) => {
         return `--exclude-table ${table}`
       })
       .join(' ')
 
-    const include = (program.include ?? [])
+    const includeFlag = (include ?? [])
       .map((table) => {
         return `--table ${table}`
       })
@@ -82,10 +87,10 @@ try {
         `${container} pg_dump`,
         '--column-inserts',
         '--data-only',
-        exclude,
+        excludeFlag,
         '--format p',
         `--host ${url.hostname}`,
-        include,
+        includeFlag,
         url.port ? `--port ${url.port}` : '',
         '--rows-per-insert 99',
         url.username ? `--user ${url.username}` : '',

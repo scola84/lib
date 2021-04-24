@@ -1,43 +1,44 @@
+import { PostgresqlConnection, PostgresqlDatabase } from '../../../../../src/server/helpers/sql/postgresql'
 import { GenericContainer } from 'testcontainers'
-import { MysqlConnection } from '../../../../../src/server/helpers/sql/mysql'
-import type { Pool } from 'mysql2/promise'
+import { Pool } from 'pg'
+import type { PoolConfig } from 'pg'
 import type { StartedTestContainer } from 'testcontainers'
-import { createPool as createMysqlPool } from 'mysql2/promise'
 import { expect } from 'chai'
 
-describe('MysqlConnection', () => {
+describe('PostgresqlConnection', () => {
   describe('should', () => {
-    it('transform parameters', transformParameters)
-    it('release connection', releaseConnection)
+    it('parse a DSN', parseADSN)
+    it('connect with object options', connectWithObjectOptions)
+    it('connect with string options', connectWithStringOptions)
+    it('execute a query', executeAQuery)
     it('insert one row', insertOneRow)
     it('insert two rows', insertTwoRows)
     it('update one row', updateOneRow)
     it('delete one row', deleteOneRow)
     it('stream rows', streamRows)
   })
-
-  describe('should fail to', () => {
-    it('transform an undefined parameter', transformAnUndefinedParameter)
-  })
 })
 
 const dbname = 'scola'
+const hostname = '127.0.0.1'
 const username = 'root'
 const password = 'password'
-const port = 3306
+const port = 5432
+const dsn = `mysql://${username}:${password}@${hostname}:${port}/${dbname}?max=20`
 
 let container: StartedTestContainer | null = null
 let pool: Pool | null = null
 
 beforeAll(async () => {
-  container = await new GenericContainer('mysql:8')
-    .withExposedPorts(port)
-    .withEnv('MYSQL_DATABASE', dbname)
-    .withEnv('MYSQL_ROOT_PASSWORD', password)
-    .withTmpFs({ '/var/lib/mysql': 'rw' })
+  container = await new GenericContainer('postgres:13-alpine')
+    .withExposedPorts(5432)
+    .withEnv('POSTGRES_DB', dbname)
+    .withEnv('POSTGRES_PASSWORD', password)
+    .withEnv('POSTGRES_USER', username)
+    .withTmpFs({ '/var/lib/postgresql/data': 'rw' })
     .start()
 
-  pool = createMysqlPool({
+  pool = new Pool({
     database: dbname,
     host: container.getHost(),
     password,
@@ -46,9 +47,9 @@ beforeAll(async () => {
   })
 
   await pool.query(`CREATE TABLE test (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NULL,
-    value VARCHAR(255) NULL
+    id SERIAL PRIMARY KEY,
+    name VARCHAR NULL,
+    value VARCHAR NULL
   )`)
 })
 
@@ -58,21 +59,24 @@ afterAll(async () => {
 })
 
 beforeEach(async () => {
-  await pool?.query('TRUNCATE test')
+  await pool?.query('TRUNCATE test RESTART IDENTITY')
 })
 
-async function createConnection (): Promise<MysqlConnection> {
+function createDatabase (options?: PoolConfig | string): PostgresqlDatabase {
   if (pool === null) {
     throw new Error('Pool is null')
   }
 
-  return new MysqlConnection(await pool.getConnection())
+  const database = new PostgresqlDatabase(options)
+  database.pool = pool
+
+  return database
 }
 
 async function deleteOneRow (): Promise<void> {
-  const connection = await createConnection()
+  const database = createDatabase()
 
-  const { id } = await connection.insertOne(`
+  const { id } = await database.insertOne(`
     INSERT INTO test (
       name,
       value
@@ -85,16 +89,14 @@ async function deleteOneRow (): Promise<void> {
     value: 'value-insert'
   })
 
-  const { count } = await connection.delete(`
+  await database.delete(`
     DELETE FROM test
     WHERE id = $(id)
   `, {
     id
   })
 
-  expect(count).equal(1)
-
-  const data = await connection.selectOne(`
+  const data = await database.selectOne(`
     SELECT *
     FROM test
     WHERE id = $(id)
@@ -103,10 +105,21 @@ async function deleteOneRow (): Promise<void> {
   })
 
   expect(data).equal(undefined)
+  expect(database.pool.idleCount).gt(0)
+}
+
+async function executeAQuery (): Promise<void> {
+  const database = createDatabase()
+
+  await database.query(`
+    SELECT 1
+  `)
+
+  expect(database.pool.idleCount).gt(0)
 }
 
 async function insertOneRow (): Promise<void> {
-  const connection = await createConnection()
+  const database = createDatabase()
 
   const expectedData = {
     id: 1,
@@ -114,7 +127,7 @@ async function insertOneRow (): Promise<void> {
     value: 'value-insert'
   }
 
-  const { id } = await connection.insertOne(`
+  const { id } = await database.insertOne(`
     INSERT INTO test (
       name,
       value
@@ -129,7 +142,7 @@ async function insertOneRow (): Promise<void> {
 
   expect(id).equal(1)
 
-  const data = await connection.selectOne(`
+  const data = await database.selectOne(`
     SELECT *
     FROM test
     WHERE id = $(id)
@@ -138,10 +151,11 @@ async function insertOneRow (): Promise<void> {
   })
 
   expect(data).include(expectedData)
+  expect(database.pool.idleCount).gt(0)
 }
 
 async function insertTwoRows (): Promise<void> {
-  const connection = await createConnection()
+  const database = createDatabase()
 
   const expectedData = [{
     id: 1,
@@ -153,7 +167,7 @@ async function insertTwoRows (): Promise<void> {
     value: 'value-insert'
   }]
 
-  const [{ id }] = await connection.insert(`
+  const [{ id }] = await database.insert(`
     INSERT INTO test (
       name,
       value
@@ -167,31 +181,41 @@ async function insertTwoRows (): Promise<void> {
 
   expect(id).equal(1)
 
-  const data = await connection.select(`
+  const data = await database.select(`
     SELECT *
     FROM test
   `)
 
   expect(data).deep.members(expectedData)
+  expect(database.pool.idleCount).gt(0)
 }
 
-async function releaseConnection (finish: (error?: Error | null) => void): Promise<void> {
-  const connection = await createConnection()
-
-  pool?.once('release', (releasedConnection: MysqlConnection['connection']) => {
-    try {
-      expect(releasedConnection.threadId).equal(connection.connection.threadId)
-      finish()
-    } catch (error: unknown) {
-      finish(error as Error)
-    }
-  })
-
+async function connectWithObjectOptions (): Promise<void> {
+  const database = createDatabase(PostgresqlDatabase.parseDSN(dsn))
+  const connection = await database.connect()
+  expect(connection).instanceOf(PostgresqlConnection)
   connection.release()
 }
 
+async function connectWithStringOptions (): Promise<void> {
+  const database = createDatabase(dsn)
+  const connection = await database.connect()
+  expect(connection).instanceOf(PostgresqlConnection)
+  connection.release()
+}
+
+function parseADSN (): void {
+  const expectedOptions = {
+    connectionString: dsn,
+    max: '20'
+  }
+
+  const options = PostgresqlDatabase.parseDSN(dsn)
+  expect(options).eql(expectedOptions)
+}
+
 async function streamRows (finish: (error?: Error | null) => void): Promise<void> {
-  const connection = await createConnection()
+  const database = createDatabase()
   const data: unknown[] = []
 
   const expectedData = [{
@@ -204,7 +228,7 @@ async function streamRows (finish: (error?: Error | null) => void): Promise<void
     value: 'value-insert'
   }]
 
-  await connection.insert(`
+  await database.insert(`
     INSERT INTO test (
       name,
       value
@@ -216,7 +240,7 @@ async function streamRows (finish: (error?: Error | null) => void): Promise<void
     ]
   })
 
-  const stream = connection.stream(`
+  const stream = await database.stream(`
     SELECT *
     FROM test
   `)
@@ -225,9 +249,10 @@ async function streamRows (finish: (error?: Error | null) => void): Promise<void
     data.push(datum)
   })
 
-  stream.on('end', () => {
+  stream.on('close', () => {
     try {
       expect(data).deep.members(expectedData)
+      expect(database.pool.idleCount).gt(0)
       finish()
     } catch (error: unknown) {
       finish(error as Error)
@@ -235,67 +260,8 @@ async function streamRows (finish: (error?: Error | null) => void): Promise<void
   })
 }
 
-async function transformParameters (): Promise<void> {
-  const connection = await createConnection()
-
-  const expectedQuery = `
-    SELECT *
-    FROM test
-    WHERE
-      test1 = ? AND
-      test2 = ? AND
-      test3 = ? AND
-      test4 = ?
-  `
-
-  const rawQuery = `
-    SELECT *
-    FROM test
-    WHERE
-      test1 = $(test1) AND
-      test2 = $(test2) AND
-      test3 = $(test1) AND
-      test4 = $(test3)
-  `
-
-  const expectedValues = [1, 2, 1, '{"number":3}']
-
-  const rawValues = {
-    test1: 1,
-    test2: 2,
-    test3: {
-      number: 3
-    }
-  }
-
-  const [query, values] = connection.transform(rawQuery, rawValues)
-
-  expect(query).equal(expectedQuery)
-  expect(values).deep.equal(expectedValues)
-}
-
-async function transformAnUndefinedParameter (): Promise<void> {
-  const connection = await createConnection()
-
-  const rawQuery = `
-    SELECT *
-    FROM test
-    WHERE test = $(test1)
-  `
-
-  const rawValues = {
-    test2: 2
-  }
-
-  try {
-    connection.transform(rawQuery, rawValues)
-  } catch (error: unknown) {
-    expect(String(error)).match(/Parameter "test1" is undefined/u)
-  }
-}
-
 async function updateOneRow (): Promise<void> {
-  const connection = await createConnection()
+  const database = createDatabase()
 
   const expectedData = {
     id: 1,
@@ -303,7 +269,7 @@ async function updateOneRow (): Promise<void> {
     value: 'value-update'
   }
 
-  const { id } = await connection.insertOne(`
+  const { id } = await database.insertOne(`
     INSERT INTO test (
       name,
       value
@@ -316,7 +282,7 @@ async function updateOneRow (): Promise<void> {
     value: 'value-insert'
   })
 
-  const { count } = await connection.update(`
+  await database.update(`
     UPDATE test
     SET
       name = $(name),
@@ -328,9 +294,7 @@ async function updateOneRow (): Promise<void> {
     value: 'value-update'
   })
 
-  expect(count).equal(1)
-
-  const data = await connection.selectOne(`
+  const data = await database.selectOne(`
     SELECT *
     FROM test
     WHERE id = $(id)
@@ -339,4 +303,5 @@ async function updateOneRow (): Promise<void> {
   })
 
   expect(data).include(expectedData)
+  expect(database.pool.idleCount).gt(0)
 }

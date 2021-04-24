@@ -1,4 +1,4 @@
-import type { Connection, Database, InsertResult, UpdateResult } from '../sql'
+import type { Database, InsertResult, UpdateResult } from '../sql'
 import type { Item, Queue, QueueRun, TaskRun } from '../../entities'
 import type { Logger } from 'pino'
 import { Transform } from 'stream'
@@ -47,15 +47,15 @@ export class QueueRunner {
     })
   }
 
-  public createInserter (connection: Connection, queueRun: QueueRun): Transform {
+  public createInserter (queueRun: QueueRun): Transform {
     return new Transform({
       objectMode: true,
       transform: async (payload: unknown, encoding, finish) => {
         try {
-          const { id: itemId } = await this.insertItem(connection, queueRun, payload)
+          const { id: itemId = 0 } = await this.insertItem(queueRun, payload) ?? {}
 
           const [firstTask] = await Promise.all(queueRun.queue.tasks.map(async (task) => {
-            const { id: taskRunId = '0' } = await this.insertTaskRun(connection, queueRun.id, itemId, task.id)
+            const { id: taskRunId = 0 } = await this.insertTaskRun(queueRun, itemId, task.id) ?? {}
 
             return {
               name: `${queueRun.name}-${task.name}`,
@@ -73,24 +73,25 @@ export class QueueRunner {
   }
 
   public async run (queue: Queue, parameters: unknown[] = []): Promise<void> {
-    const connection = await this.database.connect()
-    const { id: queueRunId = 0 } = await this.insertQueueRun(connection, queue)
+    const { id: queueRunId = 0 } = await this.insertQueueRun(queue) ?? {}
     const queueRun: QueueRun = createQueueRun(queueRunId, queue)
-    const database = this.databases[queue.connection ?? '']
 
     try {
+      const database = this.databases[queue.database ?? '']
+
       if (database === undefined) {
         throw new Error('Database is undefined')
       }
 
-      const inserter = this.createInserter(connection, queueRun)
+      queueRun.connection = await this.database.connect()
+      const inserter = this.createInserter(queueRun)
       const reader = await database.stream(queue.query ?? '', parameters)
       const xadder = this.createAdder()
 
       await pipeline(reader, inserter, xadder)
-      await this.updateQueueRunOk(connection, queueRun)
+      await this.updateQueueRunOk(queueRun)
 
-      const queues = await this.selectQueues(connection, queueRun)
+      const queues = await this.selectQueues(queueRun) ?? []
 
       await Promise.all(queues.map(async ({ id }): Promise<number> => {
         return this.store.publish('queue', JSON.stringify({
@@ -100,17 +101,17 @@ export class QueueRunner {
       }))
     } catch (error: unknown) {
       try {
-        await this.updateQueueRunErr(connection, queueRun, error as Error)
+        await this.updateQueueRunErr(queueRun, error as Error)
       } catch (updateError: unknown) {
         this.logger?.error({ context: 'run' }, String(updateError))
       }
     } finally {
-      connection.release()
+      queueRun.connection?.release()
     }
   }
 
-  protected async insertItem (connection: Connection, queueRun: QueueRun, payload: unknown): Promise<InsertResult> {
-    return connection.insertOne<Item>(sql`
+  protected async insertItem (queueRun: QueueRun, payload: unknown): Promise<InsertResult | undefined> {
+    return queueRun.connection?.insertOne<Item>(sql`
       INSERT INTO item (
         fkey_queue_run_id,
         payload
@@ -124,8 +125,8 @@ export class QueueRunner {
     })
   }
 
-  protected async insertQueueRun (connection: Connection, queue: Queue): Promise<InsertResult> {
-    return connection.insertOne<QueueRun>(sql`
+  protected async insertQueueRun (queue: Queue): Promise<InsertResult | undefined> {
+    return queue.connection?.insertOne<QueueRun>(sql`
       INSERT INTO queue_run (
         fkey_queue_id,
         name
@@ -139,8 +140,8 @@ export class QueueRunner {
     })
   }
 
-  protected async insertTaskRun (connection: Connection, queueRunId: number, itemId: number, taskId: number): Promise<InsertResult> {
-    return connection.insertOne<TaskRun>(sql`
+  protected async insertTaskRun (queueRun: QueueRun, itemId: number, taskId: number): Promise<InsertResult | undefined> {
+    return queueRun.connection?.insertOne<TaskRun>(sql`
       INSERT INTO task_run (
         fkey_item_id,
         fkey_queue_run_id,
@@ -152,13 +153,13 @@ export class QueueRunner {
       )
     `, {
       fkey_item_id: itemId,
-      fkey_queue_run_id: queueRunId,
+      fkey_queue_run_id: queueRun.id,
       fkey_task_id: taskId
     })
   }
 
-  protected async selectQueues (connection: Connection, queueRun: QueueRun): Promise<Queue[]> {
-    return connection.select<QueueRun, Queue[]>(sql`
+  protected async selectQueues (queueRun: QueueRun): Promise<Queue[] | undefined> {
+    return queueRun.connection?.select<QueueRun, Queue[]>(sql`
       SELECT queue.id
       FROM queue
       JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
@@ -170,8 +171,8 @@ export class QueueRunner {
     })
   }
 
-  protected async updateQueueRunErr (connection: Connection, queueRun: QueueRun, error: Error): Promise<UpdateResult> {
-    return connection.update<QueueRun>(sql`
+  protected async updateQueueRunErr (queueRun: QueueRun, error: Error): Promise<UpdateResult | undefined> {
+    return queueRun.connection?.update<QueueRun>(sql`
       UPDATE queue_run
       SET
         code = 'err',
@@ -184,8 +185,8 @@ export class QueueRunner {
     })
   }
 
-  protected async updateQueueRunOk (connection: Connection, queueRun: QueueRun): Promise<UpdateResult> {
-    return connection.update<QueueRun>(sql`
+  protected async updateQueueRunOk (queueRun: QueueRun): Promise<UpdateResult | undefined> {
+    return queueRun.connection?.update<QueueRun>(sql`
       UPDATE queue_run
       SET
         aggr_total = $(aggr_total),

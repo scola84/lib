@@ -1,3 +1,4 @@
+import type { Connection } from '../helpers'
 import type { Item } from './item'
 import type { QueueRun } from './queue-run'
 import type { Task } from './task'
@@ -8,6 +9,7 @@ import { createTask } from './task'
 
 export interface TaskRun<Payload = unknown, Options = unknown, Result = unknown> extends Required<TaskRunBase> {
   code: 'err' | 'ok' | 'pending'
+  connection?: Connection
   result: Result
   item: Item<Payload>
   queueRun: QueueRun

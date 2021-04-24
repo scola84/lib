@@ -1,13 +1,15 @@
+import type { Connection } from '../helpers'
 import type { Queue as QueueBase } from './base'
 import type { Task } from './task'
 
 export interface Queue extends Required<QueueBase> {
+  connection?: Connection
   tasks: Task[]
 }
 
 export function createQueue (): Queue {
   return {
-    connection: 'connection',
+    database: 'database',
     date_created: new Date(),
     date_updated: new Date(),
     fkey_queue_id: 0,

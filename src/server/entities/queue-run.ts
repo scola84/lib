@@ -1,8 +1,10 @@
+import type { Connection } from '../helpers'
 import type { Queue } from './queue'
 import type { QueueRun as QueueRunBase } from './base'
 import { createQueue } from './queue'
 
 export interface QueueRun extends Required<QueueRunBase> {
+  connection?: Connection
   code: 'err' | 'ok' | 'pending'
   queue: Queue
 }

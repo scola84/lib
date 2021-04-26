@@ -97,5 +97,5 @@
     "test:dev": "yarn test --watch"
   },
   "types": "types/index.d.ts",
-  "version": "15.1.0"
+  "version": "15.2.0"
 }

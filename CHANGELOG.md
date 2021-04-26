@@ -1,3 +1,10 @@
+# [15.2.0](https://github.com/scola84/lib/compare/v15.1.0...v15.2.0) (2021-04-26)
+
+
+### Features
+
+* improve sql connection management ([28af86a](https://github.com/scola84/lib/commit/28af86a563b11cf7be4467718dce94f6380ce108))
+
 # [15.1.0](https://github.com/scola84/lib/compare/v15.0.1...v15.1.0) (2021-04-23)
 
 

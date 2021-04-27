@@ -24,12 +24,12 @@ try {
   }
 
   const typeMap = {
-    Buffer: ['binary', 'varbinary', 'image', 'UDT'],
-    Date: ['datetime', 'timestamp', 'date', 'time', 'timestamp', 'datetime2', 'smalldatetime', 'datetimeoffset'],
-    Object: ['json', 'TVP'],
-    boolean: ['bit', 'boolean', 'bool'],
-    number: ['tinyint', 'int', 'numeric', 'integer', 'real', 'smallint', 'decimal', 'float', 'float4', 'float8', 'double precision', 'double', 'dec', 'fixed', 'year', 'serial', 'bigserial', 'int4', 'money', 'smallmoney'],
-    string: ['nchar', 'nvarchar', 'varchar', 'char', 'tinytext', 'text', 'longtext', 'mediumtext', 'ntext', 'varbinary', 'uuid', 'uniqueidentifier', 'character varying', 'bigint', 'xml']
+    Buffer: ['UDT', 'binary', 'image', 'varbinary'],
+    Date: ['date', 'datetime', 'datetime2', 'datetimeoffset', 'smalldatetime', 'time', 'timestamp', 'timestamp'],
+    Object: ['TVP', 'json'],
+    boolean: ['bit', 'bool', 'boolean'],
+    number: ['bigint', 'bigserial', 'dec', 'decimal', 'double', 'double precision', 'fixed', 'float', 'float4', 'float8', 'int', 'int4', 'int8', 'integer', 'money', 'numeric', 'real', 'serial', 'smallint', 'smallmoney', 'tinyint', 'year'],
+    string: ['char', 'character varying', 'longtext', 'mediumtext', 'nchar', 'ntext', 'nvarchar', 'text', 'tinytext', 'uniqueidentifier', 'uuid', 'varbinary', 'varchar', 'xml']
   }
 
   const url = new URL(source)

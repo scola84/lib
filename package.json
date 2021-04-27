@@ -59,6 +59,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
     "jest": "^26.6.3",
+    "jest-circus": "^26.6.3",
     "lit-analyzer": "^1.2.1",
     "rollup": "^2.45.2",
     "rollup-plugin-copy": "^3.4.0",
@@ -92,7 +93,7 @@
     "bundle:dev": "yarn bundle --sourcemap --watch",
     "lint": "tsc --project src/client && tsc --project src/server && lit-analyzer src/client --strict && eslint bin src test",
     "lint:dev": "yarn lint --fix && git update-index --again",
-    "test": "jest --maxWorkers 4 --preset ts-jest --testTimeout 60000",
+    "test": "jest --maxWorkers 4 --preset ts-jest --testRunner jest-circus/runner --testTimeout 60000",
     "test:cov": "yarn test --collectCoverage",
     "test:dev": "yarn test --watch"
   },

@@ -3,15 +3,16 @@ import { expect } from 'chai'
 import { pipeline } from '../../../../src/server/helpers/stream/pipeline'
 
 describe('pipeline', () => {
-  describe('should reject when', () => {
+  describe('should fail when', () => {
+    it('< 2 streams are provided', lessThanTwoStreamsAreProvided)
     it('streams are provided in a wrong order', streamsAreProvidedInAWrongOrder)
     it('a readable fails', aReadableFails)
     it('a transform fails', aTransformFails)
     it('a writable fails', aWritableFails)
   })
 
-  describe('should resolve when', () => {
-    it('streams run normally', streamsRunNormally)
+  describe('should', () => {
+    it('stream', streamData)
   })
 })
 
@@ -113,39 +114,15 @@ async function aWritableFails (): Promise<void> {
   }
 }
 
-async function streamsAreProvidedInAWrongOrder (): Promise<void> {
-  const readable = new Readable({
-    read () {
-      this.push(null)
-    }
-  })
-
-  const transform = new Transform({
-    transform (chunk, encoding, callback) {
-      callback(null, chunk)
-    }
-  })
-
-  const writable = new Writable({
-    write (chunk, encoding, callback: (error?: Error) => void) {
-      callback()
-    }
-  })
-
+async function lessThanTwoStreamsAreProvided (): Promise<void> {
   try {
-    await pipeline(writable, readable, transform)
+    await pipeline()
   } catch (error: unknown) {
-    expect(readable.listeners('data').length).equal(0)
-    expect(readable.listeners('error').length).equal(0)
-    expect(transform.listeners('data').length).equal(0)
-    expect(transform.listeners('error').length).equal(0)
-    expect(writable.listeners('data').length).equal(0)
-    expect(writable.listeners('error').length).equal(0)
-    expect(String(error)).match(/Cannot pipe a Writable/u)
+    expect(String(error)).match(/Less than 2 streams provided/u)
   }
 }
 
-async function streamsRunNormally (): Promise<void> {
+async function streamData (): Promise<void> {
   const chunks: string[] = []
 
   const readable = new Readable({
@@ -176,4 +153,36 @@ async function streamsRunNormally (): Promise<void> {
   expect(writable.listeners('data').length).equal(0)
   expect(writable.listeners('error').length).equal(0)
   expect(chunks).members(['string'])
+}
+
+async function streamsAreProvidedInAWrongOrder (): Promise<void> {
+  const readable = new Readable({
+    read () {
+      this.push(null)
+    }
+  })
+
+  const transform = new Transform({
+    transform (chunk, encoding, callback) {
+      callback(null, chunk)
+    }
+  })
+
+  const writable = new Writable({
+    write (chunk, encoding, callback: (error?: Error) => void) {
+      callback()
+    }
+  })
+
+  try {
+    await pipeline(writable, readable, transform)
+  } catch (error: unknown) {
+    expect(readable.listeners('data').length).equal(0)
+    expect(readable.listeners('error').length).equal(0)
+    expect(transform.listeners('data').length).equal(0)
+    expect(transform.listeners('error').length).equal(0)
+    expect(writable.listeners('data').length).equal(0)
+    expect(writable.listeners('error').length).equal(0)
+    expect(String(error)).match(/Cannot pipe a Writable/u)
+  }
 }

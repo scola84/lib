@@ -2,10 +2,14 @@ import { GenericContainer } from 'testcontainers'
 import { MysqlConnection } from '../../../../../src/server/helpers/sql/mysql'
 import type { Pool } from 'mysql2/promise'
 import type { StartedTestContainer } from 'testcontainers'
-import { createPool as createMysqlPool } from 'mysql2/promise'
+import { createPool } from 'mysql2/promise'
 import { expect } from 'chai'
 
 describe('MysqlConnection', () => {
+  describe('should fail to', () => {
+    it('transform an undefined parameter', transformAnUndefinedParameter)
+  })
+
   describe('should', () => {
     it('transform parameters', transformParameters)
     it('release connection', releaseConnection)
@@ -15,37 +19,37 @@ describe('MysqlConnection', () => {
     it('delete one row', deleteOneRow)
     it('stream rows', streamRows)
   })
-
-  describe('should fail to', () => {
-    it('transform an undefined parameter', transformAnUndefinedParameter)
-  })
 })
 
-const dbname = 'scola'
-const username = 'root'
-const password = 'password'
-const port = 3306
+class Helpers {
+  public container: StartedTestContainer
+  public pool: Pool
+}
 
-let container: StartedTestContainer | null = null
-let pool: Pool | null = null
+const DATABASE = 'scola'
+const PASSWORD = 'password'
+const PORT = 3306
+const USERNAME = 'root'
+
+const helpers = new Helpers()
 
 beforeAll(async () => {
-  container = await new GenericContainer('mysql:8')
-    .withExposedPorts(port)
-    .withEnv('MYSQL_DATABASE', dbname)
-    .withEnv('MYSQL_ROOT_PASSWORD', password)
+  helpers.container = await new GenericContainer('mysql:8')
+    .withExposedPorts(PORT)
+    .withEnv('MYSQL_DATABASE', DATABASE)
+    .withEnv('MYSQL_ROOT_PASSWORD', PASSWORD)
     .withTmpFs({ '/var/lib/mysql': 'rw' })
     .start()
 
-  pool = createMysqlPool({
-    database: dbname,
-    host: container.getHost(),
-    password,
-    port: container.getMappedPort(port),
-    user: username
+  helpers.pool = createPool({
+    database: DATABASE,
+    host: helpers.container.getHost(),
+    password: PASSWORD,
+    port: helpers.container.getMappedPort(PORT),
+    user: USERNAME
   })
 
-  await pool.query(`CREATE TABLE test (
+  await helpers.pool.query(`CREATE TABLE test (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NULL,
     value VARCHAR(255) NULL
@@ -53,96 +57,98 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await pool?.end()
-  await container?.stop()
+  await helpers.pool.end()
+  await helpers.container.stop()
 })
 
 beforeEach(async () => {
-  await pool?.query('TRUNCATE test')
+  await helpers.pool.query('TRUNCATE test')
 })
 
 async function createConnection (): Promise<MysqlConnection> {
-  if (pool === null) {
-    throw new Error('Pool is null')
-  }
-
-  return new MysqlConnection(await pool.getConnection())
+  return new MysqlConnection(await helpers.pool.getConnection())
 }
 
 async function deleteOneRow (): Promise<void> {
   const connection = await createConnection()
 
-  const { id } = await connection.insertOne(`
-    INSERT INTO test (
-      name,
-      value
-    ) VALUES (
-      $(name),
-      $(value)
-    )
-  `, {
-    name: 'name-insert',
-    value: 'value-insert'
-  })
+  try {
+    const { id } = await connection.insertOne(`
+      INSERT INTO test (
+        name,
+        value
+      ) VALUES (
+        $(name),
+        $(value)
+      )
+    `, {
+      name: 'name-insert',
+      value: 'value-insert'
+    })
 
-  const { count } = await connection.delete(`
-    DELETE FROM test
-    WHERE id = $(id)
-  `, {
-    id
-  })
+    const { count } = await connection.delete(`
+      DELETE FROM test
+      WHERE id = $(id)
+    `, {
+      id
+    })
 
-  expect(count).equal(1)
+    expect(count).equal(1)
 
-  const data = await connection.selectOne(`
-    SELECT *
-    FROM test
-    WHERE id = $(id)
-  `, {
-    id
-  })
+    const data = await connection.selectOne(`
+      SELECT *
+      FROM test
+      WHERE id = $(id)
+    `, {
+      id
+    })
 
-  expect(data).equal(undefined)
+    expect(data).equal(undefined)
+  } finally {
+    connection.release()
+  }
 }
 
 async function insertOneRow (): Promise<void> {
-  const connection = await createConnection()
-
   const expectedData = {
     id: 1,
     name: 'name-insert',
     value: 'value-insert'
   }
 
-  const { id } = await connection.insertOne(`
-    INSERT INTO test (
-      name,
-      value
-    ) VALUES (
-      $(name),
-      $(value)
-    )
-  `, {
-    name: 'name-insert',
-    value: 'value-insert'
-  })
+  const connection = await createConnection()
 
-  expect(id).equal(1)
+  try {
+    const { id } = await connection.insertOne(`
+      INSERT INTO test (
+        name,
+        value
+      ) VALUES (
+        $(name),
+        $(value)
+      )
+    `, {
+      name: 'name-insert',
+      value: 'value-insert'
+    })
 
-  const data = await connection.selectOne(`
-    SELECT *
-    FROM test
-    WHERE id = $(id)
-  `, {
-    id
-  })
+    expect(id).equal(1)
 
-  expect(data).include(expectedData)
+    const data = await connection.selectOne(`
+      SELECT *
+      FROM test
+      WHERE id = $(id)
+    `, {
+      id
+    })
+
+    expect(data).include(expectedData)
+  } finally {
+    connection.release()
+  }
 }
 
 async function insertTwoRows (): Promise<void> {
-  const connection = await createConnection()
-
   const expectedData = [{
     id: 1,
     name: 'name-insert',
@@ -153,45 +159,52 @@ async function insertTwoRows (): Promise<void> {
     value: 'value-insert'
   }]
 
-  const [{ id }] = await connection.insert(`
-    INSERT INTO test (
-      name,
-      value
-    ) VALUES $(list)
-  `, {
-    list: [
-      ['name-insert', 'value-insert'],
-      ['name-insert', 'value-insert']
-    ]
-  })
-
-  expect(id).equal(1)
-
-  const data = await connection.select(`
-    SELECT *
-    FROM test
-  `)
-
-  expect(data).deep.members(expectedData)
-}
-
-async function releaseConnection (finish: (error?: Error | null) => void): Promise<void> {
   const connection = await createConnection()
 
-  pool?.once('release', (releasedConnection: MysqlConnection['connection']) => {
-    try {
-      expect(releasedConnection.threadId).equal(connection.connection.threadId)
-      finish()
-    } catch (error: unknown) {
-      finish(error as Error)
-    }
-  })
+  try {
+    const [{ id }] = await connection.insert(`
+      INSERT INTO test (
+        name,
+        value
+      ) VALUES $(list)
+    `, {
+      list: [
+        ['name-insert', 'value-insert'],
+        ['name-insert', 'value-insert']
+      ]
+    })
 
-  connection.release()
+    expect(id).equal(1)
+
+    const data = await connection.select(`
+      SELECT *
+      FROM test
+    `)
+
+    expect(data).deep.members(expectedData)
+  } finally {
+    connection.release()
+  }
 }
 
-async function streamRows (finish: (error?: Error | null) => void): Promise<void> {
+async function releaseConnection (): Promise<void> {
   const connection = await createConnection()
+
+  return new Promise((resolve, reject) => {
+    helpers.pool.once('release', (releasedConnection: MysqlConnection['connection']) => {
+      try {
+        expect(releasedConnection.threadId).equal(connection.connection.threadId)
+        resolve()
+      } catch (error: unknown) {
+        reject(error)
+      }
+    })
+
+    connection.release()
+  })
+}
+
+async function streamRows (): Promise<void> {
   const data: unknown[] = []
 
   const expectedData = [{
@@ -203,6 +216,8 @@ async function streamRows (finish: (error?: Error | null) => void): Promise<void
     name: 'name-insert',
     value: 'value-insert'
   }]
+
+  const connection = await createConnection()
 
   await connection.insert(`
     INSERT INTO test (
@@ -221,23 +236,24 @@ async function streamRows (finish: (error?: Error | null) => void): Promise<void
     FROM test
   `)
 
-  stream.on('data', (datum) => {
-    data.push(datum)
-  })
+  return new Promise((resolve, reject) => {
+    stream.on('data', (datum) => {
+      data.push(datum)
+    })
 
-  stream.on('end', () => {
-    try {
-      expect(data).deep.members(expectedData)
-      finish()
-    } catch (error: unknown) {
-      finish(error as Error)
-    }
+    stream.on('end', () => {
+      try {
+        connection.release()
+        expect(data).deep.members(expectedData)
+        resolve()
+      } catch (error: unknown) {
+        reject(error)
+      }
+    })
   })
 }
 
 async function transformParameters (): Promise<void> {
-  const connection = await createConnection()
-
   const expectedQuery = `
     SELECT *
     FROM test
@@ -247,6 +263,8 @@ async function transformParameters (): Promise<void> {
       test3 = ? AND
       test4 = ?
   `
+
+  const expectedValues = [1, 2, 1, '{"number":3}']
 
   const rawQuery = `
     SELECT *
@@ -258,8 +276,6 @@ async function transformParameters (): Promise<void> {
       test4 = $(test3)
   `
 
-  const expectedValues = [1, 2, 1, '{"number":3}']
-
   const rawValues = {
     test1: 1,
     test2: 2,
@@ -268,15 +284,18 @@ async function transformParameters (): Promise<void> {
     }
   }
 
-  const [query, values] = connection.transform(rawQuery, rawValues)
+  const connection = await createConnection()
 
-  expect(query).equal(expectedQuery)
-  expect(values).deep.equal(expectedValues)
+  try {
+    const [query, values] = connection.transform(rawQuery, rawValues)
+    expect(query).equal(expectedQuery)
+    expect(values).deep.equal(expectedValues)
+  } finally {
+    connection.release()
+  }
 }
 
 async function transformAnUndefinedParameter (): Promise<void> {
-  const connection = await createConnection()
-
   const rawQuery = `
     SELECT *
     FROM test
@@ -287,56 +306,64 @@ async function transformAnUndefinedParameter (): Promise<void> {
     test2: 2
   }
 
+  const connection = await createConnection()
+
   try {
     connection.transform(rawQuery, rawValues)
   } catch (error: unknown) {
     expect(String(error)).match(/Parameter "test1" is undefined/u)
+  } finally {
+    connection.release()
   }
 }
 
 async function updateOneRow (): Promise<void> {
-  const connection = await createConnection()
-
   const expectedData = {
     id: 1,
     name: 'name-update',
     value: 'value-update'
   }
 
-  const { id } = await connection.insertOne(`
-    INSERT INTO test (
-      name,
-      value
-    ) VALUES (
-      $(name),
-      $(value)
-    )
-  `, {
-    name: 'name-insert',
-    value: 'value-insert'
-  })
+  const connection = await createConnection()
 
-  const { count } = await connection.update(`
-    UPDATE test
-    SET
-      name = $(name),
-      value = $(value)
-    WHERE id = $(id)
-  `, {
-    id,
-    name: 'name-update',
-    value: 'value-update'
-  })
+  try {
+    const { id } = await connection.insertOne(`
+      INSERT INTO test (
+        name,
+        value
+      ) VALUES (
+        $(name),
+        $(value)
+      )
+    `, {
+      name: 'name-insert',
+      value: 'value-insert'
+    })
 
-  expect(count).equal(1)
+    const { count } = await connection.update(`
+      UPDATE test
+      SET
+        name = $(name),
+        value = $(value)
+      WHERE id = $(id)
+    `, {
+      id,
+      name: 'name-update',
+      value: 'value-update'
+    })
 
-  const data = await connection.selectOne(`
-    SELECT *
-    FROM test
-    WHERE id = $(id)
-  `, {
-    id
-  })
+    expect(count).equal(1)
 
-  expect(data).include(expectedData)
+    const data = await connection.selectOne(`
+      SELECT *
+      FROM test
+      WHERE id = $(id)
+    `, {
+      id
+    })
+
+    expect(data).include(expectedData)
+  } finally {
+    connection.release()
+  }
 }

@@ -1,61 +1,77 @@
 import { GenericContainer } from 'testcontainers'
+import type { SinonSandbox } from 'sinon'
 import type { StartedTestContainer } from 'testcontainers'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { XAdder } from '../../../../src/server/helpers/redis/xadder'
 import type { XAdderOptions } from '../../../../src/server/helpers/redis/xadder'
 import { createNodeRedisClient } from 'handy-redis'
+import { createSandbox } from 'sinon'
 import { expect } from 'chai'
-import { stub } from 'sinon'
 
 describe('XAdder', () => {
-  describe('should emit an error when', () => {
+  describe('should fail when', () => {
     it('store.batch fails', storeBatchFails)
     it('store.batch.exec fails', storeBatchExecFails)
     it('store.batch.exec fails on final', storeBatchExecFailsOnFinal)
     it('store.batch.xadd fails', storeBatchXAddFails)
   })
 
-  describe('should successfully', () => {
+  describe('should', () => {
     it('write items', writeItems)
     it('write items on final', writeItemsOnFinal)
   })
 })
 
-async function createContainer (): Promise<StartedTestContainer> {
-  return new GenericContainer('redis')
-    .withExposedPorts(6379)
-    .start()
+class Helpers {
+  public container: StartedTestContainer
+  public sandbox: SinonSandbox
+  public store: WrappedNodeRedisClient
 }
 
-function createAdder (store: WrappedNodeRedisClient, options: Partial<XAdderOptions> = {}): XAdder {
+const PORT = 6379
+const helpers = new Helpers()
+
+beforeAll(async () => {
+  helpers.container = await new GenericContainer('redis')
+    .withExposedPorts(PORT)
+    .start()
+
+  helpers.store = createNodeRedisClient(
+    helpers.container.getMappedPort(6379),
+    helpers.container.getHost()
+  )
+})
+
+afterAll(async () => {
+  helpers.store.end()
+  await helpers.container.stop()
+})
+
+beforeEach(async () => {
+  helpers.sandbox = createSandbox()
+  await helpers.store.flushall()
+})
+
+afterEach(() => {
+  helpers.sandbox.restore()
+})
+
+function createAdder (options: Partial<XAdderOptions>): XAdder {
   return new XAdder({
     maxLength: 1024,
-    store,
+    store: helpers.store,
     ...options
   })
 }
 
-function createStore (container: StartedTestContainer): WrappedNodeRedisClient {
-  return createNodeRedisClient(
-    container.getMappedPort(6379),
-    container.getHost()
-  )
-}
-
-async function storeBatchFails (finish: (error?: unknown) => void): Promise<void> {
-  const container = await createContainer()
-  const store = createStore(container)
-
-  const adder = createAdder(store, {
+function storeBatchFails (finish: (error?: unknown) => void): void {
+  const adder = createAdder({
     highWaterMark: 1
   })
 
-  stub(store, 'batch').throws(new Error('batch fail'))
-
-  adder.on('close', () => {
-    store.end()
-    container.stop().catch(() => {})
-  })
+  helpers.sandbox
+    .stub(helpers.store, 'batch')
+    .throws(new Error('batch fail'))
 
   adder.on('error', (error) => {
     try {
@@ -71,23 +87,20 @@ async function storeBatchFails (finish: (error?: unknown) => void): Promise<void
   adder.end()
 }
 
-async function storeBatchExecFails (finish: (error?: unknown) => void): Promise<void> {
-  const container = await createContainer()
-  const store = createStore(container)
-
-  const adder = createAdder(store, {
+function storeBatchExecFails (finish: (error?: unknown) => void): void {
+  const adder = createAdder({
     highWaterMark: 1
   })
 
-  const batch = store.batch()
+  const batch = helpers.store.batch()
 
-  stub(batch, 'exec').rejects(new Error('exec fail'))
-  stub(store, 'batch').returns(batch)
+  helpers.sandbox
+    .stub(batch, 'exec')
+    .rejects(new Error('exec fail'))
 
-  adder.on('close', () => {
-    store.end()
-    container.stop().catch(() => {})
-  })
+  helpers.sandbox
+    .stub(helpers.store, 'batch')
+    .returns(batch)
 
   adder.on('error', (error) => {
     try {
@@ -103,23 +116,20 @@ async function storeBatchExecFails (finish: (error?: unknown) => void): Promise<
   adder.end()
 }
 
-async function storeBatchExecFailsOnFinal (finish: (error?: unknown) => void): Promise<void> {
-  const container = await createContainer()
-  const store = createStore(container)
-
-  const adder = createAdder(store, {
+function storeBatchExecFailsOnFinal (finish: (error?: unknown) => void): void {
+  const adder = createAdder({
     highWaterMark: 2
   })
 
-  const batch = store.batch()
+  const batch = helpers.store.batch()
 
-  stub(batch, 'exec').rejects(new Error('exec fail'))
-  stub(store, 'batch').returns(batch)
+  helpers.sandbox
+    .stub(batch, 'exec')
+    .rejects(new Error('exec fail'))
 
-  adder.on('close', () => {
-    store.end()
-    container.stop().catch(() => {})
-  })
+  helpers.sandbox
+    .stub(helpers.store, 'batch')
+    .returns(batch)
 
   adder.on('error', (error) => {
     try {
@@ -135,23 +145,20 @@ async function storeBatchExecFailsOnFinal (finish: (error?: unknown) => void): P
   adder.end({})
 }
 
-async function storeBatchXAddFails (finish: (error?: unknown) => void): Promise<void> {
-  const container = await createContainer()
-  const store = createStore(container)
-
-  const adder = createAdder(store, {
+function storeBatchXAddFails (finish: (error?: unknown) => void): void {
+  const adder = createAdder({
     highWaterMark: 1
   })
 
-  const batch = store.batch()
+  const batch = helpers.store.batch()
 
-  stub(batch, 'xadd').throws(new Error('xadd fail'))
-  stub(store, 'batch').returns(batch)
+  helpers.sandbox
+    .stub(batch, 'xadd')
+    .throws(new Error('xadd fail'))
 
-  adder.on('close', () => {
-    store.end()
-    container.stop().catch(() => {})
-  })
+  helpers.sandbox
+    .stub(helpers.store, 'batch')
+    .returns(batch)
 
   adder.on('error', (error) => {
     try {
@@ -167,16 +174,13 @@ async function storeBatchXAddFails (finish: (error?: unknown) => void): Promise<
   adder.end()
 }
 
-async function writeItems (finish: (error?: unknown) => void): Promise<void> {
-  const container = await createContainer()
-  const store = createStore(container)
-
-  const adder = createAdder(store, {
+function writeItems (finish: (error?: unknown) => void): void {
+  const adder = createAdder({
     highWaterMark: 2
   })
 
   adder.on('close', () => {
-    store
+    helpers.store
       .xrange('key', '-', '+')
       .then((data) => {
         expect(data.length).equal(2)
@@ -184,10 +188,6 @@ async function writeItems (finish: (error?: unknown) => void): Promise<void> {
       })
       .catch((error) => {
         finish(error)
-      })
-      .finally(() => {
-        store.end()
-        container.stop().catch(() => {})
       })
   })
 
@@ -204,16 +204,13 @@ async function writeItems (finish: (error?: unknown) => void): Promise<void> {
   adder.end()
 }
 
-async function writeItemsOnFinal (finish: (error?: unknown) => void): Promise<void> {
-  const container = await createContainer()
-  const store = createStore(container)
-
-  const adder = createAdder(store, {
+function writeItemsOnFinal (finish: (error?: unknown) => void): void {
+  const adder = createAdder({
     highWaterMark: 2
   })
 
   adder.on('close', () => {
-    store
+    helpers.store
       .xrange('key', '-', '+')
       .then((data) => {
         expect(data.length).equal(1)
@@ -221,10 +218,6 @@ async function writeItemsOnFinal (finish: (error?: unknown) => void): Promise<vo
       })
       .catch((error) => {
         finish(error)
-      })
-      .finally(() => {
-        store.end()
-        container.stop().catch(() => {})
       })
   })
 

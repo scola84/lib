@@ -2,7 +2,7 @@ import { Formatter } from '../../../../src/server/helpers/intl'
 import { expect } from 'chai'
 
 describe('Formatter', () => {
-  describe('should succesfully', () => {
+  describe('should', () => {
     describe('format a value', formatAValue)
     describe('lookup a code', lookupACode)
     describe('return a code', returnACode)

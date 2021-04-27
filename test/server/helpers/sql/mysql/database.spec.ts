@@ -9,6 +9,7 @@ import { expect } from 'chai'
 describe('MysqlConnection', () => {
   describe('should', () => {
     it('parse a DSN', parseADSN)
+    it('parse a bigint as a number', parseABigIntAsANumber)
     it('connect with object options', connectWithObjectOptions)
     it('connect with string options', connectWithStringOptions)
     it('execute a query', executeAQuery)
@@ -52,9 +53,9 @@ beforeAll(async () => {
   })
 
   await helpers.pool.query(`CREATE TABLE test (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NULL,
-    value VARCHAR(255) NULL
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    value VARCHAR(255)
   )`)
 })
 
@@ -71,6 +72,59 @@ function createDatabase (options?: PoolOptions | string): MysqlDatabase {
   const database = new MysqlDatabase(options)
   database.pool = helpers.pool
   return database
+}
+
+async function connectWithObjectOptions (): Promise<void> {
+  const database = createDatabase(MysqlDatabase.parseDSN(DSN))
+  const connection = await database.connect()
+
+  try {
+    expect(connection).instanceOf(MysqlConnection)
+  } finally {
+    connection.release()
+  }
+}
+
+async function connectWithStringOptions (): Promise<void> {
+  const database = createDatabase(DSN)
+  const connection = await database.connect()
+
+  try {
+    expect(connection).instanceOf(MysqlConnection)
+  } finally {
+    connection.release()
+  }
+}
+
+async function parseABigIntAsANumber (): Promise<void> {
+  const database = createDatabase()
+  const id = 1
+
+  await database.insertOne(`
+    INSERT INTO test (
+      id,
+      name,
+      value
+    ) VALUES (
+      $(id),
+      $(name),
+      $(value)
+    )
+  `, {
+    id: 1,
+    name: 'name-insert',
+    value: 'value-insert'
+  })
+
+  const data = await database.selectOne<{ id: number }, { id: number }>(`
+    SELECT *
+    FROM test
+    WHERE id = $(id)
+  `, {
+    id
+  })
+
+  expect(data?.id).equal(id)
 }
 
 async function deleteOneRow (): Promise<void> {
@@ -210,28 +264,6 @@ async function insertTwoRows (): Promise<void> {
 
   expect(data).deep.members(expectedData)
   expect(released).equal(2)
-}
-
-async function connectWithObjectOptions (): Promise<void> {
-  const database = createDatabase(MysqlDatabase.parseDSN(DSN))
-  const connection = await database.connect()
-
-  try {
-    expect(connection).instanceOf(MysqlConnection)
-  } finally {
-    connection.release()
-  }
-}
-
-async function connectWithStringOptions (): Promise<void> {
-  const database = createDatabase(DSN)
-  const connection = await database.connect()
-
-  try {
-    expect(connection).instanceOf(MysqlConnection)
-  } finally {
-    connection.release()
-  }
 }
 
 function parseADSN (): void {

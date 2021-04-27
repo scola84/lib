@@ -1,9 +1,11 @@
+import { Pool, types } from 'pg'
 import { Database } from '../database'
-import { Pool } from 'pg'
 import type { PoolConfig } from 'pg'
 import { PostgresqlConnection } from './connection'
 import { URL } from 'url'
 import tokens from './tokens'
+
+types.setTypeParser(20, parseInt)
 
 export class PostgresqlDatabase extends Database {
   public pool: Pool

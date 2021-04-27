@@ -18,7 +18,10 @@ export class MysqlDatabase extends Database {
       ? MysqlDatabase.parseDSN(rawOptions)
       : rawOptions
 
-    this.pool = createPool(options)
+    this.pool = createPool({
+      supportBigNumbers: true,
+      ...options
+    })
   }
 
   public static parseDSN (dsn: string): PoolOptions {

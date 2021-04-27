@@ -3,72 +3,23 @@
     {
       "extends": [
         "eslint:all",
-        "standard"
+        "standard",
+        ".eslint/js.json"
       ],
       "files": [
         "**/*.js"
       ],
       "parserOptions": {
-        "ecmaVersion": 2021,
         "sourceType": "module"
-      },
-      "rules": {
-        "arrow-body-style": [
-          "error",
-          "always"
-        ],
-        "array-bracket-newline": [
-          "error",
-          "consistent"
-        ],
-        "array-element-newline": [
-          "error",
-          "consistent"
-        ],
-        "capitalized-comments": "off",
-        "class-methods-use-this": "off",
-        "func-style": [
-          "error",
-          "declaration"
-        ],
-        "function-call-argument-newline": "off",
-        "max-len": "off",
-        "max-lines": "off",
-        "max-params": "off",
-        "max-statements": "off",
-        "multiline-comment-style": "off",
-        "multiline-ternary": "off",
-        "no-empty-function": "off",
-        "no-extra-parens": "off",
-        "no-magic-numbers": "off",
-        "no-multiple-empty-lines": [
-          "error",
-          {
-            "max": 1,
-            "maxBOF": 0,
-            "maxEOF": 0
-          }
-        ],
-        "no-ternary": "off",
-        "no-undefined": "off",
-        "no-unused-vars": [
-          "error",
-          {
-            "vars": "local"
-          }
-        ],
-        "quote-props": [
-          "error",
-          "consistent"
-        ],
-        "require-atomic-updates": "off"
       }
     },
     {
       "extends": [
         "eslint:all",
         "plugin:@typescript-eslint/all",
-        "standard-with-typescript"
+        "standard-with-typescript",
+        ".eslint/js.json",
+        ".eslint/ts.json"
       ],
       "files": [
         "**/*.ts"
@@ -77,105 +28,6 @@
       "parserOptions": {
         "project": "tsconfig.json",
         "sourceType": "module"
-      },
-      "rules": {
-        "@typescript-eslint/member-ordering": [
-          "error",
-          {
-            "default": {
-              "memberTypes": [
-                "signature",
-                "public-static-field",
-                "protected-static-field",
-                "private-static-field",
-                "public-decorated-field",
-                "protected-decorated-field",
-                "private-decorated-field",
-                "public-instance-field",
-                "protected-instance-field",
-                "private-instance-field",
-                "public-abstract-field",
-                "protected-abstract-field",
-                "private-abstract-field",
-                "public-constructor",
-                "protected-constructor",
-                "private-constructor",
-                "public-static-method",
-                "protected-static-method",
-                "private-static-method",
-                "public-decorated-method",
-                "protected-decorated-method",
-                "private-decorated-method",
-                "public-instance-method",
-                "protected-instance-method",
-                "private-instance-method",
-                "public-abstract-method",
-                "protected-abstract-method",
-                "private-abstract-method"
-              ],
-              "order": "alphabetically"
-            }
-          }
-        ],
-        "@typescript-eslint/no-empty-function": "off",
-        "@typescript-eslint/no-extra-parens": "off",
-        "@typescript-eslint/no-magic-numbers": "off",
-        "@typescript-eslint/no-type-alias": "off",
-        "@typescript-eslint/object-curly-spacing": "off",
-        "@typescript-eslint/prefer-readonly-parameter-types": "off",
-        "@typescript-eslint/return-await": [
-          "error",
-          "in-try-catch"
-        ],
-        "arrow-body-style": [
-          "error",
-          "always"
-        ],
-        "array-bracket-newline": [
-          "error",
-          "consistent"
-        ],
-        "array-element-newline": [
-          "error",
-          "consistent"
-        ],
-        "capitalized-comments": "off",
-        "class-methods-use-this": "off",
-        "func-style": [
-          "error",
-          "declaration"
-        ],
-        "function-call-argument-newline": "off",
-        "max-len": "off",
-        "max-lines": "off",
-        "max-params": "off",
-        "max-statements": "off",
-        "multiline-comment-style": "off",
-        "multiline-ternary": "off",
-        "no-empty-function": "off",
-        "no-extra-parens": "off",
-        "no-magic-numbers": "off",
-        "no-multiple-empty-lines": [
-          "error",
-          {
-            "max": 1,
-            "maxBOF": 0,
-            "maxEOF": 0
-          }
-        ],
-        "no-ternary": "off",
-        "no-undefined": "off",
-        "no-unused-vars": [
-          "error",
-          {
-            "vars": "local"
-          }
-        ],
-        "quote-props": [
-          "error",
-          "consistent"
-        ],
-        "require-atomic-updates": "off"
       }
     }
   ]

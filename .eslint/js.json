@@ -1,0 +1,53 @@
+{
+  "rules": {
+    "arrow-body-style": [
+      "error",
+      "always"
+    ],
+    "array-bracket-newline": [
+      "error",
+      "consistent"
+    ],
+    "array-element-newline": [
+      "error",
+      "consistent"
+    ],
+    "capitalized-comments": "off",
+    "class-methods-use-this": "off",
+    "func-style": [
+      "error",
+      "declaration"
+    ],
+    "function-call-argument-newline": "off",
+    "max-len": "off",
+    "max-lines": "off",
+    "max-params": "off",
+    "max-statements": "off",
+    "multiline-comment-style": "off",
+    "multiline-ternary": "off",
+    "no-empty-function": "off",
+    "no-extra-parens": "off",
+    "no-magic-numbers": "off",
+    "no-multiple-empty-lines": [
+      "error",
+      {
+        "max": 1,
+        "maxBOF": 0,
+        "maxEOF": 0
+      }
+    ],
+    "no-ternary": "off",
+    "no-undefined": "off",
+    "no-unused-vars": [
+      "error",
+      {
+        "vars": "local"
+      }
+    ],
+    "quote-props": [
+      "error",
+      "consistent"
+    ],
+    "require-atomic-updates": "off"
+  }
+}

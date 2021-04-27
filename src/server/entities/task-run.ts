@@ -16,6 +16,10 @@ export interface TaskRun<Payload = unknown, Options = unknown, Result = unknown>
   task: Task<Options>
 }
 
+export interface ConnectedTaskRun<Payload = unknown, Options = unknown, Result = unknown> extends TaskRun<Payload, Options, Result> {
+  connection: Connection
+}
+
 export function createTaskRun<Payload, Options, Result> (payload: Payload, options: Options, result: Result): TaskRun<Payload, Options, Result> {
   return {
     code: 'pending',

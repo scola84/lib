@@ -1,2 +1,2 @@
 #!/bin/bash
-yarn lint:dev && yarn test
+yarn lint --fix && git update-index --again && yarn test

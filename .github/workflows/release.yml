@@ -30,8 +30,8 @@ jobs:
       - name: Test
         run: yarn test
 
-      - name: Bundle
-        run: yarn bundle
+      - name: Make
+        run: yarn make
 
       - name: Release
         run: yarn semantic-release

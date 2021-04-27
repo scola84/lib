@@ -90,13 +90,9 @@
   "name": "@scola/lib",
   "repository": "github:scola84/lib",
   "scripts": {
-    "bundle": "rollup --config",
-    "bundle:dev": "yarn bundle --sourcemap --watch",
     "lint": "tsc --project src/client && tsc --project src/server && lit-analyzer src/client --strict && eslint bin src test",
-    "lint:dev": "yarn lint --fix && git update-index --again",
-    "test": "jest --maxWorkers 4 --preset ts-jest --testRunner jest-circus/runner --testTimeout 60000",
-    "test:cov": "yarn test --collectCoverage",
-    "test:dev": "yarn test --watch"
+    "make": "rollup --config --sourcemap",
+    "test": "jest --maxWorkers 4 --preset ts-jest --testRunner jest-circus/runner --testTimeout 60000"
   },
   "types": "types/index.d.ts",
   "version": "15.2.0"

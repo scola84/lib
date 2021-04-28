@@ -51,7 +51,6 @@ try {
 
     child.execSync([
     `docker exec ${container} mysqldump`,
-    '--compact',
     excludeFlags,
     `--host ${url.hostname}`,
     '--no-data',
@@ -82,6 +81,7 @@ try {
       'docker exec',
       url.password ? `--env PGPASSWORD=${url.password}` : '',
     `${container} pg_dump`,
+    '--create',
     excludeFlags,
     '--format p',
     `--host ${url.hostname}`,

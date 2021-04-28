@@ -1,0 +1,9 @@
+version: "3.7"
+services:
+  redis:
+    command: redis-server /etc/redis/conf.d/redis.conf
+    image: "redis:6-alpine"
+    ports:
+      - "0.0.0.0:6379:6379"
+    volumes:
+      - $PWD/.deploy/redis/conf.d:/etc/redis/conf.d

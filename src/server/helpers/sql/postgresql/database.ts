@@ -41,4 +41,8 @@ export class PostgresqlDatabase extends Database {
   public async connect (): Promise<PostgresqlConnection> {
     return new PostgresqlConnection(await this.pool.connect())
   }
+
+  public async end (): Promise<void> {
+    return this.pool.end()
+  }
 }

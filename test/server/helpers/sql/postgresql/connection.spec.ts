@@ -1,7 +1,8 @@
-import { GenericContainer } from 'testcontainers'
+import type { StartedDockerComposeEnvironment, StartedTestContainer } from 'testcontainers'
+import { Copy } from '../../../../../src/server/helpers/fs'
+import { DockerComposeEnvironment } from 'testcontainers'
 import { Pool } from 'pg'
 import { PostgresqlConnection } from '../../../../../src/server/helpers/sql/postgresql'
-import type { StartedTestContainer } from 'testcontainers'
 import { expect } from 'chai'
 
 describe('PostgresqlConnection', () => {
@@ -22,30 +23,30 @@ describe('PostgresqlConnection', () => {
 
 class Helpers {
   public container: StartedTestContainer
+  public environment: StartedDockerComposeEnvironment
+  public file: Copy
   public pool: Pool
 }
 
 const DATABASE = 'scola'
-const PASSWORD = 'password'
-const PORT = 5432
+const HOSTPORT = 5432
+const PASSWORD = 'root'
 const USERNAME = 'root'
 
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.container = await new GenericContainer('postgres:13-alpine')
-    .withExposedPorts(PORT)
-    .withEnv('POSTGRES_DB', DATABASE)
-    .withEnv('POSTGRES_PASSWORD', PASSWORD)
-    .withEnv('POSTGRES_USER', USERNAME)
-    .withTmpFs({ '/var/lib/postgresql/data': 'rw' })
-    .start()
+  helpers.file = await new Copy('.deploy/postgres/docker.yml').read()
+  await helpers.file.replace(`:${HOSTPORT}:`, '::').writeTarget()
+
+  helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
+  helpers.container = helpers.environment.getContainer('postgres_1')
 
   helpers.pool = new Pool({
     database: DATABASE,
     host: helpers.container.getHost(),
     password: PASSWORD,
-    port: helpers.container.getMappedPort(PORT),
+    port: helpers.container.getMappedPort(HOSTPORT),
     user: USERNAME
   })
 
@@ -58,29 +59,26 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await helpers.pool.end()
-  await helpers.container.stop()
+  await helpers.environment.down()
+  await helpers.file.unlinkTarget()
 })
 
 beforeEach(async () => {
   await helpers.pool.query('TRUNCATE test RESTART IDENTITY')
 })
 
-async function createConnection (): Promise<PostgresqlConnection> {
-  return new PostgresqlConnection(await helpers.pool.connect())
-}
-
 async function deleteOneRow (): Promise<void> {
-  const connection = await createConnection()
+  const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
     const { id } = await connection.insertOne(`
       INSERT INTO test (
         name,
         value
-        ) VALUES (
+      ) VALUES (
         $(name),
         $(value)
-        )
+      )
     `, {
       name: 'name-insert',
       value: 'value-insert'
@@ -114,7 +112,7 @@ async function insertOneRow (): Promise<void> {
     value: 'value-insert'
   }
 
-  const connection = await createConnection()
+  const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
     const { id } = await connection.insertOne(`
@@ -157,7 +155,7 @@ async function insertTwoRows (): Promise<void> {
     value: 'value-insert'
   }]
 
-  const connection = await createConnection()
+  const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
     const [{ id }] = await connection.insert(`
@@ -186,7 +184,7 @@ async function insertTwoRows (): Promise<void> {
 }
 
 async function releaseConnection (): Promise<void> {
-  const connection = await createConnection()
+  const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
     expect(helpers.pool.idleCount).equal(0)
@@ -212,7 +210,7 @@ async function streamRows (): Promise<void> {
     value: 'value-insert'
   }]
 
-  const connection = await createConnection()
+  const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   await connection.insert(`
     INSERT INTO test (
@@ -253,10 +251,10 @@ async function transformParameters (): Promise<void> {
     SELECT *
     FROM test
     WHERE
-    test1 = $1 AND
-    test2 = $2 AND
-    test3 = $3 AND
-    test4 = $4
+      test1 = $1 AND
+      test2 = $2 AND
+      test3 = $3 AND
+      test4 = $4
   `
 
   const expectedValues = [1, 2, 1, '{"number":3}']
@@ -265,10 +263,10 @@ async function transformParameters (): Promise<void> {
     SELECT *
     FROM test
     WHERE
-    test1 = $(test1) AND
-    test2 = $(test2) AND
-    test3 = $(test1) AND
-    test4 = $(test3)
+      test1 = $(test1) AND
+      test2 = $(test2) AND
+      test3 = $(test1) AND
+      test4 = $(test3)
   `
 
   const rawValues = {
@@ -279,7 +277,7 @@ async function transformParameters (): Promise<void> {
     }
   }
 
-  const connection = await createConnection()
+  const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
     const [query, values] = connection.transform(rawQuery, rawValues)
@@ -301,7 +299,7 @@ async function transformAnUndefinedParameter (): Promise<void> {
     test2: 2
   }
 
-  const connection = await createConnection()
+  const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
     connection.transform(rawQuery, rawValues)
@@ -319,7 +317,7 @@ async function updateOneRow (): Promise<void> {
     value: 'value-update'
   }
 
-  const connection = await createConnection()
+  const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
     const { id } = await connection.insertOne(`

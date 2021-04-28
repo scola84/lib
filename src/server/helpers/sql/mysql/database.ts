@@ -45,4 +45,8 @@ export class MysqlDatabase extends Database {
   public async connect (): Promise<MysqlConnection> {
     return new MysqlConnection(await this.pool.getConnection())
   }
+
+  public async end (): Promise<void> {
+    return this.pool.end()
+  }
 }

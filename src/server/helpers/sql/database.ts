@@ -87,4 +87,6 @@ export abstract class Database {
   }
 
   public abstract connect (): Promise<Connection>
+
+  public abstract end (): Promise<void>
 }

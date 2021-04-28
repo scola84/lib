@@ -1,9 +1,9 @@
-import { GenericContainer } from 'testcontainers'
+import type { StartedDockerComposeEnvironment, StartedTestContainer } from 'testcontainers'
+import { Copy } from '../../../../src/server/helpers/fs'
+import { DockerComposeEnvironment } from 'testcontainers'
 import type { SinonSandbox } from 'sinon'
-import type { StartedTestContainer } from 'testcontainers'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { XAdder } from '../../../../src/server/helpers/redis/xadder'
-import type { XAdderOptions } from '../../../../src/server/helpers/redis/xadder'
 import { createNodeRedisClient } from 'handy-redis'
 import { createSandbox } from 'sinon'
 import { expect } from 'chai'
@@ -24,27 +24,35 @@ describe('XAdder', () => {
 
 class Helpers {
   public container: StartedTestContainer
+  public environment: StartedDockerComposeEnvironment
+  public file: Copy
   public sandbox: SinonSandbox
   public store: WrappedNodeRedisClient
 }
 
-const PORT = 6379
+const HOSTPORT = 6379
+const PASSWORD = 'root'
+
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.container = await new GenericContainer('redis')
-    .withExposedPorts(PORT)
-    .start()
+  helpers.file = await new Copy('.deploy/redis/docker.yml').read()
+  await helpers.file.replace(`:${HOSTPORT}:`, '::').writeTarget()
 
-  helpers.store = createNodeRedisClient(
-    helpers.container.getMappedPort(6379),
-    helpers.container.getHost()
-  )
+  helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
+  helpers.container = helpers.environment.getContainer('redis_1')
+
+  helpers.store = createNodeRedisClient({
+    auth_pass: PASSWORD,
+    host: helpers.container.getHost(),
+    port: helpers.container.getMappedPort(HOSTPORT)
+  })
 })
 
 afterAll(async () => {
   helpers.store.end()
-  await helpers.container.stop()
+  await helpers.environment.down()
+  await helpers.file.unlinkTarget()
 })
 
 beforeEach(async () => {
@@ -56,17 +64,11 @@ afterEach(() => {
   helpers.sandbox.restore()
 })
 
-function createAdder (options: Partial<XAdderOptions>): XAdder {
-  return new XAdder({
-    maxLength: 1024,
-    store: helpers.store,
-    ...options
-  })
-}
-
 function storeBatchFails (finish: (error?: unknown) => void): void {
-  const adder = createAdder({
-    highWaterMark: 1
+  const adder = new XAdder({
+    highWaterMark: 1,
+    maxLength: 1024,
+    store: helpers.store
   })
 
   helpers.sandbox
@@ -88,8 +90,10 @@ function storeBatchFails (finish: (error?: unknown) => void): void {
 }
 
 function storeBatchExecFails (finish: (error?: unknown) => void): void {
-  const adder = createAdder({
-    highWaterMark: 1
+  const adder = new XAdder({
+    highWaterMark: 1,
+    maxLength: 1024,
+    store: helpers.store
   })
 
   const batch = helpers.store.batch()
@@ -117,8 +121,10 @@ function storeBatchExecFails (finish: (error?: unknown) => void): void {
 }
 
 function storeBatchExecFailsOnFinal (finish: (error?: unknown) => void): void {
-  const adder = createAdder({
-    highWaterMark: 2
+  const adder = new XAdder({
+    highWaterMark: 2,
+    maxLength: 1024,
+    store: helpers.store
   })
 
   const batch = helpers.store.batch()
@@ -146,8 +152,10 @@ function storeBatchExecFailsOnFinal (finish: (error?: unknown) => void): void {
 }
 
 function storeBatchXAddFails (finish: (error?: unknown) => void): void {
-  const adder = createAdder({
-    highWaterMark: 1
+  const adder = new XAdder({
+    highWaterMark: 1,
+    maxLength: 1024,
+    store: helpers.store
   })
 
   const batch = helpers.store.batch()
@@ -175,8 +183,10 @@ function storeBatchXAddFails (finish: (error?: unknown) => void): void {
 }
 
 function writeItems (finish: (error?: unknown) => void): void {
-  const adder = createAdder({
-    highWaterMark: 2
+  const adder = new XAdder({
+    highWaterMark: 2,
+    maxLength: 1024,
+    store: helpers.store
   })
 
   adder.on('close', () => {
@@ -205,8 +215,10 @@ function writeItems (finish: (error?: unknown) => void): void {
 }
 
 function writeItemsOnFinal (finish: (error?: unknown) => void): void {
-  const adder = createAdder({
-    highWaterMark: 2
+  const adder = new XAdder({
+    highWaterMark: 2,
+    maxLength: 1024,
+    store: helpers.store
   })
 
   adder.on('close', () => {

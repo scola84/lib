@@ -1,7 +1,8 @@
-import { GenericContainer } from 'testcontainers'
+import type { StartedDockerComposeEnvironment, StartedTestContainer } from 'testcontainers'
+import { Copy } from '../../../../../src/server/helpers/fs'
+import { DockerComposeEnvironment } from 'testcontainers'
 import { MysqlConnection } from '../../../../../src/server/helpers/sql/mysql'
 import type { Pool } from 'mysql2/promise'
-import type { StartedTestContainer } from 'testcontainers'
 import { createPool } from 'mysql2/promise'
 import { expect } from 'chai'
 
@@ -23,29 +24,30 @@ describe('MysqlConnection', () => {
 
 class Helpers {
   public container: StartedTestContainer
+  public environment: StartedDockerComposeEnvironment
+  public file: Copy
   public pool: Pool
 }
 
 const DATABASE = 'scola'
-const PASSWORD = 'password'
-const PORT = 3306
+const HOSTPORT = 3306
+const PASSWORD = 'root'
 const USERNAME = 'root'
 
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.container = await new GenericContainer('mysql:8')
-    .withExposedPorts(PORT)
-    .withEnv('MYSQL_DATABASE', DATABASE)
-    .withEnv('MYSQL_ROOT_PASSWORD', PASSWORD)
-    .withTmpFs({ '/var/lib/mysql': 'rw' })
-    .start()
+  helpers.file = await new Copy('.deploy/mysql/docker.yml').read()
+  await helpers.file.replace(`:${HOSTPORT}:`, '::').writeTarget()
+
+  helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
+  helpers.container = helpers.environment.getContainer('mysql_1')
 
   helpers.pool = createPool({
     database: DATABASE,
     host: helpers.container.getHost(),
     password: PASSWORD,
-    port: helpers.container.getMappedPort(PORT),
+    port: helpers.container.getMappedPort(HOSTPORT),
     user: USERNAME
   })
 
@@ -58,19 +60,16 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await helpers.pool.end()
-  await helpers.container.stop()
+  await helpers.environment.down()
+  await helpers.file.unlinkTarget()
 })
 
 beforeEach(async () => {
   await helpers.pool.query('TRUNCATE test')
 })
 
-async function createConnection (): Promise<MysqlConnection> {
-  return new MysqlConnection(await helpers.pool.getConnection())
-}
-
 async function deleteOneRow (): Promise<void> {
-  const connection = await createConnection()
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
     const { id } = await connection.insertOne(`
@@ -116,7 +115,7 @@ async function insertOneRow (): Promise<void> {
     value: 'value-insert'
   }
 
-  const connection = await createConnection()
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
     const { id } = await connection.insertOne(`
@@ -159,7 +158,7 @@ async function insertTwoRows (): Promise<void> {
     value: 'value-insert'
   }]
 
-  const connection = await createConnection()
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
     const [{ id }] = await connection.insert(`
@@ -188,7 +187,7 @@ async function insertTwoRows (): Promise<void> {
 }
 
 async function releaseConnection (): Promise<void> {
-  const connection = await createConnection()
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   return new Promise((resolve, reject) => {
     helpers.pool.once('release', (releasedConnection: MysqlConnection['connection']) => {
@@ -217,7 +216,7 @@ async function streamRows (): Promise<void> {
     value: 'value-insert'
   }]
 
-  const connection = await createConnection()
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   await connection.insert(`
     INSERT INTO test (
@@ -284,7 +283,7 @@ async function transformParameters (): Promise<void> {
     }
   }
 
-  const connection = await createConnection()
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
     const [query, values] = connection.transform(rawQuery, rawValues)
@@ -306,7 +305,7 @@ async function transformAnUndefinedParameter (): Promise<void> {
     test2: 2
   }
 
-  const connection = await createConnection()
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
     connection.transform(rawQuery, rawValues)
@@ -324,7 +323,7 @@ async function updateOneRow (): Promise<void> {
     value: 'value-update'
   }
 
-  const connection = await createConnection()
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
     const { id } = await connection.insertOne(`

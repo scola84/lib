@@ -1,9 +1,9 @@
-import { GenericContainer } from 'testcontainers'
+import type { StartedDockerComposeEnvironment, StartedTestContainer } from 'testcontainers'
+import { Copy } from '../../../../src/server/helpers/fs'
+import { DockerComposeEnvironment } from 'testcontainers'
 import type { SinonSandbox } from 'sinon'
-import type { StartedTestContainer } from 'testcontainers'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { ZScanner } from '../../../../src/server/helpers/redis/zscanner'
-import type { ZScannerOptions } from '../../../../src/server/helpers/redis/zscanner'
 import { createNodeRedisClient } from 'handy-redis'
 import { createSandbox } from 'sinon'
 import { expect } from 'chai'
@@ -23,27 +23,35 @@ describe('ZScanner', () => {
 
 class Helpers {
   public container: StartedTestContainer
+  public environment: StartedDockerComposeEnvironment
+  public file: Copy
   public sandbox: SinonSandbox
   public store: WrappedNodeRedisClient
 }
 
-const port = 6379
+const HOSTPORT = 6379
+const PASSWORD = 'root'
+
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.container = await new GenericContainer('redis')
-    .withExposedPorts(port)
-    .start()
+  helpers.file = await new Copy('.deploy/redis/docker.yml').read()
+  await helpers.file.replace(`:${HOSTPORT}:`, '::').writeTarget()
 
-  helpers.store = createNodeRedisClient(
-    helpers.container.getMappedPort(6379),
-    helpers.container.getHost()
-  )
+  helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
+  helpers.container = helpers.environment.getContainer('redis_1')
+
+  helpers.store = createNodeRedisClient({
+    auth_pass: PASSWORD,
+    host: helpers.container.getHost(),
+    port: helpers.container.getMappedPort(HOSTPORT)
+  })
 })
 
 afterAll(async () => {
   helpers.store.end()
-  await helpers.container.stop()
+  await helpers.environment.down()
+  await helpers.file.unlinkTarget()
 })
 
 beforeEach(async () => {
@@ -55,17 +63,11 @@ afterEach(() => {
   helpers.sandbox.restore()
 })
 
-function createScanner (options: Partial<ZScannerOptions> = {}): ZScanner {
-  return new ZScanner({
-    key: 'key',
-    store: helpers.store,
-    ...options
-  })
-}
-
 async function deleteTheSet (): Promise<void> {
-  const scanner = createScanner({
-    delete: true
+  const scanner = new ZScanner({
+    delete: true,
+    key: 'key',
+    store: helpers.store
   })
 
   await helpers.store.zadd('key', [0, 'member-0'])
@@ -98,7 +100,10 @@ async function emitMembers (): Promise<void> {
     ['member-1', '1']
   ]
 
-  const scanner = createScanner()
+  const scanner = new ZScanner({
+    key: 'key',
+    store: helpers.store
+  })
 
   await Promise.all(members.map(async (value, index) => {
     return helpers.store.zadd('key', [index, `member-${index}`])
@@ -123,8 +128,10 @@ async function emitMembers (): Promise<void> {
 }
 
 function storeDelFails (finish: (error?: unknown) => void): void {
-  const scanner = createScanner({
-    delete: true
+  const scanner = new ZScanner({
+    delete: true,
+    key: 'key',
+    store: helpers.store
   })
 
   helpers.sandbox
@@ -144,8 +151,10 @@ function storeDelFails (finish: (error?: unknown) => void): void {
 }
 
 function storeZscanFails (finish: (error?: unknown) => void): void {
-  const scanner = createScanner({
-    delete: true
+  const scanner = new ZScanner({
+    delete: true,
+    key: 'key',
+    store: helpers.store
   })
 
   helpers.sandbox
@@ -170,7 +179,10 @@ async function useTheCursor (): Promise<void> {
   const members = new Array(SIZE).fill(0)
   const data: Array<[number, string]> = []
 
-  const scanner = createScanner()
+  const scanner = new ZScanner({
+    key: 'key',
+    store: helpers.store
+  })
 
   await Promise.all(members.map(async (value, index) => {
     return helpers.store.zadd('key', [index, `member-${index}`])

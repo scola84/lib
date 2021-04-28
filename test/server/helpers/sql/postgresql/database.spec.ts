@@ -1,16 +1,17 @@
-import { PostgresqlConnection, PostgresqlDatabase } from '../../../../../src/server/helpers/sql/postgresql'
-import { GenericContainer } from 'testcontainers'
+import type { StartedDockerComposeEnvironment, StartedTestContainer } from 'testcontainers'
+import { Copy } from '../../../../../src/server/helpers/fs'
+import { DockerComposeEnvironment } from 'testcontainers'
 import { Pool } from 'pg'
-import type { PoolConfig } from 'pg'
-import type { StartedTestContainer } from 'testcontainers'
+import { PostgresqlDatabase } from '../../../../../src/server/helpers/sql/postgresql'
 import { expect } from 'chai'
 
 describe('PostgresqlConnection', () => {
   describe('should', () => {
-    it('parse a DSN', parseADSN)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
+    it('parse a DSN', parseADSN)
     it('connect with object options', connectWithObjectOptions)
     it('connect with string options', connectWithStringOptions)
+    it('connect without options', connectWithoutOptions)
     it('execute a query', executeAQuery)
     it('insert one row', insertOneRow)
     it('insert two rows', insertTwoRows)
@@ -22,33 +23,33 @@ describe('PostgresqlConnection', () => {
 
 class Helpers {
   public container: StartedTestContainer
+  public dsn: string
+  public environment: StartedDockerComposeEnvironment
+  public file: Copy
   public pool: Pool
 }
 
 const DATABASE = 'scola'
 const HOSTNAME = '127.0.0.1'
-const PASSWORD = 'password'
-const PORT = 5432
+const HOSTPORT = 5432
+const PASSWORD = 'root'
 const USERNAME = 'root'
-
-const DSN = `mysql://${USERNAME}:${PASSWORD}@${HOSTNAME}:${PORT}/${DATABASE}?max=20`
 
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.container = await new GenericContainer('postgres:13-alpine')
-    .withExposedPorts(5432)
-    .withEnv('POSTGRES_DB', DATABASE)
-    .withEnv('POSTGRES_PASSWORD', PASSWORD)
-    .withEnv('POSTGRES_USER', USERNAME)
-    .withTmpFs({ '/var/lib/postgresql/data': 'rw' })
-    .start()
+  helpers.file = await new Copy('.deploy/postgres/docker.yml').read()
+  await helpers.file.replace(`:${HOSTPORT}:`, '::').writeTarget()
+
+  helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
+  helpers.container = helpers.environment.getContainer('postgres_1')
+  helpers.dsn = `mysql://${USERNAME}:${PASSWORD}@${HOSTNAME}:${helpers.container.getMappedPort(HOSTPORT)}/${DATABASE}?max=20`
 
   helpers.pool = new Pool({
     database: DATABASE,
     host: helpers.container.getHost(),
     password: PASSWORD,
-    port: helpers.container.getMappedPort(PORT),
+    port: helpers.container.getMappedPort(HOSTPORT),
     user: USERNAME
   })
 
@@ -61,84 +62,95 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await helpers.pool.end()
-  await helpers.container.stop()
+  await helpers.environment.down()
+  await helpers.file.unlinkTarget()
 })
 
 beforeEach(async () => {
   await helpers.pool.query('TRUNCATE test RESTART IDENTITY')
 })
 
-function createDatabase (options?: PoolConfig | string): PostgresqlDatabase {
-  const database = new PostgresqlDatabase(options)
-  database.pool = helpers.pool
-  return database
-}
-
 async function connectWithObjectOptions (): Promise<void> {
-  const database = createDatabase(PostgresqlDatabase.parseDSN(DSN))
-  const connection = await database.connect()
+  const database = new PostgresqlDatabase(PostgresqlDatabase.parseDSN(helpers.dsn))
 
   try {
-    expect(connection).instanceOf(PostgresqlConnection)
+    expect(database.pool).instanceOf(Pool)
   } finally {
-    connection.release()
+    await database.end()
   }
 }
 
 async function connectWithStringOptions (): Promise<void> {
-  const database = createDatabase(DSN)
-  const connection = await database.connect()
+  const database = new PostgresqlDatabase(helpers.dsn)
 
   try {
-    expect(connection).instanceOf(PostgresqlConnection)
+    expect(database.pool).instanceOf(Pool)
   } finally {
-    connection.release()
+    await database.end()
+  }
+}
+
+async function connectWithoutOptions (): Promise<void> {
+  const database = new PostgresqlDatabase()
+
+  try {
+    expect(database.pool).instanceOf(Pool)
+  } finally {
+    await database.end()
   }
 }
 
 async function deleteOneRow (): Promise<void> {
-  const database = createDatabase()
+  const database = new PostgresqlDatabase(helpers.dsn)
 
-  const { id } = await database.insertOne(`
-    INSERT INTO test (
-      name,
-      value
-    ) VALUES (
-      $(name),
-      $(value)
-    )
-  `, {
-    name: 'name-insert',
-    value: 'value-insert'
-  })
+  try {
+    const { id } = await database.insertOne(`
+      INSERT INTO test (
+        name,
+        value
+      ) VALUES (
+        $(name),
+        $(value)
+      )
+    `, {
+      name: 'name-insert',
+      value: 'value-insert'
+    })
 
-  await database.delete(`
-    DELETE FROM test
-    WHERE id = $(id)
-  `, {
-    id
-  })
+    await database.delete(`
+      DELETE FROM test
+      WHERE id = $(id)
+    `, {
+      id
+    })
 
-  const data = await database.selectOne(`
-    SELECT *
-    FROM test
-    WHERE id = $(id)
-  `, {
-    id
-  })
+    const data = await database.selectOne(`
+      SELECT *
+      FROM test
+      WHERE id = $(id)
+    `, {
+      id
+    })
 
-  expect(data).equal(undefined)
-  expect(database.pool.idleCount).gt(0)
+    expect(data).equal(undefined)
+    expect(database.pool.idleCount).gt(0)
+  } finally {
+    await database.end()
+  }
 }
 
 async function executeAQuery (): Promise<void> {
-  const database = createDatabase()
+  const database = new PostgresqlDatabase(helpers.dsn)
 
-  await database.query(`
-    SELECT 1
-  `)
+  try {
+    await database.query(`
+      SELECT 1
+    `)
 
-  expect(database.pool.idleCount).gt(0)
+    expect(database.pool.idleCount).gt(0)
+  } finally {
+    await database.end()
+  }
 }
 
 async function insertOneRow (): Promise<void> {
@@ -148,33 +160,37 @@ async function insertOneRow (): Promise<void> {
     value: 'value-insert'
   }
 
-  const database = createDatabase()
+  const database = new PostgresqlDatabase(helpers.dsn)
 
-  const { id } = await database.insertOne(`
-    INSERT INTO test (
-      name,
-      value
-    ) VALUES (
-      $(name),
-      $(value)
-    )
-  `, {
-    name: 'name-insert',
-    value: 'value-insert'
-  })
+  try {
+    const { id } = await database.insertOne(`
+      INSERT INTO test (
+        name,
+        value
+      ) VALUES (
+        $(name),
+        $(value)
+      )
+    `, {
+      name: 'name-insert',
+      value: 'value-insert'
+    })
 
-  expect(id).equal(1)
+    expect(id).equal(1)
 
-  const data = await database.selectOne(`
-    SELECT *
-    FROM test
-    WHERE id = $(id)
-  `, {
-    id
-  })
+    const data = await database.selectOne(`
+      SELECT *
+      FROM test
+      WHERE id = $(id)
+    `, {
+      id
+    })
 
-  expect(data).include(expectedData)
-  expect(database.pool.idleCount).gt(0)
+    expect(data).include(expectedData)
+    expect(database.pool.idleCount).gt(0)
+  } finally {
+    await database.end()
+  }
 }
 
 async function insertTwoRows (): Promise<void> {
@@ -188,38 +204,76 @@ async function insertTwoRows (): Promise<void> {
     value: 'value-insert'
   }]
 
-  const database = createDatabase()
+  const database = new PostgresqlDatabase(helpers.dsn)
 
-  const [{ id }] = await database.insert(`
-    INSERT INTO test (
-      name,
-      value
-    ) VALUES $(list)
-  `, {
-    list: [
-      ['name-insert', 'value-insert'],
-      ['name-insert', 'value-insert']
-    ]
-  })
+  try {
+    const [{ id }] = await database.insert(`
+      INSERT INTO test (
+        name,
+        value
+      ) VALUES $(list)
+    `, {
+      list: [
+        ['name-insert', 'value-insert'],
+        ['name-insert', 'value-insert']
+      ]
+    })
 
-  expect(id).equal(1)
+    expect(id).equal(1)
 
-  const data = await database.select(`
-    SELECT *
-    FROM test
-  `)
+    const data = await database.select(`
+      SELECT *
+      FROM test
+    `)
 
-  expect(data).deep.members(expectedData)
-  expect(database.pool.idleCount).gt(0)
+    expect(data).deep.members(expectedData)
+    expect(database.pool.idleCount).gt(0)
+  } finally {
+    await database.end()
+  }
+}
+
+async function parseABigIntAsANumber (): Promise<void> {
+  const database = new PostgresqlDatabase(helpers.dsn)
+
+  try {
+    const { id } = await database.insertOne(`
+      INSERT INTO test (
+        id,
+        name,
+        value
+      ) VALUES (
+        $(id),
+        $(name),
+        $(value)
+      )
+    `, {
+      id: 1,
+      name: 'name-insert',
+      value: 'value-insert'
+    })
+
+    const data = await database.selectOne<{ id: number }, { id: number }>(`
+      SELECT *
+      FROM test
+      WHERE id = $(id)
+    `, {
+      id
+    })
+
+    expect(data?.id).equal(id)
+  } finally {
+    await database.end()
+  }
 }
 
 function parseADSN (): void {
   const expectedOptions = {
-    connectionString: DSN,
+    connectionString: helpers.dsn,
     max: '20'
   }
 
-  const options = PostgresqlDatabase.parseDSN(DSN)
+  const options = PostgresqlDatabase.parseDSN(helpers.dsn)
   expect(options).eql(expectedOptions)
 }
 
@@ -236,71 +290,36 @@ async function streamRows (): Promise<void> {
     value: 'value-insert'
   }]
 
-  const database = createDatabase()
+  const database = new PostgresqlDatabase(helpers.dsn)
 
-  await database.insert(`
-    INSERT INTO test (
-      name,
-      value
-    ) VALUES $(list)
-  `, {
-    list: [
-      ['name-insert', 'value-insert'],
-      ['name-insert', 'value-insert']
-    ]
-  })
-
-  const stream = await database.stream(`
-    SELECT *
-    FROM test
-  `)
-
-  return new Promise((resolve, reject) => {
-    stream.on('data', (datum) => {
-      data.push(datum)
+  try {
+    await database.insert('INSERT INTO test (name,value) VALUES $(list)', {
+      list: [
+        ['name-insert', 'value-insert'],
+        ['name-insert', 'value-insert']
+      ]
     })
 
-    stream.on('close', () => {
-      try {
-        expect(data).deep.members(expectedData)
-        expect(database.pool.idleCount).gt(0)
-        resolve()
-      } catch (error: unknown) {
-        reject(error)
-      }
+    const stream = await database.stream('SELECT * FROM test')
+
+    await new Promise<void>((resolve, reject) => {
+      stream.on('data', (datum) => {
+        data.push(datum)
+      })
+
+      stream.on('close', () => {
+        try {
+          expect(data).deep.members(expectedData)
+          expect(database.pool.idleCount).gt(0)
+          resolve()
+        } catch (error: unknown) {
+          reject(error)
+        }
+      })
     })
-  })
-}
-
-async function parseABigIntAsANumber (): Promise<void> {
-  const database = createDatabase()
-  const id = 1
-
-  await database.insertOne(`
-    INSERT INTO test (
-      id,
-      name,
-      value
-    ) VALUES (
-      $(id),
-      $(name),
-      $(value)
-    )
-  `, {
-    id,
-    name: 'name-insert',
-    value: 'value-insert'
-  })
-
-  const data = await database.selectOne<{ id: number }, { id: number }>(`
-    SELECT *
-    FROM test
-    WHERE id = $(id)
-  `, {
-    id
-  })
-
-  expect(data?.id).equal(id)
+  } finally {
+    await database.end()
+  }
 }
 
 async function updateOneRow (): Promise<void> {
@@ -310,41 +329,39 @@ async function updateOneRow (): Promise<void> {
     value: 'value-update'
   }
 
-  const database = createDatabase()
+  const database = new PostgresqlDatabase(helpers.dsn)
 
-  const { id } = await database.insertOne(`
-    INSERT INTO test (
-      name,
-      value
-    ) VALUES (
-      $(name),
-      $(value)
-    )
-  `, {
-    name: 'name-insert',
-    value: 'value-insert'
-  })
+  try {
+    const { id } = await database.insertOne(`
+      INSERT INTO test (name,value) VALUES ($(name),$(value))
+    `, {
+      name: 'name-insert',
+      value: 'value-insert'
+    })
 
-  await database.update(`
-    UPDATE test
-    SET
-      name = $(name),
-      value = $(value)
-    WHERE id = $(id)
-  `, {
-    id,
-    name: 'name-update',
-    value: 'value-update'
-  })
+    await database.update(`
+      UPDATE test
+      SET
+        name = $(name),
+        value = $(value)
+      WHERE id = $(id)
+    `, {
+      id,
+      name: 'name-update',
+      value: 'value-update'
+    })
 
-  const data = await database.selectOne(`
-    SELECT *
-    FROM test
-    WHERE id = $(id)
-  `, {
-    id
-  })
+    const data = await database.selectOne(`
+      SELECT *
+      FROM test
+      WHERE id = $(id)
+    `, {
+      id
+    })
 
-  expect(data).include(expectedData)
-  expect(database.pool.idleCount).gt(0)
+    expect(data).include(expectedData)
+    expect(database.pool.idleCount).gt(0)
+  } finally {
+    await database.end()
+  }
 }

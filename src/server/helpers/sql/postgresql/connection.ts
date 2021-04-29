@@ -67,6 +67,13 @@ export class PostgresqlConnection extends Connection {
       return undefined
     }
 
-    return value === null ? value : JSON.stringify(value)
+    if (
+      Buffer.isBuffer(value) ||
+      value === null
+    ) {
+      return value
+    }
+
+    return JSON.stringify(value)
   }
 }

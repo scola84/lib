@@ -68,6 +68,14 @@ export class MysqlConnection extends Connection {
   }
 
   protected transformObject (value: unknown): unknown {
-    return Array.isArray(value) || value === null ? value : JSON.stringify(value)
+    if (
+      Array.isArray(value) ||
+      Buffer.isBuffer(value) ||
+      value === null
+    ) {
+      return value
+    }
+
+    return JSON.stringify(value)
   }
 }

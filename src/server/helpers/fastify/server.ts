@@ -14,7 +14,7 @@ export interface ServerOptions extends FastifyServerOptions {
 export class Server {
   public address: string
 
-  public fastify: FastifyInstance
+  public fastify?: FastifyInstance
 
   public fastifyCookie?: FastifyPluginCallback = fastifyCookie
 
@@ -61,10 +61,10 @@ export class Server {
     }
 
     return Promise.all([
-      this.fastify.register(this.fastifyCookie ?? (() => {})),
-      this.fastify.register(this.fastifyFormbody ?? (() => {})),
-      this.fastify.register(this.fastifyMultipart ?? (() => {})),
-      this.fastify.listen(this.port, this.address)
+      this.fastify?.register(this.fastifyCookie ?? (() => {})),
+      this.fastify?.register(this.fastifyFormbody ?? (() => {})),
+      this.fastify?.register(this.fastifyMultipart ?? (() => {})),
+      this.fastify?.listen(this.port, this.address)
     ])
   }
 
@@ -74,6 +74,6 @@ export class Server {
       port: this.port
     }, 'Stopping server')
 
-    return this.fastify.close()
+    return this.fastify?.close()
   }
 }

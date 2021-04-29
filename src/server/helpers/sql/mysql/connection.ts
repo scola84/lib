@@ -1,8 +1,13 @@
 import type { DeleteResult, InsertResult, UpdateResult } from '../connection'
 import type { PoolConnection, ResultSetHeader } from 'mysql2/promise'
+import type { Connection as BaseConnection } from 'mysql'
 import { Connection } from '../connection'
 import type { Readable } from 'stream'
 import tokens from './tokens'
+
+interface StreamConnection extends PoolConnection {
+  connection: BaseConnection
+}
 
 export class MysqlConnection extends Connection {
   public connection: PoolConnection
@@ -48,7 +53,7 @@ export class MysqlConnection extends Connection {
   }
 
   public stream<V> (query: string, values?: Partial<V>): Readable {
-    return this.connection.connection
+    return (this.connection as StreamConnection).connection
       .query(...this.transform(query, values))
       .stream()
   }

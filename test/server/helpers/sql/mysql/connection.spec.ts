@@ -81,8 +81,8 @@ async function deleteOneRow (): Promise<void> {
         $(value)
       )
     `, {
-      name: 'name-insert',
-      value: 'value-insert'
+      name: 'name1',
+      value: 'value1'
     })
 
     const { count } = await connection.delete(`
@@ -111,8 +111,8 @@ async function deleteOneRow (): Promise<void> {
 async function insertOneRow (): Promise<void> {
   const expectedData = {
     id: 1,
-    name: 'name-insert',
-    value: 'value-insert'
+    name: 'name1',
+    value: 'value1'
   }
 
   const connection = new MysqlConnection(await helpers.pool.getConnection())
@@ -127,8 +127,8 @@ async function insertOneRow (): Promise<void> {
         $(value)
       )
     `, {
-      name: 'name-insert',
-      value: 'value-insert'
+      name: 'name1',
+      value: 'value1'
     })
 
     expect(id).equal(1)
@@ -150,12 +150,12 @@ async function insertOneRow (): Promise<void> {
 async function insertTwoRows (): Promise<void> {
   const expectedData = [{
     id: 1,
-    name: 'name-insert',
-    value: 'value-insert'
+    name: 'name1',
+    value: 'value1'
   }, {
     id: 2,
-    name: 'name-insert',
-    value: 'value-insert'
+    name: 'name2',
+    value: 'value2'
   }]
 
   const connection = new MysqlConnection(await helpers.pool.getConnection())
@@ -168,8 +168,8 @@ async function insertTwoRows (): Promise<void> {
       ) VALUES $(list)
     `, {
       list: [
-        ['name-insert', 'value-insert'],
-        ['name-insert', 'value-insert']
+        ['name1', 'value1'],
+        ['name2', 'value2']
       ]
     })
 
@@ -208,12 +208,12 @@ async function streamRows (): Promise<void> {
 
   const expectedData = [{
     id: 1,
-    name: 'name-insert',
-    value: 'value-insert'
+    name: 'name1',
+    value: 'value1'
   }, {
     id: 2,
-    name: 'name-insert',
-    value: 'value-insert'
+    name: 'name2',
+    value: 'value2'
   }]
 
   const connection = new MysqlConnection(await helpers.pool.getConnection())
@@ -225,8 +225,8 @@ async function streamRows (): Promise<void> {
     ) VALUES $(list)
   `, {
     list: [
-      ['name-insert', 'value-insert'],
-      ['name-insert', 'value-insert']
+      ['name1', 'value1'],
+      ['name2', 'value2']
     ]
   })
 
@@ -257,27 +257,27 @@ async function transformParameters (): Promise<void> {
     SELECT *
     FROM test
     WHERE
-      test1 = ? AND
-      test2 = ? AND
-      test3 = ? AND
-      test4 = ?
+      test = ? AND
+      test = ? AND
+      test = ? AND
+      test = ?
   `
 
-  const expectedValues = [1, 2, 1, '{"number":3}']
+  const expectedValues = [1, null, 1, '{"number":3}']
 
   const rawQuery = `
     SELECT *
     FROM test
     WHERE
-      test1 = $(test1) AND
-      test2 = $(test2) AND
-      test3 = $(test1) AND
-      test4 = $(test3)
+      test = $(test1) AND
+      test = $(test2) AND
+      test = $(test1) AND
+      test = $(test3)
   `
 
   const rawValues = {
     test1: 1,
-    test2: 2,
+    test2: null,
     test3: {
       number: 3
     }
@@ -319,8 +319,8 @@ async function transformAnUndefinedParameter (): Promise<void> {
 async function updateOneRow (): Promise<void> {
   const expectedData = {
     id: 1,
-    name: 'name-update',
-    value: 'value-update'
+    name: 'name1-update',
+    value: 'value1-update'
   }
 
   const connection = new MysqlConnection(await helpers.pool.getConnection())
@@ -335,8 +335,8 @@ async function updateOneRow (): Promise<void> {
         $(value)
       )
     `, {
-      name: 'name-insert',
-      value: 'value-insert'
+      name: 'name1',
+      value: 'value1'
     })
 
     const { count } = await connection.update(`
@@ -347,8 +347,8 @@ async function updateOneRow (): Promise<void> {
       WHERE id = $(id)
     `, {
       id,
-      name: 'name-update',
-      value: 'value-update'
+      name: 'name1-update',
+      value: 'value1-update'
     })
 
     expect(count).equal(1)

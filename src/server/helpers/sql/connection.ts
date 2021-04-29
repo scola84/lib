@@ -16,7 +16,11 @@ export interface UpdateResult {
 export abstract class Connection {
   public abstract tokens: tokens
 
-  public transform (rawQuery: string, rawValues: Record<string, unknown> = {}): [string, unknown[]] {
+  public transform (rawQuery: string, rawValues: Record<string, unknown> | unknown[] = {}): [string, unknown[]] {
+    if (rawValues instanceof Array) {
+      return [rawQuery, rawValues]
+    }
+
     const match = rawQuery.match(/\$\(\w+\)/gu) ?? []
     const values = []
 

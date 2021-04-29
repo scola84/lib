@@ -12,6 +12,7 @@ describe('PostgresqlConnection', () => {
 
   describe('should', () => {
     it('transform parameters', transformParameters)
+    it('transform parameters for bulk insert', transformParametersForBulkInsert)
     it('release connection', releaseConnection)
     it('insert one row', insertOneRow)
     it('insert two rows', insertTwoRows)
@@ -108,8 +109,8 @@ async function deleteOneRow (): Promise<void> {
 async function insertOneRow (): Promise<void> {
   const expectedData = {
     id: 1,
-    name: 'name-insert',
-    value: 'value-insert'
+    name: 'name1',
+    value: 'value1'
   }
 
   const connection = new PostgresqlConnection(await helpers.pool.connect())
@@ -124,8 +125,8 @@ async function insertOneRow (): Promise<void> {
         $(value)
       )
     `, {
-      name: 'name-insert',
-      value: 'value-insert'
+      name: 'name1',
+      value: 'value1'
     })
 
     expect(id).equal(1)
@@ -147,12 +148,12 @@ async function insertOneRow (): Promise<void> {
 async function insertTwoRows (): Promise<void> {
   const expectedData = [{
     id: 1,
-    name: 'name-insert',
-    value: 'value-insert'
+    name: 'name1',
+    value: 'value1'
   }, {
     id: 2,
-    name: 'name-insert',
-    value: 'value-insert'
+    name: 'name2',
+    value: 'value2'
   }]
 
   const connection = new PostgresqlConnection(await helpers.pool.connect())
@@ -165,8 +166,8 @@ async function insertTwoRows (): Promise<void> {
       ) VALUES $(list)
     `, {
       list: [
-        ['name-insert', 'value-insert'],
-        ['name-insert', 'value-insert']
+        ['name1', 'value1'],
+        ['name2', 'value2']
       ]
     })
 
@@ -202,12 +203,12 @@ async function streamRows (): Promise<void> {
 
   const expectedData = [{
     id: 1,
-    name: 'name-insert',
-    value: 'value-insert'
+    name: 'name1',
+    value: 'value1'
   }, {
     id: 2,
-    name: 'name-insert',
-    value: 'value-insert'
+    name: 'name2',
+    value: 'value2'
   }]
 
   const connection = new PostgresqlConnection(await helpers.pool.connect())
@@ -219,8 +220,8 @@ async function streamRows (): Promise<void> {
     ) VALUES $(list)
   `, {
     list: [
-      ['name-insert', 'value-insert'],
-      ['name-insert', 'value-insert']
+      ['name1', 'value1'],
+      ['name2', 'value2']
     ]
   })
 
@@ -251,30 +252,68 @@ async function transformParameters (): Promise<void> {
     SELECT *
     FROM test
     WHERE
-      test1 = $1 AND
-      test2 = $2 AND
-      test3 = $3 AND
-      test4 = $4
+      test = $1 AND
+      test = $2 AND
+      test = $3 AND
+      test = $4 AND
+      test = $5
   `
 
-  const expectedValues = [1, 2, 1, '{"number":3}']
+  const expectedValues = [1, null, 1, '{"number":3}', 'value']
 
   const rawQuery = `
     SELECT *
     FROM test
     WHERE
-      test1 = $(test1) AND
-      test2 = $(test2) AND
-      test3 = $(test1) AND
-      test4 = $(test3)
+      test = $(test1) AND
+      test = $(test2) AND
+      test = $(test1) AND
+      test = $(test3) AND
+      test = $(test4)
   `
 
   const rawValues = {
     test1: 1,
-    test2: 2,
+    test2: null,
     test3: {
       number: 3
-    }
+    },
+    test4: 'value'
+  }
+
+  const connection = new PostgresqlConnection(await helpers.pool.connect())
+
+  try {
+    const [query, values] = connection.transform(rawQuery, rawValues)
+    expect(query).equal(expectedQuery)
+    expect(values).deep.equal(expectedValues)
+  } finally {
+    connection.release()
+  }
+}
+
+async function transformParametersForBulkInsert (): Promise<void> {
+  const expectedQuery = `
+    INSERT INTO test (
+      name,
+      value
+    ) VALUES ('name1', 'value1'), ('name2', 'value2')
+  `
+
+  const expectedValues: [] = []
+
+  const rawQuery = `
+    INSERT INTO test (
+      name,
+      value
+    ) VALUES $(list)
+  `
+
+  const rawValues = {
+    list: [
+      ['name1', 'value1'],
+      ['name2', 'value2']
+    ]
   }
 
   const connection = new PostgresqlConnection(await helpers.pool.connect())
@@ -313,8 +352,8 @@ async function transformAnUndefinedParameter (): Promise<void> {
 async function updateOneRow (): Promise<void> {
   const expectedData = {
     id: 1,
-    name: 'name-update',
-    value: 'value-update'
+    name: 'name1-update',
+    value: 'value1-update'
   }
 
   const connection = new PostgresqlConnection(await helpers.pool.connect())
@@ -329,8 +368,8 @@ async function updateOneRow (): Promise<void> {
         $(value)
       )
     `, {
-      name: 'name-insert',
-      value: 'value-insert'
+      name: 'name1',
+      value: 'value1'
     })
 
     await connection.update(`
@@ -341,8 +380,8 @@ async function updateOneRow (): Promise<void> {
       WHERE id = $(id)
     `, {
       id,
-      name: 'name-update',
-      value: 'value-update'
+      name: 'name1-update',
+      value: 'value1-update'
     })
 
     const data = await connection.selectOne(`

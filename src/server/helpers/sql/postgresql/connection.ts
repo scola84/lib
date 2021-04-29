@@ -63,6 +63,10 @@ export class PostgresqlConnection extends Connection {
   }
 
   protected transformObject (value: unknown): unknown {
-    return Array.isArray(value) ? undefined : JSON.stringify(value)
+    if (Array.isArray(value)) {
+      return undefined
+    }
+
+    return value === null ? value : JSON.stringify(value)
   }
 }

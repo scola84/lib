@@ -16,6 +16,7 @@
     {
       "extends": [
         "eslint:all",
+        "standard",
         "plugin:@typescript-eslint/all",
         "standard-with-typescript",
         ".eslint/js.json",

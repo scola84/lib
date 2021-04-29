@@ -1,3 +1,11 @@
+## [15.3.1](https://github.com/scola84/lib/compare/v15.3.0...v15.3.1) (2021-04-29)
+
+
+### Bug Fixes
+
+* **fastify:** make property optional again ([582ebc1](https://github.com/scola84/lib/commit/582ebc1e03d53c77fc13eb41eb4b3c97c913f970))
+* **fastify:** undefined property accessor ([7e96bed](https://github.com/scola84/lib/commit/7e96bedec251f80cec781e67f279cd1b3f05b9e0))
+
 # [15.3.0](https://github.com/scola84/lib/compare/v15.2.0...v15.3.0) (2021-04-29)
 
 

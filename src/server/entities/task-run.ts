@@ -1,4 +1,4 @@
-import type { Connection } from '../helpers'
+import type { Connection } from '../helpers/sql'
 import type { Item } from './item'
 import type { QueueRun } from './queue-run'
 import type { Task } from './task'
@@ -9,15 +9,11 @@ import { createTask } from './task'
 
 export interface TaskRun<Payload = unknown, Options = unknown, Result = unknown> extends Required<TaskRunBase> {
   code: 'err' | 'ok' | 'pending'
-  connection?: Connection
-  result: Result
   item: Item<Payload>
   queueRun: QueueRun
+  result: Result
+  sql?: Connection
   task: Task<Options>
-}
-
-export interface ConnectedTaskRun<Payload = unknown, Options = unknown, Result = unknown> extends TaskRun<Payload, Options, Result> {
-  connection: Connection
 }
 
 export function createTaskRun<Payload, Options, Result> (payload: Payload, options: Options, result: Result): TaskRun<Payload, Options, Result> {

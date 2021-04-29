@@ -13,6 +13,10 @@ import { promise } from 'fastq'
 import { sql } from '../sql'
 import waitUntil from 'async-wait-until'
 
+export interface SqlTaskRun<Payload = unknown, Options = unknown, Result = unknown> extends TaskRun<Payload, Options, Result> {
+  sql: Connection
+}
+
 export interface TaskRunnerOptions extends DuplexOptions {
   block: number
   channel: string
@@ -126,7 +130,17 @@ export abstract class TaskRunner {
     return pipeline(...streams)
   }
 
-  public start (): void {
+  public setup (): void {
+    this.queue = this.createQueue()
+    this.storeDuplicate = this.createStoreDuplicate()
+    this.validator = this.createValidator()
+
+    this.storeDuplicate.nodeRedis.on('error', (error) => {
+      this.logger?.error({ context: 'setup' }, String(error))
+    })
+  }
+
+  public start (setup = true): void {
     this.logger?.info({
       block: this.block,
       channel: this.channel,
@@ -136,9 +150,9 @@ export abstract class TaskRunner {
       maxLength: this.maxLength
     }, 'Starting task runner')
 
-    this.queue = this.createQueue()
-    this.storeDuplicate = this.createStoreDuplicate()
-    this.validator = this.createValidator()
+    if (setup) {
+      this.setup()
+    }
 
     this.read()
   }
@@ -149,6 +163,7 @@ export abstract class TaskRunner {
         this.store.nodeRedis.connected,
         this.storeDuplicate?.nodeRedis.connected
       ],
+      idle: this.queue?.idle(),
       queue: this.queue?.length()
     }, 'Stopping task runner')
 
@@ -156,7 +171,9 @@ export abstract class TaskRunner {
     this.storeDuplicate?.end()
 
     await waitUntil(() => {
-      return this.queue?.length() === 0
+      return this.queue?.idle() === true
+    }, {
+      timeout: Number.POSITIVE_INFINITY
     })
   }
 
@@ -186,7 +203,7 @@ export abstract class TaskRunner {
   }
 
   protected async finishTaskRun (taskRun: TaskRun): Promise<void> {
-    taskRun.connection = await this.database.connect()
+    taskRun.sql = await this.database.connect()
     taskRun.code = taskRun.code === 'pending' ? 'ok' : taskRun.code
     taskRun.item.code = taskRun.code
 
@@ -229,14 +246,14 @@ export abstract class TaskRunner {
       taskRun.reason = String(error)
     } finally {
       try {
-        taskRun.connection?.release()
-        delete taskRun.connection
+        taskRun.sql?.release()
+        delete taskRun.sql
         await this.finishTaskRun(taskRun)
       } catch (error: unknown) {
         this.logger?.error({ context: 'handle-task-run' }, String(error))
       } finally {
-        taskRun.connection?.release()
-        delete taskRun.connection
+        taskRun.sql?.release()
+        delete taskRun.sql
       }
     }
   }
@@ -252,6 +269,17 @@ export abstract class TaskRunner {
       .catch(async (error: unknown) => {
         if ((/no such key/ui).test(String(error))) {
           await this.createGroup()
+          this.read()
+          return
+        }
+
+        if ((/connection lost/ui).test(String(error))) {
+          await waitUntil(() => {
+            return this.store.nodeRedis.connected
+          }, {
+            timeout: this.block
+          })
+
           this.read()
           return
         }
@@ -290,7 +318,7 @@ export abstract class TaskRunner {
           throw new Error(`Task run "${id}" is undefined`)
         }
 
-        taskRun.connection = connection
+        taskRun.sql = connection
         taskRun.xid = xid
 
         const [
@@ -321,7 +349,7 @@ export abstract class TaskRunner {
   }
 
   protected async selectItem (taskRun: TaskRun): Promise<Item | undefined> {
-    return taskRun.connection?.selectOne<Item, Item>(sql`
+    return taskRun.sql?.selectOne<Item, Item>(sql`
       SELECT *
       FROM item
       WHERE id = $(id)
@@ -331,7 +359,7 @@ export abstract class TaskRunner {
   }
 
   protected async selectQueueRun (taskRun: TaskRun): Promise<QueueRun | undefined> {
-    return taskRun.connection?.selectOne<QueueRun, QueueRun>(sql`
+    return taskRun.sql?.selectOne<QueueRun, QueueRun>(sql`
       SELECT *
       FROM queue_run
       WHERE id = $(id)
@@ -341,7 +369,7 @@ export abstract class TaskRunner {
   }
 
   protected async selectQueues (taskRun: TaskRun): Promise<Queue[] | undefined> {
-    return taskRun.connection?.select<QueueRun, Queue[]>(sql`
+    return taskRun.sql?.select<QueueRun, Queue[]>(sql`
       SELECT queue.id
       FROM queue
       JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
@@ -356,7 +384,7 @@ export abstract class TaskRunner {
   }
 
   protected async selectTask (taskRun: TaskRun): Promise<Task | undefined> {
-    return taskRun.connection?.selectOne<Task, Task>(sql`
+    return taskRun.sql?.selectOne<Task, Task>(sql`
       SELECT *
       FROM task
       WHERE id = $(id)
@@ -366,7 +394,7 @@ export abstract class TaskRunner {
   }
 
   protected async selectTaskRunOnFinish (taskRun: TaskRun): Promise<Task & TaskRun | undefined> {
-    return taskRun.connection?.selectOne<Task & TaskRun, Task & TaskRun>(sql`
+    return taskRun.sql?.selectOne<Task & TaskRun, Task & TaskRun>(sql`
       SELECT
         task_run.id,
         task.name
@@ -396,8 +424,8 @@ export abstract class TaskRunner {
   protected async startTaskRun (taskRun: TaskRun): Promise<void> {
     await this.updateTaskRunOnStart(taskRun)
 
-    taskRun.connection?.release()
-    delete taskRun.connection
+    taskRun.sql?.release()
+    delete taskRun.sql
 
     if (taskRun.code === 'pending') {
       this.validate('options', taskRun.task.options)
@@ -407,7 +435,7 @@ export abstract class TaskRunner {
   }
 
   protected async updateItem (taskRun: TaskRun): Promise<UpdateResult | undefined> {
-    return taskRun.connection?.update<Item>(sql`
+    return taskRun.sql?.update<Item>(sql`
       UPDATE item
       SET
         code = $(code),
@@ -420,7 +448,7 @@ export abstract class TaskRunner {
   }
 
   protected async updateQueueRun (taskRun: TaskRun): Promise<UpdateResult | undefined> {
-    return taskRun.connection?.update<QueueRun>(sql`
+    return taskRun.sql?.update<QueueRun>(sql`
       UPDATE queue_run
       SET
         aggr_${taskRun.code} = aggr_${taskRun.code} + 1,
@@ -434,7 +462,7 @@ export abstract class TaskRunner {
   }
 
   protected async updateTaskRunOnFinish (taskRun: TaskRun): Promise<UpdateResult | undefined> {
-    return taskRun.connection?.update<TaskRun | { result: string }>(sql`
+    return taskRun.sql?.update<TaskRun | { result: string }>(sql`
       UPDATE task_run
       SET
         code = $(code),
@@ -451,7 +479,7 @@ export abstract class TaskRunner {
   }
 
   protected async updateTaskRunOnRead (taskRun: TaskRun): Promise<UpdateResult | undefined> {
-    return taskRun.connection?.update<TaskRun>(sql`
+    return taskRun.sql?.update<TaskRun>(sql`
       UPDATE task_run
       SET
         date_queued = NOW(),
@@ -465,7 +493,7 @@ export abstract class TaskRunner {
   }
 
   protected async updateTaskRunOnStart (taskRun: TaskRun): Promise<UpdateResult | undefined> {
-    return taskRun.connection?.update<TaskRun>(sql`
+    return taskRun.sql?.update<TaskRun>(sql`
       UPDATE task_run
       SET
         consumer = $(consumer),

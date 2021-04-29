@@ -1,6 +1,5 @@
 import type { FastifyInstance, FastifyPluginCallback, FastifyServerOptions } from 'fastify'
 import type { Logger } from 'pino'
-import { ServerError } from './error'
 import { fastify } from 'fastify'
 import fastifyCookie from 'fastify-cookie'
 import fastifyFormbody from 'fastify-formbody'
@@ -8,24 +7,30 @@ import fastifyMultipart from 'fastify-multipart'
 
 export interface ServerOptions extends FastifyServerOptions {
   address?: string
-  logger: Logger
+  logger?: Logger
   port?: number
 }
 
 export class Server {
   public address: string
 
-  public fastify?: FastifyInstance
+  public fastify: FastifyInstance
 
-  public logger: Logger
+  public fastifyCookie?: FastifyPluginCallback = fastifyCookie
+
+  public fastifyFormbody?: FastifyPluginCallback = fastifyFormbody
+
+  public fastifyMultipart?: FastifyPluginCallback = fastifyMultipart
+
+  public logger?: Logger
 
   public options: FastifyServerOptions
 
   public port: number
 
-  public constructor (options: ServerOptions) {
+  public constructor (options: ServerOptions = {}) {
     this.address = options.address ?? '0.0.0.0'
-    this.logger = options.logger.child({ name: 'server' })
+    this.logger = options.logger?.child({ name: 'server' })
     this.options = options
     this.port = options.port ?? 3000
   }
@@ -34,74 +39,41 @@ export class Server {
     return fastify({
       ajv: {
         customOptions: {
-          allErrors: true,
-          verbose: true
+          allErrors: true
         }
       },
       ...this.options
     })
   }
 
-  public createFastifyCookie (): FastifyPluginCallback {
-    return fastifyCookie
-  }
-
-  public createFastifyFormbody (): FastifyPluginCallback {
-    return fastifyFormbody
-  }
-
-  public createFastifyMultipart (): FastifyPluginCallback {
-    return fastifyMultipart
-  }
-
   public setup (): void {
     this.fastify = this.createFastify()
-
-    this.fastify.addHook('preSerialization', (request, reply, data, finish) => {
-      finish(null, reply.statusCode >= 400 ? data : {
-        code: 'OK',
-        data
-      })
-    })
-
-    this.fastify.setErrorHandler(({ code, validation }, request, reply) => {
-      reply
-        .send(new ServerError(code, validation))
-        .then(() => {}, (error: unknown) => {
-          this.logger.error(String(error))
-        })
-    })
-
-    this.fastify.setNotFoundHandler((request, reply) => {
-      reply
-        .code(404)
-        .send(new ServerError('ERR_NOT_FOUND'))
-        .then(() => {}, (error: unknown) => {
-          this.logger.error(String(error))
-        })
-    })
   }
 
-  public async start (): Promise<unknown> {
-    this.logger.info({
+  public async start (setup = true): Promise<unknown> {
+    this.logger?.info({
       address: this.address,
       port: this.port
     }, 'Starting server')
 
+    if (setup) {
+      this.setup()
+    }
+
     return Promise.all([
-      this.fastify?.register(this.createFastifyCookie()),
-      this.fastify?.register(this.createFastifyFormbody()),
-      this.fastify?.register(this.createFastifyMultipart()),
-      this.fastify?.listen(this.port, this.address)
+      this.fastify.register(this.fastifyCookie ?? (() => {})),
+      this.fastify.register(this.fastifyFormbody ?? (() => {})),
+      this.fastify.register(this.fastifyMultipart ?? (() => {})),
+      this.fastify.listen(this.port, this.address)
     ])
   }
 
   public async stop (): Promise<unknown> {
-    this.logger.info({
+    this.logger?.info({
       address: this.address,
       port: this.port
     }, 'Stopping server')
 
-    return this.fastify?.close()
+    return this.fastify.close()
   }
 }

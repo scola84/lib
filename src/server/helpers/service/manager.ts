@@ -72,8 +72,8 @@ export class ServiceManager {
 
     Promise
       .all([
-        isMatch('server', this.types) ? this.server?.start() : null,
-        isMatch('queuer', this.types) ? this.queuer?.start() : null
+        isMatch('server', this.types) ? this.server?.start(false) : null,
+        isMatch('queuer', this.types) ? this.queuer?.start(false) : null
       ])
       .catch((error) => {
         this.logger?.error(String(error))

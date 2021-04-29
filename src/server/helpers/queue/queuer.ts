@@ -92,14 +92,26 @@ export class Queuer {
 
   public setup (): void {
     this.storeDuplicate = this.createStoreDuplicate()
+
+    this.store.nodeRedis.on('error', (error) => {
+      this.logger.error({ context: 'setup' }, String(error))
+    })
+
+    this.storeDuplicate.nodeRedis.on('error', (error) => {
+      this.logger.error({ context: 'setup' }, String(error))
+    })
   }
 
-  public async start (): Promise<void> {
+  public async start (setup = true): Promise<void> {
     this.logger.info({
       channel: this.channel,
       names: this.names,
       schedule: this.schedule
     }, 'Starting queuer')
+
+    if (setup) {
+      this.setup()
+    }
 
     this.startSchedule(this.schedule)
     await this.startListener(this.channel)
@@ -125,6 +137,8 @@ export class Queuer {
 
     await waitUntil(() => {
       return this.queueRunners.size === 0
+    }, {
+      timeout: Number.POSITIVE_INFINITY
     })
 
     await this.store.quit()
@@ -135,7 +149,7 @@ export class Queuer {
     this.queueRunners.add(queueRunner)
 
     try {
-      queue.connection = await this.database.connect()
+      queue.sql = await this.database.connect()
       await this.updateQueue(queue)
       queue.tasks = await this.selectTasks(queue) ?? []
       await queueRunner.run(queue, parameters)
@@ -143,8 +157,8 @@ export class Queuer {
       this.logger.error({ context: 'run' }, String(error))
     } finally {
       this.queueRunners.delete(queueRunner)
-      queue.connection?.release()
-      delete queue.connection
+      queue.sql?.release()
+      delete queue.sql
     }
   }
 
@@ -201,7 +215,7 @@ export class Queuer {
   }
 
   protected async selectTasks (queue: Queue): Promise<Task[] | undefined> {
-    return queue.connection?.select<Task, Task[]>(sql`
+    return queue.sql?.select<Task, Task[]>(sql`
       SELECT *
       FROM task
       WHERE fkey_queue_id = $(fkey_queue_id)
@@ -234,7 +248,7 @@ export class Queuer {
   }
 
   protected async updateQueue (queue: Queue): Promise<UpdateResult | undefined> {
-    return queue.connection?.update<Queue>(sql`
+    return queue.sql?.update<Queue>(sql`
       UPDATE queue
       SET schedule_next = $(schedule_next)
       WHERE id = $(id)

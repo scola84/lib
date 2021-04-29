@@ -1,6 +1,16 @@
-import type { FastifyReply, FastifyRequest, FastifySchema, RouteOptions } from 'fastify'
+import type { FastifyReply, FastifyRequest, FastifySchema, RawRequestDefaultExpression, RawServerBase, RawServerDefault, RouteOptions } from 'fastify'
+import type { Connection } from '../sql'
 import type { Logger } from 'pino'
+import type { RouteGenericInterface } from 'fastify/types/route'
 import type { Server } from './server'
+
+export interface SqlRequest<
+  RouteGeneric extends RouteGenericInterface = RouteGenericInterface,
+  RawServer extends RawServerBase = RawServerDefault,
+  RawRequest extends RawRequestDefaultExpression<RawServer> = RawRequestDefaultExpression<RawServer>
+> extends FastifyRequest<RouteGeneric, RawServerBase, RawRequest> {
+  sql: Connection
+}
 
 export interface RouteHandlerOptions extends RouteOptions {
   logger: Logger
@@ -43,13 +53,37 @@ export abstract class RouteHandler {
       url: this.url
     }, 'Starting route handler')
 
-    this.server.fastify?.route({
-      handler: this.route.bind(this),
+    this.server.fastify.route({
+      handler: this.handleRoute.bind(this),
       method: this.method,
       schema: this.schema,
       url: this.url,
       ...this.options
     })
+  }
+
+  protected async handleError (reply: FastifyReply, error: unknown): Promise<void> {
+    this.logger?.error({ context: 'handle-error' }, String(error))
+
+    if (!reply.sent) {
+      await reply
+        .status(500)
+        .send(new Error('Internal Server Error'))
+    }
+  }
+
+  protected async handleRoute (request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    try {
+      await this.route(request, reply)
+    } catch (error: unknown) {
+      try {
+        await this.handleError(reply, error)
+      } catch (replyError: unknown) {
+        this.logger?.error({ context: 'handle-route' }, String(replyError))
+      }
+    } finally {
+      (request as Partial<SqlRequest>).sql?.release()
+    }
   }
 
   public abstract route (request: FastifyRequest, reply: FastifyReply): Promise<void>

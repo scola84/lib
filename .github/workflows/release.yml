@@ -25,13 +25,13 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Lint
-        run: yarn lint
+        run: yarn run lint
 
       - name: Test
-        run: yarn test
+        run: yarn run test
 
       - name: Make
-        run: yarn make
+        run: yarn run make
 
       - name: Release
         run: yarn semantic-release

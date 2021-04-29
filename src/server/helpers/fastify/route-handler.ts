@@ -53,7 +53,7 @@ export abstract class RouteHandler {
       url: this.url
     }, 'Starting route handler')
 
-    this.server.fastify.route({
+    this.server.fastify?.route({
       handler: this.handleRoute.bind(this),
       method: this.method,
       schema: this.schema,

@@ -96,5 +96,5 @@
     "test": "jest --maxWorkers 4 --preset ts-jest --testRunner jest-circus/runner --testTimeout 60000"
   },
   "types": "types/index.d.ts",
-  "version": "15.2.0"
+  "version": "15.3.0"
 }

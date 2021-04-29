@@ -1,3 +1,21 @@
+# [15.3.0](https://github.com/scola84/lib/compare/v15.2.0...v15.3.0) (2021-04-29)
+
+
+### Bug Fixes
+
+* add sql property to task runner and route handler ([7b39e8a](https://github.com/scola84/lib/commit/7b39e8a10bab6bd34c61c305111e2f3358680f2b))
+* **cli:** add database create statement to schema dumps ([44bb41f](https://github.com/scola84/lib/commit/44bb41fd21a19615dbffeaca5d77bbf848a4259f))
+* **cli:** make bigint a number in sql-ts ([9d3dc11](https://github.com/scola84/lib/commit/9d3dc116e716d2badbd91f2a50f826e459baba42))
+* **queue:** add missing ConnectedTaskRun interface ([8805f24](https://github.com/scola84/lib/commit/8805f24fb0eef336c2a3172a41393ab25ee67ab6))
+* **sql:** parameter transform of null and Array ([070716f](https://github.com/scola84/lib/commit/070716f51996666e7c7a94a7f0e41359719a0a8a))
+* **sql:** support big numbers ([cc5debd](https://github.com/scola84/lib/commit/cc5debdbd6443086aab0930dfe244082c21fd201))
+* **sql:** transform Buffer parameter correctly ([743af52](https://github.com/scola84/lib/commit/743af528a98ee1f9893ff18f50a6e471311c6abc))
+
+
+### Features
+
+* add database end, implement tests with DockerComposeEnvironment ([e939e38](https://github.com/scola84/lib/commit/e939e38b8dbedea85df39d02b3b0d01ce8eebfb7))
+
 # [15.2.0](https://github.com/scola84/lib/compare/v15.1.0...v15.2.0) (2021-04-26)
 
 

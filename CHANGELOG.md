@@ -1,3 +1,10 @@
+# [15.4.0](https://github.com/scola84/lib/compare/v15.3.1...v15.4.0) (2021-04-30)
+
+
+### Features
+
+* add docker files and restructure package accordingly ([1c442c1](https://github.com/scola84/lib/commit/1c442c17fc45a23f3798aab0a27db5804c6c743d))
+
 ## [15.3.1](https://github.com/scola84/lib/compare/v15.3.0...v15.3.1) (2021-04-29)
 
 

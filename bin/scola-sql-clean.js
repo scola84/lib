@@ -23,7 +23,7 @@ try {
         'rm',
         '--force',
         '--recursive',
-        `.deploy/${protocol}/initdb.d/${dir}`
+        `.docker/${protocol}/initdb.d/*/${dir}`
       ].join(' '), {
         stdio: 'inherit'
       })

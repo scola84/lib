@@ -38,12 +38,16 @@ const USERNAME = 'root'
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.file = await new Copy('.deploy/postgres/docker.yml').read()
-  await helpers.file.replace(`:${HOSTPORT}:`, '::').writeTarget()
+  helpers.file = await new Copy('.docker/postgres/compose.yaml').read()
+
+  await helpers.file
+    .replace(`:${HOSTPORT}:`, '::')
+    .replace(/\.\//gu, '$PWD/.docker/')
+    .writeTarget()
 
   helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
   helpers.container = helpers.environment.getContainer('postgres_1')
-  helpers.dsn = `mysql://${USERNAME}:${PASSWORD}@${HOSTNAME}:${helpers.container.getMappedPort(HOSTPORT)}/${DATABASE}?max=20`
+  helpers.dsn = `postgres://${USERNAME}:${PASSWORD}@${HOSTNAME}:${helpers.container.getMappedPort(HOSTPORT)}/${DATABASE}?max=20`
 
   helpers.pool = new Pool({
     database: DATABASE,

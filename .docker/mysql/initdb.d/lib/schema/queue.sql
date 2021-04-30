@@ -27,7 +27,6 @@ USE `queue`;
 -- Table structure for table `item`
 --
 
-DROP TABLE IF EXISTS `item`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `item` (
@@ -47,7 +46,6 @@ CREATE TABLE `item` (
 -- Table structure for table `queue`
 --
 
-DROP TABLE IF EXISTS `queue`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `queue` (
@@ -72,7 +70,6 @@ CREATE TABLE `queue` (
 -- Table structure for table `queue_run`
 --
 
-DROP TABLE IF EXISTS `queue_run`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `queue_run` (
@@ -99,7 +96,6 @@ CREATE TABLE `queue_run` (
 -- Table structure for table `task`
 --
 
-DROP TABLE IF EXISTS `task`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `task` (
@@ -120,7 +116,6 @@ CREATE TABLE `task` (
 -- Table structure for table `task_run`
 --
 
-DROP TABLE IF EXISTS `task_run`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `task_run` (
@@ -156,4 +151,4 @@ CREATE TABLE `task_run` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-04-27 13:32:22
+-- Dump completed on 2021-04-30 10:31:16

@@ -37,8 +37,12 @@ const USERNAME = 'root'
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.file = await new Copy('.deploy/postgres/docker.yml').read()
-  await helpers.file.replace(`:${HOSTPORT}:`, '::').writeTarget()
+  helpers.file = await new Copy('.docker/postgres/compose.yaml').read()
+
+  await helpers.file
+    .replace(`:${HOSTPORT}:`, '::')
+    .replace(/\.\//gu, '$PWD/.docker/')
+    .writeTarget()
 
   helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
   helpers.container = helpers.environment.getContainer('postgres_1')

@@ -35,8 +35,12 @@ const PASSWORD = 'root'
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.file = await new Copy('.deploy/redis/docker.yml').read()
-  await helpers.file.replace(`:${HOSTPORT}:`, '::').writeTarget()
+  helpers.file = await new Copy('.docker/redis/compose.yaml').read()
+
+  await helpers.file
+    .replace(`:${HOSTPORT}:`, '::')
+    .replace(/\.\//gu, '$PWD/.docker/')
+    .writeTarget()
 
   helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
   helpers.container = helpers.environment.getContainer('redis_1')

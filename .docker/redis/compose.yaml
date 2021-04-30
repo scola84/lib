@@ -1,4 +1,4 @@
-version: "3.7"
+version: "3"
 services:
   redis:
     command: redis-server /etc/redis/conf.d/redis.conf
@@ -6,4 +6,4 @@ services:
     ports:
       - "0.0.0.0:6379:6379"
     volumes:
-      - $PWD/.deploy/redis/conf.d:/etc/redis/conf.d
+      - ./redis/conf.d:/etc/redis/conf.d

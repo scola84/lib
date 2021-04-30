@@ -1,0 +1,13 @@
+version: "3"
+services:
+  nginx:
+    depends_on:
+      - node
+    image: "nginx:1-alpine"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/snippets:/etc/nginx/snippets
+      - ./nginx/www:/nginx
+      - $PWD/dist/client:/nginx/dist/client

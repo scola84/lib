@@ -32,12 +32,13 @@ try {
     include
   } = program.opts()
 
+  const [name] = container.split('_')
   const url = new URL(source)
   const database = url.pathname.slice(1)
   const protocol = url.protocol.slice(0, -1)
 
   const targetFile = target === undefined
-    ? `.deploy/${protocol}/initdb.d/data/${database}.sql`
+    ? `.docker/${protocol}/initdb.d/${name}/data/${database}.sql`
     : target
 
   fs.mkdirSync(path.dirname(targetFile), { recursive: true })
@@ -55,11 +56,11 @@ try {
         `docker exec ${container} mysqldump`,
         '--compact',
         excludeFlag,
-        `--host ${url.hostname}`,
+        `--host ${url.hostname || '127.0.0.1'}`,
         '--no-create-info',
-        url.password ? `--password=${url.password}` : '',
-        url.port ? `--port ${url.port}` : '',
-        url.username ? `--user ${url.username}` : '',
+        `--password=${url.password || 'root'}`,
+        `--port ${url.port || 3306}`,
+        `--user ${url.username || 'root'}`,
         database,
         includeFlag,
         `> ${targetFile}`
@@ -83,19 +84,19 @@ try {
 
     child.execSync([
       'docker exec',
-      url.password ? `--env PGPASSWORD=${url.password}` : '',
-        `${container} pg_dump`,
-        '--column-inserts',
-        '--data-only',
-        excludeFlag,
-        '--format p',
-        `--host ${url.hostname}`,
-        includeFlag,
-        url.port ? `--port ${url.port}` : '',
-        '--rows-per-insert 99',
-        url.username ? `--user ${url.username}` : '',
-        database,
-        `> ${targetFile}`
+      `--env PGPASSWORD=${url.password || 'root'}`,
+      `${container} pg_dump`,
+      '--column-inserts',
+      '--data-only',
+      excludeFlag,
+      '--format p',
+      `--host ${url.hostname || '127.0.0.1'}`,
+      includeFlag,
+      `--port ${url.port || 5432}`,
+      '--rows-per-insert 99',
+      `--user ${url.username || 'root'}`,
+      database,
+      `> ${targetFile}`
     ].join(' '), {
       stdio: 'inherit'
     })

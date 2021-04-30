@@ -1,4 +1,7 @@
 {
+  "parserOptions": {
+    "sourceType": "module"
+  },
   "rules": {
     "arrow-body-style": [
       "error",

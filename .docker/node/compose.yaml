@@ -1,0 +1,19 @@
+version: "3"
+services:
+  node:
+    command: >
+      sh -c "
+        yarn install --frozen-lockfile --production &&
+        yarn run exec
+      "
+    depends_on:
+      - redis
+    env_file: $PWD/.env
+    image: "node:14"
+    ports:
+      - "9229:9229"
+    volumes:
+      - $PWD/dist/server:/node/app/dist/server
+      - $PWD/package.json:/node/app/package.json
+      - $PWD/yarn.lock:/node/app/yarn.lock
+    working_dir: /node/app

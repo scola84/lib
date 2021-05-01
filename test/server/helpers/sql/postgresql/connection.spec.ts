@@ -28,6 +28,7 @@ const helpers = new Helpers()
 beforeAll(async () => {
   helpers.pool = new Pool({
     database: 'scola',
+    host: 'postgres',
     password: 'root',
     user: 'root'
   })

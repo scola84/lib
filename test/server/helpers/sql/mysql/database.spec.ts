@@ -31,6 +31,7 @@ beforeAll(async () => {
 
   helpers.pool = createPool({
     database: 'scola',
+    host: 'mysql',
     password: 'root',
     user: 'root'
   })

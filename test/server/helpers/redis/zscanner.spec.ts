@@ -27,7 +27,8 @@ const helpers = new Helpers()
 
 beforeAll(() => {
   helpers.store = createNodeRedisClient({
-    auth_pass: 'root'
+    auth_pass: 'root',
+    host: 'redis'
   })
 })
 

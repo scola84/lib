@@ -1,12 +1,12 @@
 import { File } from './file'
-import randomString from 'crypto-random-string'
+import { randomBytes } from 'crypto'
 
 export class Copy extends File {
   public target: string
 
   public constructor (source: string, target?: string) {
     super(source)
-    this.target = target ?? `/tmp/copy-${randomString(16)}`
+    this.target = target ?? `/tmp/copy-${randomBytes(16).toString('hex')}`
   }
 
   public async unlinkTarget (): Promise<this> {

@@ -35,12 +35,12 @@ beforeEach(() => {
   helpers.sandbox = createSandbox()
 })
 
-afterEach(async () => {
+afterEach(() => {
   helpers.sandbox.restore()
-  await helpers.store.flushall()
 })
 
-afterAll(() => {
+afterAll(async () => {
+  await helpers.store.flushall()
   helpers.store.end()
 })
 
@@ -75,7 +75,6 @@ async function deleteTheSet (): Promise<void> {
 async function emitMembers (): Promise<void> {
   const data: Array<[number, string]> = []
   const key = 'zscanner-emit-members'
-  const members = new Array(2).fill(0)
 
   const expectedData = [
     ['member-0', '0'],
@@ -87,15 +86,16 @@ async function emitMembers (): Promise<void> {
     store: helpers.store
   })
 
-  await Promise.all(members.map(async (value, index) => {
-    return helpers.store.zadd(key, [index, `member-${index}`])
-  }))
+  await helpers.store
+    .batch()
+    .zadd(key, [0, 'member-0'])
+    .zadd(key, [1, 'member-1'])
+    .exec()
 
   return new Promise((resolve, reject) => {
     scanner.on('close', () => {
       try {
         expect(data).deep.members(expectedData)
-        expect(data.length).equal(members.length)
         expect(scanner.cursor).equal(0)
         resolve()
       } catch (error: unknown) {
@@ -162,21 +162,25 @@ function storeZscanFails (finish: (error?: unknown) => void): void {
 async function useTheCursor (): Promise<void> {
   const data: Array<[number, string]> = []
   const key = 'zscanner-use-the-cursor'
-  const members = new Array(256).fill(0)
+  const size = 256
 
   const scanner = new ZScanner({
     key,
     store: helpers.store
   })
 
-  await Promise.all(members.map(async (value, index) => {
-    return helpers.store.zadd(key, [index, `member-${index}`])
-  }))
+  const batch = helpers.store.batch()
+
+  for (let it = 0; it < size; it += 1) {
+    batch.zadd(key, [it, `member-${it}`])
+  }
+
+  await batch.exec()
 
   return new Promise((resolve, reject) => {
     scanner.on('close', () => {
       try {
-        expect(data.length).equal(members.length)
+        expect(data.length).equal(size)
         expect(scanner.cursor).equal(0)
         resolve()
       } catch (error: unknown) {

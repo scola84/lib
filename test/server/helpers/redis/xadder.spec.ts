@@ -32,17 +32,17 @@ beforeAll(() => {
   })
 })
 
-afterAll(() => {
-  helpers.store.end()
-})
-
-beforeEach(async () => {
+beforeEach(() => {
   helpers.sandbox = createSandbox()
-  await helpers.store.flushall()
 })
 
 afterEach(() => {
   helpers.sandbox.restore()
+})
+
+afterAll(async () => {
+  await helpers.store.flushall()
+  helpers.store.end()
 })
 
 function storeBatchFails (finish: (error?: unknown) => void): void {

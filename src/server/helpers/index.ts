@@ -1,5 +1,4 @@
 export * from './fastify'
-export * from './fs'
 export * from './intl'
 export * from './redis'
 export * from './sql'

@@ -9,5 +9,5 @@ services:
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/snippets:/etc/nginx/snippets
-      - ./nginx/www:/nginx
+      - ./nginx/www/index.html:/nginx/index.html
       - $PWD/dist/client:/nginx/dist/client

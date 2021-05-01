@@ -1,6 +1,3 @@
-import type { StartedDockerComposeEnvironment, StartedTestContainer } from 'testcontainers'
-import { Copy } from '../../../../../src/server/helpers/fs'
-import { DockerComposeEnvironment } from 'testcontainers'
 import { Pool } from 'pg'
 import { PostgresqlDatabase } from '../../../../../src/server/helpers/sql/postgresql'
 import { expect } from 'chai'
@@ -22,56 +19,35 @@ describe('PostgresqlConnection', () => {
 })
 
 class Helpers {
-  public container: StartedTestContainer
   public dsn: string
-  public environment: StartedDockerComposeEnvironment
-  public file: Copy
   public pool: Pool
 }
-
-const DATABASE = 'scola'
-const HOSTNAME = '127.0.0.1'
-const HOSTPORT = 5432
-const PASSWORD = 'root'
-const USERNAME = 'root'
 
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.file = await new Copy('.docker/postgres/compose.yaml').read()
-
-  await helpers.file
-    .replace(`:${HOSTPORT}:`, '::')
-    .replace(/\.\//gu, '$PWD/.docker/')
-    .writeTarget()
-
-  helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
-  helpers.container = helpers.environment.getContainer('postgres_1')
-  helpers.dsn = `postgres://${USERNAME}:${PASSWORD}@${HOSTNAME}:${helpers.container.getMappedPort(HOSTPORT)}/${DATABASE}?max=20`
+  helpers.dsn = 'postgres://root:root@127.0.0.1/scola?max=20'
 
   helpers.pool = new Pool({
-    database: DATABASE,
-    host: helpers.container.getHost(),
-    password: PASSWORD,
-    port: helpers.container.getMappedPort(HOSTPORT),
-    user: USERNAME
+    database: 'scola',
+    password: 'root',
+    user: 'root'
   })
 
-  await helpers.pool.query(`CREATE TABLE test (
+  await helpers.pool.query(`CREATE TABLE test_database (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR,
     value VARCHAR
   )`)
 })
 
-afterAll(async () => {
-  await helpers.pool.end()
-  await helpers.environment.down()
-  await helpers.file.unlinkTarget()
+beforeEach(async () => {
+  await helpers.pool.query('TRUNCATE test_database RESTART IDENTITY')
 })
 
-beforeEach(async () => {
-  await helpers.pool.query('TRUNCATE test RESTART IDENTITY')
+afterAll(async () => {
+  await helpers.pool.query('DROP TABLE test_database')
+  await helpers.pool.end()
 })
 
 async function connectWithObjectOptions (): Promise<void> {
@@ -109,7 +85,7 @@ async function deleteOneRow (): Promise<void> {
 
   try {
     const { id } = await database.insertOne(`
-      INSERT INTO test (
+      INSERT INTO test_database (
         name,
         value
       ) VALUES (
@@ -122,7 +98,7 @@ async function deleteOneRow (): Promise<void> {
     })
 
     await database.delete(`
-      DELETE FROM test
+      DELETE FROM test_database
       WHERE id = $(id)
     `, {
       id
@@ -130,7 +106,7 @@ async function deleteOneRow (): Promise<void> {
 
     const data = await database.selectOne(`
       SELECT *
-      FROM test
+      FROM test_database
       WHERE id = $(id)
     `, {
       id
@@ -168,7 +144,7 @@ async function insertOneRow (): Promise<void> {
 
   try {
     const { id } = await database.insertOne(`
-      INSERT INTO test (
+      INSERT INTO test_database (
         name,
         value
       ) VALUES (
@@ -184,7 +160,7 @@ async function insertOneRow (): Promise<void> {
 
     const data = await database.selectOne(`
       SELECT *
-      FROM test
+      FROM test_database
       WHERE id = $(id)
     `, {
       id
@@ -212,7 +188,7 @@ async function insertTwoRows (): Promise<void> {
 
   try {
     const [{ id }] = await database.insert(`
-      INSERT INTO test (
+      INSERT INTO test_database (
         name,
         value
       ) VALUES $(list)
@@ -227,7 +203,7 @@ async function insertTwoRows (): Promise<void> {
 
     const data = await database.select(`
       SELECT *
-      FROM test
+      FROM test_database
     `)
 
     expect(data).deep.members(expectedData)
@@ -242,7 +218,7 @@ async function parseABigIntAsANumber (): Promise<void> {
 
   try {
     const { id } = await database.insertOne(`
-      INSERT INTO test (
+      INSERT INTO test_database (
         id,
         name,
         value
@@ -259,7 +235,7 @@ async function parseABigIntAsANumber (): Promise<void> {
 
     const data = await database.selectOne<{ id: number }, { id: number }>(`
       SELECT *
-      FROM test
+      FROM test_database
       WHERE id = $(id)
     `, {
       id
@@ -297,14 +273,14 @@ async function streamRows (): Promise<void> {
   const database = new PostgresqlDatabase(helpers.dsn)
 
   try {
-    await database.insert('INSERT INTO test (name,value) VALUES $(list)', {
+    await database.insert('INSERT INTO test_database (name,value) VALUES $(list)', {
       list: [
         ['name-insert', 'value-insert'],
         ['name-insert', 'value-insert']
       ]
     })
 
-    const stream = await database.stream('SELECT * FROM test')
+    const stream = await database.stream('SELECT * FROM test_database')
 
     await new Promise<void>((resolve, reject) => {
       stream.on('data', (datum) => {
@@ -337,14 +313,14 @@ async function updateOneRow (): Promise<void> {
 
   try {
     const { id } = await database.insertOne(`
-      INSERT INTO test (name,value) VALUES ($(name),$(value))
+      INSERT INTO test_database (name,value) VALUES ($(name),$(value))
     `, {
       name: 'name-insert',
       value: 'value-insert'
     })
 
     await database.update(`
-      UPDATE test
+      UPDATE test_database
       SET
         name = $(name),
         value = $(value)
@@ -357,7 +333,7 @@ async function updateOneRow (): Promise<void> {
 
     const data = await database.selectOne(`
       SELECT *
-      FROM test
+      FROM test_database
       WHERE id = $(id)
     `, {
       id

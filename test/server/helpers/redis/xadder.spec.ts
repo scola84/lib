@@ -1,6 +1,3 @@
-import type { StartedDockerComposeEnvironment, StartedTestContainer } from 'testcontainers'
-import { Copy } from '../../../../src/server/helpers/fs'
-import { DockerComposeEnvironment } from 'testcontainers'
 import type { SinonSandbox } from 'sinon'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { XAdder } from '../../../../src/server/helpers/redis/xadder'
@@ -23,40 +20,20 @@ describe('XAdder', () => {
 })
 
 class Helpers {
-  public container: StartedTestContainer
-  public environment: StartedDockerComposeEnvironment
-  public file: Copy
   public sandbox: SinonSandbox
   public store: WrappedNodeRedisClient
 }
 
-const HOSTPORT = 6379
-const PASSWORD = 'root'
-
 const helpers = new Helpers()
 
-beforeAll(async () => {
-  helpers.file = await new Copy('.docker/redis/compose.yaml').read()
-
-  await helpers.file
-    .replace(`:${HOSTPORT}:`, '::')
-    .replace(/\.\//gu, '$PWD/.docker/')
-    .writeTarget()
-
-  helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
-  helpers.container = helpers.environment.getContainer('redis_1')
-
+beforeAll(() => {
   helpers.store = createNodeRedisClient({
-    auth_pass: PASSWORD,
-    host: helpers.container.getHost(),
-    port: helpers.container.getMappedPort(HOSTPORT)
+    auth_pass: 'root'
   })
 })
 
-afterAll(async () => {
+afterAll(() => {
   helpers.store.end()
-  await helpers.environment.down()
-  await helpers.file.unlinkTarget()
 })
 
 beforeEach(async () => {
@@ -187,6 +164,8 @@ function storeBatchXAddFails (finish: (error?: unknown) => void): void {
 }
 
 function writeItems (finish: (error?: unknown) => void): void {
+  const key = 'xadder-write-items'
+
   const adder = new XAdder({
     highWaterMark: 2,
     maxLength: 1024,
@@ -195,7 +174,7 @@ function writeItems (finish: (error?: unknown) => void): void {
 
   adder.on('close', () => {
     helpers.store
-      .xrange('key', '-', '+')
+      .xrange(key, '-', '+')
       .then((data) => {
         expect(data.length).equal(2)
         finish()
@@ -206,12 +185,12 @@ function writeItems (finish: (error?: unknown) => void): void {
   })
 
   adder.write({
-    name: 'key',
+    name: key,
     value: ['id', 'value-1']
   })
 
   adder.write({
-    name: 'key',
+    name: key,
     value: ['id', 'value-1']
   })
 
@@ -219,6 +198,8 @@ function writeItems (finish: (error?: unknown) => void): void {
 }
 
 function writeItemsOnFinal (finish: (error?: unknown) => void): void {
+  const key = 'xadder-write-items-on-final'
+
   const adder = new XAdder({
     highWaterMark: 2,
     maxLength: 1024,
@@ -227,7 +208,7 @@ function writeItemsOnFinal (finish: (error?: unknown) => void): void {
 
   adder.on('close', () => {
     helpers.store
-      .xrange('key', '-', '+')
+      .xrange(key, '-', '+')
       .then((data) => {
         expect(data.length).equal(1)
         finish()
@@ -238,7 +219,7 @@ function writeItemsOnFinal (finish: (error?: unknown) => void): void {
   })
 
   adder.end({
-    name: 'key',
+    name: key,
     value: ['id', 'value-1']
   })
 }

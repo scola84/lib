@@ -1,6 +1,3 @@
-import type { StartedDockerComposeEnvironment, StartedTestContainer } from 'testcontainers'
-import { Copy } from '../../../../../src/server/helpers/fs'
-import { DockerComposeEnvironment } from 'testcontainers'
 import { Pool } from 'pg'
 import { PostgresqlConnection } from '../../../../../src/server/helpers/sql/postgresql'
 import { expect } from 'chai'
@@ -23,53 +20,32 @@ describe('PostgresqlConnection', () => {
 })
 
 class Helpers {
-  public container: StartedTestContainer
-  public environment: StartedDockerComposeEnvironment
-  public file: Copy
   public pool: Pool
 }
-
-const DATABASE = 'scola'
-const HOSTPORT = 5432
-const PASSWORD = 'root'
-const USERNAME = 'root'
 
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.file = await new Copy('.docker/postgres/compose.yaml').read()
-
-  await helpers.file
-    .replace(`:${HOSTPORT}:`, '::')
-    .replace(/\.\//gu, '$PWD/.docker/')
-    .writeTarget()
-
-  helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
-  helpers.container = helpers.environment.getContainer('postgres_1')
-
   helpers.pool = new Pool({
-    database: DATABASE,
-    host: helpers.container.getHost(),
-    password: PASSWORD,
-    port: helpers.container.getMappedPort(HOSTPORT),
-    user: USERNAME
+    database: 'scola',
+    password: 'root',
+    user: 'root'
   })
 
-  await helpers.pool.query(`CREATE TABLE test (
+  await helpers.pool.query(`CREATE TABLE test_connection (
     id SERIAL PRIMARY KEY,
     name VARCHAR NULL,
     value VARCHAR NULL
   )`)
 })
 
-afterAll(async () => {
-  await helpers.pool.end()
-  await helpers.environment.down()
-  await helpers.file.unlinkTarget()
+beforeEach(async () => {
+  await helpers.pool.query('TRUNCATE test_connection RESTART IDENTITY')
 })
 
-beforeEach(async () => {
-  await helpers.pool.query('TRUNCATE test RESTART IDENTITY')
+afterAll(async () => {
+  await helpers.pool.query('DROP TABLE test_connection')
+  await helpers.pool.end()
 })
 
 async function deleteOneRow (): Promise<void> {
@@ -77,7 +53,7 @@ async function deleteOneRow (): Promise<void> {
 
   try {
     const { id } = await connection.insertOne(`
-      INSERT INTO test (
+      INSERT INTO test_connection (
         name,
         value
       ) VALUES (
@@ -90,7 +66,7 @@ async function deleteOneRow (): Promise<void> {
     })
 
     await connection.delete(`
-      DELETE FROM test
+      DELETE FROM test_connection
       WHERE id = $(id)
     `, {
       id
@@ -98,7 +74,7 @@ async function deleteOneRow (): Promise<void> {
 
     const data = await connection.selectOne(`
       SELECT *
-      FROM test
+      FROM test_connection
       WHERE id = $(id)
     `, {
       id
@@ -121,7 +97,7 @@ async function insertOneRow (): Promise<void> {
 
   try {
     const { id } = await connection.insertOne(`
-      INSERT INTO test (
+      INSERT INTO test_connection (
         name,
         value
       ) VALUES (
@@ -137,7 +113,7 @@ async function insertOneRow (): Promise<void> {
 
     const data = await connection.selectOne(`
       SELECT *
-      FROM test
+      FROM test_connection
       WHERE id = $(id)
     `, {
       id
@@ -164,7 +140,7 @@ async function insertTwoRows (): Promise<void> {
 
   try {
     const [{ id }] = await connection.insert(`
-      INSERT INTO test (
+      INSERT INTO test_connection (
         name,
         value
       ) VALUES $(list)
@@ -179,7 +155,7 @@ async function insertTwoRows (): Promise<void> {
 
     const data = await connection.select(`
       SELECT *
-      FROM test
+      FROM test_connection
     `)
 
     expect(data).deep.members(expectedData)
@@ -218,7 +194,7 @@ async function streamRows (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   await connection.insert(`
-    INSERT INTO test (
+    INSERT INTO test_connection (
       name,
       value
     ) VALUES $(list)
@@ -231,7 +207,7 @@ async function streamRows (): Promise<void> {
 
   const stream = connection.stream(`
     SELECT *
-    FROM test
+    FROM test_connection
   `)
 
   return new Promise((resolve, reject) => {
@@ -254,7 +230,7 @@ async function streamRows (): Promise<void> {
 async function transformParameters (): Promise<void> {
   const expectedQuery = `
     SELECT *
-    FROM test
+    FROM test_connection
     WHERE
       test = $1 AND
       test = $2 AND
@@ -267,7 +243,7 @@ async function transformParameters (): Promise<void> {
 
   const rawQuery = `
     SELECT *
-    FROM test
+    FROM test_connection
     WHERE
       test = $(test1) AND
       test = $(test2) AND
@@ -298,7 +274,7 @@ async function transformParameters (): Promise<void> {
 
 async function transformParametersForBulkInsert (): Promise<void> {
   const expectedQuery = `
-    INSERT INTO test (
+    INSERT INTO test_connection (
       name,
       value
     ) VALUES ('name1', 'value1'), ('name2', 'value2')
@@ -307,7 +283,7 @@ async function transformParametersForBulkInsert (): Promise<void> {
   const expectedValues: [] = []
 
   const rawQuery = `
-    INSERT INTO test (
+    INSERT INTO test_connection (
       name,
       value
     ) VALUES $(list)
@@ -334,7 +310,7 @@ async function transformParametersForBulkInsert (): Promise<void> {
 async function transformAnUndefinedParameter (): Promise<void> {
   const rawQuery = `
     SELECT *
-    FROM test
+    FROM test_connection
     WHERE test = $(test1)
   `
 
@@ -364,7 +340,7 @@ async function updateOneRow (): Promise<void> {
 
   try {
     const { id } = await connection.insertOne(`
-      INSERT INTO test (
+      INSERT INTO test_connection (
         name,
         value
       ) VALUES (
@@ -377,7 +353,7 @@ async function updateOneRow (): Promise<void> {
     })
 
     await connection.update(`
-      UPDATE test
+      UPDATE test_connection
       SET
         name = $(name),
         value = $(value)
@@ -390,7 +366,7 @@ async function updateOneRow (): Promise<void> {
 
     const data = await connection.selectOne(`
       SELECT *
-      FROM test
+      FROM test_connection
       WHERE id = $(id)
     `, {
       id

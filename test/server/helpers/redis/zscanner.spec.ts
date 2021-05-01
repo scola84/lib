@@ -1,6 +1,3 @@
-import type { StartedDockerComposeEnvironment, StartedTestContainer } from 'testcontainers'
-import { Copy } from '../../../../src/server/helpers/fs'
-import { DockerComposeEnvironment } from 'testcontainers'
 import type { SinonSandbox } from 'sinon'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { ZScanner } from '../../../../src/server/helpers/redis/zscanner'
@@ -22,64 +19,46 @@ describe('ZScanner', () => {
 })
 
 class Helpers {
-  public container: StartedTestContainer
-  public environment: StartedDockerComposeEnvironment
-  public file: Copy
   public sandbox: SinonSandbox
   public store: WrappedNodeRedisClient
 }
 
-const HOSTPORT = 6379
-const PASSWORD = 'root'
-
 const helpers = new Helpers()
 
-beforeAll(async () => {
-  helpers.file = await new Copy('.docker/redis/compose.yaml').read()
-
-  await helpers.file
-    .replace(`:${HOSTPORT}:`, '::')
-    .replace(/\.\//gu, '$PWD/.docker/')
-    .writeTarget()
-
-  helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
-  helpers.container = helpers.environment.getContainer('redis_1')
-
+beforeAll(() => {
   helpers.store = createNodeRedisClient({
-    auth_pass: PASSWORD,
-    host: helpers.container.getHost(),
-    port: helpers.container.getMappedPort(HOSTPORT)
+    auth_pass: 'root'
   })
 })
 
-afterAll(async () => {
-  helpers.store.end()
-  await helpers.environment.down()
-  await helpers.file.unlinkTarget()
+beforeEach(() => {
+  helpers.sandbox = createSandbox()
 })
 
-beforeEach(async () => {
-  helpers.sandbox = createSandbox()
+afterEach(async () => {
+  helpers.sandbox.restore()
   await helpers.store.flushall()
 })
 
-afterEach(() => {
-  helpers.sandbox.restore()
+afterAll(() => {
+  helpers.store.end()
 })
 
 async function deleteTheSet (): Promise<void> {
+  const key = 'zscanner-delete-the-set'
+
   const scanner = new ZScanner({
     delete: true,
-    key: 'key',
+    key,
     store: helpers.store
   })
 
-  await helpers.store.zadd('key', [0, 'member-0'])
+  await helpers.store.zadd(key, [0, 'member-0'])
 
   return new Promise((resolve, reject) => {
     scanner.on('close', () => {
       helpers.store
-        .exists('key')
+        .exists('zscanner-delete-the-set')
         .then((exists) => {
           expect(exists).equal(0)
           resolve()
@@ -94,10 +73,9 @@ async function deleteTheSet (): Promise<void> {
 }
 
 async function emitMembers (): Promise<void> {
-  const SIZE = 2
-
   const data: Array<[number, string]> = []
-  const members = new Array(SIZE).fill(0)
+  const key = 'zscanner-emit-members'
+  const members = new Array(2).fill(0)
 
   const expectedData = [
     ['member-0', '0'],
@@ -105,19 +83,19 @@ async function emitMembers (): Promise<void> {
   ]
 
   const scanner = new ZScanner({
-    key: 'key',
+    key,
     store: helpers.store
   })
 
   await Promise.all(members.map(async (value, index) => {
-    return helpers.store.zadd('key', [index, `member-${index}`])
+    return helpers.store.zadd(key, [index, `member-${index}`])
   }))
 
   return new Promise((resolve, reject) => {
     scanner.on('close', () => {
       try {
         expect(data).deep.members(expectedData)
-        expect(data.length).equal(SIZE)
+        expect(data.length).equal(members.length)
         expect(scanner.cursor).equal(0)
         resolve()
       } catch (error: unknown) {
@@ -132,9 +110,11 @@ async function emitMembers (): Promise<void> {
 }
 
 function storeDelFails (finish: (error?: unknown) => void): void {
+  const key = 'zscanner-store-del-fails'
+
   const scanner = new ZScanner({
     delete: true,
-    key: 'key',
+    key,
     store: helpers.store
   })
 
@@ -155,9 +135,11 @@ function storeDelFails (finish: (error?: unknown) => void): void {
 }
 
 function storeZscanFails (finish: (error?: unknown) => void): void {
+  const key = 'zscanner-store-zscan-fails'
+
   const scanner = new ZScanner({
     delete: true,
-    key: 'key',
+    key,
     store: helpers.store
   })
 
@@ -178,24 +160,23 @@ function storeZscanFails (finish: (error?: unknown) => void): void {
 }
 
 async function useTheCursor (): Promise<void> {
-  const SIZE = 256
-
-  const members = new Array(SIZE).fill(0)
   const data: Array<[number, string]> = []
+  const key = 'zscanner-use-the-cursor'
+  const members = new Array(256).fill(0)
 
   const scanner = new ZScanner({
-    key: 'key',
+    key,
     store: helpers.store
   })
 
   await Promise.all(members.map(async (value, index) => {
-    return helpers.store.zadd('key', [index, `member-${index}`])
+    return helpers.store.zadd(key, [index, `member-${index}`])
   }))
 
   return new Promise((resolve, reject) => {
     scanner.on('close', () => {
       try {
-        expect(data.length).equal(SIZE)
+        expect(data.length).equal(members.length)
         expect(scanner.cursor).equal(0)
         resolve()
       } catch (error: unknown) {

@@ -1,6 +1,3 @@
-import type { StartedDockerComposeEnvironment, StartedTestContainer } from 'testcontainers'
-import { Copy } from '../../../../../src/server/helpers/fs'
-import { DockerComposeEnvironment } from 'testcontainers'
 import { MysqlConnection } from '../../../../../src/server/helpers/sql/mysql'
 import type { Pool } from 'mysql2/promise'
 import { createPool } from 'mysql2/promise'
@@ -23,53 +20,32 @@ describe('MysqlConnection', () => {
 })
 
 class Helpers {
-  public container: StartedTestContainer
-  public environment: StartedDockerComposeEnvironment
-  public file: Copy
   public pool: Pool
 }
-
-const DATABASE = 'scola'
-const HOSTPORT = 3306
-const PASSWORD = 'root'
-const USERNAME = 'root'
 
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.file = await new Copy('.docker/mysql/compose.yaml').read()
-
-  await helpers.file
-    .replace(`:${HOSTPORT}:`, '::')
-    .replace(/\.\//gu, '$PWD/.docker/')
-    .writeTarget()
-
-  helpers.environment = await new DockerComposeEnvironment('', helpers.file.target).up()
-  helpers.container = helpers.environment.getContainer('mysql_1')
-
   helpers.pool = createPool({
-    database: DATABASE,
-    host: helpers.container.getHost(),
-    password: PASSWORD,
-    port: helpers.container.getMappedPort(HOSTPORT),
-    user: USERNAME
+    database: 'scola',
+    password: 'root',
+    user: 'root'
   })
 
-  await helpers.pool.query(`CREATE TABLE test (
+  await helpers.pool.query(`CREATE TABLE test_connection (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NULL,
     value VARCHAR(255) NULL
   )`)
 })
 
-afterAll(async () => {
-  await helpers.pool.end()
-  await helpers.environment.down()
-  await helpers.file.unlinkTarget()
+afterEach(async () => {
+  await helpers.pool.query('TRUNCATE test_connection')
 })
 
-beforeEach(async () => {
-  await helpers.pool.query('TRUNCATE test')
+afterAll(async () => {
+  await helpers.pool.query('DROP TABLE test_connection')
+  await helpers.pool.end()
 })
 
 async function deleteOneRow (): Promise<void> {
@@ -77,7 +53,7 @@ async function deleteOneRow (): Promise<void> {
 
   try {
     const { id } = await connection.insertOne(`
-      INSERT INTO test (
+      INSERT INTO test_connection (
         name,
         value
       ) VALUES (
@@ -90,7 +66,7 @@ async function deleteOneRow (): Promise<void> {
     })
 
     const { count } = await connection.delete(`
-      DELETE FROM test
+      DELETE FROM test_connection
       WHERE id = $(id)
     `, {
       id
@@ -100,7 +76,7 @@ async function deleteOneRow (): Promise<void> {
 
     const data = await connection.selectOne(`
       SELECT *
-      FROM test
+      FROM test_connection
       WHERE id = $(id)
     `, {
       id
@@ -123,7 +99,7 @@ async function insertOneRow (): Promise<void> {
 
   try {
     const { id } = await connection.insertOne(`
-      INSERT INTO test (
+      INSERT INTO test_connection (
         name,
         value
       ) VALUES (
@@ -139,7 +115,7 @@ async function insertOneRow (): Promise<void> {
 
     const data = await connection.selectOne(`
       SELECT *
-      FROM test
+      FROM test_connection
       WHERE id = $(id)
     `, {
       id
@@ -166,7 +142,7 @@ async function insertTwoRows (): Promise<void> {
 
   try {
     const [{ id }] = await connection.insert(`
-      INSERT INTO test (
+      INSERT INTO test_connection (
         name,
         value
       ) VALUES $(list)
@@ -181,7 +157,7 @@ async function insertTwoRows (): Promise<void> {
 
     const data = await connection.select(`
       SELECT *
-      FROM test
+      FROM test_connection
     `)
 
     expect(data).deep.members(expectedData)
@@ -223,7 +199,7 @@ async function streamRows (): Promise<void> {
   const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   await connection.insert(`
-    INSERT INTO test (
+    INSERT INTO test_connection (
       name,
       value
     ) VALUES $(list)
@@ -236,7 +212,7 @@ async function streamRows (): Promise<void> {
 
   const stream = connection.stream(`
     SELECT *
-    FROM test
+    FROM test_connection
   `)
 
   return new Promise((resolve, reject) => {
@@ -259,7 +235,7 @@ async function streamRows (): Promise<void> {
 async function transformParameters (): Promise<void> {
   const expectedQuery = `
     SELECT *
-    FROM test
+    FROM test_connection
     WHERE
       test = ? AND
       test = ? AND
@@ -271,7 +247,7 @@ async function transformParameters (): Promise<void> {
 
   const rawQuery = `
     SELECT *
-    FROM test
+    FROM test_connection
     WHERE
       test = $(test1) AND
       test = $(test2) AND
@@ -331,7 +307,7 @@ async function updateOneRow (): Promise<void> {
 
   try {
     const { id } = await connection.insertOne(`
-      INSERT INTO test (
+      INSERT INTO test_connection (
         name,
         value
       ) VALUES (
@@ -344,7 +320,7 @@ async function updateOneRow (): Promise<void> {
     })
 
     const { count } = await connection.update(`
-      UPDATE test
+      UPDATE test_connection
       SET
         name = $(name),
         value = $(value)
@@ -359,7 +335,7 @@ async function updateOneRow (): Promise<void> {
 
     const data = await connection.selectOne(`
       SELECT *
-      FROM test
+      FROM test_connection
       WHERE id = $(id)
     `, {
       id

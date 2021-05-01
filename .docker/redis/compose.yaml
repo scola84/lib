@@ -3,7 +3,9 @@ services:
   redis:
     command: redis-server /etc/redis/conf.d/redis.conf
     image: "redis:6-alpine"
+    networks:
+      - scola
     ports:
-      - "0.0.0.0:6379:6379"
+      - "6379:6379"
     volumes:
       - ./redis/conf.d:/etc/redis/conf.d

@@ -4,6 +4,8 @@ services:
     depends_on:
       - node
     image: "nginx:1-alpine"
+    networks:
+      - scola
     ports:
       - "3000:3000"
     volumes:

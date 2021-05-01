@@ -6,8 +6,10 @@ services:
       MYSQL_DATABASE: scola
       MYSQL_ROOT_PASSWORD: root
     image: "mysql:8.0.18"
+    networks:
+      - scola
     ports:
-      - "0.0.0.0:3306:3306"
+      - "3306:3306"
     tmpfs:
       - /var/lib/mysql
     volumes:

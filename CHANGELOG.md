@@ -1,3 +1,14 @@
+## [15.4.2](https://github.com/scola84/lib/compare/v15.4.1...v15.4.2) (2021-05-01)
+
+
+### Bug Fixes
+
+* **test:** add network to docker-compose files ([279e6e1](https://github.com/scola84/lib/commit/279e6e1b868801dff0bb5d833c6eaf4904a65223))
+* **test:** docker-compose command in github workflow ([172f58d](https://github.com/scola84/lib/commit/172f58dd4bdae0c149956d2b6cb22f0e87613675))
+* **test:** flush redis afterAll ([00480c8](https://github.com/scola84/lib/commit/00480c85ff31dae0a3e69504d673cc170b211d2f))
+* **test:** move start containers to workflow ([ba23436](https://github.com/scola84/lib/commit/ba23436c25bf3306f9492cc3f98c92d585558133))
+* **test:** set service name as hostname ([3611054](https://github.com/scola84/lib/commit/36110541d495d922f1c89225acafff4d96f77654))
+
 ## [15.4.1](https://github.com/scola84/lib/compare/v15.4.0...v15.4.1) (2021-05-01)
 
 

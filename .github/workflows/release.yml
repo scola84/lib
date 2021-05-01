@@ -28,15 +28,13 @@ jobs:
         run: yarn run lint
 
       - name: Start containers
-        run: docker-compose up --detach --file .docker/compose.yaml --file .docker/mysql/compose.yaml --file .docker/postgres/compose.yaml --file .docker/redis/compose.yaml
+        run: docker-compose --file .docker/compose.yaml --file .docker/mysql/compose.yaml --file .docker/postgres/compose.yaml --file .docker/redis/compose.yaml up --detach
 
       - name: Test
-        run: |
-          sleep 60
-          yarn run test
+        run: yarn run test
 
       - name: Stop containers
-        run: docker-compose down --file .docker/compose.yaml --file .docker/mysql/compose.yaml --file .docker/postgres/compose.yaml --file .docker/redis/compose.yaml
+        run: docker-compose --file .docker/compose.yaml --file .docker/mysql/compose.yaml --file .docker/postgres/compose.yaml --file .docker/redis/compose.yaml down
 
       - name: Make
         run: yarn run make

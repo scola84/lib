@@ -31,7 +31,9 @@ jobs:
         run: docker-compose up --detach --file .docker/compose.yaml --file .docker/mysql/compose.yaml --file .docker/postgres/compose.yaml --file .docker/redis/compose.yaml
 
       - name: Test
-        run: yarn run test
+        run: |
+          sleep 60
+          yarn run test
 
       - name: Stop containers
         run: docker-compose down --file .docker/compose.yaml --file .docker/mysql/compose.yaml --file .docker/postgres/compose.yaml --file .docker/redis/compose.yaml

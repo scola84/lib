@@ -1,3 +1,10 @@
+## [15.4.1](https://github.com/scola84/lib/compare/v15.4.0...v15.4.1) (2021-05-01)
+
+
+### Bug Fixes
+
+* **deps:** update dependencies ([ec12e2b](https://github.com/scola84/lib/commit/ec12e2b2cbbe8a89b0fdec5e047c9275e1068727))
+
 # [15.4.0](https://github.com/scola84/lib/compare/v15.3.1...v15.4.0) (2021-04-30)
 
 

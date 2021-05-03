@@ -11,5 +11,5 @@ services:
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/snippets:/etc/nginx/snippets
-      - ./nginx/www/index.html:/nginx/index.html
-      - $PWD/dist/client:/nginx/dist/client
+      - ./nginx/html/index.html:/usr/share/nginx/html/index.html
+      - $PWD/dist/client:/usr/share/nginx/html/dist/client

@@ -15,7 +15,7 @@ services:
     ports:
       - "9229:9229"
     volumes:
-      - $PWD/dist/server:/node/app/dist/server
-      - $PWD/package.json:/node/app/package.json
-      - $PWD/yarn.lock:/node/app/yarn.lock
-    working_dir: /node/app
+      - $PWD/dist/server:/usr/src/app/dist/server
+      - $PWD/package.json:/usr/src/app/package.json
+      - $PWD/yarn.lock:/usr/src/app/yarn.lock
+    working_dir: /usr/src/app

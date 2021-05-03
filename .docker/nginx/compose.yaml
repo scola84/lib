@@ -9,7 +9,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/snippets:/etc/nginx/snippets
-      - ./nginx/html/index.html:/usr/share/nginx/html/index.html
       - $PWD/dist/client:/usr/share/nginx/html/dist/client
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/html/index.html:/usr/share/nginx/html/index.html
+      - ./nginx/snippets:/etc/nginx/snippets

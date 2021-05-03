@@ -1,3 +1,10 @@
+## [15.5.1](https://github.com/scola84/lib/compare/v15.5.0...v15.5.1) (2021-05-03)
+
+
+### Bug Fixes
+
+* **docker:** move nginx files to an existing location ([a785abb](https://github.com/scola84/lib/commit/a785abb2935c2bc14b5a76be82fa02eae3a6db93))
+
 # [15.5.0](https://github.com/scola84/lib/compare/v15.4.2...v15.5.0) (2021-05-03)
 
 

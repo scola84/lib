@@ -1,3 +1,10 @@
+# [15.6.0](https://github.com/scola84/lib/compare/v15.5.2...v15.6.0) (2021-05-03)
+
+
+### Features
+
+* **sql:** add mssql ([1615148](https://github.com/scola84/lib/commit/1615148dc1d9d218dbb924589fa68753fd424cd7))
+
 ## [15.5.2](https://github.com/scola84/lib/compare/v15.5.1...v15.5.2) (2021-05-03)
 
 

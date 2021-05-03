@@ -1,3 +1,10 @@
+## [15.5.2](https://github.com/scola84/lib/compare/v15.5.1...v15.5.2) (2021-05-03)
+
+
+### Bug Fixes
+
+* **docker:** move files inside containers ([ae44539](https://github.com/scola84/lib/commit/ae445395b7e237ae82306f68008ecb44494fb2ff))
+
 ## [15.5.1](https://github.com/scola84/lib/compare/v15.5.0...v15.5.1) (2021-05-03)
 
 

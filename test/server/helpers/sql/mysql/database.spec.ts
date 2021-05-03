@@ -6,17 +6,17 @@ import { sql } from '../../../../../src/server/helpers/sql/tag'
 
 describe('MysqlConnection', () => {
   describe('should', () => {
-    it('parse a bigint as a number', parseABigIntAsANumber)
-    it('parse a DSN', parseADSN)
     it('connect with object options', connectWithObjectOptions)
     it('connect with string options', connectWithStringOptions)
     it('connect without options', connectWithoutOptions)
+    it('delete one row', deleteOneRow)
     it('execute a query', executeAQuery)
     it('insert one row', insertOneRow)
     it('insert two rows', insertTwoRows)
-    it('update one row', updateOneRow)
-    it('delete one row', deleteOneRow)
+    it('parse a BigInt as a Number', parseABigIntAsANumber)
+    it('parse a DSN', parseADSN)
     it('stream rows', streamRows)
+    it('update one row', updateOneRow)
   })
 })
 
@@ -28,7 +28,7 @@ class Helpers {
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.dsn = 'mysql://root:root@127.0.0.1:3306/scola?connectionLimit=20'
+  helpers.dsn = 'mysql://root:root@127.0.0.1:3306/scola?connectionLimit=20&supportBigNumbers=true'
 
   helpers.pool = createPool({
     database: 'scola',
@@ -137,10 +137,7 @@ async function executeAQuery (): Promise<void> {
       released += 1
     })
 
-    await database.query(sql`
-      SELECT 1
-    `)
-
+    await database.query(sql`SELECT 1`)
     expect(released).equal(1)
   } finally {
     await database.end()
@@ -245,16 +242,13 @@ async function parseABigIntAsANumber (): Promise<void> {
   try {
     const { id } = await database.insertOne(sql`
       INSERT INTO test_database (
-        id,
         name,
         value
       ) VALUES (
-        $(id),
         $(name),
         $(value)
       )
     `, {
-      id: 1,
       name: 'name-insert',
       value: 'value-insert'
     })
@@ -275,11 +269,12 @@ async function parseABigIntAsANumber (): Promise<void> {
 
 function parseADSN (): void {
   const expectedOptions = {
-    connectionLimit: '20',
+    connectionLimit: 20,
     database: 'scola',
     host: '127.0.0.1',
     password: 'root',
     port: 3306,
+    supportBigNumbers: true,
     user: 'root'
   }
 

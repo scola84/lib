@@ -1,0 +1,11 @@
+version: "3"
+services:
+  mssql:
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: rootRoot1
+    image: "mcr.microsoft.com/mssql/server:2019-latest"
+    networks:
+      - scola
+    ports:
+      - "1433:1433"

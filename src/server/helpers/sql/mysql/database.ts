@@ -3,6 +3,7 @@ import { Database } from '../database'
 import { MysqlConnection } from './connection'
 import { URL } from 'url'
 import { createPool } from 'mysql2/promise'
+import lodash from 'lodash'
 import tokens from './tokens'
 import { unescape } from 'querystring'
 
@@ -36,7 +37,7 @@ export class MysqlDatabase extends Database {
     }
 
     for (const [key, value] of url.searchParams.entries()) {
-      options[key as keyof PoolOptions] = value
+      lodash.set(options, key, JSON.parse(value))
     }
 
     return options

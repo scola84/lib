@@ -3,7 +3,6 @@ import { Connection } from '../connection'
 import PgQueryStream from 'pg-query-stream'
 import type { PoolClient } from 'pg'
 import type { Readable } from 'stream'
-import { literal } from 'pg-format'
 import tokens from './tokens'
 
 export class PostgresqlConnection extends Connection {
@@ -32,7 +31,7 @@ export class PostgresqlConnection extends Connection {
   }
 
   public async query<V, R>(query: string, values?: Partial<V>): Promise<R> {
-    const { rows } = await this.connection.query(...this.transform(query, values))
+    const { rows } = await this.connection.query(this.transform(query, values))
     return rows as unknown as R
   }
 
@@ -50,30 +49,11 @@ export class PostgresqlConnection extends Connection {
   }
 
   public stream<V> (query: string, values?: Partial<V>): Readable {
-    return this.connection.query(new PgQueryStream(...this.transform(query, values)))
+    return this.connection.query(new PgQueryStream(this.transform(query, values)))
   }
 
   public async update<V> (query: string, values?: V): Promise<UpdateResult> {
     await this.query(query, values)
     return { count: 0 }
-  }
-
-  protected transformKey (key: string, index: number, value: unknown): string {
-    return Array.isArray(value) ? literal(value) : `$${index + 1}`
-  }
-
-  protected transformObject (value: unknown): unknown {
-    if (Array.isArray(value)) {
-      return undefined
-    }
-
-    if (
-      Buffer.isBuffer(value) ||
-      value === null
-    ) {
-      return value
-    }
-
-    return JSON.stringify(value)
   }
 }

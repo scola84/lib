@@ -1,5 +1,5 @@
-import { Pool } from 'pg'
-import { PostgresqlDatabase } from '../../../../../src/server/helpers/sql/postgresql'
+import { ConnectionPool } from 'mssql'
+import { MssqlDatabase } from '../../../../../src/server/helpers/sql/mssql'
 import { expect } from 'chai'
 import { sql } from '../../../../../src/server/helpers/sql/tag'
 
@@ -8,10 +8,10 @@ describe('PostgresqlConnection', () => {
     it('connect with object options', connectWithObjectOptions)
     it('connect with string options', connectWithStringOptions)
     it('connect without options', connectWithoutOptions)
-    it('delete one row', deleteOneRow)
-    it('execute a query', executeAQuery)
     it('insert one row', insertOneRow)
     it('insert two rows', insertTwoRows)
+    it('delete one row', deleteOneRow)
+    it('execute a query', executeAQuery)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
     it('parse a DSN', parseADSN)
     it('stream rows', streamRows)
@@ -19,70 +19,85 @@ describe('PostgresqlConnection', () => {
   })
 })
 
+interface PoolWithNumbers {
+  available: number
+  borrowed: number
+  pending: number
+  size: number
+}
+
 class Helpers {
   public dsn: string
-  public pool: Pool
+  public pool: ConnectionPool
 }
 
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.dsn = 'postgres://root:root@127.0.0.1/scola?keepAlive=true&max=20'
+  helpers.dsn = 'mssql://sa:rootRoot1@localhost:1433/scola?parseJSON=true&pool.max=20'
 
-  helpers.pool = new Pool({
-    database: 'scola',
-    password: 'root',
-    user: 'root'
+  helpers.pool = new ConnectionPool({
+    options: {
+      enableArithAbort: true
+    },
+    password: 'rootRoot1',
+    server: 'localhost',
+    user: 'sa'
   })
 
+  await helpers.pool.connect()
+  await helpers.pool.query(sql`CREATE DATABASE scola`)
+  await helpers.pool.query(sql`USE scola`)
+
   await helpers.pool.query(sql`CREATE TABLE test_database (
-    id BIGSERIAL PRIMARY KEY,
-    name VARCHAR,
-    value VARCHAR
+    id INT NOT NULL PRIMARY KEY IDENTITY (1, 1),
+    name VARCHAR(255) NULL,
+    value VARCHAR(255) NULL
   )`)
 })
 
-beforeEach(async () => {
-  await helpers.pool.query(sql`TRUNCATE test_database RESTART IDENTITY`)
+afterEach(async () => {
+  await helpers.pool.query(sql`TRUNCATE TABLE test_database`)
 })
 
 afterAll(async () => {
-  await helpers.pool.query(sql`DROP TABLE test_database`)
-  await helpers.pool.end()
+  await helpers.pool.query(sql`USE master`)
+  await helpers.pool.query(sql`DROP DATABASE scola`)
+  await helpers.pool.close()
 })
 
 async function connectWithObjectOptions (): Promise<void> {
-  const database = new PostgresqlDatabase(PostgresqlDatabase.parseDSN(helpers.dsn))
+  const database = new MssqlDatabase(MssqlDatabase.parseDSN(helpers.dsn))
 
   try {
-    expect(database.pool).instanceOf(Pool)
+    expect(database.pool).instanceOf(ConnectionPool)
   } finally {
     await database.end()
   }
 }
 
 async function connectWithStringOptions (): Promise<void> {
-  const database = new PostgresqlDatabase(helpers.dsn)
+  const database = new MssqlDatabase(helpers.dsn)
 
   try {
-    expect(database.pool).instanceOf(Pool)
+    expect(database.pool).instanceOf(ConnectionPool)
   } finally {
     await database.end()
   }
 }
 
 async function connectWithoutOptions (): Promise<void> {
-  const database = new PostgresqlDatabase()
+  const database = new MssqlDatabase()
 
   try {
-    expect(database.pool).instanceOf(Pool)
+    expect(database.pool).instanceOf(ConnectionPool)
   } finally {
     await database.end()
   }
 }
 
 async function deleteOneRow (): Promise<void> {
-  const database = new PostgresqlDatabase(helpers.dsn)
+  const database = new MssqlDatabase(helpers.dsn)
 
   try {
     const { id } = await database.insertOne(sql`
@@ -113,19 +128,22 @@ async function deleteOneRow (): Promise<void> {
       id
     })
 
+    const pool = database.pool as unknown as PoolWithNumbers
+
     expect(data).equal(undefined)
-    expect(database.pool.idleCount).gt(0)
+    expect(pool.available).equal(pool.size)
   } finally {
     await database.end()
   }
 }
 
 async function executeAQuery (): Promise<void> {
-  const database = new PostgresqlDatabase(helpers.dsn)
+  const database = new MssqlDatabase(helpers.dsn)
+  const pool = database.pool as unknown as PoolWithNumbers
 
   try {
     await database.query(sql`SELECT 1`)
-    expect(database.pool.idleCount).gt(0)
+    expect(pool.available).equal(pool.size)
   } finally {
     await database.end()
   }
@@ -138,7 +156,8 @@ async function insertOneRow (): Promise<void> {
     value: 'value-insert'
   }
 
-  const database = new PostgresqlDatabase(helpers.dsn)
+  const database = new MssqlDatabase(helpers.dsn)
+  const pool = database.pool as unknown as PoolWithNumbers
 
   try {
     const { id } = await database.insertOne(sql`
@@ -165,7 +184,7 @@ async function insertOneRow (): Promise<void> {
     })
 
     expect(data).include(expectedData)
-    expect(database.pool.idleCount).gt(0)
+    expect(pool.available).equal(pool.size)
   } finally {
     await database.end()
   }
@@ -182,7 +201,8 @@ async function insertTwoRows (): Promise<void> {
     value: 'value-insert'
   }]
 
-  const database = new PostgresqlDatabase(helpers.dsn)
+  const database = new MssqlDatabase(helpers.dsn)
+  const pool = database.pool as unknown as PoolWithNumbers
 
   try {
     const [{ id }] = await database.insert(sql`
@@ -197,7 +217,7 @@ async function insertTwoRows (): Promise<void> {
       ]
     })
 
-    expect(id).equal(1)
+    expect(id).equal(2)
 
     const data = await database.select(sql`
       SELECT *
@@ -205,14 +225,14 @@ async function insertTwoRows (): Promise<void> {
     `)
 
     expect(data).deep.members(expectedData)
-    expect(database.pool.idleCount).gt(0)
+    expect(pool.available).equal(pool.size)
   } finally {
     await database.end()
   }
 }
 
 async function parseABigIntAsANumber (): Promise<void> {
-  const database = new PostgresqlDatabase(helpers.dsn)
+  const database = new MssqlDatabase(helpers.dsn)
 
   try {
     const { id } = await database.insertOne(sql`
@@ -244,12 +264,21 @@ async function parseABigIntAsANumber (): Promise<void> {
 
 function parseADSN (): void {
   const expectedOptions = {
-    connectionString: helpers.dsn,
-    keepAlive: true,
-    max: 20
+    database: 'scola',
+    options: {
+      enableArithAbort: true
+    },
+    parseJSON: true,
+    password: 'rootRoot1',
+    pool: {
+      max: 20
+    },
+    port: 1433,
+    server: 'localhost',
+    user: 'sa'
   }
 
-  const options = PostgresqlDatabase.parseDSN(helpers.dsn)
+  const options = MssqlDatabase.parseDSN(helpers.dsn)
   expect(options).eql(expectedOptions)
 }
 
@@ -266,7 +295,8 @@ async function streamRows (): Promise<void> {
     value: 'value-insert'
   }]
 
-  const database = new PostgresqlDatabase(helpers.dsn)
+  const database = new MssqlDatabase(helpers.dsn)
+  const pool = database.pool as unknown as PoolWithNumbers
 
   try {
     await database.insert('INSERT INTO test_database (name,value) VALUES $(list)', {
@@ -286,7 +316,7 @@ async function streamRows (): Promise<void> {
       stream.on('close', () => {
         try {
           expect(data).deep.members(expectedData)
-          expect(database.pool.idleCount).gt(0)
+          expect(pool.available).equal(pool.size)
           resolve()
         } catch (error: unknown) {
           reject(error)
@@ -305,7 +335,8 @@ async function updateOneRow (): Promise<void> {
     value: 'value-update'
   }
 
-  const database = new PostgresqlDatabase(helpers.dsn)
+  const database = new MssqlDatabase(helpers.dsn)
+  const pool = database.pool as unknown as PoolWithNumbers
 
   try {
     const { id } = await database.insertOne(sql`
@@ -336,7 +367,7 @@ async function updateOneRow (): Promise<void> {
     })
 
     expect(data).include(expectedData)
-    expect(database.pool.idleCount).gt(0)
+    expect(pool.available).equal(pool.size)
   } finally {
     await database.end()
   }

@@ -10,13 +10,14 @@ describe('MysqlConnection', () => {
   })
 
   describe('should', () => {
-    it('transform parameters', transformParameters)
-    it('release connection', releaseConnection)
+    it('delete one row', deleteOneRow)
     it('insert one row', insertOneRow)
     it('insert two rows', insertTwoRows)
-    it('update one row', updateOneRow)
-    it('delete one row', deleteOneRow)
+    it('release connection', releaseConnection)
     it('stream rows', streamRows)
+    it('transform parameters', transformParameters)
+    it('transform parameters for bulk insert', transformParametersForBulkInsert)
+    it('update one row', updateOneRow)
   })
 })
 
@@ -233,48 +234,6 @@ async function streamRows (): Promise<void> {
   })
 }
 
-async function transformParameters (): Promise<void> {
-  const expectedQuery = `
-    SELECT *
-    FROM test_connection
-    WHERE
-      test = ? AND
-      test = ? AND
-      test = ? AND
-      test = ?
-  `
-
-  const expectedValues = [1, null, 1, '{"number":3}']
-
-  const rawQuery = `
-    SELECT *
-    FROM test_connection
-    WHERE
-      test = $(test1) AND
-      test = $(test2) AND
-      test = $(test1) AND
-      test = $(test3)
-  `
-
-  const rawValues = {
-    test1: 1,
-    test2: null,
-    test3: {
-      number: 3
-    }
-  }
-
-  const connection = new MysqlConnection(await helpers.pool.getConnection())
-
-  try {
-    const [query, values] = connection.transform(rawQuery, rawValues)
-    expect(query).equal(expectedQuery)
-    expect(values).deep.equal(expectedValues)
-  } finally {
-    connection.release()
-  }
-}
-
 async function transformAnUndefinedParameter (): Promise<void> {
   const rawQuery = `
     SELECT *
@@ -292,6 +251,80 @@ async function transformAnUndefinedParameter (): Promise<void> {
     connection.transform(rawQuery, rawValues)
   } catch (error: unknown) {
     expect(String(error)).match(/Parameter "test1" is undefined/u)
+  } finally {
+    connection.release()
+  }
+}
+
+async function transformParameters (): Promise<void> {
+  const expectedQuery = `
+    SELECT *
+    FROM test_connection
+    WHERE
+      test = 1 AND
+      test = NULL AND
+      test = 1 AND
+      test = '{\\"number\\":3}' AND
+      test = 'value'
+  `
+
+  const rawQuery = `
+    SELECT *
+    FROM test_connection
+    WHERE
+      test = $(test1) AND
+      test = $(test2) AND
+      test = $(test1) AND
+      test = $(test3) AND
+      test = $(test4)
+  `
+
+  const rawValues = {
+    test1: 1,
+    test2: null,
+    test3: {
+      number: 3
+    },
+    test4: 'value'
+  }
+
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
+
+  try {
+    const query = connection.transform(rawQuery, rawValues)
+    expect(query).equal(expectedQuery)
+  } finally {
+    connection.release()
+  }
+}
+
+async function transformParametersForBulkInsert (): Promise<void> {
+  const expectedQuery = `
+    INSERT INTO test_connection (
+      name,
+      value
+    ) VALUES ('name1', 'value1'), ('name2', 'value2')
+  `
+
+  const rawQuery = `
+    INSERT INTO test_connection (
+      name,
+      value
+    ) VALUES $(list)
+  `
+
+  const rawValues = {
+    list: [
+      ['name1', 'value1'],
+      ['name2', 'value2']
+    ]
+  }
+
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
+
+  try {
+    const query = connection.transform(rawQuery, rawValues)
+    expect(query).equal(expectedQuery)
   } finally {
     connection.release()
   }

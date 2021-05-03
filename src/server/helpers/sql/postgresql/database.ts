@@ -3,6 +3,7 @@ import { Database } from '../database'
 import type { PoolConfig } from 'pg'
 import { PostgresqlConnection } from './connection'
 import { URL } from 'url'
+import lodash from 'lodash'
 import tokens from './tokens'
 
 types.setTypeParser(20, parseInt)
@@ -26,13 +27,11 @@ export class PostgresqlDatabase extends Database {
     const url = new URL(dsn)
 
     const options: PoolConfig = {
-      connectionString: dsn,
-      ...Array
-        .from(url.searchParams.entries())
-        .reduce((entries: Record<string, string>, [key, value]: [string, string]) => {
-          entries[key] = value
-          return entries
-        }, {})
+      connectionString: dsn
+    }
+
+    for (const [key, value] of url.searchParams.entries()) {
+      lodash.set(options, key, JSON.parse(value))
     }
 
     return options

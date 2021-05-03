@@ -1,9 +1,9 @@
-import { Pool } from 'pg'
-import { PostgresqlConnection } from '../../../../../src/server/helpers/sql/postgresql'
+import { ConnectionPool } from 'mssql'
+import { MssqlConnection } from '../../../../../src/server/helpers/sql/mssql'
 import { expect } from 'chai'
 import { sql } from '../../../../../src/server/helpers/sql/tag'
 
-describe('PostgresqlConnection', () => {
+describe('MssqlConnection', () => {
   describe('should fail to', () => {
     it('transform an undefined parameter', transformAnUndefinedParameter)
   })
@@ -20,37 +20,52 @@ describe('PostgresqlConnection', () => {
   })
 })
 
+interface PoolWithNumbers {
+  available: number
+  borrowed: number
+  pending: number
+  size: number
+}
+
 class Helpers {
-  public pool: Pool
+  public pool: ConnectionPool
 }
 
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.pool = new Pool({
-    database: 'scola',
-    password: 'root',
-    user: 'root'
+  helpers.pool = new ConnectionPool({
+    options: {
+      enableArithAbort: true
+    },
+    password: 'rootRoot1',
+    server: 'localhost',
+    user: 'sa'
   })
 
+  await helpers.pool.connect()
+  await helpers.pool.query(sql`CREATE DATABASE scola`)
+  await helpers.pool.query(sql`USE scola`)
+
   await helpers.pool.query(sql`CREATE TABLE test_connection (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR NULL,
-    value VARCHAR NULL
+    id INT NOT NULL PRIMARY KEY IDENTITY (1, 1),
+    name VARCHAR(255) NULL,
+    value VARCHAR(255) NULL
   )`)
 })
 
-beforeEach(async () => {
-  await helpers.pool.query(sql`TRUNCATE test_connection RESTART IDENTITY`)
+afterEach(async () => {
+  await helpers.pool.query(sql`TRUNCATE TABLE test_connection`)
 })
 
 afterAll(async () => {
-  await helpers.pool.query(sql`DROP TABLE test_connection`)
-  await helpers.pool.end()
+  await helpers.pool.query(sql`USE master`)
+  await helpers.pool.query(sql`DROP DATABASE scola`)
+  await helpers.pool.close()
 })
 
 async function deleteOneRow (): Promise<void> {
-  const connection = new PostgresqlConnection(await helpers.pool.connect())
+  const connection = new MssqlConnection(helpers.pool.request())
 
   try {
     const { id } = await connection.insertOne(sql`
@@ -62,16 +77,18 @@ async function deleteOneRow (): Promise<void> {
         $(value)
       )
     `, {
-      name: 'name-insert',
-      value: 'value-insert'
+      name: 'name1',
+      value: 'value1'
     })
 
-    await connection.delete(sql`
+    const { count } = await connection.delete(sql`
       DELETE FROM test_connection
       WHERE id = $(id)
     `, {
       id
     })
+
+    expect(count).equal(1)
 
     const data = await connection.selectOne(sql`
       SELECT *
@@ -94,7 +111,7 @@ async function insertOneRow (): Promise<void> {
     value: 'value1'
   }
 
-  const connection = new PostgresqlConnection(await helpers.pool.connect())
+  const connection = new MssqlConnection(helpers.pool.request())
 
   try {
     const { id } = await connection.insertOne(sql`
@@ -137,7 +154,7 @@ async function insertTwoRows (): Promise<void> {
     value: 'value2'
   }]
 
-  const connection = new PostgresqlConnection(await helpers.pool.connect())
+  const connection = new MssqlConnection(helpers.pool.request())
 
   try {
     const [{ id }] = await connection.insert(sql`
@@ -152,7 +169,7 @@ async function insertTwoRows (): Promise<void> {
       ]
     })
 
-    expect(id).equal(1)
+    expect(id).equal(2)
 
     const data = await connection.select(sql`
       SELECT *
@@ -166,17 +183,18 @@ async function insertTwoRows (): Promise<void> {
 }
 
 async function releaseConnection (): Promise<void> {
-  const connection = new PostgresqlConnection(await helpers.pool.connect())
+  const connection = new MssqlConnection(helpers.pool.request())
+  const pool = helpers.pool as unknown as PoolWithNumbers
 
-  try {
-    expect(helpers.pool.idleCount).equal(0)
-    connection.release()
-    expect(helpers.pool.idleCount).equal(1)
-  } finally {
-    if (helpers.pool.idleCount === 0) {
+  return new Promise((resolve, reject) => {
+    try {
       connection.release()
+      expect(pool.available).equal(pool.size)
+      resolve()
+    } catch (error: unknown) {
+      reject(error)
     }
-  }
+  })
 }
 
 async function streamRows (): Promise<void> {
@@ -192,7 +210,7 @@ async function streamRows (): Promise<void> {
     value: 'value2'
   }]
 
-  const connection = new PostgresqlConnection(await helpers.pool.connect())
+  const connection = new MssqlConnection(helpers.pool.request())
 
   await connection.insert(sql`
     INSERT INTO test_connection (
@@ -228,10 +246,10 @@ async function streamRows (): Promise<void> {
   })
 }
 
-async function transformAnUndefinedParameter (): Promise<void> {
+function transformAnUndefinedParameter (): void {
   const rawQuery = `
     SELECT *
-    FROM test_connection
+    FROM test
     WHERE test = $(test1)
   `
 
@@ -239,7 +257,7 @@ async function transformAnUndefinedParameter (): Promise<void> {
     test2: 2
   }
 
-  const connection = new PostgresqlConnection(await helpers.pool.connect())
+  const connection = new MssqlConnection(helpers.pool.request())
 
   try {
     connection.transform(rawQuery, rawValues)
@@ -250,7 +268,7 @@ async function transformAnUndefinedParameter (): Promise<void> {
   }
 }
 
-async function transformParameters (): Promise<void> {
+function transformParameters (): void {
   const expectedQuery = `
     SELECT *
     FROM test_connection
@@ -282,7 +300,7 @@ async function transformParameters (): Promise<void> {
     test4: 'value'
   }
 
-  const connection = new PostgresqlConnection(await helpers.pool.connect())
+  const connection = new MssqlConnection(helpers.pool.request())
 
   try {
     const query = connection.transform(rawQuery, rawValues)
@@ -292,7 +310,7 @@ async function transformParameters (): Promise<void> {
   }
 }
 
-async function transformParametersForBulkInsert (): Promise<void> {
+function transformParametersForBulkInsert (): void {
   const expectedQuery = `
     INSERT INTO test_connection (
       name,
@@ -314,7 +332,7 @@ async function transformParametersForBulkInsert (): Promise<void> {
     ]
   }
 
-  const connection = new PostgresqlConnection(await helpers.pool.connect())
+  const connection = new MssqlConnection(helpers.pool.request())
 
   try {
     const query = connection.transform(rawQuery, rawValues)
@@ -331,7 +349,7 @@ async function updateOneRow (): Promise<void> {
     value: 'value1-update'
   }
 
-  const connection = new PostgresqlConnection(await helpers.pool.connect())
+  const connection = new MssqlConnection(helpers.pool.request())
 
   try {
     const { id } = await connection.insertOne(sql`
@@ -347,7 +365,7 @@ async function updateOneRow (): Promise<void> {
       value: 'value1'
     })
 
-    await connection.update(sql`
+    const { count } = await connection.update(sql`
       UPDATE test_connection
       SET
         name = $(name),
@@ -358,6 +376,8 @@ async function updateOneRow (): Promise<void> {
       name: 'name1-update',
       value: 'value1-update'
     })
+
+    expect(count).equal(1)
 
     const data = await connection.selectOne(sql`
       SELECT *

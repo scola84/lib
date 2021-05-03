@@ -35,7 +35,7 @@ export class MysqlConnection extends Connection {
   }
 
   public async query<V, R>(query: string, values?: Partial<V>): Promise<R> {
-    const [result] = await this.connection.query(...this.transform(query, values))
+    const [result] = await this.connection.query(this.transform(query, values))
     return result as unknown as R
   }
 
@@ -54,28 +54,12 @@ export class MysqlConnection extends Connection {
 
   public stream<V> (query: string, values?: Partial<V>): Readable {
     return (this.connection as StreamConnection).connection
-      .query(...this.transform(query, values))
+      .query(this.transform(query, values))
       .stream()
   }
 
   public async update<V> (query: string, values?: Partial<V>): Promise<UpdateResult> {
     const result = await this.query<V, ResultSetHeader>(query, values)
     return { count: result.affectedRows }
-  }
-
-  protected transformKey (): string {
-    return '?'
-  }
-
-  protected transformObject (value: unknown): unknown {
-    if (
-      Array.isArray(value) ||
-      Buffer.isBuffer(value) ||
-      value === null
-    ) {
-      return value
-    }
-
-    return JSON.stringify(value)
   }
 }

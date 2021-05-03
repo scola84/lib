@@ -1,6 +1,7 @@
 import { Pool } from 'pg'
 import { PostgresqlDatabase } from '../../../../../src/server/helpers/sql/postgresql'
 import { expect } from 'chai'
+import { sql } from '../../../../../src/server/helpers/sql/tag'
 
 describe('PostgresqlConnection', () => {
   describe('should', () => {
@@ -34,7 +35,7 @@ beforeAll(async () => {
     user: 'root'
   })
 
-  await helpers.pool.query(`CREATE TABLE test_database (
+  await helpers.pool.query(sql`CREATE TABLE test_database (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR,
     value VARCHAR
@@ -42,11 +43,11 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-  await helpers.pool.query('TRUNCATE test_database RESTART IDENTITY')
+  await helpers.pool.query(sql`TRUNCATE test_database RESTART IDENTITY`)
 })
 
 afterAll(async () => {
-  await helpers.pool.query('DROP TABLE test_database')
+  await helpers.pool.query(sql`DROP TABLE test_database`)
   await helpers.pool.end()
 })
 
@@ -84,7 +85,7 @@ async function deleteOneRow (): Promise<void> {
   const database = new PostgresqlDatabase(helpers.dsn)
 
   try {
-    const { id } = await database.insertOne(`
+    const { id } = await database.insertOne(sql`
       INSERT INTO test_database (
         name,
         value
@@ -97,14 +98,14 @@ async function deleteOneRow (): Promise<void> {
       value: 'value-insert'
     })
 
-    await database.delete(`
+    await database.delete(sql`
       DELETE FROM test_database
       WHERE id = $(id)
     `, {
       id
     })
 
-    const data = await database.selectOne(`
+    const data = await database.selectOne(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)
@@ -123,7 +124,7 @@ async function executeAQuery (): Promise<void> {
   const database = new PostgresqlDatabase(helpers.dsn)
 
   try {
-    await database.query(`
+    await database.query(sql`
       SELECT 1
     `)
 
@@ -143,7 +144,7 @@ async function insertOneRow (): Promise<void> {
   const database = new PostgresqlDatabase(helpers.dsn)
 
   try {
-    const { id } = await database.insertOne(`
+    const { id } = await database.insertOne(sql`
       INSERT INTO test_database (
         name,
         value
@@ -158,7 +159,7 @@ async function insertOneRow (): Promise<void> {
 
     expect(id).equal(1)
 
-    const data = await database.selectOne(`
+    const data = await database.selectOne(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)
@@ -187,7 +188,7 @@ async function insertTwoRows (): Promise<void> {
   const database = new PostgresqlDatabase(helpers.dsn)
 
   try {
-    const [{ id }] = await database.insert(`
+    const [{ id }] = await database.insert(sql`
       INSERT INTO test_database (
         name,
         value
@@ -201,7 +202,7 @@ async function insertTwoRows (): Promise<void> {
 
     expect(id).equal(1)
 
-    const data = await database.select(`
+    const data = await database.select(sql`
       SELECT *
       FROM test_database
     `)
@@ -217,7 +218,7 @@ async function parseABigIntAsANumber (): Promise<void> {
   const database = new PostgresqlDatabase(helpers.dsn)
 
   try {
-    const { id } = await database.insertOne(`
+    const { id } = await database.insertOne(sql`
       INSERT INTO test_database (
         id,
         name,
@@ -233,7 +234,7 @@ async function parseABigIntAsANumber (): Promise<void> {
       value: 'value-insert'
     })
 
-    const data = await database.selectOne<{ id: number }, { id: number }>(`
+    const data = await database.selectOne<{ id: number }, { id: number }>(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)
@@ -312,14 +313,14 @@ async function updateOneRow (): Promise<void> {
   const database = new PostgresqlDatabase(helpers.dsn)
 
   try {
-    const { id } = await database.insertOne(`
+    const { id } = await database.insertOne(sql`
       INSERT INTO test_database (name,value) VALUES ($(name),$(value))
     `, {
       name: 'name-insert',
       value: 'value-insert'
     })
 
-    await database.update(`
+    await database.update(sql`
       UPDATE test_database
       SET
         name = $(name),
@@ -331,7 +332,7 @@ async function updateOneRow (): Promise<void> {
       value: 'value-update'
     })
 
-    const data = await database.selectOne(`
+    const data = await database.selectOne(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)

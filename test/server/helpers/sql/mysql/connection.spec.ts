@@ -2,6 +2,7 @@ import { MysqlConnection } from '../../../../../src/server/helpers/sql/mysql'
 import type { Pool } from 'mysql2/promise'
 import { createPool } from 'mysql2/promise'
 import { expect } from 'chai'
+import { sql } from '../../../../../src/server/helpers/sql/tag'
 
 describe('MysqlConnection', () => {
   describe('should fail to', () => {
@@ -32,7 +33,7 @@ beforeAll(async () => {
     user: 'root'
   })
 
-  await helpers.pool.query(`CREATE TABLE test_connection (
+  await helpers.pool.query(sql`CREATE TABLE test_connection (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NULL,
     value VARCHAR(255) NULL
@@ -40,11 +41,11 @@ beforeAll(async () => {
 })
 
 afterEach(async () => {
-  await helpers.pool.query('TRUNCATE test_connection')
+  await helpers.pool.query(sql`TRUNCATE test_connection`)
 })
 
 afterAll(async () => {
-  await helpers.pool.query('DROP TABLE test_connection')
+  await helpers.pool.query(sql`DROP TABLE test_connection`)
   await helpers.pool.end()
 })
 
@@ -52,7 +53,7 @@ async function deleteOneRow (): Promise<void> {
   const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
-    const { id } = await connection.insertOne(`
+    const { id } = await connection.insertOne(sql`
       INSERT INTO test_connection (
         name,
         value
@@ -65,7 +66,7 @@ async function deleteOneRow (): Promise<void> {
       value: 'value1'
     })
 
-    const { count } = await connection.delete(`
+    const { count } = await connection.delete(sql`
       DELETE FROM test_connection
       WHERE id = $(id)
     `, {
@@ -74,7 +75,7 @@ async function deleteOneRow (): Promise<void> {
 
     expect(count).equal(1)
 
-    const data = await connection.selectOne(`
+    const data = await connection.selectOne(sql`
       SELECT *
       FROM test_connection
       WHERE id = $(id)
@@ -98,7 +99,7 @@ async function insertOneRow (): Promise<void> {
   const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
-    const { id } = await connection.insertOne(`
+    const { id } = await connection.insertOne(sql`
       INSERT INTO test_connection (
         name,
         value
@@ -113,7 +114,7 @@ async function insertOneRow (): Promise<void> {
 
     expect(id).equal(1)
 
-    const data = await connection.selectOne(`
+    const data = await connection.selectOne(sql`
       SELECT *
       FROM test_connection
       WHERE id = $(id)
@@ -141,7 +142,7 @@ async function insertTwoRows (): Promise<void> {
   const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
-    const [{ id }] = await connection.insert(`
+    const [{ id }] = await connection.insert(sql`
       INSERT INTO test_connection (
         name,
         value
@@ -155,7 +156,7 @@ async function insertTwoRows (): Promise<void> {
 
     expect(id).equal(1)
 
-    const data = await connection.select(`
+    const data = await connection.select(sql`
       SELECT *
       FROM test_connection
     `)
@@ -198,7 +199,7 @@ async function streamRows (): Promise<void> {
 
   const connection = new MysqlConnection(await helpers.pool.getConnection())
 
-  await connection.insert(`
+  await connection.insert(sql`
     INSERT INTO test_connection (
       name,
       value
@@ -210,7 +211,7 @@ async function streamRows (): Promise<void> {
     ]
   })
 
-  const stream = connection.stream(`
+  const stream = connection.stream(sql`
     SELECT *
     FROM test_connection
   `)
@@ -306,7 +307,7 @@ async function updateOneRow (): Promise<void> {
   const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
-    const { id } = await connection.insertOne(`
+    const { id } = await connection.insertOne(sql`
       INSERT INTO test_connection (
         name,
         value
@@ -319,7 +320,7 @@ async function updateOneRow (): Promise<void> {
       value: 'value1'
     })
 
-    const { count } = await connection.update(`
+    const { count } = await connection.update(sql`
       UPDATE test_connection
       SET
         name = $(name),
@@ -333,7 +334,7 @@ async function updateOneRow (): Promise<void> {
 
     expect(count).equal(1)
 
-    const data = await connection.selectOne(`
+    const data = await connection.selectOne(sql`
       SELECT *
       FROM test_connection
       WHERE id = $(id)

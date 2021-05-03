@@ -1,6 +1,7 @@
 import { Pool } from 'pg'
 import { PostgresqlConnection } from '../../../../../src/server/helpers/sql/postgresql'
 import { expect } from 'chai'
+import { sql } from '../../../../../src/server/helpers/sql/tag'
 
 describe('PostgresqlConnection', () => {
   describe('should fail to', () => {
@@ -32,7 +33,7 @@ beforeAll(async () => {
     user: 'root'
   })
 
-  await helpers.pool.query(`CREATE TABLE test_connection (
+  await helpers.pool.query(sql`CREATE TABLE test_connection (
     id SERIAL PRIMARY KEY,
     name VARCHAR NULL,
     value VARCHAR NULL
@@ -40,11 +41,11 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-  await helpers.pool.query('TRUNCATE test_connection RESTART IDENTITY')
+  await helpers.pool.query(sql`TRUNCATE test_connection RESTART IDENTITY`)
 })
 
 afterAll(async () => {
-  await helpers.pool.query('DROP TABLE test_connection')
+  await helpers.pool.query(sql`DROP TABLE test_connection`)
   await helpers.pool.end()
 })
 
@@ -52,7 +53,7 @@ async function deleteOneRow (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    const { id } = await connection.insertOne(`
+    const { id } = await connection.insertOne(sql`
       INSERT INTO test_connection (
         name,
         value
@@ -65,14 +66,14 @@ async function deleteOneRow (): Promise<void> {
       value: 'value-insert'
     })
 
-    await connection.delete(`
+    await connection.delete(sql`
       DELETE FROM test_connection
       WHERE id = $(id)
     `, {
       id
     })
 
-    const data = await connection.selectOne(`
+    const data = await connection.selectOne(sql`
       SELECT *
       FROM test_connection
       WHERE id = $(id)
@@ -96,7 +97,7 @@ async function insertOneRow (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    const { id } = await connection.insertOne(`
+    const { id } = await connection.insertOne(sql`
       INSERT INTO test_connection (
         name,
         value
@@ -111,7 +112,7 @@ async function insertOneRow (): Promise<void> {
 
     expect(id).equal(1)
 
-    const data = await connection.selectOne(`
+    const data = await connection.selectOne(sql`
       SELECT *
       FROM test_connection
       WHERE id = $(id)
@@ -139,7 +140,7 @@ async function insertTwoRows (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    const [{ id }] = await connection.insert(`
+    const [{ id }] = await connection.insert(sql`
       INSERT INTO test_connection (
         name,
         value
@@ -153,7 +154,7 @@ async function insertTwoRows (): Promise<void> {
 
     expect(id).equal(1)
 
-    const data = await connection.select(`
+    const data = await connection.select(sql`
       SELECT *
       FROM test_connection
     `)
@@ -193,7 +194,7 @@ async function streamRows (): Promise<void> {
 
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
-  await connection.insert(`
+  await connection.insert(sql`
     INSERT INTO test_connection (
       name,
       value
@@ -205,7 +206,7 @@ async function streamRows (): Promise<void> {
     ]
   })
 
-  const stream = connection.stream(`
+  const stream = connection.stream(sql`
     SELECT *
     FROM test_connection
   `)
@@ -339,7 +340,7 @@ async function updateOneRow (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    const { id } = await connection.insertOne(`
+    const { id } = await connection.insertOne(sql`
       INSERT INTO test_connection (
         name,
         value
@@ -352,7 +353,7 @@ async function updateOneRow (): Promise<void> {
       value: 'value1'
     })
 
-    await connection.update(`
+    await connection.update(sql`
       UPDATE test_connection
       SET
         name = $(name),
@@ -364,7 +365,7 @@ async function updateOneRow (): Promise<void> {
       value: 'value1-update'
     })
 
-    const data = await connection.selectOne(`
+    const data = await connection.selectOne(sql`
       SELECT *
       FROM test_connection
       WHERE id = $(id)

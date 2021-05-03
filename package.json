@@ -29,15 +29,15 @@
     "async-wait-until": "^2.0.5",
     "commander": "^7.2.0",
     "cron-parser": "^3.5.0",
-    "fastify": "^3.15.0",
+    "fastify": "^3.15.1",
     "fastify-cookie": "^5.3.0",
     "fastify-formbody": "^5.0.0",
     "fastify-multipart": "^4.0.5",
     "fastq": "^1.11.0",
     "fluent-json-schema": "^2.0.4",
     "handy-redis": "^2.2.1",
-    "intl-messageformat": "^9.6.11",
-    "lit-element": "^2.4.0",
+    "intl-messageformat": "^9.6.12",
+    "lit-element": "^2.5.0",
     "lit-html": "^1.4.0",
     "micromatch": "^4.0.4",
     "minimist": "^1.2.5",
@@ -157,7 +157,7 @@
     "exec": "onchange --initial --kill ./dist/server/cjs.js -- node ./dist/server/cjs.js",
     "lint": "tsc --project ./src/client && tsc --project ./src/server && tsc --project ./test/server && lit-analyzer ./src/client --strict && eslint ./bin ./src ./test",
     "make": "rollup --config ./bin/rollup.config.js --sourcemap",
-    "test": "jest --maxWorkers 4 --preset ts-jest --testRunner jest-circus/runner"
+    "test": "jest --preset ts-jest --runInBand --testRunner jest-circus/runner"
   },
   "types": "./types/index.d.ts",
   "version": "15.4.2"

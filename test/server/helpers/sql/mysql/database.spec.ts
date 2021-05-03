@@ -2,6 +2,7 @@ import { MysqlDatabase } from '../../../../../src/server/helpers/sql/mysql'
 import type { Pool } from 'mysql2/promise'
 import { createPool } from 'mysql2/promise'
 import { expect } from 'chai'
+import { sql } from '../../../../../src/server/helpers/sql/tag'
 
 describe('MysqlConnection', () => {
   describe('should', () => {
@@ -35,7 +36,7 @@ beforeAll(async () => {
     user: 'root'
   })
 
-  await helpers.pool.query(`CREATE TABLE test_database (
+  await helpers.pool.query(sql`CREATE TABLE test_database (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NULL,
     value VARCHAR(255) NULL
@@ -43,11 +44,11 @@ beforeAll(async () => {
 })
 
 afterEach(async () => {
-  await helpers.pool.query('TRUNCATE test_database')
+  await helpers.pool.query(sql`TRUNCATE test_database`)
 })
 
 afterAll(async () => {
-  await helpers.pool.query('DROP TABLE test_database')
+  await helpers.pool.query(sql`DROP TABLE test_database`)
   await helpers.pool.end()
 })
 
@@ -91,7 +92,7 @@ async function deleteOneRow (): Promise<void> {
       released += 1
     })
 
-    const { id } = await database.insertOne(`
+    const { id } = await database.insertOne(sql`
       INSERT INTO test_database (
         name,
         value
@@ -104,14 +105,14 @@ async function deleteOneRow (): Promise<void> {
       value: 'value-insert'
     })
 
-    await database.delete(`
+    await database.delete(sql`
       DELETE FROM test_database
       WHERE id = $(id)
     `, {
       id
     })
 
-    const data = await database.selectOne(`
+    const data = await database.selectOne(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)
@@ -136,7 +137,7 @@ async function executeAQuery (): Promise<void> {
       released += 1
     })
 
-    await database.query(`
+    await database.query(sql`
       SELECT 1
     `)
 
@@ -162,7 +163,7 @@ async function insertOneRow (): Promise<void> {
       released += 1
     })
 
-    const { id } = await database.insertOne(`
+    const { id } = await database.insertOne(sql`
       INSERT INTO test_database (
         name,
         value
@@ -177,7 +178,7 @@ async function insertOneRow (): Promise<void> {
 
     expect(id).equal(1)
 
-    const data = await database.selectOne(`
+    const data = await database.selectOne(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)
@@ -212,7 +213,7 @@ async function insertTwoRows (): Promise<void> {
       released += 1
     })
 
-    const [{ id }] = await database.insert(`
+    const [{ id }] = await database.insert(sql`
       INSERT INTO test_database (
         name,
         value
@@ -226,7 +227,7 @@ async function insertTwoRows (): Promise<void> {
 
     expect(id).equal(1)
 
-    const data = await database.select(`
+    const data = await database.select(sql`
       SELECT *
       FROM test_database
     `)
@@ -242,7 +243,7 @@ async function parseABigIntAsANumber (): Promise<void> {
   const database = new MysqlDatabase(helpers.dsn)
 
   try {
-    const { id } = await database.insertOne(`
+    const { id } = await database.insertOne(sql`
       INSERT INTO test_database (
         id,
         name,
@@ -258,7 +259,7 @@ async function parseABigIntAsANumber (): Promise<void> {
       value: 'value-insert'
     })
 
-    const data = await database.selectOne<{ id: number }, { id: number }>(`
+    const data = await database.selectOne<{ id: number }, { id: number }>(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)
@@ -353,14 +354,14 @@ async function updateOneRow (): Promise<void> {
       released += 1
     })
 
-    const { id } = await database.insertOne(`
+    const { id } = await database.insertOne(sql`
       INSERT INTO test_database (name,value) VALUES ($(name),$(value))
     `, {
       name: 'name-insert',
       value: 'value-insert'
     })
 
-    await database.update(`
+    await database.update(sql`
       UPDATE test_database
       SET
         name = $(name),
@@ -372,7 +373,7 @@ async function updateOneRow (): Promise<void> {
       value: 'value-update'
     })
 
-    const data = await database.selectOne(`
+    const data = await database.selectOne(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)

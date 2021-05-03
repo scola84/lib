@@ -177,13 +177,23 @@ export abstract class TaskRunner {
     })
   }
 
-  public validate (name: string, data: unknown): void {
+  public validate<Data = unknown> (name: string, data?: Data): Data {
+    if (data === undefined) {
+      throw new Error('Data is undefined')
+    }
+
     const schema = this.validator?.getSchema(name)
 
-    if (schema?.(data) === false) {
+    if (schema === undefined) {
+      throw new Error(`Schema "${name}" is undefined`)
+    }
+
+    if (schema(data) === false) {
       const error = schema.errors?.[0]
       throw new Error(`${name}${error?.instancePath ?? ''} ${error?.message ?? ''}`)
     }
+
+    return data
   }
 
   protected async createGroup (): Promise<void> {

@@ -1,3 +1,10 @@
+# [15.5.0](https://github.com/scola84/lib/compare/v15.4.2...v15.5.0) (2021-05-03)
+
+
+### Features
+
+* **queue:** make validate data optional ([2921a13](https://github.com/scola84/lib/commit/2921a1366dd99ee037f2312ed544af496318cdc8))
+
 ## [15.4.2](https://github.com/scola84/lib/compare/v15.4.1...v15.4.2) (2021-05-01)
 
 

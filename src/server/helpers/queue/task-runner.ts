@@ -438,8 +438,14 @@ export abstract class TaskRunner {
     delete taskRun.sql
 
     if (taskRun.code === 'pending') {
-      this.validate('options', taskRun.task.options)
-      this.validate('payload', taskRun.item.payload)
+      if (this.validator?.getSchema('options') !== undefined) {
+        this.validate('options', taskRun.task.options)
+      }
+
+      if (this.validator?.getSchema('payload') !== undefined) {
+        this.validate('payload', taskRun.item.payload)
+      }
+
       await this.run(taskRun)
     }
   }

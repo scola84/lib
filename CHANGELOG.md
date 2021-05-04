@@ -1,3 +1,10 @@
+## [15.6.2](https://github.com/scola84/lib/compare/v15.6.1...v15.6.2) (2021-05-04)
+
+
+### Bug Fixes
+
+* **queue:** check if schema exists before validating options/payload ([e5fa4d3](https://github.com/scola84/lib/commit/e5fa4d376ff6afd8eef58f8bb77e63d32e782c41))
+
 ## [15.6.1](https://github.com/scola84/lib/compare/v15.6.0...v15.6.1) (2021-05-04)
 
 

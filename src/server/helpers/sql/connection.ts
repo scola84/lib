@@ -1,6 +1,4 @@
 import type { Readable } from 'stream'
-import { escape } from 'sqlstring'
-import lodash from 'lodash'
 import type tokens from './tokens'
 
 export interface DeleteResult {
@@ -18,7 +16,7 @@ export interface UpdateResult {
 export abstract class Connection {
   public abstract tokens: tokens
 
-  public transform (rawQuery: string, rawValues: Record<string, unknown> = {}): string {
+  public format (rawQuery: string, rawValues: Record<string, unknown> = {}): string {
     const matches = rawQuery.match(/\$\(\w+\)/gu) ?? []
 
     let key = null
@@ -33,17 +31,15 @@ export abstract class Connection {
         throw new Error(`Parameter "${key}" is undefined`)
       }
 
-      if (lodash.isPlainObject(value)) {
-        value = JSON.stringify(value)
-      }
-
-      query = query.replace(match, escape(value))
+      query = query.replace(match, this.formatValue(value))
     }
 
     return query
   }
 
   public abstract delete <V> (query: string, values?: Partial<V>): Promise<DeleteResult>
+
+  public abstract formatValue (value: unknown): string
 
   public abstract insert<V, R = number> (query: string, values?: Partial<V>, key?: string): Promise<Array<InsertResult<R>>>
 

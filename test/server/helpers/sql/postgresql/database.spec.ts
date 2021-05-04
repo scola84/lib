@@ -10,8 +10,8 @@ describe('PostgresqlConnection', () => {
     it('connect without options', connectWithoutOptions)
     it('delete one row', deleteOneRow)
     it('execute a query', executeAQuery)
+    it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
-    it('insert two rows', insertTwoRows)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
     it('parse a DSN', parseADSN)
     it('stream rows', streamRows)
@@ -37,8 +37,8 @@ beforeAll(async () => {
 
   await helpers.pool.query(sql`CREATE TABLE test_database (
     id BIGSERIAL PRIMARY KEY,
-    name VARCHAR,
-    value VARCHAR
+    name varchar,
+    value varchar
   )`)
 })
 
@@ -86,16 +86,10 @@ async function deleteOneRow (): Promise<void> {
 
   try {
     const { id } = await database.insertOne(sql`
-      INSERT INTO test_database (
-        name,
-        value
-      ) VALUES (
-        $(name),
-        $(value)
-      )
+      INSERT INTO test_database (name)
+      VALUES ($(name))
     `, {
-      name: 'name-insert',
-      value: 'value-insert'
+      name: 'name'
     })
 
     await database.delete(sql`
@@ -105,16 +99,8 @@ async function deleteOneRow (): Promise<void> {
       id
     })
 
-    const data = await database.selectOne(sql`
-      SELECT *
-      FROM test_database
-      WHERE id = $(id)
-    `, {
-      id
-    })
-
-    expect(data).equal(undefined)
-    expect(database.pool.idleCount).gt(0)
+    expect(database.pool.totalCount).gt(0)
+    expect(database.pool.idleCount).equal(database.pool.totalCount)
   } finally {
     await database.end()
   }
@@ -131,17 +117,32 @@ async function executeAQuery (): Promise<void> {
   }
 }
 
-async function insertOneRow (): Promise<void> {
-  const expectedData = {
-    id: 1,
-    name: 'name-insert',
-    value: 'value-insert'
-  }
-
+async function insertABulkOfRows (): Promise<void> {
   const database = new PostgresqlDatabase(helpers.dsn)
 
   try {
-    const { id } = await database.insertOne(sql`
+    await database.insert(sql`
+      INSERT INTO test_database (name)
+      VALUES $(list)
+    `, {
+      list: [
+        ['name1'],
+        ['name2']
+      ]
+    })
+
+    expect(database.pool.totalCount).gt(0)
+    expect(database.pool.idleCount).equal(database.pool.totalCount)
+  } finally {
+    await database.end()
+  }
+}
+
+async function insertOneRow (): Promise<void> {
+  const database = new PostgresqlDatabase(helpers.dsn)
+
+  try {
+    await database.insertOne(sql`
       INSERT INTO test_database (
         name,
         value
@@ -154,58 +155,8 @@ async function insertOneRow (): Promise<void> {
       value: 'value-insert'
     })
 
-    expect(id).equal(1)
-
-    const data = await database.selectOne(sql`
-      SELECT *
-      FROM test_database
-      WHERE id = $(id)
-    `, {
-      id
-    })
-
-    expect(data).include(expectedData)
-    expect(database.pool.idleCount).gt(0)
-  } finally {
-    await database.end()
-  }
-}
-
-async function insertTwoRows (): Promise<void> {
-  const expectedData = [{
-    id: 1,
-    name: 'name-insert',
-    value: 'value-insert'
-  }, {
-    id: 2,
-    name: 'name-insert',
-    value: 'value-insert'
-  }]
-
-  const database = new PostgresqlDatabase(helpers.dsn)
-
-  try {
-    const [{ id }] = await database.insert(sql`
-      INSERT INTO test_database (
-        name,
-        value
-      ) VALUES $(list)
-    `, {
-      list: [
-        ['name-insert', 'value-insert'],
-        ['name-insert', 'value-insert']
-      ]
-    })
-
-    expect(id).equal(1)
-
-    const data = await database.select(sql`
-      SELECT *
-      FROM test_database
-    `)
-
-    expect(data).deep.members(expectedData)
-    expect(database.pool.idleCount).gt(0)
+    expect(database.pool.totalCount).gt(0)
+    expect(database.pool.idleCount).equal(database.pool.totalCount)
   } finally {
     await database.end()
   }
@@ -216,16 +167,10 @@ async function parseABigIntAsANumber (): Promise<void> {
 
   try {
     const { id } = await database.insertOne(sql`
-      INSERT INTO test_database (
-        name,
-        value
-      ) VALUES (
-        $(name),
-        $(value)
-      )
+      INSERT INTO test_database (name)
+      VALUES ($(name))
     `, {
-      name: 'name-insert',
-      value: 'value-insert'
+      name: 'name'
     })
 
     const data = await database.selectOne<{ id: number }, { id: number }>(sql`
@@ -254,39 +199,31 @@ function parseADSN (): void {
 }
 
 async function streamRows (): Promise<void> {
-  const data: unknown[] = []
-
-  const expectedData = [{
-    id: 1,
-    name: 'name-insert',
-    value: 'value-insert'
-  }, {
-    id: 2,
-    name: 'name-insert',
-    value: 'value-insert'
-  }]
-
   const database = new PostgresqlDatabase(helpers.dsn)
 
   try {
-    await database.insert('INSERT INTO test_database (name,value) VALUES $(list)', {
+    await database.insert(`
+      INSERT INTO test_database (name)
+      VALUES $(list)
+    `, {
       list: [
-        ['name-insert', 'value-insert'],
-        ['name-insert', 'value-insert']
+        ['name1'],
+        ['name2']
       ]
     })
 
-    const stream = await database.stream('SELECT * FROM test_database')
+    const stream = await database.stream(`
+      SELECT *
+      FROM test_database
+    `)
 
     await new Promise<void>((resolve, reject) => {
-      stream.on('data', (datum) => {
-        data.push(datum)
-      })
+      stream.on('data', () => {})
 
       stream.on('close', () => {
         try {
-          expect(data).deep.members(expectedData)
-          expect(database.pool.idleCount).gt(0)
+          expect(database.pool.totalCount).gt(0)
+          expect(database.pool.idleCount).equal(database.pool.totalCount)
           resolve()
         } catch (error: unknown) {
           reject(error)
@@ -299,44 +236,27 @@ async function streamRows (): Promise<void> {
 }
 
 async function updateOneRow (): Promise<void> {
-  const expectedData = {
-    id: 1,
-    name: 'name-update',
-    value: 'value-update'
-  }
-
   const database = new PostgresqlDatabase(helpers.dsn)
 
   try {
     const { id } = await database.insertOne(sql`
-      INSERT INTO test_database (name,value) VALUES ($(name),$(value))
+      INSERT INTO test_database (name)
+      VALUES ($(name))
     `, {
-      name: 'name-insert',
-      value: 'value-insert'
+      name: 'name'
     })
 
     await database.update(sql`
       UPDATE test_database
-      SET
-        name = $(name),
-        value = $(value)
+      SET name = $(name)
       WHERE id = $(id)
     `, {
       id,
-      name: 'name-update',
-      value: 'value-update'
+      name: 'name-update'
     })
 
-    const data = await database.selectOne(sql`
-      SELECT *
-      FROM test_database
-      WHERE id = $(id)
-    `, {
-      id
-    })
-
-    expect(data).include(expectedData)
-    expect(database.pool.idleCount).gt(0)
+    expect(database.pool.totalCount).gt(0)
+    expect(database.pool.idleCount).equal(database.pool.totalCount)
   } finally {
     await database.end()
   }

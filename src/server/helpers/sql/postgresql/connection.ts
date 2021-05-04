@@ -3,6 +3,7 @@ import { Connection } from '../connection'
 import PgQueryStream from 'pg-query-stream'
 import type { PoolClient } from 'pg'
 import type { Readable } from 'stream'
+import { literal } from 'pg-format'
 import tokens from './tokens'
 
 export class PostgresqlConnection extends Connection {
@@ -20,6 +21,10 @@ export class PostgresqlConnection extends Connection {
     return { count: 0 }
   }
 
+  public formatValue (value: unknown): string {
+    return literal(value as string)
+  }
+
   public async insert<V, R = number> (query: string, values?: Partial<V>, key = 'id'): Promise<Array<InsertResult<R>>> {
     const result = await this.query<V, Array<InsertResult<R>>>(`${query} RETURNING ${key} AS id`, values)
     return result
@@ -31,7 +36,7 @@ export class PostgresqlConnection extends Connection {
   }
 
   public async query<V, R>(query: string, values?: Partial<V>): Promise<R> {
-    const { rows } = await this.connection.query(this.transform(query, values))
+    const { rows } = await this.connection.query(this.format(query, values))
     return rows as unknown as R
   }
 
@@ -49,7 +54,7 @@ export class PostgresqlConnection extends Connection {
   }
 
   public stream<V> (query: string, values?: Partial<V>): Readable {
-    return this.connection.query(new PgQueryStream(this.transform(query, values)))
+    return this.connection.query(new PgQueryStream(this.format(query, values)))
   }
 
   public async update<V> (query: string, values?: V): Promise<UpdateResult> {

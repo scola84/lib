@@ -3,6 +3,8 @@ import type { PoolConnection, ResultSetHeader } from 'mysql2/promise'
 import type { Connection as BaseConnection } from 'mysql'
 import { Connection } from '../connection'
 import type { Readable } from 'stream'
+import { escape } from 'sqlstring'
+import lodash from 'lodash'
 import tokens from './tokens'
 
 interface StreamConnection extends PoolConnection {
@@ -24,6 +26,10 @@ export class MysqlConnection extends Connection {
     return { count: result.affectedRows }
   }
 
+  public formatValue (value: unknown): string {
+    return escape(lodash.isPlainObject(value) ? JSON.stringify(value) : value)
+  }
+
   public async insert<V, R = number> (query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {
     const result = await this.query<V, { insertId: R }>(query, values)
     return [{ id: result.insertId }]
@@ -35,7 +41,7 @@ export class MysqlConnection extends Connection {
   }
 
   public async query<V, R>(query: string, values?: Partial<V>): Promise<R> {
-    const [result] = await this.connection.query(this.transform(query, values))
+    const [result] = await this.connection.query(this.format(query, values))
     return result as unknown as R
   }
 
@@ -54,7 +60,7 @@ export class MysqlConnection extends Connection {
 
   public stream<V> (query: string, values?: Partial<V>): Readable {
     return (this.connection as StreamConnection).connection
-      .query(this.transform(query, values))
+      .query(this.format(query, values))
       .stream()
   }
 

@@ -3,6 +3,8 @@ import type { IResult, Request } from 'mssql'
 import { Connection } from '../connection'
 import type { Readable } from 'stream'
 import { Transform } from 'stream'
+import { escape } from 'sqlstring'
+import lodash from 'lodash'
 import tokens from './tokens'
 
 export class MssqlConnection extends Connection {
@@ -20,6 +22,12 @@ export class MssqlConnection extends Connection {
     return { count: result.rowsAffected[0] }
   }
 
+  public formatValue (value: unknown): string {
+    return escape(lodash.isPlainObject(value) || typeof value === 'boolean'
+      ? JSON.stringify(value)
+      : value)
+  }
+
   public async insert<V, R = number> (query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {
     const result = await this.query<V, IResult<{ id: R }>>(`${query}; SELECT SCOPE_IDENTITY() AS id;`, values)
     return result.recordset
@@ -31,7 +39,7 @@ export class MssqlConnection extends Connection {
   }
 
   public async query<V, R>(query: string, values?: Partial<V>): Promise<R> {
-    const result = await this.connection.query(this.transform(query, values))
+    const result = await this.connection.query(this.format(query, values))
     return result as unknown as R
   }
 
@@ -61,7 +69,7 @@ export class MssqlConnection extends Connection {
 
     this.connection.pipe(transform)
     // eslint-disable-next-line no-void
-    void this.connection.query(this.transform(query, values))
+    void this.connection.query(this.format(query, values))
 
     return transform
   }

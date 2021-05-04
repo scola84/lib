@@ -6,7 +6,7 @@ import { URL } from 'url'
 import lodash from 'lodash'
 import tokens from './tokens'
 
-types.setTypeParser(20, parseInt)
+types.setTypeParser(types.builtins.INT8, parseInt)
 
 export class PostgresqlDatabase extends Database {
   public pool: Pool

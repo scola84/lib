@@ -1,3 +1,10 @@
+## [15.6.1](https://github.com/scola84/lib/compare/v15.6.0...v15.6.1) (2021-05-04)
+
+
+### Bug Fixes
+
+* **sql:** format and parse more data types correctly ([638ef97](https://github.com/scola84/lib/commit/638ef97f2defc6b21ffe25b8958cc1ac5a9aa216))
+
 # [15.6.0](https://github.com/scola84/lib/compare/v15.5.2...v15.6.0) (2021-05-03)
 
 

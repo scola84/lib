@@ -1,2 +1,8 @@
 #!/bin/bash
+
+if [[ $(git symbolic-ref --short HEAD) = "main" ]] && [[ -n $(git diff --cached --name-only | grep \.docker/.*/initdb.d/.*/data) ]]; then
+  echo "Error: data files found"
+  exit 1
+fi
+
 yarn run lint --fix && git update-index --again && yarn run test

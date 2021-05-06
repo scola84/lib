@@ -53,17 +53,18 @@ try {
     const includeFlag = (include ?? []).join(' ')
 
     child.execSync([
-        `docker exec ${container} mysqldump`,
-        '--compact',
-        excludeFlag,
-        `--host ${url.hostname || '127.0.0.1'}`,
-        '--no-create-info',
-        `--password=${url.password || 'root'}`,
-        `--port ${url.port || 3306}`,
-        `--user ${url.username || 'root'}`,
-        database,
-        includeFlag,
-        `> ${targetFile}`
+      `docker exec ${container} mysqldump`,
+      '--compact',
+      excludeFlag,
+      `--host ${url.hostname || '127.0.0.1'}`,
+      '--no-create-info',
+      `--password=${url.password || 'root'}`,
+      `--port ${url.port || 3306}`,
+      '--skip-extended-insert',
+      `--user ${url.username || 'root'}`,
+      database,
+      includeFlag,
+      `> ${targetFile}`
     ].join(' '), {
       stdio: 'inherit'
     })
@@ -88,12 +89,12 @@ try {
       `${container} pg_dump`,
       '--column-inserts',
       '--data-only',
+      '--disable-triggers',
       excludeFlag,
       '--format p',
       `--host ${url.hostname || '127.0.0.1'}`,
       includeFlag,
       `--port ${url.port || 5432}`,
-      '--rows-per-insert 99',
       `--user ${url.username || 'root'}`,
       database,
       `> ${targetFile}`

@@ -1,3 +1,10 @@
+## [15.6.3](https://github.com/scola84/lib/compare/v15.6.2...v15.6.3) (2021-05-06)
+
+
+### Bug Fixes
+
+* **docker:** add extra hosts to node service ([5a1f6bb](https://github.com/scola84/lib/commit/5a1f6bba4062829bcbdf56731a2fc46a35a3625e))
+
 ## [15.6.2](https://github.com/scola84/lib/compare/v15.6.1...v15.6.2) (2021-05-04)
 
 

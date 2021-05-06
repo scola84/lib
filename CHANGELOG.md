@@ -1,3 +1,10 @@
+## [15.6.4](https://github.com/scola84/lib/compare/v15.6.3...v15.6.4) (2021-05-06)
+
+
+### Bug Fixes
+
+* **bin:** improve output of sql-data ([7e0f342](https://github.com/scola84/lib/commit/7e0f342beb22d8e4e619aa6115d752493e9cb8a9))
+
 ## [15.6.3](https://github.com/scola84/lib/compare/v15.6.2...v15.6.3) (2021-05-06)
 
 

@@ -1,3 +1,10 @@
+## [15.6.5](https://github.com/scola84/lib/compare/v15.6.4...v15.6.5) (2021-05-07)
+
+
+### Bug Fixes
+
+* **queue:** only update schedule_next if schedule_next was null ([1bddbd8](https://github.com/scola84/lib/commit/1bddbd82d57aba1402ccb9a4bad5a9690ed6acce))
+
 ## [15.6.4](https://github.com/scola84/lib/compare/v15.6.3...v15.6.4) (2021-05-06)
 
 

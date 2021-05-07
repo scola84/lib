@@ -150,7 +150,6 @@ export class Queuer {
 
     try {
       queue.sql = await this.database.connect()
-      await this.updateQueue(queue)
       queue.tasks = await this.selectTasks(queue) ?? []
       await queueRunner.run(queue, parameters)
     } catch (error: unknown) {
@@ -181,7 +180,11 @@ export class Queuer {
     const queues = await this.selectQueues(date)
 
     await Promise.all(queues.map(async (queue): Promise<void> => {
-      await this.run(queue)
+      await this.updateQueue(queue)
+
+      if (queue.schedule_next !== null) {
+        await this.run(queue)
+      }
     }))
   }
 
@@ -248,17 +251,15 @@ export class Queuer {
   }
 
   protected async updateQueue (queue: Queue): Promise<UpdateResult | undefined> {
-    return queue.sql?.update<Queue>(sql`
+    return this.database.update<Queue>(sql`
       UPDATE queue
       SET schedule_next = $(schedule_next)
       WHERE id = $(id)
     `, {
       id: queue.id,
-      schedule_next: queue.schedule === null
-        ? null
-        : parseExpression(queue.schedule)
-          .next()
-          .toDate()
+      schedule_next: parseExpression(queue.schedule ?? '')
+        .next()
+        .toDate()
     })
   }
 }

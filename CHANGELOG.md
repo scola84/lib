@@ -1,3 +1,10 @@
+## [15.6.6](https://github.com/scola84/lib/compare/v15.6.5...v15.6.6) (2021-05-07)
+
+
+### Bug Fixes
+
+* **sql:** properly parse DSN ([52a9f80](https://github.com/scola84/lib/commit/52a9f802e1ee5eb8e35fa59a2b27c1bb79a9049f))
+
 ## [15.6.5](https://github.com/scola84/lib/compare/v15.6.4...v15.6.5) (2021-05-07)
 
 

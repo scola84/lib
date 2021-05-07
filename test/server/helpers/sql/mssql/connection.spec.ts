@@ -39,7 +39,8 @@ const helpers = new Helpers()
 beforeAll(async () => {
   helpers.pool = new ConnectionPool({
     options: {
-      enableArithAbort: true
+      enableArithAbort: true,
+      encrypt: false
     },
     password: 'rootRoot1',
     server: 'localhost',

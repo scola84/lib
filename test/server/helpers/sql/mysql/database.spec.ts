@@ -15,7 +15,7 @@ describe('MysqlConnection', () => {
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
-    it('parse a DSN', parseADSN)
+    it('parse a DSN', parseADsn)
     it('stream rows', streamRows)
     it('update one row', updateOneRow)
   })
@@ -36,7 +36,7 @@ class Helpers {
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.dsn = 'mysql://root:root@127.0.0.1:3306/scola?connectionLimit=20&supportBigNumbers=true'
+  helpers.dsn = 'mysql://root:root@127.0.0.1:3306/scola'
 
   helpers.pool = createPool({
     database: 'scola',
@@ -61,7 +61,7 @@ afterAll(async () => {
 })
 
 async function connectWithObjectOptions (): Promise<void> {
-  const database = new MysqlDatabase(MysqlDatabase.parseDSN(helpers.dsn))
+  const database = new MysqlDatabase(MysqlDatabase.parseDsn(helpers.dsn))
 
   try {
     expect(database.pool.constructor.name).equal('PromisePool')
@@ -219,8 +219,11 @@ async function parseABigIntAsANumber (): Promise<void> {
   }
 }
 
-function parseADSN (): void {
+function parseADsn (): void {
+  const dsn = `${helpers.dsn}?charset=utf8&connectionLimit=20&supportBigNumbers=true`
+
   const expectedOptions = {
+    charset: 'utf8',
     connectionLimit: 20,
     database: 'scola',
     host: '127.0.0.1',
@@ -230,7 +233,7 @@ function parseADSN (): void {
     user: 'root'
   }
 
-  const options = MysqlDatabase.parseDSN(helpers.dsn)
+  const options = MysqlDatabase.parseDsn(dsn)
   expect(options).eql(expectedOptions)
 }
 

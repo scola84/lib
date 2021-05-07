@@ -13,7 +13,7 @@ describe('PostgresqlConnection', () => {
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
-    it('parse a DSN', parseADSN)
+    it('parse a DSN', parseADsn)
     it('stream rows', streamRows)
     it('update one row', updateOneRow)
   })
@@ -27,7 +27,7 @@ class Helpers {
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.dsn = 'postgres://root:root@127.0.0.1/scola?keepAlive=true&max=20'
+  helpers.dsn = 'postgres://root:root@127.0.0.1/scola'
 
   helpers.pool = new Pool({
     database: 'scola',
@@ -52,7 +52,7 @@ afterAll(async () => {
 })
 
 async function connectWithObjectOptions (): Promise<void> {
-  const database = new PostgresqlDatabase(PostgresqlDatabase.parseDSN(helpers.dsn))
+  const database = new PostgresqlDatabase(PostgresqlDatabase.parseDsn(helpers.dsn))
 
   try {
     expect(database.pool).instanceOf(Pool)
@@ -187,14 +187,17 @@ async function parseABigIntAsANumber (): Promise<void> {
   }
 }
 
-function parseADSN (): void {
+function parseADsn (): void {
+  const dsn = `${helpers.dsn}?keepAlive=true&max=20&sslmode=require`
+
   const expectedOptions = {
-    connectionString: helpers.dsn,
+    connectionString: dsn,
     keepAlive: true,
-    max: 20
+    max: 20,
+    sslmode: 'require'
   }
 
-  const options = PostgresqlDatabase.parseDSN(helpers.dsn)
+  const options = PostgresqlDatabase.parseDsn(dsn)
   expect(options).eql(expectedOptions)
 }
 

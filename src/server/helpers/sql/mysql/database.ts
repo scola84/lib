@@ -4,6 +4,7 @@ import { MysqlConnection } from './connection'
 import { URL } from 'url'
 import { createPool } from 'mysql2/promise'
 import lodash from 'lodash'
+import { parse } from 'query-string'
 import tokens from './tokens'
 import { unescape } from 'querystring'
 
@@ -16,7 +17,7 @@ export class MysqlDatabase extends Database {
     super()
 
     const options = typeof rawOptions === 'string'
-      ? MysqlDatabase.parseDSN(rawOptions)
+      ? MysqlDatabase.parseDsn(rawOptions)
       : rawOptions
 
     this.pool = createPool({
@@ -25,7 +26,7 @@ export class MysqlDatabase extends Database {
     })
   }
 
-  public static parseDSN (dsn: string): PoolOptions {
+  public static parseDsn (dsn: string): PoolOptions {
     const url = new URL(dsn)
 
     const options: PoolOptions = {
@@ -36,9 +37,14 @@ export class MysqlDatabase extends Database {
       user: url.username
     }
 
-    for (const [key, value] of url.searchParams.entries()) {
-      lodash.set(options, key, JSON.parse(value))
-    }
+    Object
+      .entries(parse(url.search, {
+        parseBooleans: true,
+        parseNumbers: true
+      }))
+      .forEach(([name, value]) => {
+        lodash.set(options, name, value)
+      })
 
     return options
   }

@@ -4,6 +4,7 @@ import type { PoolConfig } from 'pg'
 import { PostgresqlConnection } from './connection'
 import { URL } from 'url'
 import lodash from 'lodash'
+import { parse } from 'query-string'
 import tokens from './tokens'
 
 types.setTypeParser(types.builtins.INT8, parseInt)
@@ -17,22 +18,27 @@ export class PostgresqlDatabase extends Database {
     super()
 
     const options = typeof rawOptions === 'string'
-      ? PostgresqlDatabase.parseDSN(rawOptions)
+      ? PostgresqlDatabase.parseDsn(rawOptions)
       : rawOptions
 
     this.pool = new Pool(options)
   }
 
-  public static parseDSN (dsn: string): PoolConfig {
+  public static parseDsn (dsn: string): PoolConfig {
     const url = new URL(dsn)
 
     const options: PoolConfig = {
       connectionString: dsn
     }
 
-    for (const [key, value] of url.searchParams.entries()) {
-      lodash.set(options, key, JSON.parse(value))
-    }
+    Object
+      .entries(parse(url.search, {
+        parseBooleans: true,
+        parseNumbers: true
+      }))
+      .forEach(([name, value]) => {
+        lodash.set(options, name, value)
+      })
 
     return options
   }

@@ -4,7 +4,9 @@ import { MssqlConnection } from './connection'
 import { URL } from 'url'
 import type { config } from 'mssql'
 import lodash from 'lodash'
+import { parse } from 'query-string'
 import tokens from './tokens'
+import { unescape } from 'querystring'
 
 export class MssqlDatabase extends Database {
   public pool: ConnectionPool
@@ -15,19 +17,20 @@ export class MssqlDatabase extends Database {
     super()
 
     const options = typeof rawOptions === 'string'
-      ? MssqlDatabase.parseDSN(rawOptions)
+      ? MssqlDatabase.parseDsn(rawOptions)
       : rawOptions
 
     this.pool = new ConnectionPool(options)
   }
 
-  public static parseDSN (dsn: string): config {
+  public static parseDsn (dsn: string): config {
     const url = new URL(dsn)
 
     const options: config = {
       database: url.pathname.slice(1),
       options: {
-        enableArithAbort: true
+        enableArithAbort: true,
+        encrypt: false
       },
       password: unescape(url.password),
       port: Number(url.port),
@@ -35,9 +38,14 @@ export class MssqlDatabase extends Database {
       user: url.username
     }
 
-    for (const [key, value] of url.searchParams.entries()) {
-      lodash.set(options, key, JSON.parse(value))
-    }
+    Object
+      .entries(parse(url.search, {
+        parseBooleans: true,
+        parseNumbers: true
+      }))
+      .forEach(([name, value]) => {
+        lodash.set(options, name, value)
+      })
 
     return options
   }

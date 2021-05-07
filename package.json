@@ -16,7 +16,7 @@
   "browser": "./dist/client/umd.js",
   "dependencies": {
     "@rmp135/sql-ts": "^1.8.2",
-    "@rollup/plugin-commonjs": "^18.1.0",
+    "@rollup/plugin-commonjs": "^19.0.0",
     "@rollup/plugin-node-resolve": "^13.0.0",
     "@rollup/plugin-typescript": "^8.2.1",
     "@types/lodash": "^4.14.168",
@@ -45,13 +45,15 @@
     "lodash": "^4.17.21",
     "micromatch": "^4.0.4",
     "minimist": "^1.2.5",
-    "mssql": "^6.3.1",
+    "mssql": "^7.0.0",
     "mysql2": "^2.2.5",
     "node-schedule": "^2.0.0",
     "onchange": "^7.1.0",
     "pg": "^8.6.0",
     "pg-format": "^1.0.4",
     "pg-query-stream": "^4.1.0",
+    "query-string": "^7.0.0",
+    "querystring": "^0.2.1",
     "redis": "^3.1.2",
     "rollup": "^2.47.0",
     "rollup-plugin-copy": "^3.4.0",
@@ -62,7 +64,7 @@
     "rollup-plugin-terser": "^7.0.2",
     "sqlstring": "^2.3.2",
     "stream": "^0.0.2",
-    "type-fest": "^1.0.2"
+    "type-fest": "^1.1.0"
   },
   "description": "The Scola Library",
   "devDependencies": {

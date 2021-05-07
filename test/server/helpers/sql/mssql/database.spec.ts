@@ -3,7 +3,7 @@ import { MssqlDatabase } from '../../../../../src/server/helpers/sql/mssql'
 import { expect } from 'chai'
 import { sql } from '../../../../../src/server/helpers/sql/tag'
 
-describe('PostgresqlConnection', () => {
+describe('MssqlConnection', () => {
   describe('should', () => {
     it('connect with object options', connectWithObjectOptions)
     it('connect with string options', connectWithStringOptions)
@@ -13,7 +13,7 @@ describe('PostgresqlConnection', () => {
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
-    it('parse a DSN', parseADSN)
+    it('parse a DSN', parseADsn)
     it('stream rows', streamRows)
     it('update one row', updateOneRow)
   })
@@ -34,11 +34,12 @@ class Helpers {
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.dsn = 'mssql://sa:rootRoot1@localhost:1433/scola?parseJSON=true&pool.max=20'
+  helpers.dsn = 'mssql://sa:rootRoot1@localhost:1433/scola'
 
   helpers.pool = new ConnectionPool({
     options: {
-      enableArithAbort: true
+      enableArithAbort: true,
+      encrypt: false
     },
     password: 'rootRoot1',
     server: 'localhost',
@@ -67,7 +68,7 @@ afterAll(async () => {
 })
 
 async function connectWithObjectOptions (): Promise<void> {
-  const database = new MssqlDatabase(MssqlDatabase.parseDSN(helpers.dsn))
+  const database = new MssqlDatabase(MssqlDatabase.parseDsn(helpers.dsn))
 
   try {
     expect(database.pool).instanceOf(ConnectionPool)
@@ -202,11 +203,15 @@ async function parseABigIntAsANumber (): Promise<void> {
   }
 }
 
-function parseADSN (): void {
+function parseADsn (): void {
+  const dsn = `${helpers.dsn}?domain=scola&parseJSON=true&pool.max=20`
+
   const expectedOptions = {
     database: 'scola',
+    domain: 'scola',
     options: {
-      enableArithAbort: true
+      enableArithAbort: true,
+      encrypt: false
     },
     parseJSON: true,
     password: 'rootRoot1',
@@ -218,7 +223,7 @@ function parseADSN (): void {
     user: 'sa'
   }
 
-  const options = MssqlDatabase.parseDSN(helpers.dsn)
+  const options = MssqlDatabase.parseDsn(dsn)
   expect(options).eql(expectedOptions)
 }
 

@@ -1,3 +1,16 @@
+# [16.0.0](https://github.com/scola84/lib/compare/v15.6.6...v16.0.0) (2021-05-08)
+
+
+### Bug Fixes
+
+* decode username and password everywhere ([108c6d0](https://github.com/scola84/lib/commit/108c6d05dc9f300b6b5f419687f0cd87f8f5e37d))
+* remove less than smart sql connection property ([81446eb](https://github.com/scola84/lib/commit/81446ebeddf1c841074c0f13ea4d67986503c733))
+
+
+### BREAKING CHANGES
+
+* The SqlTaskRun and SqlRequest have been removed.
+
 ## [15.6.6](https://github.com/scola84/lib/compare/v15.6.5...v15.6.6) (2021-05-07)
 
 

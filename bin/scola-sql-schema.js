@@ -55,10 +55,10 @@ try {
     excludeFlags,
     `--host ${url.hostname || '127.0.0.1'}`,
     '--no-data',
-    `--password=${url.password || 'root'}`,
+    `--password=${decodeURIComponent(url.password || 'root')}`,
     `--port ${url.port || 3306}`,
     '--skip-add-drop-table',
-    `--user ${url.username || 'root'}`,
+    `--user ${decodeURIComponent(url.username || 'root')}`,
     `--databases ${database}`,
     `> ${targetFile}`
     ].join(' '), {
@@ -81,7 +81,7 @@ try {
 
     child.execSync([
       'docker exec',
-      `--env PGPASSWORD=${url.password || 'root'}`,
+      `--env PGPASSWORD=${decodeURIComponent(url.password || 'root')}`,
       `${container} pg_dump`,
       '--create',
       excludeFlags,
@@ -91,7 +91,7 @@ try {
       '--no-owner',
       `--port ${url.port || 5432}`,
       '--schema-only',
-      `--user ${url.username || 'root'}`,
+      `--user ${decodeURIComponent(url.username || 'root')}`,
       database,
       `> ${targetFile}`
     ].join(' '), {

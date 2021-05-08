@@ -6,7 +6,6 @@ import type { config } from 'mssql'
 import lodash from 'lodash'
 import { parse } from 'query-string'
 import tokens from './tokens'
-import { unescape } from 'querystring'
 
 export class MssqlDatabase extends Database {
   public pool: ConnectionPool
@@ -31,10 +30,10 @@ export class MssqlDatabase extends Database {
       options: {
         encrypt: false
       },
-      password: unescape(url.password),
+      password: decodeURIComponent(url.password),
       port: Number(url.port),
       server: url.hostname,
-      user: url.username
+      user: decodeURIComponent(url.username)
     }
 
     Object

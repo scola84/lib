@@ -36,7 +36,7 @@ try {
   fs.mkdirSync(path.dirname(targetFile), { recursive: true })
 
   child.execSync([
-    `cat .docker/mysql/initdb.d/schema/${database}.sql`,
+    `cat .docker/mysql/initdb.d/${name}/schema/${database}.sql`,
     '| sed "s/USE/-- USE/g" ',
     '> /tmp/scola-diff.sql'
   ].join(' '))
@@ -45,9 +45,9 @@ try {
     'mysql-schema-diff',
     `--host ${url.hostname || '127.0.0.1'}`,
     '--no-old-defs',
-    `--password=${url.password ?? 'root'}`,
+    `--password=${decodeURIComponent(url.password || 'root')}`,
     `--port ${url.port || 3306}`,
-    `--user ${url.username || 'root'}`,
+    `--user ${decodeURIComponent(url.username || 'root')}`,
     `db:${database}`,
     '/tmp/scola-diff.sql',
     `> ${targetFile}`

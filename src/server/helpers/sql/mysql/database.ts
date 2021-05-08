@@ -6,7 +6,6 @@ import { createPool } from 'mysql2/promise'
 import lodash from 'lodash'
 import { parse } from 'query-string'
 import tokens from './tokens'
-import { unescape } from 'querystring'
 
 export class MysqlDatabase extends Database {
   public pool: Pool
@@ -30,10 +29,10 @@ export class MysqlDatabase extends Database {
       database: url.pathname.slice(1),
       decimalNumbers: true,
       host: url.hostname,
-      password: unescape(url.password),
+      password: decodeURIComponent(url.password),
       port: Number(url.port),
       supportBigNumbers: true,
-      user: url.username
+      user: decodeURIComponent(url.username)
     }
 
     Object

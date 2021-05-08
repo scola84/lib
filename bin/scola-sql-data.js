@@ -58,10 +58,10 @@ try {
       excludeFlag,
       `--host ${url.hostname || '127.0.0.1'}`,
       '--no-create-info',
-      `--password=${url.password || 'root'}`,
+      `--password=${decodeURIComponent(url.password || 'root')}`,
       `--port ${url.port || 3306}`,
       '--skip-extended-insert',
-      `--user ${url.username || 'root'}`,
+      `--user ${decodeURIComponent(url.username || 'root')}`,
       database,
       includeFlag,
       `> ${targetFile}`
@@ -85,7 +85,7 @@ try {
 
     child.execSync([
       'docker exec',
-      `--env PGPASSWORD=${url.password || 'root'}`,
+      `--env PGPASSWORD=${decodeURIComponent(url.password || 'root')}`,
       `${container} pg_dump`,
       '--column-inserts',
       '--data-only',
@@ -95,7 +95,7 @@ try {
       `--host ${url.hostname || '127.0.0.1'}`,
       includeFlag,
       `--port ${url.port || 5432}`,
-      `--user ${url.username || 'root'}`,
+      `--user ${decodeURIComponent(url.username || 'root')}`,
       database,
       `> ${targetFile}`
     ].join(' '), {

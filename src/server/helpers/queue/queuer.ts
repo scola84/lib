@@ -149,15 +149,12 @@ export class Queuer {
     this.queueRunners.add(queueRunner)
 
     try {
-      queue.sql = await this.database.connect()
       queue.tasks = await this.selectTasks(queue) ?? []
       await queueRunner.run(queue, parameters)
     } catch (error: unknown) {
       this.logger.error({ context: 'run' }, String(error))
     } finally {
       this.queueRunners.delete(queueRunner)
-      queue.sql?.release()
-      delete queue.sql
     }
   }
 
@@ -218,7 +215,7 @@ export class Queuer {
   }
 
   protected async selectTasks (queue: Queue): Promise<Task[] | undefined> {
-    return queue.sql?.select<Task, Task[]>(sql`
+    return this.database.select<Task, Task[]>(sql`
       SELECT *
       FROM task
       WHERE fkey_queue_id = $(fkey_queue_id)

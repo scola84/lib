@@ -210,7 +210,6 @@ function parseADsn (): void {
     database: 'scola',
     domain: 'scola',
     options: {
-      enableArithAbort: true,
       encrypt: false
     },
     parseJSON: true,

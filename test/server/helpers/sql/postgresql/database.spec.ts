@@ -192,6 +192,7 @@ function parseADsn (): void {
 
   const expectedOptions = {
     connectionString: dsn,
+    connectionTimeoutMillis: 10000,
     keepAlive: true,
     max: 20,
     sslmode: 'require'

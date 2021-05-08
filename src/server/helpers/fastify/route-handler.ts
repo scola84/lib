@@ -1,16 +1,6 @@
-import type { FastifyReply, FastifyRequest, FastifySchema, RawRequestDefaultExpression, RawServerBase, RawServerDefault, RouteOptions } from 'fastify'
-import type { Connection } from '../sql'
+import type { FastifyReply, FastifyRequest, FastifySchema, RouteOptions } from 'fastify'
 import type { Logger } from 'pino'
-import type { RouteGenericInterface } from 'fastify/types/route'
 import type { Server } from './server'
-
-export interface SqlRequest<
-  RouteGeneric extends RouteGenericInterface = RouteGenericInterface,
-  RawServer extends RawServerBase = RawServerDefault,
-  RawRequest extends RawRequestDefaultExpression<RawServer> = RawRequestDefaultExpression<RawServer>
-> extends FastifyRequest<RouteGeneric, RawServerBase, RawRequest> {
-  sql: Connection
-}
 
 export interface RouteHandlerOptions extends RouteOptions {
   logger: Logger
@@ -81,8 +71,6 @@ export abstract class RouteHandler {
       } catch (replyError: unknown) {
         this.logger?.error({ context: 'handle-route' }, String(replyError))
       }
-    } finally {
-      (request as Partial<SqlRequest>).sql?.release()
     }
   }
 

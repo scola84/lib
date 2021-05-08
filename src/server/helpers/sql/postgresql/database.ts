@@ -28,7 +28,8 @@ export class PostgresqlDatabase extends Database {
     const url = new URL(dsn)
 
     const options: PoolConfig = {
-      connectionString: dsn
+      connectionString: dsn,
+      connectionTimeoutMillis: 10000
     }
 
     Object

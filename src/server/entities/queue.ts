@@ -1,9 +1,7 @@
-import type { Connection } from '../helpers/sql'
 import type { Queue as QueueBase } from './base'
 import type { Task } from './task'
 
 export interface Queue extends Required<QueueBase> {
-  sql?: Connection
   tasks: Task[]
 }
 

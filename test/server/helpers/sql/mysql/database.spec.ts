@@ -226,6 +226,7 @@ function parseADsn (): void {
     charset: 'utf8',
     connectionLimit: 20,
     database: 'scola',
+    decimalNumbers: true,
     host: '127.0.0.1',
     password: 'root',
     port: 3306,

@@ -20,10 +20,7 @@ export class MysqlDatabase extends Database {
       ? MysqlDatabase.parseDsn(rawOptions)
       : rawOptions
 
-    this.pool = createPool({
-      supportBigNumbers: true,
-      ...options
-    })
+    this.pool = createPool(options)
   }
 
   public static parseDsn (dsn: string): PoolOptions {
@@ -31,9 +28,11 @@ export class MysqlDatabase extends Database {
 
     const options: PoolOptions = {
       database: url.pathname.slice(1),
+      decimalNumbers: true,
       host: url.hostname,
       password: unescape(url.password),
       port: Number(url.port),
+      supportBigNumbers: true,
       user: url.username
     }
 

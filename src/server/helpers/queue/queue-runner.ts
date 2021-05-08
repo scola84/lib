@@ -83,7 +83,6 @@ export class QueueRunner {
         throw new Error('Database is undefined')
       }
 
-      queueRun.sql = await this.database.connect()
       const inserter = this.createInserter(queueRun)
       const reader = await database.stream(queue.query ?? '', parameters)
       const xadder = this.createAdder()
@@ -105,13 +104,11 @@ export class QueueRunner {
       } catch (updateError: unknown) {
         this.logger?.error({ context: 'run' }, String(updateError))
       }
-    } finally {
-      queueRun.sql?.release()
     }
   }
 
   protected async insertItem (queueRun: QueueRun, payload: unknown): Promise<InsertResult | undefined> {
-    return queueRun.sql?.insertOne<Item>(sql`
+    return this.database.insertOne<Item>(sql`
       INSERT INTO item (
         fkey_queue_run_id,
         payload
@@ -126,7 +123,7 @@ export class QueueRunner {
   }
 
   protected async insertQueueRun (queue: Queue): Promise<InsertResult | undefined> {
-    return queue.sql?.insertOne<QueueRun>(sql`
+    return this.database.insertOne<QueueRun>(sql`
       INSERT INTO queue_run (
         fkey_queue_id,
         name
@@ -141,7 +138,7 @@ export class QueueRunner {
   }
 
   protected async insertTaskRun (queueRun: QueueRun, itemId: number, taskId: number): Promise<InsertResult | undefined> {
-    return queueRun.sql?.insertOne<TaskRun>(sql`
+    return this.database.insertOne<TaskRun>(sql`
       INSERT INTO task_run (
         fkey_item_id,
         fkey_queue_run_id,
@@ -159,7 +156,7 @@ export class QueueRunner {
   }
 
   protected async selectQueues (queueRun: QueueRun): Promise<Queue[] | undefined> {
-    return queueRun.sql?.select<QueueRun, Queue[]>(sql`
+    return this.database.select<QueueRun, Queue[]>(sql`
       SELECT queue.id
       FROM queue
       JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
@@ -172,7 +169,7 @@ export class QueueRunner {
   }
 
   protected async updateQueueRunErr (queueRun: QueueRun, error: Error): Promise<UpdateResult | undefined> {
-    return queueRun.sql?.update<QueueRun>(sql`
+    return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
         code = 'err',
@@ -186,7 +183,7 @@ export class QueueRunner {
   }
 
   protected async updateQueueRunOk (queueRun: QueueRun): Promise<UpdateResult | undefined> {
-    return queueRun.sql?.update<QueueRun>(sql`
+    return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
         aggr_total = $(aggr_total),

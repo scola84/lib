@@ -29,7 +29,6 @@ export class MssqlDatabase extends Database {
     const options: config = {
       database: url.pathname.slice(1),
       options: {
-        enableArithAbort: true,
         encrypt: false
       },
       password: unescape(url.password),

@@ -1,3 +1,10 @@
+# [16.1.0](https://github.com/scola84/lib/compare/v16.0.0...v16.1.0) (2021-05-08)
+
+
+### Features
+
+* **sql:** data format to database ([2fdc3a3](https://github.com/scola84/lib/commit/2fdc3a33d1996933e765260c8f0827a2c0edee7b))
+
 # [16.0.0](https://github.com/scola84/lib/compare/v15.6.6...v16.0.0) (2021-05-08)
 
 

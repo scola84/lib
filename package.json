@@ -171,5 +171,5 @@
     "test": "jest --preset ts-jest --runInBand --testRunner jest-circus/runner"
   },
   "types": "./types/index.d.ts",
-  "version": "16.0.0"
+  "version": "16.1.0"
 }

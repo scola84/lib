@@ -3,11 +3,15 @@ import { Database } from '../database'
 import { MssqlConnection } from './connection'
 import { URL } from 'url'
 import type { config } from 'mssql'
+import { format } from '../format'
+import { format as formatValue } from './format'
 import lodash from 'lodash'
 import { parse } from 'query-string'
 import tokens from './tokens'
 
 export class MssqlDatabase extends Database {
+  public format = format(formatValue)
+
   public pool: ConnectionPool
 
   public tokens = tokens

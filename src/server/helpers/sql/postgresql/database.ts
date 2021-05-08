@@ -3,6 +3,8 @@ import { Database } from '../database'
 import type { PoolConfig } from 'pg'
 import { PostgresqlConnection } from './connection'
 import { URL } from 'url'
+import { format } from '../format'
+import { format as formatValue } from './format'
 import lodash from 'lodash'
 import { parse } from 'query-string'
 import tokens from './tokens'
@@ -10,6 +12,8 @@ import tokens from './tokens'
 types.setTypeParser(types.builtins.INT8, parseInt)
 
 export class PostgresqlDatabase extends Database {
+  public format = format(formatValue)
+
   public pool: Pool
 
   public tokens = tokens

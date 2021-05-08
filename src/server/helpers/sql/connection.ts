@@ -14,32 +14,11 @@ export interface UpdateResult {
 }
 
 export abstract class Connection {
+  public abstract format: (rawQuery: string, rawValues: Record<string, unknown>) => string
+
   public abstract tokens: tokens
 
-  public format (rawQuery: string, rawValues: Record<string, unknown> = {}): string {
-    const matches = rawQuery.match(/\$\(\w+\)/gu) ?? []
-
-    let key = null
-    let query = rawQuery
-    let value = null
-
-    for (const match of matches) {
-      key = match.slice(2, -1)
-      value = rawValues[key]
-
-      if (value === undefined) {
-        throw new Error(`Parameter "${key}" is undefined`)
-      }
-
-      query = query.replace(match, this.formatValue(value))
-    }
-
-    return query
-  }
-
   public abstract delete <V> (query: string, values?: Partial<V>): Promise<DeleteResult>
-
-  public abstract formatValue (value: unknown): string
 
   public abstract insert<V, R = number> (query: string, values?: Partial<V>, key?: string): Promise<Array<InsertResult<R>>>
 

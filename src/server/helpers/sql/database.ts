@@ -3,6 +3,8 @@ import type { Readable } from 'stream'
 import type tokens from './tokens'
 
 export abstract class Database {
+  public abstract format: (rawQuery: string, rawValues: Record<string, unknown>) => string
+
   public abstract tokens: tokens
 
   public async delete<V> (query: string, values?: Partial<V>): Promise<DeleteResult> {

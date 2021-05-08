@@ -3,11 +3,14 @@ import { Connection } from '../connection'
 import PgQueryStream from 'pg-query-stream'
 import type { PoolClient } from 'pg'
 import type { Readable } from 'stream'
-import { literal } from 'pg-format'
+import { format } from '../format'
+import { format as formatValue } from './format'
 import tokens from './tokens'
 
 export class PostgresqlConnection extends Connection {
   public connection: PoolClient
+
+  public format = format(formatValue)
 
   public tokens = tokens
 
@@ -19,10 +22,6 @@ export class PostgresqlConnection extends Connection {
   public async delete<V> (query: string, values?: Partial<V>): Promise<DeleteResult> {
     await this.query(query, values)
     return { count: 0 }
-  }
-
-  public formatValue (value: unknown): string {
-    return literal(value as string)
   }
 
   public async insert<V, R = number> (query: string, values?: Partial<V>, key = 'id'): Promise<Array<InsertResult<R>>> {

@@ -3,8 +3,8 @@ import type { PoolConnection, ResultSetHeader } from 'mysql2/promise'
 import type { Connection as BaseConnection } from 'mysql'
 import { Connection } from '../connection'
 import type { Readable } from 'stream'
-import { escape } from 'sqlstring'
-import lodash from 'lodash'
+import { format } from '../format'
+import { format as formatValue } from './format'
 import tokens from './tokens'
 
 interface StreamConnection extends PoolConnection {
@@ -13,6 +13,8 @@ interface StreamConnection extends PoolConnection {
 
 export class MysqlConnection extends Connection {
   public connection: PoolConnection
+
+  public format = format(formatValue)
 
   public tokens = tokens
 
@@ -24,10 +26,6 @@ export class MysqlConnection extends Connection {
   public async delete<V> (query: string, values?: Partial<V>): Promise<DeleteResult> {
     const result = await this.query<V, ResultSetHeader>(query, values)
     return { count: result.affectedRows }
-  }
-
-  public formatValue (value: unknown): string {
-    return escape(lodash.isPlainObject(value) ? JSON.stringify(value) : value)
   }
 
   public async insert<V, R = number> (query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {

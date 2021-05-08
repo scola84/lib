@@ -11,11 +11,11 @@ describe('MysqlConnection', () => {
     it('connect with string options', connectWithStringOptions)
     it('connect without options', connectWithoutOptions)
     it('delete one row', deleteOneRow)
-    it('execute a query', executeAQuery)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
     it('parse a DSN', parseADsn)
+    it('select rows', selectRows)
     it('stream rows', streamRows)
     it('update one row', updateOneRow)
   })
@@ -122,25 +122,6 @@ async function deleteOneRow (): Promise<void> {
   }
 }
 
-async function executeAQuery (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
-
-  try {
-    await database.query(sql`SELECT 1`)
-    expect(all.length).gt(0)
-    expect(free.length).equal(all.length)
-  } finally {
-    await database.end()
-  }
-}
-
 async function insertABulkOfRows (): Promise<void> {
   const database = new MysqlDatabase(helpers.dsn)
 
@@ -236,6 +217,29 @@ function parseADsn (): void {
 
   const options = MysqlDatabase.parseDsn(dsn)
   expect(options).eql(expectedOptions)
+}
+
+async function selectRows (): Promise<void> {
+  const database = new MysqlDatabase(helpers.dsn)
+
+  const {
+    pool: {
+      _allConnections: all,
+      _freeConnections: free
+    }
+  } = database.pool as unknown as PoolWithNumbers
+
+  try {
+    await database.select(sql`
+      SELECT *
+      FROM test_database
+    `)
+
+    expect(all.length).gt(0)
+    expect(free.length).equal(all.length)
+  } finally {
+    await database.end()
+  }
 }
 
 async function streamRows (): Promise<void> {

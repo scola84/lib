@@ -3,12 +3,14 @@ import type { IResult, Request } from 'mssql'
 import { Connection } from '../connection'
 import type { Readable } from 'stream'
 import { Transform } from 'stream'
-import { escape } from 'sqlstring'
-import lodash from 'lodash'
+import { format } from '../format'
+import { format as formatValue } from './format'
 import tokens from './tokens'
 
 export class MssqlConnection extends Connection {
   public connection: Request
+
+  public format = format(formatValue)
 
   public tokens = tokens
 
@@ -20,12 +22,6 @@ export class MssqlConnection extends Connection {
   public async delete<V> (query: string, values?: Partial<V>): Promise<DeleteResult> {
     const result = await this.query<V, IResult<unknown>>(query, values)
     return { count: result.rowsAffected[0] }
-  }
-
-  public formatValue (value: unknown): string {
-    return escape(lodash.isPlainObject(value) || typeof value === 'boolean'
-      ? JSON.stringify(value)
-      : value)
   }
 
   public async insert<V, R = number> (query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {

@@ -149,7 +149,7 @@ export class Queuer {
     this.queueRunners.add(queueRunner)
 
     try {
-      queue.tasks = await this.selectTasks(queue) ?? []
+      queue.tasks = await this.selectTasks(queue)
       await queueRunner.run(queue, parameters)
     } catch (error: unknown) {
       this.logger.error({ context: 'run' }, String(error))
@@ -186,7 +186,7 @@ export class Queuer {
   }
 
   protected async selectQueue (id: number): Promise<Queue | undefined> {
-    return this.database.selectOne<Queue, Queue>(sql`
+    return this.database.select<Queue, Queue>(sql`
       SELECT *
       FROM queue
       WHERE id = $(id)
@@ -196,7 +196,7 @@ export class Queuer {
   }
 
   protected async selectQueues (date: Date): Promise<Queue[]> {
-    return this.database.select<Queue & { date: Date}, Queue[]>(sql`
+    return this.database.selectAll<Queue & { date: Date}, Queue>(sql`
       SELECT *
       FROM queue
       WHERE
@@ -214,8 +214,8 @@ export class Queuer {
     })
   }
 
-  protected async selectTasks (queue: Queue): Promise<Task[] | undefined> {
-    return this.database.select<Task, Task[]>(sql`
+  protected async selectTasks (queue: Queue): Promise<Task[]> {
+    return this.database.selectAll<Task, Task>(sql`
       SELECT *
       FROM task
       WHERE fkey_queue_id = $(fkey_queue_id)
@@ -247,7 +247,7 @@ export class Queuer {
     })
   }
 
-  protected async updateQueue (queue: Queue): Promise<UpdateResult | undefined> {
+  protected async updateQueue (queue: Queue): Promise<UpdateResult> {
     return this.database.update<Queue>(sql`
       UPDATE queue
       SET schedule_next = $(schedule_next)

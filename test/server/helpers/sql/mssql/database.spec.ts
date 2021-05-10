@@ -13,7 +13,10 @@ describe('MssqlConnection', () => {
     it('insert one row', insertOneRow)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
     it('parse a DSN', parseADsn)
-    it('select rows', selectRows)
+    it('query', query)
+    it('select multiple rows', selectMultipleRows)
+    it('select and resolve undefined', selectAndResolveUndefined)
+    it('select one and reject undefined', selectOneAndRejectUndefined)
     it('stream rows', streamRows)
     it('update one row', updateOneRow)
   })
@@ -128,7 +131,7 @@ async function insertABulkOfRows (): Promise<void> {
   const pool = database.pool as unknown as PoolWithNumbers
 
   try {
-    await database.insert(sql`
+    await database.insertAll(sql`
       INSERT INTO test_database (name)
       VALUES $(list)
     `, {
@@ -184,7 +187,7 @@ async function parseABigIntAsANumber (): Promise<void> {
     })
 
     // https://github.com/tediousjs/tedious/issues/678
-    expect(data?.id).equal(String(id))
+    expect(data.id).equal(String(id))
   } finally {
     await database.end()
   }
@@ -213,7 +216,7 @@ function parseADsn (): void {
   expect(options).eql(expectedOptions)
 }
 
-async function selectRows (): Promise<void> {
+async function query (): Promise<void> {
   const database = new MssqlDatabase(helpers.dsn)
   const pool = database.pool as unknown as PoolWithNumbers
 
@@ -225,6 +228,65 @@ async function selectRows (): Promise<void> {
 
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
+  } finally {
+    await database.end()
+  }
+}
+
+async function selectMultipleRows (): Promise<void> {
+  const database = new MssqlDatabase(helpers.dsn)
+  const pool = database.pool as unknown as PoolWithNumbers
+
+  try {
+    await database.selectAll(sql`
+      SELECT *
+      FROM test_database
+    `)
+
+    expect(pool.size).gt(0)
+    expect(pool.available).equal(pool.size)
+  } finally {
+    await database.end()
+  }
+}
+
+async function selectAndResolveUndefined (): Promise<void> {
+  const database = new MssqlDatabase(helpers.dsn)
+  const pool = database.pool as unknown as PoolWithNumbers
+
+  try {
+    await database.select(sql`
+      SELECT *
+      FROM test_database
+      WHERE id = $(id)
+    `, {
+      id: 1
+    })
+
+    expect(pool.size).gt(0)
+    expect(pool.available).equal(pool.size)
+  } finally {
+    await database.end()
+  }
+}
+
+async function selectOneAndRejectUndefined (): Promise<void> {
+  const database = new MssqlDatabase(helpers.dsn)
+  const pool = database.pool as unknown as PoolWithNumbers
+
+  try {
+    await database.selectOne(sql`
+      SELECT *
+      FROM test_database
+      WHERE id = $(id)
+    `, {
+      id: 1
+    })
+
+    expect(pool.size).gt(0)
+    expect(pool.available).equal(pool.size)
+  } catch (error: unknown) {
+    expect(String(error)).match(/Object is undefined/u)
   } finally {
     await database.end()
   }

@@ -15,7 +15,10 @@ describe('MysqlConnection', () => {
     it('insert one row', insertOneRow)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
     it('parse a DSN', parseADsn)
-    it('select rows', selectRows)
+    it('query', query)
+    it('select multiple rows', selectMultipleRows)
+    it('select and resolve undefined', selectAndResolveUndefined)
+    it('select one and reject undefined', selectOneAndRejectUndefined)
     it('stream rows', streamRows)
     it('update one row', updateOneRow)
   })
@@ -133,7 +136,7 @@ async function insertABulkOfRows (): Promise<void> {
   } = database.pool as unknown as PoolWithNumbers
 
   try {
-    await database.insert(sql`
+    await database.insertAll(sql`
       INSERT INTO test_database (name)
       VALUES $(list)
     `, {
@@ -194,7 +197,7 @@ async function parseABigIntAsANumber (): Promise<void> {
       id
     })
 
-    expect(data?.id).equal(id)
+    expect(data.id).equal(id)
   } finally {
     await database.end()
   }
@@ -219,7 +222,53 @@ function parseADsn (): void {
   expect(options).eql(expectedOptions)
 }
 
-async function selectRows (): Promise<void> {
+async function query (): Promise<void> {
+  const database = new MysqlDatabase(helpers.dsn)
+
+  const {
+    pool: {
+      _allConnections: all,
+      _freeConnections: free
+    }
+  } = database.pool as unknown as PoolWithNumbers
+
+  try {
+    await database.query(sql`
+      SELECT *
+      FROM test_database
+    `)
+
+    expect(all.length).gt(0)
+    expect(free.length).equal(all.length)
+  } finally {
+    await database.end()
+  }
+}
+
+async function selectMultipleRows (): Promise<void> {
+  const database = new MysqlDatabase(helpers.dsn)
+
+  const {
+    pool: {
+      _allConnections: all,
+      _freeConnections: free
+    }
+  } = database.pool as unknown as PoolWithNumbers
+
+  try {
+    await database.selectAll(sql`
+      SELECT *
+      FROM test_database
+    `)
+
+    expect(all.length).gt(0)
+    expect(free.length).equal(all.length)
+  } finally {
+    await database.end()
+  }
+}
+
+async function selectAndResolveUndefined (): Promise<void> {
   const database = new MysqlDatabase(helpers.dsn)
 
   const {
@@ -233,10 +282,41 @@ async function selectRows (): Promise<void> {
     await database.select(sql`
       SELECT *
       FROM test_database
-    `)
+      WHERE id = $(id)
+    `, {
+      id: 1
+    })
 
     expect(all.length).gt(0)
     expect(free.length).equal(all.length)
+  } finally {
+    await database.end()
+  }
+}
+
+async function selectOneAndRejectUndefined (): Promise<void> {
+  const database = new MysqlDatabase(helpers.dsn)
+
+  const {
+    pool: {
+      _allConnections: all,
+      _freeConnections: free
+    }
+  } = database.pool as unknown as PoolWithNumbers
+
+  try {
+    await database.selectOne(sql`
+      SELECT *
+      FROM test_database
+      WHERE id = $(id)
+    `, {
+      id: 1
+    })
+
+    expect(all.length).gt(0)
+    expect(free.length).equal(all.length)
+  } catch (error: unknown) {
+    expect(String(error)).match(/Object is undefined/u)
   } finally {
     await database.end()
   }

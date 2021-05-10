@@ -52,10 +52,10 @@ export class QueueRunner {
       objectMode: true,
       transform: async (payload: unknown, encoding, finish) => {
         try {
-          const { id: itemId = 0 } = await this.insertItem(queueRun, payload) ?? {}
+          const { id: itemId = 0 } = await this.insertItem(queueRun, payload)
 
           const [firstTask] = await Promise.all(queueRun.queue.tasks.map(async (task) => {
-            const { id: taskRunId = 0 } = await this.insertTaskRun(queueRun, itemId, task.id) ?? {}
+            const { id: taskRunId = 0 } = await this.insertTaskRun(queueRun, itemId, task.id)
 
             return {
               name: `${queueRun.name}-${task.name}`,
@@ -73,7 +73,7 @@ export class QueueRunner {
   }
 
   public async run (queue: Queue, parameters: unknown[] = []): Promise<void> {
-    const { id: queueRunId = 0 } = await this.insertQueueRun(queue) ?? {}
+    const { id: queueRunId = 0 } = await this.insertQueueRun(queue)
     const queueRun: QueueRun = createQueueRun(queueRunId, queue)
 
     try {
@@ -90,7 +90,7 @@ export class QueueRunner {
       await pipeline(reader, inserter, xadder)
       await this.updateQueueRunOk(queueRun)
 
-      const queues = await this.selectQueues(queueRun) ?? []
+      const queues = await this.selectQueues(queueRun)
 
       await Promise.all(queues.map(async ({ id }): Promise<number> => {
         return this.store.publish('queue', JSON.stringify({
@@ -107,7 +107,7 @@ export class QueueRunner {
     }
   }
 
-  protected async insertItem (queueRun: QueueRun, payload: unknown): Promise<InsertResult | undefined> {
+  protected async insertItem (queueRun: QueueRun, payload: unknown): Promise<InsertResult> {
     return this.database.insertOne<Item>(sql`
       INSERT INTO item (
         fkey_queue_run_id,
@@ -122,7 +122,7 @@ export class QueueRunner {
     })
   }
 
-  protected async insertQueueRun (queue: Queue): Promise<InsertResult | undefined> {
+  protected async insertQueueRun (queue: Queue): Promise<InsertResult> {
     return this.database.insertOne<QueueRun>(sql`
       INSERT INTO queue_run (
         fkey_queue_id,
@@ -137,7 +137,7 @@ export class QueueRunner {
     })
   }
 
-  protected async insertTaskRun (queueRun: QueueRun, itemId: number, taskId: number): Promise<InsertResult | undefined> {
+  protected async insertTaskRun (queueRun: QueueRun, itemId: number, taskId: number): Promise<InsertResult> {
     return this.database.insertOne<TaskRun>(sql`
       INSERT INTO task_run (
         fkey_item_id,
@@ -155,8 +155,8 @@ export class QueueRunner {
     })
   }
 
-  protected async selectQueues (queueRun: QueueRun): Promise<Queue[] | undefined> {
-    return this.database.select<QueueRun, Queue[]>(sql`
+  protected async selectQueues (queueRun: QueueRun): Promise<Queue[]> {
+    return this.database.selectAll<QueueRun, Queue>(sql`
       SELECT queue.id
       FROM queue
       JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
@@ -168,7 +168,7 @@ export class QueueRunner {
     })
   }
 
-  protected async updateQueueRunErr (queueRun: QueueRun, error: Error): Promise<UpdateResult | undefined> {
+  protected async updateQueueRunErr (queueRun: QueueRun, error: Error): Promise<UpdateResult> {
     return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
@@ -182,7 +182,7 @@ export class QueueRunner {
     })
   }
 
-  protected async updateQueueRunOk (queueRun: QueueRun): Promise<UpdateResult | undefined> {
+  protected async updateQueueRunOk (queueRun: QueueRun): Promise<UpdateResult> {
     return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET

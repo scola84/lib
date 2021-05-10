@@ -19,19 +19,24 @@ export class MssqlConnection extends Connection {
     this.connection = connection
   }
 
-  public async delete<V> (query: string, values?: Partial<V>): Promise<DeleteResult> {
+  public async delete<V>(query: string, values?: Partial<V>): Promise<DeleteResult> {
     const result = await this.query<V, IResult<unknown>>(query, values)
     return { count: result.rowsAffected[0] }
   }
 
-  public async insert<V, R = number> (query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {
-    const result = await this.query<V, IResult<{ id: R }>>(`${query}; SELECT SCOPE_IDENTITY() AS id;`, values)
-    return result.recordset
+  public async insert<V, R = number>(query: string, values?: Partial<V>): Promise<InsertResult<R>> {
+    const { recordset: [object] } = await this.query<V, IResult<{ id: R }>>(`${query}; SELECT SCOPE_IDENTITY() AS id;`, values)
+    return object
   }
 
-  public async insertOne<V, R = number> (query: string, values?: Partial<V>): Promise<InsertResult<R>> {
-    const result = await this.query<V, IResult<{ id: R }>>(`${query}; SELECT SCOPE_IDENTITY() AS id;`, values)
-    return result.recordset[0]
+  public async insertAll<V, R = number>(query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {
+    const { recordset } = await this.query<V, IResult<{ id: R }>>(`${query}; SELECT SCOPE_IDENTITY() AS id;`, values)
+    return recordset
+  }
+
+  public async insertOne<V, R = number>(query: string, values?: Partial<V>): Promise<InsertResult<R>> {
+    const { recordset: [object] } = await this.query<V, IResult<{ id: R }>>(`${query}; SELECT SCOPE_IDENTITY() AS id;`, values)
+    return object
   }
 
   public async query<V, R>(query: string, values?: Partial<V>): Promise<R> {
@@ -43,17 +48,27 @@ export class MssqlConnection extends Connection {
     this.connection.cancel()
   }
 
-  public async select<V, R>(query: string, values?: Partial<V>): Promise<R> {
-    const result = await this.query<V, IResult<R>>(query, values)
-    return result.recordset as unknown as R
+  public async select<V, R>(query: string, values?: Partial<V>): Promise<R | undefined> {
+    const { recordset: [object] } = await this.query<V, IResult<R>>(query, values)
+    return object
   }
 
-  public async selectOne<V, R>(query: string, values?: Partial<V>): Promise<R | undefined> {
+  public async selectAll<V, R>(query: string, values?: Partial<V>): Promise<R[]> {
     const result = await this.query<V, IResult<R>>(query, values)
-    return result.recordset[0]
+    return result.recordset
   }
 
-  public stream<V> (query: string, values?: Partial<V>): Readable {
+  public async selectOne<V, R>(query: string, values?: Partial<V>): Promise<R> {
+    const { recordset: [object] } = await this.query<V, IResult<R>>(query, values)
+
+    if (object === undefined) {
+      throw new Error(`Object is undefined (${JSON.stringify(values)})`)
+    }
+
+    return object
+  }
+
+  public stream<V>(query: string, values?: Partial<V>): Readable {
     this.connection.stream = true
 
     const transform = new Transform({
@@ -70,7 +85,7 @@ export class MssqlConnection extends Connection {
     return transform
   }
 
-  public async update<V> (query: string, values?: Partial<V>): Promise<UpdateResult> {
+  public async update<V>(query: string, values?: Partial<V>): Promise<UpdateResult> {
     const result = await this.query<V, IResult<unknown>>(query, values)
     return { count: result.rowsAffected[0] }
   }

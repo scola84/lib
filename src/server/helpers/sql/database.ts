@@ -7,7 +7,7 @@ export abstract class Database {
 
   public abstract tokens: tokens
 
-  public async delete<V> (query: string, values?: Partial<V>): Promise<DeleteResult> {
+  public async delete<V>(query: string, values?: Partial<V>): Promise<DeleteResult> {
     const connection = await this.connect()
 
     try {
@@ -17,7 +17,7 @@ export abstract class Database {
     }
   }
 
-  public async insert <V, R = number>(query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {
+  public async insert<V, R = number>(query: string, values?: Partial<V>): Promise<InsertResult<R>> {
     const connection = await this.connect()
 
     try {
@@ -27,7 +27,17 @@ export abstract class Database {
     }
   }
 
-  public async insertOne<V, R = number> (query: string, values?: Partial<V>): Promise<InsertResult<R>> {
+  public async insertAll<V, R = number>(query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {
+    const connection = await this.connect()
+
+    try {
+      return await connection.insertAll<V, R>(query, values)
+    } finally {
+      connection.release()
+    }
+  }
+
+  public async insertOne<V, R = number>(query: string, values?: Partial<V>): Promise<InsertResult<R>> {
     const connection = await this.connect()
 
     try {
@@ -47,7 +57,7 @@ export abstract class Database {
     }
   }
 
-  public async select<V, R>(query: string, values?: Partial<V>): Promise<R> {
+  public async select<V, R>(query: string, values?: Partial<V>): Promise<R | undefined> {
     const connection = await this.connect()
 
     try {
@@ -57,7 +67,17 @@ export abstract class Database {
     }
   }
 
-  public async selectOne<V, R>(query: string, values?: Partial<V>): Promise<R | undefined> {
+  public async selectAll<V, R>(query: string, values?: Partial<V>): Promise<R[]> {
+    const connection = await this.connect()
+
+    try {
+      return await connection.selectAll<V, R>(query, values)
+    } finally {
+      connection.release()
+    }
+  }
+
+  public async selectOne<V, R>(query: string, values?: Partial<V>): Promise<R> {
     const connection = await this.connect()
 
     try {
@@ -67,7 +87,7 @@ export abstract class Database {
     }
   }
 
-  public async stream<V> (query: string, values?: Partial<V>): Promise<Readable> {
+  public async stream<V>(query: string, values?: Partial<V>): Promise<Readable> {
     const connection = await this.connect()
     const stream = connection.stream<V>(query, values)
 
@@ -78,7 +98,7 @@ export abstract class Database {
     return stream
   }
 
-  public async update<V> (query: string, values?: Partial<V>): Promise<UpdateResult> {
+  public async update<V>(query: string, values?: Partial<V>): Promise<UpdateResult> {
     const connection = await this.connect()
 
     try {

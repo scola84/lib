@@ -225,7 +225,7 @@ export abstract class TaskRunner {
 
     if (nextTaskRun === undefined) {
       await this.updateQueueRun(taskRun)
-      const queues = await this.selectQueues(taskRun) ?? []
+      const queues = await this.selectQueues(taskRun)
 
       await Promise.all(queues.map(async ({ id }) => {
         await this.store.publish(this.channel, JSON.stringify({
@@ -313,10 +313,6 @@ export abstract class TaskRunner {
       try {
         const taskRun = await this.selectTaskRunOnRead(Number(id))
 
-        if (taskRun === undefined) {
-          throw new Error(`Task run "${id}" is undefined`)
-        }
-
         const [
           item,
           queueRun,
@@ -326,10 +322,6 @@ export abstract class TaskRunner {
           this.selectQueueRun(taskRun),
           this.selectTask(taskRun)
         ])
-
-        if (item === undefined || queueRun === undefined || task === undefined) {
-          throw new Error(`Properties of task run "${id}" are undefined`)
-        }
 
         taskRun.item = item
         taskRun.queueRun = queueRun
@@ -344,7 +336,7 @@ export abstract class TaskRunner {
     }))
   }
 
-  protected async selectItem (taskRun: TaskRun): Promise<Item | undefined> {
+  protected async selectItem (taskRun: TaskRun): Promise<Item> {
     return this.database.selectOne<Item, Item>(sql`
       SELECT *
       FROM item
@@ -354,7 +346,7 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async selectQueueRun (taskRun: TaskRun): Promise<QueueRun | undefined> {
+  protected async selectQueueRun (taskRun: TaskRun): Promise<QueueRun> {
     return this.database.selectOne<QueueRun, QueueRun>(sql`
       SELECT *
       FROM queue_run
@@ -364,8 +356,8 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async selectQueues (taskRun: TaskRun): Promise<Queue[] | undefined> {
-    return this.database.select<QueueRun, Queue[]>(sql`
+  protected async selectQueues (taskRun: TaskRun): Promise<Queue[]> {
+    return this.database.selectAll<QueueRun, Queue>(sql`
       SELECT queue.id
       FROM queue
       JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
@@ -379,7 +371,7 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async selectTask (taskRun: TaskRun): Promise<Task | undefined> {
+  protected async selectTask (taskRun: TaskRun): Promise<Task> {
     return this.database.selectOne<Task, Task>(sql`
       SELECT *
       FROM task
@@ -389,7 +381,7 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async selectTaskRunOnFinish (taskRun: TaskRun): Promise<Task & TaskRun | undefined> {
+  protected async selectTaskRunOnFinish (taskRun: TaskRun): Promise<Task & TaskRun> {
     return this.database.selectOne<Task & TaskRun, Task & TaskRun>(sql`
       SELECT
         task_run.id,
@@ -407,7 +399,7 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async selectTaskRunOnRead (id: number): Promise<TaskRun | undefined> {
+  protected async selectTaskRunOnRead (id: number): Promise<TaskRun> {
     return this.database.selectOne<TaskRun, TaskRun>(sql`
       SELECT *
       FROM task_run
@@ -433,7 +425,7 @@ export abstract class TaskRunner {
     }
   }
 
-  protected async updateItem (taskRun: TaskRun): Promise<UpdateResult | undefined> {
+  protected async updateItem (taskRun: TaskRun): Promise<UpdateResult> {
     return this.database.update<Item>(sql`
       UPDATE item
       SET
@@ -446,7 +438,7 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async updateQueueRun (taskRun: TaskRun): Promise<UpdateResult | undefined> {
+  protected async updateQueueRun (taskRun: TaskRun): Promise<UpdateResult> {
     return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
@@ -460,7 +452,7 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async updateTaskRunOnFinish (taskRun: TaskRun): Promise<UpdateResult | undefined> {
+  protected async updateTaskRunOnFinish (taskRun: TaskRun): Promise<UpdateResult> {
     return this.database.update<TaskRun | { result: string }>(sql`
       UPDATE task_run
       SET
@@ -477,7 +469,7 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async updateTaskRunOnRead (taskRun: TaskRun): Promise<UpdateResult | undefined> {
+  protected async updateTaskRunOnRead (taskRun: TaskRun): Promise<UpdateResult> {
     return this.database.update<TaskRun>(sql`
       UPDATE task_run
       SET
@@ -491,7 +483,7 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async updateTaskRunOnStart (taskRun: TaskRun): Promise<UpdateResult | undefined> {
+  protected async updateTaskRunOnStart (taskRun: TaskRun): Promise<UpdateResult> {
     return this.database.update<TaskRun>(sql`
       UPDATE task_run
       SET

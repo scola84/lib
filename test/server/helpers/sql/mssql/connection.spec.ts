@@ -18,6 +18,9 @@ describe('MssqlConnection', () => {
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('release connection', releaseConnection)
+    it('select multiple rows', selectMultipleRows)
+    it('select and resolve undefined', selectAndResolveUndefined)
+    it('select one and reject undefined', selectOneAndRejectUndefined)
     it('stream rows', streamRows)
     it('update one row', updateOneRow)
   })
@@ -91,7 +94,7 @@ async function deleteOneRow (): Promise<void> {
 
     expect(count).equal(1)
 
-    const data = await connection.selectOne(sql`
+    const data = await connection.select(sql`
       SELECT *
       FROM test_connection
       WHERE id = $(id)
@@ -207,7 +210,7 @@ async function insertABulkOfRows (): Promise<void> {
   const connection = new MssqlConnection(helpers.pool.request())
 
   try {
-    const [{ id }] = await connection.insert(sql`
+    const [{ id }] = await connection.insertAll(sql`
       INSERT INTO test_connection (name)
       VALUES $(list)
     `, {
@@ -219,7 +222,7 @@ async function insertABulkOfRows (): Promise<void> {
 
     expect(id).equal(2)
 
-    const data = await connection.select(sql`
+    const data = await connection.selectAll(sql`
       SELECT *
       FROM test_connection
     `)
@@ -294,6 +297,72 @@ async function releaseConnection (): Promise<void> {
       reject(error)
     }
   })
+}
+
+async function selectMultipleRows (): Promise<void> {
+  const expectedData = [{
+    name: 'name1'
+  }, {
+    name: 'name2'
+  }]
+
+  const connection = new MssqlConnection(helpers.pool.request())
+
+  try {
+    await connection.insert(sql`
+    INSERT INTO test_connection (name)
+    VALUES $(list)
+  `, {
+      list: [
+        ['name1'],
+        ['name2']
+      ]
+    })
+
+    const data = await connection.selectAll(sql`
+    SELECT *
+    FROM test_connection
+  `)
+
+    expect(data).containSubset(expectedData)
+  } finally {
+    connection.release()
+  }
+}
+
+async function selectAndResolveUndefined (): Promise<void> {
+  const connection = new MssqlConnection(helpers.pool.request())
+
+  try {
+    const object = await connection.select(sql`
+      SELECT *
+      FROM test_connection
+      WHERE id = $(id)
+    `, {
+      id: 1
+    })
+
+    expect(object).equal(undefined)
+  } finally {
+    connection.release()
+  }
+}
+
+async function selectOneAndRejectUndefined (): Promise<void> {
+  const connection = new MssqlConnection(helpers.pool.request())
+
+  try {
+    await connection.selectOne(sql`
+      SELECT *
+      FROM test_connection
+      WHERE id = $(id)
+    `, {
+      id: 1
+    })
+  } catch (error: unknown) {
+    connection.release()
+    expect(String(error)).match(/Object is undefined/u)
+  }
 }
 
 async function streamRows (): Promise<void> {

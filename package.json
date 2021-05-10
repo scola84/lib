@@ -28,7 +28,7 @@
     "@types/pg-format": "^1.0.1",
     "@types/pino": "^6.3.8",
     "@types/sqlstring": "^2.3.0",
-    "ajv": "^8.2.0",
+    "ajv": "^8.3.0",
     "async-wait-until": "^2.0.5",
     "commander": "^7.2.0",
     "cron-parser": "^3.5.0",
@@ -37,9 +37,9 @@
     "fastify-formbody": "^5.0.0",
     "fastify-multipart": "^4.0.5",
     "fastq": "^1.11.0",
-    "fluent-json-schema": "^2.0.4",
+    "fluent-json-schema": "^3.0.0",
     "handy-redis": "^2.2.1",
-    "intl-messageformat": "^9.6.12",
+    "intl-messageformat": "^9.6.13",
     "lit-element": "^2.5.1",
     "lit-html": "^1.4.1",
     "lodash": "^4.17.21",
@@ -63,7 +63,7 @@
     "rollup-plugin-terser": "^7.0.2",
     "sqlstring": "^2.3.2",
     "stream": "^0.0.2",
-    "type-fest": "^1.1.0"
+    "type-fest": "^1.1.1"
   },
   "description": "The Scola Library",
   "devDependencies": {

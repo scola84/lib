@@ -23,17 +23,22 @@ export class MysqlConnection extends Connection {
     this.connection = connection
   }
 
-  public async delete<V> (query: string, values?: Partial<V>): Promise<DeleteResult> {
+  public async delete<V>(query: string, values?: Partial<V>): Promise<DeleteResult> {
     const result = await this.query<V, ResultSetHeader>(query, values)
     return { count: result.affectedRows }
   }
 
-  public async insert<V, R = number> (query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {
+  public async insert<V, R = number>(query: string, values?: Partial<V>): Promise<InsertResult<R>> {
+    const result = await this.query<V, { insertId: R }>(query, values)
+    return { id: result.insertId }
+  }
+
+  public async insertAll<V, R = number>(query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {
     const result = await this.query<V, { insertId: R }>(query, values)
     return [{ id: result.insertId }]
   }
 
-  public async insertOne<V, R = number> (query: string, values?: Partial<V>): Promise<InsertResult<R>> {
+  public async insertOne<V, R = number>(query: string, values?: Partial<V>): Promise<InsertResult<R>> {
     const result = await this.query<V, { insertId: R }>(query, values)
     return { id: result.insertId }
   }
@@ -47,22 +52,32 @@ export class MysqlConnection extends Connection {
     this.connection.release()
   }
 
-  public async select<V, R>(query: string, values?: Partial<V>): Promise<R> {
-    return this.query<V, R>(query, values)
+  public async select<V, R>(query: string, values?: Partial<V>): Promise<R | undefined> {
+    const [object] = await this.query<V, R[]>(query, values)
+    return object
   }
 
-  public async selectOne<V, R>(query: string, values?: Partial<V>): Promise<R | undefined> {
-    const result = await this.query<V, R[]>(query, values)
-    return result[0]
+  public async selectAll<V, R>(query: string, values?: Partial<V>): Promise<R[]> {
+    return this.query<V, R[]>(query, values)
   }
 
-  public stream<V> (query: string, values?: Partial<V>): Readable {
+  public async selectOne<V, R>(query: string, values?: Partial<V>): Promise<R> {
+    const [object] = await this.query<V, R[]>(query, values)
+
+    if (object === undefined) {
+      throw new Error(`Object is undefined (${JSON.stringify(values)})`)
+    }
+
+    return object
+  }
+
+  public stream<V>(query: string, values?: Partial<V>): Readable {
     return (this.connection as StreamConnection).connection
       .query(this.format(query, values))
       .stream()
   }
 
-  public async update<V> (query: string, values?: Partial<V>): Promise<UpdateResult> {
+  public async update<V>(query: string, values?: Partial<V>): Promise<UpdateResult> {
     const result = await this.query<V, ResultSetHeader>(query, values)
     return { count: result.affectedRows }
   }

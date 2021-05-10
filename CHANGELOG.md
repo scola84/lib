@@ -1,3 +1,16 @@
+# [17.0.0](https://github.com/scola84/lib/compare/v16.1.0...v17.0.0) (2021-05-10)
+
+
+### Features
+
+* **sql:** add insertAll and selectAll methods ([29ac375](https://github.com/scola84/lib/commit/29ac3750fcfd16c9bac3a08eff1cdb0a93083a88))
+
+
+### BREAKING CHANGES
+
+* **sql:** The insert and select methods apply to single objects,
+insertAll and selectAll apply to multiple objects.
+
 # [16.1.0](https://github.com/scola84/lib/compare/v16.0.0...v16.1.0) (2021-05-08)
 
 

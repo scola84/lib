@@ -1,3 +1,10 @@
+## [18.0.1](https://github.com/scola84/lib/compare/v18.0.0...v18.0.1) (2021-05-11)
+
+
+### Bug Fixes
+
+* **queue:** allow next task run to be undefined ([8fcbd2c](https://github.com/scola84/lib/commit/8fcbd2caaf581c54734296038239f2399787fde7))
+
 # [18.0.0](https://github.com/scola84/lib/compare/v17.0.0...v18.0.0) (2021-05-11)
 
 

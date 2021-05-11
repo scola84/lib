@@ -18,18 +18,27 @@ try {
     throw new Error('error: missing required argument "source"')
   }
 
+  if (target === undefined) {
+    throw new Error('error: missing required argument "target"')
+  }
+
   const clients = {
     mysql: ['mysql', 'mysql2'],
     postgres: ['pg']
   }
 
+  const ports = {
+    mysql: 3306,
+    postgres: 5432
+  }
+
   const typeMap = {
     Buffer: ['UDT', 'binary', 'image', 'varbinary'],
-    Date: ['date', 'datetime', 'datetime2', 'datetimeoffset', 'smalldatetime', 'time', 'timestamp', 'timestamp'],
-    Object: ['TVP', 'json'],
+    Date: ['date', 'datetime', 'datetime2', 'datetimeoffset', 'smalldatetime', 'time', 'timestamp', 'timestamptz'],
     boolean: ['bit', 'bool', 'boolean'],
     number: ['bigint', 'bigserial', 'dec', 'decimal', 'double', 'double precision', 'fixed', 'float', 'float4', 'float8', 'int', 'int4', 'int8', 'integer', 'money', 'numeric', 'real', 'serial', 'smallint', 'smallmoney', 'tinyint', 'year'],
-    string: ['char', 'character varying', 'longtext', 'mediumtext', 'nchar', 'ntext', 'nvarchar', 'text', 'tinytext', 'uniqueidentifier', 'uuid', 'varbinary', 'varchar', 'xml']
+    string: ['char', 'character varying', 'longtext', 'mediumtext', 'nchar', 'ntext', 'nvarchar', 'text', 'tinytext', 'uniqueidentifier', 'uuid', 'varbinary', 'varchar', 'xml'],
+    unknown: ['TVP', 'json']
   }
 
   const url = new URL(source)
@@ -50,18 +59,19 @@ try {
 
   fs.mkdirSync(target, { recursive: true })
 
+  url.hostname = url.hostname || '127.0.0.1'
+  url.username = url.username || 'root'
+  url.password = url.password || 'root'
+  url.port = url.port || ports[protocol]
+
   sqlts
     .toObject({
       client,
-      connection: source,
+      connection: String(url),
       // eslint-disable-next-line no-template-curly-in-string
       interfaceNameFormat: '${table}',
       tableNameCasing: 'pascal',
-      typeMap: {
-        Date: [...typeMap.Date, 'timestamptz'],
-        number: [...typeMap.number, 'int8'],
-        unknown: ['json']
-      }
+      typeMap
     })
     .then((database) => {
       for (const table of database.tables) {

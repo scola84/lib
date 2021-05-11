@@ -1,3 +1,16 @@
+# [18.0.0](https://github.com/scola84/lib/compare/v17.0.0...v18.0.0) (2021-05-11)
+
+
+### Bug Fixes
+
+* **bin:** set defaults in sql-ts ([d9fc5fd](https://github.com/scola84/lib/commit/d9fc5fd71a9349c6eb1a79975f6cafefab36bd88))
+* **queue:** change validate method from public to private ([5ba081b](https://github.com/scola84/lib/commit/5ba081b317e272fb1f33b5e7a8a9ded3ae6ec70f))
+
+
+### BREAKING CHANGES
+
+* **queue:** The validate method is removed from the public API.
+
 # [17.0.0](https://github.com/scola84/lib/compare/v16.1.0...v17.0.0) (2021-05-10)
 
 

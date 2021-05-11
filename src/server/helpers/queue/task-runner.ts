@@ -360,8 +360,8 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async selectTaskRunOnFinish (taskRun: TaskRun): Promise<Task & TaskRun> {
-    return this.database.selectOne<Task & TaskRun, Task & TaskRun>(sql`
+  protected async selectTaskRunOnFinish (taskRun: TaskRun): Promise<Task & TaskRun | undefined> {
+    return this.database.select<Task & TaskRun, Task & TaskRun>(sql`
       SELECT
         task_run.id,
         task.name

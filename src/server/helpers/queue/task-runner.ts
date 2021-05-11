@@ -173,25 +173,6 @@ export abstract class TaskRunner {
     })
   }
 
-  public validate<Data = unknown> (name: string, data?: Data): Data {
-    if (data === undefined) {
-      throw new Error('Data is undefined')
-    }
-
-    const schema = this.validator?.getSchema(name)
-
-    if (schema === undefined) {
-      throw new Error(`Schema "${name}" is undefined`)
-    }
-
-    if (schema(data) === false) {
-      const error = schema.errors?.[0]
-      throw new Error(`${name}${error?.instancePath ?? ''} ${error?.message ?? ''}`)
-    }
-
-    return data
-  }
-
   protected async createGroup (): Promise<void> {
     try {
       await this.store.xgroup([['CREATE', [this.name, this.group]], '$', 'MKSTREAM'])
@@ -288,19 +269,17 @@ export abstract class TaskRunner {
       })
   }
 
-  protected async readGroup (): Promise<Array<[string, string[] | null]> | null> {
-    return this.storeDuplicate?.xreadgroup(
+  protected async readTaskRuns (): Promise<void> {
+    const result = await this.storeDuplicate?.xreadgroup(
       ['GROUP', [this.group, this.consumer]],
       ['COUNT', this.concurrency],
       ['BLOCK', this.block],
       'STREAMS',
       [this.name],
       this.xid
-    ) as Promise<Array<[string, string[] | null]> | null>
-  }
+    ) as Array<[string, string[] | null]> | null
 
-  protected async readTaskRuns (): Promise<void> {
-    const items = (await this.readGroup())?.[0][1] ?? []
+    const items = result?.[0][1] ?? []
 
     if (items.length === 0) {
       this.xid = '>'
@@ -497,6 +476,21 @@ export abstract class TaskRunner {
       id: taskRun.id,
       xid: taskRun.xid
     })
+  }
+
+  protected validate <Data = unknown> (name: string, data: Data): Data {
+    const schema = this.validator?.getSchema(name)
+
+    if (schema === undefined) {
+      throw new Error(`Schema "${name}" is undefined`)
+    }
+
+    if (schema(data) === false) {
+      const error = schema.errors?.[0]
+      throw new Error(`${name}${error?.instancePath ?? ''} ${error?.message ?? ''}`)
+    }
+
+    return data
   }
 
   protected abstract run (taskRun: TaskRun): Promise<void>

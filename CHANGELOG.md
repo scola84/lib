@@ -1,3 +1,10 @@
+## [18.0.2](https://github.com/scola84/lib/compare/v18.0.1...v18.0.2) (2021-05-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependencies ([dc5fb8f](https://github.com/scola84/lib/commit/dc5fb8fd07c54c1693444c26711eea7e96d11c73))
+
 ## [18.0.1](https://github.com/scola84/lib/compare/v18.0.0...v18.0.1) (2021-05-11)
 
 

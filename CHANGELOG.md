@@ -1,3 +1,15 @@
+# [18.1.0](https://github.com/scola84/lib/compare/v18.0.3...v18.1.0) (2021-06-03)
+
+
+### Bug Fixes
+
+* **queue:** provide the previous queue run id in an object ([4e538c9](https://github.com/scola84/lib/commit/4e538c9e50d7e44b315710fc18580e7a80848757))
+
+
+### Features
+
+* **sql:** implement a class to format simple CRUD queries ([1a532b5](https://github.com/scola84/lib/commit/1a532b5630b20dd57875994c15fd41d243edd586))
+
 ## [18.0.3](https://github.com/scola84/lib/compare/v18.0.2...v18.0.3) (2021-05-26)
 
 

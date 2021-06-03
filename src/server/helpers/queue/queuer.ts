@@ -25,7 +25,7 @@ export interface QueuerOptions {
 
 export interface QueuerMessage {
   id?: number
-  parameters?: unknown[]
+  parameters?: Record<string, unknown>
 }
 
 export class Queuer {
@@ -144,7 +144,7 @@ export class Queuer {
     await this.store.quit()
   }
 
-  protected async run (queue: Queue, parameters?: unknown[]): Promise<void> {
+  protected async run (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
     const queueRunner = this.createQueueRunner()
     this.queueRunners.add(queueRunner)
 

@@ -113,7 +113,9 @@ export abstract class TaskRunner {
   }
 
   public createValidator (): Ajv {
-    const validator = new Ajv()
+    const validator = new Ajv({
+      useDefaults: true
+    })
 
     for (const name of Object.keys(this.schema)) {
       validator.addSchema(this.schema[name].valueOf(), name)
@@ -211,7 +213,9 @@ export abstract class TaskRunner {
       await Promise.all(queues.map(async ({ id }) => {
         await this.store.publish(this.channel, JSON.stringify({
           id,
-          parameters: [taskRun.queueRun.id]
+          parameters: {
+            id: taskRun.queueRun.id
+          }
         }))
       }))
     } else {

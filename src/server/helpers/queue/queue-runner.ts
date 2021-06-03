@@ -72,7 +72,7 @@ export class QueueRunner {
     })
   }
 
-  public async run (queue: Queue, parameters: unknown[] = []): Promise<void> {
+  public async run (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
     const { id: queueRunId = 0 } = await this.insertQueueRun(queue)
     const queueRun: QueueRun = createQueueRun(queueRunId, queue)
 
@@ -95,7 +95,9 @@ export class QueueRunner {
       await Promise.all(queues.map(async ({ id }): Promise<number> => {
         return this.store.publish('queue', JSON.stringify({
           id,
-          parameters: [queueRun.id]
+          parameters: {
+            id: queueRun.id
+          }
         }))
       }))
     } catch (error: unknown) {

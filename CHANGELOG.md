@@ -1,3 +1,10 @@
+## [18.1.1](https://github.com/scola84/lib/compare/v18.1.0...v18.1.1) (2021-06-03)
+
+
+### Bug Fixes
+
+* **tsconfig:** restore rootDir reference in src ([596934e](https://github.com/scola84/lib/commit/596934e6a438c7c0fbb4638ba99d922b0ed0f9ba))
+
 # [18.1.0](https://github.com/scola84/lib/compare/v18.0.3...v18.1.0) (2021-06-03)
 
 

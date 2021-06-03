@@ -3,7 +3,7 @@
     "lib": [
       "es6"
     ],
-    "rootDir": "../../"
+    "rootDir": "../"
   },
   "extends": "../../tsconfig.json",
   "include": [

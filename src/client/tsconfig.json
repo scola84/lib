@@ -3,7 +3,7 @@
     "lib": [
       "dom"
     ],
-    "rootDir": "../../"
+    "rootDir": "../"
   },
   "extends": "../../tsconfig.json",
   "include": [

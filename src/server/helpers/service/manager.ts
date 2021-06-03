@@ -62,7 +62,7 @@ export class ServiceManager {
 
     Object.entries(this.services).forEach(([sn, service]) => {
       Object.entries(service).forEach(([tn, type]) => {
-        Object.entries(type ?? {}).forEach(([fn, factory]) => {
+        Object.entries(type).forEach(([fn, factory]) => {
           if (isMatch(`${sn}.${tn}.${fn}`, this.names)) {
             (factory as () => void)()
           }

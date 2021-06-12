@@ -1,3 +1,11 @@
+# [18.2.0](https://github.com/scola84/lib/compare/v18.1.1...v18.2.0) (2021-06-12)
+
+
+### Features
+
+* **bin:** export Entities as interface in sql-ts ([c3328d9](https://github.com/scola84/lib/commit/c3328d98fb21d08eb3141ba573e90bc000801ef4))
+* **sql:** add de/populate method to database/connection ([9234832](https://github.com/scola84/lib/commit/923483214b2ee7f9ee694e87b1f77adef55f64a7))
+
 ## [18.1.1](https://github.com/scola84/lib/compare/v18.1.0...v18.1.1) (2021-06-03)
 
 

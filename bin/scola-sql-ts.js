@@ -74,6 +74,13 @@ try {
       typeMap
     })
     .then((database) => {
+      database.tables = database.tables.filter((table) => {
+        return url.pathname.includes('queue') || table.schema !== 'queue'
+      })
+
+      return database
+    })
+    .then((database) => {
       for (const table of database.tables) {
         table.columns.sort((left, right) => {
           return left.propertyName > right.propertyName ? 1 : -1
@@ -85,22 +92,30 @@ try {
     .then((database) => {
       for (const table of database.tables) {
         fs.writeFileSync(
-            `${target}/${table.name.replace('_', '-')}.ts`,
-            sqlts
-              .fromObject({
-                enums: [],
-                tables: [table]
-              }, {})
-              .replace(/\/\*[\s\S]*\*\/\n*/gu, '')
-              .replace(/"/gu, '')
-              .replace(/&lt;/gu, '<')
-              .replace(/&gt;/gu, '>')
-              .replace(/\s\n/gu, '\n')
+          `${target}/${table.name.replace('_', '-')}.ts`,
+          sqlts
+            .fromObject({
+              enums: [],
+              tables: [table]
+            }, {})
+            .replace(/\/\*[\s\S]*\*\/\n*/gu, '')
+            .replace(/"/gu, '')
+            .replace(/&lt;/gu, '<')
+            .replace(/&gt;/gu, '>')
+            .replace(/\s\n/gu, '\n')
         )
       }
+
       return database
     })
     .then((database) => {
+      const entities = database.tables
+        .map((table) => {
+          return `  ${table.name}: Array<Partial<${table.interfaceName}>>`
+        })
+        .sort()
+        .join('\n')
+
       const exports = database.tables
         .map((table) => {
           return `export * from './${table.name.replace('_', '-')}'`
@@ -108,7 +123,24 @@ try {
         .sort()
         .join('\n')
 
-      fs.writeFileSync(`${target}/index.ts`, `${exports}\n`)
+      const imports = database.tables
+        .map((table) => {
+          return `import type { ${table.interfaceName} } from './${table.name.replace('_', '-')}'`
+        })
+        .sort()
+        .join('\n')
+
+      const data = [
+        imports,
+        '',
+        exports,
+        '',
+        'export interface Entities extends Record<string, Array<Partial<unknown>>> {',
+        entities,
+        '}'
+      ].join('\n')
+
+      fs.writeFileSync(`${target}/index.ts`, `${data.trim()}\n`)
     })
     .catch((error) => {
       logger.log(String(error))

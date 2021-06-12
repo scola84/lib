@@ -1,17 +1,22 @@
 import { sql } from './tag'
 
 export class Query {
-  public constructor (properties: Record<string, unknown>) {
-    Object.assign(this, properties)
+  public entity: Record<string, unknown>
+
+  public table: string
+
+  public constructor (table: string, entity: Record<string, unknown>) {
+    this.entity = entity
+    this.table = table
   }
 
-  public delete (table: string): string {
+  public delete (): string {
     return sql`
       DELETE
-      FROM ${table}
+      FROM ${this.table}
       WHERE ${
         Object
-          .keys(this)
+          .keys(this.entity)
           .filter((column) => {
             return column.endsWith('id')
           })
@@ -23,15 +28,15 @@ export class Query {
     `
   }
 
-  public insert (table: string): string {
+  public insert (): string {
     return sql`
-      INSERT INTO ${table} (${
+      INSERT INTO ${this.table} (${
         Object
-          .keys(this)
+          .keys(this.entity)
           .join(',')
       }) VALUES (${
         Object
-          .keys(this)
+          .keys(this.entity)
           .map((column) => {
             return `$(${column})`
           })
@@ -40,17 +45,17 @@ export class Query {
     `
   }
 
-  public select (table: string): string {
+  public select (): string {
     return sql`
       SELECT ${
         Object
-          .keys(this)
+          .keys(this.entity)
           .join(',')
       }
-      FROM ${table}
+      FROM ${this.table}
       WHERE ${
         Object
-          .keys(this)
+          .keys(this.entity)
           .filter((column) => {
             return column.endsWith('id')
           })
@@ -62,12 +67,12 @@ export class Query {
     `
   }
 
-  public update (table: string): string {
+  public update (): string {
     return sql`
-      UPDATE ${table}
+      UPDATE ${this.table}
       SET ${
         Object
-          .keys(this)
+          .keys(this.entity)
           .filter((column) => {
             return !column.endsWith('id')
           })
@@ -78,7 +83,7 @@ export class Query {
       }
       WHERE ${
         Object
-          .keys(this)
+          .keys(this.entity)
           .filter((column) => {
             return column.endsWith('id')
           })

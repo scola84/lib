@@ -13,10 +13,12 @@ describe('MssqlConnection', () => {
 
   describe('should', () => {
     it('delete one row', deleteOneRow)
+    it('depopulate', depopulate)
     it('format a query', formatAQuery)
     it('format a query for bulk insert', formatAQueryForBulkInsert)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
+    it('populate', populate)
     it('release connection', releaseConnection)
     it('select multiple rows', selectMultipleRows)
     it('select and resolve undefined', selectAndResolveUndefined)
@@ -102,7 +104,53 @@ async function deleteOneRow (): Promise<void> {
       id
     })
 
+    expect(id).equal(1)
     expect(data).equal(undefined)
+  } finally {
+    connection.release()
+  }
+}
+
+async function depopulate (): Promise<void> {
+  const populateData = {
+    test_connection: [{
+      name: 'name',
+      value_boolean: true,
+      value_json: {
+        value: 'json'
+      },
+      value_number: 1,
+      value_string: 'string'
+    }]
+  }
+
+  const depopulateData = {
+    test_connection: [{
+      id: 1
+    }]
+  }
+
+  const connection = new MssqlConnection(helpers.pool.request())
+
+  try {
+    const {
+      test_connection: [{
+        id
+      }]
+    } = await connection.populate(populateData)
+
+    await connection.depopulate(depopulateData)
+
+    const data = await connection.select(sql`
+      SELECT *
+      FROM test_connection
+      WHERE id = $(id)
+    `, {
+      id
+    })
+
+    expect(id).equal(1)
+    expect(data).eql(undefined)
   } finally {
     connection.release()
   }
@@ -284,6 +332,49 @@ async function insertOneRow (): Promise<void> {
   }
 }
 
+async function populate (): Promise<void> {
+  const populateData = {
+    test_connection: [{
+      name: 'name',
+      value_boolean: true,
+      value_json: {
+        value: 'json'
+      },
+      value_number: 1,
+      value_string: 'string'
+    }]
+  }
+
+  const expectedData = {
+    ...populateData.test_connection[0],
+    id: 1,
+    value_json: '{\\"value\\":\\"json\\"}'
+  }
+
+  const connection = new MssqlConnection(helpers.pool.request())
+
+  try {
+    const {
+      test_connection: [{
+        id
+      }]
+    } = await connection.populate(populateData)
+
+    const data = await connection.selectOne(sql`
+      SELECT *
+      FROM test_connection
+      WHERE id = $(id)
+    `, {
+      id
+    })
+
+    expect(id).equal(1)
+    expect(data).eql(expectedData)
+  } finally {
+    connection.release()
+  }
+}
+
 async function releaseConnection (): Promise<void> {
   const connection = new MssqlConnection(helpers.pool.request())
   const pool = helpers.pool as unknown as PoolWithNumbers
@@ -442,6 +533,7 @@ async function updateOneRow (): Promise<void> {
       id
     })
 
+    expect(id).equal(1)
     expect(data).include(expectedData)
   } finally {
     connection.release()

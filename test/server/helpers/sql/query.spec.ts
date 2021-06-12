@@ -11,14 +11,14 @@ describe('Query', () => {
 })
 
 function aDeleteQuery (): void {
-  const query = new Query({
+  const query = new Query('object_table', {
     column1: 'column1',
     column2: 'column2',
     object_id: 1
   })
 
   const cleanQuery = query
-    .delete('object_table')
+    .delete()
     .trim()
     .replace(/\n\s*/gu, ' ')
 
@@ -26,14 +26,14 @@ function aDeleteQuery (): void {
 }
 
 function aSelectQuery (): void {
-  const query = new Query({
+  const query = new Query('object_table', {
     column1: 'column1',
     column2: 'column2',
     object_id: 1
   })
 
   const cleanQuery = query
-    .select('object_table')
+    .select()
     .trim()
     .replace(/\n\s*/gu, ' ')
 
@@ -41,13 +41,13 @@ function aSelectQuery (): void {
 }
 
 function anInsertQuery (): void {
-  const query = new Query({
+  const query = new Query('object_table', {
     column1: 'column1',
     column2: 'column2'
   })
 
   const cleanQuery = query
-    .insert('object_table')
+    .insert()
     .trim()
     .replace(/\n\s*/gu, ' ')
 
@@ -55,14 +55,14 @@ function anInsertQuery (): void {
 }
 
 function anUpdateQuery (): void {
-  const query = new Query({
+  const query = new Query('object_table', {
     column1: 'column1',
     column2: 'column2',
     object_id: 1
   })
 
   const cleanQuery = query
-    .update('object_table')
+    .update()
     .trim()
     .replace(/\n\s*/gu, ' ')
 

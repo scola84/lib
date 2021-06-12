@@ -14,10 +14,12 @@ describe('MysqlConnection', () => {
 
   describe('should', () => {
     it('delete one row', deleteOneRow)
+    it('depopulate', depopulate)
     it('format a query', formatAQuery)
     it('format a query for bulk insert', formatAQueryForBulkInsert)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
+    it('populate', populate)
     it('release connection', releaseConnection)
     it('select multiple rows', selectMultipleRows)
     it('select and resolve undefined', selectAndResolveUndefined)
@@ -87,7 +89,52 @@ async function deleteOneRow (): Promise<void> {
       id
     })
 
+    expect(id).equal(1)
     expect(data).equal(undefined)
+  } finally {
+    connection.release()
+  }
+}
+
+async function depopulate (): Promise<void> {
+  const populateData = {
+    test_connection: [{
+      id: 1,
+      name: 'name',
+      value_boolean: true,
+      value_json: {
+        value: 'json'
+      },
+      value_number: 1,
+      value_string: 'string'
+    }]
+  }
+
+  const depopulateData = {
+    ...populateData
+  }
+
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
+
+  try {
+    const {
+      test_connection: [{
+        id
+      }]
+    } = await connection.populate(populateData)
+
+    await connection.depopulate(depopulateData)
+
+    const data = await connection.select(sql`
+      SELECT *
+      FROM test_connection
+      WHERE id = $(id)
+    `, {
+      id
+    })
+
+    expect(id).equal(1)
+    expect(data).eql(undefined)
   } finally {
     connection.release()
   }
@@ -269,6 +316,49 @@ async function insertOneRow (): Promise<void> {
   }
 }
 
+async function populate (): Promise<void> {
+  const populateData = {
+    test_connection: [{
+      id: 1,
+      name: 'name',
+      value_boolean: true,
+      value_json: {
+        value: 'json'
+      },
+      value_number: 1,
+      value_string: 'string'
+    }]
+  }
+
+  const expectedData = {
+    ...populateData.test_connection[0],
+    value_boolean: 1
+  }
+
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
+
+  try {
+    const {
+      test_connection: [{
+        id
+      }]
+    } = await connection.populate(populateData)
+
+    const data = await connection.selectOne(sql`
+      SELECT *
+      FROM test_connection
+      WHERE id = $(id)
+    `, {
+      id
+    })
+
+    expect(id).equal(1)
+    expect(data).eql(expectedData)
+  } finally {
+    connection.release()
+  }
+}
+
 async function releaseConnection (): Promise<void> {
   const connection = new MysqlConnection(await helpers.pool.getConnection())
 
@@ -420,6 +510,7 @@ async function updateOneRow (): Promise<void> {
       id
     })
 
+    expect(id).equal(1)
     expect(data).include(expectedData)
   } finally {
     connection.release()

@@ -17,6 +17,16 @@ export abstract class Database {
     }
   }
 
+  public async depopulate (entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<DeleteResult>>>> {
+    const connection = await this.connect()
+
+    try {
+      return await connection.depopulate(entities)
+    } finally {
+      connection.release()
+    }
+  }
+
   public async insert<V, R = number>(query: string, values?: Partial<V>): Promise<InsertResult<R>> {
     const connection = await this.connect()
 
@@ -42,6 +52,16 @@ export abstract class Database {
 
     try {
       return await connection.insertOne<V, R>(query, values)
+    } finally {
+      connection.release()
+    }
+  }
+
+  public async populate<R = number>(entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<InsertResult<R>>>>> {
+    const connection = await this.connect()
+
+    try {
+      return await connection.populate<R>(entities)
     } finally {
       connection.release()
     }

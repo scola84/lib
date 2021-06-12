@@ -9,10 +9,12 @@ describe('MssqlConnection', () => {
     it('connect with string options', connectWithStringOptions)
     it('connect without options', connectWithoutOptions)
     it('delete one row', deleteOneRow)
+    it('depopulate', depopulate)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
     it('parse a DSN', parseADsn)
+    it('populate', populate)
     it('query', query)
     it('select multiple rows', selectMultipleRows)
     it('select and resolve undefined', selectAndResolveUndefined)
@@ -126,6 +128,25 @@ async function deleteOneRow (): Promise<void> {
   }
 }
 
+async function depopulate (): Promise<void> {
+  const database = new MssqlDatabase(helpers.dsn)
+  const pool = database.pool as unknown as PoolWithNumbers
+
+  try {
+    await database.depopulate({
+      test_database: [{
+        id: 1,
+        name: 'name'
+      }]
+    })
+
+    expect(pool.size).gt(0)
+    expect(pool.available).equal(pool.size)
+  } finally {
+    await database.end()
+  }
+}
+
 async function insertABulkOfRows (): Promise<void> {
   const database = new MssqlDatabase(helpers.dsn)
   const pool = database.pool as unknown as PoolWithNumbers
@@ -214,6 +235,24 @@ function parseADsn (): void {
 
   const options = MssqlDatabase.parseDsn(dsn)
   expect(options).eql(expectedOptions)
+}
+
+async function populate (): Promise<void> {
+  const database = new MssqlDatabase(helpers.dsn)
+  const pool = database.pool as unknown as PoolWithNumbers
+
+  try {
+    await database.populate({
+      test_database: [{
+        name: 'name'
+      }]
+    })
+
+    expect(pool.size).gt(0)
+    expect(pool.available).equal(pool.size)
+  } finally {
+    await database.end()
+  }
 }
 
 async function query (): Promise<void> {

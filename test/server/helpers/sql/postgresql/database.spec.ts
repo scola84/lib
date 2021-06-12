@@ -9,10 +9,12 @@ describe('PostgresqlConnection', () => {
     it('connect with string options', connectWithStringOptions)
     it('connect without options', connectWithoutOptions)
     it('delete one row', deleteOneRow)
+    it('depopulate', depopulate)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
     it('parse a DSN', parseADsn)
+    it('populate', populate)
     it('query', query)
     it('select multiple rows', selectMultipleRows)
     it('select and resolve undefined', selectAndResolveUndefined)
@@ -109,6 +111,24 @@ async function deleteOneRow (): Promise<void> {
   }
 }
 
+async function depopulate (): Promise<void> {
+  const database = new PostgresqlDatabase(helpers.dsn)
+
+  try {
+    await database.depopulate({
+      test_database: [{
+        id: 1,
+        name: 'name'
+      }]
+    })
+
+    expect(database.pool.totalCount).gt(0)
+    expect(database.pool.idleCount).equal(database.pool.totalCount)
+  } finally {
+    await database.end()
+  }
+}
+
 async function insertABulkOfRows (): Promise<void> {
   const database = new PostgresqlDatabase(helpers.dsn)
 
@@ -192,6 +212,24 @@ function parseADsn (): void {
 
   const options = PostgresqlDatabase.parseDsn(dsn)
   expect(options).eql(expectedOptions)
+}
+
+async function populate (): Promise<void> {
+  const database = new PostgresqlDatabase(helpers.dsn)
+
+  try {
+    await database.populate({
+      test_database: [{
+        id: 1,
+        name: 'name'
+      }]
+    })
+
+    expect(database.pool.totalCount).gt(0)
+    expect(database.pool.idleCount).equal(database.pool.totalCount)
+  } finally {
+    await database.end()
+  }
 }
 
 async function query (): Promise<void> {

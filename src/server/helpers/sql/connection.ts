@@ -1,5 +1,5 @@
-import { Query } from './query'
 import type { Readable } from 'stream'
+import { sql } from './tag'
 import type tokens from './tokens'
 
 export interface DeleteResult {
@@ -20,27 +20,66 @@ export abstract class Connection {
   public abstract tokens: tokens
 
   public async depopulate (entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<DeleteResult>>>> {
+    const result: Record<string, Array<Partial<DeleteResult>>> = {}
+
     await Promise.all(Object
       .keys(entities)
+      .map((table) => {
+        result[table] = []
+        return table
+      })
       .map(async (table) => {
         return Promise.all(entities[table].map(async (object, index) => {
-          entities[table][index] = await this.delete(new Query(table, object).delete(), object)
+          result[table][index] = await this.delete(sql`
+            DELETE
+            FROM ${table}
+            WHERE ${
+              Object
+                .keys(object)
+                .filter((column) => {
+                  return column.endsWith('id')
+                })
+                .map((column) => {
+                  return `${column} = $(${column})`
+                })
+                .join(' AND ')
+            }
+          `, object)
         }))
       }))
 
-    return entities
+    return result
   }
 
   public async populate<R = number>(entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<InsertResult<R>>>>> {
+    const result: Record<string, Array<Partial<InsertResult<R>>>> = {}
+
     await Promise.all(Object
       .keys(entities)
+      .map((table) => {
+        result[table] = []
+        return table
+      })
       .map(async (table) => {
         return Promise.all(entities[table].map(async (object, index) => {
-          entities[table][index] = await this.insert<unknown, R>(new Query(table, object).insert(), object)
+          result[table][index] = await this.insert<unknown, R>(sql`
+            INSERT INTO ${table} (${
+              Object
+                .keys(object)
+                .join(',')
+            }) VALUES (${
+              Object
+                .keys(object)
+                .map((column) => {
+                  return `$(${column})`
+                })
+              .join(',')
+            })
+          `, object)
         }))
       }))
 
-    return entities
+    return result
   }
 
   public abstract delete<V>(query: string, values?: Partial<V>): Promise<DeleteResult>

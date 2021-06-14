@@ -1,3 +1,10 @@
+## [18.3.1](https://github.com/scola84/lib/compare/v18.3.0...v18.3.1) (2021-06-14)
+
+
+### Bug Fixes
+
+* **sql:** move INSERT/DELETE directly into populate/depopulate methods ([cb7d47b](https://github.com/scola84/lib/commit/cb7d47b228aa18c4cbc9e6fc8ec131420ee2b1d0))
+
 # [18.3.0](https://github.com/scola84/lib/compare/v18.2.0...v18.3.0) (2021-06-14)
 
 

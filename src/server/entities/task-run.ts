@@ -16,7 +16,7 @@ export interface TaskRun<Payload = unknown, Options = unknown, Result = unknown>
   task: Task<Options>
 }
 
-export function createTaskRun<Payload, Options, Result> (payload: Payload, options: Options, result: Result): TaskRun<Payload, Options, Result> {
+export function createTaskRun<Payload, Options, Result> (payload?: Payload, options?: Options, result?: Result): TaskRun<Payload, Options, Result> {
   return {
     code: 'pending',
     consumer: null,
@@ -31,7 +31,7 @@ export function createTaskRun<Payload, Options, Result> (payload: Payload, optio
     item: createItem(payload),
     queueRun: createQueueRun(),
     reason: null,
-    result,
+    result: (result ?? {}) as Result,
     task: createTask(options),
     xid: 'xid'
   }

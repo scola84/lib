@@ -5,13 +5,13 @@ export interface Item<Payload = unknown> extends Required<ItemBase> {
   payload: Payload
 }
 
-export function createItem<Payload> (payload: Payload): Item<Payload> {
+export function createItem<Payload> (payload?: Payload): Item<Payload> {
   return {
     code: 'pending',
     date_created: new Date(),
     date_updated: new Date(),
     fkey_queue_run_id: 0,
     id: 0,
-    payload
+    payload: (payload ?? {}) as Payload
   }
 }

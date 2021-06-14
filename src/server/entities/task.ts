@@ -4,7 +4,7 @@ export interface Task<Options = unknown> extends Required<TaskBase> {
   options: Options
 }
 
-export function createTask<Options> (options: Options): Task<Options> {
+export function createTask<Options> (options?: Options): Task<Options> {
   return {
     date_created: new Date(),
     date_updated: new Date(),
@@ -12,6 +12,6 @@ export function createTask<Options> (options: Options): Task<Options> {
     id: 0,
     name: 'name',
     number: 0,
-    options
+    options: (options ?? {}) as Options
   }
 }

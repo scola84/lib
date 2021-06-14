@@ -1,3 +1,10 @@
+# [18.3.0](https://github.com/scola84/lib/compare/v18.2.0...v18.3.0) (2021-06-14)
+
+
+### Features
+
+* **queue:** make arguments of factory functions optional ([df4d266](https://github.com/scola84/lib/commit/df4d26618a8677f67dd342f9bf6df120ec69f11b))
+
 # [18.2.0](https://github.com/scola84/lib/compare/v18.1.1...v18.2.0) (2021-06-12)
 
 

@@ -1,6 +1,33 @@
 import { Transform, Writable } from 'stream'
 import type { Readable } from 'stream'
 
+/**
+ * Handles a data stream as a Promise.
+ *
+ * Destroys all streams, removes all listeners and rejects the Promise if one of the streams emits an error.
+ *
+ * Removes all listeners and resolves the Promise if the streams finish successfully.
+ *
+ * @param streams - The streams
+ * @returns void
+ * @throws less than 2 streams are provided
+ * @throws the streams are provided in the wrong order
+ * @throws one of the streams emits an error
+ *
+ * @example
+ * ```ts
+ * const reader = createReadStream('some/source')
+ * const writer = createWriteStream('some/target')
+ *
+ * pipeline(reader, writer)
+ *   .then(() => {
+ *     console.log('done')
+ *   })
+ *   .catch((error) => {
+ *      console.error(error)
+ *   })
+ * ```
+ */
 export async function pipeline (...streams: Array<Readable | Transform | Writable>): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     if (streams.length < 2) {

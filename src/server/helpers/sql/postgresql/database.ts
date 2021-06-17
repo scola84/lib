@@ -11,6 +11,9 @@ import tokens from './tokens'
 
 types.setTypeParser(types.builtins.INT8, parseInt)
 
+/**
+ * Manages PostgreSQL connections.
+ */
 export class PostgresqlDatabase extends Database {
   public format = format(formatValue)
 
@@ -18,16 +21,40 @@ export class PostgresqlDatabase extends Database {
 
   public tokens = tokens
 
-  public constructor (rawOptions: PoolConfig | string = {}) {
+  /**
+   * Constructs a PostgreSQL database.
+   *
+   * Parses the options with `parseDsn` if it is a string.
+   *
+   * @param options - The database options
+   */
+  public constructor (options: PoolConfig | string = {}) {
     super()
 
-    const options = typeof rawOptions === 'string'
-      ? PostgresqlDatabase.parseDsn(rawOptions)
-      : rawOptions
+    const databaseOptions = typeof options === 'string'
+      ? PostgresqlDatabase.parseDsn(options)
+      : options
 
-    this.pool = new Pool(options)
+    this.pool = new Pool(databaseOptions)
   }
 
+  /**
+   * Constructs pool options from a DSN (Data Source Name) of a PostgreSQL server.
+   *
+   * Adds `connectionString: dsn` and `connectionTimeoutMillis: 10000` to the pool options.
+   *
+   * Parses the query string of the DSN, casts booleans and numbers and adds the key/value pairs to the pool options.
+   *
+   * @param dsn - The DSN
+   * @returns The pool options
+   *
+   * @example
+   *
+   * ```ts
+   * const options = PostgresqlDatabase.parseDSN('mysql://root:root@localhost:3306/db?max=10')
+   * // options = { connectionString: 'mysql://root:root@localhost:3306/db?max=10', connectionTimeoutMillis: 10000, max: 10 }
+   * ```
+   */
   public static parseDsn (dsn: string): PoolConfig {
     const url = new URL(dsn)
 

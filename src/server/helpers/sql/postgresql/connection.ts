@@ -7,6 +7,9 @@ import { format } from '../format'
 import { format as formatValue } from './format'
 import tokens from './tokens'
 
+/**
+ * Executes PostgreSQL queries.
+ */
 export class PostgresqlConnection extends Connection {
   public connection: PoolClient
 
@@ -14,6 +17,11 @@ export class PostgresqlConnection extends Connection {
 
   public tokens = tokens
 
+  /**
+   * Constructs a PostgreSQL connection.
+   *
+   * @param connection - The underlying connection
+   */
   public constructor (connection: PoolClient) {
     super()
     this.connection = connection

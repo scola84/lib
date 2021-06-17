@@ -4,6 +4,9 @@
     "project": "tsconfig.json",
     "sourceType": "module"
   },
+  "plugins": [
+    "eslint-plugin-tsdoc"
+  ],
   "rules": {
     "@typescript-eslint/member-ordering": [
       "error",
@@ -52,6 +55,7 @@
     "@typescript-eslint/return-await": [
       "error",
       "in-try-catch"
-    ]
+    ],
+    "tsdoc/syntax": "warn"
   }
 }

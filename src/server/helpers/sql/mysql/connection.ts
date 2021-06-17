@@ -11,6 +11,9 @@ interface StreamConnection extends PoolConnection {
   connection: BaseConnection
 }
 
+/**
+ * Executes MySQL queries.
+ */
 export class MysqlConnection extends Connection {
   public connection: PoolConnection
 
@@ -18,6 +21,11 @@ export class MysqlConnection extends Connection {
 
   public tokens = tokens
 
+  /**
+   * Constructs a MySQL connection.
+   *
+   * @param connection - The underlying connection
+   */
   public constructor (connection: PoolConnection) {
     super()
     this.connection = connection

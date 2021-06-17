@@ -9,6 +9,9 @@ import lodash from 'lodash'
 import { parse } from 'query-string'
 import tokens from './tokens'
 
+/**
+ * Manages MSSQL connections.
+ */
 export class MssqlDatabase extends Database {
   public format = format(formatValue)
 
@@ -16,16 +19,40 @@ export class MssqlDatabase extends Database {
 
   public tokens = tokens
 
-  public constructor (rawOptions: config | string = { server: '' }) {
+  /**
+   * Constructs a MSSQL database.
+   *
+   * Parses the options with `parseDsn` if it is a string.
+   *
+   * @param options - The database options
+   */
+  public constructor (options: config | string = { server: '' }) {
     super()
 
-    const options = typeof rawOptions === 'string'
-      ? MssqlDatabase.parseDsn(rawOptions)
-      : rawOptions
+    const databaseOptions = typeof options === 'string'
+      ? MssqlDatabase.parseDsn(options)
+      : options
 
-    this.pool = new ConnectionPool(options)
+    this.pool = new ConnectionPool(databaseOptions)
   }
 
+  /**
+   * Constructs pool options from a DSN (Data Source Name) of a MSSQL server.
+   *
+   * Adds `options.encrypt: false` to the pool options.
+   *
+   * Parses the query string of the DSN, casts booleans and numbers and adds the key/value pairs to the pool options.
+   *
+   * @param dsn - The DSN
+   * @returns The pool options
+   *
+   * @example
+   *
+   * ```ts
+   * const options = MssqlDatabase.parseDSN('mssql://root:root@localhost:1433/db?connectionTimeout=10000')
+   * // options = { connectionTimeout: 10000, database: 'db', options: { encrypt: false }, host: 'localhost', password: 'root', port: 1433, user: 'root' }
+   * ```
+   */
   public static parseDsn (dsn: string): config {
     const url = new URL(dsn)
 

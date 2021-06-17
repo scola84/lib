@@ -9,6 +9,9 @@ import lodash from 'lodash'
 import { parse } from 'query-string'
 import tokens from './tokens'
 
+/**
+ * Manages MySQL connections.
+ */
 export class MysqlDatabase extends Database {
   public format = format(formatValue)
 
@@ -16,16 +19,40 @@ export class MysqlDatabase extends Database {
 
   public tokens = tokens
 
-  public constructor (rawOptions: PoolOptions | string = {}) {
+  /**
+   * Constructs a MySQL database.
+   *
+   * Parses the options with `parseDsn` if it is a string.
+   *
+   * @param options - The database options
+   */
+  public constructor (options: PoolOptions | string = {}) {
     super()
 
-    const options = typeof rawOptions === 'string'
-      ? MysqlDatabase.parseDsn(rawOptions)
-      : rawOptions
+    const databaseOptions = typeof options === 'string'
+      ? MysqlDatabase.parseDsn(options)
+      : options
 
-    this.pool = createPool(options)
+    this.pool = createPool(databaseOptions)
   }
 
+  /**
+   * Constructs pool options from a DSN (Data Source Name) of a MySQL server.
+   *
+   * Adds `decimalNumbers: true` and `supportBigNumbers: true` to the pool options.
+   *
+   * Parses the query string of the DSN, casts booleans and numbers and adds the key/value pairs to the pool options.
+   *
+   * @param dsn - The DSN
+   * @returns The pool options
+   *
+   * @example
+   *
+   * ```ts
+   * const options = MysqlDatabase.parseDSN('mysql://root:root@localhost:3306/db?nestTables=1')
+   * // options = { database: 'db', decimalNumbers: true, host: 'localhost', password: 'root', nestTables: true, port: 3306, supportBigNumbers: true, user: 'root' }
+   * ```
+   */
   public static parseDsn (dsn: string): PoolOptions {
     const url = new URL(dsn)
 

@@ -13,44 +13,44 @@ const data = {
   name: 'scola'
 }
 
-const locale = 'en'
+const locale = 'nl'
 
 Formatter.strings = {
   en: {
-    key: 'value-en',
-    key_with_data: 'value-en {name}'
+    hello: 'Hello',
+    hello_name: 'Hello {name}'
   },
   nl: {
-    key: 'value-nl',
-    key_with_data: 'value-nl {name}'
+    hello: 'Hallo',
+    hello_name: 'Hallo {name}'
   }
 }
 
 function formatAValue (): void {
   it('without data and without locale', () => {
-    expect(new Formatter().format('key')).equal('value-nl')
+    expect(new Formatter().format('hello')).equal('Hello')
   })
 
   it('with data and without locale', () => {
-    expect(new Formatter().format('key_with_data', undefined, data)).equal('value-nl scola')
+    expect(new Formatter().format('hello_name', undefined, data)).equal('Hello scola')
   })
 
   it('without data and with locale', () => {
-    expect(new Formatter().format('key', locale)).equal('value-en')
+    expect(new Formatter().format('hello', locale)).equal('Hallo')
   })
 
   it('with data and with locale', () => {
-    expect(new Formatter().format('key_with_data', locale, data)).equal('value-en scola')
+    expect(new Formatter().format('hello_name', locale, data)).equal('Hallo scola')
   })
 }
 
 function lookupACode (): void {
   it('with lowercase value', () => {
-    expect(new Formatter().lookup('value-nl')).equal('key')
+    expect(new Formatter().lookup('Hello')).equal('hello')
   })
 
   it('with uppercase value', () => {
-    expect(new Formatter().lookup('VALUE-nl')).equal('key')
+    expect(new Formatter().lookup('HELLO')).equal('hello')
   })
 
   it('with non-existent locale', () => {
@@ -72,6 +72,6 @@ function returnACode (): void {
   })
 
   it('data is missing', () => {
-    expect(new Formatter().format('key_with_data', locale, {})).equal('key_with_data')
+    expect(new Formatter().format('hello_name', locale, {})).equal('hello_name')
   })
 }

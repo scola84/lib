@@ -62,7 +62,7 @@ export class Queuer {
     this.highWaterMark = options.highWaterMark ?? Number(process.env.QUEUE_HWM ?? 16)
     this.logger = options.logger.child({ name: 'queuer' })
     this.maxLength = options.maxLength ?? Number(process.env.QUEUE_MAX_LENGTH ?? 1024 * 1024)
-    this.names = options.names ?? process.env.QUEUE_NAMES ?? '.'
+    this.names = options.names ?? process.env.QUEUE_NAMES ?? '%'
     this.schedule = options.schedule ?? process.env.QUEUE_SCHEDULE ?? '* * * * *'
     this.store = options.store
   }
@@ -200,7 +200,7 @@ export class Queuer {
       SELECT *
       FROM queue
       WHERE
-        name ${this.database.tokens.regexp} $(name) AND
+        name LIKE $(name) AND
         schedule_begin <= $(date) AND (
           schedule_end >= $(date) OR
           schedule_end IS NULL

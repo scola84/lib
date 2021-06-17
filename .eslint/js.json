@@ -22,6 +22,7 @@
       "declaration"
     ],
     "function-call-argument-newline": "off",
+    "lines-around-comment": "off",
     "max-len": "off",
     "max-lines": "off",
     "max-params": "off",

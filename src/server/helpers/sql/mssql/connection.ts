@@ -7,6 +7,9 @@ import { format } from '../format'
 import { format as formatValue } from './format'
 import tokens from './tokens'
 
+/**
+ * Executes MSSQL queries.
+ */
 export class MssqlConnection extends Connection {
   public connection: Request
 
@@ -14,6 +17,11 @@ export class MssqlConnection extends Connection {
 
   public tokens = tokens
 
+  /**
+   * Constructs a MSSQL connection.
+   *
+   * @param connection - The underlying connection
+   */
   public constructor (connection: Request) {
     super()
     this.connection = connection
@@ -25,17 +33,29 @@ export class MssqlConnection extends Connection {
   }
 
   public async insert<V, R = number>(query: string, values?: Partial<V>): Promise<InsertResult<R>> {
-    const { recordset: [object] } = await this.query<V, IResult<{ id: R }>>(`${query}; SELECT SCOPE_IDENTITY() AS id;`, values)
+    const { recordset: [object] } = await this.query<V, IResult<{ id: R }>>(`
+      ${query};
+      SELECT SCOPE_IDENTITY() AS id;
+    `, values)
+
     return object
   }
 
   public async insertAll<V, R = number>(query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {
-    const { recordset } = await this.query<V, IResult<{ id: R }>>(`${query}; SELECT SCOPE_IDENTITY() AS id;`, values)
+    const { recordset } = await this.query<V, IResult<{ id: R }>>(`
+      ${query};
+      SELECT SCOPE_IDENTITY() AS id;
+    `, values)
+
     return recordset
   }
 
   public async insertOne<V, R = number>(query: string, values?: Partial<V>): Promise<InsertResult<R>> {
-    const { recordset: [object] } = await this.query<V, IResult<{ id: R }>>(`${query}; SELECT SCOPE_IDENTITY() AS id;`, values)
+    const { recordset: [object] } = await this.query<V, IResult<{ id: R }>>(`
+      ${query};
+      SELECT SCOPE_IDENTITY() AS id;
+    `, values)
+
     return object
   }
 
@@ -54,8 +74,8 @@ export class MssqlConnection extends Connection {
   }
 
   public async selectAll<V, R>(query: string, values?: Partial<V>): Promise<R[]> {
-    const result = await this.query<V, IResult<R>>(query, values)
-    return result.recordset
+    const { recordset } = await this.query<V, IResult<R>>(query, values)
+    return recordset
   }
 
   public async selectOne<V, R>(query: string, values?: Partial<V>): Promise<R> {

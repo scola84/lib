@@ -88,6 +88,7 @@
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
+    "eslint-plugin-tsdoc": "^0.2.14",
     "jest": "^27.0.4",
     "jest-circus": "^27.0.4",
     "lit-analyzer": "^1.2.1",
@@ -96,6 +97,8 @@
     "ts-jest": "^27.0.3",
     "ts-lit-plugin": "^1.2.1",
     "ts-node": "^10.0.0",
+    "typedoc": "^0.21.0",
+    "typedoc-plugin-markdown": "^3.9.0",
     "typescript": "^4.3.2"
   },
   "engines": {
@@ -165,6 +168,7 @@
   },
   "repository": "github:scola84/lib",
   "scripts": {
+    "docs": "rm -rf docs/server && typedoc --excludeNotDocumented --out docs/server --readme none src/server/index.ts && rm -rf docs/client && typedoc --excludeNotDocumented --out docs/client --readme none src/client/index.ts",
     "exec": "onchange --initial --kill ./dist/server/cjs.js -- node ./dist/server/cjs.js",
     "lint": "tsc --project ./src/client && tsc --project ./src/server && tsc --project ./test/server && lit-analyzer ./src/client --strict && eslint ./bin ./src ./test",
     "make": "rollup --config ./bin/rollup.config.js --sourcemap",

@@ -109,7 +109,7 @@ async function emitMembers (): Promise<void> {
   })
 }
 
-function storeDelFails (finish: (error?: unknown) => void): void {
+function storeDelFails (finish: jest.DoneCallback): void {
   const key = 'zscanner-store-del-fails'
 
   const scanner = new ZScanner({
@@ -134,7 +134,7 @@ function storeDelFails (finish: (error?: unknown) => void): void {
   scanner.on('data', () => {})
 }
 
-function storeZscanFails (finish: (error?: unknown) => void): void {
+function storeZscanFails (finish: jest.DoneCallback): void {
   const key = 'zscanner-store-zscan-fails'
 
   const scanner = new ZScanner({

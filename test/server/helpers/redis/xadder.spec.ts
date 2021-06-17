@@ -45,7 +45,7 @@ afterAll(async () => {
   helpers.store.end()
 })
 
-function storeBatchFails (finish: (error?: unknown) => void): void {
+function storeBatchFails (finish: jest.DoneCallback): void {
   const adder = new XAdder({
     highWaterMark: 1,
     maxLength: 1024,
@@ -70,7 +70,7 @@ function storeBatchFails (finish: (error?: unknown) => void): void {
   adder.end()
 }
 
-function storeBatchExecFails (finish: (error?: unknown) => void): void {
+function storeBatchExecFails (finish: jest.DoneCallback): void {
   const adder = new XAdder({
     highWaterMark: 1,
     maxLength: 1024,
@@ -101,7 +101,7 @@ function storeBatchExecFails (finish: (error?: unknown) => void): void {
   adder.end()
 }
 
-function storeBatchExecFailsOnFinal (finish: (error?: unknown) => void): void {
+function storeBatchExecFailsOnFinal (finish: jest.DoneCallback): void {
   const adder = new XAdder({
     highWaterMark: 2,
     maxLength: 1024,
@@ -132,7 +132,7 @@ function storeBatchExecFailsOnFinal (finish: (error?: unknown) => void): void {
   adder.end({})
 }
 
-function storeBatchXAddFails (finish: (error?: unknown) => void): void {
+function storeBatchXAddFails (finish: jest.DoneCallback): void {
   const adder = new XAdder({
     highWaterMark: 1,
     maxLength: 1024,
@@ -163,7 +163,7 @@ function storeBatchXAddFails (finish: (error?: unknown) => void): void {
   adder.end()
 }
 
-function writeItems (finish: (error?: unknown) => void): void {
+function writeItems (finish: jest.DoneCallback): void {
   const key = 'xadder-write-items'
 
   const adder = new XAdder({
@@ -197,7 +197,7 @@ function writeItems (finish: (error?: unknown) => void): void {
   adder.end()
 }
 
-function writeItemsOnFinal (finish: (error?: unknown) => void): void {
+function writeItemsOnFinal (finish: jest.DoneCallback): void {
   const key = 'xadder-write-items-on-final'
 
   const adder = new XAdder({

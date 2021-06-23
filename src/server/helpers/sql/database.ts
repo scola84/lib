@@ -296,7 +296,9 @@ export abstract class Database {
    * @example
    * ```ts
    * const result = database.select(sql`
-   *   SELECT *
+   *   SELECT
+   *     c1,
+   *     id
    *   FROM t1
    *   WHERE id = $(id)
    * `, {
@@ -328,7 +330,9 @@ export abstract class Database {
    * @example
    * ```ts
    * const result = database.selectAll(sql`
-   *   SELECT *
+   *   SELECT
+   *     c1,
+   *     id
    *   FROM t1
    *   WHERE id = $(id)
    * `, {
@@ -360,8 +364,10 @@ export abstract class Database {
    *
    * @example
    * ```ts
-   * const result = database.select(sql`
-   *   SELECT *
+   * const result = database.selectOne(sql`
+   *   SELECT
+   *     c1,
+   *     id
    *   FROM t1
    *   WHERE id = $(id)
    * `, {
@@ -393,7 +399,9 @@ export abstract class Database {
    * @example
    * ```ts
    * const reader = database.stream(sql`
-   *   SELECT *
+   *   SELECT
+   *     c1,
+   *     id
    *   FROM t1
    * `)
    *

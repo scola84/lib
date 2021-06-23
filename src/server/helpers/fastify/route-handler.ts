@@ -3,15 +3,34 @@ import type { Logger } from 'pino'
 import type { Server } from './server'
 
 export interface RouteHandlerOptions extends RouteOptions {
+  /**
+   * The logger.
+   *
+   * @see https://www.npmjs.com/package/pino
+   */
   logger: Logger
+
+  /**
+   * The server.
+   */
   server: Server
 }
 
+/**
+ * Handles a request and sends a reply.
+ */
 export abstract class RouteHandler {
+  /**
+   * The options for the Fastify route.
+   *
+   * @see https://github.com/fastify/fastify/blob/main/docs/Routes.md
+   */
   public static options?: Partial<RouteHandlerOptions>
 
   /**
    * The logger.
+   *
+   * @see https://www.npmjs.com/package/pino
    */
   public logger?: Logger
 
@@ -45,7 +64,7 @@ export abstract class RouteHandler {
   public url: RouteOptions['url']
 
   /**
-   * Constructs a route handler.
+   * Creates a route handler.
    *
    * Merges the static class `options` and the constructor `options`.
    *
@@ -74,7 +93,7 @@ export abstract class RouteHandler {
    *
    * The registered handler calls the `route` method of this class, which has the same signature as the handler.
    *
-   * Sends a 500 response to the client if an error is thrown and a response has not yet been sent.
+   * Sends a 500 reply to the client if an error is thrown and a reply has not yet been sent.
    */
   public start (): void {
     this.logger?.info({
@@ -92,7 +111,7 @@ export abstract class RouteHandler {
   }
 
   /**
-   * Sends a 500 response to the client if a response has not yet been sent.
+   * Sends a 500 reply to the client if a reply has not yet been sent.
    *
    * @param reply - The reply
    * @param error - The error
@@ -108,7 +127,7 @@ export abstract class RouteHandler {
   }
 
   /**
-   * Calls `route` and `handleError` is an error is thrown.
+   * Calls `route`, and `handleError` if an error is thrown.
    *
    * @param request - The request
    * @param reply - The reply
@@ -126,7 +145,7 @@ export abstract class RouteHandler {
   }
 
   /**
-   * Performs the business logic.
+   * Handles the request and sends the reply.
    *
    * @param request - The request
    * @param reply - The reply

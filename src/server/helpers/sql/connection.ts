@@ -318,7 +318,9 @@ export abstract class Connection {
    * @example
    * ```ts
    * const result = connection.select(sql`
-   *   SELECT *
+   *   SELECT
+   *     c1,
+   *     id
    *   FROM t1
    *   WHERE id = $(id)
    * `, {
@@ -340,7 +342,9 @@ export abstract class Connection {
    * @example
    * ```ts
    * const result = connection.selectAll(sql`
-   *   SELECT *
+   *   SELECT
+   *     c1,
+   *     id
    *   FROM t1
    *   WHERE id = $(id)
    * `, {
@@ -362,8 +366,10 @@ export abstract class Connection {
    *
    * @example
    * ```ts
-   * const result = connection.select(sql`
-   *   SELECT *
+   * const result = connection.selectOne(sql`
+   *   SELECT
+   *     c1,
+   *     id
    *   FROM t1
    *   WHERE id = $(id)
    * `, {
@@ -385,7 +391,9 @@ export abstract class Connection {
    * @example
    * ```ts
    * const reader = connection.stream(sql`
-   *   SELECT *
+   *   SELECT
+   *     c1,
+   *     id
    *   FROM t1
    * `)
    *

@@ -22,7 +22,7 @@ export class MysqlConnection extends Connection {
   public tokens = tokens
 
   /**
-   * Constructs a MySQL connection.
+   * Creates a MySQL connection.
    *
    * @param connection - The underlying connection
    */

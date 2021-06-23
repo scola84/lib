@@ -1,117 +1,254 @@
 import type { Database, UpdateResult } from '../sql'
-import type { DuplexOptions, Readable, Transform, Writable } from 'stream'
-import type { Item, Queue, QueueRun, Task, TaskRun } from '../../entities'
+import type { Queue, QueueRun, TaskRun } from '../../entities'
 import Ajv from 'ajv'
+import type { DuplexOptions } from 'stream'
 import type { Logger } from 'pino'
 import type { ObjectSchema } from 'fluent-json-schema'
 import type { Queuer } from './queuer'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createNodeRedisClient } from 'handy-redis'
 import type { queue as fastq } from 'fastq'
-import { pipeline } from '../stream'
 import { promise } from 'fastq'
 import { sql } from '../sql'
 import waitUntil from 'async-wait-until'
 
 export interface TaskRunnerOptions extends DuplexOptions {
-  block: number
+  /**
+   * The channel to trigger queue runs.
+   *
+   * @defaultValue `process.env.QUEUE_CHANNEL` or 'queue'
+   */
   channel: string
+
+  /**
+   * The concurrency of the task runner.
+   *
+   * @defaultValue `process.env.QUEUE_CONCURRENCY` or 1
+   */
   concurrency: number | string
-  consumer: string
+
+  /**
+   * The database containing the queues.
+   */
   database: Database
-  group: string
+
+  /**
+   * The host of the task runner.
+   *
+   * @defaultValue `process.env.HOSTNAME` or ''
+   */
+  host: string
+
+  /**
+   * The logger.
+   *
+   * @see https://www.npmjs.com/package/pino
+   */
   logger?: Logger
-  maxLength: number
+
+  /**
+   * The name of the queue.
+   */
   name: string
+
+  /**
+   * The queuer.
+   */
   queuer: Queuer
+
+  /**
+   * The schema of the task runner.
+   *
+   * If it contains an `options` and/or `payload` schema the task runner will validate the options and/or payload of the task run respectively.
+   *
+   * @see https://www.npmjs.com/package/fluent-json-schema
+   */
   schema: Record<string, ObjectSchema>
+
+  /**
+   * The store to trigger queue runs.
+   */
   store: WrappedNodeRedisClient
-  xid: string
+
+  /**
+   * The amount of time to block the store list pop as milliseconds.
+   *
+   * @defaultValue 5 * 60 * 1000
+   */
+  timeout: number
 }
 
+/**
+ * Runs a task.
+ */
 export abstract class TaskRunner {
+  /**
+   * The options for the task runner.
+   *
+   * @see https://github.com/fastify/fastify/blob/main/docs/Routes.md
+   */
   public static options?: Partial<TaskRunnerOptions>
 
-  public block: number
-
+  /**
+   * The channel to trigger queue runs.
+   *
+   * @defaultValue `process.env.QUEUE_CHANNEL` or 'queue'
+   */
   public channel: string
 
+  /**
+   * The concurrency of the task runner.
+   *
+   * @defaultValue `process.env.QUEUE_CONCURRENCY` or 1
+   */
   public concurrency: number
 
-  public consumer: string
-
+  /**
+   * The database containing the queues.
+   */
   public database: Database
 
-  public group: string
+  /**
+   * The host of the task runner.
+   *
+   * @defaultValue `process.env.HOSTNAME` or ''
+   */
+  public host: string
 
+  /**
+   * The logger.
+   *
+   * @see https://www.npmjs.com/package/pino
+   */
   public logger?: Logger
 
-  public maxLength: number
-
+  /**
+   * The name of the queue.
+   */
   public name: string
 
+  /**
+   * The local queue.
+   *
+   * @see https://www.npmjs.com/package/fastq
+   */
   public queue?: fastq
 
+  /**
+   * The schema of the task runner.
+   *
+   * If it contains an `options` and/or `payload` schema the task runner will validate the options and/or payload of the task run respectively.
+   *
+   * @see https://www.npmjs.com/package/fluent-json-schema
+   */
   public schema: Record<string, ObjectSchema>
 
+  /**
+   * The store to trigger queue runs.
+   */
   public store: WrappedNodeRedisClient
 
+  /**
+   * The store to trigger task runs.
+   */
   public storeDuplicate?: WrappedNodeRedisClient
 
+  /**
+   * The amount of time to block the store list pop as milliseconds.
+   *
+   * @defaultValue 5 * 60 * 1000
+   */
+  public timeout: number
+
+  /**
+   * The validator to validate data against the `schema`.
+   *
+   * @see https://www.npmjs.com/package/ajv
+   */
   public validator?: Ajv
 
-  public xid: string
-
-  public constructor (coptions: Partial<TaskRunnerOptions>) {
-    const options = {
+  /**
+   * Creates a task runner.
+   *
+   * Merges the static class `options` and the constructor `options`.
+   *
+   * Adds the task runner to the queuer.
+   *
+   * @param options - The task runner options
+   * @throws database is undefined
+   * @throws name is undefined
+   * @throws store is undefined
+   */
+  public constructor (options: Partial<TaskRunnerOptions>) {
+    const runnerOptions = {
       ...TaskRunner.options,
-      ...coptions
+      ...options
     }
 
-    if (options.database === undefined) {
+    if (runnerOptions.database === undefined) {
       throw new Error('Option "database" is undefined')
     }
 
-    if (options.name === undefined) {
+    if (runnerOptions.name === undefined) {
       throw new Error('Option "name is undefined')
     }
 
-    if (options.store === undefined) {
+    if (runnerOptions.store === undefined) {
       throw new Error('Option "store" is undefined')
     }
 
-    this.block = options.block ?? 5 * 60 * 1000
-    this.channel = options.channel ?? 'queue'
-    this.concurrency = Number(options.concurrency ?? process.env.QUEUE_CONCURRENCY ?? 1)
-    this.consumer = options.consumer ?? process.env.HOSTNAME ?? ''
-    this.database = options.database
-    this.group = options.group ?? options.name
-    this.logger = options.logger?.child({ name: options.name })
-    this.maxLength = options.maxLength ?? 1024 * 1024
-    this.name = options.name
-    this.schema = options.schema ?? {}
-    this.store = options.store
-    this.xid = options.xid ?? '0-0'
+    if (options.queuer !== undefined) {
+      options.queuer.add(this)
+    }
 
-    options.queuer?.add(this)
+    this.channel = runnerOptions.channel ?? process.env.QUEUE_CHANNEL ?? 'queue'
+    this.concurrency = Number(runnerOptions.concurrency ?? process.env.QUEUE_CONCURRENCY ?? 1)
+    this.database = runnerOptions.database
+    this.host = runnerOptions.host ?? process.env.HOSTNAME ?? ''
+    this.logger = runnerOptions.logger?.child({ name: runnerOptions.name })
+    this.name = runnerOptions.name
+    this.schema = runnerOptions.schema ?? {}
+    this.store = runnerOptions.store
+    this.timeout = runnerOptions.timeout ?? 5 * 60 * 1000
   }
 
+  /**
+   * Creates a local queue.
+   *
+   * Handles task runs with the given `concurrency`.
+   *
+   * Calls `push` if the queue is drained.
+   *
+   * @returns The local queue
+   */
   public createQueue (): fastq {
-    const queuer = promise<unknown, TaskRun>(async (taskRun) => {
+    const queue = promise<unknown, TaskRun>(async (taskRun) => {
       return this.handleTaskRun(taskRun)
     }, this.concurrency)
 
-    queuer.empty = () => {
-      this.read()
+    queue.drain = () => {
+      this.push()
     }
 
-    return queuer
+    return queue
   }
 
+  /**
+   * Creates a duplicate of the store.
+   *
+   * @returns The store duplicate
+   */
   public createStoreDuplicate (): WrappedNodeRedisClient {
     return createNodeRedisClient(this.store.nodeRedis.duplicate())
   }
 
+  /**
+   * Create a validator.
+   *
+   * Adds the `schema`.
+   *
+   * @returns The validator
+   */
   public createValidator (): Ajv {
     const validator = new Ajv({
       useDefaults: true
@@ -124,10 +261,13 @@ export abstract class TaskRunner {
     return validator
   }
 
-  public async pipeline (...streams: Array<Readable | Transform | Writable>): Promise<void> {
-    return pipeline(...streams)
-  }
-
+  /**
+   * Sets up the task runner.
+   *
+   * Sets `queue`, `storeDuplicate` and `validator`.
+   *
+   * Registers an `error` event listener on `storeDuplicate`
+   */
   public setup (): void {
     this.queue = this.createQueue()
     this.storeDuplicate = this.createStoreDuplicate()
@@ -138,23 +278,33 @@ export abstract class TaskRunner {
     })
   }
 
+  /**
+   * Starts the task runner.
+   *
+   * Calls `setup` and `push`.
+   *
+   * @param setup - Whether to call `setup`
+   */
   public start (setup = true): void {
     this.logger?.info({
-      block: this.block,
       channel: this.channel,
       concurrency: this.concurrency,
-      consumer: this.consumer,
-      group: this.group,
-      maxLength: this.maxLength
+      host: this.host,
+      timeout: this.timeout
     }, 'Starting task runner')
 
     if (setup) {
       this.setup()
     }
 
-    this.read()
+    this.push()
   }
 
+  /**
+   * Stops the task runner.
+   *
+   * Closes the `storeDuplicate` and returns when all the task runs have finished.
+   */
   public async stop (): Promise<void> {
     this.logger?.info({
       connected: [
@@ -165,7 +315,6 @@ export abstract class TaskRunner {
       queue: this.queue?.length()
     }, 'Stopping task runner')
 
-    await this.delConsumer()
     this.storeDuplicate?.end()
 
     await waitUntil(() => {
@@ -175,65 +324,46 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async createGroup (): Promise<void> {
-    try {
-      await this.store.xgroup([['CREATE', [this.name, this.group]], '$', 'MKSTREAM'])
-    } catch (error: unknown) {
-      this.logger?.error({ context: 'create-group' }, String(error))
-    }
-  }
-
-  protected async delConsumer (): Promise<void> {
-    try {
-      await this.store.xgroup(['DELCONSUMER', [this.name, this.group, this.consumer]])
-    } catch (error: unknown) {
-      this.logger?.error({ context: 'del-consumer' }, String(error))
-    }
-  }
-
+  /**
+   * Finishes the task run.
+   *
+   * Updates the task run and the queue run.
+   *
+   * Triggers dependant queues if all task runs have finished successfully.
+   *
+   * @param taskRun - The task run
+   */
   protected async finishTaskRun (taskRun: TaskRun): Promise<void> {
-    taskRun.code = taskRun.code === 'pending' ? 'ok' : taskRun.code
-    taskRun.item.code = taskRun.code
-
+    taskRun.status = taskRun.status === 'pending' ? 'ok' : taskRun.status
     await this.updateTaskRunOnFinish(taskRun)
-    await this.updateItem(taskRun)
+    await this.updateQueueRun(taskRun)
+    const queues = await this.selectQueues(taskRun)
 
-    if (taskRun.xid !== null) {
-      await this.store.xack(this.name, this.group, taskRun.xid)
-    }
-
-    const nextTaskRun = taskRun.code === 'ok'
-      ? await this.selectTaskRunOnFinish(taskRun)
-      : undefined
-
-    if (nextTaskRun === undefined) {
-      await this.updateQueueRun(taskRun)
-      const queues = await this.selectQueues(taskRun)
-
-      await Promise.all(queues.map(async ({ id }) => {
-        await this.store.publish(this.channel, JSON.stringify({
-          id,
-          parameters: {
-            id: taskRun.queueRun.id
-          }
-        }))
+    await Promise.all(queues.map(async ({ id }) => {
+      await this.store.publish(this.channel, JSON.stringify({
+        id,
+        parameters: {
+          id: taskRun.queueRun.id
+        }
       }))
-    } else {
-      await this.store.xadd(
-        `${taskRun.queueRun.name}-${nextTaskRun.name}`,
-        ['MAXLEN', ['~', this.maxLength]],
-        '*',
-        ['id', String(nextTaskRun.id)]
-      )
-    }
+    }))
   }
 
+  /**
+   * Handles the task run.
+   *
+   * Starts and finishes the task run.
+   *
+   * Set the `status` and `reason` of the task run if an error was caught.
+   *
+   * @param taskRun - The task run
+   */
   protected async handleTaskRun (taskRun: TaskRun): Promise<void> {
     try {
-      await this.startTaskRun(taskRun)
+      await this.runTask(taskRun)
     } catch (error: unknown) {
-      taskRun.code = 'err'
       taskRun.reason = String(error)
+      taskRun.status = 'err'
     } finally {
       try {
         await this.finishTaskRun(taskRun)
@@ -243,92 +373,92 @@ export abstract class TaskRunner {
     }
   }
 
-  protected read (): void {
+  /**
+   * Pushes a task run.
+   *
+   * Calls itself if the local queue is empty after pushing the task run.
+   *
+   * Calls itself if the store connection was lost and reestablished.
+   */
+  protected push (): void {
     this
-      .readTaskRuns()
+      .pushTaskRun()
       .then(() => {
-        if (this.queue?.length() === 0) {
-          this.read()
+        if (Number(this.queue?.length()) < this.concurrency) {
+          this.push()
         }
       })
       .catch(async (error: unknown) => {
-        if ((/no such key/ui).test(String(error))) {
-          await this.createGroup()
-          this.read()
-          return
-        }
-
         if ((/connection lost/ui).test(String(error))) {
           await waitUntil(() => {
             return this.store.nodeRedis.connected
           }, {
-            timeout: this.block
+            timeout: Number.POSITIVE_INFINITY
           })
 
-          this.read()
+          this.push()
           return
         }
 
-        this.logger?.error({ context: 'read' }, String(error))
+        this.logger?.error({ context: 'push' }, String(error))
       })
   }
 
-  protected async readTaskRuns (): Promise<void> {
-    const result = await this.storeDuplicate?.xreadgroup(
-      ['GROUP', [this.group, this.consumer]],
-      ['COUNT', this.concurrency],
-      ['BLOCK', this.block],
-      'STREAMS',
-      [this.name],
-      this.xid
-    ) as Array<[string, string[] | null]> | null
+  /**
+   * Pushes a task run.
+   *
+   * Pops the ID of a task run from the store list having the same name as the task runner. Blocks the amount of milliseconds given by `timeout`.
+   *
+   * Selects the task run and the queue run.
+   *
+   * Updates the task run and pushes it onto the local queue.
+   */
+  protected async pushTaskRun (): Promise<void> {
+    const [,id] = await this.storeDuplicate?.blpop([this.name], this.timeout / 1000) ?? []
 
-    const items = result?.[0][1] ?? []
-
-    if (items.length === 0) {
-      this.xid = '>'
+    if (id === undefined) {
       return
     }
 
-    await Promise.all(items.map(async ([xid, [, id]]): Promise<void> => {
-      this.xid = this.xid === '>' ? '>' : xid
+    try {
+      const taskRun = await this.selectTaskRun(Number(id))
+      taskRun.queueRun = await this.selectQueueRun(taskRun)
+      await this.updateTaskRunOnPush(taskRun)
+      this.queue?.push(taskRun)
+    } catch (error: unknown) {
+      this.logger?.error({ context: 'push-task-run' }, String(error))
+    }
+  }
 
-      try {
-        const taskRun = await this.selectTaskRunOnRead(Number(id))
+  /**
+   * Runs a task.
+   *
+   * Updates the task run, validates the `options` and/or `payload` and calls `run`.
+   *
+   * @param taskRun - The task run
+   */
+  protected async runTask (taskRun: TaskRun): Promise<void> {
+    await this.updateTaskRunOnRun(taskRun)
 
-        const [
-          item,
-          queueRun,
-          task
-        ] = await Promise.all([
-          this.selectItem(taskRun),
-          this.selectQueueRun(taskRun),
-          this.selectTask(taskRun)
-        ])
-
-        taskRun.item = item
-        taskRun.queueRun = queueRun
-        taskRun.task = task
-        taskRun.xid = xid
-
-        await this.updateTaskRunOnRead(taskRun)
-        this.queue?.push(taskRun)
-      } catch (error: unknown) {
-        this.logger?.error({ context: 'read-task-runs' }, String(error))
+    if (taskRun.status === 'pending') {
+      if (this.validator?.getSchema('options') !== undefined) {
+        this.validate('options', taskRun.queueRun.options)
       }
-    }))
+
+      if (this.validator?.getSchema('payload') !== undefined) {
+        this.validate('payload', taskRun.payload)
+      }
+
+      await this.run(taskRun)
+    }
   }
 
-  protected async selectItem (taskRun: TaskRun): Promise<Item> {
-    return this.database.selectOne<Item, Item>(sql`
-      SELECT *
-      FROM item
-      WHERE id = $(id)
-    `, {
-      id: taskRun.fkey_item_id
-    })
-  }
-
+  /**
+   * Selects a queue run.
+   *
+   * @param taskRun - The task run
+   * @returns The queue run
+   */
   protected async selectQueueRun (taskRun: TaskRun): Promise<QueueRun> {
     return this.database.selectOne<QueueRun, QueueRun>(sql`
       SELECT *
@@ -339,6 +469,20 @@ export abstract class TaskRunner {
     })
   }
 
+  /**
+   * Selects queues.
+   *
+   * Applies the following criteria:
+   *
+   * * `queue.fkey_queue_id = queue_run.fkey_queue_id`
+   * * `queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total`
+   * * `queue_run.fkey_task_run_id = task_run.id`
+   *
+   * The second criterion may be true for multiple task run (race condition). The latter criterion prevents this, because together they will only be satisfied by the last task run.
+   *
+   * @param queueRun - The queue run
+   * @returns The queues
+   */
   protected async selectQueues (taskRun: TaskRun): Promise<Queue[]> {
     return this.database.selectAll<QueueRun, Queue>(sql`
       SELECT queue.id
@@ -346,43 +490,21 @@ export abstract class TaskRunner {
       JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
       WHERE
         queue_run.id = $(id) AND
-        queue_run.fkey_item_id = $(fkey_item_id) AND
-        queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
+        queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total AND
+        queue_run.fkey_task_run_id = $(fkey_task_run_id)
     `, {
-      fkey_item_id: taskRun.item.id,
+      fkey_task_run_id: taskRun.id,
       id: taskRun.queueRun.id
     })
   }
 
-  protected async selectTask (taskRun: TaskRun): Promise<Task> {
-    return this.database.selectOne<Task, Task>(sql`
-      SELECT *
-      FROM task
-      WHERE id = $(id)
-    `, {
-      id: taskRun.fkey_task_id
-    })
-  }
-
-  protected async selectTaskRunOnFinish (taskRun: TaskRun): Promise<Task & TaskRun | undefined> {
-    return this.database.select<Task & TaskRun, Task & TaskRun>(sql`
-      SELECT
-        task_run.id,
-        task.name
-      FROM task_run
-      JOIN task ON task_run.fkey_task_id = task.id
-      WHERE
-        fkey_item_id = $(fkey_item_id) AND
-        task.number > $(number)
-      ORDER BY task.number ASC
-      LIMIT 1
-    `, {
-      fkey_item_id: taskRun.item.id,
-      number: taskRun.task.number
-    })
-  }
-
-  protected async selectTaskRunOnRead (id: number): Promise<TaskRun> {
+  /**
+   * Selects a task run.
+   *
+   * @param id - The ID of the task run
+   * @returns The task run
+   */
+  protected async selectTaskRun (id: number): Promise<TaskRun> {
     return this.database.selectOne<TaskRun, TaskRun>(sql`
       SELECT *
       FROM task_run
@@ -392,97 +514,108 @@ export abstract class TaskRunner {
     })
   }
 
-  protected async startTaskRun (taskRun: TaskRun): Promise<void> {
-    await this.updateTaskRunOnStart(taskRun)
-
-    if (taskRun.code === 'pending') {
-      if (this.validator?.getSchema('options') !== undefined) {
-        this.validate('options', taskRun.task.options)
-      }
-
-      if (this.validator?.getSchema('payload') !== undefined) {
-        this.validate('payload', taskRun.item.payload)
-      }
-
-      await this.run(taskRun)
-    }
-  }
-
-  protected async updateItem (taskRun: TaskRun): Promise<UpdateResult> {
-    return this.database.update<Item>(sql`
-      UPDATE item
-      SET
-        code = $(code),
-        date_updated = NOW()
-      WHERE id = $(id)
-    `, {
-      code: taskRun.item.code,
-      id: taskRun.item.id
-    })
-  }
-
+  /**
+   * Updates a queue run.
+   *
+   * Increments either `aggr_err` or `aggr_ok` by 1, depending on the result of the task run.
+   *
+   * Sets `fkey_task_run_id` to the ID of the task run.
+   *
+   * @param taskRun - The task run
+   * @returns The update result
+   */
   protected async updateQueueRun (taskRun: TaskRun): Promise<UpdateResult> {
     return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
-        aggr_${taskRun.code} = aggr_${taskRun.code} + 1,
+        aggr_${taskRun.status} = aggr_${taskRun.status} + 1,
         date_updated = NOW(),
-        fkey_item_id = $(fkey_item_id)
+        fkey_task_run_id = $(fkey_task_run_id)
       WHERE id = $(id)
     `, {
-      fkey_item_id: taskRun.item.id,
+      fkey_task_run_id: taskRun.id,
       id: taskRun.queueRun.id
     })
   }
 
+  /**
+   * Updates a task run.
+   *
+   * Sets the `status`, `reason` and `result`.
+   *
+   * @param taskRun - The task run
+   * @returns The update result
+   */
   protected async updateTaskRunOnFinish (taskRun: TaskRun): Promise<UpdateResult> {
-    return this.database.update<TaskRun | { result: string }>(sql`
+    return this.database.update<TaskRun>(sql`
       UPDATE task_run
       SET
-        code = $(code),
         date_updated = NOW(),
         reason = $(reason),
-        result = $(result)
+        result = $(result),
+        status = $(status)
       WHERE id = $(id)
     `, {
-      code: taskRun.code,
       id: taskRun.id,
       reason: taskRun.reason,
-      result: taskRun.result
+      result: taskRun.result,
+      status: taskRun.status
     })
   }
 
-  protected async updateTaskRunOnRead (taskRun: TaskRun): Promise<UpdateResult> {
+  /**
+   * Update a task run.
+   *
+   * Sets `date_queued`.
+   *
+   * @param taskRun - The task run
+   * @returns The update result
+   */
+  protected async updateTaskRunOnPush (taskRun: TaskRun): Promise<UpdateResult> {
     return this.database.update<TaskRun>(sql`
       UPDATE task_run
       SET
         date_queued = NOW(),
-        date_updated = NOW(),
-        xid = $(xid)
+        date_updated = NOW()
       WHERE id = $(id)
     `, {
-      id: taskRun.id,
-      xid: taskRun.xid
+      id: taskRun.id
     })
   }
 
-  protected async updateTaskRunOnStart (taskRun: TaskRun): Promise<UpdateResult> {
+  /**
+   * Update a task run.
+   *
+   * Sets `date_started` and `host`.
+   *
+   * @param taskRun - The task run
+   * @returns The update result
+   */
+  protected async updateTaskRunOnRun (taskRun: TaskRun): Promise<UpdateResult> {
     return this.database.update<TaskRun>(sql`
       UPDATE task_run
       SET
-        consumer = $(consumer),
         date_started = NOW(),
         date_updated = NOW(),
-        xid = $(xid)
+        host = $(host)
       WHERE id = $(id)
     `, {
-      consumer: this.consumer,
-      id: taskRun.id,
-      xid: taskRun.xid
+      host: this.host,
+      id: taskRun.id
     })
   }
 
-  protected validate <Data = unknown> (name: string, data: Data): Data {
+  /**
+   * Validates data against the schema with the given name.
+   *
+   * @param name - The name of the schema
+   * @param data - The data to be validated
+   * @returns The validated data
+   * @see https://ajv.js.org/api.html#validation-errors
+   * @throws schema is undefined
+   * @throws data is invalid
+   */
+  protected validate<Data = unknown>(name: string, data: Data): Data {
     const schema = this.validator?.getSchema(name)
 
     if (schema === undefined) {
@@ -497,5 +630,10 @@ export abstract class TaskRunner {
     return data
   }
 
+  /**
+   * Runs a task.
+   *
+   * @param taskRun - The task run
+   */
   protected abstract run (taskRun: TaskRun): Promise<void>
 }

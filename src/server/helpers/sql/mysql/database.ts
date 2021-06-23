@@ -20,7 +20,7 @@ export class MysqlDatabase extends Database {
   public tokens = tokens
 
   /**
-   * Constructs a MySQL database.
+   * Creates a MySQL database.
    *
    * Parses the options with `parseDsn` if it is a string.
    *
@@ -37,7 +37,7 @@ export class MysqlDatabase extends Database {
   }
 
   /**
-   * Constructs pool options from a DSN (Data Source Name) of a MySQL server.
+   * Creates pool options from a DSN (Data Source Name) of a MySQL server.
    *
    * Adds `decimalNumbers: true` and `supportBigNumbers: true` to the pool options.
    *
@@ -49,7 +49,7 @@ export class MysqlDatabase extends Database {
    * @example
    *
    * ```ts
-   * const options = MysqlDatabase.parseDSN('mysql://root:root@localhost:3306/db?nestTables=1')
+   * const options = MysqlDatabase.parseDsn('mysql://root:root@localhost:3306/db?nestTables=1')
    * // options = { database: 'db', decimalNumbers: true, host: 'localhost', password: 'root', nestTables: true, port: 3306, supportBigNumbers: true, user: 'root' }
    * ```
    */

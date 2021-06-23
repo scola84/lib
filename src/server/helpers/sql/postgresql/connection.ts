@@ -18,7 +18,7 @@ export class PostgresqlConnection extends Connection {
   public tokens = tokens
 
   /**
-   * Constructs a PostgreSQL connection.
+   * Creates a PostgreSQL connection.
    *
    * @param connection - The underlying connection
    */

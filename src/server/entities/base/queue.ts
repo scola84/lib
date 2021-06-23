@@ -5,6 +5,7 @@ export interface Queue {
   fkey_queue_id: number | null
   id?: number
   name: string
+  options?: unknown
   query: string | null
   schedule: string | null
   schedule_begin: Date | null

@@ -1,38 +1,82 @@
-import type { Connection } from '../helpers/sql'
-import type { Item } from './item'
 import type { QueueRun } from './queue-run'
-import type { Task } from './task'
 import type { TaskRun as TaskRunBase } from './base'
-import { createItem } from './item'
 import { createQueueRun } from './queue-run'
-import { createTask } from './task'
 
 export interface TaskRun<Payload = unknown, Options = unknown, Result = unknown> extends Required<TaskRunBase> {
-  code: 'err' | 'ok' | 'pending'
-  item: Item<Payload>
-  queueRun: QueueRun
+  /**
+   * The date the task run was created.
+   */
+  date_created: Date
+
+  /**
+   * The date the task run was queued.
+   */
+  date_queued: Date | null
+
+  /**
+   * The date the task run was started.
+   */
+  date_started: Date | null
+
+  /**
+   * The date the task run was updated.
+   */
+  date_updated: Date
+
+  /**
+   * The ID of the parent queue run.
+   */
+  fkey_queue_run_id: number
+
+  /**
+   * The host.
+   */
+  host: string | null
+
+  /**
+   * The ID.
+   */
+  id: number
+
+  /**
+   * The payload.
+   */
+  payload: Payload
+
+  /**
+   * The parent queue run as QueueRun.
+   */
+  queueRun: QueueRun<Options>
+
+  /**
+   * The reason the task run failed.
+   */
+  reason: string | null
+
+  /**
+   * The result.
+   */
   result: Result
-  sql?: Connection
-  task: Task<Options>
+
+  /**
+   * The status.
+   */
+  status: 'err' | 'ok' | 'pending'
 }
 
-export function createTaskRun<Payload, Options, Result> (payload?: Payload, options?: Options, result?: Result): TaskRun<Payload, Options, Result> {
+export function createTaskRun<Payload, Options, Result> (payload?: Payload): TaskRun<Payload, Options, Result> {
   return {
-    code: 'pending',
-    consumer: null,
     date_created: new Date(),
     date_queued: null,
     date_started: null,
     date_updated: new Date(),
-    fkey_item_id: 0,
     fkey_queue_run_id: 0,
-    fkey_task_id: 0,
+    host: null,
     id: 0,
-    item: createItem(payload),
+    payload: (payload ?? {}) as Payload,
     queueRun: createQueueRun(),
     reason: null,
-    result: (result ?? {}) as Result,
-    task: createTask(options),
-    xid: 'xid'
+    result: Object.create(null) as Result,
+    status: 'pending'
   }
 }

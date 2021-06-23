@@ -4,27 +4,24 @@ import type { Server } from '../fastify'
 import { isMatch } from 'micromatch'
 
 export type Services = Record<string, {
-  /**
-   * The queues to manage.
-   */
   queues?: Record<string, () => void>
-
-  /**
-   * The routes to manage.
-   */
   routes?: Record<string, () => void>
 }>
 
 export interface ServiceManagerOptions {
   /**
    * The logger.
+   *
+   * @see https://www.npmjs.com/package/pino
    */
   logger?: Logger
 
   /**
-   * The names of the `services` to manage.
+   * The names of the `services` to manage as  one or more micromatch patterns, separated by a colon.
    *
-   * Must be one or more micromatch patterns, separated by a colon.
+   * To determine whether a service should be started, the service name is matched against the micromatch patterns provided by `names`.
+   *
+   * A service name is created by concatenating its nested keys, i.e. \{service\}.\{type\}.\{factory\} -  the available types are 'queues' and 'routes'.
    *
    * @defaultValue `process.env.SERVICE_NAMES` or '*'
    * @see https://www.npmjs.com/package/micromatch
@@ -50,13 +47,16 @@ export interface ServiceManagerOptions {
    * The signal to stop the delegates.
    *
    * @defaultValue 'SIGTERM'.
+   * @see https://nodejs.org/api/process.html#process_signal_events
    */
   signal?: NodeJS.Signals | null
 
   /**
-   * The types of the delegates to manage.
+   * The types of the delegates to manage as one or more micromatch patterns, separated by a colon.
    *
-   * Must be one or more micromatch patterns, separated by a colon.
+   * To determine whether a delegate should be started, the delegate type is matched against the micromatch patterns.
+   *
+   * The delegate types are 'queuer' and 'server'.
    *
    * @defaultValue `process.env.SERVICE_TYPES` or '*'
    * @see https://www.npmjs.com/package/micromatch
@@ -65,18 +65,22 @@ export interface ServiceManagerOptions {
 }
 
 /**
- * Manages the services of the application.
+ * Manages services.
  */
 export class ServiceManager {
   /**
    * The logger.
+   *
+   * @see https://www.npmjs.com/package/pino
    */
   public logger?: Logger
 
   /**
-   * The names of the `services` to manage.
+   * The names of the `services` to manage as one or more micromatch patterns, separated by a colon.
    *
-   * Must be one or more micromatch patterns, separated by a colon.
+   * To determine whether a service should be started, the service name is matched against the micromatch patterns.
+   *
+   * A service name is created by concatenating its nested keys, i.e. \{service\}.\{type\}.\{factory\} -  the available types are 'queues' and 'routes'.
    *
    * @defaultValue `process.env.SERVICE_NAMES` or '*'
    * @see https://www.npmjs.com/package/micromatch
@@ -84,22 +88,24 @@ export class ServiceManager {
   public names: string[] | string
 
   /**
-   * The NodeJS process to listen for the stop signal.
+   * The NodeJS process.
+   *
+   * @see https://nodejs.org/api/process.html
    */
   public process = process
 
   /**
-   * The queuer.
+   * The delegate to manage queues.
    */
   public queuer?: Queuer
 
   /**
-   * The server.
+   * The delegate to manage routes.
    */
   public server?: Server
 
   /**
-   * The services to manage.
+   * The factory methods of the services to manage. The factory methods must instantiate and start the `TaskRunner`s and/or `RouteHandler`s of the application.
    */
   public services: Services
 
@@ -107,13 +113,16 @@ export class ServiceManager {
    * The signal to stop the delegates.
    *
    * @defaultValue 'SIGTERM'.
+   * @see https://nodejs.org/api/process.html#process_signal_events
    */
   public signal: NodeJS.Signals | null
 
   /**
-   * The types of the delegates to manage.
+   * The types of the delegates to manage as one or more micromatch patterns, separated by a colon.
    *
-   * Must be one or more micromatch patterns, separated by a colon.
+   * To determine whether a delegate should be started, the delegate type is matched against the micromatch patterns.
+   *
+   * The delegate types are 'queuer' and 'server'.
    *
    * @defaultValue `process.env.SERVICE_TYPES` or '*'
    * @see https://www.npmjs.com/package/micromatch
@@ -121,7 +130,7 @@ export class ServiceManager {
   public types: string[] | string
 
   /**
-   * Constructs a service manager.
+   * Creates a service manager.
    *
    * @param options - The server manager options
    */
@@ -136,21 +145,13 @@ export class ServiceManager {
   }
 
   /**
-   * Starts the `queuer` and/or `server`, which are delegates of the `ServiceManager` to manage queues and routes respectively.
+   * Starts the service manager.
    *
-   * To determine whether a delegate should be started, the delegate type is matched against the micromatch patterns provided by `types`.
+   * Starts the `queuer` and `server` depending on `types` and starts the `services` depending on `names`.
    *
-   * Starts the `services` by calling their factory methods.
+   * Listens for the stop `signal` and calls `stop` if the signal is received.
    *
-   * To determine whether a service should be started, the service name is matched against the micromatch patterns provided by `names`.
-   *
-   * A service name is constructed by concatenating its nested keys, i.e. \{service\}.\{type\}.\{factory\} -  the available types are 'queues' and 'routes'.
-   *
-   * The factory methods should simply instantiate and start the `TaskRunner`s and/or `RouteHandler`s of the application.
-   *
-   * Listen for the stop `signal` and calls `stop` if the signal is received.
-   *
-   * Exits the NodeJS process if an error occurs during startup.
+   * Exits the `process` if an error occurs during startup.
    */
   public start (): void {
     this.logger?.info({
@@ -195,9 +196,11 @@ export class ServiceManager {
   }
 
   /**
-   * Stops the delegates. The delegates are responsible for stopping the services they manage.
+   * Stops the service manager.
    *
-   * Exits the NodeJS process after the delegates have been stopped.
+   * Stops the `queuer` and `server`, which are responsible for stopping the services they manage.
+   *
+   * Exits the `process` after the delegates have been stopped.
    */
   public stop (): void {
     this.logger?.info({

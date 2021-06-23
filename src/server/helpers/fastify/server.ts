@@ -29,7 +29,7 @@ export interface ServerOptions extends FastifyServerOptions {
 }
 
 /**
- * Manages the frontend routes.
+ * Manages routes.
  */
 export class Server {
   /**
@@ -89,7 +89,7 @@ export class Server {
   public port: number
 
   /**
-   * Constructs a server.
+   * Creates a server.
    *
    * @param options - The server options
    */
@@ -119,7 +119,7 @@ export class Server {
   /**
    * Sets up the server.
    *
-   * Creates `fastify`.
+   * Sets `fastify`.
    */
   public setup (): void {
     this.fastify = this.createFastify()

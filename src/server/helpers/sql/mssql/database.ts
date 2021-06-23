@@ -20,7 +20,7 @@ export class MssqlDatabase extends Database {
   public tokens = tokens
 
   /**
-   * Constructs a MSSQL database.
+   * Creates a MSSQL database.
    *
    * Parses the options with `parseDsn` if it is a string.
    *
@@ -37,7 +37,7 @@ export class MssqlDatabase extends Database {
   }
 
   /**
-   * Constructs pool options from a DSN (Data Source Name) of a MSSQL server.
+   * Creates pool options from a DSN (Data Source Name) of a MSSQL server.
    *
    * Adds `options.encrypt: false` to the pool options.
    *
@@ -49,7 +49,7 @@ export class MssqlDatabase extends Database {
    * @example
    *
    * ```ts
-   * const options = MssqlDatabase.parseDSN('mssql://root:root@localhost:1433/db?connectionTimeout=10000')
+   * const options = MssqlDatabase.parseDsn('mssql://root:root@localhost:1433/db?connectionTimeout=10000')
    * // options = { connectionTimeout: 10000, database: 'db', options: { encrypt: false }, host: 'localhost', password: 'root', port: 1433, user: 'root' }
    * ```
    */

@@ -40,38 +40,6 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
---
--- Name: item; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.item (
-    code character varying DEFAULT 'pending'::character varying NOT NULL,
-    date_created timestamp with time zone DEFAULT now() NOT NULL,
-    date_updated timestamp with time zone DEFAULT now() NOT NULL,
-    fkey_queue_run_id bigint NOT NULL,
-    id bigint NOT NULL,
-    payload json NOT NULL
-);
-
-
---
--- Name: item_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.item_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: item_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.item_id_seq OWNED BY public.item.id;
-
 
 --
 -- Name: queue; Type: TABLE; Schema: public; Owner: -
@@ -84,6 +52,7 @@ CREATE TABLE public.queue (
     fkey_queue_id bigint,
     id bigint NOT NULL,
     name character varying NOT NULL,
+    options json DEFAULT '{}'::json NOT NULL,
     query text,
     schedule character varying,
     schedule_begin timestamp with time zone,
@@ -119,14 +88,15 @@ CREATE TABLE public.queue_run (
     aggr_err integer DEFAULT 0 NOT NULL,
     aggr_ok integer DEFAULT 0 NOT NULL,
     aggr_total integer DEFAULT 0 NOT NULL,
-    code character varying DEFAULT 'pending'::character varying NOT NULL,
     date_created timestamp with time zone DEFAULT now() NOT NULL,
     date_updated timestamp with time zone DEFAULT now() NOT NULL,
-    fkey_item_id bigint,
     fkey_queue_id bigint NOT NULL,
+    fkey_task_run_id bigint,
     id bigint NOT NULL,
     name character varying NOT NULL,
-    reason text
+    options json DEFAULT '{}'::json NOT NULL,
+    reason text,
+    status character varying DEFAULT 'pending'::character varying NOT NULL
 );
 
 
@@ -150,57 +120,21 @@ ALTER SEQUENCE public.queue_run_id_seq OWNED BY public.queue_run.id;
 
 
 --
--- Name: task; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.task (
-    date_created timestamp with time zone DEFAULT now() NOT NULL,
-    date_updated timestamp with time zone DEFAULT now() NOT NULL,
-    fkey_queue_id bigint NOT NULL,
-    id bigint NOT NULL,
-    name character varying DEFAULT 'main'::character varying NOT NULL,
-    number integer DEFAULT 1 NOT NULL,
-    options json DEFAULT '{}'::json NOT NULL
-);
-
-
---
--- Name: task_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.task_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: task_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.task_id_seq OWNED BY public.task.id;
-
-
---
 -- Name: task_run; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.task_run (
-    code character varying DEFAULT 'pending'::character varying NOT NULL,
-    consumer character varying,
     date_created timestamp with time zone DEFAULT now() NOT NULL,
     date_queued timestamp with time zone,
     date_started timestamp with time zone,
     date_updated timestamp with time zone DEFAULT now() NOT NULL,
-    fkey_item_id bigint NOT NULL,
     fkey_queue_run_id bigint NOT NULL,
-    fkey_task_id bigint NOT NULL,
+    host character varying,
     id bigint NOT NULL,
+    payload json NOT NULL,
     reason text,
     result json DEFAULT '{}'::json NOT NULL,
-    xid character varying
+    status character varying DEFAULT 'pending'::character varying NOT NULL
 );
 
 
@@ -224,13 +158,6 @@ ALTER SEQUENCE public.task_run_id_seq OWNED BY public.task_run.id;
 
 
 --
--- Name: item id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.item ALTER COLUMN id SET DEFAULT nextval('public.item_id_seq'::regclass);
-
-
---
 -- Name: queue id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -245,25 +172,10 @@ ALTER TABLE ONLY public.queue_run ALTER COLUMN id SET DEFAULT nextval('public.qu
 
 
 --
--- Name: task id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.task ALTER COLUMN id SET DEFAULT nextval('public.task_id_seq'::regclass);
-
-
---
 -- Name: task_run id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.task_run ALTER COLUMN id SET DEFAULT nextval('public.task_run_id_seq'::regclass);
-
-
---
--- Name: item item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.item
-    ADD CONSTRAINT item_pkey PRIMARY KEY (id);
 
 
 --
@@ -283,26 +195,11 @@ ALTER TABLE ONLY public.queue_run
 
 
 --
--- Name: task task_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.task
-    ADD CONSTRAINT task_pkey PRIMARY KEY (id);
-
-
---
 -- Name: task_run task_run_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.task_run
     ADD CONSTRAINT task_run_pkey PRIMARY KEY (id);
-
-
---
--- Name: item_fkey_queue_run_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX item_fkey_queue_run_id_idx ON public.item USING btree (fkey_queue_run_id);
 
 
 --
@@ -313,10 +210,10 @@ CREATE INDEX queue_fkey_queue_id_idx ON public.queue USING btree (fkey_queue_id)
 
 
 --
--- Name: queue_run_fkey_item_id_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: queue_run_fkey_task_run_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX queue_run_fkey_item_id_idx ON public.queue_run USING btree (fkey_item_id);
+CREATE INDEX queue_run_fkey_task_run_id_idx ON public.queue_run USING btree (fkey_task_run_id);
 
 
 --
@@ -327,20 +224,6 @@ CREATE INDEX queue_run_fkey_queue_id_idx ON public.queue_run USING btree (fkey_q
 
 
 --
--- Name: task_fkey_queue_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX task_fkey_queue_id_idx ON public.task USING btree (fkey_queue_id);
-
-
---
--- Name: task_run_fkey_item_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX task_run_fkey_item_id_idx ON public.task_run USING btree (fkey_item_id);
-
-
---
 -- Name: task_run_fkey_queue_run_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -348,26 +231,11 @@ CREATE INDEX task_run_fkey_queue_run_id_idx ON public.task_run USING btree (fkey
 
 
 --
--- Name: task_run_fkey_task_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX task_run_fkey_task_id_idx ON public.task_run USING btree (fkey_task_id);
-
-
---
--- Name: task_run item_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.task_run
-    ADD CONSTRAINT item_fkey FOREIGN KEY (fkey_item_id) REFERENCES public.item(id) ON DELETE CASCADE;
-
-
---
--- Name: queue_run item_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: queue_run task_run_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.queue_run
-    ADD CONSTRAINT item_fkey FOREIGN KEY (fkey_item_id) REFERENCES public.item(id) ON DELETE SET NULL;
+    ADD CONSTRAINT task_run_fkey FOREIGN KEY (fkey_task_run_id) REFERENCES public.task_run(id) ON DELETE SET NULL;
 
 
 --
@@ -376,14 +244,6 @@ ALTER TABLE ONLY public.queue_run
 
 ALTER TABLE ONLY public.queue_run
     ADD CONSTRAINT queue_fkey FOREIGN KEY (fkey_queue_id) REFERENCES public.queue(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: task queue_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.task
-    ADD CONSTRAINT queue_fkey FOREIGN KEY (fkey_queue_id) REFERENCES public.queue(id) ON DELETE CASCADE;
 
 
 --
@@ -403,22 +263,5 @@ ALTER TABLE ONLY public.task_run
 
 
 --
--- Name: item queue_run_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.item
-    ADD CONSTRAINT queue_run_fkey FOREIGN KEY (fkey_queue_run_id) REFERENCES public.queue_run(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: task_run task_run_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.task_run
-    ADD CONSTRAINT task_run_fkey FOREIGN KEY (fkey_task_id) REFERENCES public.task(id) ON DELETE CASCADE;
-
-
---
 -- PostgreSQL database dump complete
 --
-

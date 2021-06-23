@@ -1,11 +1,72 @@
 import type { Queue as QueueBase } from './base'
-import type { Task } from './task'
 
-export interface Queue extends Required<QueueBase> {
-  tasks: Task[]
+export interface Queue<Options = unknown> extends Required<QueueBase> {
+  /**
+   * The database to run the generator query on.
+   */
+  database: string | null
+
+  /**
+   * The date the queue was created.
+   */
+  date_created: Date
+
+  /**
+   * The date the queue was updated.
+   */
+  date_updated: Date
+
+  /**
+   * The ID of the parent queue.
+   *
+   * If a run of the parent queue has finished, a run of the child queue will be triggered.
+   */
+  fkey_queue_id: number | null
+
+  /**
+   * The ID.
+   */
+  id: number
+
+  /**
+   * The name.
+   */
+  name: string
+
+  /**
+   * The options.
+   */
+  options: Options
+
+  /**
+   * The generator query.
+   */
+  query: string | null
+
+  /**
+   * The schedule as a cron schedule expression.
+   *
+   * @see https://www.npmjs.com/package/node-schedule
+   */
+  schedule: string | null
+
+  /**
+   * The date after which the queue may be run.
+   */
+  schedule_begin: Date | null
+
+  /**
+   * The date before which the queue may be run.
+   */
+  schedule_end: Date | null
+
+  /**
+   * The date of the next queue run.
+   */
+  schedule_next: Date | null
 }
 
-export function createQueue (): Queue {
+export function createQueue<Options> (options?: Options): Queue<Options> {
   return {
     database: 'database',
     date_created: new Date(),
@@ -13,11 +74,11 @@ export function createQueue (): Queue {
     fkey_queue_id: 0,
     id: 0,
     name: 'name',
+    options: (options ?? {}) as Options,
     query: '',
     schedule: '',
     schedule_begin: null,
     schedule_end: null,
-    schedule_next: null,
-    tasks: []
+    schedule_next: null
   }
 }

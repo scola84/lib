@@ -18,7 +18,7 @@ export class MssqlConnection extends Connection {
   public tokens = tokens
 
   /**
-   * Constructs a MSSQL connection.
+   * Creates a MSSQL connection.
    *
    * @param connection - The underlying connection
    */

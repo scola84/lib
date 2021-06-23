@@ -22,7 +22,7 @@ export class PostgresqlDatabase extends Database {
   public tokens = tokens
 
   /**
-   * Constructs a PostgreSQL database.
+   * Creates a PostgreSQL database.
    *
    * Parses the options with `parseDsn` if it is a string.
    *
@@ -39,7 +39,7 @@ export class PostgresqlDatabase extends Database {
   }
 
   /**
-   * Constructs pool options from a DSN (Data Source Name) of a PostgreSQL server.
+   * Creates pool options from a DSN (Data Source Name) of a PostgreSQL server.
    *
    * Adds `connectionString: dsn` and `connectionTimeoutMillis: 10000` to the pool options.
    *
@@ -51,7 +51,7 @@ export class PostgresqlDatabase extends Database {
    * @example
    *
    * ```ts
-   * const options = PostgresqlDatabase.parseDSN('mysql://root:root@localhost:3306/db?max=10')
+   * const options = PostgresqlDatabase.parseDsn('mysql://root:root@localhost:3306/db?max=10')
    * // options = { connectionString: 'mysql://root:root@localhost:3306/db?max=10', connectionTimeoutMillis: 10000, max: 10 }
    * ```
    */

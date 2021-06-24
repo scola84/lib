@@ -26,18 +26,17 @@ try {
   const [name] = container.split('_')
   const url = new URL(source)
   const database = url.pathname.slice(1)
-  const protocol = url.protocol.slice(0, -1)
 
   const targetFile = target === undefined
-    ? `.docker/${protocol}/initdb.d/${name}/diff/${database}.sql`
+    ? '/tmp/scola-sql-diff-out.sql'
     : target
 
   fs.mkdirSync(path.dirname(targetFile), { recursive: true })
 
   child.execSync([
-    `cat .docker/mysql/initdb.d/${name}/schema/${database}.sql`,
+    `cat .docker/mysql/initdb.d/${name}/${database}.sql`,
     '| sed "s/USE/-- USE/g" ',
-    '> /tmp/scola-diff.sql'
+    '> /tmp/scola-sql-diff-in.sql'
   ].join(' '))
 
   child.execSync([
@@ -48,11 +47,9 @@ try {
     `--port ${url.port || 3306}`,
     `--user ${decodeURIComponent(url.username || 'root')}`,
     `db:${database}`,
-    '/tmp/scola-diff.sql',
+    '/tmp/scola-diff-sql-in.sql',
     `> ${targetFile}`
   ].join(' '))
-
-  child.execSync('rm /tmp/scola-diff.sql')
 } catch (error) {
   logger.error(String(error))
 }

@@ -3,8 +3,11 @@
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "foxundermoon.shell-format",
+    "frigus02.vscode-sql-tagged-template-literals-syntax-only",
     "oouo-diogo-perdigao.docthis",
+    "redhat.vscode-yaml",
     "runem.lit-plugin",
-    "ryanluker.vscode-coverage-gutters"
+    "ryanluker.vscode-coverage-gutters",
+    "streetsidesoftware.code-spell-checker"
   ]
 }

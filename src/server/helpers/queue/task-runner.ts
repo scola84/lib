@@ -356,7 +356,7 @@ export abstract class TaskRunner {
    *
    * Starts the task run.
    *
-   * Sets `reason` and `status` of the task run if an error was caught.
+   * Sets `reason` and `status` of the task run if an error is caught.
    *
    * Finishes the task run.
    *
@@ -437,24 +437,28 @@ export abstract class TaskRunner {
   /**
    * Runs a task.
    *
+   * Checks whether `status` of the task run is still 'pending', otherwise returns.
+   *
    * Updates the task run, validates `options` and/or `payload` and calls `run`.
    *
    * @param taskRun - The task run
    */
   protected async runTask (taskRun: TaskRun): Promise<void> {
+    if (taskRun.status !== 'pending') {
+      return
+    }
+
     await this.updateTaskRunOnRun(taskRun)
 
-    if (taskRun.status === 'pending') {
-      if (this.validator?.getSchema('options') !== undefined) {
-        this.validate('options', taskRun.queueRun.options)
-      }
-
-      if (this.validator?.getSchema('payload') !== undefined) {
-        this.validate('payload', taskRun.payload)
-      }
-
-      await this.run(taskRun)
+    if (this.validator?.getSchema('options') !== undefined) {
+      this.validate('options', taskRun.queueRun.options)
     }
+
+    if (this.validator?.getSchema('payload') !== undefined) {
+      this.validate('payload', taskRun.payload)
+    }
+
+    await this.run(taskRun)
   }
 
   /**
@@ -610,7 +614,7 @@ export abstract class TaskRunner {
   }
 
   /**
-   * Validates data against the schema with the given name.
+   * Validates data against `schema` with the given name.
    *
    * @param name - The name of the schema
    * @param data - The data to be validated

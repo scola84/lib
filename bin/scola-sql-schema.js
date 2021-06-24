@@ -37,7 +37,7 @@ try {
   const protocol = url.protocol.slice(0, -1)
 
   const targetFile = target === undefined
-    ? `.docker/${protocol}/initdb.d/${name}/schema/${database}.sql`
+    ? `.docker/${protocol}/initdb.d/${name}/${database}.sql`
     : target
 
   fs.mkdirSync(path.dirname(targetFile), { recursive: true })

@@ -5,7 +5,6 @@ import type { PoolClient } from 'pg'
 import type { Readable } from 'stream'
 import { format } from '../format'
 import { format as formatValue } from './format'
-import tokens from './tokens'
 
 /**
  * Executes PostgreSQL queries.
@@ -14,8 +13,6 @@ export class PostgresqlConnection extends Connection {
   public connection: PoolClient
 
   public format = format(formatValue)
-
-  public tokens = tokens
 
   /**
    * Creates a PostgreSQL connection.

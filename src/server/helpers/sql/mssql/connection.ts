@@ -5,7 +5,6 @@ import type { Readable } from 'stream'
 import { Transform } from 'stream'
 import { format } from '../format'
 import { format as formatValue } from './format'
-import tokens from './tokens'
 
 /**
  * Executes MSSQL queries.
@@ -14,8 +13,6 @@ export class MssqlConnection extends Connection {
   public connection: Request
 
   public format = format(formatValue)
-
-  public tokens = tokens
 
   /**
    * Creates a MSSQL connection.

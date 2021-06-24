@@ -18,7 +18,7 @@
       "    super(options)",
       "  }",
       "",
-      "  public async route (request: FastifyRequest<${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Request>, reply: FastifyReply): Promise<void> {",
+      "  public async handle (request: FastifyRequest<${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Request>, reply: FastifyReply): Promise<void> {",
       "    $0",
       "  }",
       "}",

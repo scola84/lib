@@ -1,6 +1,5 @@
 import type { Readable } from 'stream'
 import { sql } from './tag'
-import type tokens from './tokens'
 
 /**
  * The result of a DELETE query.
@@ -15,11 +14,11 @@ export interface DeleteResult {
 /**
  * The result of an INSERT query.
  */
-export interface InsertResult<R = number> {
+export interface InsertResult<ID = number> {
   /**
    * The id of the inserted row.
    */
-  id: R
+  id: ID
 }
 
 /**
@@ -83,11 +82,6 @@ export abstract class Connection {
    * ```
    */
   public abstract format: (query: string, values: Record<string, unknown>) => string
-
-  /**
-   * Dialect-specific tokens, e.g. '~' or 'REGEXP' for applying a regular expression in PostgreSQL or MySQL respectively.
-   */
-  public abstract tokens: tokens
 
   /**
    * Depopulates the database.

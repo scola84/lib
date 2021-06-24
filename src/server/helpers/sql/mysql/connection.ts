@@ -5,7 +5,6 @@ import { Connection } from '../connection'
 import type { Readable } from 'stream'
 import { format } from '../format'
 import { format as formatValue } from './format'
-import tokens from './tokens'
 
 interface StreamConnection extends PoolConnection {
   connection: BaseConnection
@@ -18,8 +17,6 @@ export class MysqlConnection extends Connection {
   public connection: PoolConnection
 
   public format = format(formatValue)
-
-  public tokens = tokens
 
   /**
    * Creates a MySQL connection.

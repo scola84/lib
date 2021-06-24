@@ -7,7 +7,6 @@ import { format } from '../format'
 import { format as formatValue } from './format'
 import lodash from 'lodash'
 import { parse } from 'query-string'
-import tokens from './tokens'
 
 /**
  * Manages MySQL connections.
@@ -16,8 +15,6 @@ export class MysqlDatabase extends Database {
   public format = format(formatValue)
 
   public pool: Pool
-
-  public tokens = tokens
 
   /**
    * Creates a MySQL database.

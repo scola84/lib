@@ -7,7 +7,6 @@ import { format } from '../format'
 import { format as formatValue } from './format'
 import lodash from 'lodash'
 import { parse } from 'query-string'
-import tokens from './tokens'
 
 /**
  * Manages MSSQL connections.
@@ -16,8 +15,6 @@ export class MssqlDatabase extends Database {
   public format = format(formatValue)
 
   public pool: ConnectionPool
-
-  public tokens = tokens
 
   /**
    * Creates a MSSQL database.

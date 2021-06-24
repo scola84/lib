@@ -1,6 +1,5 @@
 import type { Connection, DeleteResult, InsertResult, UpdateResult } from './connection'
 import type { Readable } from 'stream'
-import type tokens from './tokens'
 
 /**
  * Manages database connections.
@@ -53,11 +52,6 @@ export abstract class Database {
    * The connection pool.
    */
   public abstract pool: unknown
-
-  /**
-   * Dialect-specific tokens, e.g. '~' or 'REGEXP' for applying a regular expression in PostgreSQL or MySQL respectively.
-   */
-  public abstract tokens: tokens
 
   /**
    * Deletes zero or more rows from the database.

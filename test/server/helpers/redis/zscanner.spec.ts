@@ -55,7 +55,7 @@ async function deleteTheSet (): Promise<void> {
 
   await helpers.store.zadd(key, [0, 'member-0'])
 
-  return new Promise((resolve, reject) => {
+  const promise = new Promise<void>((resolve, reject) => {
     scanner.on('close', () => {
       helpers.store
         .exists('zscanner-delete-the-set')
@@ -70,6 +70,8 @@ async function deleteTheSet (): Promise<void> {
 
     scanner.on('data', () => {})
   })
+
+  return promise
 }
 
 async function emitMembers (): Promise<void> {
@@ -177,7 +179,7 @@ async function useTheCursor (): Promise<void> {
 
   await batch.exec()
 
-  return new Promise((resolve, reject) => {
+  const promise = new Promise<void>((resolve, reject) => {
     scanner.on('close', () => {
       try {
         expect(data.length).equal(size)
@@ -196,4 +198,6 @@ async function useTheCursor (): Promise<void> {
       }
     })
   })
+
+  return promise
 }

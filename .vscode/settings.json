@@ -11,11 +11,5 @@
   "[typescript]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
-  "editor.codeActionsOnSave": {
-    "source.fixAll": true
-  },
-  "editor.tabSize": 2,
-  "eslint.format.enable": true,
-  "files.insertFinalNewline": true,
-  "files.trimFinalNewlines": true
+  "eslint.format.enable": true
 }

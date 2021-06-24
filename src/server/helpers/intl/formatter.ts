@@ -79,10 +79,12 @@ export class Formatter {
   public lookup (string: string, language = Formatter.lang): string | undefined {
     const strings = Formatter.strings[language] ?? {}
 
-    return Object
+    const foundCode = Object
       .keys(strings)
       .find((code) => {
         return strings[code].toLowerCase() === string.toLowerCase()
       })
+
+    return foundCode
   }
 }

@@ -279,6 +279,7 @@ async function selectAndResolveUndefined (): Promise<void> {
     await database.end()
   }
 }
+
 async function selectOneAndRejectUndefined (): Promise<void> {
   const database = new PostgresqlDatabase(helpers.dsn)
 

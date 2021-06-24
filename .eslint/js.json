@@ -48,6 +48,67 @@
         "vars": "local"
       }
     ],
+    "padding-line-between-statements": [
+      "error",
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": "block-like"
+      },
+      {
+        "blankLine": "always",
+        "prev": "block-like",
+        "next": "*"
+      },
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": "import"
+      },
+      {
+        "blankLine": "always",
+        "prev": "import",
+        "next": "*"
+      },
+      {
+        "blankLine": "never",
+        "prev": "import",
+        "next": "import"
+      },
+      {
+        "blankLine": "never",
+        "prev": [
+          "const",
+          "expression",
+          "let",
+          "return"
+        ],
+        "next": [
+          "const",
+          "expression",
+          "let",
+          "return"
+        ]
+      },
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": [
+          "multiline-const",
+          "multiline-expression",
+          "multiline-let"
+        ]
+      },
+      {
+        "blankLine": "always",
+        "prev": [
+          "multiline-const",
+          "multiline-expression",
+          "multiline-let"
+        ],
+        "next": "*"
+      }
+    ],
     "quote-props": [
       "error",
       "consistent"

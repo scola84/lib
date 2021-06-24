@@ -1,12 +1,11 @@
 const child = require('child_process')
 const { Command } = require('commander')
-
 const logger = console
 const program = new Command()
 
-program.parse()
-
 try {
+  program.parse()
+
   const dirs = [
     'data',
     'diff'

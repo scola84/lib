@@ -362,7 +362,7 @@ async function populate (): Promise<void> {
 async function releaseConnection (): Promise<void> {
   const connection = new MysqlConnection(await helpers.pool.getConnection())
 
-  return new Promise((resolve, reject) => {
+  const promise = new Promise<void>((resolve, reject) => {
     helpers.pool.once('release', (releasedConnection: MysqlConnection['connection']) => {
       try {
         expect(releasedConnection.threadId).equal(connection.connection.threadId)
@@ -374,6 +374,8 @@ async function releaseConnection (): Promise<void> {
 
     connection.release()
   })
+
+  return promise
 }
 
 async function selectMultipleRows (): Promise<void> {

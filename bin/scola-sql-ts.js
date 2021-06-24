@@ -2,10 +2,8 @@ const { Command } = require('commander')
 const { URL } = require('url')
 const fs = require('fs')
 const sqlts = require('@rmp135/sql-ts')
-
 const logger = console
 const program = new Command()
-
 program.parse()
 
 try {
@@ -58,7 +56,6 @@ try {
   }
 
   fs.mkdirSync(target, { recursive: true })
-
   url.hostname = url.hostname || '127.0.0.1'
   url.username = url.username || 'root'
   url.password = url.password || 'root'

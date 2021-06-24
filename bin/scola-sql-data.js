@@ -3,16 +3,15 @@ const { URL } = require('url')
 const child = require('child_process')
 const fs = require('fs')
 const path = require('path')
-
 const logger = console
 const program = new Command()
 
-program
-  .option('-e, --exclude <exclude...>', 'a list of tables')
-  .option('-i, --include <include...>', 'a list of tables')
-  .parse()
-
 try {
+  program
+    .option('-e, --exclude <exclude...>', 'a list of tables')
+    .option('-i, --include <include...>', 'a list of tables')
+    .parse()
+
   const [
     container,
     source,

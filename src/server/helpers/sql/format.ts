@@ -15,7 +15,6 @@
 export function format (formatValue: (value: unknown) => string) {
   return (query: string, values: Record<string, unknown> = {}): string => {
     const matches = query.match(/\$\(\w+\)/gu) ?? []
-
     let key = null
     let result = query
     let value = null

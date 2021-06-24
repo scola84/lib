@@ -101,7 +101,6 @@ export class MssqlConnection extends Connection {
     this.connection.pipe(transform)
     // eslint-disable-next-line no-void
     void this.connection.query(this.format(query, values))
-
     return transform
   }
 

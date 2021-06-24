@@ -379,7 +379,7 @@ async function releaseConnection (): Promise<void> {
   const connection = new MssqlConnection(helpers.pool.request())
   const pool = helpers.pool as unknown as PoolWithNumbers
 
-  return new Promise((resolve, reject) => {
+  const promise = new Promise<void>((resolve, reject) => {
     try {
       connection.release()
       expect(pool.available).equal(pool.size)
@@ -388,6 +388,8 @@ async function releaseConnection (): Promise<void> {
       reject(error)
     }
   })
+
+  return promise
 }
 
 async function selectMultipleRows (): Promise<void> {

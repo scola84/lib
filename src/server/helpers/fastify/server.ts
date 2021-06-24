@@ -7,7 +7,7 @@ import fastifyMultipart from 'fastify-multipart'
 
 export interface ServerOptions extends FastifyServerOptions {
   /**
-   * The address to bind the server to.
+   * The `fastify` address.
    *
    * @defaultValue '0.0.0.0'.
    */
@@ -21,12 +21,12 @@ export interface ServerOptions extends FastifyServerOptions {
   logger?: Logger
 
   /**
-   * The plugins to register on the Fastify instance.
+   * The `fastify` plugins.
    */
   plugins?: Record<string, FastifyPluginCallback>
 
   /**
-   * The port to bind the server to.
+   * The `fastify` port.
    *
    * @defaultValue 3000.
    */
@@ -38,7 +38,7 @@ export interface ServerOptions extends FastifyServerOptions {
  */
 export class Server {
   /**
-   * The address to bind `fastify` to.
+   * The `fastify` address.
    *
    * @defaultValue '0.0.0.0'.
    */
@@ -59,19 +59,19 @@ export class Server {
   public logger?: Logger
 
   /**
-   * The options for the Fastify instance.
+   * The `fastify` options.
    *
    * @see https://www.npmjs.com/package/fastify
    */
   public options: FastifyServerOptions
 
   /**
-   * The plugins to register on `fastify`.
+   * The `fastify` plugins.
    */
   public plugins: Record<string, FastifyPluginCallback>
 
   /**
-   * The port to bind `fastify` to.
+   * The `fastify` port.
    *
    * @defaultValue 3000
    */
@@ -123,7 +123,7 @@ export class Server {
   /**
    * Starts the server.
    *
-   * Calls `setup`, registers the `plugins` and binds `fastify` to the `address` and `port`.
+   * Calls `setup`, registers `plugins` and binds `fastify` to `address` and `port`.
    *
    * @param setup - Whether to call `setup`
    */

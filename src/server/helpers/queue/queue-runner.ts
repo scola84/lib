@@ -70,24 +70,24 @@ export class QueueRunner {
   }
 
   /**
-   * Creates a writer.
+   * Creates a task run writer.
    *
    * The writer receives a payload and inserts a task run based on the queue run and the payload into the database.
    *
-   * The writer pushes the ID of the task run onto the store list having the same name as the queue run.
+   * The writer pushes the ID of the task run at the tail of the store list at `name` of the queue run.
    *
-   * The writer increments `aggr_total` of the queue run with 1.
+   * The writer increments `aggr_total` of the queue run with `1`.
    *
    * @param queueRun - The queue run
    * @returns The writer
    */
-  public createWriter (queueRun: QueueRun): Writable {
+  public createTaskRunWriter (queueRun: QueueRun): Writable {
     return new Writable({
       objectMode: true,
       write: async (payload: unknown, encoding, finish) => {
         try {
           const { id = 0 } = await this.insertTaskRun(queueRun, payload)
-          await this.store.lpush(queueRun.name, String(id))
+          await this.store.rpush(queueRun.name, String(id))
           queueRun.aggr_total += 1
           finish()
         } catch (error: unknown) {
@@ -102,16 +102,16 @@ export class QueueRunner {
    *
    * Creates a queue run and inserts it into the database.
    *
-   * Executes the generator `query` of the queue as a stream and passes the results to the writer created by `createWriter`.
+   * Executes the generator query of the queue as a stream and passes the results to the task writer.
    *
-   * Updates the `status` of the queue run to 'ok' and triggers dependant queues if all task runs have been triggered and have finished successfully.
+   * Updates the queue run and triggers dependant queues if all task runs have been triggered and have finished successfully.
    *
    * Normally, dependant queues will be triggered by the task runner when the last task has finished. But occasionally, e.g. when the generator query returns an empty result set, the queue runner has to trigger the dependant queues.
    *
-   * Updates the `status` of the queue run to 'err' if an error occurred while triggering the task runs.
+   * Updates the queue run if an error occurred while triggering the task runs.
    *
    * @param queue - The queue
-   * @param parameters - The parameters for the generator query.
+   * @param parameters - The parameters for the generator query
    */
   public async run (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
     const queueRun: QueueRun = createQueueRun(queue)
@@ -127,7 +127,7 @@ export class QueueRunner {
 
       await pipeline(
         await database.stream(queue.query ?? '', parameters),
-        this.createWriter(queueRun)
+        this.createTaskRunWriter(queueRun)
       )
 
       await this.updateQueueRunOk(queueRun)
@@ -223,7 +223,7 @@ export class QueueRunner {
   /**
    * Updates the queue run.
    *
-   * Sets the `status` to 'err' and the `reason` to the error message.
+   * Sets `status` to 'err' and `reason` to the error message.
    *
    * @param queueRun - The queue run
    * @param error - The error
@@ -246,7 +246,7 @@ export class QueueRunner {
   /**
    *  Updates the queue run.
    *
-   * Sets the `status` to 'ok' and the `aggr_total` to the total of task runs which have been triggered.
+   * Sets `status` to 'ok' and `aggr_total` to the total of task runs which have been triggered.
    *
    * @param queueRun - The queue run
    * @returns The update result

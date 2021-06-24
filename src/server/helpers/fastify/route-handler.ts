@@ -17,11 +17,11 @@ export interface RouteHandlerOptions extends RouteOptions {
 }
 
 /**
- * Handles a request and sends a reply.
+ * Handles a route.
  */
 export abstract class RouteHandler {
   /**
-   * The options for the Fastify route.
+   * The route options.
    *
    * @see https://github.com/fastify/fastify/blob/main/docs/Routes.md
    */
@@ -35,19 +35,19 @@ export abstract class RouteHandler {
   public logger?: Logger
 
   /**
-   * The method of the route.
+   * The method.
    */
   public method: RouteOptions['method']
 
   /**
-   * The options for the Fastify route.
+   * The route options.
    *
    * @see https://github.com/fastify/fastify/blob/main/docs/Routes.md
    */
   public options: Partial<RouteOptions>
 
   /**
-   * The schema of the route.
+   * The schema.
    *
    * @see https://github.com/fastify/fastify/blob/main/docs/Validation-and-Serialization.md
    */
@@ -59,7 +59,7 @@ export abstract class RouteHandler {
   public server: Server
 
   /**
-   * The URL of the route.
+   * The URL.
    */
   public url: RouteOptions['url']
 
@@ -68,32 +68,32 @@ export abstract class RouteHandler {
    *
    * Merges the static class `options` and the constructor `options`.
    *
-   * @param options - The route options
+   * @param options - The route handler options
    * @throws server is undefined
    */
   public constructor (options: Partial<RouteHandlerOptions>) {
-    const routeOptions = {
+    const handlerOptions = {
       ...RouteHandler.options,
       ...options
     }
 
-    if (routeOptions.server === undefined) {
+    if (handlerOptions.server === undefined) {
       throw new Error('Option "server" is undefined')
     }
 
-    this.logger = routeOptions.logger?.child({ name: routeOptions.url })
-    this.options = routeOptions
-    this.server = routeOptions.server
+    this.logger = handlerOptions.logger?.child({ name: handlerOptions.url })
+    this.options = handlerOptions
+    this.server = handlerOptions.server
   }
 
   /**
    * Starts the route handler.
    *
-   * Registers the `method`, `url`, `schema` and a handler on the `fastify` instance of the `server`.
+   * Registers `method`, `url`, `schema`, `options` and a handler on `server.fastify`.
    *
-   * The registered handler calls the `route` method of this class, which has the same signature as the handler.
+   * The registered handler calls `handle`, which has the same signature as the handler.
    *
-   * Sends a 500 reply to the client if an error is thrown and a reply has not yet been sent.
+   * The registered handler calls `handleError` if an error is caught.
    */
   public start (): void {
     this.logger?.info({
@@ -111,6 +111,8 @@ export abstract class RouteHandler {
   }
 
   /**
+   * Handles an error.
+   *
    * Sends a 500 reply to the client if a reply has not yet been sent.
    *
    * @param reply - The reply
@@ -127,14 +129,16 @@ export abstract class RouteHandler {
   }
 
   /**
-   * Calls `route`, and `handleError` if an error is thrown.
+   * Handles a route.
+   *
+   * Calls `handle`, and `handleError` if an error is caught.
    *
    * @param request - The request
    * @param reply - The reply
    */
   protected async handleRoute (request: FastifyRequest, reply: FastifyReply): Promise<void> {
     try {
-      await this.route(request, reply)
+      await this.handle(request, reply)
     } catch (error: unknown) {
       try {
         await this.handleError(reply, error)
@@ -145,10 +149,10 @@ export abstract class RouteHandler {
   }
 
   /**
-   * Handles the request and sends the reply.
+   * Handles a route.
    *
    * @param request - The request
    * @param reply - The reply
    */
-  public abstract route (request: FastifyRequest, reply: FastifyReply): Promise<void>
+  public abstract handle (request: FastifyRequest, reply: FastifyReply): Promise<void>
 }

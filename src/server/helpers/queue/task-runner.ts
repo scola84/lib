@@ -16,14 +16,14 @@ export interface TaskRunnerOptions extends DuplexOptions {
   /**
    * The channel to trigger queue runs.
    *
-   * @defaultValue `process.env.QUEUE_CHANNEL` or 'queue'
+   * @defaultValue `process.env.QUEUE_CHANNEL` or `'queue'`
    */
   channel: string
 
   /**
-   * The concurrency of the task runner.
+   * The concurrency.
    *
-   * @defaultValue `process.env.QUEUE_CONCURRENCY` or 1
+   * @defaultValue `process.env.QUEUE_CONCURRENCY` or `1`
    */
   concurrency: number | string
 
@@ -33,9 +33,9 @@ export interface TaskRunnerOptions extends DuplexOptions {
   database: Database
 
   /**
-   * The host of the task runner.
+   * The host.
    *
-   * @defaultValue `process.env.HOSTNAME` or ''
+   * @defaultValue `process.env.HOSTNAME` or `''`
    */
   host: string
 
@@ -47,7 +47,7 @@ export interface TaskRunnerOptions extends DuplexOptions {
   logger?: Logger
 
   /**
-   * The name of the queue.
+   * The name.
    */
   name: string
 
@@ -57,7 +57,7 @@ export interface TaskRunnerOptions extends DuplexOptions {
   queuer: Queuer
 
   /**
-   * The schema of the task runner.
+   * The schema.
    *
    * If it contains an `options` and/or `payload` schema the task runner will validate the options and/or payload of the task run respectively.
    *
@@ -73,7 +73,7 @@ export interface TaskRunnerOptions extends DuplexOptions {
   /**
    * The amount of time to block the store list pop as milliseconds.
    *
-   * @defaultValue 5 * 60 * 1000
+   * @defaultValue `5 * 60 * 1000`
    */
   timeout: number
 }
@@ -83,7 +83,7 @@ export interface TaskRunnerOptions extends DuplexOptions {
  */
 export abstract class TaskRunner {
   /**
-   * The options for the task runner.
+   * The task runner options.
    *
    * @see https://github.com/fastify/fastify/blob/main/docs/Routes.md
    */
@@ -92,14 +92,14 @@ export abstract class TaskRunner {
   /**
    * The channel to trigger queue runs.
    *
-   * @defaultValue `process.env.QUEUE_CHANNEL` or 'queue'
+   * @defaultValue `process.env.QUEUE_CHANNEL` or `'queue'`
    */
   public channel: string
 
   /**
-   * The concurrency of the task runner.
+   * The concurrency.
    *
-   * @defaultValue `process.env.QUEUE_CONCURRENCY` or 1
+   * @defaultValue `process.env.QUEUE_CONCURRENCY` or `1`
    */
   public concurrency: number
 
@@ -109,9 +109,9 @@ export abstract class TaskRunner {
   public database: Database
 
   /**
-   * The host of the task runner.
+   * The host.
    *
-   * @defaultValue `process.env.HOSTNAME` or ''
+   * @defaultValue `process.env.HOSTNAME` or `''`
    */
   public host: string
 
@@ -123,19 +123,19 @@ export abstract class TaskRunner {
   public logger?: Logger
 
   /**
-   * The name of the queue.
+   * The name.
    */
   public name: string
 
   /**
-   * The local queue.
+   * The queue to run tasks concurrently.
    *
    * @see https://www.npmjs.com/package/fastq
    */
   public queue?: fastq
 
   /**
-   * The schema of the task runner.
+   * The schema.
    *
    * If it contains an `options` and/or `payload` schema the task runner will validate the options and/or payload of the task run respectively.
    *
@@ -156,12 +156,12 @@ export abstract class TaskRunner {
   /**
    * The amount of time to block the store list pop as milliseconds.
    *
-   * @defaultValue 5 * 60 * 1000
+   * @defaultValue `5 * 60 * 1000`
    */
   public timeout: number
 
   /**
-   * The validator to validate data against the `schema`.
+   * The validator to validate data against `schema`.
    *
    * @see https://www.npmjs.com/package/ajv
    */
@@ -213,13 +213,13 @@ export abstract class TaskRunner {
   }
 
   /**
-   * Creates a local queue.
+   * Creates a queue.
    *
-   * Handles task runs with the given `concurrency`.
+   * The queue handles task runs in parallel with a concurrency given by `concurrency`.
    *
-   * Calls `push` if the queue is drained.
+   * The queue calls `push` if it is drained.
    *
-   * @returns The local queue
+   * @returns The queue
    */
   public createQueue (): fastq {
     const queue = promise<unknown, TaskRun>(async (taskRun) => {
@@ -234,7 +234,7 @@ export abstract class TaskRunner {
   }
 
   /**
-   * Creates a duplicate of the store.
+   * Creates a duplicate of `store`.
    *
    * @returns The store duplicate
    */
@@ -243,9 +243,9 @@ export abstract class TaskRunner {
   }
 
   /**
-   * Create a validator.
+   * Creates a validator.
    *
-   * Adds the `schema`.
+   * Creates a validator and adds `schema` to the validator.
    *
    * @returns The validator
    */
@@ -266,7 +266,7 @@ export abstract class TaskRunner {
    *
    * Sets `queue`, `storeDuplicate` and `validator`.
    *
-   * Registers an `error` event listener on `storeDuplicate`
+   * Registers an `error` event listener on `storeDuplicate`.
    */
   public setup (): void {
     this.queue = this.createQueue()
@@ -303,7 +303,7 @@ export abstract class TaskRunner {
   /**
    * Stops the task runner.
    *
-   * Closes the `storeDuplicate` and returns when all the task runs have finished.
+   * Ends `storeDuplicate` and returns when all the task runs have finished.
    */
   public async stop (): Promise<void> {
     this.logger?.info({
@@ -326,6 +326,8 @@ export abstract class TaskRunner {
 
   /**
    * Finishes the task run.
+   *
+   * Sets `status` of the task run to 'ok' if it is pending.
    *
    * Updates the task run and the queue run.
    *
@@ -352,9 +354,11 @@ export abstract class TaskRunner {
   /**
    * Handles the task run.
    *
-   * Starts and finishes the task run.
+   * Starts the task run.
    *
-   * Set the `status` and `reason` of the task run if an error was caught.
+   * Sets `reason` and `status` of the task run if an error was caught.
+   *
+   * Finishes the task run.
    *
    * @param taskRun - The task run
    */
@@ -376,7 +380,7 @@ export abstract class TaskRunner {
   /**
    * Pushes a task run.
    *
-   * Calls itself if the local queue is empty after pushing the task run.
+   * Calls itself if the queue length is less than the `concurrency`.
    *
    * Calls itself if the store connection was lost and reestablished.
    */
@@ -407,11 +411,11 @@ export abstract class TaskRunner {
   /**
    * Pushes a task run.
    *
-   * Pops the ID of a task run from the store list having the same name as the task runner. Blocks the amount of milliseconds given by `timeout`.
+   * Pops the ID of a task run from the head of the store list at `name`. Blocks for the amount of milliseconds given by `timeout`.
    *
    * Selects the task run and the queue run.
    *
-   * Updates the task run and pushes it onto the local queue.
+   * Updates the task run and pushes it onto the queue.
    */
   protected async pushTaskRun (): Promise<void> {
     const [,id] = await this.storeDuplicate?.blpop([this.name], this.timeout / 1000) ?? []
@@ -433,7 +437,7 @@ export abstract class TaskRunner {
   /**
    * Runs a task.
    *
-   * Updates the task run, validates the `options` and/or `payload` and calls `run`.
+   * Updates the task run, validates `options` and/or `payload` and calls `run`.
    *
    * @param taskRun - The task run
    */
@@ -517,7 +521,7 @@ export abstract class TaskRunner {
   /**
    * Updates a queue run.
    *
-   * Increments either `aggr_err` or `aggr_ok` by 1, depending on the result of the task run.
+   * Increments either `aggr_err` or `aggr_ok` by `1`, depending on the result of the task run.
    *
    * Sets `fkey_task_run_id` to the ID of the task run.
    *
@@ -541,7 +545,7 @@ export abstract class TaskRunner {
   /**
    * Updates a task run.
    *
-   * Sets the `status`, `reason` and `result`.
+   * Sets `status`, `reason` and `result`.
    *
    * @param taskRun - The task run
    * @returns The update result

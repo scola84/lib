@@ -17,7 +17,7 @@ export interface ServiceManagerOptions {
   logger?: Logger
 
   /**
-   * The names of the `services` to manage as  one or more micromatch patterns, separated by a colon.
+   * The names of `services` to manage as one or more micromatch patterns, separated by a colon.
    *
    * To determine whether a service should be started, the service name is matched against the micromatch patterns provided by `names`.
    *
@@ -39,7 +39,9 @@ export interface ServiceManagerOptions {
   server?: Server
 
   /**
-   * The services to manage.
+   * The services.
+   *
+   * The factory methods must instantiate and start the `TaskRunner`s and/or `RouteHandler`s of the application.
    */
   services: Services
 
@@ -76,7 +78,7 @@ export class ServiceManager {
   public logger?: Logger
 
   /**
-   * The names of the `services` to manage as one or more micromatch patterns, separated by a colon.
+   * The names of `services` to manage as one or more micromatch patterns, separated by a colon.
    *
    * To determine whether a service should be started, the service name is matched against the micromatch patterns.
    *
@@ -105,7 +107,9 @@ export class ServiceManager {
   public server?: Server
 
   /**
-   * The factory methods of the services to manage. The factory methods must instantiate and start the `TaskRunner`s and/or `RouteHandler`s of the application.
+   * The services.
+   *
+   * The factory methods must instantiate and start the `TaskRunner`s and/or `RouteHandler`s of the application.
    */
   public services: Services
 
@@ -147,11 +151,11 @@ export class ServiceManager {
   /**
    * Starts the service manager.
    *
-   * Starts the `queuer` and `server` depending on `types` and starts the `services` depending on `names`.
+   * Starts `queuer` and `server` depending on `types` and starts `services` depending on `names`.
    *
    * Listens for the stop `signal` and calls `stop` if the signal is received.
    *
-   * Exits the `process` if an error occurs during startup.
+   * Exits `process` if an error occurs during startup.
    */
   public start (): void {
     this.logger?.info({
@@ -198,9 +202,9 @@ export class ServiceManager {
   /**
    * Stops the service manager.
    *
-   * Stops the `queuer` and `server`, which are responsible for stopping the services they manage.
+   * Stops `queuer` and `server`, which are responsible for stopping the services they manage.
    *
-   * Exits the `process` after the delegates have been stopped.
+   * Exits `process` after the delegates have been stopped.
    */
   public stop (): void {
     this.logger?.info({

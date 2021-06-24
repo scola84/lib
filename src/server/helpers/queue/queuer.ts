@@ -435,7 +435,7 @@ export class Queuer {
   /**
    * Updates a queue.
    *
-   * Parses the `schedule` of the queue and updates `schedule_next` of the queue in the database accordingly.
+   * Parses `schedule` of the queue and updates `schedule_next` of the queue in the database accordingly.
    *
    * @param queue - The queue
    * @returns The update result

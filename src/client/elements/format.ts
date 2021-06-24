@@ -1,12 +1,8 @@
-import {
-  customElement,
-  html,
-  property
-} from 'lit-element'
-
+import { customElement, property } from 'lit/decorators.js'
 import Format from 'intl-messageformat'
 import { NodeElement } from './node'
-import type { TemplateResult } from 'lit-element'
+import type { TemplateResult } from 'lit'
+import { html } from 'lit'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -39,11 +35,13 @@ export class FormatElement extends NodeElement {
   public lookup (string: string, language = FormatElement.lang): string | undefined {
     const strings = FormatElement.strings[language] ?? {}
 
-    return Object
+    const foundCode = Object
       .keys(strings)
       .find((code) => {
         return strings[code].toLowerCase() === string.toLowerCase()
       })
+
+    return foundCode
   }
 
   public render (): TemplateResult {
@@ -51,10 +49,12 @@ export class FormatElement extends NodeElement {
     const data = this.data ?? this.dataset
     const language = this.lang === '' ? undefined : this.lang
 
-    return html`
+    const template = html`
       <slot name="body">
         <slot>${this.format(code, language, data)}</slot>
       </slot>
     `
+
+    return template
   }
 }

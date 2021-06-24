@@ -1,7 +1,7 @@
 import type { InputElement } from './input'
 import type { LogEvent } from './node'
 import { RequestElement } from './request'
-import { customElement } from 'lit-element'
+import { customElement } from 'lit/decorators.js'
 
 declare global {
   interface HTMLElementTagNameMap {

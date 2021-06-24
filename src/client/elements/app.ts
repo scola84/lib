@@ -1,11 +1,7 @@
-import {
-  css,
-  customElement,
-  property
-} from 'lit-element'
-
-import type { CSSResult } from 'lit-element'
+import { customElement, property } from 'lit/decorators.js'
+import type { CSSResultGroup } from 'lit'
 import { ClipElement } from './clip'
+import { css } from 'lit'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -15,7 +11,7 @@ declare global {
 
 @customElement('scola-app')
 export class AppElement extends ClipElement {
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     ...ClipElement.styles,
     css`
       :host {

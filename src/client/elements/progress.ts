@@ -1,5 +1,6 @@
-import type { CSSResult, PropertyValues, TemplateResult } from 'lit-element'
-import { css, customElement, html, property, query, svg } from 'lit-element'
+import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
+import { css, html, svg } from 'lit'
+import { customElement, property, query } from 'lit/decorators.js'
 import { NodeElement } from './node'
 import type { RequestElement } from './request'
 
@@ -12,7 +13,7 @@ declare global {
 // https://css-tricks.com/building-progress-ring-quickly/
 @customElement('scola-progress')
 export class ProgressElement extends NodeElement {
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
     css`
       :host {
@@ -275,7 +276,6 @@ export class ProgressElement extends NodeElement {
 
     this.radius = (parseFloat(width) - parseFloat(strokeWidth)) / 2
     const cf = this.radius * 2 * Math.PI
-
     this.circleElement?.setAttribute('r', String(this.radius))
     this.circleElement?.style.setProperty('stroke-dasharray', `${cf}px ${cf}px`)
     this.circleElement?.style.setProperty('stroke-dashoffset', `${cf}px`)

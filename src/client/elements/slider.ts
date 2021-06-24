@@ -1,8 +1,9 @@
-import type { CSSResult, PropertyValues } from 'lit-element'
-import { css, customElement, property } from 'lit-element'
+import type { CSSResultGroup, PropertyValues } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
 import { FormatElement } from './format'
 import { InputElement } from './input'
 import type { NodeEvent } from './node'
+import { css } from 'lit'
 
 declare global {
   interface HTMLElementEventMap {
@@ -18,7 +19,7 @@ declare global {
 // https://css-tricks.com/sliding-nightmare-understanding-range-input/
 @customElement('scola-slider')
 export class SliderElement extends InputElement {
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     ...InputElement.styles,
     css`
       slot:not([name]) {
@@ -319,14 +320,11 @@ export class SliderElement extends InputElement {
 
   public firstUpdated (properties: PropertyValues): void {
     super.firstUpdated(properties)
-
     this.addEventListener('scola-slider-max', this.handleMax.bind(this))
     this.addEventListener('scola-slider-min', this.handleMin.bind(this))
-
     this.inputElement?.addEventListener('input', this.handleSlide.bind(this))
     this.inputElement?.style.setProperty('--max', this.inputElement.max)
     this.inputElement?.style.setProperty('--min', this.inputElement.min)
-
     this.setValueStyle()
     this.setValueText()
   }

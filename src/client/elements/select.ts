@@ -1,5 +1,6 @@
-import type { CSSResult, PropertyValues, TemplateResult } from 'lit-element'
-import { css, customElement, html, property, query } from 'lit-element'
+import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
+import { css, html } from 'lit'
+import { customElement, property, query } from 'lit/decorators.js'
 import { InputElement } from './input'
 import type { InputEvent } from './input'
 
@@ -11,7 +12,7 @@ declare global {
 
 @customElement('scola-select')
 export class SelectElement extends InputElement {
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     ...InputElement.styles,
     css`
       input {
@@ -209,8 +210,8 @@ export class SelectElement extends InputElement {
 
   protected handleClickCheckbox (): void {
     const { inputElement } = this
-
     this.toggleChecked()
+
     this.dispatchEvent(new CustomEvent<InputEvent['detail']>('scola-input', {
       detail: {
         origin: this,

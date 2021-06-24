@@ -1,5 +1,6 @@
-import type { CSSResult, PropertyValues, TemplateResult } from 'lit-element'
-import { LitElement, css, customElement, html, property, query } from 'lit-element'
+import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
+import { LitElement, css, html } from 'lit'
+import { customElement, property, query } from 'lit/decorators.js'
 
 declare global {
   interface HTMLElementEventMap {
@@ -51,7 +52,7 @@ export interface NodeResult {
 export class NodeElement extends LitElement {
   public static presets: Presets
 
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     css`
       :host {
         display: flex;
@@ -1496,7 +1497,7 @@ export class NodeElement extends LitElement {
     if (event.detail !== null && LogLevel[event.detail.level] >= LogLevel[this.logLevel]) {
       event.cancelBubble = true
       this.logs.push(event.detail)
-      this.requestUpdateInternal('logs')
+      this.requestUpdate('logs')
     }
   }
 
@@ -1526,7 +1527,6 @@ export class NodeElement extends LitElement {
     let diff = 0
     let last = 0
     let tid = 0
-
     return (...args): void => {
       diff = Date.now() - last
       window.clearTimeout(tid)
@@ -1546,6 +1546,7 @@ export class NodeElement extends LitElement {
           resolve(...args)
           last = Date.now()
         }
+
         tid = 0
       }, once ? duration : duration - diff)
     }

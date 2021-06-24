@@ -1,10 +1,11 @@
 import type { NodeEvent, NodeResult } from './node'
-import type { PropertyValues, TemplateResult } from 'lit-element'
-import { customElement, html, property } from 'lit-element'
+import type { PropertyValues, TemplateResult } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
 import type { InputElement } from './input'
 import { NodeElement } from './node'
 import { RequestElement } from './request'
-import { repeat } from 'lit-html/directives/repeat'
+import { html } from 'lit'
+import { repeat } from 'lit/directives/repeat.js'
 
 declare global {
   interface HTMLElementEventMap {
@@ -125,7 +126,6 @@ export class ListElement extends RequestElement {
 
   public connectedCallback (): void {
     this.keyFunction = this.getKey.bind(this)
-
     this.emptyElement = this.querySelector<NodeElement>(':scope > [slot="empty"]')
     this.templateElement = this.querySelector<NodeElement>(':scope > [slot="template"]')
 
@@ -223,10 +223,8 @@ export class ListElement extends RequestElement {
 
   protected async finishJSON (): Promise<void> {
     await super.finishJSON()
-
     this.cursor = this.data.cursor
     this.items.push(...this.data.items ?? [])
-
     this.finishEmpty()
   }
 

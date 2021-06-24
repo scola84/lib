@@ -1,13 +1,9 @@
-import {
-  css,
-  customElement,
-  property
-} from 'lit-element'
-
+import { customElement, property } from 'lit/decorators.js'
 import type { AppElement } from './app'
-import type { CSSResult } from 'lit-element'
+import type { CSSResultGroup } from 'lit'
 import { NodeElement } from './node'
 import type { NodeEvent } from './node'
+import { css } from 'lit'
 
 declare global {
   interface HTMLElementEventMap {
@@ -94,7 +90,7 @@ const vtoAlternatives: Record<VerticalTo, VerticalTo[]> = {
 
 @customElement('scola-dialog')
 export class DialogElement extends NodeElement {
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
     css`
       :host {
@@ -656,9 +652,9 @@ export class DialogElement extends NodeElement {
   }
 
   protected async easeOpacity (from: number, to: number, duration?: number): Promise<unknown> {
-    const { assignedElement } = this
-
     return new Promise<unknown>((resolve) => {
+      const { assignedElement } = this
+
       this.ease(from, to, ({ done, value }) => {
         assignedElement?.style.setProperty('opacity', `${value}`)
 

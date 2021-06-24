@@ -1,8 +1,9 @@
-import type { CSSResult, PropertyValues } from 'lit-element'
-import { css, customElement, property } from 'lit-element'
+import type { CSSResultGroup, PropertyValues } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
 import type { NodeEvent } from './node'
 import type { ViewMoveEvent } from './view'
+import { css } from 'lit'
 
 declare global {
   interface HTMLElementEventMap {
@@ -20,7 +21,7 @@ declare global {
 
 @customElement('scola-clip')
 export class ClipElement extends NodeElement {
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
     css`
       slot[name="body"] {
@@ -137,9 +138,11 @@ export class ClipElement extends NodeElement {
         break
       case 'inner':
         this.addEventListener('scola-clip-inner', this.handleInner.bind(this))
+
         if (this.innerHidden === true) {
           this.firstUpdatedInner()
         }
+
         break
       case 'nested':
         this.addEventListener('scola-clip-nested', this.handleNested.bind(this))
@@ -212,7 +215,6 @@ export class ClipElement extends NodeElement {
 
   public showContent (element: HTMLElement, duration = this.contentDuration, callback = (): void => {}): void {
     const contentElements = Array.from(this.contentElements)
-
     const dimensionName = this.flow === 'row' ? 'width' : 'height'
     const scrollName = this.flow === 'row' ? 'scrollLeft' : 'scrollTop'
 
@@ -245,8 +247,8 @@ export class ClipElement extends NodeElement {
 
   public showInner (duration = this.innerDuration, callback = (): void => {}): void {
     this.defaultSlotElement?.style.removeProperty('display')
-
     const name = this.determineInnerPropertyName()
+
     const from = this.defaultSlotElement instanceof HTMLSlotElement
       ? this.determineInnerPropertyValue(this.defaultSlotElement)
       : 0
@@ -269,7 +271,6 @@ export class ClipElement extends NodeElement {
 
   public showOuter (element: HTMLElement, duration = this.outerDuration, callback = (): void => {}): void {
     element.style.removeProperty('display')
-
     const name = this.determineOuterPropertyName(element)
     const from = this.determineOuterPropertyValue(element)
 

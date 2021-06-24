@@ -1,6 +1,7 @@
-import type { CSSResult, PropertyValues, TemplateResult } from 'lit-element'
+import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
 import type { Log, NodeEvent } from './node'
-import { css, customElement, html, property } from 'lit-element'
+import { css, html } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
 
 declare global {
@@ -15,7 +16,7 @@ declare global {
 
 @customElement('scola-log')
 export class LogElement extends NodeElement {
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
     css`
       :host([hidden]) {
@@ -121,7 +122,7 @@ export class LogElement extends NodeElement {
 
   public showLog (log: Log, duration = this.duration): void {
     this.log = log
-    this.requestUpdateInternal()
+    this.requestUpdate()
 
     if (!this.hidden) {
       return
@@ -129,7 +130,6 @@ export class LogElement extends NodeElement {
 
     window.requestAnimationFrame(() => {
       const { scrollHeight = 0 } = this.defaultSlotElement ?? {}
-
       this.defaultSlotElement?.style.setProperty('margin-top', `-${scrollHeight}px`)
       this.hidden = false
 
@@ -156,7 +156,6 @@ export class LogElement extends NodeElement {
     }
 
     this.showLog(log)
-
     const timeout = log.timeout ?? (this.timeout === 0 ? 3000 : this.timeout)
     this.timeoutId = window.setTimeout(this.showNext.bind(this), timeout)
   }

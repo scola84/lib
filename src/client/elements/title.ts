@@ -1,7 +1,8 @@
-import type { PropertyValues, TemplateResult } from 'lit-element'
-import { customElement, html, property } from 'lit-element'
+import type { PropertyValues, TemplateResult } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
 import type { ViewElement } from './view'
+import { html } from 'lit'
 
 declare global {
   interface HTMLElementTagNameMap {

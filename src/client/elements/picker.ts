@@ -1,12 +1,13 @@
-import type { CSSResult, PropertyValues } from 'lit-element'
-import { css, customElement } from 'lit-element'
+import type { CSSResultGroup, PropertyValues } from 'lit'
 import { FormatElement } from './format'
 import { InputElement } from './input'
 import { NodeElement } from './node'
+import { css } from 'lit'
+import { customElement } from 'lit/decorators.js'
 
 @customElement('scola-picker')
 export class PickerElement extends InputElement {
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     ...InputElement.styles,
     css`
       input {
@@ -124,6 +125,7 @@ export class PickerElement extends InputElement {
       valueElement instanceof FormatElement
     ) {
       const { value: hex } = inputElement
+
       const [red, green, blue] =
         hex
           .slice(1)
@@ -150,6 +152,7 @@ export class PickerElement extends InputElement {
       valueElement instanceof FormatElement
     ) {
       const files = Array.from(inputElement.files ?? [])
+
       valueElement.data = {
         count: files.length,
         name: files[0]?.name,

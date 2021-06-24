@@ -1,8 +1,8 @@
 import type { LogEvent, NodeEvent, NodeResult } from './node'
-import { customElement, property } from 'lit-element'
+import { customElement, property } from 'lit/decorators.js'
 import type { AuthEvent } from './auth'
 import { NodeElement } from './node'
-import type { PropertyValues } from 'lit-element'
+import type { PropertyValues } from 'lit'
 
 declare global {
   interface HTMLElementEventMap {
@@ -168,7 +168,6 @@ export class RequestElement extends NodeElement {
     this.loaded = 0
     this.started = true
     this.total = 0
-
     this.fetch(request)
   }
 
@@ -235,7 +234,6 @@ export class RequestElement extends NodeElement {
 
         this.request = request
         this.response = response
-
         await this.finish()
       })
       .catch((error: unknown) => {

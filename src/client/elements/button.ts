@@ -1,11 +1,12 @@
-import type { CSSResult, PropertyValues } from 'lit-element'
-import { css, customElement, property } from 'lit-element'
+import type { CSSResultGroup, PropertyValues } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
 import { ClipElement } from './clip'
 import { NodeElement } from './node'
 import type { NodeEvent } from './node'
 import { ProgressElement } from './progress'
 import { RequestElement } from './request'
 import { ViewElement } from './view'
+import { css } from 'lit'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -15,7 +16,7 @@ declare global {
 
 @customElement('scola-button')
 export class ButtonElement extends NodeElement {
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
     css`
       :host,

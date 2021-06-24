@@ -1,7 +1,8 @@
-import type { CSSResult, TemplateResult } from 'lit-element'
-import { css, customElement, html, property } from 'lit-element'
+import type { CSSResultGroup, TemplateResult } from 'lit'
+import { css, html } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
-import { unsafeSVG } from 'lit-html/directives/unsafe-svg'
+import { unsafeSVG } from 'lit/directives/unsafe-svg.js'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -17,7 +18,7 @@ export interface Icons {
 export class IconElement extends NodeElement {
   public static icons: Icons = {}
 
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
     css`
       :host([rtl][dir="rtl"]) {
@@ -86,7 +87,7 @@ export class IconElement extends NodeElement {
     if (this.name !== undefined && IconElement.icons[this.name] !== undefined) {
       return html`
         <slot name="body">
-          <slot>${unsafeSVG(IconElement.icons[this.name])}</slot>
+          <slot>${unsafeSVG(IconElement.icons[this.name] ?? '')}</slot>
         </slot>
       `
     }

@@ -1,8 +1,4 @@
-import {
-  customElement,
-  property
-} from 'lit-element'
-
+import { customElement, property } from 'lit/decorators.js'
 import { ClipElement } from './clip'
 import type { NodeEvent } from './node'
 
@@ -116,7 +112,6 @@ export class ViewElement extends ClipElement {
     window.addEventListener('scola-view-forward', this.handleForwardBound)
     window.addEventListener('scola-view-home', this.handleHomeBound)
     super.connectedCallback()
-
     this.setupState()
 
     if (!this.loadStorage()) {
@@ -149,7 +144,6 @@ export class ViewElement extends ClipElement {
 
     this.hasFuture = state.pointer < state.views.length - 1
     this.hasPast = state.pointer > 0
-
     const nextView = state.views[state.pointer]
 
     if (nextView === null || nextView === undefined) {
@@ -371,7 +365,6 @@ export class ViewElement extends ClipElement {
 
         const view = state.views[state.pointer]
         pointers[target] = state.pointer
-
         return view !== null && view !== undefined
           ? `${result}/${view.ref}@${target}`
           : result
@@ -409,7 +402,6 @@ export class ViewElement extends ClipElement {
     const dimensionName = this.flow === 'row' ? 'width' : 'height'
     const scrollFactor = this.dir === 'rtl' ? -1 : 1
     const scrollName = this.flow === 'row' ? 'scrollLeft' : 'scrollTop'
-
     const style = window.getComputedStyle(element)
     const scrollDelta = scrollFactor * parseFloat(style[dimensionName])
 

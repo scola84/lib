@@ -1,7 +1,8 @@
-import type { CSSResult, PropertyValues } from 'lit-element'
-import { css, customElement, property } from 'lit-element'
+import type { CSSResultGroup, PropertyValues } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
+import { css } from 'lit'
 
 declare global {
   interface HTMLElementEventMap {
@@ -23,7 +24,7 @@ export interface InputEvent {
 
 @customElement('scola-input')
 export class InputElement extends NodeElement {
-  public static styles: CSSResult[] = [
+  public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
     css`
       input,

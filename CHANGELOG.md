@@ -1,3 +1,27 @@
+# [19.0.0](https://github.com/scola84/lib/compare/v18.3.1...v19.0.0) (2021-06-24)
+
+
+### Features
+
+* remove data from mysql and postgres (in .docker and bin) ([b1b2542](https://github.com/scola84/lib/commit/b1b2542b9e8d4dec1c5fc690b36af32c9b325ab4))
+* **client:** use new lit package ([e38ec40](https://github.com/scola84/lib/commit/e38ec408dadd6451fb925727f5a5dab7f4e0770e))
+* **fastify:** move plugins to object ([971dc53](https://github.com/scola84/lib/commit/971dc53e0a60b04407d2f268d088e4020d171bd3))
+* **queue:** remove task and item ([79c7e0c](https://github.com/scola84/lib/commit/79c7e0ca94d796c59e3fa4d4ace31cd009c9428b))
+* **redis:** remove ZScanner ([6f82021](https://github.com/scola84/lib/commit/6f820219805d0af98713d7b8c14b0aaa9b66231a))
+* **sql:** remove tokens ([73d84d7](https://github.com/scola84/lib/commit/73d84d78ff8999240b3ed1912dadff971229d794))
+
+
+### BREAKING CHANGES
+
+* Data is loaded from a different entrypoint and
+bin subcommands nog longer exist.
+* **redis:** The ZScanner no longer exists.
+* **fastify:** The plugins are grouped to one property.
+* **sql:** The databases and connections no longer have
+dialect-specific tokens.
+* **client:** Symbols of lit are no longer exported.
+* **queue:** Queues no longer use tasks and items.
+
 ## [18.3.1](https://github.com/scola84/lib/compare/v18.3.0...v18.3.1) (2021-06-14)
 
 

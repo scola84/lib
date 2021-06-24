@@ -21,6 +21,11 @@ export interface ServerOptions extends FastifyServerOptions {
   logger?: Logger
 
   /**
+   * The plugins to register on the Fastify instance.
+   */
+  plugins?: Record<string, FastifyPluginCallback>
+
+  /**
    * The port to bind the server to.
    *
    * @defaultValue 3000.
@@ -47,27 +52,6 @@ export class Server {
   public fastify?: FastifyInstance
 
   /**
-   * A plugin to get and set cookies.
-   *
-   * @see https://www.npmjs.com/package/fastify-cookie
-   */
-  public fastifyCookie?: FastifyPluginCallback = fastifyCookie
-
-  /**
-   * A plugin to parse application/x-www-form-urlencoded content.
-   *
-   * @see https://www.npmjs.com/package/fastify-formbody
-   */
-  public fastifyFormbody?: FastifyPluginCallback = fastifyFormbody
-
-  /**
-   * A plugin to parse multipart/form-data content.
-   *
-   * @see https://www.npmjs.com/package/fastify-multipart
-   */
-  public fastifyMultipart?: FastifyPluginCallback = fastifyMultipart
-
-  /**
    * The logger.
    *
    * @see https://www.npmjs.com/package/pino
@@ -82,9 +66,14 @@ export class Server {
   public options: FastifyServerOptions
 
   /**
+   * The plugins to register on `fastify`.
+   */
+  public plugins: Record<string, FastifyPluginCallback>
+
+  /**
    * The port to bind `fastify` to.
    *
-   * @defaultValue 3000.
+   * @defaultValue 3000
    */
   public port: number
 
@@ -98,6 +87,12 @@ export class Server {
     this.logger = options.logger?.child({ name: 'server' })
     this.options = options
     this.port = options.port ?? 3000
+
+    this.plugins = options.plugins ?? {
+      cookie: fastifyCookie,
+      formbody: fastifyFormbody,
+      multipart: fastifyMultipart
+    }
   }
 
   /**
@@ -142,12 +137,11 @@ export class Server {
       this.setup()
     }
 
-    await Promise.all([
-      this.fastify?.register(this.fastifyCookie ?? (() => {})),
-      this.fastify?.register(this.fastifyFormbody ?? (() => {})),
-      this.fastify?.register(this.fastifyMultipart ?? (() => {})),
-      this.fastify?.listen(this.port, this.address)
-    ])
+    await Promise.all(Object.values(this.plugins).map((plugin) => {
+      return this.fastify?.register(plugin)
+    }))
+
+    await this.fastify?.listen(this.port, this.address)
   }
 
   /**

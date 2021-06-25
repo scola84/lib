@@ -1,3 +1,16 @@
+# [20.0.0](https://github.com/scola84/lib/compare/v19.0.0...v20.0.0) (2021-06-25)
+
+
+### Features
+
+* **queue:** improve factory methods for queue entities ([f3d6839](https://github.com/scola84/lib/commit/f3d683926c6a99fbfc8c91406f519068bc03b495))
+* **queue:** return the pipeline ([8d997fd](https://github.com/scola84/lib/commit/8d997fdfa252844ff568fb3f4c2e6feba792c724))
+
+
+### BREAKING CHANGES
+
+* **queue:** factory methods require a partial entity as argument.
+
 # [19.0.0](https://github.com/scola84/lib/compare/v18.3.1...v19.0.0) (2021-06-24)
 
 

@@ -66,7 +66,7 @@ export interface Queue<Options = unknown> extends Required<QueueBase> {
   schedule_next: Date | null
 }
 
-export function createQueue<Options> (options?: Options): Queue<Options> {
+export function createQueue<Options = Record<string, unknown>> (queue?: Partial<Queue<Options>>): Queue<Options> {
   return {
     database: 'database',
     date_created: new Date(),
@@ -74,7 +74,7 @@ export function createQueue<Options> (options?: Options): Queue<Options> {
     fkey_queue_id: 0,
     id: 0,
     name: 'name',
-    options: (options ?? {}) as Options,
+    options: (queue?.options ?? {}) as Options,
     query: '',
     schedule: '',
     schedule_begin: null,

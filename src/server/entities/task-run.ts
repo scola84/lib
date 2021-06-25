@@ -64,7 +64,7 @@ export interface TaskRun<Payload = unknown, Options = unknown, Result = unknown>
   status: 'err' | 'ok' | 'pending'
 }
 
-export function createTaskRun<Payload, Options, Result> (payload?: Payload): TaskRun<Payload, Options, Result> {
+export function createTaskRun<Payload = Record<string, unknown>, Options = Record<string, unknown>, Result = Record<string, unknown>> (taskRun?: Partial<TaskRun<Payload, Options, Result>>): TaskRun<Payload, Options, Result> {
   return {
     date_created: new Date(),
     date_queued: null,
@@ -73,10 +73,11 @@ export function createTaskRun<Payload, Options, Result> (payload?: Payload): Tas
     fkey_queue_run_id: 0,
     host: null,
     id: 0,
-    payload: (payload ?? {}) as Payload,
-    queueRun: createQueueRun(),
+    payload: Object.create(null) as Payload,
+    queueRun: taskRun?.queueRun ?? createQueueRun<Options>(),
     reason: null,
     result: Object.create(null) as Result,
-    status: 'pending'
+    status: 'pending',
+    ...taskRun
   }
 }

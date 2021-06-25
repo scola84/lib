@@ -114,7 +114,7 @@ export class QueueRunner {
    * @param parameters - The parameters for the generator query
    */
   public async run (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
-    const queueRun: QueueRun = createQueueRun(queue)
+    const queueRun: QueueRun = createQueueRun({ queue })
     const { id: queueRunId } = await this.insertQueueRun(queueRun)
     queueRun.id = queueRunId
 
@@ -168,7 +168,7 @@ export class QueueRunner {
         $(options)
       )
     `, {
-      fkey_queue_id: queueRun.queue?.id,
+      fkey_queue_id: queueRun.queue.id,
       name: queueRun.name,
       options: queueRun.options
     })

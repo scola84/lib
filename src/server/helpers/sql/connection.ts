@@ -113,21 +113,25 @@ export abstract class Connection {
       })
       .map(async (table) => {
         return Promise.all(entities[table].map(async (object, index) => {
-          result[table][index] = await this.delete(sql`
-            DELETE
-            FROM ${table}
-            WHERE ${
-              Object
-                .keys(object)
-                .filter((column) => {
-                  return column.endsWith('id')
-                })
-                .map((column) => {
-                  return `${column} = $(${column})`
-                })
-                .join(' AND ')
-            }
-          `, object)
+          try {
+            result[table][index] = await this.delete(sql`
+              DELETE
+              FROM ${table}
+              WHERE ${
+                Object
+                  .keys(object)
+                  .filter((column) => {
+                    return column.endsWith('id')
+                  })
+                  .map((column) => {
+                    return `${column} = $(${column})`
+                  })
+                  .join(' AND ')
+              }
+            `, object)
+          } catch (error: unknown) {
+            result[table][index] = {}
+          }
         }))
       }))
 
@@ -164,20 +168,24 @@ export abstract class Connection {
       })
       .map(async (table) => {
         return Promise.all(entities[table].map(async (object, index) => {
-          result[table][index] = await this.insert<unknown, R>(sql`
-            INSERT INTO ${table} (${
-              Object
-                .keys(object)
+          try {
+            result[table][index] = await this.insert<unknown, R>(sql`
+              INSERT INTO ${table} (${
+                Object
+                  .keys(object)
+                  .join(',')
+              }) VALUES (${
+                Object
+                  .keys(object)
+                  .map((column) => {
+                    return `$(${column})`
+                  })
                 .join(',')
-            }) VALUES (${
-              Object
-                .keys(object)
-                .map((column) => {
-                  return `$(${column})`
-                })
-              .join(',')
-            })
-          `, object)
+              })
+            `, object)
+          } catch (error: unknown) {
+            result[table][index] = {}
+          }
         }))
       }))
 

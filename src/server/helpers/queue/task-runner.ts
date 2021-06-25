@@ -1,13 +1,14 @@
 import type { Database, UpdateResult } from '../sql'
+import type { DuplexOptions, Readable, Transform, Writable } from 'stream'
 import type { Queue, QueueRun, TaskRun } from '../../entities'
 import Ajv from 'ajv'
-import type { DuplexOptions } from 'stream'
 import type { Logger } from 'pino'
 import type { ObjectSchema } from 'fluent-json-schema'
 import type { Queuer } from './queuer'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createNodeRedisClient } from 'handy-redis'
 import type { queue as fastq } from 'fastq'
+import { pipeline } from '../stream'
 import { promise } from 'fastq'
 import { sql } from '../sql'
 import waitUntil from 'async-wait-until'
@@ -259,6 +260,16 @@ export abstract class TaskRunner {
     }
 
     return validator
+  }
+
+  /**
+   * Handles a data stream as a Promise.
+   *
+   * @param streams - The streams
+   * @see {@link pipeline}
+   */
+  public async pipeline (...streams: Array<Readable | Transform | Writable>): Promise<void> {
+    return pipeline(...streams)
   }
 
   /**

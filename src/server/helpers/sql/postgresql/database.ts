@@ -18,46 +18,17 @@ export class PostgresqlDatabase extends Database {
 
   public pool: Pool
 
-  /**
-   * Creates a PostgreSQL database.
-   *
-   * Parses the options with `parseDsn` if it is a string.
-   *
-   * @param options - The database options
-   */
-  public constructor (options: PoolConfig | string = {}) {
-    super()
-
-    const databaseOptions = typeof options === 'string'
-      ? PostgresqlDatabase.parseDsn(options)
-      : options
-
-    this.pool = new Pool(databaseOptions)
+  public async connect (): Promise<PostgresqlConnection> {
+    return new PostgresqlConnection(await this.pool.connect())
   }
 
-  /**
-   * Creates pool options from a DSN (Data Source Name) of a PostgreSQL server.
-   *
-   * Adds `connectionString: dsn` and `connectionTimeoutMillis: 10000` to the pool options.
-   *
-   * Parses the query string of the DSN, casts booleans and numbers and adds the key/value pairs to the pool options.
-   *
-   * @param dsn - The DSN
-   * @returns The pool options
-   *
-   * @example
-   *
-   * ```ts
-   * const options = PostgresqlDatabase.parseDsn('mysql://root:root@localhost:3306/db?max=10')
-   * // options = { connectionString: 'mysql://root:root@localhost:3306/db?max=10', connectionTimeoutMillis: 10000, max: 10 }
-   * ```
-   */
-  public static parseDsn (dsn: string): PoolConfig {
-    const url = new URL(dsn)
+  public createPool (): Pool {
+    const url = new URL(this.dsn ?? 'postgres://')
 
     const options: PoolConfig = {
-      connectionString: dsn,
-      connectionTimeoutMillis: 10000
+      connectionString: this.dsn,
+      connectionTimeoutMillis: 10000,
+      password: this.password
     }
 
     Object
@@ -69,14 +40,18 @@ export class PostgresqlDatabase extends Database {
         lodash.set(options, name, value)
       })
 
-    return options
+    return new Pool(options)
   }
 
-  public async connect (): Promise<PostgresqlConnection> {
-    return new PostgresqlConnection(await this.pool.connect())
+  public async start (): Promise<void> {
+    this.pool = this.createPool()
+
+    if (this.population !== undefined) {
+      await this.populate(this.population)
+    }
   }
 
-  public async end (): Promise<void> {
-    return this.pool.end()
+  public async stop (): Promise<void> {
+    await this.pool.end()
   }
 }

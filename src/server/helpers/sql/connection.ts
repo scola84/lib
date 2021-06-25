@@ -86,35 +86,28 @@ export abstract class Connection {
   /**
    * Depopulates the database.
    *
+   * Discards any errors.
+   *
    * @param entities - The entities
-   * @returns The ids of the deleted entities
    *
    * @example
    * ```ts
-   * const result = connection.depopulate({
+   * connection.depopulate({
    *   t1: [{
    *     c1: 'v1'
    *   }, {
    *     c1: 'v2'
    *   }]
    * })
-   *
-   * // result = { t1: [{ count: 1 }, { count: 2 }] }
    * ```
    */
-  public async depopulate (entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<DeleteResult>>>> {
-    const result: Record<string, Array<Partial<DeleteResult>>> = {}
-
+  public async depopulate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
     await Promise.all(Object
-      .keys(entities)
-      .map((table) => {
-        result[table] = []
-        return table
-      })
-      .map(async (table) => {
-        return Promise.all(entities[table].map(async (object, index) => {
+      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .map(async ([table, rows]) => {
+        return Promise.all(rows.map(async (object) => {
           try {
-            result[table][index] = await this.delete(sql`
+            await this.delete(sql`
               DELETE
               FROM ${table}
               WHERE ${
@@ -130,46 +123,37 @@ export abstract class Connection {
               }
             `, object)
           } catch (error: unknown) {
-            result[table][index] = {}
+            // discard error
           }
         }))
       }))
-
-    return result
   }
 
   /**
    * Populates the database.
    *
+   * Discards any errors.
+   *
    * @param entities - The entities
-   * @returns The ids of the inserted entities
    *
    * @example
    * ```ts
-   * const result = connection.populate({
+   * connection.populate({
    *   t1: [{
    *     c1: 'v1'
    *   }, {
    *     c1: 'v2'
    *   }]
    * })
-   *
-   * // result = { t1: [{ id: 1 }, { id: 2 }] }
    * ```
    */
-  public async populate<ID = number>(entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<InsertResult<ID>>>>> {
-    const result: Record<string, Array<Partial<InsertResult<ID>>>> = {}
-
+  public async populate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
     await Promise.all(Object
-      .keys(entities)
-      .map((table) => {
-        result[table] = []
-        return table
-      })
-      .map(async (table) => {
-        return Promise.all(entities[table].map(async (object, index) => {
+      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .map(async ([table, rows]) => {
+        return Promise.all(rows.map(async (object) => {
           try {
-            result[table][index] = await this.insert<unknown, ID>(sql`
+            await this.insert(sql`
               INSERT INTO ${table} (${
                 Object
                   .keys(object)
@@ -184,12 +168,10 @@ export abstract class Connection {
               })
             `, object)
           } catch (error: unknown) {
-            result[table][index] = {}
+            // discard error
           }
         }))
       }))
-
-    return result
   }
 
   /**

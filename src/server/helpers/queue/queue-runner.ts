@@ -16,7 +16,7 @@ export interface QueueRunnerOptions {
   /**
    * The databases to run generator queries on.
    */
-  databases: Record<string, Database | undefined>
+  databases: Partial<Record<string, Database>>
 
   /**
    * The logger.
@@ -43,7 +43,7 @@ export class QueueRunner {
   /**
    * The databases to run generator queries on.
    */
-  public databases: Record<string, Database | undefined>
+  public databases: Partial<Record<string, Database>>
 
   /**
    * The logger.

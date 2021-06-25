@@ -114,12 +114,7 @@ async function depopulate (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    const {
-      test_connection: [{
-        id
-      }]
-    } = await connection.populate(populateData)
-
+    await connection.populate(populateData)
     await connection.depopulate(depopulateData)
 
     const data = await connection.select(sql`
@@ -127,10 +122,9 @@ async function depopulate (): Promise<void> {
       FROM test_connection
       WHERE id = $(id)
     `, {
-      id
+      id: 1
     })
 
-    expect(id).equal(1)
     expect(data).eql(undefined)
   } finally {
     connection.release()
@@ -333,21 +327,16 @@ async function populate (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    const {
-      test_connection: [{
-        id
-      }]
-    } = await connection.populate(populateData)
+    await connection.populate(populateData)
 
     const data = await connection.selectOne(sql`
       SELECT *
       FROM test_connection
       WHERE id = $(id)
     `, {
-      id
+      id: 1
     })
 
-    expect(id).equal(1)
     expect(data).eql(expectedData)
   } finally {
     connection.release()

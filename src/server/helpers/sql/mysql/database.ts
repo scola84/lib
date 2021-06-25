@@ -16,48 +16,18 @@ export class MysqlDatabase extends Database {
 
   public pool: Pool
 
-  /**
-   * Creates a MySQL database.
-   *
-   * Parses the options with `parseDsn` if it is a string.
-   *
-   * @param options - The database options
-   */
-  public constructor (options: PoolOptions | string = {}) {
-    super()
-
-    const databaseOptions = typeof options === 'string'
-      ? MysqlDatabase.parseDsn(options)
-      : options
-
-    this.pool = createPool(databaseOptions)
+  public async connect (): Promise<MysqlConnection> {
+    return new MysqlConnection(await this.pool.getConnection())
   }
 
-  /**
-   * Creates pool options from a DSN (Data Source Name) of a MySQL server.
-   *
-   * Adds `decimalNumbers: true` and `supportBigNumbers: true` to the pool options.
-   *
-   * Parses the query string of the DSN, casts booleans and numbers and adds the key/value pairs to the pool options.
-   *
-   * @param dsn - The DSN
-   * @returns The pool options
-   *
-   * @example
-   *
-   * ```ts
-   * const options = MysqlDatabase.parseDsn('mysql://root:root@localhost:3306/db?nestTables=1')
-   * // options = { database: 'db', decimalNumbers: true, host: 'localhost', password: 'root', nestTables: true, port: 3306, supportBigNumbers: true, user: 'root' }
-   * ```
-   */
-  public static parseDsn (dsn: string): PoolOptions {
-    const url = new URL(dsn)
+  public createPool (): Pool {
+    const url = new URL(this.dsn ?? 'mysql://')
 
     const options: PoolOptions = {
       database: url.pathname.slice(1),
       decimalNumbers: true,
       host: url.hostname,
-      password: decodeURIComponent(url.password),
+      password: this.password,
       port: Number(url.port),
       supportBigNumbers: true,
       user: decodeURIComponent(url.username)
@@ -72,14 +42,18 @@ export class MysqlDatabase extends Database {
         lodash.set(options, name, value)
       })
 
-    return options
+    return createPool(options)
   }
 
-  public async connect (): Promise<MysqlConnection> {
-    return new MysqlConnection(await this.pool.getConnection())
+  public async start (): Promise<void> {
+    this.pool = this.createPool()
+
+    if (this.population !== undefined) {
+      await this.populate(this.population)
+    }
   }
 
-  public async end (): Promise<void> {
-    return this.pool.end()
+  public async stop (): Promise<void> {
+    await this.pool.end()
   }
 }

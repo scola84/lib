@@ -1,5 +1,5 @@
+import type { ConnectionOptions, Pool } from 'mysql2/promise'
 import { MysqlDatabase } from '../../../../../src/server/helpers/sql/mysql'
-import type { Pool } from 'mysql2/promise'
 import { createPool } from 'mysql2/promise'
 import type denque from 'denque'
 import { expect } from 'chai'
@@ -7,27 +7,27 @@ import { sql } from '../../../../../src/server/helpers/sql/tag'
 
 describe('MysqlConnection', () => {
   describe('should', () => {
-    it('connect with object options', connectWithObjectOptions)
-    it('connect with string options', connectWithStringOptions)
-    it('connect without options', connectWithoutOptions)
+    it('create a pool with options', createAPoolWithOptions)
+    it('create a pool without options', createAPoolWithoutOptions)
     it('delete one row', deleteOneRow)
     it('depopulate', depopulate)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
-    it('parse a DSN', parseADsn)
     it('populate', populate)
     it('query', query)
     it('select multiple rows', selectMultipleRows)
     it('select and resolve undefined', selectAndResolveUndefined)
     it('select one and reject undefined', selectOneAndRejectUndefined)
+    it('start a database with a population', startADatabaseWithAPopulation)
     it('stream rows', streamRows)
     it('update one row', updateOneRow)
   })
 })
 
-interface PoolWithNumbers {
+interface ExtendedPool {
   pool: {
+    config: ConnectionOptions
     _allConnections: denque
     _freeConnections: denque
   }
@@ -35,13 +35,15 @@ interface PoolWithNumbers {
 
 class Helpers {
   public dsn: string
+  public password: string
   public pool: Pool
 }
 
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.dsn = 'mysql://root:root@127.0.0.1:3306/scola'
+  helpers.dsn = 'mysql://root@127.0.0.1:3306/scola?connectionLimit=15'
+  helpers.password = 'root'
 
   helpers.pool = createPool({
     database: 'scola',
@@ -65,47 +67,39 @@ afterAll(async () => {
   await helpers.pool.end()
 })
 
-async function connectWithObjectOptions (): Promise<void> {
-  const database = new MysqlDatabase(MysqlDatabase.parseDsn(helpers.dsn))
+function createAPoolWithOptions (): void {
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
-  try {
-    expect(database.pool.constructor.name).equal('PromisePool')
-  } finally {
-    await database.end()
-  }
+  const pool = database.createPool() as unknown as ExtendedPool
+  expect(pool.pool.constructor.name).equal('Pool')
+  expect(pool.pool.config.connectionLimit).equal(15)
 }
 
-async function connectWithStringOptions (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  try {
-    expect(database.pool.constructor.name).equal('PromisePool')
-  } finally {
-    await database.end()
-  }
-}
-
-async function connectWithoutOptions (): Promise<void> {
+function createAPoolWithoutOptions (): void {
   const database = new MysqlDatabase()
-
-  try {
-    expect(database.pool.constructor.name).equal('PromisePool')
-  } finally {
-    await database.end()
-  }
+  const pool = database.createPool() as unknown as ExtendedPool
+  expect(pool.pool.constructor.name).equal('Pool')
 }
 
 async function deleteOneRow (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
+    const {
+      pool: {
+        _allConnections: all,
+        _freeConnections: free
+      }
+    } = database.pool as unknown as ExtendedPool
+
     const { id } = await database.insertOne(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
@@ -123,21 +117,26 @@ async function deleteOneRow (): Promise<void> {
     expect(all.length).gt(0)
     expect(free.length).equal(all.length)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function depopulate (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
+    const {
+      pool: {
+        _allConnections: all,
+        _freeConnections: free
+      }
+    } = database.pool as unknown as ExtendedPool
+
     await database.depopulate({
       test_database: [{
         id: 1,
@@ -148,21 +147,26 @@ async function depopulate (): Promise<void> {
     expect(all.length).gt(0)
     expect(free.length).equal(all.length)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function insertABulkOfRows (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
+    const {
+      pool: {
+        _allConnections: all,
+        _freeConnections: free
+      }
+    } = database.pool as unknown as ExtendedPool
+
     await database.insertAll(sql`
       INSERT INTO test_database (name)
       VALUES $(list)
@@ -176,21 +180,26 @@ async function insertABulkOfRows (): Promise<void> {
     expect(all.length).gt(0)
     expect(free.length).equal(all.length)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function insertOneRow (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
+    const {
+      pool: {
+        _allConnections: all,
+        _freeConnections: free
+      }
+    } = database.pool as unknown as ExtendedPool
+
     await database.insertOne(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
@@ -201,14 +210,19 @@ async function insertOneRow (): Promise<void> {
     expect(all.length).gt(0)
     expect(free.length).equal(all.length)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function parseABigIntAsANumber (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
     const { id } = await database.insertOne(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
@@ -226,40 +240,26 @@ async function parseABigIntAsANumber (): Promise<void> {
 
     expect(data.id).equal(id)
   } finally {
-    await database.end()
+    await database.stop()
   }
-}
-
-function parseADsn (): void {
-  const dsn = `${helpers.dsn}?charset=utf8&connectionLimit=20&supportBigNumbers=true`
-
-  const expectedOptions = {
-    charset: 'utf8',
-    connectionLimit: 20,
-    database: 'scola',
-    decimalNumbers: true,
-    host: '127.0.0.1',
-    password: 'root',
-    port: 3306,
-    supportBigNumbers: true,
-    user: 'root'
-  }
-
-  const options = MysqlDatabase.parseDsn(dsn)
-  expect(options).eql(expectedOptions)
 }
 
 async function populate (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
+    const {
+      pool: {
+        _allConnections: all,
+        _freeConnections: free
+      }
+    } = database.pool as unknown as ExtendedPool
+
     await database.populate({
       test_database: [{
         id: 1,
@@ -270,21 +270,26 @@ async function populate (): Promise<void> {
     expect(all.length).gt(0)
     expect(free.length).equal(all.length)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function query (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
+    const {
+      pool: {
+        _allConnections: all,
+        _freeConnections: free
+      }
+    } = database.pool as unknown as ExtendedPool
+
     await database.query(sql`
       SELECT *
       FROM test_database
@@ -293,21 +298,26 @@ async function query (): Promise<void> {
     expect(all.length).gt(0)
     expect(free.length).equal(all.length)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function selectMultipleRows (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
+    const {
+      pool: {
+        _allConnections: all,
+        _freeConnections: free
+      }
+    } = database.pool as unknown as ExtendedPool
+
     await database.selectAll(sql`
       SELECT *
       FROM test_database
@@ -316,21 +326,26 @@ async function selectMultipleRows (): Promise<void> {
     expect(all.length).gt(0)
     expect(free.length).equal(all.length)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function selectAndResolveUndefined (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
+    const {
+      pool: {
+        _allConnections: all,
+        _freeConnections: free
+      }
+    } = database.pool as unknown as ExtendedPool
+
     await database.select(sql`
       SELECT *
       FROM test_database
@@ -342,21 +357,26 @@ async function selectAndResolveUndefined (): Promise<void> {
     expect(all.length).gt(0)
     expect(free.length).equal(all.length)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function selectOneAndRejectUndefined (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
+    const {
+      pool: {
+        _allConnections: all,
+        _freeConnections: free
+      }
+    } = database.pool as unknown as ExtendedPool
+
     await database.selectOne(sql`
       SELECT *
       FROM test_database
@@ -370,21 +390,55 @@ async function selectOneAndRejectUndefined (): Promise<void> {
   } catch (error: unknown) {
     expect(String(error)).match(/Object is undefined/u)
   } finally {
-    await database.end()
+    await database.stop()
+  }
+}
+
+async function startADatabaseWithAPopulation (): Promise<void> {
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password,
+    population: {
+      test_database: [{
+        id: 1,
+        name: 'name'
+      }]
+    }
+  })
+
+  try {
+    await database.start()
+
+    const data = await database.selectOne<{ id: number }, { id: number }>(sql`
+      SELECT *
+      FROM test_database
+      WHERE id = $(id)
+    `, {
+      id: 1
+    })
+
+    expect(data.id).equal(1)
+  } finally {
+    await database.stop()
   }
 }
 
 async function streamRows (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
+    const {
+      pool: {
+        _allConnections: all,
+        _freeConnections: free
+      }
+    } = database.pool as unknown as ExtendedPool
+
     await database.insert(`
       INSERT INTO test_database (name)
       VALUES $(list)
@@ -414,21 +468,26 @@ async function streamRows (): Promise<void> {
       })
     })
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function updateOneRow (): Promise<void> {
-  const database = new MysqlDatabase(helpers.dsn)
-
-  const {
-    pool: {
-      _allConnections: all,
-      _freeConnections: free
-    }
-  } = database.pool as unknown as PoolWithNumbers
+  const database = new MysqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
+    const {
+      pool: {
+        _allConnections: all,
+        _freeConnections: free
+      }
+    } = database.pool as unknown as ExtendedPool
+
     const { id } = await database.insertOne(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
@@ -448,6 +507,6 @@ async function updateOneRow (): Promise<void> {
     expect(all.length).gt(0)
     expect(free.length).equal(all.length)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }

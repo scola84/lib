@@ -157,7 +157,7 @@ export class ServiceManager {
    *
    * Exits `process` if an error occurs during startup.
    */
-  public start (): void {
+  public async start (): Promise<void> {
     this.logger?.info({
       names: this.names,
       signal: this.signal,
@@ -182,7 +182,7 @@ export class ServiceManager {
       })
     })
 
-    Promise
+    await Promise
       .all([
         isMatch('server', this.types) ? this.server?.start(false) : null,
         isMatch('queuer', this.types) ? this.queuer?.start(false) : null
@@ -194,7 +194,7 @@ export class ServiceManager {
 
     if (this.signal !== null) {
       this.process.once(this.signal, () => {
-        this.stop()
+        this.stop().catch(() => {})
       })
     }
   }
@@ -206,14 +206,14 @@ export class ServiceManager {
    *
    * Exits `process` after the delegates have been stopped.
    */
-  public stop (): void {
+  public async stop (): Promise<void> {
     this.logger?.info({
       names: this.names,
       signal: this.signal,
       types: this.types
     }, 'Stopping service manager')
 
-    Promise
+    await Promise
       .all([
         isMatch('server', this.types) ? this.server?.stop() : null,
         isMatch('queuer', this.types) ? this.queuer?.stop() : null

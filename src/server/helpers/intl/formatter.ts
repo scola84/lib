@@ -12,7 +12,7 @@ export class Formatter {
   /**
    * The language-specific collections of strings.
    */
-  public static strings: Record<string, Record<string, string> | undefined> = {}
+  public static strings: Partial<Record<string, Record<string, string>>> = {}
 
   /**
    * Formats a string according to `Intl MessageFormat`.

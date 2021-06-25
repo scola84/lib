@@ -1,45 +1,48 @@
 import { ConnectionPool } from 'mssql'
 import { MssqlDatabase } from '../../../../../src/server/helpers/sql/mssql'
+import type { config } from 'mssql'
 import { expect } from 'chai'
 import { sql } from '../../../../../src/server/helpers/sql/tag'
 
 describe('MssqlConnection', () => {
   describe('should', () => {
-    it('connect with object options', connectWithObjectOptions)
-    it('connect with string options', connectWithStringOptions)
-    it('connect without options', connectWithoutOptions)
+    it('create a pool with options', createAPoolWithOptions)
+    it('create a pool without options', createAPoolWithoutOptions)
     it('delete one row', deleteOneRow)
     it('depopulate', depopulate)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
-    it('parse a DSN', parseADsn)
     it('populate', populate)
     it('query', query)
     it('select multiple rows', selectMultipleRows)
     it('select and resolve undefined', selectAndResolveUndefined)
     it('select one and reject undefined', selectOneAndRejectUndefined)
+    it('start a database with a population', startADatabaseWithAPopulation)
     it('stream rows', streamRows)
     it('update one row', updateOneRow)
   })
 })
 
-interface PoolWithNumbers {
+interface ExtendedPool {
   available: number
   borrowed: number
+  config: config
   pending: number
   size: number
 }
 
 class Helpers {
   public dsn: string
+  public password: string
   public pool: ConnectionPool
 }
 
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.dsn = 'mssql://sa:rootRoot1@localhost:1433/scola'
+  helpers.dsn = 'mssql://sa@localhost:1433/scola?parseJSON=true'
+  helpers.password = 'rootRoot1'
 
   helpers.pool = new ConnectionPool({
     options: {
@@ -72,41 +75,33 @@ afterAll(async () => {
   await helpers.pool.close()
 })
 
-async function connectWithObjectOptions (): Promise<void> {
-  const database = new MssqlDatabase(MssqlDatabase.parseDsn(helpers.dsn))
+function createAPoolWithOptions (): void {
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
-  try {
-    expect(database.pool).instanceOf(ConnectionPool)
-  } finally {
-    await database.end()
-  }
+  const pool = database.createPool() as unknown as ExtendedPool
+  expect(pool).instanceof(ConnectionPool)
+  expect(pool.config.parseJSON).equal(true)
 }
 
-async function connectWithStringOptions (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-
-  try {
-    expect(database.pool).instanceOf(ConnectionPool)
-  } finally {
-    await database.end()
-  }
-}
-
-async function connectWithoutOptions (): Promise<void> {
+function createAPoolWithoutOptions (): void {
   const database = new MssqlDatabase()
-
-  try {
-    expect(database.pool).instanceOf(ConnectionPool)
-  } finally {
-    await database.end()
-  }
+  const pool = database.createPool()
+  expect(pool).instanceOf(ConnectionPool)
 }
 
 async function deleteOneRow (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-  const pool = database.pool as unknown as PoolWithNumbers
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+    const pool = database.pool as unknown as ExtendedPool
+
     const { id } = await database.insertOne(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
@@ -124,15 +119,20 @@ async function deleteOneRow (): Promise<void> {
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function depopulate (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-  const pool = database.pool as unknown as PoolWithNumbers
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+    const pool = database.pool as unknown as ExtendedPool
+
     await database.depopulate({
       test_database: [{
         id: 1,
@@ -143,15 +143,20 @@ async function depopulate (): Promise<void> {
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function insertABulkOfRows (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-  const pool = database.pool as unknown as PoolWithNumbers
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+    const pool = database.pool as unknown as ExtendedPool
+
     await database.insertAll(sql`
       INSERT INTO test_database (name)
       VALUES $(list)
@@ -165,15 +170,20 @@ async function insertABulkOfRows (): Promise<void> {
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function insertOneRow (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-  const pool = database.pool as unknown as PoolWithNumbers
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+    const pool = database.pool as unknown as ExtendedPool
+
     await database.insertOne(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
@@ -184,14 +194,19 @@ async function insertOneRow (): Promise<void> {
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function parseABigIntAsANumber (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+
     const { id } = await database.insertOne(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
@@ -210,38 +225,20 @@ async function parseABigIntAsANumber (): Promise<void> {
     // https://github.com/tediousjs/tedious/issues/678
     expect(data.id).equal(String(id))
   } finally {
-    await database.end()
+    await database.stop()
   }
-}
-
-function parseADsn (): void {
-  const dsn = `${helpers.dsn}?domain=scola&parseJSON=true&pool.max=20`
-
-  const expectedOptions = {
-    database: 'scola',
-    domain: 'scola',
-    options: {
-      encrypt: false
-    },
-    parseJSON: true,
-    password: 'rootRoot1',
-    pool: {
-      max: 20
-    },
-    port: 1433,
-    server: 'localhost',
-    user: 'sa'
-  }
-
-  const options = MssqlDatabase.parseDsn(dsn)
-  expect(options).eql(expectedOptions)
 }
 
 async function populate (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-  const pool = database.pool as unknown as PoolWithNumbers
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+    const pool = database.pool as unknown as ExtendedPool
+
     await database.populate({
       test_database: [{
         name: 'name'
@@ -251,15 +248,20 @@ async function populate (): Promise<void> {
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function query (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-  const pool = database.pool as unknown as PoolWithNumbers
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+    const pool = database.pool as unknown as ExtendedPool
+
     await database.query(sql`
       SELECT *
       FROM test_database
@@ -268,15 +270,20 @@ async function query (): Promise<void> {
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function selectMultipleRows (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-  const pool = database.pool as unknown as PoolWithNumbers
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+    const pool = database.pool as unknown as ExtendedPool
+
     await database.selectAll(sql`
       SELECT *
       FROM test_database
@@ -285,15 +292,20 @@ async function selectMultipleRows (): Promise<void> {
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function selectAndResolveUndefined (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-  const pool = database.pool as unknown as PoolWithNumbers
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+    const pool = database.pool as unknown as ExtendedPool
+
     await database.select(sql`
       SELECT *
       FROM test_database
@@ -305,15 +317,20 @@ async function selectAndResolveUndefined (): Promise<void> {
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function selectOneAndRejectUndefined (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-  const pool = database.pool as unknown as PoolWithNumbers
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+    const pool = database.pool as unknown as ExtendedPool
+
     await database.selectOne(sql`
       SELECT *
       FROM test_database
@@ -327,15 +344,48 @@ async function selectOneAndRejectUndefined (): Promise<void> {
   } catch (error: unknown) {
     expect(String(error)).match(/Object is undefined/u)
   } finally {
-    await database.end()
+    await database.stop()
+  }
+}
+
+async function startADatabaseWithAPopulation (): Promise<void> {
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password,
+    population: {
+      test_database: [{
+        name: 'name'
+      }]
+    }
+  })
+
+  try {
+    await database.start()
+
+    const data = await database.selectOne<{ id: number }, { id: number }>(sql`
+      SELECT *
+      FROM test_database
+      WHERE id = $(id)
+    `, {
+      id: 1
+    })
+
+    expect(data.id).equal('1')
+  } finally {
+    await database.stop()
   }
 }
 
 async function streamRows (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-  const pool = database.pool as unknown as PoolWithNumbers
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+    const pool = database.pool as unknown as ExtendedPool
+
     await database.insert(`
       INSERT INTO test_database (name)
       VALUES $(list)
@@ -365,15 +415,20 @@ async function streamRows (): Promise<void> {
       })
     })
   } finally {
-    await database.end()
+    await database.stop()
   }
 }
 
 async function updateOneRow (): Promise<void> {
-  const database = new MssqlDatabase(helpers.dsn)
-  const pool = database.pool as unknown as PoolWithNumbers
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
 
   try {
+    await database.start()
+    const pool = database.pool as unknown as ExtendedPool
+
     const { id } = await database.insertOne(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
@@ -393,6 +448,6 @@ async function updateOneRow (): Promise<void> {
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
   } finally {
-    await database.end()
+    await database.stop()
   }
 }

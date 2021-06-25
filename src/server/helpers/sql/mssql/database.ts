@@ -16,49 +16,19 @@ export class MssqlDatabase extends Database {
 
   public pool: ConnectionPool
 
-  /**
-   * Creates a MSSQL database.
-   *
-   * Parses the options with `parseDsn` if it is a string.
-   *
-   * @param options - The database options
-   */
-  public constructor (options: config | string = { server: '' }) {
-    super()
-
-    const databaseOptions = typeof options === 'string'
-      ? MssqlDatabase.parseDsn(options)
-      : options
-
-    this.pool = new ConnectionPool(databaseOptions)
+  public async connect (): Promise<MssqlConnection> {
+    return Promise.resolve(new MssqlConnection(this.pool.request()))
   }
 
-  /**
-   * Creates pool options from a DSN (Data Source Name) of a MSSQL server.
-   *
-   * Adds `options.encrypt: false` to the pool options.
-   *
-   * Parses the query string of the DSN, casts booleans and numbers and adds the key/value pairs to the pool options.
-   *
-   * @param dsn - The DSN
-   * @returns The pool options
-   *
-   * @example
-   *
-   * ```ts
-   * const options = MssqlDatabase.parseDsn('mssql://root:root@localhost:1433/db?connectionTimeout=10000')
-   * // options = { connectionTimeout: 10000, database: 'db', options: { encrypt: false }, host: 'localhost', password: 'root', port: 1433, user: 'root' }
-   * ```
-   */
-  public static parseDsn (dsn: string): config {
-    const url = new URL(dsn)
+  public createPool (): ConnectionPool {
+    const url = new URL(this.dsn ?? 'mssql://')
 
     const options: config = {
       database: url.pathname.slice(1),
       options: {
         encrypt: false
       },
-      password: decodeURIComponent(url.password),
+      password: this.password,
       port: Number(url.port),
       server: url.hostname,
       user: decodeURIComponent(url.username)
@@ -73,18 +43,19 @@ export class MssqlDatabase extends Database {
         lodash.set(options, name, value)
       })
 
-    return options
+    return new ConnectionPool(options)
   }
 
-  public async connect (): Promise<MssqlConnection> {
-    if (!this.pool.connected) {
-      await this.pool.connect()
+  public async start (): Promise<void> {
+    this.pool = this.createPool()
+    await this.pool.connect()
+
+    if (this.population !== undefined) {
+      await this.populate(this.population)
     }
-
-    return new MssqlConnection(this.pool.request())
   }
 
-  public async end (): Promise<void> {
-    return this.pool.close()
+  public async stop (): Promise<void> {
+    await this.pool.close()
   }
 }

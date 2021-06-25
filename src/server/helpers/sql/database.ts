@@ -1,10 +1,42 @@
 import type { Connection, DeleteResult, InsertResult, UpdateResult } from './connection'
 import type { Readable } from 'stream'
 
+export interface DatabaseOptions {
+  /**
+   * The DSN (Data Source Name) of the database server.
+   */
+  dsn?: string
+
+  /**
+   * The password of the database server.
+   */
+  password?: string
+
+  /**
+   * The population to add to the database at startup.
+   */
+  population?: Partial<Record<string, Array<Partial<unknown>>>>
+}
+
 /**
  * Manages database connections.
  */
 export abstract class Database {
+  /**
+   * The DSN (Data Source Name) of the database server.
+   */
+  public dsn?: string
+
+  /**
+   * The password of the database server.
+   */
+  public password?: string
+
+  /**
+   * The population to add to the database at startup.
+   */
+  public population?: Partial<Record<string, Array<Partial<unknown>>>>
+
   /**
    * Formats a query to a dialect-specific form.
    *
@@ -54,6 +86,17 @@ export abstract class Database {
   public abstract pool: unknown
 
   /**
+   * Creates a database client.
+   *
+   * @param options - The database options
+   */
+  public constructor (options: DatabaseOptions = {}) {
+    this.dsn = options.dsn
+    this.password = options.password
+    this.population = options.population
+  }
+
+  /**
    * Deletes zero or more rows from the database.
    *
    * Acquires a connection, executes the query and releases the connection.
@@ -91,26 +134,23 @@ export abstract class Database {
    * Acquires a connection, depopulates the database and releases the connection.
    *
    * @param entities - The entities
-   * @returns The ids of the deleted entities
    *
    * @example
    * ```ts
-   * const result = database.depopulate({
+   * database.depopulate({
    *   t1: [{
    *     c1: 'v1'
    *   }, {
    *     c1: 'v2'
    *   }]
    * })
-   *
-   * // result = { t1: [{ count: 1 }, { count: 2 }] }
    * ```
    */
-  public async depopulate (entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<DeleteResult>>>> {
+  public async depopulate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
     const connection = await this.connect()
 
     try {
-      return await connection.depopulate(entities)
+      await connection.depopulate(entities)
     } finally {
       connection.release()
     }
@@ -234,26 +274,23 @@ export abstract class Database {
    * Acquires a connection, populates the database and releases the connection.
    *
    * @param entities - The entities
-   * @returns The ids of the inserted entities
    *
    * @example
    * ```ts
-   * const result = database.populate({
+   * database.populate({
    *   t1: [{
    *     c1: 'v1'
    *   }, {
    *     c1: 'v2'
    *   }]
    * })
-   *
-   * // result = { t1: [{ id: 1 }, { id: 2 }] }
    * ```
    */
-  public async populate<ID = number>(entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<InsertResult<ID>>>>> {
+  public async populate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
     const connection = await this.connect()
 
     try {
-      return await connection.populate<ID>(entities)
+      await connection.populate(entities)
     } finally {
       connection.release()
     }
@@ -455,7 +492,29 @@ export abstract class Database {
   public abstract connect (): Promise<Connection>
 
   /**
+   * Creates a connection pool.
+   *
+   * Parses `dsn` as the pool options.
+   *
+   * Adds `password` and dialect-specific default values to the pool options.
+   *
+   * Parses the query string of `dsn`, casts boolean and number values and adds the key/value pairs to the pool options.
+   *
+   * @returns The connection pool
+   */
+  public abstract createPool (): unknown
+
+  /**
+   * Starts the database client.
+   *
+   * Sets `pool` and populates the database.
+   */
+  public abstract start (): Promise<void>
+
+  /**
+   * Stops the database client.
+   *
    * Closes the connection pool.
    */
-  public abstract end (): Promise<void>
+  public abstract stop (): Promise<void>
 }

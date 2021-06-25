@@ -75,11 +75,11 @@ export abstract class Database {
    * // count = 1 if there is one row with c1 = v1
    * ```
    */
-  public async delete<V>(query: string, values?: Partial<V>): Promise<DeleteResult> {
+  public async delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult> {
     const connection = await this.connect()
 
     try {
-      return await connection.delete<V>(query, values)
+      return await connection.delete<Values>(query, values)
     } finally {
       connection.release()
     }
@@ -138,11 +138,11 @@ export abstract class Database {
    * // id = 1
    * ```
    */
-  public async insert<V, R = number>(query: string, values?: Partial<V>): Promise<InsertResult<R>> {
+  public async insert<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
     const connection = await this.connect()
 
     try {
-      return await connection.insert<V, R>(query, values)
+      return await connection.insert<Values, ID>(query, values)
     } finally {
       connection.release()
     }
@@ -186,11 +186,11 @@ export abstract class Database {
    * // result = [{ id: 1 }, { id: 2 }]
    * ```
    */
-  public async insertAll<V, R = number>(query: string, values?: Partial<V>): Promise<Array<InsertResult<R>>> {
+  public async insertAll<Values, ID = number>(query: string, values?: Partial<Values>): Promise<Array<InsertResult<ID>>> {
     const connection = await this.connect()
 
     try {
-      return await connection.insertAll<V, R>(query, values)
+      return await connection.insertAll<Values, ID>(query, values)
     } finally {
       connection.release()
     }
@@ -218,11 +218,11 @@ export abstract class Database {
    * // id = 1
    * ```
    */
-  public async insertOne<V, R = number>(query: string, values?: Partial<V>): Promise<InsertResult<R>> {
+  public async insertOne<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
     const connection = await this.connect()
 
     try {
-      return await connection.insertOne<V, R>(query, values)
+      return await connection.insertOne<Values, ID>(query, values)
     } finally {
       connection.release()
     }
@@ -249,11 +249,11 @@ export abstract class Database {
    * // result = { t1: [{ id: 1 }, { id: 2 }] }
    * ```
    */
-  public async populate<R = number>(entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<InsertResult<R>>>>> {
+  public async populate<ID = number>(entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<InsertResult<ID>>>>> {
     const connection = await this.connect()
 
     try {
-      return await connection.populate<R>(entities)
+      return await connection.populate<ID>(entities)
     } finally {
       connection.release()
     }
@@ -268,11 +268,11 @@ export abstract class Database {
    * @param values - The values
    * @returns The query-specific result set
    */
-  public async query<V, R>(query: string, values?: Partial<V>): Promise<R> {
+  public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
     const connection = await this.connect()
 
     try {
-      return await connection.query<V, R>(query, values)
+      return await connection.query<Values, Result>(query, values)
     } finally {
       connection.release()
     }
@@ -302,11 +302,11 @@ export abstract class Database {
    * // result = { id: 1, c1: 'v1' }
    * ```
    */
-  public async select<V, R>(query: string, values?: Partial<V>): Promise<R | undefined> {
+  public async select<Values, Result>(query: string, values?: Partial<Values>): Promise<Result | undefined> {
     const connection = await this.connect()
 
     try {
-      return await connection.select<V, R>(query, values)
+      return await connection.select<Values, Result>(query, values)
     } finally {
       connection.release()
     }
@@ -336,11 +336,11 @@ export abstract class Database {
    * // result = [{ id: 1, c1: 'v1' }]
    * ```
    */
-  public async selectAll<V, R>(query: string, values?: Partial<V>): Promise<R[]> {
+  public async selectAll<Values, Result>(query: string, values?: Partial<Values>): Promise<Result[]> {
     const connection = await this.connect()
 
     try {
-      return await connection.selectAll<V, R>(query, values)
+      return await connection.selectAll<Values, Result>(query, values)
     } finally {
       connection.release()
     }
@@ -371,11 +371,11 @@ export abstract class Database {
    * // result = { id: 1, c1: 'v1' }
    * ```
    */
-  public async selectOne<V, R>(query: string, values?: Partial<V>): Promise<R> {
+  public async selectOne<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
     const connection = await this.connect()
 
     try {
-      return await connection.selectOne<V, R>(query, values)
+      return await connection.selectOne<Values, Result>(query, values)
     } finally {
       connection.release()
     }
@@ -405,9 +405,9 @@ export abstract class Database {
    * })
    * ```
    */
-  public async stream<V>(query: string, values?: Partial<V>): Promise<Readable> {
+  public async stream<Values>(query: string, values?: Partial<Values>): Promise<Readable> {
     const connection = await this.connect()
-    const stream = connection.stream<V>(query, values)
+    const stream = connection.stream<Values>(query, values)
 
     stream.once('close', () => {
       connection.release()
@@ -439,11 +439,11 @@ export abstract class Database {
    * // count = 1
    * ```
    */
-  public async update<V>(query: string, values?: Partial<V>): Promise<UpdateResult> {
+  public async update<Values>(query: string, values?: Partial<Values>): Promise<UpdateResult> {
     const connection = await this.connect()
 
     try {
-      return await connection.update<V>(query, values)
+      return await connection.update<Values>(query, values)
     } finally {
       connection.release()
     }

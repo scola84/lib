@@ -157,8 +157,8 @@ export abstract class Connection {
    * // result = { t1: [{ id: 1 }, { id: 2 }] }
    * ```
    */
-  public async populate<R = number>(entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<InsertResult<R>>>>> {
-    const result: Record<string, Array<Partial<InsertResult<R>>>> = {}
+  public async populate<ID = number>(entities: Record<string, Array<Partial<unknown>>>): Promise<Record<string, Array<Partial<InsertResult<ID>>>>> {
+    const result: Record<string, Array<Partial<InsertResult<ID>>>> = {}
 
     await Promise.all(Object
       .keys(entities)
@@ -169,7 +169,7 @@ export abstract class Connection {
       .map(async (table) => {
         return Promise.all(entities[table].map(async (object, index) => {
           try {
-            result[table][index] = await this.insert<unknown, R>(sql`
+            result[table][index] = await this.insert<unknown, ID>(sql`
               INSERT INTO ${table} (${
                 Object
                   .keys(object)
@@ -212,7 +212,7 @@ export abstract class Connection {
    * // count = 1 if there is one row with c1 = v1
    * ```
    */
-  public abstract delete<V>(query: string, values?: Partial<V>): Promise<DeleteResult>
+  public abstract delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult>
 
   /**
    * Inserts one row into the database.
@@ -234,7 +234,7 @@ export abstract class Connection {
    * // id = 1
    * ```
    */
-  public abstract insert<V, R = number>(query: string, values?: Partial<V>, key?: string): Promise<InsertResult<R>>
+  public abstract insert<Values, ID = number>(query: string, values?: Partial<Values>, key?: string): Promise<InsertResult<ID>>
 
   /**
    * Inserts zero or more rows into the database.
@@ -272,7 +272,7 @@ export abstract class Connection {
    * // result = [{ id: 1 }, { id: 2 }]
    * ```
    */
-  public abstract insertAll<V, R = number>(query: string, values?: Partial<V>, key?: string): Promise<Array<InsertResult<R>>>
+  public abstract insertAll<Values, ID = number>(query: string, values?: Partial<Values>, key?: string): Promise<Array<InsertResult<ID>>>
 
   /**
    * Inserts one row into the database.
@@ -294,7 +294,7 @@ export abstract class Connection {
    * // id = 1
    * ```
    */
-  public abstract insertOne<V, R = number>(query: string, values?: Partial<V>, key?: string): Promise<InsertResult<R>>
+  public abstract insertOne<Values, ID = number>(query: string, values?: Partial<Values>, key?: string): Promise<InsertResult<ID>>
 
   /**
    * Executes any query against the database.
@@ -303,7 +303,7 @@ export abstract class Connection {
    * @param values - The values
    * @returns The query-specific result set
    */
-  public abstract query<V, R>(query: string, values?: Partial<V>): Promise<R>
+  public abstract query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result>
 
   /**
    * Releases the connection.
@@ -332,7 +332,7 @@ export abstract class Connection {
    * // result = { id: 1, c1: 'v1' }
    * ```
    */
-  public abstract select<V, R>(query: string, values?: Partial<V>): Promise<R | undefined>
+  public abstract select<Values, Result>(query: string, values?: Partial<Values>): Promise<Result | undefined>
 
   /**
    * Selects multiple rows from the database.
@@ -356,7 +356,7 @@ export abstract class Connection {
    * // result = [{ id: 1, c1: 'v1' }]
    * ```
    */
-  public abstract selectAll<V, R>(query: string, values?: Partial<V>): Promise<R[]>
+  public abstract selectAll<Values, Result>(query: string, values?: Partial<Values>): Promise<Result[]>
 
   /**
    * Selects one row from the database.
@@ -381,7 +381,7 @@ export abstract class Connection {
    * // result = { id: 1, c1: 'v1' }
    * ```
    */
-  public abstract selectOne<V, R>(query: string, values?: Partial<V>): Promise<R>
+  public abstract selectOne<Values, Result>(query: string, values?: Partial<Values>): Promise<Result>
 
   /**
    * Creates a stream of the selected rows.
@@ -405,7 +405,7 @@ export abstract class Connection {
    * })
    * ```
    */
-  public abstract stream<V>(query: string, values?: Partial<V>): Readable
+  public abstract stream<Values>(query: string, values?: Partial<Values>): Readable
 
   /**
    * Updates zero or more rows in the database.
@@ -428,5 +428,5 @@ export abstract class Connection {
    * // count = 1
    * ```
    */
-  public abstract update<V>(query: string, values?: Partial<V>): Promise<UpdateResult>
+  public abstract update<Values>(query: string, values?: Partial<Values>): Promise<UpdateResult>
 }

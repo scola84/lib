@@ -24,45 +24,45 @@ export class PostgresqlConnection extends Connection {
     this.connection = connection
   }
 
-  public async delete<V>(query: string, values?: Partial<V>): Promise<DeleteResult> {
+  public async delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult> {
     await this.query(query, values)
     return { count: 0 }
   }
 
-  public async insert<V, R = number>(query: string, values?: Partial<V>, key = 'id'): Promise<InsertResult<R>> {
-    const [object] = await this.query<V, Array<InsertResult<R>>>(`${query} RETURNING ${key} AS id`, values)
+  public async insert<Values, ID = number>(query: string, values?: Partial<Values>, key = 'id'): Promise<InsertResult<ID>> {
+    const [object] = await this.query<Values, Array<InsertResult<ID>>>(`${query} RETURNING ${key} AS id`, values)
     return object
   }
 
-  public async insertAll<V, R = number>(query: string, values?: Partial<V>, key = 'id'): Promise<Array<InsertResult<R>>> {
-    return this.query<V, Array<InsertResult<R>>>(`${query} RETURNING ${key} AS id`, values)
+  public async insertAll<Values, ID = number>(query: string, values?: Partial<Values>, key = 'id'): Promise<Array<InsertResult<ID>>> {
+    return this.query<Values, Array<InsertResult<ID>>>(`${query} RETURNING ${key} AS id`, values)
   }
 
-  public async insertOne<V, R = number>(query: string, values?: Partial<V>, key = 'id'): Promise<InsertResult<R>> {
-    const [object] = await this.query<V, Array<InsertResult<R>>>(`${query} RETURNING ${key} AS id`, values)
+  public async insertOne<Values, ID = number>(query: string, values?: Partial<Values>, key = 'id'): Promise<InsertResult<ID>> {
+    const [object] = await this.query<Values, Array<InsertResult<ID>>>(`${query} RETURNING ${key} AS id`, values)
     return object
   }
 
-  public async query<V, R>(query: string, values?: Partial<V>): Promise<R> {
+  public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
     const { rows } = await this.connection.query(this.format(query, values))
-    return rows as unknown as R
+    return rows as unknown as Result
   }
 
   public release (): void {
     this.connection.release()
   }
 
-  public async select<V, R>(query: string, values?: Partial<V>): Promise<R | undefined> {
-    const [object] = await this.query<V, R[]>(query, values)
+  public async select<Values, Result>(query: string, values?: Partial<Values>): Promise<Result | undefined> {
+    const [object] = await this.query<Values, Result[]>(query, values)
     return object
   }
 
-  public async selectAll<V, R>(query: string, values?: Partial<V>): Promise<R[]> {
-    return this.query<V, R[]>(query, values)
+  public async selectAll<Values, Result>(query: string, values?: Partial<Values>): Promise<Result[]> {
+    return this.query<Values, Result[]>(query, values)
   }
 
-  public async selectOne<V, R>(query: string, values?: Partial<V>): Promise<R> {
-    const [object] = await this.query<V, R[]>(query, values)
+  public async selectOne<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
+    const [object] = await this.query<Values, Result[]>(query, values)
 
     if (object === undefined) {
       throw new Error(`Object is undefined (${JSON.stringify(values)})`)
@@ -71,11 +71,11 @@ export class PostgresqlConnection extends Connection {
     return object
   }
 
-  public stream<V>(query: string, values?: Partial<V>): Readable {
+  public stream<Values>(query: string, values?: Partial<Values>): Readable {
     return this.connection.query(new PgQueryStream(this.format(query, values)))
   }
 
-  public async update<V>(query: string, values?: V): Promise<UpdateResult> {
+  public async update<Values>(query: string, values?: Values): Promise<UpdateResult> {
     await this.query(query, values)
     return { count: 0 }
   }

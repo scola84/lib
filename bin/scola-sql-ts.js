@@ -7,7 +7,7 @@ const program = new Command()
 
 program.addHelpText('after', `
 Description:
-  Creates TypeScript interfaces based on the tables of a SQL database.
+  Creates TypeScript interfaces from a SQL database.
 
   Reads all tables from the database at <source>. Creates an interface for 
   every table with the sorted column names as property names and the column

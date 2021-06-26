@@ -67,6 +67,8 @@ export class Server {
 
   /**
    * The `fastify` plugins.
+   *
+   * @see https://www.fastify.io/docs/master/Plugins/
    */
   public plugins: Record<string, FastifyPluginCallback>
 

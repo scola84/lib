@@ -45,6 +45,8 @@ export interface TaskRun<Payload = unknown, Options = unknown, Result = unknown>
 
   /**
    * The parent queue run as QueueRun.
+   *
+   * @see {@link QueueRun}
    */
   queueRun: QueueRun<Options>
 

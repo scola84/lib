@@ -30,11 +30,15 @@ export interface ServiceManagerOptions {
 
   /**
    * The queuer.
+   *
+   * @see {@link Queuer}
    */
   queuer?: Queuer
 
   /**
    * The server.
+   *
+   * @see {@link Server}
    */
   server?: Server
 
@@ -98,11 +102,15 @@ export class ServiceManager {
 
   /**
    * The delegate to manage queues.
+   *
+   * @see {@link Queuer}
    */
   public queuer?: Queuer
 
   /**
    * The delegate to manage routes.
+   *
+   * @see {@link Server}
    */
   public server?: Server
 

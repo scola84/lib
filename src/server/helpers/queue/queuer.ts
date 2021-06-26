@@ -33,11 +33,15 @@ export interface QueuerOptions {
 
   /**
    * The database containing the queues.
+   *
+   * @see {@link Database}
    */
   database: Database
 
   /**
    * The databases to run generator queries on.
+   *
+   * @see {@link Database}
    */
   databases: Partial<Record<string, Database>>
 
@@ -65,6 +69,8 @@ export interface QueuerOptions {
 
   /**
    * The store to trigger task runs.
+   *
+   * @see https://www.npmjs.com/package/handy-redis
    */
   store: WrappedNodeRedisClient
 }
@@ -82,16 +88,22 @@ export class Queuer {
 
   /**
    * The database containing the queues.
+   *
+   * @see {@link Database}
    */
   public database: Database
 
   /**
    * The databases to run generator queries on.
+   *
+   * @see {@link Database}
    */
   public databases: Partial<Record<string, Database>>
 
   /**
    * The job to trigger queue runs.
+   *
+   * @see https://www.npmjs.com/package/node-schedule
    */
   public job?: Job
 
@@ -111,6 +123,8 @@ export class Queuer {
 
   /**
    * The active queue runners.
+   *
+   * @see {@link QueueRunner}
    */
   public queueRunners: Set<QueueRunner> = new Set()
 
@@ -124,16 +138,22 @@ export class Queuer {
 
   /**
    * The store to trigger task runs.
+   *
+   * @see https://www.npmjs.com/package/handy-redis
    */
   public store: WrappedNodeRedisClient
 
   /**
    * The store duplicate to trigger queue runs.
+   *
+   * @see https://www.npmjs.com/package/handy-redis
    */
   public storeDuplicate?: WrappedNodeRedisClient
 
   /**
    * The active task runners.
+   *
+   * @see {@link TaskRunner}
    */
   public taskRunners: Set<TaskRunner> = new Set()
 

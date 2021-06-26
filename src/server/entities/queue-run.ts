@@ -55,6 +55,8 @@ export interface QueueRun<Options = unknown> extends Required<QueueRunBase> {
 
   /**
    * The parent queue as Queue.
+   *
+   * @see {@link Queue}
    */
   queue: Queue<Options>
 

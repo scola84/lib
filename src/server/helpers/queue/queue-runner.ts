@@ -10,11 +10,15 @@ import { sql } from '../sql'
 export interface QueueRunnerOptions {
   /**
    * The database containing the queues.
+   *
+   * @see {@link Database}
    */
   database: Database
 
   /**
    * The databases to run generator queries on.
+   *
+   * @see {@link Database}
    */
   databases: Partial<Record<string, Database>>
 
@@ -27,6 +31,8 @@ export interface QueueRunnerOptions {
 
   /**
    * The store to trigger task runs.
+   *
+   * @see https://www.npmjs.com/package/handy-redis
    */
   store: WrappedNodeRedisClient
 }
@@ -37,11 +43,15 @@ export interface QueueRunnerOptions {
 export class QueueRunner {
   /**
    * The database containing the queues.
+   *
+   * @see {@link Database}
    */
   public database: Database
 
   /**
    * The databases to run generator queries on.
+   *
+   * @see {@link Database}
    */
   public databases: Partial<Record<string, Database>>
 
@@ -54,6 +64,8 @@ export class QueueRunner {
 
   /**
    * The store to trigger task runs.
+   *
+   * @see https://www.npmjs.com/package/handy-redis
    */
   public store: WrappedNodeRedisClient
 

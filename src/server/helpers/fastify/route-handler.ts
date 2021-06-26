@@ -12,6 +12,8 @@ export interface RouteHandlerOptions extends RouteOptions {
 
   /**
    * The server.
+   *
+   * @see {@link Server}
    */
   server: Server
 }
@@ -55,6 +57,8 @@ export abstract class RouteHandler {
 
   /**
    * The server.
+   *
+   * @see {@link Server}
    */
   public server: Server
 

@@ -30,6 +30,8 @@ export interface TaskRunnerOptions extends DuplexOptions {
 
   /**
    * The database containing the queues.
+   *
+   * @see {@link Database}
    */
   database: Database
 
@@ -54,6 +56,8 @@ export interface TaskRunnerOptions extends DuplexOptions {
 
   /**
    * The queuer.
+   *
+   * @see {@link Queuer}
    */
   queuer: Queuer
 
@@ -68,6 +72,8 @@ export interface TaskRunnerOptions extends DuplexOptions {
 
   /**
    * The store to trigger queue runs.
+   *
+   * @see https://preview.npmjs.com/package/handy-redis
    */
   store: WrappedNodeRedisClient
 
@@ -106,6 +112,8 @@ export abstract class TaskRunner {
 
   /**
    * The database containing the queues.
+   *
+   * @see {@link Database}
    */
   public database: Database
 
@@ -146,11 +154,15 @@ export abstract class TaskRunner {
 
   /**
    * The store to trigger queue runs.
+   *
+   * @see https://www.npmjs.com/package/handy-redis
    */
   public store: WrappedNodeRedisClient
 
   /**
    * The store to trigger task runs.
+   *
+   * @see https://www.npmjs.com/package/handy-redis
    */
   public storeDuplicate?: WrappedNodeRedisClient
 

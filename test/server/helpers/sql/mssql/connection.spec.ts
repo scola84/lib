@@ -19,6 +19,7 @@ describe('MssqlConnection', () => {
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('populate', populate)
+    it('populate twice without error', populateTwiceWithoutError)
     it('release connection', releaseConnection)
     it('select multiple rows', selectMultipleRows)
     it('select and resolve undefined', selectAndResolveUndefined)
@@ -57,7 +58,7 @@ beforeAll(async () => {
   await helpers.pool.query(sql`USE scola`)
 
   await helpers.pool.query(sql`CREATE TABLE test_connection (
-    id int NOT NULL PRIMARY KEY IDENTITY (1, 1),
+    id int NOT NULL PRIMARY KEY WITH (IGNORE_DUP_KEY = ON) IDENTITY (1, 1),
     name varchar(255) NULL,
     value_boolean bit NULL,
     value_json varchar(255) NULL,
@@ -114,6 +115,7 @@ async function deleteOneRow (): Promise<void> {
 async function depopulate (): Promise<void> {
   const populateData = {
     test_connection: [{
+      id: 1,
       name: 'name',
       value_boolean: true,
       value_json: {
@@ -125,9 +127,7 @@ async function depopulate (): Promise<void> {
   }
 
   const depopulateData = {
-    test_connection: [{
-      id: 1
-    }]
+    ...populateData
   }
 
   const connection = new MssqlConnection(helpers.pool.request())
@@ -329,6 +329,7 @@ async function insertOneRow (): Promise<void> {
 async function populate (): Promise<void> {
   const populateData = {
     test_connection: [{
+      id: 1,
       name: 'name',
       value_boolean: true,
       value_json: {
@@ -341,13 +342,51 @@ async function populate (): Promise<void> {
 
   const expectedData = {
     ...populateData.test_connection[0],
-    id: 1,
     value_json: '{\\"value\\":\\"json\\"}'
   }
 
   const connection = new MssqlConnection(helpers.pool.request())
 
   try {
+    await connection.populate(populateData)
+
+    const data = await connection.selectOne(sql`
+      SELECT *
+      FROM test_connection
+      WHERE id = $(id)
+    `, {
+      id: 1
+    })
+
+    expect(data).eql(expectedData)
+  } finally {
+    connection.release()
+  }
+}
+
+async function populateTwiceWithoutError (): Promise<void> {
+  const populateData = {
+    test_connection: [{
+      id: 1,
+      name: 'name',
+      value_boolean: true,
+      value_json: {
+        value: 'json'
+      },
+      value_number: 1,
+      value_string: 'string'
+    }]
+  }
+
+  const expectedData = {
+    ...populateData.test_connection[0],
+    value_json: '{\\"value\\":\\"json\\"}'
+  }
+
+  const connection = new MssqlConnection(helpers.pool.request())
+
+  try {
+    await connection.populate(populateData)
     await connection.populate(populateData)
 
     const data = await connection.selectOne(sql`

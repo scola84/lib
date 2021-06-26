@@ -1,5 +1,4 @@
 import type { Readable } from 'stream'
-import { sql } from './tag'
 
 /**
  * The result of a DELETE query.
@@ -84,97 +83,6 @@ export abstract class Connection {
   public abstract format: (query: string, values: Record<string, unknown>) => string
 
   /**
-   * Depopulates the database.
-   *
-   * Discards any errors.
-   *
-   * @param entities - The entities
-   *
-   * @example
-   * ```ts
-   * connection.depopulate({
-   *   t1: [{
-   *     c1: 'v1'
-   *   }, {
-   *     c1: 'v2'
-   *   }]
-   * })
-   * ```
-   */
-  public async depopulate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
-    await Promise.all(Object
-      .entries(entities as Record<string, Array<Partial<unknown>>>)
-      .map(async ([table, rows]) => {
-        return Promise.all(rows.map(async (object) => {
-          try {
-            await this.delete(sql`
-              DELETE
-              FROM ${table}
-              WHERE ${
-                Object
-                  .keys(object)
-                  .filter((column) => {
-                    return column.endsWith('id')
-                  })
-                  .map((column) => {
-                    return `${column} = $(${column})`
-                  })
-                  .join(' AND ')
-              }
-            `, object)
-          } catch (error: unknown) {
-            // discard error
-          }
-        }))
-      }))
-  }
-
-  /**
-   * Populates the database.
-   *
-   * Discards any errors.
-   *
-   * @param entities - The entities
-   *
-   * @example
-   * ```ts
-   * connection.populate({
-   *   t1: [{
-   *     c1: 'v1'
-   *   }, {
-   *     c1: 'v2'
-   *   }]
-   * })
-   * ```
-   */
-  public async populate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
-    await Promise.all(Object
-      .entries(entities as Record<string, Array<Partial<unknown>>>)
-      .map(async ([table, rows]) => {
-        return Promise.all(rows.map(async (object) => {
-          try {
-            await this.insert(sql`
-              INSERT INTO ${table} (${
-                Object
-                  .keys(object)
-                  .join(',')
-              }) VALUES (${
-                Object
-                  .keys(object)
-                  .map((column) => {
-                    return `$(${column})`
-                  })
-                .join(',')
-              })
-            `, object)
-          } catch (error: unknown) {
-            // discard error
-          }
-        }))
-      }))
-  }
-
-  /**
    * Deletes zero or more rows from the database.
    *
    * @param query - The query
@@ -197,7 +105,27 @@ export abstract class Connection {
   public abstract delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult>
 
   /**
+   * Depopulates the database.
+   *
+   * @param entities - The entities
+   *
+   * @example
+   * ```ts
+   * connection.depopulate({
+   *   t1: [{
+   *     c1: 'v1'
+   *   }, {
+   *     c1: 'v2'
+   *   }]
+   * })
+   * ```
+   */
+  public abstract depopulate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void>
+
+  /**
    * Inserts one row into the database.
+   *
+   * Discards a duplicate key error.
    *
    * @param query - The query
    * @param values - The values
@@ -277,6 +205,24 @@ export abstract class Connection {
    * ```
    */
   public abstract insertOne<Values, ID = number>(query: string, values?: Partial<Values>, key?: string): Promise<InsertResult<ID>>
+
+  /**
+   * Populates the database.
+   *
+   * @param entities - The entities
+   *
+   * @example
+   * ```ts
+   * connection.populate({
+   *   t1: [{
+   *     c1: 'v1'
+   *   }, {
+   *     c1: 'v2'
+   *   }]
+   * })
+   * ```
+   */
+  public abstract populate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void>
 
   /**
    * Executes any query against the database.

@@ -241,6 +241,7 @@ async function populate (): Promise<void> {
 
     await database.populate({
       test_database: [{
+        id: 1,
         name: 'name'
       }]
     })
@@ -354,6 +355,7 @@ async function startADatabaseWithAPopulation (): Promise<void> {
     password: helpers.password,
     population: {
       test_database: [{
+        id: 1,
         name: 'name'
       }]
     }

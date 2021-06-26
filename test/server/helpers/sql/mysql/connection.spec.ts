@@ -20,6 +20,7 @@ describe('MysqlConnection', () => {
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('populate', populate)
+    it('populate twice without error', populateTwiceWithoutError)
     it('release connection', releaseConnection)
     it('select multiple rows', selectMultipleRows)
     it('select and resolve undefined', selectAndResolveUndefined)
@@ -332,6 +333,45 @@ async function populate (): Promise<void> {
   const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
+    await connection.populate(populateData)
+
+    const data = await connection.selectOne(sql`
+      SELECT *
+      FROM test_connection
+      WHERE id = $(id)
+    `, {
+      id: 1
+    })
+
+    expect(data).eql(expectedData)
+  } finally {
+    connection.release()
+  }
+}
+
+async function populateTwiceWithoutError (): Promise<void> {
+  const populateData = {
+    test_connection: [{
+      id: 1,
+      name: 'name',
+      value_boolean: true,
+      value_json: {
+        value: 'json'
+      },
+      value_number: 1,
+      value_string: 'string'
+    }]
+  }
+
+  const expectedData = {
+    ...populateData.test_connection[0],
+    value_boolean: 1
+  }
+
+  const connection = new MysqlConnection(await helpers.pool.getConnection())
+
+  try {
+    await connection.populate(populateData)
     await connection.populate(populateData)
 
     const data = await connection.selectOne(sql`

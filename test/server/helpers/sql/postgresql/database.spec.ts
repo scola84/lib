@@ -37,7 +37,8 @@ class Helpers {
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.dsn = 'postgres://root:root@127.0.0.1/scola?max=15'
+  helpers.dsn = 'postgres://root@127.0.0.1/scola?max=15'
+  helpers.password = 'root'
 
   helpers.pool = new Pool({
     database: 'scola',

@@ -5,6 +5,7 @@ import type { Readable } from 'stream'
 import { Transform } from 'stream'
 import { format } from '../format'
 import { format as formatValue } from './format'
+import { sql } from '../tag'
 
 /**
  * Executes MSSQL queries.
@@ -29,8 +30,32 @@ export class MssqlConnection extends Connection {
     return { count: result.rowsAffected[0] }
   }
 
+  public async depopulate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+    await Promise.all(Object
+      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .map(async ([table, rows]) => {
+        return Promise.all(rows.map(async (object) => {
+          await this.delete(sql`
+            DELETE
+            FROM ${table}
+            WHERE ${
+              Object
+                .keys(object)
+                .filter((column) => {
+                  return column.endsWith('id')
+                })
+                .map((column) => {
+                  return `${column} = $(${column})`
+                })
+                .join(' AND ')
+            }
+          `, object)
+        }))
+      }))
+  }
+
   public async insert<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
-    const { recordset: [object] } = await this.query<Values, IResult<{ id: ID }>>(`
+    const { recordset: [object] } = await this.query<Values, IResult<{ id: ID }>>(sql`
       ${query};
       SELECT SCOPE_IDENTITY() AS id;
     `, values)
@@ -39,7 +64,7 @@ export class MssqlConnection extends Connection {
   }
 
   public async insertAll<Values, ID = number>(query: string, values?: Partial<Values>): Promise<Array<InsertResult<ID>>> {
-    const { recordset } = await this.query<Values, IResult<{ id: ID }>>(`
+    const { recordset } = await this.query<Values, IResult<{ id: ID }>>(sql`
       ${query};
       SELECT SCOPE_IDENTITY() AS id;
     `, values)
@@ -48,12 +73,37 @@ export class MssqlConnection extends Connection {
   }
 
   public async insertOne<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
-    const { recordset: [object] } = await this.query<Values, IResult<{ id: ID }>>(`
+    const { recordset: [object] } = await this.query<Values, IResult<{ id: ID }>>(sql`
       ${query};
       SELECT SCOPE_IDENTITY() AS id;
     `, values)
 
     return object
+  }
+
+  public async populate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+    await Promise.all(Object
+      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .map(async ([table, rows]) => {
+        return Promise.all(rows.map(async (object) => {
+          await this.insert(sql`
+            SET IDENTITY_INSERT ${table} ON;
+            INSERT INTO ${table} (${
+              Object
+                .keys(object)
+                .join(',')
+            }) VALUES (${
+              Object
+                .keys(object)
+                .map((column) => {
+                  return `$(${column})`
+                })
+              .join(',')
+            })
+            SET IDENTITY_INSERT ${table} OFF;
+          `, object)
+        }))
+      }))
   }
 
   public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {

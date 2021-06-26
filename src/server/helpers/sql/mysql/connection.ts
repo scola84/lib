@@ -5,6 +5,7 @@ import { Connection } from '../connection'
 import type { Readable } from 'stream'
 import { format } from '../format'
 import { format as formatValue } from './format'
+import { sql } from '../tag'
 
 interface StreamConnection extends PoolConnection {
   connection: BaseConnection
@@ -33,6 +34,30 @@ export class MysqlConnection extends Connection {
     return { count: result.affectedRows }
   }
 
+  public async depopulate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+    await Promise.all(Object
+      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .map(async ([table, rows]) => {
+        return Promise.all(rows.map(async (object) => {
+          await this.delete(sql`
+            DELETE
+            FROM ${table}
+            WHERE ${
+              Object
+                .keys(object)
+                .filter((column) => {
+                  return column.endsWith('id')
+                })
+                .map((column) => {
+                  return `${column} = $(${column})`
+                })
+                .join(' AND ')
+            }
+          `, object)
+        }))
+      }))
+  }
+
   public async insert<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
     const result = await this.query<Values, { insertId: ID }>(query, values)
     return { id: result.insertId }
@@ -46,6 +71,29 @@ export class MysqlConnection extends Connection {
   public async insertOne<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
     const result = await this.query<Values, { insertId: ID }>(query, values)
     return { id: result.insertId }
+  }
+
+  public async populate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+    await Promise.all(Object
+      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .map(async ([table, rows]) => {
+        return Promise.all(rows.map(async (object) => {
+          await this.insert(sql`
+            INSERT IGNORE INTO ${table} (${
+              Object
+                .keys(object)
+                .join(',')
+            }) VALUES (${
+              Object
+                .keys(object)
+                .map((column) => {
+                  return `$(${column})`
+                })
+              .join(',')
+            })
+          `, object)
+        }))
+      }))
   }
 
   public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {

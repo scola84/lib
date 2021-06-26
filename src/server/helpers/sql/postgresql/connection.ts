@@ -5,6 +5,7 @@ import type { PoolClient } from 'pg'
 import type { Readable } from 'stream'
 import { format } from '../format'
 import { format as formatValue } from './format'
+import { sql } from '../tag'
 
 /**
  * Executes PostgreSQL queries.
@@ -29,18 +30,77 @@ export class PostgresqlConnection extends Connection {
     return { count: 0 }
   }
 
+  public async depopulate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+    await Promise.all(Object
+      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .map(async ([table, rows]) => {
+        return Promise.all(rows.map(async (object) => {
+          await this.delete(sql`
+            DELETE
+            FROM ${table}
+            WHERE ${
+              Object
+                .keys(object)
+                .filter((column) => {
+                  return column.endsWith('id')
+                })
+                .map((column) => {
+                  return `${column} = $(${column})`
+                })
+                .join(' AND ')
+            }
+          `, object)
+        }))
+      }))
+  }
+
   public async insert<Values, ID = number>(query: string, values?: Partial<Values>, key = 'id'): Promise<InsertResult<ID>> {
-    const [object] = await this.query<Values, Array<InsertResult<ID>>>(`${query} RETURNING ${key} AS id`, values)
+    const [object] = await this.query<Values, Array<InsertResult<ID>>>(sql`
+      ${query}
+      RETURNING ${key} AS id
+    `, values)
+
     return object
   }
 
   public async insertAll<Values, ID = number>(query: string, values?: Partial<Values>, key = 'id'): Promise<Array<InsertResult<ID>>> {
-    return this.query<Values, Array<InsertResult<ID>>>(`${query} RETURNING ${key} AS id`, values)
+    return this.query<Values, Array<InsertResult<ID>>>(sql`
+      ${query}
+      RETURNING ${key} AS id
+    `, values)
   }
 
   public async insertOne<Values, ID = number>(query: string, values?: Partial<Values>, key = 'id'): Promise<InsertResult<ID>> {
-    const [object] = await this.query<Values, Array<InsertResult<ID>>>(`${query} RETURNING ${key} AS id`, values)
+    const [object] = await this.query<Values, Array<InsertResult<ID>>>(sql`
+      ${query}
+      RETURNING ${key} AS id
+    `, values)
+
     return object
+  }
+
+  public async populate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+    await Promise.all(Object
+      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .map(async ([table, rows]) => {
+        return Promise.all(rows.map(async (object) => {
+          await this.insert(sql`
+            INSERT INTO ${table} (${
+              Object
+                .keys(object)
+                .join(',')
+            }) VALUES (${
+              Object
+                .keys(object)
+                .map((column) => {
+                  return `$(${column})`
+                })
+              .join(',')
+            })
+            ON CONFLICT DO NOTHING
+          `, object)
+        }))
+      }))
   }
 
   public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {

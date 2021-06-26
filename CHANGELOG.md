@@ -1,3 +1,11 @@
+## [21.0.1](https://github.com/scola84/lib/compare/v21.0.0...v21.0.1) (2021-06-26)
+
+
+### Bug Fixes
+
+* **sql:** prevent errors when running populate multiple times ([f99018f](https://github.com/scola84/lib/commit/f99018f274bc0a5a89c30a95e9a89ade6c9bf266))
+* **sql:** set password correctly in PostgresqlDatabase ([599b9a0](https://github.com/scola84/lib/commit/599b9a04206a3f2896bba2f77c5d97e04dee6740))
+
 # [21.0.0](https://github.com/scola84/lib/compare/v20.0.0...v21.0.0) (2021-06-26)
 
 

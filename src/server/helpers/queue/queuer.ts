@@ -1,7 +1,7 @@
 import type { Database, UpdateResult } from '../sql'
 import type { Job } from 'node-schedule'
 import type { Logger } from 'pino'
-import type { Queue } from '../../entities'
+import type { Queue } from '../../../common/entities'
 import { QueueRunner } from '../../helpers/queue/queue-runner'
 import type { TaskRunner } from './task-runner'
 import type { WrappedNodeRedisClient } from 'handy-redis'

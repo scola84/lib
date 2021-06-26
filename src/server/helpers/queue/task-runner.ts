@@ -1,6 +1,6 @@
 import type { Database, UpdateResult } from '../sql'
 import type { DuplexOptions, Readable, Transform, Writable } from 'stream'
-import type { Queue, QueueRun, TaskRun } from '../../entities'
+import type { Queue, QueueRun, TaskRun } from '../../../common/entities'
 import Ajv from 'ajv'
 import type { Logger } from 'pino'
 import type { ObjectSchema } from 'fluent-json-schema'

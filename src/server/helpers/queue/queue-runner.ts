@@ -1,9 +1,9 @@
 import type { Database, InsertResult, UpdateResult } from '../sql'
-import type { Queue, QueueRun, TaskRun } from '../../entities'
+import type { Queue, QueueRun, TaskRun } from '../../../common/entities'
 import type { Logger } from 'pino'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { Writable } from 'stream'
-import { createQueueRun } from '../../entities'
+import { createQueueRun } from '../../../common/entities'
 import { pipeline } from '../stream'
 import { sql } from '../sql'
 

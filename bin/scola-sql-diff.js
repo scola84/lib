@@ -6,9 +6,33 @@ const path = require('path')
 const logger = console
 const program = new Command()
 
-try {
-  program.parse()
+program.addHelpText('after', `
+Description:
+  Dumps the diff of a SQL database and a DDL file.
 
+  Extracts the context (app or lib) from <container> and writes the DDL file
+  from ".docker/mysql/initdb.d/{context}/{database}.sql" to
+  "/tmp/scola-sql-diff-in.sql".
+
+  Runs mysql-schema-diff to compare the remote database at <source> with the
+  DDL file and writes the diff to [target].
+
+  Currently only MySQL is supported.
+
+  See http://manpages.ubuntu.com/manpages/trusty/man1/mysql-schema-diff.1p.html
+  for more information about the diff operation.
+
+Example:
+  $ scola sql-diff lib_mysql_1 mysql://root:root@localhost/queue queue.sql
+`)
+
+program
+  .argument('<container>', 'the container of the local database')
+  .argument('<source>', 'the Data Source Name (DSN) of the remote database')
+  .argument('[target]', 'the file to write the diff to', '/tmp/scola-sql-diff-out.sql')
+  .parse()
+
+try {
   const [
     container,
     source,
@@ -23,7 +47,7 @@ try {
     throw new Error('error: missing required argument "source"')
   }
 
-  const [name] = container.split('_')
+  const [context] = container.split('_')
   const url = new URL(source)
   const database = url.pathname.slice(1)
 
@@ -34,7 +58,7 @@ try {
   fs.mkdirSync(path.dirname(targetFile), { recursive: true })
 
   child.execSync([
-    `cat .docker/mysql/initdb.d/${name}/${database}.sql`,
+    `cat .docker/mysql/initdb.d/${context}/${database}.sql`,
     '| sed "s/USE/-- USE/g" ',
     '> /tmp/scola-sql-diff-in.sql'
   ].join(' '))

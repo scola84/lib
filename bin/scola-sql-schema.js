@@ -6,7 +6,24 @@ const path = require('path')
 const logger = console
 const program = new Command()
 
+program.addHelpText('after', `
+Description:
+  Dumps the schema of a SQL database.
+
+  Extracts the context (app or lib) from <container>. Runs the
+  dialect-specific dump utility on <container> to extract the schema
+  of <source> and writes it to [target].
+
+  Currently only PostgreSQL and MySQL are supported.
+
+Example:
+  $ scola sql-schema lib_mysql_1 mysql://root:root@localhost/queue queue.sql
+`)
+
 program
+  .argument('<container>', 'the container of the local database')
+  .argument('<source>', 'the Data Source Name (DSN) of the remote database')
+  .argument('[target]', 'the file to write the diff to', '.docker/{dialect}/initdb.d/{context}/{database}.sql')
   .option('-e, --exclude <exclude...>', 'a list of tables')
   .option('-i, --include <include...>', 'a list of tables')
   .parse()
@@ -31,18 +48,18 @@ try {
     include
   } = program.opts()
 
-  const [name] = container.split('_')
+  const [context] = container.split('_')
   const url = new URL(source)
   const database = url.pathname.slice(1)
-  const protocol = url.protocol.slice(0, -1)
+  const dialect = url.protocol.slice(0, -1)
 
   const targetFile = target === undefined
-    ? `.docker/${protocol}/initdb.d/${name}/${database}.sql`
+    ? `.docker/${dialect}/initdb.d/${context}/${database}.sql`
     : target
 
   fs.mkdirSync(path.dirname(targetFile), { recursive: true })
 
-  if (protocol.includes('mysql')) {
+  if (dialect.includes('mysql')) {
     const excludeFlags = (exclude ?? [])
       .map((table) => {
         return `--ignore-table ${database}.${table}`
@@ -65,7 +82,7 @@ try {
     })
   }
 
-  if (protocol.includes('postgres')) {
+  if (dialect.includes('postgres')) {
     const excludeFlags = (exclude ?? [])
       .map((table) => {
         return `--exclude-table ${table}`

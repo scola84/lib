@@ -3,8 +3,23 @@ const { Command } = require('commander')
 const logger = console
 const program = new Command()
 
+program.addHelpText('after', `
+Description:
+  Reloads a Docker Compose service.
+
+  Runs the two following commands:
+    * docker-compose rm --force --stop <service>
+    * docker-compose up --detach <service>
+
+Example:
+  $ scola dc-reload postgres
+`)
+
+program
+  .argument('<service>', 'the name of the service')
+  .parse()
+
 try {
-  program.parse()
   const [service] = program.args
 
   if (service === undefined) {

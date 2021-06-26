@@ -4,7 +4,34 @@ const fs = require('fs')
 const sqlts = require('@rmp135/sql-ts')
 const logger = console
 const program = new Command()
-program.parse()
+
+program.addHelpText('after', `
+Description:
+  Creates TypeScript interfaces based on the tables of a SQL database.
+
+  Reads all tables from the database at <source>. Creates an interface for 
+  every table with the sorted column names as property names and the column
+  types as property types. Writes every interface to a file named "{table}.ts"
+  in <target>.
+
+  Creates import/export statements for every interface. Creates an interface
+  called Entities, containing a named list of entity arrays. Writes the
+  statements and the Entities interface to "index.ts" in <target>.
+
+  See https://www.npmjs.com/package/@rmp135/sql-ts for more information about
+  the mapping between column types and property types.
+
+  See https://www.npmjs.com/package/@scola/lib for more information about
+  using the Entities interface.
+
+Example:
+  $ scola sql-ts postgres://root:root@localhost/queue src/server/entities/base
+`)
+
+program
+  .argument('<source>', 'the Data Source Name (DSN) of the database')
+  .argument('<target>', 'the directory to write the interfaces to')
+  .parse()
 
 try {
   const [
@@ -21,11 +48,13 @@ try {
   }
 
   const clients = {
+    mssql: ['mssql'],
     mysql: ['mysql', 'mysql2'],
     postgres: ['pg']
   }
 
   const ports = {
+    mssql: 1433,
     mysql: 3306,
     postgres: 5432
   }
@@ -40,9 +69,9 @@ try {
   }
 
   const url = new URL(source)
-  const protocol = url.protocol.slice(0, -1)
+  const dialect = url.protocol.slice(0, -1)
 
-  const client = (clients[protocol] ?? []).find((module) => {
+  const client = (clients[dialect] ?? []).find((module) => {
     try {
       require(module)
       return true
@@ -52,14 +81,14 @@ try {
   })
 
   if (client === undefined) {
-    throw new Error(`Client for protocol "${protocol}" is undefined`)
+    throw new Error(`Client for dialect "${dialect}" is undefined`)
   }
 
   fs.mkdirSync(target, { recursive: true })
   url.hostname = url.hostname || '127.0.0.1'
   url.username = url.username || 'root'
   url.password = url.password || 'root'
-  url.port = url.port || ports[protocol]
+  url.port = url.port || ports[dialect]
 
   sqlts
     .toObject({

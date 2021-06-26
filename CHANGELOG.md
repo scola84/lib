@@ -1,3 +1,20 @@
+# [21.0.0](https://github.com/scola84/lib/compare/v20.0.0...v21.0.0) (2021-06-26)
+
+
+### Bug Fixes
+
+* **sql:** catch de/populate errors ([ea57eb9](https://github.com/scola84/lib/commit/ea57eb9dc92e770809fa70360b891ebada684f93))
+
+
+### Features
+
+* **sql:** improve database constructors, with consistent async start/stop ([0d3e691](https://github.com/scola84/lib/commit/0d3e691dedbfac98f9099a36b031279cbdbbd456))
+
+
+### BREAKING CHANGES
+
+* **sql:** The signature of the database has changed.
+
 # [20.0.0](https://github.com/scola84/lib/compare/v19.0.0...v20.0.0) (2021-06-25)
 
 

@@ -24,11 +24,11 @@ export class PostgresqlDatabase extends Database {
 
   public createPool (): Pool {
     const url = new URL(this.dsn ?? 'postgres://')
+    url.password = this.password ?? url.password
 
     const options: PoolConfig = {
-      connectionString: this.dsn,
-      connectionTimeoutMillis: 10000,
-      password: this.password
+      connectionString: String(url),
+      connectionTimeoutMillis: 10000
     }
 
     Object

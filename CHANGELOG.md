@@ -1,3 +1,10 @@
+## [21.0.2](https://github.com/scola84/lib/compare/v21.0.1...v21.0.2) (2021-06-26)
+
+
+### Bug Fixes
+
+* **bin:** prevent error if no command is given ([7b04877](https://github.com/scola84/lib/commit/7b048777e0fab50c49bdefead2732f0d89807257))
+
 ## [21.0.1](https://github.com/scola84/lib/compare/v21.0.0...v21.0.1) (2021-06-26)
 
 

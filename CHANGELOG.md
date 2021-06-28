@@ -1,3 +1,10 @@
+## [22.0.1](https://github.com/scola84/lib/compare/v22.0.0...v22.0.1) (2021-06-28)
+
+
+### Bug Fixes
+
+* **sql:** escape column names in de/populate ([9093a6e](https://github.com/scola84/lib/commit/9093a6ea2670e606700cd7d6a11f428b9f2506d4))
+
 # [22.0.0](https://github.com/scola84/lib/compare/v21.0.2...v22.0.0) (2021-06-28)
 
 

@@ -1,3 +1,4 @@
+import type { Database } from '../sql'
 import type { Logger } from 'pino'
 import type { Queuer } from '../queue'
 import type { Server } from '../fastify'
@@ -9,6 +10,13 @@ export type Services = Record<string, {
 }>
 
 export interface ServiceManagerOptions {
+  /**
+   * The databases to manage.
+   *
+   * @see {@link Database}
+   */
+  databases?: Record<string, Database>
+
   /**
    * The logger.
    *
@@ -74,6 +82,13 @@ export interface ServiceManagerOptions {
  * Manages services.
  */
 export class ServiceManager {
+  /**
+   * The databases to manage.
+   *
+   * @see {@link Database}
+   */
+  public databases?: Record<string, Database>
+
   /**
    * The logger.
    *
@@ -147,6 +162,7 @@ export class ServiceManager {
    * @param options - The server manager options
    */
   public constructor (options: ServiceManagerOptions) {
+    this.databases = options.databases
     this.names = options.names ?? process.env.SERVICE_NAMES?.split(':') ?? '*'
     this.logger = options.logger?.child({ name: 'service-manager' })
     this.queuer = options.queuer
@@ -159,13 +175,14 @@ export class ServiceManager {
   /**
    * Starts the service manager.
    *
-   * Starts `queuer` and `server` depending on `types` and starts `services` depending on `names`.
+   * Starts `services` depending on `names`. Starts `queuer` and `server`
+   * depending on `types`. Starts `databases`
    *
    * Listens for the stop `signal` and calls `stop` if the signal is received.
    *
    * Exits `process` if an error occurs during startup.
    */
-  public async start (): Promise<void> {
+  public start (): void {
     this.logger?.info({
       names: this.names,
       signal: this.signal,
@@ -190,11 +207,13 @@ export class ServiceManager {
       })
     })
 
-    await Promise
+    Promise
       .all([
         isMatch('server', this.types) ? this.server?.start(false) : null,
         isMatch('queuer', this.types) ? this.queuer?.start(false) : null
-      ])
+      ].concat(Object.values(this.databases ?? {}).map(async (database) => {
+        return database.start()
+      })))
       .catch((error) => {
         this.logger?.error(String(error))
         this.process.exit()
@@ -202,7 +221,7 @@ export class ServiceManager {
 
     if (this.signal !== null) {
       this.process.once(this.signal, () => {
-        this.stop().catch(() => {})
+        this.stop()
       })
     }
   }
@@ -210,22 +229,25 @@ export class ServiceManager {
   /**
    * Stops the service manager.
    *
-   * Stops `queuer` and `server`, which are responsible for stopping the services they manage.
+   * Stops `queuer`, `server`, which are responsible for stopping the services
+   * they manage. Stop `databases`.
    *
    * Exits `process` after the delegates have been stopped.
    */
-  public async stop (): Promise<void> {
+  public stop (): void {
     this.logger?.info({
       names: this.names,
       signal: this.signal,
       types: this.types
     }, 'Stopping service manager')
 
-    await Promise
+    Promise
       .all([
         isMatch('server', this.types) ? this.server?.stop() : null,
         isMatch('queuer', this.types) ? this.queuer?.stop() : null
-      ])
+      ].concat(Object.values(this.databases ?? {}).map(async (database) => {
+        return database.stop()
+      })))
       .catch((error) => {
         this.logger?.error(String(error))
       })

@@ -17,14 +17,14 @@ export interface TaskRunnerOptions extends DuplexOptions {
   /**
    * The channel to trigger queue runs.
    *
-   * @defaultValue `process.env.QUEUE_CHANNEL` or `'queue'`
+   * @defaultValue `process.env.QUEUE_CHANNEL` or 'queue'
    */
   channel: string
 
   /**
    * The concurrency.
    *
-   * @defaultValue `process.env.QUEUE_CONCURRENCY` or `1`
+   * @defaultValue `process.env.QUEUE_CONCURRENCY` or 1
    */
   concurrency: number | string
 
@@ -38,7 +38,7 @@ export interface TaskRunnerOptions extends DuplexOptions {
   /**
    * The host.
    *
-   * @defaultValue `process.env.HOSTNAME` or `''`
+   * @defaultValue `process.env.HOSTNAME` or ''
    */
   host: string
 
@@ -99,14 +99,14 @@ export abstract class TaskRunner {
   /**
    * The channel to trigger queue runs.
    *
-   * @defaultValue `process.env.QUEUE_CHANNEL` or `'queue'`
+   * @defaultValue `process.env.QUEUE_CHANNEL` or 'queue'
    */
   public channel: string
 
   /**
    * The concurrency.
    *
-   * @defaultValue `process.env.QUEUE_CONCURRENCY` or `1`
+   * @defaultValue `process.env.QUEUE_CONCURRENCY` or 1
    */
   public concurrency: number
 
@@ -120,7 +120,7 @@ export abstract class TaskRunner {
   /**
    * The host.
    *
-   * @defaultValue `process.env.HOSTNAME` or `''`
+   * @defaultValue `process.env.HOSTNAME` or ''
    */
   public host: string
 
@@ -169,7 +169,7 @@ export abstract class TaskRunner {
   /**
    * The amount of time to block the store list pop as milliseconds.
    *
-   * @defaultValue `5 * 60 * 1000`
+   * @defaultValue 5 * 60 * 1000
    */
   public timeout: number
 
@@ -548,7 +548,7 @@ export abstract class TaskRunner {
   /**
    * Updates a queue run.
    *
-   * Increments either `aggr_err` or `aggr_ok` by `1`, depending on the result of the task run.
+   * Increments either `aggr_err` or `aggr_ok` by 1, depending on the result of the task run.
    *
    * Sets `fkey_task_run_id` to the ID of the task run.
    *

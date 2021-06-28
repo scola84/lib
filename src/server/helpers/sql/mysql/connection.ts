@@ -34,9 +34,9 @@ export class MysqlConnection extends Connection {
     return { count: result.affectedRows }
   }
 
-  public async depopulate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async depopulate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
     await Promise.all(Object
-      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .entries(population as Record<string, Array<Partial<unknown>>>)
       .map(async ([table, rows]) => {
         return Promise.all(rows.map(async (object) => {
           await this.delete(sql`
@@ -73,9 +73,9 @@ export class MysqlConnection extends Connection {
     return { id: result.insertId }
   }
 
-  public async populate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async populate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
     await Promise.all(Object
-      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .entries(population as Record<string, Array<Partial<unknown>>>)
       .map(async ([table, rows]) => {
         return Promise.all(rows.map(async (object) => {
           await this.insert(sql`

@@ -30,9 +30,9 @@ export class PostgresqlConnection extends Connection {
     return { count: 0 }
   }
 
-  public async depopulate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async depopulate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
     await Promise.all(Object
-      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .entries(population as Record<string, Array<Partial<unknown>>>)
       .map(async ([table, rows]) => {
         return Promise.all(rows.map(async (object) => {
           await this.delete(sql`
@@ -79,9 +79,9 @@ export class PostgresqlConnection extends Connection {
     return object
   }
 
-  public async populate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async populate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
     await Promise.all(Object
-      .entries(entities as Record<string, Array<Partial<unknown>>>)
+      .entries(population as Record<string, Array<Partial<unknown>>>)
       .map(async ([table, rows]) => {
         return Promise.all(rows.map(async (object) => {
           await this.insert(sql`

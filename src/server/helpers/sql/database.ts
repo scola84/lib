@@ -133,7 +133,7 @@ export abstract class Database {
    *
    * Acquires a connection, depopulates the database and releases the connection.
    *
-   * @param entities - The entities
+   * @param population - The population
    *
    * @example
    * ```ts
@@ -146,11 +146,11 @@ export abstract class Database {
    * })
    * ```
    */
-  public async depopulate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async depopulate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
     const connection = await this.connect()
 
     try {
-      await connection.depopulate(entities)
+      await connection.depopulate(population)
     } finally {
       connection.release()
     }
@@ -273,7 +273,7 @@ export abstract class Database {
    *
    * Acquires a connection, populates the database and releases the connection.
    *
-   * @param entities - The entities
+   * @param population - The population
    *
    * @example
    * ```ts
@@ -286,11 +286,11 @@ export abstract class Database {
    * })
    * ```
    */
-  public async populate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async populate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
     const connection = await this.connect()
 
     try {
-      await connection.populate(entities)
+      await connection.populate(population)
     } finally {
       connection.release()
     }

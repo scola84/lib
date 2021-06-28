@@ -107,7 +107,7 @@ export abstract class Connection {
   /**
    * Depopulates the database.
    *
-   * @param entities - The entities
+   * @param population - The population
    *
    * @example
    * ```ts
@@ -120,7 +120,7 @@ export abstract class Connection {
    * })
    * ```
    */
-  public abstract depopulate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void>
+  public abstract depopulate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void>
 
   /**
    * Inserts one row into the database.
@@ -209,7 +209,7 @@ export abstract class Connection {
   /**
    * Populates the database.
    *
-   * @param entities - The entities
+   * @param population - The population
    *
    * @example
    * ```ts
@@ -222,7 +222,7 @@ export abstract class Connection {
    * })
    * ```
    */
-  public abstract populate (entities: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void>
+  public abstract populate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void>
 
   /**
    * Executes any query against the database.

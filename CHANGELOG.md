@@ -1,3 +1,10 @@
+## [22.0.2](https://github.com/scola84/lib/compare/v22.0.1...v22.0.2) (2021-06-28)
+
+
+### Bug Fixes
+
+* **service:** add context to errors ([1c399ad](https://github.com/scola84/lib/commit/1c399adab0d0f8cc48e2625a51b98b82b00b7c90))
+
 ## [22.0.1](https://github.com/scola84/lib/compare/v22.0.0...v22.0.1) (2021-06-28)
 
 

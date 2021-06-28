@@ -215,7 +215,7 @@ export class ServiceManager {
         return database.start()
       })))
       .catch((error) => {
-        this.logger?.error(String(error))
+        this.logger?.error({ context: 'start' }, String(error))
         this.process.exit()
       })
 
@@ -249,7 +249,7 @@ export class ServiceManager {
         return database.stop()
       })))
       .catch((error) => {
-        this.logger?.error(String(error))
+        this.logger?.error({ context: 'stop' }, String(error))
       })
       .finally(() => {
         this.process.exit()

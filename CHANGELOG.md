@@ -1,3 +1,15 @@
+# [22.0.0](https://github.com/scola84/lib/compare/v21.0.2...v22.0.0) (2021-06-28)
+
+
+### Features
+
+* **service:** let service manager manage (start/stop) database too ([2b90cd7](https://github.com/scola84/lib/commit/2b90cd7fa69c6421b635b1139b3803ed54d0ae36))
+
+
+### BREAKING CHANGES
+
+* **service:** Serivce Manager no longer returns Promises from start/stop.
+
 ## [21.0.2](https://github.com/scola84/lib/compare/v21.0.1...v21.0.2) (2021-06-26)
 
 

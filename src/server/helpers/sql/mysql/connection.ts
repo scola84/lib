@@ -49,7 +49,7 @@ export class MysqlConnection extends Connection {
                   return column.endsWith('id')
                 })
                 .map((column) => {
-                  return `${column} = $(${column})`
+                  return `\`${column}\` = $(${column})`
                 })
                 .join(' AND ')
             }
@@ -82,6 +82,9 @@ export class MysqlConnection extends Connection {
             INSERT IGNORE INTO ${table} (${
               Object
                 .keys(object)
+                .map((column) => {
+                  return `\`${column}\``
+                })
                 .join(',')
             }) VALUES (${
               Object

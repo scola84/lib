@@ -127,11 +127,9 @@ export class SelectElement extends InputElement {
   protected rangeElement: HTMLInputElement
 
   public appendValueTo (formData: FormData | URLSearchParams): void {
-    const { inputElement } = this
-
-    if (inputElement instanceof HTMLInputElement && this.isSuccessful(inputElement)) {
-      if (inputElement.checked) {
-        formData.append(inputElement.name, inputElement.value)
+    if (this.inputElement instanceof HTMLInputElement && this.isSuccessful(this.inputElement)) {
+      if (this.inputElement.checked) {
+        formData.append(this.inputElement.name, this.inputElement.value)
       }
     }
   }
@@ -159,27 +157,24 @@ export class SelectElement extends InputElement {
 
   public setValue (data: Record<string, unknown>): void {
     this.clearError()
-    const { inputElement } = this
 
-    if (inputElement instanceof HTMLInputElement && this.isDefined(inputElement, data)) {
-      if (data[inputElement.name] === inputElement.value) {
+    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
+      if (data[this.inputElement.name] === this.inputElement.value) {
         this.toggleChecked(true)
       }
     }
   }
 
   public toggleChecked (force?: boolean): void {
-    const { inputElement } = this
-
-    if (inputElement instanceof HTMLInputElement) {
+    if (this.inputElement instanceof HTMLInputElement) {
       this.checked = force ?? !(this.checked === true)
-      inputElement.checked = this.checked
+      this.inputElement.checked = this.checked
     }
 
     let from = 0
     let to = 0
 
-    if (inputElement?.checked === true) {
+    if (this.inputElement?.checked === true) {
       to = 1
     } else {
       from = 1
@@ -209,21 +204,18 @@ export class SelectElement extends InputElement {
   }
 
   protected handleClickCheckbox (): void {
-    const { inputElement } = this
     this.toggleChecked()
 
     this.dispatchEvent(new CustomEvent<InputEvent['detail']>('scola-input', {
       detail: {
         origin: this,
-        text: inputElement?.nextElementSibling?.textContent,
-        value: inputElement?.value
+        text: this.inputElement?.nextElementSibling?.textContent,
+        value: this.inputElement?.value
       }
     }))
   }
 
   protected handleClickRadio (): void {
-    const { inputElement } = this
-
     this.parentElement
       ?.querySelectorAll<SelectElement>('scola-select')
       .forEach((selectElement: SelectElement) => {
@@ -233,8 +225,8 @@ export class SelectElement extends InputElement {
     this.dispatchEvent(new CustomEvent<InputEvent['detail']>('scola-input', {
       detail: {
         origin: this,
-        text: inputElement?.nextElementSibling?.textContent,
-        value: inputElement?.value
+        text: this.inputElement?.nextElementSibling?.textContent,
+        value: this.inputElement?.value
       }
     }))
   }

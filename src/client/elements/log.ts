@@ -130,6 +130,7 @@ export class LogElement extends NodeElement {
 
     window.requestAnimationFrame(() => {
       const { scrollHeight = 0 } = this.defaultSlotElement ?? {}
+
       this.defaultSlotElement?.style.setProperty('margin-top', `-${scrollHeight}px`)
       this.hidden = false
 
@@ -156,8 +157,11 @@ export class LogElement extends NodeElement {
     }
 
     this.showLog(log)
-    const timeout = log.timeout ?? (this.timeout === 0 ? 3000 : this.timeout)
-    this.timeoutId = window.setTimeout(this.showNext.bind(this), timeout)
+
+    this.timeoutId = window.setTimeout(
+      this.showNext.bind(this),
+      log.timeout ?? (this.timeout === 0 ? 3000 : this.timeout)
+    )
   }
 
   protected handleHide (): void {

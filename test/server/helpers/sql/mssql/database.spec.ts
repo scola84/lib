@@ -82,6 +82,7 @@ function createAPoolWithOptions (): void {
   })
 
   const pool = database.createPool() as unknown as ExtendedPool
+
   expect(pool).instanceof(ConnectionPool)
   expect(pool.config.parseJSON).equal(true)
 }
@@ -89,6 +90,7 @@ function createAPoolWithOptions (): void {
 function createAPoolWithoutOptions (): void {
   const database = new MssqlDatabase()
   const pool = database.createPool()
+
   expect(pool).instanceOf(ConnectionPool)
 }
 
@@ -100,7 +102,6 @@ async function deleteOneRow (): Promise<void> {
 
   try {
     await database.start()
-    const pool = database.pool as unknown as ExtendedPool
 
     const { id } = await database.insertOne(sql`
       INSERT INTO test_database (name)
@@ -115,6 +116,8 @@ async function deleteOneRow (): Promise<void> {
     `, {
       id
     })
+
+    const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
@@ -131,7 +134,6 @@ async function depopulate (): Promise<void> {
 
   try {
     await database.start()
-    const pool = database.pool as unknown as ExtendedPool
 
     await database.depopulate({
       test_database: [{
@@ -139,6 +141,8 @@ async function depopulate (): Promise<void> {
         name: 'name'
       }]
     })
+
+    const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
@@ -155,7 +159,6 @@ async function insertABulkOfRows (): Promise<void> {
 
   try {
     await database.start()
-    const pool = database.pool as unknown as ExtendedPool
 
     await database.insertAll(sql`
       INSERT INTO test_database (name)
@@ -166,6 +169,8 @@ async function insertABulkOfRows (): Promise<void> {
         ['name2']
       ]
     })
+
+    const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
@@ -182,7 +187,6 @@ async function insertOneRow (): Promise<void> {
 
   try {
     await database.start()
-    const pool = database.pool as unknown as ExtendedPool
 
     await database.insertOne(sql`
       INSERT INTO test_database (name)
@@ -190,6 +194,8 @@ async function insertOneRow (): Promise<void> {
     `, {
       name: 'name'
     })
+
+    const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
@@ -237,7 +243,6 @@ async function populate (): Promise<void> {
 
   try {
     await database.start()
-    const pool = database.pool as unknown as ExtendedPool
 
     await database.populate({
       test_database: [{
@@ -245,6 +250,8 @@ async function populate (): Promise<void> {
         name: 'name'
       }]
     })
+
+    const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
@@ -261,12 +268,13 @@ async function query (): Promise<void> {
 
   try {
     await database.start()
-    const pool = database.pool as unknown as ExtendedPool
 
     await database.query(sql`
       SELECT *
       FROM test_database
     `)
+
+    const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
@@ -283,12 +291,13 @@ async function selectMultipleRows (): Promise<void> {
 
   try {
     await database.start()
-    const pool = database.pool as unknown as ExtendedPool
 
     await database.selectAll(sql`
       SELECT *
       FROM test_database
     `)
+
+    const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
@@ -305,7 +314,6 @@ async function selectAndResolveUndefined (): Promise<void> {
 
   try {
     await database.start()
-    const pool = database.pool as unknown as ExtendedPool
 
     await database.select(sql`
       SELECT *
@@ -314,6 +322,8 @@ async function selectAndResolveUndefined (): Promise<void> {
     `, {
       id: 1
     })
+
+    const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
@@ -330,7 +340,6 @@ async function selectOneAndRejectUndefined (): Promise<void> {
 
   try {
     await database.start()
-    const pool = database.pool as unknown as ExtendedPool
 
     await database.selectOne(sql`
       SELECT *
@@ -339,6 +348,8 @@ async function selectOneAndRejectUndefined (): Promise<void> {
     `, {
       id: 1
     })
+
+    const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)
@@ -386,11 +397,10 @@ async function streamRows (): Promise<void> {
 
   try {
     await database.start()
-    const pool = database.pool as unknown as ExtendedPool
 
     await database.insert(`
-      INSERT INTO test_database (name)
-      VALUES $(list)
+    INSERT INTO test_database (name)
+    VALUES $(list)
     `, {
       list: [
         ['name1'],
@@ -399,9 +409,11 @@ async function streamRows (): Promise<void> {
     })
 
     const stream = await database.stream(`
-      SELECT *
-      FROM test_database
+    SELECT *
+    FROM test_database
     `)
+
+    const pool = database.pool as unknown as ExtendedPool
 
     await new Promise<void>((resolve, reject) => {
       stream.on('data', () => {})
@@ -429,7 +441,6 @@ async function updateOneRow (): Promise<void> {
 
   try {
     await database.start()
-    const pool = database.pool as unknown as ExtendedPool
 
     const { id } = await database.insertOne(sql`
       INSERT INTO test_database (name)
@@ -446,6 +457,8 @@ async function updateOneRow (): Promise<void> {
       id,
       name: 'name-update'
     })
+
+    const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
     expect(pool.available).equal(pool.size)

@@ -185,8 +185,7 @@ function formatAQuery (): void {
   const connection = new MssqlConnection(helpers.pool.request())
 
   try {
-    const query = connection.format(rawQuery, rawValues)
-    expect(query).equal(expectedQuery)
+    expect(connection.format(rawQuery, rawValues)).equal(expectedQuery)
   } finally {
     connection.release()
   }
@@ -213,8 +212,7 @@ function formatAQueryForBulkInsert (): void {
   const connection = new MssqlConnection(helpers.pool.request())
 
   try {
-    const query = connection.format(rawQuery, rawValues)
-    expect(query).equal(expectedQuery)
+    expect(connection.format(rawQuery, rawValues)).equal(expectedQuery)
   } finally {
     connection.release()
   }

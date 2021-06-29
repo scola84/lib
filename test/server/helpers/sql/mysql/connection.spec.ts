@@ -170,8 +170,7 @@ async function formatAQuery (): Promise<void> {
   const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
-    const query = connection.format(rawQuery, rawValues)
-    expect(query).equal(expectedQuery)
+    expect(connection.format(rawQuery, rawValues)).equal(expectedQuery)
   } finally {
     connection.release()
   }
@@ -198,8 +197,7 @@ async function formatAQueryForBulkInsert (): Promise<void> {
   const connection = new MysqlConnection(await helpers.pool.getConnection())
 
   try {
-    const query = connection.format(rawQuery, rawValues)
-    expect(query).equal(expectedQuery)
+    expect(connection.format(rawQuery, rawValues)).equal(expectedQuery)
   } finally {
     connection.release()
   }

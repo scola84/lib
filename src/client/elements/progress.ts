@@ -275,7 +275,9 @@ export class ProgressElement extends NodeElement {
       : {}
 
     this.radius = (parseFloat(width) - parseFloat(strokeWidth)) / 2
+
     const cf = this.radius * 2 * Math.PI
+
     this.circleElement?.setAttribute('r', String(this.radius))
     this.circleElement?.style.setProperty('stroke-dasharray', `${cf}px ${cf}px`)
     this.circleElement?.style.setProperty('stroke-dashoffset', `${cf}px`)
@@ -286,6 +288,7 @@ export class ProgressElement extends NodeElement {
     const to = cf - element.loaded / element.total * cf
     const { from = cf } = this
     const duration = from <= to ? 0 : this.duration
+
     this.from = to
 
     this.ease(from, to, ({ done, value }) => {
@@ -306,6 +309,7 @@ export class ProgressElement extends NodeElement {
     const to = Math.round(element.loaded / element.total * 100)
     const { from = 0 } = this
     const duration = from >= to ? 0 : this.duration
+
     this.from = to
 
     this.ease(from, to, ({ done, value }) => {

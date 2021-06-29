@@ -244,6 +244,7 @@ export class RequestElement extends NodeElement {
   protected async finish (): Promise<void> {
     const status = this.response?.status ?? 200
     const contentLength = this.response?.headers.get('Content-Length')
+
     this.code = status < 400 ? `OK_${status}` : `ERR_${status}`
 
     if (contentLength !== null && contentLength !== undefined) {

@@ -144,6 +144,7 @@ export class ViewElement extends ClipElement {
 
     this.hasFuture = state.pointer < state.views.length - 1
     this.hasPast = state.pointer > 0
+
     const nextView = state.views[state.pointer]
 
     if (nextView === null || nextView === undefined) {
@@ -196,6 +197,7 @@ export class ViewElement extends ClipElement {
     }
 
     event.cancelBubble = true
+
     let state = viewStates[this.id]
 
     if (state.views[state.pointer]?.ref === event.detail?.ref) {
@@ -238,6 +240,7 @@ export class ViewElement extends ClipElement {
   protected handleBack (event: NodeEvent): void {
     if (this.isTarget(event)) {
       event.cancelBubble = true
+
       const state = viewStates[this.id]
 
       if (ViewElement.type === 'push' && state.save) {
@@ -252,6 +255,7 @@ export class ViewElement extends ClipElement {
   protected handleForward (event: NodeEvent): void {
     if (this.isTarget(event)) {
       event.cancelBubble = true
+
       const state = viewStates[this.id]
 
       if (ViewElement.type === 'push' && state.save) {
@@ -266,6 +270,7 @@ export class ViewElement extends ClipElement {
   protected handleHome (event: NodeEvent): void {
     if (this.isTarget(event)) {
       event.cancelBubble = true
+
       const state = viewStates[this.id]
 
       if (ViewElement.type === 'push' && state.save) {
@@ -364,6 +369,7 @@ export class ViewElement extends ClipElement {
         }
 
         const view = state.views[state.pointer]
+
         pointers[target] = state.pointer
         return view !== null && view !== undefined
           ? `${result}/${view.ref}@${target}`

@@ -348,9 +348,9 @@ export class Queuer {
    */
   protected async run (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
     const queueRunner = this.createQueueRunner()
-    this.queueRunners.add(queueRunner)
 
     try {
+      this.queueRunners.add(queueRunner)
       await queueRunner.run(queue, parameters)
     } catch (error: unknown) {
       this.logger.error({ context: 'run' }, String(error))

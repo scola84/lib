@@ -9,7 +9,7 @@ export interface ServerOptions extends FastifyServerOptions {
   /**
    * The `fastify` address.
    *
-   * @defaultValue '0.0.0.0'.
+   * @defaultValue '0.0.0.0'
    */
   address?: string
 
@@ -28,7 +28,7 @@ export interface ServerOptions extends FastifyServerOptions {
   /**
    * The `fastify` port.
    *
-   * @defaultValue 3000.
+   * @defaultValue 3000
    */
   port?: number
 }
@@ -40,7 +40,7 @@ export class Server {
   /**
    * The `fastify` address.
    *
-   * @defaultValue '0.0.0.0'.
+   * @defaultValue '0.0.0.0'
    */
   public address: string
 

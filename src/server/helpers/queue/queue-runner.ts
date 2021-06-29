@@ -98,9 +98,13 @@ export class QueueRunner {
       objectMode: true,
       write: async (payload: unknown, encoding, finish) => {
         try {
-          const { id = 0 } = await this.insertTaskRun(queueRun, payload)
-          await this.store.rpush(queueRun.name, String(id))
           queueRun.aggr_total += 1
+
+          await this.store.rpush(
+            queueRun.name,
+            String((await this.insertTaskRun(queueRun, payload)).id)
+          )
+
           finish()
         } catch (error: unknown) {
           finish(error as Error)
@@ -128,6 +132,7 @@ export class QueueRunner {
   public async run (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
     const queueRun: QueueRun = createQueueRun({ queue })
     const { id: queueRunId } = await this.insertQueueRun(queueRun)
+
     queueRun.id = queueRunId
 
     try {
@@ -143,6 +148,7 @@ export class QueueRunner {
       )
 
       await this.updateQueueRunOk(queueRun)
+
       const queues = await this.selectQueues(queueRun)
 
       await Promise.all(queues.map(async ({ id }): Promise<number> => {

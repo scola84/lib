@@ -167,8 +167,7 @@ async function formatAQuery (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    const query = connection.format(rawQuery, rawValues)
-    expect(query).equal(expectedQuery)
+    expect(connection.format(rawQuery, rawValues)).equal(expectedQuery)
   } finally {
     connection.release()
   }
@@ -195,8 +194,7 @@ async function formatAQueryForBulkInsert (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    const query = connection.format(rawQuery, rawValues)
-    expect(query).equal(expectedQuery)
+    expect(connection.format(rawQuery, rawValues)).equal(expectedQuery)
   } finally {
     connection.release()
   }

@@ -311,10 +311,9 @@ export class SliderElement extends InputElement {
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
-    const { inputElement } = this
 
-    if (inputElement instanceof HTMLInputElement && this.isSuccessful(inputElement)) {
-      data.append(inputElement.name, inputElement.value)
+    if (this.inputElement instanceof HTMLInputElement && this.isSuccessful(this.inputElement)) {
+      data.append(this.inputElement.name, this.inputElement.value)
     }
   }
 
@@ -365,10 +364,9 @@ export class SliderElement extends InputElement {
 
   public setValue (data: Record<string, unknown>): void {
     this.clearError()
-    const { inputElement } = this
 
-    if (inputElement instanceof HTMLInputElement && this.isDefined(inputElement, data)) {
-      inputElement.value = String(data[inputElement.name])
+    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
+      this.inputElement.value = String(data[this.inputElement.name])
     }
 
     this.setValueStyle()
@@ -398,17 +396,12 @@ export class SliderElement extends InputElement {
   }
 
   protected setValueText (): void {
-    const {
-      inputElement,
-      valueElement
-    } = this
-
     if (
-      inputElement instanceof HTMLInputElement &&
-      valueElement instanceof FormatElement
+      this.inputElement instanceof HTMLInputElement &&
+      this.valueElement instanceof FormatElement
     ) {
-      valueElement.data = {
-        value: inputElement.value
+      this.valueElement.data = {
+        value: this.inputElement.value
       }
     }
   }

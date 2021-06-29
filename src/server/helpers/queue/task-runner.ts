@@ -169,7 +169,7 @@ export abstract class TaskRunner {
   /**
    * The amount of time to block the store list pop as milliseconds.
    *
-   * @defaultValue 5 * 60 * 1000
+   * @defaultValue `5 * 60 * 1000`
    */
   public timeout: number
 
@@ -359,9 +359,13 @@ export abstract class TaskRunner {
    * @param taskRun - The task run
    */
   protected async finishTaskRun (taskRun: TaskRun): Promise<void> {
-    taskRun.status = taskRun.status === 'pending' ? 'ok' : taskRun.status
+    taskRun.status = taskRun.status === 'pending'
+      ? 'ok'
+      : taskRun.status
+
     await this.updateTaskRunOnFinish(taskRun)
     await this.updateQueueRun(taskRun)
+
     const queues = await this.selectQueues(taskRun)
 
     await Promise.all(queues.map(async ({ id }) => {
@@ -449,7 +453,9 @@ export abstract class TaskRunner {
 
     try {
       const taskRun = await this.selectTaskRun(Number(id))
-      taskRun.queueRun = await this.selectQueueRun(taskRun)
+      const queueRun = await this.selectQueueRun(taskRun)
+
+      taskRun.queueRun = queueRun
       await this.updateTaskRunOnPush(taskRun)
       this.queue?.push(taskRun)
     } catch (error: unknown) {

@@ -6,11 +6,15 @@ import Format from 'intl-messageformat'
 export class Formatter {
   /**
    * The default language.
+   *
+   * @defaultValue 'en'
    */
   public static lang = 'en'
 
   /**
    * The language-specific collections of strings.
+   *
+   * @defaultValue `{}`
    */
   public static strings: Partial<Record<string, Record<string, string>>> = {}
 

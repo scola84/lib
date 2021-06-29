@@ -96,33 +96,25 @@ export class InputElement extends NodeElement {
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
-    const { inputElement } = this
 
-    if (inputElement instanceof HTMLInputElement && this.isSuccessful(inputElement)) {
-      data.append(inputElement.name, inputElement.value)
+    if (this.inputElement instanceof HTMLInputElement && this.isSuccessful(this.inputElement)) {
+      data.append(this.inputElement.name, this.inputElement.value)
     }
   }
 
   public clearError (): void {
-    const { errorElement } = this
-
-    if (errorElement instanceof FormatElement) {
-      errorElement.hidden = true
+    if (this.errorElement instanceof FormatElement) {
+      this.errorElement.hidden = true
     }
   }
 
   public clearValue (value = ''): void {
-    const {
-      clearElement,
-      inputElement
-    } = this
-
-    if (inputElement instanceof HTMLInputElement) {
-      inputElement.value = value
+    if (this.inputElement instanceof HTMLInputElement) {
+      this.inputElement.value = value
     }
 
-    if (clearElement instanceof NodeElement) {
-      clearElement.hidden = true
+    if (this.clearElement instanceof NodeElement) {
+      this.clearElement.hidden = true
     }
   }
 
@@ -156,15 +148,10 @@ export class InputElement extends NodeElement {
   }
 
   public setError (data: Record<string, unknown>): void {
-    const {
-      errorElement,
-      inputElement
-    } = this
-
-    if (inputElement instanceof HTMLInputElement && this.isDefined(inputElement, data)) {
-      if (errorElement instanceof FormatElement) {
-        Object.assign(errorElement, data[inputElement.name])
-        errorElement.hidden = false
+    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
+      if (this.errorElement instanceof FormatElement) {
+        Object.assign(this.errorElement, data[this.inputElement.name])
+        this.errorElement.hidden = false
       }
     }
   }
@@ -172,26 +159,19 @@ export class InputElement extends NodeElement {
   public setValue (data: Record<string, unknown>): void {
     this.clearError()
 
-    const {
-      clearElement,
-      inputElement
-    } = this
+    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
+      this.inputElement.value = String(data[this.inputElement.name])
 
-    if (inputElement instanceof HTMLInputElement && this.isDefined(inputElement, data)) {
-      inputElement.value = String(data[inputElement.name])
-
-      if (clearElement instanceof NodeElement) {
-        clearElement.hidden = inputElement.value === ''
+      if (this.clearElement instanceof NodeElement) {
+        this.clearElement.hidden = this.inputElement.value === ''
       }
     }
   }
 
   public updated (properties: PropertyValues): void {
     if (properties.has('disabled')) {
-      const { inputElement } = this
-
-      if (inputElement instanceof HTMLInputElement) {
-        inputElement.disabled = this.disabled === true
+      if (this.inputElement instanceof HTMLInputElement) {
+        this.inputElement.disabled = this.disabled === true
       }
     }
 
@@ -213,21 +193,16 @@ export class InputElement extends NodeElement {
       this.saveValue()
     }
 
-    const {
-      clearElement,
-      inputElement
-    } = this
-
-    if (inputElement instanceof HTMLInputElement) {
+    if (this.inputElement instanceof HTMLInputElement) {
       this.dispatchEvent(new CustomEvent<InputEvent['detail']>('scola-input', {
         detail: {
           origin: this,
-          value: inputElement.value
+          value: this.inputElement.value
         }
       }))
 
-      if (clearElement instanceof NodeElement) {
-        clearElement.hidden = inputElement.value === ''
+      if (this.clearElement instanceof NodeElement) {
+        this.clearElement.hidden = this.inputElement.value === ''
       }
     }
   }

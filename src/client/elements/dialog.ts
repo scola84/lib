@@ -653,10 +653,8 @@ export class DialogElement extends NodeElement {
 
   protected async easeOpacity (from: number, to: number, duration?: number): Promise<unknown> {
     return new Promise<unknown>((resolve) => {
-      const { assignedElement } = this
-
       this.ease(from, to, ({ done, value }) => {
-        assignedElement?.style.setProperty('opacity', `${value}`)
+        this.assignedElement?.style.setProperty('opacity', `${value}`)
 
         if (done) {
           resolve(done)
@@ -669,11 +667,9 @@ export class DialogElement extends NodeElement {
   }
 
   protected async easePosition (from: DialogPosition, to: DialogPosition, duration?: number): Promise<unknown> {
-    const { assignedElement } = this
-
     const leftPromise = new Promise<unknown>((resolve) => {
       this.ease(from.left, to.left, ({ done, value }) => {
-        assignedElement?.style.setProperty('left', `${value}px`)
+        this.assignedElement?.style.setProperty('left', `${value}px`)
 
         if (done) {
           resolve(done)
@@ -686,7 +682,7 @@ export class DialogElement extends NodeElement {
 
     const topPromise = new Promise<unknown>((resolve) => {
       this.ease(from.top, to.top, ({ done, value }) => {
-        assignedElement?.style.setProperty('top', `${value}px`)
+        this.assignedElement?.style.setProperty('top', `${value}px`)
 
         if (done) {
           resolve(done)

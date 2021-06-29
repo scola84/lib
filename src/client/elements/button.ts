@@ -193,6 +193,7 @@ export class ButtonElement extends NodeElement {
 
   protected handleClick (event: Event): void {
     event.cancelBubble = this.cancel === true
+
     const targets = this.target?.split(' ') ?? []
 
     this.event?.split(' ').forEach((type, index) => {

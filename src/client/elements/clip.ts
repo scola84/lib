@@ -194,6 +194,7 @@ export class ClipElement extends NodeElement {
 
     const name = this.determineOuterPropertyName(element)
     let to = this.determineOuterPropertyValue(element)
+
     to = Number.isNaN(to) ? 0 : to
 
     this.ease(0, to, ({ done, value }) => {
@@ -247,11 +248,12 @@ export class ClipElement extends NodeElement {
 
   public showInner (duration = this.innerDuration, callback = (): void => {}): void {
     this.defaultSlotElement?.style.removeProperty('display')
-    const name = this.determineInnerPropertyName()
 
     const from = this.defaultSlotElement instanceof HTMLSlotElement
       ? this.determineInnerPropertyValue(this.defaultSlotElement)
       : 0
+
+    const name = this.determineInnerPropertyName()
 
     this.ease(from, 0, ({ done, value }) => {
       this.defaultSlotElement?.style.setProperty(name, `-${value}px`)
@@ -271,6 +273,7 @@ export class ClipElement extends NodeElement {
 
   public showOuter (element: HTMLElement, duration = this.outerDuration, callback = (): void => {}): void {
     element.style.removeProperty('display')
+
     const name = this.determineOuterPropertyName(element)
     const from = this.determineOuterPropertyValue(element)
 

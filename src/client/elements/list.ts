@@ -349,7 +349,10 @@ export class ListElement extends RequestElement {
   }
 
   protected setSearch (): void {
-    const search = this.searchElement?.getValue()
-    this.search = search === '' ? undefined : search
+    this.search = this.searchElement?.getValue()
+
+    if (this.search === '') {
+      this.search = undefined
+    }
   }
 }

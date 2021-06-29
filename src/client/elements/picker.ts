@@ -33,15 +33,14 @@ export class PickerElement extends InputElement {
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
-    const { inputElement } = this
 
-    if (inputElement instanceof HTMLInputElement && this.isSuccessful(inputElement)) {
-      if (inputElement.files instanceof FileList && data instanceof FormData) {
-        Array.from(inputElement.files).forEach((file: File) => {
-          data.append(inputElement.name, file, file.name)
-        })
+    if (this.inputElement instanceof HTMLInputElement && this.isSuccessful(this.inputElement)) {
+      if (this.inputElement.files instanceof FileList && data instanceof FormData) {
+        for (const file of Array.from(this.inputElement.files)) {
+          data.append(this.inputElement.name, file, file.name)
+        }
       } else {
-        data.append(inputElement.name, inputElement.value)
+        data.append(this.inputElement.name, this.inputElement.value)
       }
     }
   }
@@ -94,13 +93,11 @@ export class PickerElement extends InputElement {
   }
 
   protected setValuePreviewColor (): void {
-    const { inputElement, previewElement } = this
-
     if (
-      inputElement instanceof HTMLInputElement &&
-      previewElement instanceof NodeElement
+      this.inputElement instanceof HTMLInputElement &&
+      this.previewElement instanceof NodeElement
     ) {
-      previewElement.style.setProperty('background', inputElement.value)
+      this.previewElement.style.setProperty('background', this.inputElement.value)
     }
   }
 
@@ -118,13 +115,11 @@ export class PickerElement extends InputElement {
   }
 
   protected setValueTextColor (): void {
-    const { inputElement, valueElement } = this
-
     if (
-      inputElement instanceof HTMLInputElement &&
-      valueElement instanceof FormatElement
+      this.inputElement instanceof HTMLInputElement &&
+      this.valueElement instanceof FormatElement
     ) {
-      const { value: hex } = inputElement
+      const { value: hex } = this.inputElement
 
       const [red, green, blue] =
         hex
@@ -134,7 +129,7 @@ export class PickerElement extends InputElement {
             return parseInt(part, 16)
           }) ?? []
 
-      valueElement.data = {
+      this.valueElement.data = {
         blue,
         count: hex === '' ? 0 : 1,
         green,
@@ -145,15 +140,13 @@ export class PickerElement extends InputElement {
   }
 
   protected setValueTextFile (): void {
-    const { inputElement, valueElement } = this
-
     if (
-      inputElement instanceof HTMLInputElement &&
-      valueElement instanceof FormatElement
+      this.inputElement instanceof HTMLInputElement &&
+      this.valueElement instanceof FormatElement
     ) {
-      const files = Array.from(inputElement.files ?? [])
+      const files = Array.from(this.inputElement.files ?? [])
 
-      valueElement.data = {
+      this.valueElement.data = {
         count: files.length,
         name: files[0]?.name,
         size: files.reduce((total, file) => {

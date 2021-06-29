@@ -69,6 +69,7 @@ function createAPoolWithOptions (): void {
   })
 
   const pool = database.createPool() as unknown as ExtendedPool
+
   expect(pool).instanceOf(Pool)
   expect(pool.options.max).equal(15)
 }
@@ -76,6 +77,7 @@ function createAPoolWithOptions (): void {
 function createAPoolWithoutOptions (): void {
   const database = new PostgresqlDatabase()
   const pool = database.createPool() as unknown as ExtendedPool
+
   expect(pool).instanceOf(Pool)
 }
 

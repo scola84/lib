@@ -74,6 +74,7 @@ function createAPoolWithOptions (): void {
   })
 
   const pool = database.createPool() as unknown as ExtendedPool
+
   expect(pool.pool.constructor.name).equal('Pool')
   expect(pool.pool.config.connectionLimit).equal(15)
 }
@@ -81,6 +82,7 @@ function createAPoolWithOptions (): void {
 function createAPoolWithoutOptions (): void {
   const database = new MysqlDatabase()
   const pool = database.createPool() as unknown as ExtendedPool
+
   expect(pool.pool.constructor.name).equal('Pool')
 }
 

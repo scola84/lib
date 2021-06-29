@@ -62,6 +62,48 @@
       },
       {
         "blankLine": "always",
+        "prev": [
+          "const",
+          "expression",
+          "let"
+        ],
+        "next": "*"
+      },
+      {
+        "blankLine": "never",
+        "prev": [
+          "const",
+          "let"
+        ],
+        "next": [
+          "const",
+          "let"
+        ]
+      },
+      {
+        "blankLine": "never",
+        "prev": [
+          "expression"
+        ],
+        "next": [
+          "expression"
+        ]
+      },
+      {
+        "blankLine": "never",
+        "prev": [
+          "const",
+          "expression",
+          "let"
+        ],
+        "next": [
+          "break",
+          "return",
+          "throw"
+        ]
+      },
+      {
+        "blankLine": "always",
         "prev": "*",
         "next": "import"
       },
@@ -74,21 +116,6 @@
         "blankLine": "never",
         "prev": "import",
         "next": "import"
-      },
-      {
-        "blankLine": "never",
-        "prev": [
-          "const",
-          "expression",
-          "let",
-          "return"
-        ],
-        "next": [
-          "const",
-          "expression",
-          "let",
-          "return"
-        ]
       },
       {
         "blankLine": "always",

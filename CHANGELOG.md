@@ -1,3 +1,10 @@
+## [22.0.3](https://github.com/scola84/lib/compare/v22.0.2...v22.0.3) (2021-06-29)
+
+
+### Bug Fixes
+
+* enforce stricter newline rules ([633b848](https://github.com/scola84/lib/commit/633b848a6f0b29b0ea8f11dd74788d735d67a439))
+
 ## [22.0.2](https://github.com/scola84/lib/compare/v22.0.1...v22.0.2) (2021-06-28)
 
 

@@ -175,55 +175,60 @@ export class ServiceManager {
   /**
    * Starts the service manager.
    *
-   * Starts `services` depending on `names`. Starts `queuer` and `server`
-   * depending on `types`. Starts `databases`
+   * Starts `services` depending on `names`. Starts `databases`. Starts
+   * `queuer` and `server` depending on `types`.
    *
    * Listens for the stop `signal` and calls `stop` if the signal is received.
    *
    * Exits `process` if an error occurs during startup.
    */
   public start (): void {
-    this.logger?.info({
-      names: this.names,
-      signal: this.signal,
-      types: this.types
-    }, 'Starting service manager')
-
-    if (isMatch('server', this.types)) {
-      this.server?.setup()
-    }
-
-    if (isMatch('queuer', this.types)) {
-      this.queuer?.setup()
-    }
-
-    Object.entries(this.services).forEach(([sn, service]) => {
-      Object.entries(service).forEach(([tn, type]) => {
-        Object.entries(type).forEach(([fn, factory]) => {
-          if (isMatch(`${sn}.${tn}.${fn}`, this.names)) {
-            factory()
-          }
-        })
-      })
-    })
-
     Promise
-      .all([
-        isMatch('server', this.types) ? this.server?.start(false) : null,
-        isMatch('queuer', this.types) ? this.queuer?.start(false) : null
-      ].concat(Object.values(this.databases ?? {}).map(async (database) => {
-        return database.start()
-      })))
+      .resolve()
+      .then(async () => {
+        this.logger?.info({
+          names: this.names,
+          signal: this.signal,
+          types: this.types
+        }, 'Starting service manager')
+
+        if (isMatch('server', this.types)) {
+          this.server?.setup()
+        }
+
+        if (isMatch('queuer', this.types)) {
+          this.queuer?.setup()
+        }
+
+        Object.entries(this.services).forEach(([sn, service]) => {
+          Object.entries(service).forEach(([tn, type]) => {
+            Object.entries(type).forEach(([fn, factory]) => {
+              if (isMatch(`${sn}.${tn}.${fn}`, this.names)) {
+                factory()
+              }
+            })
+          })
+        })
+
+        await Promise.all(Object.values(this.databases ?? {}).map(async (database) => {
+          return database.start()
+        }))
+
+        await Promise.all([
+          isMatch('server', this.types) ? this.server?.start(false) : null,
+          isMatch('queuer', this.types) ? this.queuer?.start(false) : null
+        ])
+
+        if (this.signal !== null) {
+          this.process.once(this.signal, () => {
+            this.stop()
+          })
+        }
+      })
       .catch((error) => {
         this.logger?.error({ context: 'start' }, String(error))
         this.process.exit()
       })
-
-    if (this.signal !== null) {
-      this.process.once(this.signal, () => {
-        this.stop()
-      })
-    }
   }
 
   /**
@@ -235,19 +240,24 @@ export class ServiceManager {
    * Exits `process` after the delegates have been stopped.
    */
   public stop (): void {
-    this.logger?.info({
-      names: this.names,
-      signal: this.signal,
-      types: this.types
-    }, 'Stopping service manager')
-
     Promise
-      .all([
-        isMatch('server', this.types) ? this.server?.stop() : null,
-        isMatch('queuer', this.types) ? this.queuer?.stop() : null
-      ].concat(Object.values(this.databases ?? {}).map(async (database) => {
-        return database.stop()
-      })))
+      .resolve()
+      .then(async () => {
+        this.logger?.info({
+          names: this.names,
+          signal: this.signal,
+          types: this.types
+        }, 'Stopping service manager')
+
+        await Promise.all([
+          isMatch('server', this.types) ? this.server?.stop() : null,
+          isMatch('queuer', this.types) ? this.queuer?.stop() : null
+        ])
+
+        await Promise.all(Object.values(this.databases ?? {}).map(async (database) => {
+          return database.stop()
+        }))
+      })
       .catch((error) => {
         this.logger?.error({ context: 'stop' }, String(error))
       })

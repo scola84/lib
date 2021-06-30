@@ -1,3 +1,10 @@
+## [22.0.6](https://github.com/scola84/lib/compare/v22.0.5...v22.0.6) (2021-06-30)
+
+
+### Bug Fixes
+
+* **service:** make start/stop database/delegates sequential ([d13246c](https://github.com/scola84/lib/commit/d13246c857139fac3dda6631e8b2e7f143050665))
+
 ## [22.0.5](https://github.com/scola84/lib/compare/v22.0.4...v22.0.5) (2021-06-30)
 
 

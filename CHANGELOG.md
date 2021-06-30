@@ -1,3 +1,10 @@
+## [22.0.7](https://github.com/scola84/lib/compare/v22.0.6...v22.0.7) (2021-06-30)
+
+
+### Bug Fixes
+
+* **deps:** move and update dependencies ([3a769e2](https://github.com/scola84/lib/commit/3a769e2c03d839b8e5f614024f5c7f3a23151529))
+
 ## [22.0.6](https://github.com/scola84/lib/compare/v22.0.5...v22.0.6) (2021-06-30)
 
 

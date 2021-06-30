@@ -1,3 +1,10 @@
+## [22.0.5](https://github.com/scola84/lib/compare/v22.0.4...v22.0.5) (2021-06-30)
+
+
+### Bug Fixes
+
+* **deps:** revert dependency due to bug ([9e59747](https://github.com/scola84/lib/commit/9e5974751b5430bbb8490693e01bdc05464e62cc))
+
 ## [22.0.4](https://github.com/scola84/lib/compare/v22.0.3...v22.0.4) (2021-06-30)
 
 

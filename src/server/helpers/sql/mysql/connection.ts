@@ -41,7 +41,7 @@ export class MysqlConnection extends Connection {
         return Promise.all(rows.map(async (object) => {
           await this.delete(sql`
             DELETE
-            FROM ${table}
+            FROM \`${table}\`
             WHERE ${
               Object
                 .keys(object)
@@ -79,7 +79,7 @@ export class MysqlConnection extends Connection {
       .map(async ([table, rows]) => {
         return Promise.all(rows.map(async (object) => {
           await this.insert(sql`
-            INSERT IGNORE INTO ${table} (${
+            INSERT IGNORE INTO \`${table}\` (${
               Object
                 .keys(object)
                 .map((column) => {

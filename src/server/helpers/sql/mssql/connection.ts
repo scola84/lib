@@ -37,7 +37,7 @@ export class MssqlConnection extends Connection {
         return Promise.all(rows.map(async (object) => {
           await this.delete(sql`
             DELETE
-            FROM ${table}
+            FROM [${table}]
             WHERE ${
               Object
                 .keys(object)
@@ -88,7 +88,7 @@ export class MssqlConnection extends Connection {
         return Promise.all(rows.map(async (object) => {
           await this.insert(sql`
             SET IDENTITY_INSERT ${table} ON;
-            INSERT INTO ${table} (${
+            INSERT INTO [${table}] (${
               Object
                 .keys(object)
                 .map((column) => {

@@ -1,3 +1,10 @@
+## [22.0.4](https://github.com/scola84/lib/compare/v22.0.3...v22.0.4) (2021-06-30)
+
+
+### Bug Fixes
+
+* **sql:** escape table names too in de/populate ([43e890c](https://github.com/scola84/lib/commit/43e890c73154d72e63cd003154b975bdefc90903))
+
 ## [22.0.3](https://github.com/scola84/lib/compare/v22.0.2...v22.0.3) (2021-06-29)
 
 

@@ -171,5 +171,5 @@
     "test": "jest --preset ts-jest --runInBand"
   },
   "types": "./types/index.d.ts",
-  "version": "22.0.3"
+  "version": "22.0.4"
 }

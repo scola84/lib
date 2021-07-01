@@ -312,7 +312,10 @@ export class SliderElement extends InputElement {
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (this.inputElement instanceof HTMLInputElement && this.isSuccessful(this.inputElement)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isSuccessful(this.inputElement)
+    ) {
       data.append(this.inputElement.name, this.inputElement.value)
     }
   }
@@ -333,11 +336,11 @@ export class SliderElement extends InputElement {
 
     const {
       name,
-      max,
-      value
+      max = '',
+      value = ''
     } = this.inputElement ?? {}
 
-    this.ease(Number(value), Number(max), ({ value: newValue }) => {
+    this.ease(parseFloat(value), parseFloat(max), ({ value: newValue }) => {
       this.setValue({ [name ?? '']: newValue })
     }, {
       duration: this.duration,
@@ -350,11 +353,11 @@ export class SliderElement extends InputElement {
 
     const {
       name,
-      min,
-      value
+      min = '',
+      value = ''
     } = this.inputElement ?? {}
 
-    this.ease(Number(value), Number(min), ({ value: newValue }) => {
+    this.ease(parseFloat(value), parseFloat(min), ({ value: newValue }) => {
       this.setValue({ [name ?? '']: newValue })
     }, {
       duration: this.duration,
@@ -365,7 +368,10 @@ export class SliderElement extends InputElement {
   public setValue (data: Record<string, unknown>): void {
     this.clearError()
 
-    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isDefined(this.inputElement, data)
+    ) {
       this.inputElement.value = String(data[this.inputElement.name])
     }
 

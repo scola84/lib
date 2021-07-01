@@ -12,7 +12,7 @@ declare global {
 
 @customElement('scola-format')
 export class FormatElement extends NodeElement {
-  public static lang = 'nl'
+  public static lang = 'en'
 
   public static strings: Record<string, Record<string, string> | undefined> = {}
 
@@ -25,29 +25,18 @@ export class FormatElement extends NodeElement {
   public data?: Record<string, unknown>
 
   public format (string: string, language = FormatElement.lang, data?: Record<string, unknown>): string {
-    try {
-      return String(new Format(FormatElement.strings[language]?.[string] ?? string, language).format(data))
-    } catch (error: unknown) {
-      return string
-    }
-  }
-
-  public lookup (string: string, language = FormatElement.lang): string | undefined {
-    const strings = FormatElement.strings[language] ?? {}
-
-    const foundCode = Object
-      .keys(strings)
-      .find((code) => {
-        return strings[code].toLowerCase() === string.toLowerCase()
-      })
-
-    return foundCode
+    return String(new Format(FormatElement.strings[language]?.[string] ?? string, language).format(data))
   }
 
   public render (): TemplateResult {
     const code = this.code?.toLowerCase() ?? ''
     const data = this.data ?? this.dataset
-    const language = this.lang === '' ? undefined : this.lang
+
+    let language: string | undefined = this.lang
+
+    if (language === '') {
+      language = undefined
+    }
 
     const template = html`
       <slot name="body">

@@ -75,9 +75,9 @@ export class InputElement extends NodeElement {
   })
   public save?: boolean
 
-  protected handleInputBound: () => void
+  public inputElement?: HTMLInputElement | null
 
-  protected inputElement?: HTMLInputElement | null
+  protected handleInputBound: () => void
 
   protected get clearElement (): NodeElement | null {
     return this.querySelector('[is="clear"]')
@@ -97,7 +97,10 @@ export class InputElement extends NodeElement {
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (this.inputElement instanceof HTMLInputElement && this.isSuccessful(this.inputElement)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isSuccessful(this.inputElement)
+    ) {
       data.append(this.inputElement.name, this.inputElement.value)
     }
   }
@@ -119,8 +122,7 @@ export class InputElement extends NodeElement {
   }
 
   public connectedCallback (): void {
-    this.inputElement = this
-      .querySelector<HTMLInputElement>(':scope > input, :scope > textarea')
+    this.inputElement = this.querySelector<HTMLInputElement>(':scope > input, :scope > textarea')
 
     if (this.save === true) {
       this.loadValue()
@@ -148,7 +150,10 @@ export class InputElement extends NodeElement {
   }
 
   public setError (data: Record<string, unknown>): void {
-    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isDefined(this.inputElement, data)
+    ) {
       if (this.errorElement instanceof FormatElement) {
         Object.assign(this.errorElement, data[this.inputElement.name])
         this.errorElement.hidden = false
@@ -159,7 +164,10 @@ export class InputElement extends NodeElement {
   public setValue (data: Record<string, unknown>): void {
     this.clearError()
 
-    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isDefined(this.inputElement, data)
+    ) {
       this.inputElement.value = String(data[this.inputElement.name])
 
       if (this.clearElement instanceof NodeElement) {
@@ -205,6 +213,8 @@ export class InputElement extends NodeElement {
         this.clearElement.hidden = this.inputElement.value === ''
       }
     }
+
+    this.dispatchEvents()
   }
 
   protected isDefined (inputElement: HTMLInputElement, data: Record<string, unknown>): boolean {

@@ -267,9 +267,11 @@ export abstract class TaskRunner {
       useDefaults: true
     })
 
-    for (const name of Object.keys(this.schema)) {
-      validator.addSchema(this.schema[name].valueOf(), name)
-    }
+    Object
+      .keys(this.schema)
+      .forEach((name) => {
+        validator.addSchema(this.schema[name].valueOf(), name)
+      })
 
     return validator
   }
@@ -359,9 +361,9 @@ export abstract class TaskRunner {
    * @param taskRun - The task run
    */
   protected async finishTaskRun (taskRun: TaskRun): Promise<void> {
-    taskRun.status = taskRun.status === 'pending'
-      ? 'ok'
-      : taskRun.status
+    if (taskRun.status === 'pending') {
+      taskRun.status = 'ok'
+    }
 
     await this.updateTaskRunOnFinish(taskRun)
     await this.updateQueueRun(taskRun)

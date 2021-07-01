@@ -426,53 +426,58 @@ export class DialogElement extends NodeElement {
   }
 
   protected calculateFromPosition (from: DialogFrom): DialogPosition {
-    const {
-      height: appHeight = Infinity,
-      width: appWidth = Infinity
-    } = document
+    return {
+      left: this.calculateFromPositionLeft(from),
+      top: this.calculateFromPositionTop(from)
+    }
+  }
+
+  protected calculateFromPositionLeft (from: DialogFrom): number {
+    const { width: appWidth = Infinity } = document
       .querySelector<AppElement>('scola-app')
       ?.getBoundingClientRect() ?? {}
 
-    const {
-      height: elementHeight = 0,
-      width: elementWidth = 0
-    } = this.assignedElement
+    const { width: elementWidth = 0 } = this.assignedElement
       ?.getBoundingClientRect() ?? {}
 
-    let left = 0
-    let top = 0
+    let { dir } = this
 
-    switch (from.horizontal) {
-      case 'screen-center':
-        left = (appWidth - elementWidth) / 2
-        break
-      case 'screen-end':
-        left += this.dir === 'rtl' ? -elementWidth : appWidth + elementWidth
-        break
-      case 'screen-start':
-        left += this.dir === 'rtl' ? appWidth + elementWidth : -elementWidth
-        break
-      default:
-        break
+    if (dir === '') {
+      dir = 'ltr'
     }
+
+    switch (`${from.horizontal ?? ''}-${dir}`) {
+      case 'screen-center-ltr':
+      case 'screen-center-rtl':
+        return (appWidth - elementWidth) / 2
+      case 'screen-end-ltr':
+      case 'screen-start-rtl':
+        return appWidth + elementWidth
+      case 'screen-end-rtl':
+      case 'screen-start-ltr':
+        return -elementWidth
+      default:
+        return 0
+    }
+  }
+
+  protected calculateFromPositionTop (from: DialogFrom): number {
+    const { height: appHeight = Infinity } = document
+      .querySelector<AppElement>('scola-app')
+      ?.getBoundingClientRect() ?? {}
+
+    const { height: elementHeight = 0 } = this.assignedElement
+      ?.getBoundingClientRect() ?? {}
 
     switch (from.vertical) {
       case 'screen-bottom':
-        top += appHeight + elementHeight
-        break
+        return appHeight + elementHeight
       case 'screen-center':
-        top = (appHeight - elementHeight) / 2
-        break
+        return (appHeight - elementHeight) / 2
       case 'screen-top':
-        top += -elementHeight
-        break
+        return -elementHeight
       default:
-        break
-    }
-
-    return {
-      left,
-      top
+        return 0
     }
   }
 
@@ -492,21 +497,23 @@ export class DialogElement extends NodeElement {
       from.vertical = this.vfromScreen ?? from.vertical
     }
 
-    const {
-      left = '0',
-      top = '0'
-    } = this.assignedElement instanceof HTMLElement
-      ? window.getComputedStyle(this.assignedElement)
-      : {}
+    let left = '0'
+    let top = '0'
+
+    if (this.assignedElement instanceof HTMLElement) {
+      ({ left, top } = window.getComputedStyle(this.assignedElement))
+    }
 
     const toPosition = {
       left: parseFloat(left),
       top: parseFloat(top)
     }
 
-    const fromPosition = from.horizontal === undefined
-      ? toPosition
-      : this.calculateFromPosition(from)
+    let fromPosition = toPosition
+
+    if (from.horizontal !== undefined) {
+      fromPosition = this.calculateFromPosition(from)
+    }
 
     return {
       from: fromPosition,
@@ -549,9 +556,14 @@ export class DialogElement extends NodeElement {
       this.vtoReal = to.vertical
     }
 
-    const fromPosition = from.horizontal === undefined || from.vertical === undefined
-      ? toPosition
-      : this.calculateFromPosition(from)
+    let fromPosition = toPosition
+
+    if (
+      from.horizontal !== undefined &&
+      from.vertical !== undefined
+    ) {
+      fromPosition = this.calculateFromPosition(from)
+    }
 
     return {
       from: fromPosition,
@@ -584,31 +596,44 @@ export class DialogElement extends NodeElement {
 
   protected calculateToPositionLeft (to: DialogTo, app: DOMRect, element: DOMRect, anchor: DOMRect): number {
     let { left } = anchor
+    let { dir } = this
 
-    switch (to.horizontal) {
-      case 'center':
+    if (dir === '') {
+      dir = 'ltr'
+    }
+
+    switch (`${to.horizontal ?? ''}-${dir}`) {
+      case 'center-ltr':
+      case 'center-rtl':
         left += -(element.width - anchor.width) / 2
         break
-      case 'start':
-        left += this.dir === 'rtl' ? -element.width + anchor.width : 0
+      case 'end-rtl':
+      case 'start-ltr':
+        left += 0
         break
-      case 'start-at-end':
-        left += this.dir === 'rtl' ? -element.width : anchor.width
+      case 'end-ltr':
+      case 'start-rtl':
+        left += -element.width + anchor.width
         break
-      case 'end':
-        left += this.dir === 'rtl' ? 0 : -element.width + anchor.width
+      case 'end-at-start-rtl':
+      case 'start-at-end-ltr':
+        left += anchor.width
         break
-      case 'end-at-start':
-        left += this.dir === 'rtl' ? anchor.width : -element.width
+      case 'end-at-start-ltr':
+      case 'start-at-end-rtl':
+        left += -element.width
         break
-      case 'screen-center':
+      case 'screen-center-ltr':
+      case 'screen-center-rtl':
         left = (app.width - element.width) / 2
         break
-      case 'screen-end':
-        left = this.dir === 'rtl' ? 0 : app.width - element.width
+      case 'screen-end-ltr':
+      case 'screen-start-rtl':
+        left = app.width - element.width
         break
-      case 'screen-start':
-        left = this.dir === 'rtl' ? app.width - element.width : 0
+      case 'screen-end-rtl':
+      case 'screen-start-ltr':
+        left = 0
         break
       default:
         break
@@ -667,33 +692,32 @@ export class DialogElement extends NodeElement {
   }
 
   protected async easePosition (from: DialogPosition, to: DialogPosition, duration?: number): Promise<unknown> {
-    const leftPromise = new Promise<unknown>((resolve) => {
-      this.ease(from.left, to.left, ({ done, value }) => {
-        this.assignedElement?.style.setProperty('left', `${value}px`)
+    return Promise.all([
+      new Promise<unknown>((resolve) => {
+        this.ease(from.left, to.left, ({ done, value }) => {
+          this.assignedElement?.style.setProperty('left', `${value}px`)
 
-        if (done) {
-          resolve(done)
-        }
-      }, {
-        duration,
-        name: 'left'
+          if (done) {
+            resolve(done)
+          }
+        }, {
+          duration,
+          name: 'left'
+        })
+      }),
+      new Promise<unknown>((resolve) => {
+        this.ease(from.top, to.top, ({ done, value }) => {
+          this.assignedElement?.style.setProperty('top', `${value}px`)
+
+          if (done) {
+            resolve(done)
+          }
+        }, {
+          duration,
+          name: 'top'
+        })
       })
-    })
-
-    const topPromise = new Promise<unknown>((resolve) => {
-      this.ease(from.top, to.top, ({ done, value }) => {
-        this.assignedElement?.style.setProperty('top', `${value}px`)
-
-        if (done) {
-          resolve(done)
-        }
-      }, {
-        duration,
-        name: 'top'
-      })
-    })
-
-    return Promise.all([leftPromise, topPromise])
+    ])
   }
 
   protected findToPosition (to: DialogTo): DialogPosition {
@@ -718,13 +742,19 @@ export class DialogElement extends NodeElement {
     htoAlternatives[to.horizontal ?? 'center'].some((hto: HorizontalTo): boolean => {
       to.horizontal = hto
       position = this.calculateToPosition(to)
-      return position.left >= 0 && position.left + elementWidth <= appWidth
+      return (
+        position.left >= 0 &&
+        position.left + elementWidth <= appWidth
+      )
     })
 
     vtoAlternatives[to.vertical ?? 'center'].some((vto: VerticalTo): boolean => {
       to.vertical = vto
       position = this.calculateToPosition(to)
-      return position.top >= 0 && position.top + elementHeight <= appHeight
+      return (
+        position.top >= 0 &&
+        position.top + elementHeight <= appHeight
+      )
     })
 
     return position
@@ -764,6 +794,9 @@ export class DialogElement extends NodeElement {
   }
 
   protected isSame (from: DialogPosition, to: DialogPosition): boolean {
-    return from.left === to.left && from.top === to.top
+    return (
+      from.left === to.left &&
+      from.top === to.top
+    )
   }
 }

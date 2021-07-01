@@ -2,7 +2,6 @@ import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
 import { css, html } from 'lit'
 import { customElement, property, query } from 'lit/decorators.js'
 import { InputElement } from './input'
-import type { InputEvent } from './input'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -127,7 +126,10 @@ export class SelectElement extends InputElement {
   protected rangeElement: HTMLInputElement
 
   public appendValueTo (formData: FormData | URLSearchParams): void {
-    if (this.inputElement instanceof HTMLInputElement && this.isSuccessful(this.inputElement)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isSuccessful(this.inputElement)
+    ) {
       if (this.inputElement.checked) {
         formData.append(this.inputElement.name, this.inputElement.value)
       }
@@ -137,7 +139,12 @@ export class SelectElement extends InputElement {
   public firstUpdated (properties: PropertyValues): void {
     super.firstUpdated(properties)
     this.checked = this.inputElement?.checked
-    this.rangeElement.value = String(Number(this.inputElement?.checked))
+
+    if (this.inputElement?.checked === true) {
+      this.rangeElement.value = '1'
+    } else {
+      this.rangeElement.value = '0'
+    }
   }
 
   public render (): TemplateResult {
@@ -158,7 +165,10 @@ export class SelectElement extends InputElement {
   public setValue (data: Record<string, unknown>): void {
     this.clearError()
 
-    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isDefined(this.inputElement, data)
+    ) {
       if (data[this.inputElement.name] === this.inputElement.value) {
         this.toggleChecked(true)
       }
@@ -181,7 +191,7 @@ export class SelectElement extends InputElement {
     }
 
     this.ease(from, to, ({ value }) => {
-      this.rangeElement.value = String(value)
+      this.rangeElement.value = `${value}`
     }, {
       duration: this.duration,
       name: 'select'
@@ -201,18 +211,12 @@ export class SelectElement extends InputElement {
       default:
         break
     }
+
+    super.handleInput()
   }
 
   protected handleClickCheckbox (): void {
     this.toggleChecked()
-
-    this.dispatchEvent(new CustomEvent<InputEvent['detail']>('scola-input', {
-      detail: {
-        origin: this,
-        text: this.inputElement?.nextElementSibling?.textContent,
-        value: this.inputElement?.value
-      }
-    }))
   }
 
   protected handleClickRadio (): void {
@@ -221,13 +225,5 @@ export class SelectElement extends InputElement {
       .forEach((selectElement: SelectElement) => {
         selectElement.toggleChecked(selectElement === this)
       })
-
-    this.dispatchEvent(new CustomEvent<InputEvent['detail']>('scola-input', {
-      detail: {
-        origin: this,
-        text: this.inputElement?.nextElementSibling?.textContent,
-        value: this.inputElement?.value
-      }
-    }))
   }
 }

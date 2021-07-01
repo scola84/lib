@@ -109,7 +109,11 @@ try {
     .then((database) => {
       for (const table of database.tables) {
         table.columns.sort((left, right) => {
-          return left.propertyName > right.propertyName ? 1 : -1
+          if (left.propertyName > right.propertyName) {
+            return 1
+          }
+
+          return -1
         })
       }
 

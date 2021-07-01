@@ -53,9 +53,11 @@ try {
   const database = url.pathname.slice(1)
   const dialect = url.protocol.slice(0, -1)
 
-  const targetFile = target === undefined
-    ? `.docker/${dialect}/initdb.d/${context}/${database}.sql`
-    : target
+  let targetFile = target
+
+  if (targetFile === undefined) {
+    targetFile = `.docker/${dialect}/initdb.d/${context}/${database}.sql`
+  }
 
   fs.mkdirSync(path.dirname(targetFile), { recursive: true })
 

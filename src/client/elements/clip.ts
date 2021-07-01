@@ -165,11 +165,15 @@ export class ClipElement extends NodeElement {
   public hideInner (duration = this.innerDuration, callback = (): void => {}): void {
     const name = this.determineInnerPropertyName()
 
-    let to = this.defaultSlotElement instanceof HTMLSlotElement
-      ? this.determineInnerPropertyValue(this.defaultSlotElement)
-      : 0
+    let to = 0
 
-    to = Number.isNaN(to) ? 0 : to
+    if (this.defaultSlotElement instanceof HTMLSlotElement) {
+      to = this.determineInnerPropertyValue(this.defaultSlotElement)
+
+      if (Number.isNaN(to)) {
+        to = 0
+      }
+    }
 
     this.ease(0, to, ({ done, value }) => {
       this.defaultSlotElement?.style.setProperty(name, `-${value}px`)
@@ -193,9 +197,12 @@ export class ClipElement extends NodeElement {
     }
 
     const name = this.determineOuterPropertyName(element)
+
     let to = this.determineOuterPropertyValue(element)
 
-    to = Number.isNaN(to) ? 0 : to
+    if (Number.isNaN(to)) {
+      to = 0
+    }
 
     this.ease(0, to, ({ done, value }) => {
       element.style.setProperty(name, `-${value}px`)
@@ -216,17 +223,29 @@ export class ClipElement extends NodeElement {
 
   public showContent (element: HTMLElement, duration = this.contentDuration, callback = (): void => {}): void {
     const contentElements = Array.from(this.contentElements)
-    const dimensionName = this.flow === 'row' ? 'width' : 'height'
-    const scrollName = this.flow === 'row' ? 'scrollLeft' : 'scrollTop'
 
-    const from = this.defaultSlotElement instanceof HTMLSlotElement
-      ? this.defaultSlotElement[scrollName]
-      : 0
+    let dimensionName: 'height' | 'width' = 'height'
+    let scrollName: 'scrollLeft' | 'scrollTop' = 'scrollTop'
+    let from = 0
+    let toFactor = 1
+
+    if (this.flow === 'row') {
+      dimensionName = 'width'
+      scrollName = 'scrollLeft'
+    }
+
+    if (this.defaultSlotElement instanceof HTMLSlotElement) {
+      from = this.defaultSlotElement[scrollName]
+    }
+
+    if (this.dir === 'rtl') {
+      toFactor = -1
+    }
 
     const to =
       contentElements.indexOf(element) *
       element.getBoundingClientRect()[dimensionName] *
-      (this.dir === 'rtl' ? -1 : 1)
+      toFactor
 
     contentElements.forEach((contentElement) => {
       contentElement.hidden = contentElement !== element
@@ -249,11 +268,13 @@ export class ClipElement extends NodeElement {
   public showInner (duration = this.innerDuration, callback = (): void => {}): void {
     this.defaultSlotElement?.style.removeProperty('display')
 
-    const from = this.defaultSlotElement instanceof HTMLSlotElement
-      ? this.determineInnerPropertyValue(this.defaultSlotElement)
-      : 0
-
     const name = this.determineInnerPropertyName()
+
+    let from = 0
+
+    if (this.defaultSlotElement instanceof HTMLSlotElement) {
+      from = this.determineInnerPropertyValue(this.defaultSlotElement)
+    }
 
     this.ease(from, 0, ({ done, value }) => {
       this.defaultSlotElement?.style.setProperty(name, `-${value}px`)
@@ -332,9 +353,15 @@ export class ClipElement extends NodeElement {
   public toggleNested (element: HTMLElement): void {
     const countNotHidden = Array.from(this.contentElements).reduce(
       (count, contentElement): number => {
-        return contentElement instanceof ClipElement
-          ? count + (contentElement.defaultSlotElement?.hidden === true ? 0 : 1)
-          : count
+        if (contentElement instanceof ClipElement) {
+          if (contentElement.defaultSlotElement?.hidden === true) {
+            return count
+          }
+
+          return count + 1
+        }
+
+        return count
       },
       0
     )
@@ -373,16 +400,26 @@ export class ClipElement extends NodeElement {
   }
 
   protected determineInnerPropertyName (): string {
-    const slotName = this.handleElement?.assignedSlot?.name
+    const slotName = this.handleElement?.assignedSlot?.name ?? 'default'
 
-    switch (slotName) {
-      case 'after':
-        return this.dir === 'rtl' ? 'margin-left' : 'margin-right'
-      case 'before':
-        return this.dir === 'rtl' ? 'margin-right' : 'margin-left'
-      case 'footer':
+    let { dir } = this
+
+    if (dir === '') {
+      dir = 'ltr'
+    }
+
+    switch (`${slotName}-${dir}`) {
+      case 'after-ltr':
+      case 'before-rtl':
+        return 'margin-right'
+      case 'after-rtl':
+      case 'before-ltr':
+        return 'margin-left'
+      case 'footer-ltr':
+      case 'footer-rtl':
         return 'margin-bottom'
-      case 'header':
+      case 'header-ltr':
+      case 'header-rtl':
         return 'margin-top'
       default:
         return ''
@@ -397,7 +434,10 @@ export class ClipElement extends NodeElement {
       return 0
     }
 
-    if (slotName === 'after' || slotName === 'before') {
+    if (
+      slotName === 'after' ||
+      slotName === 'before'
+    ) {
       return parseInt(style.width, 10)
     }
 
@@ -408,15 +448,23 @@ export class ClipElement extends NodeElement {
     const flow = this.flow ?? ''
     const slotName = element.assignedSlot?.name ?? ''
 
-    switch (`${flow}-${slotName}`) {
+    let { dir } = this
+
+    if (dir === '') {
+      dir = 'ltr'
+    }
+
+    switch (`${flow}-${slotName}-${dir}`) {
       case 'column-after':
         return 'margin-bottom'
       case 'column-before':
         return 'margin-top'
-      case 'row-after':
-        return this.dir === 'rtl' ? 'margin-left' : 'margin-right'
-      case 'row-before':
-        return this.dir === 'rtl' ? 'margin-right' : 'margin-left'
+      case 'row-after-ltr':
+      case 'row-before-rtl':
+        return 'margin-right'
+      case 'row-after-rtl':
+      case 'row-before-ltr':
+        return 'margin-left'
       default:
         return ''
     }
@@ -441,7 +489,10 @@ export class ClipElement extends NodeElement {
     Array
       .from(this.contentElements)
       .forEach((element, index) => {
-        if (index === 0 && this.innerHidden === true) {
+        if (
+          index === 0 &&
+          this.innerHidden === true
+        ) {
           this.firstUpdatedInner()
         }
 
@@ -460,7 +511,10 @@ export class ClipElement extends NodeElement {
     Array
       .from(this.outerElements)
       .forEach((element) => {
-        if (element.hidden || window.getComputedStyle(element).position === 'absolute') {
+        if (
+          element.hidden ||
+          window.getComputedStyle(element).position === 'absolute'
+        ) {
           element.style.setProperty('display', 'none')
           element.hidden = true
         }
@@ -560,7 +614,10 @@ export class ClipElement extends NodeElement {
           if (element.hidden) {
             this.showOuter(element)
           }
-        } else if (!element.hidden && window.getComputedStyle(element).position === 'absolute') {
+        } else if (
+          !element.hidden &&
+          window.getComputedStyle(element).position === 'absolute'
+        ) {
           this.hideOuter(element)
         }
       })
@@ -569,16 +626,18 @@ export class ClipElement extends NodeElement {
   protected setZIndexAbsolute (element: HTMLElement): void {
     element.style.setProperty(
       'z-index',
-      String(2 + Array
+      `${2 + Array
         .from(this.outerElements)
         .map((outerElement) => {
-          return outerElement === element
-            ? 0
-            : Number(outerElement.style.getPropertyValue('z-index'))
+          if (outerElement === element) {
+            return 0
+          }
+
+          return parseFloat(outerElement.style.getPropertyValue('z-index'))
         })
         .reduce((left, right) => {
           return Math.max(left, right)
-        }, 0))
+        }, 0)}`
     )
   }
 
@@ -589,7 +648,7 @@ export class ClipElement extends NodeElement {
       if (assignedElement instanceof HTMLElement) {
         assignedElement.style.setProperty(
           'z-index',
-          String(1 + assignedElements.length - assignedElements.indexOf(assignedElement))
+          `${1 + assignedElements.length - assignedElements.indexOf(assignedElement)}`
         )
       }
     })

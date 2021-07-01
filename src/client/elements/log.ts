@@ -158,10 +158,13 @@ export class LogElement extends NodeElement {
 
     this.showLog(log)
 
-    this.timeoutId = window.setTimeout(
-      this.showNext.bind(this),
-      log.timeout ?? (this.timeout === 0 ? 3000 : this.timeout)
-    )
+    let { timeout = this.timeout } = log
+
+    if (timeout === 0) {
+      timeout = 3000
+    }
+
+    this.timeoutId = window.setTimeout(this.showNext.bind(this), timeout)
   }
 
   protected handleHide (): void {
@@ -171,9 +174,12 @@ export class LogElement extends NodeElement {
   protected observedUpdatedImmediate (properties: PropertyValues, target: NodeElement): void {
     const log = target.logs.splice(0).pop()
 
-    if (log !== undefined) {
-      this.showLog(log)
+    if (log === undefined) {
+      this.hideLog()
+      return
     }
+
+    this.showLog(log)
   }
 
   protected observedUpdatedTimeout (properties: PropertyValues, target: NodeElement): void {

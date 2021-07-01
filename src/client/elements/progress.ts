@@ -181,7 +181,7 @@ export class ProgressElement extends NodeElement {
   public indeterminate?: boolean
 
   @property()
-  public method: RequestElement['method'] = 'GET'
+  public method?: RequestElement['method']
 
   @property({
     reflect: true
@@ -233,10 +233,16 @@ export class ProgressElement extends NodeElement {
   }
 
   public observedUpdated (properties: PropertyValues, target: RequestElement): void {
-    if (target.method === this.method) {
-      if (properties.has('loaded') || properties.has('total')) {
-        this.started = target.started
+    if (
+      this.method === undefined ||
+      target.request?.method === this.method
+    ) {
+      if (
+        properties.has('loaded') ||
+        properties.has('total')
+      ) {
         this.indeterminate = target.indeterminate
+        this.started = true
 
         if (this.indeterminate === false) {
           if (this.type === 'circle') {
@@ -252,9 +258,13 @@ export class ProgressElement extends NodeElement {
   }
 
   public render (): TemplateResult {
-    const shape = this.type === 'circle'
-      ? svg`<circle cx="50%" cy="50%"/>`
-      : svg`<rect height="100%"/>`
+    let shape = svg``
+
+    if (this.type === 'circle') {
+      shape = svg`<circle cx="50%" cy="50%"/>`
+    } else {
+      shape = svg`<rect height="100%"/>`
+    }
 
     return html`
       <slot name="body">
@@ -266,19 +276,22 @@ export class ProgressElement extends NodeElement {
   }
 
   protected firstUpdatedCircle (): void {
-    const { width = '0' } = this.bodySlotElement instanceof HTMLSlotElement
-      ? window.getComputedStyle(this.bodySlotElement)
-      : {}
+    let width = '0'
+    let strokeWidth = '2'
 
-    const { strokeWidth = '2' } = this.circleElement instanceof SVGCircleElement
-      ? window.getComputedStyle(this.circleElement)
-      : {}
+    if (this.bodySlotElement instanceof HTMLSlotElement) {
+      ({ width } = window.getComputedStyle(this.bodySlotElement))
+    }
+
+    if (this.circleElement instanceof SVGCircleElement) {
+      ({ strokeWidth } = window.getComputedStyle(this.circleElement))
+    }
 
     this.radius = (parseFloat(width) - parseFloat(strokeWidth)) / 2
 
     const cf = this.radius * 2 * Math.PI
 
-    this.circleElement?.setAttribute('r', String(this.radius))
+    this.circleElement?.setAttribute('r', `${this.radius}`)
     this.circleElement?.style.setProperty('stroke-dasharray', `${cf}px ${cf}px`)
     this.circleElement?.style.setProperty('stroke-dashoffset', `${cf}px`)
   }
@@ -287,7 +300,12 @@ export class ProgressElement extends NodeElement {
     const cf = this.radius * 2 * Math.PI
     const to = cf - element.loaded / element.total * cf
     const { from = cf } = this
-    const duration = from <= to ? 0 : this.duration
+
+    let { duration } = this
+
+    if (from <= to) {
+      duration = 0
+    }
 
     this.from = to
 
@@ -297,7 +315,7 @@ export class ProgressElement extends NodeElement {
       if (done && to === 0) {
         this.circleElement?.style.setProperty('stroke-dashoffset', `${cf}px`)
         this.from = cf
-        this.started = element.started
+        this.started = !done
       }
     }, {
       duration,
@@ -308,7 +326,12 @@ export class ProgressElement extends NodeElement {
   protected observedUpdatedRect (element: RequestElement): void {
     const to = Math.round(element.loaded / element.total * 100)
     const { from = 0 } = this
-    const duration = from >= to ? 0 : this.duration
+
+    let { duration } = this
+
+    if (from >= to) {
+      duration = 0
+    }
 
     this.from = to
 
@@ -318,7 +341,7 @@ export class ProgressElement extends NodeElement {
       if (done && to === 100) {
         this.rectangleElement?.setAttribute('width', '0%')
         this.from = 0
-        this.started = element.started
+        this.started = !done
       }
     }, {
       duration,

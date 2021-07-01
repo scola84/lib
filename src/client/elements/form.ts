@@ -15,6 +15,8 @@ export class FormElement extends RequestElement {
 
   public method: RequestElement['method'] = 'POST'
 
+  public wait = true
+
   protected handleKeydownBound: (event: KeyboardEvent) => void
 
   protected get hasFiles (): boolean {
@@ -32,46 +34,35 @@ export class FormElement extends RequestElement {
     this.addEventListener('scola-log', this.handleLog.bind(this))
   }
 
-  protected createRequest (): Request {
-    return new Request(this.createURL(), {
-      body: this.getValues(),
-      cache: this.cache,
-      credentials: this.credentials,
-      integrity: this.integrity,
-      keepalive: this.keepalive,
-      method: this.method,
-      mode: this.mode,
-      redirect: this.redirect,
-      referrer: this.referrer,
-      referrerPolicy: this.referrerPolicy,
-      signal: this.controller.signal
-    })
+  protected createBody (): FormData | URLSearchParams {
+    let data = null
+
+    if (this.hasFiles) {
+      data = new FormData()
+    } else {
+      data = new URLSearchParams()
+    }
+
+    return Array
+      .from(this.inputElements)
+      .reduce((result, inputElement: InputElement) => {
+        inputElement.appendValueTo(result)
+        return result
+      }, data)
   }
 
-  protected async finishJSON (): Promise<void> {
-    await super.finishJSON()
+  protected async finish (): Promise<void> {
+    await super.finish()
 
     this.inputElements.forEach((inputElement: InputElement) => {
       if (this.data !== undefined) {
-        if (this.code === 'ERR_INPUT_INVALID') {
+        if (this.code === 'ERR_400') {
           inputElement.setError(this.data)
         } else if (this.request?.method === 'GET') {
           inputElement.setValue(this.data)
         }
       }
     })
-  }
-
-  protected getValues (): FormData | URLSearchParams {
-    const data = this.hasFiles ? new FormData() : new URLSearchParams()
-
-    Array
-      .from(this.inputElements)
-      .forEach((inputElement: InputElement) => {
-        inputElement.appendValueTo(data)
-      })
-
-    return data
   }
 
   protected handleKeydown (event: KeyboardEvent): void {
@@ -84,7 +75,7 @@ export class FormElement extends RequestElement {
   }
 
   protected handleLog (event: LogEvent): void {
-    if (event.detail?.code === 'ERR_INPUT_INVALID') {
+    if (event.detail?.code === 'ERR_400') {
       event.cancelBubble = true
     }
   }

@@ -84,7 +84,10 @@ export class IconElement extends NodeElement {
   }
 
   public render (): TemplateResult {
-    if (this.name !== undefined && IconElement.icons[this.name] !== undefined) {
+    if (
+      this.name !== undefined &&
+      IconElement.icons[this.name] !== undefined
+    ) {
       return html`
         <slot name="body">
           <slot>${unsafeSVG(IconElement.icons[this.name] ?? '')}</slot>

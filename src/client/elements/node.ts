@@ -20,7 +20,9 @@ export enum LogLevel {
   off = 5
 }
 
-export interface Log extends NodeResult {
+export interface Log {
+  code?: string
+  data?: unknown
   error?: Error
   level: keyof typeof LogLevel
   origin: HTMLElement
@@ -33,7 +35,7 @@ export interface LogEvent extends CustomEvent {
 }
 
 export interface NodeEvent extends CustomEvent {
-  detail: {
+  detail: Record<string, unknown> & {
     origin?: HTMLElement
     target?: string
   } | null
@@ -41,11 +43,6 @@ export interface NodeEvent extends CustomEvent {
 
 export interface Presets {
   ''?: Record<string, string | unknown>
-}
-
-export interface NodeResult {
-  code?: string
-  data?: unknown
 }
 
 @customElement('scola-node')
@@ -1097,6 +1094,9 @@ export class NodeElement extends LitElement {
   })
   public disabled?: boolean
 
+  @property()
+  public event?: string
+
   @property({
     reflect: true
   })
@@ -1222,7 +1222,9 @@ export class NodeElement extends LitElement {
   })
   public noWrap?: boolean
 
-  @property()
+  @property({
+    reflect: true
+  })
   public observe?: string
 
   @property({
@@ -1278,6 +1280,11 @@ export class NodeElement extends LitElement {
     reflect: true
   })
   public spacing?: 'large' | 'medium' | 'small'
+
+  @property({
+    reflect: true
+  })
+  public target?: string
 
   @property({
     reflect: true
@@ -1355,6 +1362,18 @@ export class NodeElement extends LitElement {
   }
 
   public connectedCallback (): void {
+    if (this.id.length > 0) {
+      this.id = this.replaceParams(this.id, this.closest('scola-view')?.view?.params)
+    }
+
+    if (this.observe !== undefined) {
+      this.observe = this.replaceParams(this.observe, this.closest('scola-view')?.view?.params)
+    }
+
+    if (this.target !== undefined) {
+      this.target = this.replaceParams(this.target, this.closest('scola-view')?.view?.params)
+    }
+
     if (this.logLevel !== 'off') {
       this.addEventListener('scola-log', this.handleLog.bind(this))
     }
@@ -1377,14 +1396,6 @@ export class NodeElement extends LitElement {
       Object.assign(this, undef)
     })
 
-    this.observe?.split(' ').forEach((id) => {
-      const element = document.getElementById(id)
-
-      if (element instanceof NodeElement) {
-        element.addObserver(this)
-      }
-    })
-
     super.connectedCallback()
   }
 
@@ -1402,6 +1413,14 @@ export class NodeElement extends LitElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
+    this.observe?.split(' ').forEach((id) => {
+      const element = document.getElementById(id)
+
+      if (element instanceof NodeElement) {
+        element.addObserver(this)
+      }
+    })
+
     if (this.scrollable === true) {
       this.bodySlotElement?.addEventListener('scroll', this.handleScrollBound)
     }
@@ -1437,6 +1456,24 @@ export class NodeElement extends LitElement {
     })
   }
 
+  protected dispatchEvents (detail?: NodeEvent['detail']): void {
+    const events = this.event?.split(' ') ?? []
+    const targets = this.target?.split(' ') ?? []
+
+    events.forEach((type, index) => {
+      this.dispatchEvent(new CustomEvent<NodeEvent['detail']>(type, {
+        bubbles: true,
+        composed: true,
+        detail: {
+          ...detail,
+          ...this.dataset,
+          origin: this,
+          target: targets[index]
+        }
+      }))
+    })
+  }
+
   protected ease (from: number, to: number, resolve: ({ value, done }: { value: number, done: boolean }) => void, { duration = 250, name }: { duration?: number, name?: string } = {}): void {
     let easingId = null
     let start = -1
@@ -1450,13 +1487,10 @@ export class NodeElement extends LitElement {
       }
     }
 
-    // @see https://easings.net/#easeInOutQuint
-    function easeInOutQuint (value: number): number {
-      return value < 0.5 ? 16 * value ** 5 : 1 - (-2 * value + 2) ** 5 / 2
-    }
-
     const frame = (time: number): void => {
-      start = start === -1 ? time : start
+      if (start === -1) {
+        start = time
+      }
 
       if (time - start >= duration) {
         resolve({
@@ -1470,7 +1504,7 @@ export class NodeElement extends LitElement {
       } else {
         resolve({
           done: false,
-          value: from + (to - from) * easeInOutQuint((time - start) / duration)
+          value: from + (to - from) * this.easeInOutQuint((time - start) / duration)
         })
 
         easingId = window.requestAnimationFrame(frame)
@@ -1488,15 +1522,33 @@ export class NodeElement extends LitElement {
     }
   }
 
+  // @see https://easings.net/#easeInOutQuint
+  protected easeInOutQuint (value: number): number {
+    if (value < 0.5) {
+      return 16 * value ** 5
+    }
+
+    return 1 - (-2 * value + 2) ** 5 / 2
+  }
+
   protected handleContextmenu (event: Event): boolean {
     event.preventDefault()
     return false
   }
 
   protected handleLog (event: LogEvent): void {
-    if (event.detail !== null && LogLevel[event.detail.level] >= LogLevel[this.logLevel]) {
+    if (
+      event.detail !== null &&
+      LogLevel[event.detail.level] >= LogLevel[this.logLevel]
+    ) {
       event.cancelBubble = true
-      this.logs.push(event.detail)
+
+      if (event.detail.code === undefined) {
+        this.logs = []
+      } else {
+        this.logs.push(event.detail)
+      }
+
       this.requestUpdate('logs')
     }
   }
@@ -1523,6 +1575,12 @@ export class NodeElement extends LitElement {
     return true
   }
 
+  protected replaceParams (string: string, params?: URLSearchParams): string {
+    return (string.match(/:\w+/gu) ?? []).reduce((result, match) => {
+      return result.replace(new RegExp(match, 'gu'), String(params?.get(match.slice(1)) ?? match))
+    }, string)
+  }
+
   protected throttle (resolve: () => void, { duration = 250, once = false, trail = true } = {}): () => void {
     let diff = 0
     let last = 0
@@ -1541,6 +1599,12 @@ export class NodeElement extends LitElement {
         diff = 0
       }
 
+      let timeout = duration - diff
+
+      if (once) {
+        timeout = duration
+      }
+
       tid = window.setTimeout(() => {
         if (trail) {
           resolve(...args)
@@ -1548,7 +1612,7 @@ export class NodeElement extends LitElement {
         }
 
         tid = 0
-      }, once ? duration : duration - diff)
+      }, timeout)
     }
   }
 }

@@ -14,22 +14,15 @@
  */
 export function format (formatValue: (value: unknown) => string) {
   return (query: string, values: Record<string, unknown> = {}): string => {
-    const matches = query.match(/\$\(\w+\)/gu) ?? []
-    let key = null
-    let result = query
-    let value = null
-
-    for (const match of matches) {
-      key = match.slice(2, -1)
-      value = values[key]
+    return (query.match(/\$\(\w+\)/gu) ?? []).reduce((result, match) => {
+      const key = match.slice(2, -1)
+      const value = values[key]
 
       if (value === undefined) {
         throw new Error(`Parameter "${key}" is undefined`)
       }
 
-      result = result.replace(match, formatValue(value))
-    }
-
-    return result
+      return result.replace(match, formatValue(value))
+    }, query)
   }
 }

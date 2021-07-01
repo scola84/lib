@@ -28,7 +28,6 @@
     "max-params": "off",
     "max-statements": "off",
     "multiline-comment-style": "off",
-    "multiline-ternary": "off",
     "no-empty-function": "off",
     "no-extra-parens": "off",
     "no-magic-numbers": "off",
@@ -40,7 +39,6 @@
         "maxEOF": 0
       }
     ],
-    "no-ternary": "off",
     "no-undefined": "off",
     "no-unused-vars": [
       "error",
@@ -71,23 +69,18 @@
       },
       {
         "blankLine": "never",
-        "prev": [
-          "const",
-          "let"
-        ],
-        "next": [
-          "const",
-          "let"
-        ]
+        "prev": "const",
+        "next": "const"
       },
       {
         "blankLine": "never",
-        "prev": [
-          "expression"
-        ],
-        "next": [
-          "expression"
-        ]
+        "prev": "let",
+        "next": "let"
+      },
+      {
+        "blankLine": "never",
+        "prev": "expression",
+        "next": "expression"
       },
       {
         "blankLine": "never",

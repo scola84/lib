@@ -1,11 +1,12 @@
 {
   "handler": {
     "body": [
-      "import type { FastifyReply, FastifyRequest } from 'fastify'",
+      "import type { FastifyReply, FastifyRequest, RequestGenericInterface } from 'fastify'",
       "import { RouteHandler } from '@scola/lib'",
       "import type { RouteHandlerOptions } from '@scola/lib'",
+      "import Schema from 'fluent-json-schema'",
       "",
-      "interface ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Request {",
+      "interface ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Request extends RequestGenericInterface {",
       "",
       "}",
       "",

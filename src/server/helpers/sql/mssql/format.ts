@@ -10,7 +10,12 @@ import lodash from 'lodash'
  * @returns The formatted value
  */
 export function format (value: unknown): string {
-  return escape(lodash.isPlainObject(value) || typeof value === 'boolean'
-    ? JSON.stringify(value)
-    : value)
+  if (
+    lodash.isPlainObject(value) ||
+    typeof value === 'boolean'
+  ) {
+    return escape(JSON.stringify(value))
+  }
+
+  return escape(value)
 }

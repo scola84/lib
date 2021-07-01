@@ -51,9 +51,11 @@ try {
   const url = new URL(source)
   const database = url.pathname.slice(1)
 
-  const targetFile = target === undefined
-    ? '/tmp/scola-sql-diff-out.sql'
-    : target
+  let targetFile = target
+
+  if (targetFile === undefined) {
+    targetFile = '/tmp/scola-sql-diff-out.sql'
+  }
 
   fs.mkdirSync(path.dirname(targetFile), { recursive: true })
 

@@ -26,25 +26,46 @@ declare global {
 export interface View {
   element?: HTMLElement
   origin?: HTMLElement
-  ref: string
+  name: string
+  params?: URLSearchParams
   target?: string
 }
 
-export interface ViewAppendEvent extends CustomEvent {
-  detail: View | null
+export interface ViewAppendEvent extends NodeEvent {
+  detail: Record<string, unknown> & ViewInAppend | null
 }
 
-export interface ViewMoveEvent extends CustomEvent {
-  detail: View | null
+export interface ViewMoveEvent extends NodeEvent {
+  detail: Record<string, unknown> & View | null
 }
 
-export interface ViewState {
+interface ViewInAppend extends ViewInStore {
+  element?: HTMLElement
+  origin?: HTMLElement
+  target?: string
+}
+
+interface ViewInStore {
+  name: string
+  params?: string
+}
+
+interface ViewState {
   pointer: number
   save: boolean
-  views: Array<View | null | undefined>
+  views: View[]
 }
 
-const viewStates: Record<string, ViewState> = {}
+interface ViewStateInStore {
+  pointer: number
+  save: boolean
+  views: ViewInStore[]
+}
+
+type ViewStates = Record<string, ViewState>
+type ViewStatesInStore = Partial<Record<string, ViewStateInStore>>
+
+const viewStates: ViewStates = {}
 
 @customElement('scola-view')
 export class ViewElement extends ClipElement {
@@ -81,6 +102,11 @@ export class ViewElement extends ClipElement {
   public title: string
 
   public type: ClipElement['type'] = 'content'
+
+  public get view (): View | undefined {
+    const state = viewStates[this.id] as ViewState | undefined
+    return state?.views[state.pointer]
+  }
 
   protected handleAppendBound: (event: ViewAppendEvent) => void
 
@@ -136,22 +162,25 @@ export class ViewElement extends ClipElement {
 
   public go (delta: number, dispatch = true): void {
     const state = viewStates[this.id]
-    const currentView = state.views[state.pointer]
+    const currentView = this.view
 
-    if (state.pointer + delta >= 0 && state.pointer + delta <= state.views.length - 1) {
+    if (
+      state.pointer + delta >= 0 &&
+      state.pointer + delta <= state.views.length - 1
+    ) {
       state.pointer += delta
     }
 
     this.hasFuture = state.pointer < state.views.length - 1
     this.hasPast = state.pointer > 0
 
-    const nextView = state.views[state.pointer]
+    const nextView = this.view
 
-    if (nextView === null || nextView === undefined) {
+    if (nextView === undefined) {
       return
     }
 
-    if (window.customElements.get(nextView.ref) === undefined) {
+    if (window.customElements.get(nextView.name) === undefined) {
       return
     }
 
@@ -162,14 +191,17 @@ export class ViewElement extends ClipElement {
       this.dispatchEvent(new CustomEvent<ViewMoveEvent['detail']>('scola-view-move', {
         bubbles: true,
         composed: true,
-        detail: state.views[state.pointer]
+        detail: state.views[state.pointer] as ViewMoveEvent['detail']
       }))
     }
 
     window.requestAnimationFrame(() => {
       if (nextView.element instanceof HTMLElement) {
         this.showContent(nextView.element, this.contentDuration, () => {
-          if (delta !== 0 && currentView?.element instanceof HTMLElement) {
+          if (
+            delta !== 0 &&
+            currentView?.element instanceof HTMLElement
+          ) {
             currentView.element.remove()
             delete currentView.element
           }
@@ -179,7 +211,7 @@ export class ViewElement extends ClipElement {
   }
 
   protected createElement (view: View, delta: number): HTMLElement {
-    const element = document.createElement(view.ref)
+    const element = document.createElement(view.name)
 
     if (delta < 0) {
       this.insertBefore(element, this.querySelector(':not([slot])'))
@@ -191,6 +223,17 @@ export class ViewElement extends ClipElement {
     return element
   }
 
+  protected createURL (detail: ViewAppendEvent['detail']): URL {
+    const url = `http://${detail?.name ?? ''}?${detail?.params ?? ''}`
+
+    const params = Object.keys(detail ?? {}).reduce((result, key) => {
+      result.append(key, String(detail?.[key]))
+      return result
+    }, new URLSearchParams())
+
+    return new URL(this.replaceParams(url, params))
+  }
+
   protected handleAppend (event: ViewAppendEvent): void {
     if (!this.isTarget(event)) {
       return
@@ -198,9 +241,14 @@ export class ViewElement extends ClipElement {
 
     event.cancelBubble = true
 
-    let state = viewStates[this.id]
+    const url = this.createURL(event.detail)
 
-    if (state.views[state.pointer]?.ref === event.detail?.ref) {
+    const nextView = {
+      name: url.hostname,
+      params: url.searchParams
+    }
+
+    if (this.isSame(this.view, nextView)) {
       this.go(0)
       return
     }
@@ -208,15 +256,15 @@ export class ViewElement extends ClipElement {
     Object
       .keys(viewStates)
       .forEach((target) => {
-        state = viewStates[target]
+        const state = viewStates[target]
 
         if (target === this.id) {
           state.views.splice(
             state.pointer + 1,
             state.views.length - state.pointer - 1,
-            event.detail
+            nextView
           ).forEach((view) => {
-            view?.element?.remove()
+            view.element?.remove()
           })
         } else if (ViewElement.type === 'push') {
           if (state.save && viewStates[this.id].save) {
@@ -225,7 +273,7 @@ export class ViewElement extends ClipElement {
               state.views.length - state.pointer - 1,
               state.views[state.pointer]
             ).forEach((view) => {
-              view?.element?.remove()
+              view.element?.remove()
             })
           }
         }
@@ -243,7 +291,10 @@ export class ViewElement extends ClipElement {
 
       const state = viewStates[this.id]
 
-      if (ViewElement.type === 'push' && state.save) {
+      if (
+        ViewElement.type === 'push' &&
+        state.save
+      ) {
         window.history.go(-1)
       } else {
         this.go(-1)
@@ -258,7 +309,10 @@ export class ViewElement extends ClipElement {
 
       const state = viewStates[this.id]
 
-      if (ViewElement.type === 'push' && state.save) {
+      if (
+        ViewElement.type === 'push' &&
+        state.save
+      ) {
         window.history.go(1)
       } else {
         this.go(1)
@@ -273,7 +327,10 @@ export class ViewElement extends ClipElement {
 
       const state = viewStates[this.id]
 
-      if (ViewElement.type === 'push' && state.save) {
+      if (
+        ViewElement.type === 'push' &&
+        state.save
+      ) {
         window.history.go(-state.pointer)
       } else {
         this.go(-state.pointer)
@@ -290,21 +347,33 @@ export class ViewElement extends ClipElement {
 
   protected handleViewMove (): void {}
 
+  protected isSame (left?: View, right?: View): boolean {
+    return (
+      left?.name === right?.name &&
+      left?.params?.toString() === right?.params?.toString()
+    )
+  }
+
   protected loadLocation (): void {
     const state = viewStates[this.id]
 
     window.location.pathname
       .split('/')
       .forEach((part) => {
-        const [ref, target] = part.split('@')
+        const {
+          name,
+          params,
+          target
+        } = (/(?<name>[^:]+):?(?<params>.+)?@(?<target>.+)/gu).exec(part)?.groups ?? {}
 
         if (target === this.id) {
-          if (state.views[state.pointer]?.ref !== ref) {
+          if (state.views[state.pointer]?.name !== name) {
             viewStates[this.id] = {
               pointer: state.views.length,
               save: state.save,
               views: [...state.views, {
-                ref
+                name,
+                params: new URLSearchParams(params)
               }]
             }
           }
@@ -328,15 +397,31 @@ export class ViewElement extends ClipElement {
       return false
     }
 
-    const storedStates = JSON.parse(statesString) as Record<string, ViewState>
+    const viewStatesinStore = JSON.parse(statesString) as ViewStatesInStore
 
     Object
       .keys(viewStates)
       .forEach((target) => {
         if (target === this.id) {
+          const viewStateInStore = viewStatesinStore[target]
+
+          let viewState = {}
+
+          if (viewStateInStore !== undefined) {
+            viewState = {
+              ...viewStateInStore,
+              views: viewStateInStore.views.map((view) => {
+                return {
+                  name: view.name,
+                  params: new URLSearchParams(view.params)
+                }
+              })
+            }
+          }
+
           viewStates[this.id] = {
             ...viewStates[this.id],
-            ...storedStates[target]
+            ...viewState
           }
         }
       })
@@ -368,12 +453,21 @@ export class ViewElement extends ClipElement {
           return result
         }
 
-        const view = state.views[state.pointer]
-
         pointers[target] = state.pointer
-        return view !== null && view !== undefined
-          ? `${result}/${view.ref}@${target}`
-          : result
+
+        const view = state.views[state.pointer] as View | undefined
+
+        if (view === undefined) {
+          return result
+        }
+
+        const params = view.params?.toString() ?? ''
+
+        if (params.length === 0) {
+          return `${result}/${view.name}@${target}`
+        }
+
+        return `${result}/${view.name}:${params}@${target}`
       }, '')
 
     if (ViewElement.type === 'push') {
@@ -384,30 +478,43 @@ export class ViewElement extends ClipElement {
   }
 
   protected saveStorage (): void {
-    const storedStates: Record<string, ViewState> = {}
+    const viewStatesInStore: ViewStatesInStore = {}
 
     Object
       .keys(viewStates)
       .forEach((target) => {
         if (viewStates[target].save) {
-          storedStates[target] = {
-            ...viewStates[target],
-            views: viewStates[target].views.map((view) => {
-              return view !== null && view !== undefined
-                ? { ref: view.ref }
-                : view
+          const viewState = viewStates[target]
+
+          viewStatesInStore[target] = {
+            ...viewState,
+            views: viewState.views.map((view) => {
+              return {
+                name: view.name,
+                params: view.params?.toString()
+              }
             })
           }
         }
       })
 
-    window.sessionStorage.setItem('view-states', JSON.stringify(storedStates))
+    window.sessionStorage.setItem('view-states', JSON.stringify(viewStatesInStore))
   }
 
   protected setScroll (element: HTMLElement): void {
-    const dimensionName = this.flow === 'row' ? 'width' : 'height'
-    const scrollFactor = this.dir === 'rtl' ? -1 : 1
-    const scrollName = this.flow === 'row' ? 'scrollLeft' : 'scrollTop'
+    let dimensionName: 'height' | 'width' = 'height'
+    let scrollFactor = 1
+    let scrollName: 'scrollLeft' | 'scrollTop' = 'scrollTop'
+
+    if (this.flow === 'row') {
+      dimensionName = 'width'
+      scrollName = 'scrollLeft'
+    }
+
+    if (this.dir === 'rtl') {
+      scrollFactor = -1
+    }
+
     const style = window.getComputedStyle(element)
     const scrollDelta = scrollFactor * parseFloat(style[dimensionName])
 

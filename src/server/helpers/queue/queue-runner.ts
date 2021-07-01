@@ -102,7 +102,7 @@ export class QueueRunner {
 
           await this.store.rpush(
             queueRun.name,
-            String((await this.insertTaskRun(queueRun, payload)).id)
+            `${(await this.insertTaskRun(queueRun, payload)).id}`
           )
 
           finish()

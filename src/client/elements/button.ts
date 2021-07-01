@@ -2,7 +2,6 @@ import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { ClipElement } from './clip'
 import { NodeElement } from './node'
-import type { NodeEvent } from './node'
 import { ProgressElement } from './progress'
 import { RequestElement } from './request'
 import { ViewElement } from './view'
@@ -104,9 +103,6 @@ export class ButtonElement extends NodeElement {
   })
   public data?: Record<string, unknown>
 
-  @property()
-  public event?: string
-
   @property({
     attribute: 'fill-activated',
     reflect: true
@@ -119,9 +115,6 @@ export class ButtonElement extends NodeElement {
   })
   public started?: boolean
 
-  @property()
-  public target?: string
-
   public constructor () {
     super()
     this.addEventListener('click', this.handleClick.bind(this))
@@ -132,6 +125,10 @@ export class ButtonElement extends NodeElement {
       this.observe = this.target
     }
 
+    super.connectedCallback()
+  }
+
+  public firstUpdated (properties: PropertyValues): void {
     this.observe?.split(' ').forEach((id) => {
       const element = document.getElementById(id)
 
@@ -146,7 +143,7 @@ export class ButtonElement extends NodeElement {
       }
     })
 
-    super.connectedCallback()
+    super.firstUpdated(properties)
   }
 
   public observedUpdated (properties: PropertyValues, target: NodeElement): void {
@@ -193,21 +190,7 @@ export class ButtonElement extends NodeElement {
 
   protected handleClick (event: Event): void {
     event.cancelBubble = this.cancel === true
-
-    const targets = this.target?.split(' ') ?? []
-
-    this.event?.split(' ').forEach((type, index) => {
-      this.dispatchEvent(new CustomEvent<NodeEvent['detail']>(type, {
-        bubbles: true,
-        composed: true,
-        detail: {
-          ...this.dataset,
-          ...this.data,
-          origin: this,
-          target: targets[index]
-        }
-      }))
-    })
+    this.dispatchEvents(this.data)
   }
 
   protected observedUpdatedClip (properties: PropertyValues, target: NodeElement): void {

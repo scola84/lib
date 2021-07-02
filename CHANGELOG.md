@@ -1,3 +1,10 @@
+## [22.0.8](https://github.com/scola84/lib/compare/v22.0.7...v22.0.8) (2021-07-02)
+
+
+### Bug Fixes
+
+* **stream:** allow external listeners to be called after destroy ([42b2edc](https://github.com/scola84/lib/commit/42b2edc95680744e55d15342179644ae4a4ec53e))
+
 ## [22.0.7](https://github.com/scola84/lib/compare/v22.0.6...v22.0.7) (2021-06-30)
 
 

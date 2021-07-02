@@ -4,6 +4,8 @@ import type { Readable } from 'stream'
 /**
  * Handles a data stream as a Promise.
  *
+ * Destroys all streams, removes all listeners and rejects the Promise if an error occurs during setup.
+ *
  * Destroys all streams, removes all listeners and rejects the Promise if one of the streams emits an error.
  *
  * Removes all listeners and resolves the Promise if the streams finish successfully.
@@ -31,13 +33,19 @@ import type { Readable } from 'stream'
 export async function pipeline (...streams: Array<Readable | Transform | Writable>): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     if (streams.length < 2) {
+      for (const stream of streams) {
+        stream.destroy()
+        process.nextTick(stream.removeAllListeners.bind(stream))
+      }
+
       throw new Error('Less than 2 streams provided')
     }
 
     streams.reduce((previous: Readable | Transform | Writable | null, current, index) => {
       if (previous instanceof Writable && !(previous instanceof Transform)) {
         for (const stream of streams) {
-          stream.removeAllListeners()
+          stream.destroy()
+          process.nextTick(stream.removeAllListeners.bind(stream))
         }
 
         throw new Error('Cannot pipe a Writable')
@@ -48,7 +56,7 @@ export async function pipeline (...streams: Array<Readable | Transform | Writabl
         .on('error', (error: Error) => {
           for (const stream of streams) {
             stream.destroy()
-            stream.removeAllListeners()
+            process.nextTick(stream.removeAllListeners.bind(stream))
           }
 
           reject(new Error(`Stream #${index} failed: ${error.message}`))
@@ -57,7 +65,7 @@ export async function pipeline (...streams: Array<Readable | Transform | Writabl
       if (index === streams.length - 1) {
         current.once('finish', () => {
           for (const stream of streams) {
-            stream.removeAllListeners()
+            process.nextTick(stream.removeAllListeners.bind(stream))
           }
 
           resolve()

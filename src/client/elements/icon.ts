@@ -78,13 +78,18 @@ export class IconElement extends NodeElement {
   })
   public size?: 'large' | 'medium' | 'small'
 
+  protected updaters = IconElement.updaters
+
   public constructor () {
     super()
     this.dir = document.dir
   }
 
   public render (): TemplateResult {
-    if (this.name !== undefined && IconElement.icons[this.name] !== undefined) {
+    if (
+      this.name !== undefined &&
+      IconElement.icons[this.name] !== undefined
+    ) {
       return html`
         <slot name="body">
           <slot>${unsafeSVG(IconElement.icons[this.name] ?? '')}</slot>

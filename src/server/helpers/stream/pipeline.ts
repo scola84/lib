@@ -31,22 +31,29 @@ import type { Readable } from 'stream'
  * ```
  */
 export async function pipeline (...streams: Array<Readable | Transform | Writable>): Promise<void> {
+  if (streams.length < 2) {
+    streams.forEach((stream) => {
+      stream.destroy()
+      process.nextTick(stream.removeAllListeners.bind(stream))
+    })
+
+    throw new Error('Less than 2 streams provided')
+  }
+
+  return pipe(streams)
+}
+
+async function pipe (streams: Array<Readable | Transform | Writable>): Promise<void> {
   await new Promise<void>((resolve, reject) => {
-    if (streams.length < 2) {
-      for (const stream of streams) {
-        stream.destroy()
-        process.nextTick(stream.removeAllListeners.bind(stream))
-      }
-
-      throw new Error('Less than 2 streams provided')
-    }
-
     streams.reduce((previous: Readable | Transform | Writable | null, current, index) => {
-      if (previous instanceof Writable && !(previous instanceof Transform)) {
-        for (const stream of streams) {
+      if (
+        previous instanceof Writable &&
+        !(previous instanceof Transform)
+      ) {
+        streams.forEach((stream) => {
           stream.destroy()
           process.nextTick(stream.removeAllListeners.bind(stream))
-        }
+        })
 
         throw new Error('Cannot pipe a Writable')
       }
@@ -54,25 +61,28 @@ export async function pipeline (...streams: Array<Readable | Transform | Writabl
       current
         .on('data', () => {})
         .on('error', (error: Error) => {
-          for (const stream of streams) {
+          streams.forEach((stream) => {
             stream.destroy()
             process.nextTick(stream.removeAllListeners.bind(stream))
-          }
+          })
 
           reject(new Error(`Stream #${index} failed: ${error.message}`))
         })
 
       if (index === streams.length - 1) {
         current.once('finish', () => {
-          for (const stream of streams) {
+          streams.forEach((stream) => {
             process.nextTick(stream.removeAllListeners.bind(stream))
-          }
+          })
 
           resolve()
         })
       }
 
-      if (current instanceof Transform || current instanceof Writable) {
+      if (
+        current instanceof Transform ||
+        current instanceof Writable
+      ) {
         previous?.pipe(current)
       }
 

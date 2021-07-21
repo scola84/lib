@@ -2,6 +2,8 @@ import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
 import type { Log, NodeEvent } from './node'
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
+import type { ButtonElement } from './button'
+import type { FormatElement } from './format'
 import { NodeElement } from './node'
 
 declare global {
@@ -22,15 +24,18 @@ export class LogElement extends NodeElement {
       :host([hidden]) {
         display: flex;
         height: 0;
-        overflow: hidden;
       }
     `
   ]
 
-  @property({
-    type: Number
-  })
-  public duration?: number
+  public static updaters = {
+    ...NodeElement.updaters,
+    node: (source: LogElement, target: NodeElement, properties: PropertyValues): void => {
+      if (properties.has('logs')) {
+        source.updateNode(target).catch(() => {})
+      }
+    }
+  }
 
   @property({
     type: Number
@@ -39,58 +44,62 @@ export class LogElement extends NodeElement {
 
   public logs: Log[]
 
+  protected handleHideBound: (event: NodeEvent) => void
+
   protected log?: Log
 
   protected templateElement?: NodeElement | null
 
   protected timeoutId?: number
 
+  protected updaters = LogElement.updaters
+
   public constructor () {
     super()
-    this.dir = document.dir
-    this.addEventListener('scola-log-hide', this.handleHide.bind(this))
+    this.handleHideBound = this.handleHide.bind(this)
+    this.templateElement = this.querySelector<NodeElement>(':scope > [slot="template"]')
   }
 
   public connectedCallback (): void {
-    this.templateElement = this.querySelector<NodeElement>(':scope > [slot="template"]')
+    window.addEventListener('scola-log-hide', this.handleHideBound)
     super.connectedCallback()
   }
 
-  public hideLog (duration = this.duration): void {
+  public disconnectedCallback (): void {
+    window.removeEventListener('scola-log-hide', this.handleHideBound)
+    super.disconnectedCallback()
+  }
+
+  public firstUpdated (properties: PropertyValues): void {
+    this.addEventListener('scola-log-hide', this.handleHideBound)
+    super.firstUpdated(properties)
+  }
+
+  public async hide (duration = this.duration): Promise<void> {
     if (this.hidden) {
       return
     }
 
     if (this.logs.length > 0) {
-      this.showNext()
+      await this.showNext(duration)
       return
     }
 
-    const { scrollHeight = 0 } = this.defaultSlotElement ?? {}
-
-    this.ease(0, scrollHeight, ({ done, value }) => {
-      this.defaultSlotElement?.style.setProperty('margin-top', `-${value}px`)
-
-      if (done) {
+    await this.defaultSlotElement
+      .animate([{
+        marginTop: '0px'
+      }, {
+        marginTop: `-${this.defaultSlotElement.scrollHeight}px`
+      }], {
+        duration,
+        easing: this.easing,
+        fill: 'forwards'
+      })
+      .finished
+      .then(() => {
         this.hidden = true
         this.log = undefined
-      }
-    }, {
-      duration,
-      name: 'log'
-    })
-  }
-
-  public observedUpdated (properties: PropertyValues, target: NodeElement): void {
-    if (properties.has('logs')) {
-      if (this.timeout === undefined) {
-        this.observedUpdatedImmediate(properties, target)
-      } else {
-        this.observedUpdatedTimeout(properties, target)
-      }
-    }
-
-    super.observedUpdated(properties, target)
+      })
   }
 
   public render (): TemplateResult {
@@ -100,16 +109,21 @@ export class LogElement extends NodeElement {
       element.removeAttribute('slot')
 
       element
-        .querySelectorAll('scola-button')
+        .querySelectorAll<ButtonElement>('scola-button')
         .forEach((buttonElement) => {
-          buttonElement.data = this.log?.data as Record<string, unknown>
+          if (LogElement.isObject(this.log?.data)) {
+            buttonElement.data = this.log?.data
+          }
         })
 
       element
-        .querySelectorAll('scola-format')
+        .querySelectorAll<FormatElement>('scola-format')
         .forEach((formatElement) => {
           formatElement.code = this.log?.code
-          formatElement.data = this.log?.data as Record<string, unknown>
+
+          if (LogElement.isObject(this.log?.data)) {
+            formatElement.data = this.log?.data
+          }
         })
     }
 
@@ -120,7 +134,7 @@ export class LogElement extends NodeElement {
     `
   }
 
-  public showLog (log: Log, duration = this.duration): void {
+  public async show (log: Log, duration = this.duration): Promise<void> {
     this.log = log
     this.requestUpdate()
 
@@ -128,22 +142,37 @@ export class LogElement extends NodeElement {
       return
     }
 
-    window.requestAnimationFrame(() => {
-      const { scrollHeight = 0 } = this.defaultSlotElement ?? {}
+    this.defaultSlotElement.style.setProperty('opacity', '0')
+    this.defaultSlotElement.style.setProperty('position', 'absolute')
 
-      this.defaultSlotElement?.style.setProperty('margin-top', `-${scrollHeight}px`)
-      this.hidden = false
-
-      this.ease(scrollHeight, 0, ({ value }) => {
-        this.defaultSlotElement?.style.setProperty('margin-top', `-${value}px`)
-      }, {
-        duration,
-        name: 'log'
-      })
+    await new Promise((resolve) => {
+      setTimeout(resolve)
     })
+
+    this.hidden = false
+
+    await this.defaultSlotElement
+      .animate([{
+        marginTop: `-${this.defaultSlotElement.scrollHeight}px`,
+        opacity: 1,
+        position: 'relative'
+      }, {
+        marginTop: '0px',
+        opacity: 1,
+        position: 'relative'
+      }], {
+        duration,
+        easing: this.easing,
+        fill: 'forwards'
+      })
+      .finished
+      .then(() => {
+        this.defaultSlotElement.style.removeProperty('opacity')
+        this.defaultSlotElement.style.removeProperty('position')
+      })
   }
 
-  public showNext (): void {
+  public async showNext (duration = this.duration): Promise<void> {
     if (this.timeoutId !== undefined) {
       window.clearTimeout(this.timeoutId)
       this.timeoutId = undefined
@@ -152,35 +181,55 @@ export class LogElement extends NodeElement {
     const log = this.logs.shift()
 
     if (log === undefined) {
-      this.hideLog()
+      await this.hide(duration)
       return
     }
 
-    this.showLog(log)
+    await this.show(log, duration)
 
-    this.timeoutId = window.setTimeout(
-      this.showNext.bind(this),
-      log.timeout ?? (this.timeout === 0 ? 3000 : this.timeout)
-    )
+    let { timeout = this.timeout } = log
+
+    if (timeout === 0) {
+      timeout = 3000
+    }
+
+    this.timeoutId = window.setTimeout(() => {
+      this.showNext(duration).catch(() => {})
+    }, timeout)
   }
 
-  protected handleHide (): void {
-    this.hideLog()
-  }
-
-  protected observedUpdatedImmediate (properties: PropertyValues, target: NodeElement): void {
-    const log = target.logs.splice(0).pop()
-
-    if (log !== undefined) {
-      this.showLog(log)
+  public async updateNode (element: NodeElement, duration = this.duration): Promise<void> {
+    if (this.timeout === undefined) {
+      await this.updateNodeImmediate(element, duration)
+    } else {
+      await this.updateNodeTimeout(element, duration)
     }
   }
 
-  protected observedUpdatedTimeout (properties: PropertyValues, target: NodeElement): void {
-    this.logs.splice(this.logs.length, 0, ...target.logs.splice(0))
+  protected handleHide (event: NodeEvent): void {
+    if (this.isTarget(event)) {
+      this.hide().catch(() => {})
+    }
+  }
+
+  protected async updateNodeImmediate (element: NodeElement, duration = this.duration): Promise<void> {
+    const log = element.logs
+      .splice(0)
+      .pop()
+
+    if (log === undefined) {
+      await this.hide(duration)
+      return
+    }
+
+    await this.show(log, duration)
+  }
+
+  protected async updateNodeTimeout (element: NodeElement, duration = this.duration): Promise<void> {
+    this.logs.splice(this.logs.length, 0, ...element.logs.splice(0))
 
     if (this.hidden) {
-      this.showNext()
+      await this.showNext(duration)
     }
   }
 }

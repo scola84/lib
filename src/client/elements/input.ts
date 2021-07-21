@@ -5,25 +5,15 @@ import { NodeElement } from './node'
 import { css } from 'lit'
 
 declare global {
-  interface HTMLElementEventMap {
-    'scola-input': InputEvent
-  }
-
   interface HTMLElementTagNameMap {
     'scola-input': InputElement
   }
 }
 
-export interface InputEvent {
-  detail: {
-    origin: InputElement
-    text?: string | null
-    value?: string
-  } | null
-}
-
 @customElement('scola-input')
 export class InputElement extends NodeElement {
+  public static storage: Storage = window.sessionStorage
+
   public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
     css`
@@ -75,29 +65,30 @@ export class InputElement extends NodeElement {
   })
   public save?: boolean
 
-  protected handleInputBound: () => void
+  public inputElement?: HTMLInputElement | null
 
-  protected inputElement?: HTMLInputElement | null
+  protected clearElement?: NodeElement | null
 
-  protected get clearElement (): NodeElement | null {
-    return this.querySelector('[is="clear"]')
-  }
+  protected errorElement?: FormatElement | null
 
-  protected get errorElement (): FormatElement | null {
-    return this.querySelector('[is="error"]')
-  }
+  protected storage = InputElement.storage
+
+  protected updaters = InputElement.updaters
 
   public constructor () {
     super()
-    this.handleInputBound = this.throttle(this.handleInput.bind(this), { once: true })
-    this.addEventListener('click', this.handleClick.bind(this))
-    this.addEventListener('scola-input-clear', this.handleClear.bind(this))
+    this.clearElement = this.querySelector<NodeElement>('[is="clear"]')
+    this.errorElement = this.querySelector<FormatElement>('[is="error"]')
+    this.inputElement = this.querySelector<HTMLInputElement>(':scope > input, :scope > textarea')
   }
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (this.inputElement instanceof HTMLInputElement && this.isSuccessful(this.inputElement)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isSuccessful(this.inputElement)
+    ) {
       data.append(this.inputElement.name, this.inputElement.value)
     }
   }
@@ -111,17 +102,16 @@ export class InputElement extends NodeElement {
   public clearValue (value = ''): void {
     if (this.inputElement instanceof HTMLInputElement) {
       this.inputElement.value = value
-    }
 
-    if (this.clearElement instanceof NodeElement) {
-      this.clearElement.hidden = true
+      if (this.clearElement instanceof NodeElement) {
+        this.clearElement.hidden = true
+      }
+
+      this.requestUpdate()
     }
   }
 
   public connectedCallback (): void {
-    this.inputElement = this
-      .querySelector<HTMLInputElement>(':scope > input, :scope > textarea')
-
     if (this.save === true) {
       this.loadValue()
     }
@@ -130,25 +120,24 @@ export class InputElement extends NodeElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    this.inputElement = this.inputElement?.cloneNode(true) as HTMLInputElement | undefined
+    const inputElement = this.inputElement?.cloneNode(true)
 
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.suffixSlotElement instanceof HTMLSlotElement
-    ) {
-      this.bodySlotElement?.insertBefore(this.inputElement, this.suffixSlotElement)
+    if (inputElement instanceof HTMLInputElement) {
+      this.inputElement = inputElement
+      this.bodySlotElement.insertBefore(inputElement, this.suffixSlotElement)
     }
 
-    this.inputElement?.addEventListener('input', this.handleInputBound)
+    this.addEventListener('click', this.handleClick.bind(this))
+    this.addEventListener('scola-input-clear', this.handleClear.bind(this))
+    this.inputElement?.addEventListener('input', this.handleInput.bind(this))
     super.firstUpdated(properties)
   }
 
-  public getValue (): string | undefined {
-    return this.inputElement?.value
-  }
-
   public setError (data: Record<string, unknown>): void {
-    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isDefined(this.inputElement, data)
+    ) {
       if (this.errorElement instanceof FormatElement) {
         Object.assign(this.errorElement, data[this.inputElement.name])
         this.errorElement.hidden = false
@@ -156,15 +145,33 @@ export class InputElement extends NodeElement {
     }
   }
 
+  public setInput (data: Record<string, unknown>): void {
+    if (this.inputElement instanceof HTMLInputElement) {
+      if (data.name !== undefined) {
+        this.inputElement.name = String(data.name)
+      }
+
+      if (data.value !== undefined) {
+        this.inputElement.value = String(data.value)
+        this.requestUpdate()
+      }
+    }
+  }
+
   public setValue (data: Record<string, unknown>): void {
     this.clearError()
 
-    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isDefined(this.inputElement, data)
+    ) {
       this.inputElement.value = String(data[this.inputElement.name])
 
       if (this.clearElement instanceof NodeElement) {
         this.clearElement.hidden = this.inputElement.value === ''
       }
+
+      this.requestUpdate()
     }
   }
 
@@ -194,17 +201,14 @@ export class InputElement extends NodeElement {
     }
 
     if (this.inputElement instanceof HTMLInputElement) {
-      this.dispatchEvent(new CustomEvent<InputEvent['detail']>('scola-input', {
-        detail: {
-          origin: this,
-          value: this.inputElement.value
-        }
-      }))
-
       if (this.clearElement instanceof NodeElement) {
         this.clearElement.hidden = this.inputElement.value === ''
       }
+
+      this.requestUpdate()
     }
+
+    this.dispatchEvents()
   }
 
   protected isDefined (inputElement: HTMLInputElement, data: Record<string, unknown>): boolean {
@@ -221,16 +225,17 @@ export class InputElement extends NodeElement {
 
   protected loadValue (): void {
     if (this.inputElement instanceof HTMLInputElement) {
-      this.inputElement.value = window.sessionStorage.getItem(this.id) ?? ''
+      this.inputElement.value = this.storage.getItem(this.id) ?? ''
+      this.requestUpdate()
     }
   }
 
   protected saveValue (): void {
     if (this.inputElement instanceof HTMLInputElement) {
       if (this.inputElement.value === '') {
-        window.sessionStorage.removeItem(this.id)
+        this.storage.removeItem(this.id)
       } else {
-        window.sessionStorage.setItem(this.id, this.inputElement.value)
+        this.storage.setItem(this.id, this.inputElement.value)
       }
     }
   }

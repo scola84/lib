@@ -1,8 +1,9 @@
 import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
 import { css, html } from 'lit'
 import { customElement, property, query } from 'lit/decorators.js'
+import { ClipElement } from './clip'
 import { InputElement } from './input'
-import type { InputEvent } from './input'
+import type { NodeElement } from './node'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -100,16 +101,27 @@ export class SelectElement extends InputElement {
     `
   ]
 
+  public static updaters = {
+    clip: (source: SelectElement, target: NodeElement, properties: PropertyValues): void => {
+      if (properties.has('hidden')) {
+        source.toggleChecked(!target.hidden).catch(() => {})
+      } else if (
+        source.checked === true &&
+        target.parentElement instanceof ClipElement
+      ) {
+        target.parentElement.toggleContentOrInner(target).catch(() => {})
+      }
+    },
+    select: (source: SelectElement, target: SelectElement): void => {
+      source.toggleChecked(target.checked).catch(() => {})
+    }
+  }
+
   @property({
     reflect: true,
     type: Boolean
   })
   public checked?: boolean
-
-  @property({
-    type: Number
-  })
-  public duration?: number
 
   @property({
     attribute: 'fill-checked',
@@ -126,18 +138,38 @@ export class SelectElement extends InputElement {
   @query('input[type="range"]', true)
   protected rangeElement: HTMLInputElement
 
+  protected updaters = SelectElement.updaters
+
   public appendValueTo (formData: FormData | URLSearchParams): void {
-    if (this.inputElement instanceof HTMLInputElement && this.isSuccessful(this.inputElement)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isSuccessful(this.inputElement)
+    ) {
       if (this.inputElement.checked) {
         formData.append(this.inputElement.name, this.inputElement.value)
       }
     }
   }
 
+  public connectedCallback (): void {
+    this.inputElement = this.querySelector<HTMLInputElement>(':scope > input, :scope > textarea')
+    super.connectedCallback()
+  }
+
   public firstUpdated (properties: PropertyValues): void {
-    super.firstUpdated(properties)
     this.checked = this.inputElement?.checked
-    this.rangeElement.value = String(Number(this.inputElement?.checked))
+
+    if (this.switch !== true) {
+      this.duration = 0
+    }
+
+    if (this.inputElement?.checked === true) {
+      this.rangeElement.value = '1'
+    } else {
+      this.rangeElement.value = '0'
+    }
+
+    super.firstUpdated(properties)
   }
 
   public render (): TemplateResult {
@@ -155,17 +187,37 @@ export class SelectElement extends InputElement {
     `
   }
 
-  public setValue (data: Record<string, unknown>): void {
-    this.clearError()
+  public setInput (data: Record<string, unknown>): void {
+    super.setInput(data)
 
-    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
-      if (data[this.inputElement.name] === this.inputElement.value) {
-        this.toggleChecked(true)
+    if (this.inputElement instanceof HTMLInputElement) {
+      if (data.checked === true) {
+        this.toggleChecked(true).catch(() => {})
       }
     }
   }
 
-  public toggleChecked (force?: boolean): void {
+  public setValue (data: Record<string, unknown>): void {
+    this.clearError()
+
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isDefined(this.inputElement, data)
+    ) {
+      if (data[this.inputElement.name] === this.inputElement.value) {
+        this.toggleChecked(true).catch(() => {})
+      }
+    }
+  }
+
+  public async toggleChecked (force?: boolean): Promise<void> {
+    if (
+      force !== undefined &&
+      this.checked === force
+    ) {
+      return
+    }
+
     if (this.inputElement instanceof HTMLInputElement) {
       this.checked = force ?? !(this.checked === true)
       this.inputElement.checked = this.checked
@@ -180,54 +232,40 @@ export class SelectElement extends InputElement {
       from = 1
     }
 
-    this.ease(from, to, ({ value }) => {
-      this.rangeElement.value = String(value)
-    }, {
-      duration: this.duration,
-      name: 'select'
+    await this.ease(from, to, (value) => {
+      this.rangeElement.value = `${value}`
     })
   }
 
   protected handleClick (): void {
     super.handleClick()
 
-    switch (this.inputElement?.type) {
-      case 'checkbox':
-        this.handleClickCheckbox()
-        break
-      case 'radio':
-        this.handleClickRadio()
-        break
-      default:
-        break
+    if (this.inputElement?.type === 'checkbox') {
+      this.handleClickCheckbox()
+    } else {
+      this.handleClickRadio()
     }
   }
 
   protected handleClickCheckbox (): void {
-    this.toggleChecked()
-
-    this.dispatchEvent(new CustomEvent<InputEvent['detail']>('scola-input', {
-      detail: {
-        origin: this,
-        text: this.inputElement?.nextElementSibling?.textContent,
-        value: this.inputElement?.value
-      }
-    }))
+    this
+      .toggleChecked()
+      .then(() => {
+        super.handleInput()
+      })
+      .catch(() => {})
   }
 
   protected handleClickRadio (): void {
-    this.parentElement
-      ?.querySelectorAll<SelectElement>('scola-select')
-      .forEach((selectElement: SelectElement) => {
-        selectElement.toggleChecked(selectElement === this)
+    Promise
+      .all(Array
+        .from(this.parentElement?.querySelectorAll<SelectElement>('scola-select') ?? [])
+        .map(async (selectElement: SelectElement) => {
+          return selectElement.toggleChecked(selectElement === this)
+        }))
+      .then(() => {
+        super.handleInput()
       })
-
-    this.dispatchEvent(new CustomEvent<InputEvent['detail']>('scola-input', {
-      detail: {
-        origin: this,
-        text: this.inputElement?.nextElementSibling?.textContent,
-        value: this.inputElement?.value
-      }
-    }))
+      .catch(() => {})
   }
 }

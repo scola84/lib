@@ -1,6 +1,8 @@
 import type { InputElement } from './input'
 import type { LogEvent } from './node'
+import type { PropertyValues } from 'lit'
 import { RequestElement } from './request'
+import type { SourceElement } from './source'
 import { customElement } from 'lit/decorators.js'
 
 declare global {
@@ -11,67 +13,75 @@ declare global {
 
 @customElement('scola-form')
 export class FormElement extends RequestElement {
+  public static updaters = {
+    ...RequestElement.updaters,
+    source: (source: FormElement, target: SourceElement): void => {
+      source.inputElements.forEach((inputElement) => {
+        if (FormElement.isObject(target.data)) {
+          inputElement.setValue(target.data)
+        }
+      })
+    }
+  }
+
   public data?: Record<string, unknown>
 
-  public method: RequestElement['method'] = 'POST'
+  public method = 'POST'
 
-  protected handleKeydownBound: (event: KeyboardEvent) => void
+  public wait = true
+
+  protected updaters = FormElement.updaters
 
   protected get hasFiles (): boolean {
-    return this.querySelector('input[type="file"]') !== null
+    return this.querySelector<HTMLInputElement>('input[type="file"]') !== null
   }
 
   protected get inputElements (): NodeListOf<InputElement> {
-    return this.querySelectorAll('scola-input, scola-picker, scola-select, scola-slider')
+    return this.querySelectorAll<InputElement>('scola-input, scola-picker, scola-select, scola-slider')
   }
 
-  public constructor () {
-    super()
-    this.handleKeydownBound = this.handleKeydown.bind(this)
-    this.addEventListener('keydown', this.handleKeydownBound)
+  public firstUpdated (properties: PropertyValues): void {
+    this.addEventListener('keydown', this.handleKeydown.bind(this))
     this.addEventListener('scola-log', this.handleLog.bind(this))
+    super.firstUpdated(properties)
   }
 
-  protected createRequest (): Request {
-    return new Request(this.createURL(), {
-      body: this.getValues(),
-      cache: this.cache,
-      credentials: this.credentials,
-      integrity: this.integrity,
-      keepalive: this.keepalive,
-      method: this.method,
-      mode: this.mode,
-      redirect: this.redirect,
-      referrer: this.referrer,
-      referrerPolicy: this.referrerPolicy,
-      signal: this.controller.signal
-    })
+  protected createBody (): FormData | URLSearchParams {
+    let data = null
+
+    if (this.hasFiles) {
+      data = new FormData()
+    } else {
+      data = new URLSearchParams()
+    }
+
+    return Array
+      .from(this.inputElements)
+      .reduce((result, inputElement: InputElement) => {
+        inputElement.appendValueTo(result)
+        return result
+      }, data)
   }
 
-  protected async finishJSON (): Promise<void> {
-    await super.finishJSON()
+  protected async handleFetch (): Promise<void> {
+    await super.handleFetch()
 
-    this.inputElements.forEach((inputElement: InputElement) => {
+    this.inputElements.forEach((inputElement) => {
       if (this.data !== undefined) {
-        if (this.code === 'ERR_INPUT_INVALID') {
+        if (this.code === 'err_400') {
           inputElement.setError(this.data)
         } else if (this.request?.method === 'GET') {
           inputElement.setValue(this.data)
         }
       }
     })
-  }
 
-  protected getValues (): FormData | URLSearchParams {
-    const data = this.hasFiles ? new FormData() : new URLSearchParams()
-
-    Array
-      .from(this.inputElements)
-      .forEach((inputElement: InputElement) => {
-        inputElement.appendValueTo(data)
-      })
-
-    return data
+    if (
+      this.request?.method !== 'GET' &&
+      this.code?.startsWith('ok_') === true
+    ) {
+      this.dispatchEvents()
+    }
   }
 
   protected handleKeydown (event: KeyboardEvent): void {
@@ -84,7 +94,7 @@ export class FormElement extends RequestElement {
   }
 
   protected handleLog (event: LogEvent): void {
-    if (event.detail?.code === 'ERR_INPUT_INVALID') {
+    if (event.detail?.code === 'err_400') {
       event.cancelBubble = true
     }
   }

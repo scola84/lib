@@ -7,11 +7,11 @@ import { css } from 'lit'
 
 declare global {
   interface HTMLElementEventMap {
-    'scola-clip-content': NodeEvent
-    'scola-clip-content-or-inner': NodeEvent
-    'scola-clip-inner': NodeEvent
-    'scola-clip-nested': NodeEvent
-    'scola-clip-outer': NodeEvent
+    'scola-clip-content': ClipEvent
+    'scola-clip-content-or-inner': ClipEvent
+    'scola-clip-inner': ClipEvent
+    'scola-clip-nested': ClipEvent
+    'scola-clip-outer': ClipEvent
   }
 
   interface HTMLElementTagNameMap {
@@ -19,15 +19,17 @@ declare global {
   }
 }
 
+export interface ClipEvent extends NodeEvent {
+  detail: Record<string, unknown> & {
+    id?: string
+  } | null
+}
+
 @customElement('scola-clip')
 export class ClipElement extends NodeElement {
   public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
     css`
-      slot[name="body"] {
-        overflow: hidden;
-      }
-
       slot[name="body"] slot[name] {
         z-index: 2;
       }
@@ -37,6 +39,10 @@ export class ClipElement extends NodeElement {
         flex: 0 0 100%;
         height: 100%;
         width: 100%;
+      }
+
+      :host([type="content"][resize]) slot:not([name])::slotted([hidden]) {
+        display: none;
       }
 
       :host([type="outer"]) slot[name="after"]::slotted(*),
@@ -77,78 +83,88 @@ export class ClipElement extends NodeElement {
   public amount?: 'any' | 'max-one' | 'min-one' | 'one'
 
   @property({
-    attribute: 'content-dimension'
-  })
-  public contentDimension?: 'height' | 'width'
-
-  @property({
-    attribute: 'content-duration',
-    type: Number
-  })
-  public contentDuration?: number
-
-  @property({
-    attribute: 'inner-duration',
-    type: Number
-  })
-  public innerDuration?: number
-
-  @property({
     attribute: 'inner-hidden',
     type: Boolean
   })
   public innerHidden?: boolean
 
   @property({
-    attribute: 'outer-duration',
-    type: Number
+    reflect: true,
+    type: Boolean
   })
-  public outerDuration?: number
+  public resize?: boolean
 
   @property({
     reflect: true
   })
   public type?: 'content' | 'inner' | 'nested' | 'outer'
 
-  protected get contentElements (): NodeListOf<HTMLElement> {
-    return this.querySelectorAll(':scope > :not([slot])')
-  }
+  protected contentElements: NodeListOf<HTMLElement>
 
-  protected get handleElement (): HTMLElement | null {
-    return this.querySelector(':scope > [is="handle"]')
-  }
+  protected handleContentBound: (event: NodeEvent) => void
 
-  protected get outerElements (): NodeListOf<HTMLElement> {
-    return this.querySelectorAll(':scope > [slot="after"], :scope > [slot="before"]')
-  }
+  protected handleContentOrInnerBound: (event: NodeEvent) => void
+
+  protected handleElement?: HTMLElement | null
+
+  protected handleInnerBound: (event: NodeEvent) => void
+
+  protected handleNestedBound: (event: NodeEvent) => void
+
+  protected handleOuterBound: (event: NodeEvent) => void
+
+  protected outerElements: NodeListOf<HTMLElement>
+
+  protected updaters = ClipElement.updaters
 
   public constructor () {
     super()
     this.dir = document.dir
-    this.addEventListener('click', this.handleClick.bind(this))
-    this.addEventListener('scola-view-move', this.handleViewMove.bind(this))
+    this.contentElements = this.querySelectorAll<HTMLElement>(':scope > :not([slot])')
+    this.handleElement = this.querySelector<HTMLElement>(':scope > [is="handle"]')
+    this.outerElements = this.querySelectorAll<HTMLElement>(':scope > [slot="after"], :scope > [slot="before"]')
+    this.handleContentBound = this.handleContent.bind(this)
+    this.handleContentOrInnerBound = this.handleContentOrInner.bind(this)
+    this.handleInnerBound = this.handleInner.bind(this)
+    this.handleNestedBound = this.handleNested.bind(this)
+    this.handleOuterBound = this.handleOuter.bind(this)
+  }
+
+  public connectedCallback (): void {
+    window.addEventListener('scola-clip-content', this.handleContentBound)
+    window.addEventListener('scola-clip-content-or-inner', this.handleContentOrInnerBound)
+    window.addEventListener('scola-clip-inner', this.handleInnerBound)
+    window.addEventListener('scola-clip-nested', this.handleNestedBound)
+    window.addEventListener('scola-clip-outer', this.handleOuterBound)
+    super.connectedCallback()
+  }
+
+  public disconnectedCallback (): void {
+    window.removeEventListener('scola-clip-content', this.handleContentBound)
+    window.removeEventListener('scola-clip-content-or-inner', this.handleContentOrInnerBound)
+    window.removeEventListener('scola-clip-inner', this.handleInnerBound)
+    window.removeEventListener('scola-clip-nested', this.handleNestedBound)
+    window.removeEventListener('scola-clip-outer', this.handleOuterBound)
+    super.disconnectedCallback()
   }
 
   public firstUpdated (properties: PropertyValues): void {
+    this.addEventListener('click', this.handleClick.bind(this))
+    this.addEventListener('scola-clip-content', this.handleContentBound)
+    this.addEventListener('scola-clip-content-or-inner', this.handleContentOrInnerBound)
+    this.addEventListener('scola-clip-inner', this.handleInnerBound)
+    this.addEventListener('scola-clip-nested', this.handleNestedBound)
+    this.addEventListener('scola-clip-outer', this.handleOuterBound)
+    this.addEventListener('scola-view-move', this.handleViewMove.bind(this))
+
     switch (this.type) {
       case 'content':
-        this.addEventListener('scola-clip-content', this.handleContent.bind(this))
-        this.addEventListener('scola-clip-content-or-inner', this.handleContentOrInner.bind(this))
         this.firstUpdatedContent()
         break
       case 'inner':
-        this.addEventListener('scola-clip-inner', this.handleInner.bind(this))
-
-        if (this.innerHidden === true) {
-          this.firstUpdatedInner()
-        }
-
-        break
-      case 'nested':
-        this.addEventListener('scola-clip-nested', this.handleNested.bind(this))
+        this.firstUpdatedInner()
         break
       case 'outer':
-        this.addEventListener('scola-clip-outer', this.handleOuter.bind(this))
         this.firstUpdatedOuter()
         break
       default:
@@ -158,120 +174,145 @@ export class ClipElement extends NodeElement {
     super.firstUpdated(properties)
   }
 
-  public hideContent (element: HTMLElement): void {
+  public async hideContent (element: HTMLElement): Promise<void> {
     element.hidden = true
+    return Promise.resolve()
   }
 
-  public hideInner (duration = this.innerDuration, callback = (): void => {}): void {
+  public async hideContentOrInner (element: HTMLElement, duration = this.duration): Promise<void> {
+    const promises = []
+
+    if (this.innerHidden !== true) {
+      promises.push(this.hideInner(duration))
+    }
+
+    promises.push(this.hideContent(element))
+    await Promise.all(promises)
+  }
+
+  public async hideInner (duration = this.duration): Promise<void> {
+    if (duration === 0) {
+      this.defaultSlotElement.style.setProperty('display', 'none')
+    }
+
     const name = this.determineInnerPropertyName()
+    const to = this.determineInnerPropertyValue(this.defaultSlotElement)
 
-    let to = this.defaultSlotElement instanceof HTMLSlotElement
-      ? this.determineInnerPropertyValue(this.defaultSlotElement)
-      : 0
-
-    to = Number.isNaN(to) ? 0 : to
-
-    this.ease(0, to, ({ done, value }) => {
-      this.defaultSlotElement?.style.setProperty(name, `-${value}px`)
-
-      if (done) {
-        if (this.defaultSlotElement instanceof HTMLSlotElement) {
-          this.defaultSlotElement.hidden = true
-        }
-
-        callback()
-      }
-    }, {
-      duration,
-      name: 'inner'
-    })
+    await this.defaultSlotElement
+      .animate([{
+        [name]: '0px'
+      }, {
+        [name]: `-${to}px`
+      }], {
+        duration,
+        easing: this.easing,
+        fill: 'forwards'
+      })
+      .finished
+      .then(() => {
+        this.innerHidden = true
+      })
   }
 
-  public hideOuter (element: HTMLElement, duration = this.outerDuration, callback = (): void => {}): void {
+  public async hideOuter (element: HTMLElement, duration = this.duration): Promise<void> {
+    if (duration === 0) {
+      element.style.setProperty('display', 'none')
+    }
+
     if (window.getComputedStyle(element).position === 'relative') {
       this.setZIndexRelative(element)
     }
 
     const name = this.determineOuterPropertyName(element)
-    let to = this.determineOuterPropertyValue(element)
+    const to = this.determineOuterPropertyValue(element)
 
-    to = Number.isNaN(to) ? 0 : to
-
-    this.ease(0, to, ({ done, value }) => {
-      element.style.setProperty(name, `-${value}px`)
-
-      if (done) {
+    await element
+      .animate([{
+        [name]: `-${to}px`
+      }], {
+        duration,
+        easing: this.easing,
+        fill: 'forwards'
+      })
+      .finished
+      .then(() => {
         if (window.getComputedStyle(element).position === 'absolute') {
           element.style.removeProperty('z-index')
         }
 
         element.hidden = true
-        callback()
-      }
-    }, {
-      duration,
-      name: `outer-${element.id}`
-    })
+      })
   }
 
-  public showContent (element: HTMLElement, duration = this.contentDuration, callback = (): void => {}): void {
+  public async showContent (element: HTMLElement, duration = this.duration): Promise<void> {
     const contentElements = Array.from(this.contentElements)
-    const dimensionName = this.flow === 'row' ? 'width' : 'height'
-    const scrollName = this.flow === 'row' ? 'scrollLeft' : 'scrollTop'
+    const style = window.getComputedStyle(element.assignedSlot ?? element)
 
-    const from = this.defaultSlotElement instanceof HTMLSlotElement
-      ? this.defaultSlotElement[scrollName]
-      : 0
+    let dimensionName: 'height' | 'width' = 'height'
+    let scrollName: 'scrollLeft' | 'scrollTop' = 'scrollTop'
+    let toFactor = 1
 
-    const to =
-      contentElements.indexOf(element) *
-      element.getBoundingClientRect()[dimensionName] *
-      (this.dir === 'rtl' ? -1 : 1)
+    if (this.flow === 'row') {
+      dimensionName = 'width'
+      scrollName = 'scrollLeft'
+    }
+
+    if (this.dir === 'rtl') {
+      toFactor = -1
+    }
+
+    const from = this.defaultSlotElement[scrollName]
+    const index = contentElements.indexOf(element)
+    const size = parseFloat(style[dimensionName])
+
+    if (Number.isNaN(size)) {
+      return
+    }
+
+    const to = index * size * toFactor
 
     contentElements.forEach((contentElement) => {
       contentElement.hidden = contentElement !== element
     })
 
-    this.ease(from, to, ({ done, value }) => {
-      if (this.defaultSlotElement instanceof HTMLSlotElement) {
-        this.defaultSlotElement[scrollName] = value
-      }
-
-      if (done) {
-        callback()
-      }
-    }, {
-      duration,
-      name: 'content'
-    })
+    await this.ease(from, to, (value) => {
+      this.defaultSlotElement[scrollName] = value
+    }, duration)
   }
 
-  public showInner (duration = this.innerDuration, callback = (): void => {}): void {
-    this.defaultSlotElement?.style.removeProperty('display')
+  public async showContentOrInner (element: HTMLElement, duration = this.duration): Promise<void> {
+    const promises = []
 
-    const from = this.defaultSlotElement instanceof HTMLSlotElement
-      ? this.determineInnerPropertyValue(this.defaultSlotElement)
-      : 0
+    if (this.innerHidden === true) {
+      promises.push(this.showInner(duration))
+    }
+
+    promises.push(this.showContent(element, duration))
+    await Promise.all(promises)
+  }
+
+  public async showInner (duration = this.duration): Promise<void> {
+    this.defaultSlotElement.style.removeProperty('display')
 
     const name = this.determineInnerPropertyName()
+    const from = this.determineInnerPropertyValue(this.defaultSlotElement)
 
-    this.ease(from, 0, ({ done, value }) => {
-      this.defaultSlotElement?.style.setProperty(name, `-${value}px`)
+    this.innerHidden = false
 
-      if (done) {
-        callback()
-      }
-    }, {
-      duration,
-      name: 'inner'
-    })
-
-    if (this.defaultSlotElement instanceof HTMLSlotElement) {
-      this.defaultSlotElement.hidden = false
-    }
+    await this.defaultSlotElement
+      .animate([{
+        [name]: `-${from}px`
+      }, {
+        [name]: '0px'
+      }], {
+        duration,
+        easing: this.easing,
+        fill: 'forwards'
+      })
+      .finished
   }
 
-  public showOuter (element: HTMLElement, duration = this.outerDuration, callback = (): void => {}): void {
+  public async showOuter (element: HTMLElement, duration = this.duration): Promise<void> {
     element.style.removeProperty('display')
 
     const name = this.determineOuterPropertyName(element)
@@ -283,107 +324,108 @@ export class ClipElement extends NodeElement {
       this.setZIndexRelative(element)
     }
 
-    this.ease(from, 0, ({ done, value }) => {
-      element.style.setProperty(name, `-${value}px`)
+    element.hidden = false
 
-      if (done) {
-        callback()
-      }
-    }, {
-      duration,
-      name: `outer-${element.id}`
+    await element
+      .animate([{
+        [name]: `-${from}px`
+      }, {
+        [name]: '0px'
+      }], {
+        duration,
+        easing: this.easing,
+        fill: 'forwards'
+      })
+      .finished
+  }
+
+  public async toggleContent (element: HTMLElement, duration = this.duration): Promise<void> {
+    if (element.hidden) {
+      await this.showContent(element, duration)
+    } else {
+      await this.hideContent(element)
+    }
+  }
+
+  public async toggleContentOrInner (element: HTMLElement, duration = this.duration): Promise<void> {
+    if (element.hidden) {
+      await this.showContentOrInner(element, duration)
+    } else {
+      await this.hideContentOrInner(element, duration)
+    }
+  }
+
+  public async toggleInner (duration = this.duration): Promise<void> {
+    if (this.innerHidden === true) {
+      await this.showInner(duration)
+    } else {
+      await this.hideInner(duration)
+    }
+  }
+
+  public async toggleNested (element: HTMLElement, duration = this.duration): Promise<void> {
+    const contentElements = Array.from(this.contentElements)
+
+    const visibleElements = contentElements.filter((contentElement) => {
+      return contentElement instanceof ClipElement &&
+        contentElement.innerHidden === false
     })
 
-    element.hidden = false
-  }
-
-  public toggleContent (element: HTMLElement): void {
-    if (element.hidden) {
-      this.showContent(element)
-    } else {
-      this.hideContent(element)
-    }
-  }
-
-  public toggleContentOrInner (element: HTMLElement): void {
-    if (element.hidden) {
-      if (this.defaultSlotElement?.hidden === true) {
-        this.showInner()
-      }
-
-      this.showContent(element)
-    } else {
-      if (this.defaultSlotElement?.hidden !== true) {
-        this.hideInner()
-      }
-
-      this.hideContent(element)
-    }
-  }
-
-  public toggleInner (): void {
-    if (this.defaultSlotElement?.hidden === true) {
-      this.showInner()
-    } else {
-      this.hideInner()
-    }
-  }
-
-  public toggleNested (element: HTMLElement): void {
-    const countNotHidden = Array.from(this.contentElements).reduce(
-      (count, contentElement): number => {
-        return contentElement instanceof ClipElement
-          ? count + (contentElement.defaultSlotElement?.hidden === true ? 0 : 1)
-          : count
-      },
-      0
-    )
-
-    this.contentElements.forEach((contentElement) => {
+    await Promise.all(contentElements.map(async (contentElement) => {
       if (contentElement instanceof ClipElement) {
         if (contentElement === element) {
-          if (contentElement.defaultSlotElement?.hidden === true) {
-            contentElement.showInner()
+          if (contentElement.innerHidden === true) {
+            await contentElement.showInner(duration)
           } else if (this.amount === 'min-one') {
-            if (countNotHidden > 1) {
-              contentElement.hideInner()
+            if (visibleElements.length > 1) {
+              await contentElement.hideInner(duration)
             }
           } else if (this.amount === 'any') {
-            contentElement.hideInner()
+            await contentElement.hideInner(duration)
           }
         } else if (this.amount === 'max-one') {
-          if (contentElement.defaultSlotElement?.hidden !== true) {
-            contentElement.hideInner()
+          if (contentElement.innerHidden === false) {
+            await contentElement.hideInner(duration)
           }
         } else if (this.amount === 'one') {
-          if (contentElement.defaultSlotElement?.hidden !== true) {
-            contentElement.hideInner()
+          if (contentElement.innerHidden === false) {
+            await contentElement.hideInner(duration)
           }
         }
       }
-    })
+    }))
   }
 
-  public toggleOuter (element: HTMLElement): void {
+  public async toggleOuter (element: HTMLElement, duration = this.duration): Promise<void> {
     if (element.hidden) {
-      this.showOuter(element)
+      await this.showOuter(element, duration)
     } else {
-      this.hideOuter(element)
+      await this.hideOuter(element, duration)
     }
   }
 
   protected determineInnerPropertyName (): string {
-    const slotName = this.handleElement?.assignedSlot?.name
+    const slotName = this.handleElement?.assignedSlot?.name ?? 'default'
 
-    switch (slotName) {
-      case 'after':
-        return this.dir === 'rtl' ? 'margin-left' : 'margin-right'
-      case 'before':
-        return this.dir === 'rtl' ? 'margin-right' : 'margin-left'
-      case 'footer':
-        return 'margin-bottom'
-      case 'header':
-        return 'margin-top'
+    let { dir } = this
+
+    if (dir === '') {
+      dir = 'ltr'
+    }
+
+    switch (`${slotName}-${dir}`) {
+      case 'after-ltr':
+      case 'before-rtl':
+        return 'marginRight'
+      case 'after-rtl':
+      case 'before-ltr':
+        return 'marginLeft'
+      case 'footer-ltr':
+      case 'footer-rtl':
+        return 'marginBottom'
+      case 'header-ltr':
+      case 'header-rtl':
+        return 'marginTop'
       default:
         return ''
     }
@@ -393,30 +435,45 @@ export class ClipElement extends NodeElement {
     const style = window.getComputedStyle(element)
     const slotName = this.handleElement?.assignedSlot?.name
 
-    if (slotName === undefined) {
-      return 0
+    let value = 0
+
+    if (
+      slotName === 'after' ||
+      slotName === 'before'
+    ) {
+      value = parseInt(style.width, 10)
+    } else {
+      value = parseInt(style.height, 10)
     }
 
-    if (slotName === 'after' || slotName === 'before') {
-      return parseInt(style.width, 10)
+    if (Number.isNaN(value)) {
+      value = 0
     }
 
-    return parseInt(style.height, 10)
+    return value
   }
 
   protected determineOuterPropertyName (element: HTMLElement): string {
     const flow = this.flow ?? ''
     const slotName = element.assignedSlot?.name ?? ''
 
-    switch (`${flow}-${slotName}`) {
+    let { dir } = this
+
+    if (dir === '') {
+      dir = 'ltr'
+    }
+
+    switch (`${flow}-${slotName}-${dir}`) {
       case 'column-after':
-        return 'margin-bottom'
+        return 'marginBottom'
       case 'column-before':
-        return 'margin-top'
-      case 'row-after':
-        return this.dir === 'rtl' ? 'margin-left' : 'margin-right'
-      case 'row-before':
-        return this.dir === 'rtl' ? 'margin-right' : 'margin-left'
+        return 'marginTop'
+      case 'row-after-ltr':
+      case 'row-before-rtl':
+        return 'marginRight'
+      case 'row-after-rtl':
+      case 'row-before-ltr':
+        return 'marginLeft'
       default:
         return ''
     }
@@ -425,45 +482,58 @@ export class ClipElement extends NodeElement {
   protected determineOuterPropertyValue (element: HTMLElement): number {
     const style = window.getComputedStyle(element)
 
+    let value = 0
+
     if (this.flow === 'row') {
-      return parseInt(style.width, 10)
+      value = parseInt(style.width, 10)
+    } else {
+      value = parseInt(style.height, 10)
     }
 
-    return parseInt(style.height, 10)
+    if (Number.isNaN(value)) {
+      value = 0
+    }
+
+    return value
   }
 
   protected firstUpdatedContent (): void {
-    if (this.defaultSlotElement instanceof HTMLSlotElement) {
-      this.defaultSlotElement.scrollLeft = 0
-      this.defaultSlotElement.scrollTop = 0
-    }
+    this.defaultSlotElement.scrollLeft = 0
+    this.defaultSlotElement.scrollTop = 0
 
     Array
       .from(this.contentElements)
-      .forEach((element, index) => {
-        if (index === 0 && this.innerHidden === true) {
+      .forEach((contentElement, index) => {
+        if (
+          index === 0 &&
+          this.innerHidden === true
+        ) {
           this.firstUpdatedInner()
         }
 
-        element.hidden = index !== 0
+        if (!contentElement.hidden) {
+          contentElement.hidden = index !== 0
+        }
       })
   }
 
   protected firstUpdatedInner (): void {
-    if (this.defaultSlotElement instanceof HTMLSlotElement) {
-      this.defaultSlotElement.style.setProperty('display', 'none')
-      this.defaultSlotElement.hidden = true
-    }
+    this.defaultSlotElement.style.setProperty('display', 'none')
+    this.innerHidden = true
   }
 
   protected firstUpdatedOuter (): void {
     Array
       .from(this.outerElements)
-      .forEach((element) => {
-        if (element.hidden || window.getComputedStyle(element).position === 'absolute') {
-          element.style.setProperty('display', 'none')
-          element.hidden = true
-        }
+      .forEach((outerElement) => {
+        window.requestAnimationFrame(() => {
+          if (
+            outerElement.hidden ||
+            window.getComputedStyle(outerElement).position === 'absolute'
+          ) {
+            this.hideOuter(outerElement, 0).catch(() => {})
+          }
+        })
       })
   }
 
@@ -472,61 +542,70 @@ export class ClipElement extends NodeElement {
 
     Array
       .from(this.outerElements)
-      .forEach((element) => {
+      .forEach((outerElement) => {
         if (
-          !path.includes(element) &&
-          !element.hidden &&
-          window.getComputedStyle(element).position === 'absolute'
+          !path.includes(outerElement) &&
+          !outerElement.hidden &&
+          window.getComputedStyle(outerElement).position === 'absolute'
         ) {
-          this.hideOuter(element)
+          this.hideOuter(outerElement).catch(() => {})
         }
       })
   }
 
-  protected handleContent (event: NodeEvent): void {
-    const element = this.querySelector<HTMLElement>(`#${event.detail?.target ?? ''}`)
+  protected handleContent (event: ClipEvent): void {
+    if (this.isTarget(event)) {
+      const element = this.querySelector<HTMLElement>(`#${event.detail?.id ?? ''}`)
 
-    if (element instanceof HTMLElement) {
-      event.cancelBubble = true
-      this.toggleContent(element)
+      if (element instanceof HTMLElement) {
+        event.cancelBubble = true
+        this.showContent(element).catch(() => {})
+      }
     }
   }
 
-  protected handleContentOrInner (event: NodeEvent): void {
-    const element = this.querySelector<HTMLElement>(`#${event.detail?.target ?? ''}`)
+  protected handleContentOrInner (event: ClipEvent): void {
+    if (this.isTarget(event)) {
+      if (event.detail?.id === undefined) {
+        this.toggleInner().catch(() => {})
+        return
+      }
 
-    if (element instanceof HTMLElement) {
-      event.cancelBubble = true
-      this.toggleContentOrInner(element)
+      const element = this.querySelector<HTMLElement>(`#${event.detail.id}`)
+
+      if (element instanceof HTMLElement) {
+        event.cancelBubble = true
+        this.toggleContentOrInner(element).catch(() => {})
+      }
     }
   }
 
-  protected handleInner (event: Event): void {
-    event.cancelBubble = true
-    this.toggleInner()
-  }
-
-  protected handleNested (event: Event): void {
-    const path = event.composedPath()
-
-    const element = Array
-      .from(this.contentElements)
-      .find((contentElement) => {
-        return path.includes(contentElement)
-      })
-
-    if (element instanceof HTMLElement) {
+  protected handleInner (event: ClipEvent): void {
+    if (this.isTarget(event)) {
       event.cancelBubble = true
-      this.toggleNested(element)
+      this.toggleInner().catch(() => {})
     }
   }
 
-  protected handleOuter (event: NodeEvent): void {
-    const element = this.querySelector<HTMLElement>(`#${event.detail?.target ?? ''}`)
+  protected handleNested (event: ClipEvent): void {
+    if (this.isTarget(event)) {
+      const element = this.querySelector<HTMLElement>(`#${event.detail?.id ?? ''}`)
 
-    if (element instanceof HTMLElement) {
-      event.cancelBubble = true
-      this.toggleOuter(element)
+      if (element instanceof HTMLElement) {
+        event.cancelBubble = true
+        this.toggleNested(element).catch(() => {})
+      }
+    }
+  }
+
+  protected handleOuter (event: ClipEvent): void {
+    if (this.isTarget(event)) {
+      const element = this.querySelector<HTMLElement>(`#${event.detail?.id ?? ''}`)
+
+      if (element instanceof HTMLElement) {
+        event.cancelBubble = true
+        this.toggleOuter(element).catch(() => {})
+      }
     }
   }
 
@@ -536,50 +615,54 @@ export class ClipElement extends NodeElement {
     if (
       this.defaultSlotElement instanceof HTMLSlotElement &&
       path.includes(this.defaultSlotElement) &&
-      this.defaultSlotElement.hidden
+      this.innerHidden === true
     ) {
-      this.showInner()
+      this.showInner().catch(() => {})
     }
 
     Array
       .from(this.contentElements)
-      .forEach((element) => {
-        if (path.includes(element)) {
-          if (element.hidden) {
-            this.showContent(element)
+      .forEach((contentElement) => {
+        if (path.includes(contentElement)) {
+          if (contentElement.hidden) {
+            this.showContent(contentElement).catch(() => {})
           }
-        } else if (!element.hidden) {
-          this.hideContent(element)
+        } else if (!contentElement.hidden) {
+          this.hideContent(contentElement).catch(() => {})
         }
       })
 
     Array
       .from(this.outerElements)
-      .forEach((element) => {
-        if (path.includes(element)) {
-          if (element.hidden) {
-            this.showOuter(element)
+      .forEach((outerElement) => {
+        if (path.includes(outerElement)) {
+          if (outerElement.hidden) {
+            this.showOuter(outerElement).catch(() => {})
           }
-        } else if (!element.hidden && window.getComputedStyle(element).position === 'absolute') {
-          this.hideOuter(element)
+        } else if (
+          !outerElement.hidden &&
+          window.getComputedStyle(outerElement).position === 'absolute'
+        ) {
+          this.hideOuter(outerElement).catch(() => {})
         }
       })
   }
 
   protected setZIndexAbsolute (element: HTMLElement): void {
-    element.style.setProperty(
-      'z-index',
-      String(2 + Array
-        .from(this.outerElements)
-        .map((outerElement) => {
-          return outerElement === element
-            ? 0
-            : Number(outerElement.style.getPropertyValue('z-index'))
-        })
-        .reduce((left, right) => {
-          return Math.max(left, right)
-        }, 0))
-    )
+    const zIndex = 2 + Array
+      .from(this.outerElements)
+      .map((outerElement) => {
+        if (outerElement === element) {
+          return 0
+        }
+
+        return parseFloat(outerElement.style.getPropertyValue('z-index'))
+      })
+      .reduce((left, right) => {
+        return Math.max(left, right)
+      }, 0)
+
+    element.style.setProperty('z-index', `${zIndex}`)
   }
 
   protected setZIndexRelative (element: HTMLElement): void {
@@ -589,7 +672,7 @@ export class ClipElement extends NodeElement {
       if (assignedElement instanceof HTMLElement) {
         assignedElement.style.setProperty(
           'z-index',
-          String(1 + assignedElements.length - assignedElements.indexOf(assignedElement))
+          `${1 + assignedElements.length - assignedElements.indexOf(assignedElement)}`
         )
       }
     })

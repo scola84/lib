@@ -1,6 +1,7 @@
 import { customElement, property } from 'lit/decorators.js'
 import type { CSSResultGroup } from 'lit'
 import { ClipElement } from './clip'
+import type { DialogElement } from './dialog'
 import { css } from 'lit'
 
 declare global {
@@ -403,8 +404,10 @@ export class AppElement extends ClipElement {
 
   public width: ClipElement['width'] = 'max'
 
+  protected updaters = AppElement.updaters
+
   protected get hasDialogs (): boolean {
-    return this.shadowRoot?.querySelector('scola-dialog') !== null
+    return this.shadowRoot?.querySelector<DialogElement>('scola-dialog') !== null
   }
 
   protected handleClick (event: Event): void {

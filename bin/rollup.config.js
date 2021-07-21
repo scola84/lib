@@ -37,9 +37,9 @@ module.exports = [{
       declarationDir: 'types',
       tsconfig: 'src/client/tsconfig.json'
     }),
-    arg.w || arg.watch ? {} : gzip(),
-    arg.w || arg.watch ? {} : terser.terser(),
-    arg.l || arg.livereload ? reload('dist/client/umd.js') : {}
+    (!arg.w && !arg.watch) && gzip(),
+    (!arg.w && !arg.watch) && terser.terser(),
+    (arg.l || arg.livereload) && reload('dist/client/umd.js')
   ]
 }, {
   external: (id) => {

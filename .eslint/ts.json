@@ -8,6 +8,7 @@
     "eslint-plugin-tsdoc"
   ],
   "rules": {
+    "@typescript-eslint/consistent-indexed-object-style": "off",
     "@typescript-eslint/member-ordering": [
       "error",
       {

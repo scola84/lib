@@ -290,85 +290,111 @@ export class SliderElement extends InputElement {
   ]
 
   @property({
-    type: Number
-  })
-  public duration?: number
-
-  @property({
     attribute: 'fill-progress',
     reflect: true
   })
   public fillProgress?: 'sig-1' | 'sig-2'
 
-  protected get valueElement (): FormatElement | null {
-    return this.querySelector<FormatElement>('[is="value"]')
-  }
+  protected handleMaxBound: (event: NodeEvent) => void
+
+  protected handleMinBound: (event: NodeEvent) => void
+
+  protected updaters = SliderElement.updaters
+
+  protected valueElement?: FormatElement | null
 
   public constructor () {
     super()
     this.dir = document.dir
+    this.handleMaxBound = this.handleMax.bind(this)
+    this.handleMinBound = this.handleMin.bind(this)
+    this.valueElement = this.querySelector<FormatElement>('[is="value"]')
   }
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (this.inputElement instanceof HTMLInputElement && this.isSuccessful(this.inputElement)) {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.isSuccessful(this.inputElement)
+    ) {
       data.append(this.inputElement.name, this.inputElement.value)
     }
   }
 
+  public connectedCallback (): void {
+    window.addEventListener('scola-slider-max', this.handleMaxBound)
+    window.addEventListener('scola-slider-min', this.handleMinBound)
+    super.connectedCallback()
+  }
+
+  public disconnectedCallback (): void {
+    window.removeEventListener('scola-slider-max', this.handleMaxBound)
+    window.removeEventListener('scola-slider-min', this.handleMinBound)
+    super.disconnectedCallback()
+  }
+
   public firstUpdated (properties: PropertyValues): void {
-    super.firstUpdated(properties)
-    this.addEventListener('scola-slider-max', this.handleMax.bind(this))
-    this.addEventListener('scola-slider-min', this.handleMin.bind(this))
+    this.addEventListener('scola-slider-max', this.handleMaxBound)
+    this.addEventListener('scola-slider-min', this.handleMinBound)
     this.inputElement?.addEventListener('input', this.handleSlide.bind(this))
     this.inputElement?.style.setProperty('--max', this.inputElement.max)
     this.inputElement?.style.setProperty('--min', this.inputElement.min)
     this.setValueStyle()
     this.setValueText()
+    super.firstUpdated(properties)
   }
 
-  public setMax (): void {
+  public async setMax (): Promise<void> {
     this.clearError()
 
     const {
       name,
-      max,
-      value
+      max = '',
+      value = ''
     } = this.inputElement ?? {}
 
-    this.ease(Number(value), Number(max), ({ value: newValue }) => {
+    const from = parseFloat(value)
+    const to = parseFloat(max)
+
+    if (
+      Number.isNaN(from) ||
+      Number.isNaN(to)
+    ) {
+      return
+    }
+
+    await this.ease(from, to, (newValue) => {
       this.setValue({ [name ?? '']: newValue })
-    }, {
-      duration: this.duration,
-      name: 'slider'
     })
   }
 
-  public setMin (): void {
+  public async setMin (): Promise<void> {
     this.clearError()
 
     const {
       name,
-      min,
-      value
+      min = '',
+      value = ''
     } = this.inputElement ?? {}
 
-    this.ease(Number(value), Number(min), ({ value: newValue }) => {
+    const from = parseFloat(value)
+    const to = parseFloat(min)
+
+    if (
+      Number.isNaN(from) ||
+      Number.isNaN(to)
+    ) {
+      return
+    }
+
+    await this.ease(from, to, (newValue) => {
       this.setValue({ [name ?? '']: newValue })
-    }, {
-      duration: this.duration,
-      name: 'slider'
     })
   }
 
   public setValue (data: Record<string, unknown>): void {
-    this.clearError()
-
-    if (this.inputElement instanceof HTMLInputElement && this.isDefined(this.inputElement, data)) {
-      this.inputElement.value = String(data[this.inputElement.name])
-    }
-
+    super.setValue(data)
     this.setValueStyle()
     this.setValueText()
   }
@@ -379,12 +405,16 @@ export class SliderElement extends InputElement {
     this.setValueText()
   }
 
-  protected handleMax (): void {
-    this.setMax()
+  protected handleMax (event: NodeEvent): void {
+    if (this.isTarget(event)) {
+      this.setMax().catch(() => {})
+    }
   }
 
-  protected handleMin (): void {
-    this.setMin()
+  protected handleMin (event: NodeEvent): void {
+    if (this.isTarget(event)) {
+      this.setMin().catch(() => {})
+    }
   }
 
   protected handleSlide (): void {

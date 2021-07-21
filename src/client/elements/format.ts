@@ -1,7 +1,9 @@
 import { customElement, property } from 'lit/decorators.js'
 import Format from 'intl-messageformat'
 import { NodeElement } from './node'
+import type { SourceElement } from './source'
 import type { TemplateResult } from 'lit'
+import type { ViewElement } from './view'
 import { html } from 'lit'
 
 declare global {
@@ -12,9 +14,23 @@ declare global {
 
 @customElement('scola-format')
 export class FormatElement extends NodeElement {
-  public static lang = 'nl'
+  public static lang = 'en'
 
-  public static strings: Record<string, Record<string, string> | undefined> = {}
+  public static strings: Partial<Record<string, Record<string, string>>> = {}
+
+  public static updaters = {
+    ...NodeElement.updaters,
+    source: (source: FormatElement, target: SourceElement): void => {
+      if (FormatElement.isObject(target.data)) {
+        source.data = target.data
+      }
+    },
+    view: (source: FormatElement, target: ViewElement): void => {
+      source.data = {
+        title: target.view?.element?.viewTitle
+      }
+    }
+  }
 
   @property()
   public code?: string
@@ -24,30 +40,21 @@ export class FormatElement extends NodeElement {
   })
   public data?: Record<string, unknown>
 
-  public format (string: string, language = FormatElement.lang, data?: Record<string, unknown>): string {
-    try {
-      return String(new Format(FormatElement.strings[language]?.[string] ?? string, language).format(data))
-    } catch (error: unknown) {
-      return string
-    }
-  }
+  protected updaters = FormatElement.updaters
 
-  public lookup (string: string, language = FormatElement.lang): string | undefined {
-    const strings = FormatElement.strings[language] ?? {}
-
-    const foundCode = Object
-      .keys(strings)
-      .find((code) => {
-        return strings[code].toLowerCase() === string.toLowerCase()
-      })
-
-    return foundCode
+  public format (code: string, language = FormatElement.lang, data?: Record<string, unknown>): string {
+    return String(new Format(FormatElement.strings[language]?.[code] ?? code, language).format(data))
   }
 
   public render (): TemplateResult {
-    const code = this.code?.toLowerCase() ?? ''
+    const code = this.code ?? ''
     const data = this.data ?? this.dataset
-    const language = this.lang === '' ? undefined : this.lang
+
+    let language: string | undefined = this.lang
+
+    if (language === '') {
+      language = undefined
+    }
 
     const template = html`
       <slot name="body">

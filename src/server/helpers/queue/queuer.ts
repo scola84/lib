@@ -322,17 +322,21 @@ export class Queuer {
    * @param message - The message received by the listener
    */
   protected async handleListener (message: string): Promise<void> {
-    const {
-      id,
-      parameters
-    } = JSON.parse(message) as QueuerMessage
+    try {
+      const {
+        id,
+        parameters
+      } = JSON.parse(message) as QueuerMessage
 
-    if (id !== undefined) {
-      const queue = await this.selectQueue(id)
+      if (id !== undefined) {
+        const queue = await this.selectQueue(id)
 
-      if (queue !== undefined) {
-        await this.run(queue, parameters)
+        if (queue !== undefined) {
+          await this.run(queue, parameters)
+        }
       }
+    } catch (error: unknown) {
+      this.logger.error({ context: 'handle-listener' }, String(error))
     }
   }
 

@@ -4,10 +4,12 @@ import type { Queuer } from '../queue'
 import type { Server } from '../fastify'
 import { isMatch } from 'micromatch'
 
-export type Services = Record<string, {
-  queues?: Record<string, () => void>
-  routes?: Record<string, () => void>
-}>
+export interface Services {
+  [key: string]: {
+    queues?: Record<string, () => void>
+    routes?: Record<string, () => void>
+  }
+}
 
 export interface ServiceManagerOptions {
   /**
@@ -214,15 +216,16 @@ export class ServiceManager {
           return database.start()
         }))
 
-        await Promise.all([
-          isMatch('server', this.types) ? this.server?.start(false) : null,
-          isMatch('queuer', this.types) ? this.queuer?.start(false) : null
-        ])
+        if (isMatch('server', this.types)) {
+          await this.server?.start(false)
+        }
+
+        if (isMatch('queuer', this.types)) {
+          await this.queuer?.start(false)
+        }
 
         if (this.signal !== null) {
-          this.process.once(this.signal, () => {
-            this.stop()
-          })
+          this.process.once(this.signal, this.stop.bind(this))
         }
       })
       .catch((error) => {
@@ -249,10 +252,13 @@ export class ServiceManager {
           types: this.types
         }, 'Stopping service manager')
 
-        await Promise.all([
-          isMatch('server', this.types) ? this.server?.stop() : null,
-          isMatch('queuer', this.types) ? this.queuer?.stop() : null
-        ])
+        if (isMatch('server', this.types)) {
+          await this.server?.stop()
+        }
+
+        if (isMatch('queuer', this.types)) {
+          await this.queuer?.stop()
+        }
 
         await Promise.all(Object.values(this.databases ?? {}).map(async (database) => {
           return database.stop()

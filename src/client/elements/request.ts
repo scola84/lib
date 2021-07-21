@@ -1,4 +1,4 @@
-import type { LogEvent, NodeEvent, NodeResult } from './node'
+import type { LogEvent, NodeEvent } from './node'
 import { customElement, property } from 'lit/decorators.js'
 import type { AuthEvent } from './auth'
 import { NodeElement } from './node'
@@ -16,24 +16,16 @@ declare global {
   }
 
   interface WindowEventMap {
-    'scola-request-abort': NodeEvent
-    'scola-request-start': NodeEvent
-    'scola-request-toggle': NodeEvent
+    'scola-request-abort': RequestEvent
+    'scola-request-start': RequestEvent
+    'scola-request-toggle': RequestEvent
   }
 }
 
-export interface RequestFinishEvent {
-  detail: {
-    code?: string
-    data?: unknown
-    origin: HTMLElement
-  } | null
-}
-
-export interface RequestReadEvent {
-  detail: {
-    buffer: Uint8Array | undefined
-    origin: HTMLElement
+export interface RequestEvent extends NodeEvent {
+  detail: Record<string, unknown> & RequestInit & {
+    origin?: HTMLElement
+    url?: string
   } | null
 }
 
@@ -52,6 +44,11 @@ export class RequestElement extends NodeElement {
   @property()
   public credentials?: Request['credentials']
 
+  @property({
+    attribute: false
+  })
+  public data?: unknown
+
   @property()
   public integrity?: Request['integrity']
 
@@ -63,10 +60,10 @@ export class RequestElement extends NodeElement {
   @property({
     type: Number
   })
-  public loaded = 0
+  public loaded: number
 
   @property()
-  public method?: Request['method']
+  public method: Request['method'] = 'GET'
 
   @property()
   public mode?: Request['mode']
@@ -86,17 +83,12 @@ export class RequestElement extends NodeElement {
   public referrerPolicy?: Request['referrerPolicy']
 
   @property({
-    type: Boolean
-  })
-  public started?: boolean
-
-  @property({
     type: Number
   })
-  public total = 0
+  public total: number
 
   @property()
-  public url?: string
+  public url?: Request['url']
 
   @property({
     type: Boolean
@@ -105,30 +97,27 @@ export class RequestElement extends NodeElement {
 
   public code?: string
 
-  public data?: unknown
-
-  public indeterminate?: boolean
-
   public request?: Request
 
   public response?: Response
 
+  public started?: boolean
+
   protected controller = new AbortController()
 
-  protected readonly handleAbortBound: (event: NodeEvent) => void
+  protected readonly handleAbortBound: (event: RequestEvent) => void
 
-  protected readonly handleStartBound: (event: NodeEvent) => void
+  protected readonly handleStartBound: (event: RequestEvent) => void
 
-  protected readonly handleToggleBound: (event: NodeEvent) => void
+  protected readonly handleToggleBound: (event: RequestEvent) => void
+
+  protected updaters = RequestElement.updaters
 
   public constructor () {
     super()
     this.handleAbortBound = this.handleAbort.bind(this)
     this.handleStartBound = this.handleStart.bind(this)
     this.handleToggleBound = this.handleToggle.bind(this)
-    this.addEventListener('scola-request-abort', this.handleAbortBound)
-    this.addEventListener('scola-request-start', this.handleStartBound)
-    this.addEventListener('scola-request-toggle', this.handleToggleBound)
   }
 
   public abort (): void {
@@ -152,56 +141,87 @@ export class RequestElement extends NodeElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
+    this.addEventListener('scola-request-abort', this.handleAbortBound)
+    this.addEventListener('scola-request-start', this.handleStartBound)
+    this.addEventListener('scola-request-toggle', this.handleToggleBound)
+    super.firstUpdated(properties)
+
     if (this.wait !== true) {
       this.start()
     }
-
-    super.firstUpdated(properties)
   }
 
-  public start (request?: Request): void {
+  public start (detail?: RequestEvent['detail']): void {
     if (this.started === true) {
       return
     }
 
-    this.indeterminate = true
     this.loaded = 0
     this.started = true
     this.total = 0
-    this.fetch(request)
+    this.fetch(this.createRequest(detail))
   }
 
-  public toggle (): void {
+  public toggle (detail?: RequestEvent['detail']): void {
     if (this.started === true) {
       this.abort()
     } else {
-      this.start()
+      this.start(detail)
     }
   }
 
-  protected createRequest (): Request {
-    return new Request(this.createURL(), {
+  protected createBody (): BodyInit | undefined {
+    return undefined
+  }
+
+  protected createHeaders (): HeadersInit | undefined {
+    return undefined
+  }
+
+  protected createRequest (detail?: RequestEvent['detail']): Request {
+    const method = detail?.method ?? this.method
+    const headers = this.createHeaders()
+
+    let body = null
+
+    if ((/PATCH|POST|PUT/u).exec(method) !== null) {
+      body = this.createBody()
+    }
+
+    return new Request(this.createURL(detail).toString(), {
+      body,
       cache: this.cache,
       credentials: this.credentials,
+      headers,
       integrity: this.integrity,
       keepalive: this.keepalive,
+      method: this.method,
       mode: this.mode,
       redirect: this.redirect,
       referrer: this.referrer,
       referrerPolicy: this.referrerPolicy,
-      signal: this.controller.signal
+      signal: this.controller.signal,
+      ...detail
     })
   }
 
-  protected createURL (): string {
-    return String(new URL(`${this.origin}${this.base}${this.url ?? ''}`))
+  protected createURL (detail?: RequestEvent['detail']): URL {
+    const url = `${this.origin}${this.base}${detail?.url ?? this.url ?? ''}`
+
+    const params = Object.keys(detail ?? {}).reduce((result, key) => {
+      result.append(key, String(detail?.[key]))
+      return result
+    }, new URLSearchParams(this.closest('scola-view')?.view?.params))
+
+    return new URL(this.replaceParams(url, params))
   }
 
   protected dispatchAuth (request: Request): void {
     this.dispatchEvent(new CustomEvent<AuthEvent['detail']>('scola-auth', {
       detail: (authError?: unknown): void => {
         if (authError instanceof Error) {
-          this.finishError(authError)
+          this.code = 'err_403'
+          this.handleError(authError)
           return
         }
 
@@ -211,19 +231,29 @@ export class RequestElement extends NodeElement {
   }
 
   protected dispatchLog (): void {
+    let {
+      code,
+      data
+    } = this
+
+    if (code?.startsWith('ok_') === true) {
+      code = undefined
+      data = undefined
+    }
+
     this.dispatchEvent(new CustomEvent<LogEvent['detail']>('scola-log', {
       bubbles: true,
       composed: true,
       detail: {
-        code: this.code,
-        data: this.data,
+        code,
+        data,
         level: 'err',
         origin: this
       }
     }))
   }
 
-  protected fetch (request = this.createRequest()): void {
+  protected fetch (request: Request): void {
     window
       .fetch(request)
       .then(async (response) => {
@@ -234,82 +264,66 @@ export class RequestElement extends NodeElement {
 
         this.request = request
         this.response = response
-        await this.finish()
+        await this.handleFetch()
       })
       .catch((error: unknown) => {
-        this.finishError(error)
+        this.code = 'err_fetch'
+        this.handleError(error)
       })
   }
 
-  protected async finish (): Promise<void> {
-    const status = this.response?.status ?? 200
-    const contentLength = this.response?.headers.get('Content-Length')
-
-    this.code = status < 400 ? `OK_${status}` : `ERR_${status}`
-
-    if (contentLength !== null && contentLength !== undefined) {
-      this.indeterminate = false
-      this.total = parseFloat(contentLength)
-    }
-
-    const type = this.response?.headers.get('Content-Type')
-
-    if (type?.startsWith('application/json') === true) {
-      await this.finishJSON()
-    } else if (type?.startsWith('text/') === true) {
-      await this.finishText()
-    }
-
-    this.started = false
-
-    if (!this.code.startsWith('OK_')) {
-      this.dispatchLog()
-    }
-  }
-
-  protected finishError (error: unknown): void {
-    this.code = 'ERR_REQUEST_FETCH'
-    this.started = false
-
-    if (error instanceof Error && error.name !== 'AbortError') {
-      this.dispatchLog()
-    }
-  }
-
-  protected async finishJSON (): Promise<void> {
-    const {
-      code,
-      data
-    } = await this.response?.json() as NodeResult
-
-    this.code = code
-    this.data = data
-    this.loaded = this.total
-  }
-
-  protected async finishText (): Promise<void> {
-    this.data = { text: await this.response?.text() }
-    this.loaded = this.total
-  }
-
-  protected handleAbort (event: NodeEvent): void {
+  protected handleAbort (event: RequestEvent): void {
     if (this.isTarget(event)) {
       event.cancelBubble = true
       this.abort()
     }
   }
 
-  protected handleStart (event: NodeEvent): void {
-    if (this.isTarget(event)) {
-      event.cancelBubble = true
-      this.start()
+  protected handleError (error: unknown): void {
+    this.loaded = this.total
+    this.started = false
+
+    if (
+      error instanceof Error &&
+      error.name !== 'AbortError'
+    ) {
+      this.dispatchLog()
     }
   }
 
-  protected handleToggle (event: NodeEvent): void {
+  protected async handleFetch (): Promise<void> {
+    const status = this.response?.status ?? 200
+
+    if (status < 400) {
+      this.code = `ok_${status}`
+    } else {
+      this.code = `err_${status}`
+    }
+
+    if (this.response?.headers.has('Content-Length') === true) {
+      this.total = parseFloat(this.response.headers.get('Content-Length') ?? '')
+    }
+
+    if (this.response?.headers.get('Content-Type')?.startsWith('application/json') === true) {
+      this.data = await this.response.json()
+    }
+
+    this.loaded = this.total
+    this.started = false
+    this.dispatchLog()
+  }
+
+  protected handleStart (event: RequestEvent): void {
     if (this.isTarget(event)) {
       event.cancelBubble = true
-      this.toggle()
+      this.start(event.detail ?? undefined)
+    }
+  }
+
+  protected handleToggle (event: RequestEvent): void {
+    if (this.isTarget(event)) {
+      event.cancelBubble = true
+      this.toggle(event.detail ?? undefined)
     }
   }
 }

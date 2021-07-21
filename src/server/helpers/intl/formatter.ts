@@ -27,11 +27,10 @@ export class Formatter {
    *
    * The string may contain parameters written as `{name}`, which will be replaced by the value found in the data. See the documentation (https://formatjs.io/docs/intl-messageformat) for more elaborate examples, e.g. to format plurals or dates.
    *
-   * Returns the first argument if an error occurs while formatting, e.g. if a parameter in the string is not found in the data.
-   *
    * @param string - The key of the string or the string to be formatted
    * @param language - The language of the string
    * @param data - The data to format parameters inside the string
+   * @throws any Intl MessageFormat error
    * @returns The formatted string
    *
    * @example
@@ -51,12 +50,8 @@ export class Formatter {
    * // string = 'Hello world'
    * ```
    */
-  public format (string: string, language = Formatter.lang, data?: Record<string, unknown>): string {
-    try {
-      return String(new Format(Formatter.strings[language]?.[string] ?? string, language).format(data))
-    } catch (error: unknown) {
-      return string
-    }
+  public format (code: string, language = Formatter.lang, data?: Record<string, unknown>): string {
+    return String(new Format(Formatter.strings[language]?.[code] ?? code, language).format(data))
   }
 
   /**

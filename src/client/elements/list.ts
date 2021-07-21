@@ -1,9 +1,12 @@
-import type { NodeEvent, NodeResult } from './node'
 import type { PropertyValues, TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
+import type { ButtonElement } from './button'
+import type { FormatElement } from './format'
 import type { InputElement } from './input'
 import { NodeElement } from './node'
+import type { NodeEvent } from './node'
 import { RequestElement } from './request'
+import type { SourceElement } from './source'
 import { html } from 'lit'
 import { repeat } from 'lit/directives/repeat.js'
 
@@ -27,57 +30,87 @@ declare global {
 
 export interface ListFilterEvent extends NodeEvent {
   detail: {
-    filterName?: string
-    filterValue?: string
+    name?: string
+    value?: string
     origin?: HTMLElement
     target?: string
   } | null
 }
 
-export type ListItem = Record<string, unknown>
+export interface ListItem {
+  [key: string]: unknown
+}
 
 export interface ListOrderEvent extends NodeEvent {
   detail: {
-    orderCol?: string
-    orderDir?: string
+    column?: string
+    direction?: 'asc' | 'desc'
     origin?: HTMLElement
     target?: string
   } | null
-}
-
-export interface ListResult extends NodeResult {
-  cursor?: string
-  items?: ListItem[]
 }
 
 @customElement('scola-list')
 export class ListElement extends RequestElement {
+  public static heightFactors: Partial<Record<string, number>> = {
+    default: 1,
+    large: 4.25,
+    medium: 3.25,
+    small: 2.25
+  }
+
+  public static updaters = {
+    ...RequestElement.updaters,
+    query: (source: ListElement, target: InputElement): void => {
+      source.query = target.inputElement?.value
+      source.restart()
+    },
+    source: (source: ListElement, target: SourceElement): void => {
+      if (ListElement.isArray<ListItem>(target.data)) {
+        source.items.push(...target.data)
+        source.requestUpdate('items')
+        source.handleEmpty()
+      }
+    }
+  }
+
+  @property()
+  public column?: string
+
+  @property({
+    type: Number
+  })
+  public count?: number
+
+  @property({
+    attribute: 'count-factor',
+    type: Number
+  })
+  public countFactor = 2
+
+  @property()
+  public cursor?: string
+
   @property({
     attribute: false
   })
-  public filters: Map<string, string> = new Map<string, string>()
+  public data?: ListItem[]
+
+  @property()
+  public direction?: 'asc' | 'desc'
 
   @property({
-    attribute: 'load-factor',
+    attribute: false
+  })
+  public items: ListItem[] = []
+
+  @property({
     type: Number
   })
-  public loadFactor = 2
+  public offset?: number
 
-  @property({
-    attribute: 'order-col'
-  })
-  public orderCol?: string
-
-  @property({
-    attribute: 'order-dir'
-  })
-  public orderDir?: string
-
-  @property({
-    attribute: 'page-size',
-    type: Number
-  })
-  public pageSize?: number
+  @property()
+  public query?: string
 
   @property({
     attribute: 'scroll-factor',
@@ -85,16 +118,9 @@ export class ListElement extends RequestElement {
   })
   public scrollFactor = 0.5
 
-  @property()
-  public search?: string
-
-  public data: ListResult
-
-  public method: RequestElement['method'] = 'GET'
-
-  protected cursor?: string
-
   protected emptyElement?: NodeElement | null
+
+  protected filters: Map<string, string> = new Map<string, string>()
 
   protected handleFilterBound: (event: ListFilterEvent) => void
 
@@ -102,40 +128,25 @@ export class ListElement extends RequestElement {
 
   protected handleRestartBound: (event: NodeEvent) => void
 
-  protected items: ListItem[] = []
-
   protected keyFunction: (item: ListItem) => unknown
 
   protected templateElement?: NodeElement | null
 
-  protected templateFunction: (item: ListItem) => HTMLElement | TemplateResult
+  protected templateFunction: (item: ListItem) => Node | TemplateResult | undefined
 
-  protected get searchElement (): InputElement | null {
-    return this.querySelector('[is="search"]')
-  }
+  protected updaters = ListElement.updaters
 
   public constructor () {
     super()
+    this.emptyElement = this.querySelector<NodeElement>(':scope > [slot="empty"]')
+    this.templateElement = this.querySelector<NodeElement>(':scope > [slot="template"]')
     this.handleFilterBound = this.handleFilter.bind(this)
     this.handleOrderBound = this.handleOrder.bind(this)
     this.handleRestartBound = this.handleRestart.bind(this)
-    this.addEventListener('scola-list-filter', this.handleFilterBound)
-    this.addEventListener('scola-list-order', this.handleOrderBound)
-    this.addEventListener('scola-list-restart', this.handleRestartBound)
+    this.keyFunction = this.getKey.bind(this)
   }
 
   public connectedCallback (): void {
-    this.keyFunction = this.getKey.bind(this)
-    this.emptyElement = this.querySelector<NodeElement>(':scope > [slot="empty"]')
-    this.templateElement = this.querySelector<NodeElement>(':scope > [slot="template"]')
-
-    if (this.templateElement instanceof NodeElement) {
-      this.templateFunction = this.renderTemplate.bind(this)
-    } else {
-      this.templateFunction = this.renderItem.bind(this)
-    }
-
-    this.searchElement?.addEventListener('scola-input', this.handleInput.bind(this))
     window.addEventListener('scola-list-filter', this.handleFilterBound)
     window.addEventListener('scola-list-order', this.handleOrderBound)
     window.addEventListener('scola-list-restart', this.handleRestartBound)
@@ -150,8 +161,22 @@ export class ListElement extends RequestElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    this.setPageSize()
-    this.setSearch()
+    if (this.templateElement instanceof NodeElement) {
+      this.templateFunction = this.renderTemplate.bind(this)
+    } else {
+      this.templateFunction = this.renderItem.bind(this)
+    }
+
+    this.addEventListener('scola-list-filter', this.handleFilterBound)
+    this.addEventListener('scola-list-order', this.handleOrderBound)
+    this.addEventListener('scola-list-restart', this.handleRestartBound)
+    this.bodySlotElement.addEventListener('scroll', this.handleScroll.bind(this))
+
+    const { clientHeight = 0 } = this.bodySlotElement
+    const heightName = this.templateElement?.height ?? 'default'
+    const itemHeight = 16 * (ListElement.heightFactors[heightName] ?? 1)
+
+    this.count = Math.ceil(clientHeight / itemHeight * this.countFactor)
     super.firstUpdated(properties)
   }
 
@@ -171,42 +196,45 @@ export class ListElement extends RequestElement {
     `
   }
 
-  protected cleanResult (): void {
-    this.code = undefined
-    this.data = { items: [] }
-  }
+  protected createURL (): URL {
+    const url = super.createURL()
 
-  protected createURL (): string {
-    const url = new URL(`${this.origin}${this.base}${this.url ?? ''}`)
+    if (this.column !== undefined) {
+      url.searchParams.append('column', this.column)
+    }
+
+    if (this.count !== undefined) {
+      url.searchParams.append('count', `${this.count}`)
+    }
 
     if (this.cursor !== undefined) {
       url.searchParams.append('cursor', this.cursor)
     }
 
-    if (this.orderCol !== undefined) {
-      url.searchParams.append('order-col', this.orderCol)
+    if (this.direction !== undefined) {
+      url.searchParams.append('direction', this.direction)
     }
 
-    if (this.orderDir !== undefined) {
-      url.searchParams.append('order-dir', this.orderDir)
+    if (this.offset !== undefined) {
+      url.searchParams.append('offset', `${this.offset}`)
     }
 
-    if (this.search !== undefined) {
-      url.searchParams.append('search', this.search)
-    }
-
-    if (this.pageSize !== undefined) {
-      url.searchParams.append('page-size', String(this.pageSize))
+    if (this.query !== undefined) {
+      url.searchParams.append('query', this.query)
     }
 
     this.filters.forEach((value, name) => {
       url.searchParams.append(name, value)
     })
 
-    return String(url)
+    return url
   }
 
-  protected finishEmpty (): void {
+  protected getKey (item: ListItem): string {
+    return String(item.id)
+  }
+
+  protected handleEmpty (): void {
     if (this.emptyElement instanceof NodeElement) {
       if (this.items.length === 0) {
         this.emptyElement.slot = ''
@@ -216,39 +244,42 @@ export class ListElement extends RequestElement {
     }
   }
 
-  protected finishError (error: unknown): void {
-    super.finishError(error)
-    this.finishEmpty()
+  protected handleError (error: unknown): void {
+    super.handleError(error)
+    this.handleEmpty()
   }
 
-  protected async finishJSON (): Promise<void> {
-    await super.finishJSON()
-    this.cursor = this.data.cursor
-    this.items.push(...this.data.items ?? [])
-    this.finishEmpty()
-  }
+  protected async handleFetch (): Promise<void> {
+    await super.handleFetch()
 
-  protected async finishText (): Promise<void> {
-    await super.finishText()
+    if (this.code === 'ok_200') {
+      if (
+        this.cursor !== undefined &&
+        this.column !== undefined &&
+        this.data !== undefined &&
+        this.data.length > 0
+      ) {
+        this.cursor = String(this.data[this.data.length - 1][this.column])
+      }
 
-    if (this.response instanceof Response && this.response.status < 400) {
-      this.code = 'ERR_RESPONSE_TYPE'
+      if (this.offset !== undefined) {
+        this.offset = this.items.length
+      }
+
+      this.items.push(...(this.data ?? []))
+      this.requestUpdate('items')
     }
 
-    this.finishEmpty()
-  }
-
-  protected getKey (item: ListItem): unknown {
-    return item.id
+    this.handleEmpty()
   }
 
   protected handleFilter (event: ListFilterEvent): void {
     if (this.isTarget(event)) {
-      if (event.detail?.filterName !== undefined) {
-        if (event.detail.filterValue === undefined) {
-          this.filters.delete(event.detail.filterName)
+      if (event.detail?.name !== undefined) {
+        if (event.detail.value === undefined) {
+          this.filters.delete(event.detail.name)
         } else {
-          this.filters.set(event.detail.filterName, event.detail.filterValue)
+          this.filters.set(event.detail.name, event.detail.value)
         }
       }
 
@@ -256,15 +287,10 @@ export class ListElement extends RequestElement {
     }
   }
 
-  protected handleInput (): void {
-    this.setSearch()
-    this.restart()
-  }
-
   protected handleOrder (event: ListOrderEvent): void {
     if (this.isTarget(event)) {
-      this.orderCol = event.detail?.orderCol
-      this.orderDir = event.detail?.orderDir
+      this.direction = event.detail?.direction
+      this.column = event.detail?.column
       this.restart()
     }
   }
@@ -276,20 +302,22 @@ export class ListElement extends RequestElement {
   }
 
   protected handleScroll (): void {
-    if (this.cursor === undefined) {
+    if (
+      this.count === undefined ||
+      this.data === undefined ||
+      this.data.length < this.count
+    ) {
       return
     }
 
-    if (this.bodySlotElement instanceof HTMLSlotElement) {
-      const {
-        clientHeight,
-        scrollHeight,
-        scrollTop
-      } = this.bodySlotElement
+    const {
+      clientHeight,
+      scrollHeight,
+      scrollTop
+    } = this.bodySlotElement
 
-      if (scrollHeight - scrollTop - clientHeight < this.scrollFactor * clientHeight) {
-        this.start()
-      }
+    if (scrollHeight - scrollTop - clientHeight < this.scrollFactor * clientHeight) {
+      this.start()
     }
   }
 
@@ -299,60 +327,45 @@ export class ListElement extends RequestElement {
     `
   }
 
-  protected renderTemplate (item: ListItem): HTMLElement {
-    const element = this.templateElement?.cloneNode(true) as NodeElement
+  protected renderTemplate (item: ListItem): Node | undefined {
+    const element = this.templateElement?.cloneNode(true)
 
-    element
-      .removeAttribute('slot')
+    if (element instanceof NodeElement) {
+      element
+        .removeAttribute('slot')
 
-    element
-      .querySelectorAll('scola-button')
-      .forEach((buttonElement) => {
-        buttonElement.data = item
-      })
+      element
+        .querySelectorAll<ButtonElement>('scola-button')
+        .forEach((buttonElement) => {
+          buttonElement.data = item
+        })
 
-    element
-      .querySelectorAll('scola-format')
-      .forEach((formatElement) => {
-        formatElement.data = item
-      })
+      element
+        .querySelectorAll<FormatElement>('scola-format')
+        .forEach((formatElement) => {
+          formatElement.data = item
+        })
+
+      element
+        .querySelectorAll<InputElement>('scola-input, scola-picker, scola-select, scola-slider')
+        .forEach((inputElement) => {
+          inputElement.setInput(item)
+        })
+    }
 
     return element
   }
 
   protected restart (): void {
-    this.cursor = undefined
+    if (this.cursor !== undefined) {
+      this.cursor = ''
+    }
+
+    if (this.offset !== undefined) {
+      this.offset = 0
+    }
+
     this.items = []
     this.start()
-  }
-
-  protected setPageSize (): void {
-    const { clientHeight = 0 } = this.bodySlotElement ?? {}
-    let itemHeight = 0
-
-    switch (this.templateElement?.height) {
-      case 'large':
-        itemHeight = 4.25 * 16
-        break
-      case 'medium':
-        itemHeight = 3.25 * 16
-        break
-      case 'small':
-        itemHeight = 2.25 * 16
-        break
-      default:
-        itemHeight = 16
-        break
-    }
-
-    this.pageSize = Math.ceil(clientHeight / itemHeight * this.loadFactor)
-  }
-
-  protected setSearch (): void {
-    this.search = this.searchElement?.getValue()
-
-    if (this.search === '') {
-      this.search = undefined
-    }
   }
 }

@@ -3,7 +3,8 @@ import type { Logger } from 'pino'
 import { fastify } from 'fastify'
 import fastifyCookie from 'fastify-cookie'
 import fastifyFormbody from 'fastify-formbody'
-import fastifyMultipart from 'fastify-multipart'
+import fastifyMulter from 'fastify-multer'
+import fastifySse from 'fastify-sse-v2'
 
 export interface ServerOptions extends FastifyServerOptions {
   /**
@@ -93,7 +94,8 @@ export class Server {
     this.plugins = options.plugins ?? {
       cookie: fastifyCookie,
       formbody: fastifyFormbody,
-      multipart: fastifyMultipart
+      multipart: fastifyMulter.contentParser,
+      sse: fastifySse
     }
   }
 

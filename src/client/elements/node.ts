@@ -10,6 +10,10 @@ declare global {
   interface HTMLElementTagNameMap {
     'scola-node': NodeElement
   }
+
+  interface WindowEventMap {
+    [key: string]: NodeEvent
+  }
 }
 
 export enum LogLevel {
@@ -20,7 +24,9 @@ export enum LogLevel {
   off = 5
 }
 
-export interface Log extends NodeResult {
+export interface Log {
+  code?: string
+  data?: unknown
   error?: Error
   level: keyof typeof LogLevel
   origin: HTMLElement
@@ -33,23 +39,29 @@ export interface LogEvent extends CustomEvent {
 }
 
 export interface NodeEvent extends CustomEvent {
-  detail: {
+  detail:
+  | (Record<string, unknown> & {
     origin?: HTMLElement
     target?: string
-  } | null
+  })
+  | null
+}
+
+export interface Updaters {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: (source: any, target: any, properties: PropertyValues) => void
 }
 
 export interface Presets {
   ''?: Record<string, string | unknown>
 }
 
-export interface NodeResult {
-  code?: string
-  data?: unknown
-}
-
 @customElement('scola-node')
 export class NodeElement extends LitElement {
+  public static duration = 250
+
+  public static easing = 'cubic-bezier(0.83, 0, 0.17, 1)'
+
   public static presets: Presets
 
   public static styles: CSSResultGroup[] = [
@@ -57,6 +69,7 @@ export class NodeElement extends LitElement {
       :host {
         display: flex;
         flex-direction: column;
+        overflow: hidden;
         position: relative;
       }
 
@@ -321,14 +334,6 @@ export class NodeElement extends LitElement {
         }
       }
 
-      :host([no-overflow]) {
-        overflow-x: hidden;
-      }
-
-      :host([no-wrap]) {
-        flex: 1;
-      }
-
       :host([outer-backdrop="large"]) {
         backdrop-filter: blur(0.75rem);
         -webkit-backdrop-filter: blur(0.75rem);
@@ -346,10 +351,6 @@ export class NodeElement extends LitElement {
 
       :host([outer-height]) {
         height: 100%;
-      }
-
-      :host([outer-height][scrollable]) {
-        max-height: none;
       }
 
       @media (min-height: 384px) {
@@ -464,10 +465,6 @@ export class NodeElement extends LitElement {
         width: 100%;
       }
 
-      :host([outer-width][scrollable]) {
-        max-width: none;
-      }
-
       @media (min-width: 384px) {
         :host([outer-width="small"]) {
           width: 336px;
@@ -578,11 +575,6 @@ export class NodeElement extends LitElement {
         height: 32rem;
       }
 
-      :host([scrollable]) {
-        max-height: 100%;
-        max-width: 100%;
-      }
-
       :host([spacing="large"]) {
         padding: 0.75rem;
       }
@@ -651,14 +643,6 @@ export class NodeElement extends LitElement {
         display: inherit;
         overflow: inherit;
         position: relative;
-      }
-
-      :host([scrollable]) slot[name="body"] {
-        flex: 1;
-        display: block;
-        overflow: auto;
-        scrollbar-color: transparent transparent;
-        -webkit-overflow-scrolling: touch;
       }
 
       :host([case="lower"]) slot[name="body"] {
@@ -750,31 +734,27 @@ export class NodeElement extends LitElement {
           background: var(--scola-node-fill-hover-sig-2, #009000);
         }
 
-        :host([fill="aux-1"][scrollable]) slot[name="body"]:hover {
+        :host([fill="aux-1"][scrollbar]) slot[name="body"]:hover {
           scrollbar-color: var(--scola-scrollbar-color-aux-1, #ddd) transparent;
         }
 
-        :host([fill="aux-2"][scrollable]) slot[name="body"]:hover {
+        :host([fill="aux-2"][scrollbar]) slot[name="body"]:hover {
           scrollbar-color: var(--scola-scrollbar-color-aux-2, #ccc) transparent;
         }
 
-        :host([fill="aux-3"][scrollable]) slot[name="body"]:hover {
+        :host([fill="aux-3"][scrollbar]) slot[name="body"]:hover {
           scrollbar-color: var(--scola-scrollbar-color-aux-3, #bbb) transparent;
         }
 
-        :host([scrollable]) slot[name="body"]::-webkit-scrollbar {
-          width: 0.75rem;
-        }
-
-        :host([fill="aux-1"][scrollable]) slot[name="body"]:hover::-webkit-scrollbar-thumb {
+        :host([fill="aux-1"][scrollbar]) slot[name="body"]:hover::-webkit-scrollbar-thumb {
           background: var(--scola-scrollbar-color-aux-1, #ddd);
         }
 
-        :host([fill="aux-2"][scrollable]) slot[name="body"]:hover::-webkit-scrollbar-thumb {
+        :host([fill="aux-2"][scrollbar]) slot[name="body"]:hover::-webkit-scrollbar-thumb {
           background: var(--scola-scrollbar-color-aux-2, #ccc);
         }
 
-        :host([fill="aux-3"][scrollable]) slot[name="body"]:hover::-webkit-scrollbar-thumb {
+        :host([fill="aux-3"][scrollbar]) slot[name="body"]:hover::-webkit-scrollbar-thumb {
           background: var(--scola-scrollbar-color-aux-3, #bbb);
         }
       }
@@ -923,7 +903,6 @@ export class NodeElement extends LitElement {
       }
 
       :host([round]) slot[name="body"] {
-        overflow: hidden;
         will-change: transform;
       }
 
@@ -941,6 +920,34 @@ export class NodeElement extends LitElement {
 
       :host([round="small"]) slot[name="body"] {
         border-radius: 0.25rem;
+      }
+
+      :host([scrollbar]) slot[name="body"] {
+        overflow: auto;
+        scrollbar-color: transparent transparent;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      :host([scrollbar="large"]) slot[name="body"] {
+        scrollbar-width: auto;
+      }
+
+      :host([scrollbar="small"]) slot[name="body"] {
+        scrollbar-width: thin;
+      }
+
+      :host([scrollbar][height="flex"]) slot[name="body"] {
+        display: block;
+      }
+
+      :host([scrollbar="large"]) slot[name="body"]::-webkit-scrollbar {
+        height: 0.75rem;
+        width: 0.75rem;
+      }
+
+      :host([scrollbar="small"]) slot[name="body"]::-webkit-scrollbar {
+        height: 0.25rem;
+        width: 0.25rem;
       }
 
       :host([valign="between"][flow="column"]) slot[name="body"] {
@@ -1046,8 +1053,14 @@ export class NodeElement extends LitElement {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+
+      :host([scrollbar][flow="row"]) slot:not([name]) {
+        flex: 1 0 auto;
+      }
     `
   ]
+
+  public static updaters: Updaters = {}
 
   @property({
     attribute: 'at-large',
@@ -1096,6 +1109,17 @@ export class NodeElement extends LitElement {
     type: Boolean
   })
   public disabled?: boolean
+
+  @property({
+    type: Number
+  })
+  public duration = NodeElement.duration
+
+  @property()
+  public easing = NodeElement.easing
+
+  @property()
+  public event?: string
 
   @property({
     reflect: true
@@ -1165,7 +1189,7 @@ export class NodeElement extends LitElement {
     attribute: 'inner-height',
     reflect: true
   })
-  public innerHeight?: 'large' | 'medium' | 'small'
+  public innerHeight?: 'large-auto' | 'large' | 'medium-auto' | 'medium' | 'small-auto' | 'small'
 
   @property({
     attribute: 'inner-shadow',
@@ -1177,7 +1201,7 @@ export class NodeElement extends LitElement {
     attribute: 'inner-width',
     reflect: true
   })
-  public innerWidth: 'large' | 'medium-auto' | 'medium' | 'small'
+  public innerWidth: 'large-auto' | 'large' | 'medium-auto' | 'medium' | 'small-auto' | 'small'
 
   @property()
   public is?: string
@@ -1207,13 +1231,6 @@ export class NodeElement extends LitElement {
     type: Boolean
   })
   public noContext?: boolean
-
-  @property({
-    attribute: 'no-overflow',
-    reflect: true,
-    type: Boolean
-  })
-  public noOverflow?: boolean
 
   @property({
     attribute: 'no-wrap',
@@ -1269,15 +1286,20 @@ export class NodeElement extends LitElement {
   public rows?: number
 
   @property({
-    reflect: true,
-    type: Boolean
+    reflect: true
   })
-  public scrollable?: boolean
+  public scrollbar?: 'large' | 'small'
 
   @property({
     reflect: true
   })
   public spacing?: 'large' | 'medium' | 'small'
+
+  @property()
+  public target?: string
+
+  @property()
+  public updater?: string
 
   @property({
     reflect: true
@@ -1315,39 +1337,34 @@ export class NodeElement extends LitElement {
   })
   public wrap?: boolean
 
-  @query('slot[name="after"]', true)
-  protected afterSlotElement?: HTMLSlotElement
-
-  @query('slot[name="before"]', true)
-  protected beforeSlotElement?: HTMLSlotElement
-
   @query('slot[name="body"]', true)
-  protected bodySlotElement?: HTMLSlotElement
+  protected bodySlotElement: HTMLSlotElement
 
   @query('slot:not([name])', true)
-  protected defaultSlotElement?: HTMLSlotElement
+  protected defaultSlotElement: HTMLSlotElement
 
   @query('slot[name="footer"]', true)
-  protected footerSlotElement?: HTMLSlotElement
+  protected footerSlotElement: HTMLSlotElement
 
   @query('slot[name="header"]', true)
-  protected headerSlotElement?: HTMLSlotElement
+  protected headerSlotElement: HTMLSlotElement
 
   @query('slot[name="prefix"]', true)
-  protected prefixSlotElement?: HTMLSlotElement
+  protected prefixSlotElement: HTMLSlotElement
 
   @query('slot[name="suffix"]', true)
-  protected suffixSlotElement?: HTMLSlotElement
-
-  protected easingIds: Record<string, number | null> = {}
-
-  protected handleScrollBound: () => void
+  protected suffixSlotElement: HTMLSlotElement
 
   protected observers: Set<NodeElement> = new Set<NodeElement>()
 
-  public constructor () {
-    super()
-    this.handleScrollBound = this.throttle(this.handleScroll.bind(this))
+  protected updaters = NodeElement.updaters
+
+  public static isArray<T = unknown>(value: unknown): value is T[] {
+    return Array.isArray(value)
+  }
+
+  public static isObject<T extends Record<string, unknown>>(value: unknown): value is T {
+    return typeof value === 'object' && value !== null
   }
 
   public addObserver (element: NodeElement): void {
@@ -1355,45 +1372,40 @@ export class NodeElement extends LitElement {
   }
 
   public connectedCallback (): void {
-    if (this.logLevel !== 'off') {
-      this.addEventListener('scola-log', this.handleLog.bind(this))
-    }
+    this.preset?.split(' ').forEach((presetName) => {
+      const properties: Record<string, unknown> = {}
 
-    if (this.noContext === true) {
-      this.addEventListener('contextmenu', this.handleContextmenu.bind(this))
-    }
+      Object.keys(NodeElement.presets[presetName as keyof Presets] ?? {}).forEach((propertyName) => {
+        if (this[propertyName as keyof NodeElement] === undefined) {
+          properties[propertyName] =
+              NodeElement.presets[presetName as keyof Presets]?.[propertyName]
+        }
+      })
 
-    this.preset?.split(' ').forEach((preset) => {
-      const undef: Record<string, unknown> = {}
-
-      Object
-        .keys(NodeElement.presets[preset as keyof Presets] ?? {})
-        .forEach((name) => {
-          if (this[name as keyof NodeElement] === undefined) {
-            undef[name] = NodeElement.presets[preset as keyof Presets]?.[name]
-          }
-        })
-
-      Object.assign(this, undef)
+      Object.assign(this, properties)
     })
 
-    this.observe?.split(' ').forEach((id) => {
-      const element = document.getElementById(id)
+    if (this.id.length > 0) {
+      this.id = this.replaceParams(this.id, this.closest('scola-view')?.view?.params)
+    }
 
-      if (element instanceof NodeElement) {
-        element.addObserver(this)
-      }
-    })
+    if (this.observe !== undefined) {
+      this.observe = this.replaceParams(this.observe, this.closest('scola-view')?.view?.params)
+    }
+
+    if (this.target !== undefined) {
+      this.target = this.replaceParams(this.target, this.closest('scola-view')?.view?.params)
+    }
 
     super.connectedCallback()
   }
 
   public disconnectedCallback (): void {
-    this.observe?.split(' ').forEach((id) => {
-      const element = document.getElementById(id)
+    this.observe?.split(' ').forEach((observeId) => {
+      const target = document.getElementById(observeId)
 
-      if (element instanceof NodeElement) {
-        element.removeObserver(this)
+      if (target instanceof NodeElement) {
+        target.removeObserver(this)
       }
     })
 
@@ -1402,16 +1414,31 @@ export class NodeElement extends LitElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    if (this.scrollable === true) {
-      this.bodySlotElement?.addEventListener('scroll', this.handleScrollBound)
+    if (this.logLevel !== 'off') {
+      this.addEventListener('scola-log', this.handleLog.bind(this))
     }
+
+    if (this.noContext === true) {
+      this.addEventListener('contextmenu', this.handleContextmenu.bind(this))
+    }
+
+    this.observe?.split(' ').forEach((observeId) => {
+      const target = document.getElementById(observeId)
+
+      if (target instanceof NodeElement) {
+        this.observedUpdated(properties, target)
+        target.addObserver(this)
+      }
+    })
 
     super.firstUpdated(properties)
   }
 
-  public observedUpdated (properties: PropertyValues, target: NodeElement): void
-
-  public observedUpdated (): void {}
+  public observedUpdated (properties: PropertyValues, target: NodeElement): void {
+    this.updater?.split(' ').forEach((updaterName) => {
+      this.updaters[updaterName](this, target, properties)
+    })
+  }
 
   public removeObserver (element: NodeElement): void {
     this.observers.delete(element)
@@ -1437,55 +1464,53 @@ export class NodeElement extends LitElement {
     })
   }
 
-  protected ease (from: number, to: number, resolve: ({ value, done }: { value: number, done: boolean }) => void, { duration = 250, name }: { duration?: number, name?: string } = {}): void {
-    let easingId = null
-    let start = -1
+  protected dispatchEvents (detail?: NodeEvent['detail']): void {
+    const events = this.event?.split(' ') ?? []
+    const targets = this.target?.split(' ') ?? []
 
-    if (name !== undefined) {
-      easingId = this.easingIds[name]
-
-      if (easingId !== null) {
-        window.cancelAnimationFrame(easingId)
-        this.easingIds[name] = null
-      }
-    }
-
-    // @see https://easings.net/#easeInOutQuint
-    function easeInOutQuint (value: number): number {
-      return value < 0.5 ? 16 * value ** 5 : 1 - (-2 * value + 2) ** 5 / 2
-    }
-
-    const frame = (time: number): void => {
-      start = start === -1 ? time : start
-
-      if (time - start >= duration) {
-        resolve({
-          done: true,
-          value: to
-        })
-
-        if (name !== undefined) {
-          this.easingIds[name] = null
+    events.forEach((event, index) => {
+      this.dispatchEvent(new CustomEvent<NodeEvent['detail']>(event, {
+        bubbles: true,
+        composed: true,
+        detail: {
+          ...detail,
+          ...this.dataset,
+          origin: this,
+          target: targets[index]
         }
-      } else {
-        resolve({
-          done: false,
-          value: from + (to - from) * easeInOutQuint((time - start) / duration)
-        })
+      }))
+    })
+  }
 
-        easingId = window.requestAnimationFrame(frame)
+  protected async ease (from: number, to: number, callback: (value: number) => void, duration = this.duration): Promise<void> {
+    return new Promise((resolve) => {
+      const element = document.body.appendChild(document.createElement('div'))
 
-        if (name !== undefined) {
-          this.easingIds[name] = easingId
+      element.animate([{
+        left: `${from}px`
+      }, {
+        left: `${to}px`
+      }], {
+        duration,
+        easing: this.easing,
+        fill: 'forwards'
+      })
+
+      function frame (): void {
+        const value = window.getComputedStyle(element).left
+
+        callback(parseFloat(value))
+
+        if (value === `${to}px`) {
+          element.remove()
+          resolve()
+        } else {
+          window.requestAnimationFrame(frame)
         }
       }
-    }
 
-    easingId = window.requestAnimationFrame(frame)
-
-    if (name !== undefined) {
-      this.easingIds[name] = easingId
-    }
+      window.requestAnimationFrame(frame)
+    })
   }
 
   protected handleContextmenu (event: Event): boolean {
@@ -1496,19 +1521,15 @@ export class NodeElement extends LitElement {
   protected handleLog (event: LogEvent): void {
     if (event.detail !== null && LogLevel[event.detail.level] >= LogLevel[this.logLevel]) {
       event.cancelBubble = true
-      this.logs.push(event.detail)
+
+      if (event.detail.code === undefined) {
+        this.logs = []
+      } else {
+        this.logs.push(event.detail)
+      }
+
       this.requestUpdate('logs')
     }
-  }
-
-  protected handleScroll (): void {
-    this.dispatchEvent(new CustomEvent<NodeEvent['detail']>('scola-scroll', {
-      bubbles: true,
-      composed: true,
-      detail: {
-        origin: this
-      }
-    }))
   }
 
   protected isTarget (event: NodeEvent, element: Element = this): boolean {
@@ -1523,32 +1544,9 @@ export class NodeElement extends LitElement {
     return true
   }
 
-  protected throttle (resolve: () => void, { duration = 250, once = false, trail = true } = {}): () => void {
-    let diff = 0
-    let last = 0
-    let tid = 0
-    return (...args): void => {
-      diff = Date.now() - last
-      window.clearTimeout(tid)
-
-      if (once) {
-        if (!trail && tid === 0) {
-          resolve(...args)
-        }
-      } else if (diff > duration) {
-        resolve(...args)
-        last = Date.now()
-        diff = 0
-      }
-
-      tid = window.setTimeout(() => {
-        if (trail) {
-          resolve(...args)
-          last = Date.now()
-        }
-
-        tid = 0
-      }, once ? duration : duration - diff)
-    }
+  protected replaceParams (string: string, params?: URLSearchParams): string {
+    return (string.match(/:\w+/gu) ?? []).reduce((result, match) => {
+      return result.replace(new RegExp(match, 'gu'), String(params?.get(match.slice(1)) ?? match))
+    }, string)
   }
 }

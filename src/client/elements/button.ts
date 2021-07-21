@@ -2,10 +2,10 @@ import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { ClipElement } from './clip'
 import { NodeElement } from './node'
-import type { NodeEvent } from './node'
-import { ProgressElement } from './progress'
-import { RequestElement } from './request'
-import { ViewElement } from './view'
+import type { ProgressElement } from './progress'
+import type { RequestElement } from './request'
+import type { SourceElement } from './source'
+import type { ViewElement } from './view'
 import { css } from 'lit'
 
 declare global {
@@ -14,8 +14,14 @@ declare global {
   }
 }
 
+interface ButtonState extends Record<string, unknown> {
+  activated?: boolean
+}
+
 @customElement('scola-button')
 export class ButtonElement extends NodeElement {
+  public static storage: Storage = window.sessionStorage
+
   public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
     css`
@@ -82,6 +88,79 @@ export class ButtonElement extends NodeElement {
     `
   ]
 
+  public static updaters = {
+    ...NodeElement.updaters,
+    'clip-content': (source: ButtonElement, target: NodeElement, properties: PropertyValues): void => {
+      if (properties.has('hidden')) {
+        source.activated = !target.hidden
+      } else if (target.parentElement instanceof ClipElement) {
+        if (source.activated === true) {
+          target.parentElement.showContent(target, 0).catch(() => {})
+        } else if (source.activated === false) {
+          target.parentElement.hideContent(target).catch(() => {})
+        }
+      }
+    },
+    'clip-content-or-inner': (source: ButtonElement, target: NodeElement, properties: PropertyValues): void => {
+      if (properties.has('hidden')) {
+        source.activated = !target.hidden
+      } else if (target.parentElement instanceof ClipElement) {
+        if (source.activated === true) {
+          target.parentElement.showContentOrInner(target, 0).catch(() => {})
+        }
+      }
+    },
+    'clip-inner': (source: ButtonElement, target: ClipElement, properties: PropertyValues): void => {
+      if (properties.has('innerHidden')) {
+        source.activated = target.innerHidden === false
+      } else if (source.activated === true) {
+        target.showInner(0).catch(() => {})
+      } else if (source.activated === false) {
+        target.hideInner(0).catch(() => {})
+      }
+    },
+    'clip-nested': (source: ButtonElement, target: ClipElement, properties: PropertyValues): void => {
+      if (properties.has('innerHidden')) {
+        source.activated = target.innerHidden === false
+      } else if (target.parentElement instanceof ClipElement) {
+        if (source.activated === true) {
+          target.parentElement.toggleNested(target, 0).catch(() => {})
+        }
+      }
+    },
+    'clip-outer': (source: ButtonElement, target: NodeElement, properties: PropertyValues): void => {
+      if (properties.has('hidden')) {
+        source.activated = !target.hidden
+      } else if (target.parentElement instanceof ClipElement) {
+        if (source.activated === true) {
+          target.parentElement.showOuter(target, 0).catch(() => {})
+        } else if (source.activated === false) {
+          target.parentElement.hideOuter(target, 0).catch(() => {})
+        }
+      }
+    },
+    'progress': (source: ButtonElement, target: ProgressElement): void => {
+      source.started = target.started
+    },
+    'request': (source: ButtonElement, target: RequestElement): void => {
+      source.started = target.started
+    },
+    'source': (source: ButtonElement, target: SourceElement): void => {
+      if (ButtonElement.isObject(target.data)) {
+        source.data = target.data
+      }
+    },
+    'view-back': (source: ButtonElement, target: ViewElement): void => {
+      source.disabled = !target.hasPast
+    },
+    'view-forward': (source: ButtonElement, target: ViewElement): void => {
+      source.disabled = !target.hasFuture
+    },
+    'view-home': (source: ButtonElement, target: ViewElement): void => {
+      source.disabled = !target.hasPast
+    }
+  }
+
   @property({
     reflect: true,
     type: Boolean
@@ -104,9 +183,6 @@ export class ButtonElement extends NodeElement {
   })
   public data?: Record<string, unknown>
 
-  @property()
-  public event?: string
-
   @property({
     attribute: 'fill-activated',
     reflect: true
@@ -114,115 +190,65 @@ export class ButtonElement extends NodeElement {
   public fillActivated?: 'aux-1' | 'aux-2' | 'aux-3' | 'sig-1' | 'sig-2'
 
   @property({
+    type: Boolean
+  })
+  public save?: boolean
+
+  @property({
     reflect: true,
     type: Boolean
   })
   public started?: boolean
 
-  @property()
-  public target?: string
+  protected storage = ButtonElement.storage
 
-  public constructor () {
-    super()
-    this.addEventListener('click', this.handleClick.bind(this))
-  }
+  protected updaters = ButtonElement.updaters
 
   public connectedCallback (): void {
-    if (this.observe === '') {
-      this.observe = this.target
+    if (this.save === true) {
+      this.loadState()
     }
-
-    this.observe?.split(' ').forEach((id) => {
-      const element = document.getElementById(id)
-
-      if (element?.parentElement instanceof ClipElement) {
-        this.toggleClip(element)
-      } else if (element instanceof ProgressElement) {
-        this.toggleProgress(element)
-      } else if (element instanceof RequestElement) {
-        this.toggleRequest(element)
-      } else if (element instanceof ViewElement) {
-        this.toggleView(element)
-      }
-    })
 
     super.connectedCallback()
   }
 
-  public observedUpdated (properties: PropertyValues, target: NodeElement): void {
-    if (target.parentElement instanceof ClipElement) {
-      this.observedUpdatedClip(properties, target)
-    } else if (target instanceof ProgressElement) {
-      this.observedUpdatedProgress(properties, target)
-    } else if (target instanceof RequestElement) {
-      this.observedUpdatedRequest(properties, target)
-    } else if (target instanceof ViewElement) {
-      this.observedUpdatedView(properties, target)
+  public firstUpdated (properties: PropertyValues): void {
+    this.addEventListener('click', this.handleClick.bind(this))
+    super.firstUpdated(properties)
+  }
+
+  public updated (properties: PropertyValues): void {
+    if (this.save === true) {
+      this.saveState()
     }
 
-    super.observedUpdated(properties, target)
-  }
-
-  public toggleClip (element: HTMLElement): void {
-    this.activated = !element.hidden
-  }
-
-  public toggleProgress (element: ProgressElement): void {
-    this.started = element.started
-  }
-
-  public toggleRequest (element: RequestElement): void {
-    this.started = element.started
-  }
-
-  public toggleView (element: ViewElement): void {
-    switch (this.event) {
-      case 'scola-view-back':
-        this.disabled = !element.hasPast
-        break
-      case 'scola-view-forward':
-        this.disabled = !element.hasFuture
-        break
-      case 'scola-view-home':
-        this.disabled = !element.hasPast
-        break
-      default:
-        break
-    }
+    super.updated(properties)
   }
 
   protected handleClick (event: Event): void {
     event.cancelBubble = this.cancel === true
-
-    const targets = this.target?.split(' ') ?? []
-
-    this.event?.split(' ').forEach((type, index) => {
-      this.dispatchEvent(new CustomEvent<NodeEvent['detail']>(type, {
-        bubbles: true,
-        composed: true,
-        detail: {
-          ...this.dataset,
-          ...this.data,
-          origin: this,
-          target: targets[index]
-        }
-      }))
-    })
+    this.dispatchEvents(this.data)
   }
 
-  protected observedUpdatedClip (properties: PropertyValues, target: NodeElement): void {
-    this.toggleClip(target)
+  protected loadState (): void {
+    const stateString = this.storage.getItem(this.id)
+
+    if (stateString === null) {
+      return
+    }
+
+    const state: unknown = JSON.parse(stateString)
+
+    if (ButtonElement.isObject<ButtonState>(state)) {
+      this.activated = state.activated
+    }
   }
 
-  protected observedUpdatedProgress (properties: PropertyValues, target: ProgressElement): void {
-    this.toggleProgress(target)
-  }
+  protected saveState (): void {
+    const state = {
+      activated: this.activated
+    }
 
-  protected observedUpdatedRequest (properties: PropertyValues, target: RequestElement): void {
-    this.toggleRequest(target)
-  }
-
-  protected observedUpdatedView (properties: PropertyValues, target: ViewElement): void {
-    this.toggleView(target)
+    this.storage.setItem(this.id, JSON.stringify(state))
   }
 }

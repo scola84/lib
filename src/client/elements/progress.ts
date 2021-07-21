@@ -71,14 +71,12 @@ export class ProgressElement extends NodeElement {
         transform-origin: 50% 50%;
       }
 
-      :host([started][mode="indeterminate"]) circle,
-      :host([started][mode="mixed"][indeterminate]) circle {
+      :host([started][mode="indeterminate"]) circle {
         animation: spin 1s infinite ease-in-out;
         stroke-dashoffset: 1rem !important;
       }
 
-      :host([started][mode="indeterminate"]) rect,
-      :host([started][mode="mixed"][indeterminate]) rect {
+      :host([started][mode="indeterminate"]) rect {
         animation: flow 1s infinite ease-in-out;
         width: 33% !important;
       }
@@ -169,29 +167,25 @@ export class ProgressElement extends NodeElement {
     `
   ]
 
-  @property({
-    type: Number
-  })
-  public duration?: number
-
-  @property({
-    reflect: true,
-    type: Boolean
-  })
-  public indeterminate?: boolean
+  public static updaters = {
+    ...NodeElement.updaters,
+    request: (source: ProgressElement, target: RequestElement, properties: PropertyValues): void => {
+      if (
+        properties.has('loaded') ||
+        properties.has('total')
+      ) {
+        source.updateRequest(target).catch(() => {})
+      }
+    }
+  }
 
   @property()
-  public method: RequestElement['method'] = 'GET'
+  public method?: RequestElement['method']
 
   @property({
     reflect: true
   })
-  public mode?: 'determinate' | 'indeterminate' | 'mixed'
-
-  @property({
-    reflect: true
-  })
-  public position?: 'bottom' | 'center' | 'top'
+  public mode: 'determinate' | 'indeterminate' = 'indeterminate'
 
   @property({
     reflect: true
@@ -218,11 +212,13 @@ export class ProgressElement extends NodeElement {
   protected circleElement?: SVGCircleElement
 
   @query('rect', true)
-  protected rectangleElement?: SVGRectElement
+  protected rectElement?: SVGRectElement
 
   protected from?: number
 
   protected radius = 0
+
+  protected updaters = ProgressElement.updaters
 
   public firstUpdated (properties: PropertyValues): void {
     if (this.type === 'circle') {
@@ -232,29 +228,14 @@ export class ProgressElement extends NodeElement {
     super.firstUpdated(properties)
   }
 
-  public observedUpdated (properties: PropertyValues, target: RequestElement): void {
-    if (target.method === this.method) {
-      if (properties.has('loaded') || properties.has('total')) {
-        this.started = target.started
-        this.indeterminate = target.indeterminate
-
-        if (this.indeterminate === false) {
-          if (this.type === 'circle') {
-            this.observedUpdatedCircle(target)
-          } else {
-            this.observedUpdatedRect(target)
-          }
-        }
-      }
-    }
-
-    super.observedUpdated(properties, target)
-  }
-
   public render (): TemplateResult {
-    const shape = this.type === 'circle'
-      ? svg`<circle cx="50%" cy="50%"/>`
-      : svg`<rect height="100%"/>`
+    let shape = svg``
+
+    if (this.type === 'circle') {
+      shape = svg`<circle cx="50%" cy="50%"/>`
+    } else {
+      shape = svg`<rect height="100%"/>`
+    }
 
     return html`
       <slot name="body">
@@ -265,64 +246,99 @@ export class ProgressElement extends NodeElement {
     `
   }
 
-  protected firstUpdatedCircle (): void {
-    const { width = '0' } = this.bodySlotElement instanceof HTMLSlotElement
-      ? window.getComputedStyle(this.bodySlotElement)
-      : {}
+  public async updateRequest (element: RequestElement): Promise<void> {
+    if (
+      this.method === undefined ||
+      this.method === element.request?.method
+    ) {
+      if (this.mode === 'indeterminate') {
+        this.started = element.started
+      } else {
+        this.started = true
 
-    const { strokeWidth = '2' } = this.circleElement instanceof SVGCircleElement
-      ? window.getComputedStyle(this.circleElement)
-      : {}
-
-    this.radius = (parseFloat(width) - parseFloat(strokeWidth)) / 2
-
-    const cf = this.radius * 2 * Math.PI
-
-    this.circleElement?.setAttribute('r', String(this.radius))
-    this.circleElement?.style.setProperty('stroke-dasharray', `${cf}px ${cf}px`)
-    this.circleElement?.style.setProperty('stroke-dashoffset', `${cf}px`)
+        if (this.type === 'circle') {
+          await this.updateRequestCircle(element)
+        } else {
+          await this.updateRequestRect(element)
+        }
+      }
+    }
   }
 
-  protected observedUpdatedCircle (element: RequestElement): void {
+  protected firstUpdatedCircle (): void {
+    if (this.circleElement instanceof SVGCircleElement) {
+      const strokeWidth = parseFloat(window.getComputedStyle(this.circleElement).strokeWidth)
+      const width = parseFloat(window.getComputedStyle(this.bodySlotElement).width)
+
+      if (
+        Number.isFinite(strokeWidth) &&
+        Number.isFinite(width)
+      ) {
+        this.radius = (width - strokeWidth) / 2
+      }
+
+      const cf = this.radius * 2 * Math.PI
+
+      this.circleElement.setAttribute('r', `${this.radius}`)
+      this.circleElement.setAttribute('stroke-dasharray', `${cf}px ${cf}px`)
+      this.circleElement.setAttribute('stroke-dashoffset', `${cf}px`)
+    }
+  }
+
+  protected async updateRequestCircle (element: RequestElement): Promise<void> {
+    if (element.total === 0) {
+      return
+    }
+
     const cf = this.radius * 2 * Math.PI
     const to = cf - element.loaded / element.total * cf
-    const { from = cf } = this
-    const duration = from <= to ? 0 : this.duration
+
+    let { from = cf } = this
+
+    if (from < to) {
+      from = to
+    }
 
     this.from = to
 
-    this.ease(from, to, ({ done, value }) => {
-      this.circleElement?.style.setProperty('stroke-dashoffset', `${value}px`)
-
-      if (done && to === 0) {
-        this.circleElement?.style.setProperty('stroke-dashoffset', `${cf}px`)
-        this.from = cf
-        this.started = element.started
-      }
-    }, {
-      duration,
-      name: 'circle'
-    })
+    await this
+      .ease(from, to, (value) => {
+        this.circleElement?.setAttribute('stroke-dashoffset', `${value}px`)
+      })
+      .then(() => {
+        if (element.loaded === element.total) {
+          this.circleElement?.setAttribute('stroke-dashoffset', `${cf}px`)
+          this.from = cf
+          this.started = false
+        }
+      })
   }
 
-  protected observedUpdatedRect (element: RequestElement): void {
+  protected async updateRequestRect (element: RequestElement): Promise<void> {
+    if (element.total === 0) {
+      return
+    }
+
     const to = Math.round(element.loaded / element.total * 100)
-    const { from = 0 } = this
-    const duration = from >= to ? 0 : this.duration
+
+    let { from = 0 } = this
+
+    if (from > to) {
+      from = to
+    }
 
     this.from = to
 
-    this.ease(from, to, ({ done, value }) => {
-      this.rectangleElement?.setAttribute('width', `${value}%`)
-
-      if (done && to === 100) {
-        this.rectangleElement?.setAttribute('width', '0%')
-        this.from = 0
-        this.started = element.started
-      }
-    }, {
-      duration,
-      name: 'rect'
-    })
+    await this
+      .ease(from, to, (value) => {
+        this.rectElement?.setAttribute('width', `${value}%`)
+      })
+      .then(() => {
+        if (element.loaded === element.total) {
+          this.rectElement?.setAttribute('width', '0%')
+          this.from = 0
+          this.started = false
+        }
+      })
   }
 }

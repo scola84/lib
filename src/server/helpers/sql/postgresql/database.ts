@@ -28,7 +28,7 @@ export class PostgresqlDatabase extends Database {
     url.password = this.password ?? url.password
 
     const options: PoolConfig = {
-      connectionString: String(url),
+      connectionString: url.toString(),
       connectionTimeoutMillis: 10000
     }
 

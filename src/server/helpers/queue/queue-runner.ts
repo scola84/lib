@@ -102,12 +102,12 @@ export class QueueRunner {
 
           await this.store.rpush(
             queueRun.name,
-            String((await this.insertTaskRun(queueRun, payload)).id)
+            `${(await this.insertTaskRun(queueRun, payload)).id}`
           )
 
           finish()
         } catch (error: unknown) {
-          finish(error as Error)
+          finish(new Error(String(error)))
         }
       }
     })
@@ -161,7 +161,7 @@ export class QueueRunner {
       }))
     } catch (error: unknown) {
       try {
-        await this.updateQueueRunErr(queueRun, error as Error)
+        await this.updateQueueRunErr(queueRun, error)
       } catch (updateError: unknown) {
         this.logger?.error({ context: 'run' }, String(updateError))
       }
@@ -247,7 +247,7 @@ export class QueueRunner {
    * @param error - The error
    * @returns The update result
    */
-  protected async updateQueueRunErr (queueRun: QueueRun, error: Error): Promise<UpdateResult> {
+  protected async updateQueueRunErr (queueRun: QueueRun, error: unknown): Promise<UpdateResult> {
     return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET

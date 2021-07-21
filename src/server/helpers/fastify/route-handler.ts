@@ -1,8 +1,17 @@
 import type { FastifyReply, FastifyRequest, FastifySchema, RouteOptions, ValidationResult } from 'fastify'
+import type { Database } from '../sql'
 import type { Logger } from 'pino'
 import type { Server } from './server'
+import type { WrappedNodeRedisClient } from 'handy-redis'
 
 export interface RouteHandlerOptions extends RouteOptions {
+  /**
+   * The database.
+   *
+   * @see {@link Database}
+   */
+  database: Database
+
   /**
    * The logger.
    *
@@ -16,6 +25,13 @@ export interface RouteHandlerOptions extends RouteOptions {
    * @see {@link Server}
    */
   server: Server
+
+  /**
+   * The store.
+   *
+   * @see https://preview.npmjs.com/package/handy-redis
+   */
+  store: WrappedNodeRedisClient
 }
 
 /**
@@ -28,6 +44,13 @@ export abstract class RouteHandler {
    * @see https://github.com/fastify/fastify/blob/main/docs/Routes.md
    */
   public static options?: Partial<RouteHandlerOptions>
+
+  /**
+   * The database.
+   *
+   * @see {@link Database}
+   */
+  public database?: Database
 
   /**
    * The logger.
@@ -70,6 +93,13 @@ export abstract class RouteHandler {
   public server: Server
 
   /**
+   * The store.
+   *
+   * @see https://www.npmjs.com/package/handy-redis
+   */
+  public store?: WrappedNodeRedisClient
+
+  /**
    * The URL.
    */
   public url: RouteOptions['url']
@@ -92,9 +122,11 @@ export abstract class RouteHandler {
       throw new Error('Option "server" is undefined')
     }
 
+    this.database = handlerOptions.database
     this.logger = handlerOptions.logger?.child({ name: handlerOptions.url })
     this.options = handlerOptions
     this.server = handlerOptions.server
+    this.store = handlerOptions.store
   }
 
   /**

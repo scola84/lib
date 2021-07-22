@@ -90,7 +90,7 @@ export class ButtonElement extends NodeElement {
 
   public static updaters = {
     ...NodeElement.updaters,
-    'clip-content': (source: ButtonElement, target: NodeElement, properties: PropertyValues): void => {
+    'scola-clip-content': (source: ButtonElement, target: NodeElement, properties: PropertyValues): void => {
       if (properties.has('hidden')) {
         source.activated = !target.hidden
       } else if (target.parentElement instanceof ClipElement) {
@@ -101,7 +101,7 @@ export class ButtonElement extends NodeElement {
         }
       }
     },
-    'clip-content-or-inner': (source: ButtonElement, target: NodeElement, properties: PropertyValues): void => {
+    'scola-clip-content-or-inner': (source: ButtonElement, target: NodeElement, properties: PropertyValues): void => {
       if (properties.has('hidden')) {
         source.activated = !target.hidden
       } else if (target.parentElement instanceof ClipElement) {
@@ -110,7 +110,7 @@ export class ButtonElement extends NodeElement {
         }
       }
     },
-    'clip-inner': (source: ButtonElement, target: ClipElement, properties: PropertyValues): void => {
+    'scola-clip-inner': (source: ButtonElement, target: ClipElement, properties: PropertyValues): void => {
       if (properties.has('innerHidden')) {
         source.activated = target.innerHidden === false
       } else if (source.activated === true) {
@@ -119,7 +119,7 @@ export class ButtonElement extends NodeElement {
         target.hideInner(0).catch(() => {})
       }
     },
-    'clip-nested': (source: ButtonElement, target: ClipElement, properties: PropertyValues): void => {
+    'scola-clip-nested': (source: ButtonElement, target: ClipElement, properties: PropertyValues): void => {
       if (properties.has('innerHidden')) {
         source.activated = target.innerHidden === false
       } else if (target.parentElement instanceof ClipElement) {
@@ -128,7 +128,7 @@ export class ButtonElement extends NodeElement {
         }
       }
     },
-    'clip-outer': (source: ButtonElement, target: NodeElement, properties: PropertyValues): void => {
+    'scola-clip-outer': (source: ButtonElement, target: NodeElement, properties: PropertyValues): void => {
       if (properties.has('hidden')) {
         source.activated = !target.hidden
       } else if (target.parentElement instanceof ClipElement) {
@@ -139,24 +139,24 @@ export class ButtonElement extends NodeElement {
         }
       }
     },
-    'progress': (source: ButtonElement, target: ProgressElement): void => {
+    'scola-progress': (source: ButtonElement, target: ProgressElement): void => {
       source.started = target.started
     },
-    'request': (source: ButtonElement, target: RequestElement): void => {
+    'scola-request': (source: ButtonElement, target: RequestElement): void => {
       source.started = target.started
     },
-    'source': (source: ButtonElement, target: SourceElement): void => {
+    'scola-source': (source: ButtonElement, target: SourceElement): void => {
       if (source.isObject(target.data)) {
         source.data = target.data
       }
     },
-    'view-back': (source: ButtonElement, target: ViewElement): void => {
+    'scola-view-back': (source: ButtonElement, target: ViewElement): void => {
       source.disabled = !target.hasPast
     },
-    'view-forward': (source: ButtonElement, target: ViewElement): void => {
+    'scola-view-forward': (source: ButtonElement, target: ViewElement): void => {
       source.disabled = !target.hasFuture
     },
-    'view-home': (source: ButtonElement, target: ViewElement): void => {
+    'scola-view-home': (source: ButtonElement, target: ViewElement): void => {
       source.disabled = !target.hasPast
     }
   }

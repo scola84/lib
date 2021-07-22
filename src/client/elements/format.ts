@@ -20,12 +20,12 @@ export class FormatElement extends NodeElement {
 
   public static updaters = {
     ...NodeElement.updaters,
-    source: (source: FormatElement, target: SourceElement): void => {
+    'scola-source': (source: FormatElement, target: SourceElement): void => {
       if (source.isObject(target.data)) {
         source.data = target.data
       }
     },
-    view: (source: FormatElement, target: ViewElement): void => {
+    'scola-view': (source: FormatElement, target: ViewElement): void => {
       source.data = {
         title: target.view?.element?.viewTitle
       }

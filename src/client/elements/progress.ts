@@ -169,7 +169,7 @@ export class ProgressElement extends NodeElement {
 
   public static updaters = {
     ...NodeElement.updaters,
-    request: (source: ProgressElement, target: RequestElement, properties: PropertyValues): void => {
+    'scola-request': (source: ProgressElement, target: RequestElement, properties: PropertyValues): void => {
       if (
         properties.has('loaded') ||
         properties.has('total')

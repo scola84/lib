@@ -102,7 +102,8 @@ export class SelectElement extends InputElement {
   ]
 
   public static updaters = {
-    clip: (source: SelectElement, target: NodeElement, properties: PropertyValues): void => {
+    ...InputElement.updaters,
+    'scola-clip': (source: SelectElement, target: NodeElement, properties: PropertyValues): void => {
       if (properties.has('hidden')) {
         source.toggleChecked(!target.hidden).catch(() => {})
       } else if (
@@ -112,7 +113,7 @@ export class SelectElement extends InputElement {
         target.parentElement.toggleContentOrInner(target).catch(() => {})
       }
     },
-    select: (source: SelectElement, target: SelectElement): void => {
+    'scola-select': (source: SelectElement, target: SelectElement): void => {
       source.toggleChecked(target.checked).catch(() => {})
     }
   }

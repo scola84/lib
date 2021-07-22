@@ -30,7 +30,7 @@ export class LogElement extends NodeElement {
 
   public static updaters = {
     ...NodeElement.updaters,
-    node: (source: LogElement, target: NodeElement, properties: PropertyValues): void => {
+    'scola-node': (source: LogElement, target: NodeElement, properties: PropertyValues): void => {
       if (properties.has('logs')) {
         source.updateNode(target).catch(() => {})
       }

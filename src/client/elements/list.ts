@@ -61,11 +61,11 @@ export class ListElement extends RequestElement {
 
   public static updaters = {
     ...RequestElement.updaters,
-    query: (source: ListElement, target: InputElement): void => {
+    'scola-query': (source: ListElement, target: InputElement): void => {
       source.query = target.inputElement?.value
       source.restart()
     },
-    source: (source: ListElement, target: SourceElement): void => {
+    'scola-source': (source: ListElement, target: SourceElement): void => {
       if (source.isArray<ListItem>(target.data)) {
         source.items.push(...target.data)
         source.requestUpdate('items')

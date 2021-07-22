@@ -15,7 +15,7 @@ declare global {
 export class FormElement extends RequestElement {
   public static updaters = {
     ...RequestElement.updaters,
-    source: (source: FormElement, target: SourceElement): void => {
+    'scola-source': (source: FormElement, target: SourceElement): void => {
       source.inputElements.forEach((inputElement) => {
         if (source.isObject(target.data)) {
           inputElement.setValue(target.data)

@@ -146,7 +146,7 @@ export class ButtonElement extends NodeElement {
       source.started = target.started
     },
     'source': (source: ButtonElement, target: SourceElement): void => {
-      if (ButtonElement.isObject(target.data)) {
+      if (source.isObject(target.data)) {
         source.data = target.data
       }
     },
@@ -239,7 +239,7 @@ export class ButtonElement extends NodeElement {
 
     const state: unknown = JSON.parse(stateString)
 
-    if (ButtonElement.isObject<ButtonState>(state)) {
+    if (this.isObject<ButtonState>(state)) {
       this.activated = state.activated
     }
   }

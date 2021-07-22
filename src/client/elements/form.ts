@@ -17,7 +17,7 @@ export class FormElement extends RequestElement {
     ...RequestElement.updaters,
     source: (source: FormElement, target: SourceElement): void => {
       source.inputElements.forEach((inputElement) => {
-        if (FormElement.isObject(target.data)) {
+        if (source.isObject(target.data)) {
           inputElement.setValue(target.data)
         }
       })

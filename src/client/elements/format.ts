@@ -21,7 +21,7 @@ export class FormatElement extends NodeElement {
   public static updaters = {
     ...NodeElement.updaters,
     source: (source: FormatElement, target: SourceElement): void => {
-      if (FormatElement.isObject(target.data)) {
+      if (source.isObject(target.data)) {
         source.data = target.data
       }
     },

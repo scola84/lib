@@ -111,8 +111,8 @@ export class LogElement extends NodeElement {
       element
         .querySelectorAll<ButtonElement>('scola-button')
         .forEach((buttonElement) => {
-          if (LogElement.isObject(this.log?.data)) {
-            buttonElement.data = this.log?.data
+          if (this.isObject(this.log?.data)) {
+            buttonElement.data = this.log.data
           }
         })
 
@@ -121,8 +121,8 @@ export class LogElement extends NodeElement {
         .forEach((formatElement) => {
           formatElement.code = this.log?.code
 
-          if (LogElement.isObject(this.log?.data)) {
-            formatElement.data = this.log?.data
+          if (this.isObject(this.log?.data)) {
+            formatElement.data = this.log.data
           }
         })
     }

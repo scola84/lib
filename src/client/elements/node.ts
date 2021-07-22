@@ -1359,14 +1359,6 @@ export class NodeElement extends LitElement {
 
   protected updaters = NodeElement.updaters
 
-  public static isArray<T = unknown>(value: unknown): value is T[] {
-    return Array.isArray(value)
-  }
-
-  public static isObject<T extends Record<string, unknown>>(value: unknown): value is T {
-    return typeof value === 'object' && value !== null
-  }
-
   public addObserver (element: NodeElement): void {
     this.observers.add(element)
   }
@@ -1432,6 +1424,14 @@ export class NodeElement extends LitElement {
     })
 
     super.firstUpdated(properties)
+  }
+
+  public isArray<T = unknown>(value: unknown): value is T[] {
+    return Array.isArray(value)
+  }
+
+  public isObject<T extends Record<string, unknown>>(value: unknown): value is T {
+    return typeof value === 'object' && value !== null
   }
 
   public observedUpdated (properties: PropertyValues, target: NodeElement): void {

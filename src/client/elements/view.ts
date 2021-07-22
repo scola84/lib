@@ -351,7 +351,7 @@ export class ViewElement extends ClipElement {
   protected loadHistory (): void {
     const pointers: unknown = window.history.state
 
-    if (ViewElement.isObject(pointers)) {
+    if (this.isObject(pointers)) {
       const pointer = pointers[this.id]
 
       if (pointer !== undefined) {
@@ -404,7 +404,7 @@ export class ViewElement extends ClipElement {
 
     const viewStatesInStore: unknown = JSON.parse(statesString)
 
-    if (!ViewElement.isObject<ViewStatesInStore>(viewStatesInStore)) {
+    if (!this.isObject<ViewStatesInStore>(viewStatesInStore)) {
       return false
     }
 

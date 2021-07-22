@@ -66,7 +66,7 @@ export class ListElement extends RequestElement {
       source.restart()
     },
     source: (source: ListElement, target: SourceElement): void => {
-      if (ListElement.isArray<ListItem>(target.data)) {
+      if (source.isArray<ListItem>(target.data)) {
         source.items.push(...target.data)
         source.requestUpdate('items')
         source.handleEmpty()

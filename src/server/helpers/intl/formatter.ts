@@ -19,7 +19,7 @@ export class Formatter {
   public static strings: Partial<Record<string, Record<string, string>>> = {}
 
   /**
-   * Formats a string according to `Intl MessageFormat`.
+   * Formats a string according to Intl MessageFormat.
    *
    * Uses the first argument as a key to resolve the string from the collection of strings of the given language.
    *

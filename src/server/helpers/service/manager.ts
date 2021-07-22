@@ -55,7 +55,7 @@ export interface ServiceManagerOptions {
   /**
    * The services.
    *
-   * The factory methods must instantiate and start the `TaskRunner`s and/or `RouteHandler`s of the application.
+   * The factory methods must instantiate and start the TaskRunners and/or RouteHandlers of the application.
    */
   services: Services
 
@@ -134,7 +134,7 @@ export class ServiceManager {
   /**
    * The services.
    *
-   * The factory methods must instantiate and start the `TaskRunner`s and/or `RouteHandler`s of the application.
+   * The factory methods must instantiate and start the TaskRunners and/or RouteHandlers of the application.
    */
   public services: Services
 

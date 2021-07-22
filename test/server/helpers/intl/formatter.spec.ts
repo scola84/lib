@@ -6,6 +6,7 @@ describe('Formatter', () => {
     describe('format a value', formatAValue)
     describe('lookup a code', lookupACode)
     describe('return a code', returnACode)
+    describe('throw an error', throwAnError)
   })
 })
 
@@ -70,8 +71,14 @@ function returnACode (): void {
   it('value was not found (with non-existent locale)', () => {
     expect(new Formatter().format('no-value', 'de')).equal('no-value')
   })
+}
 
+function throwAnError (): void {
   it('data is missing', () => {
-    expect(new Formatter().format('hello_name', locale, {})).equal('hello_name')
+    try {
+      new Formatter().format('hello_name', locale, {})
+    } catch (error: unknown) {
+      expect(String(error)).match(/The intl string context variable "name" was not provided/u)
+    }
   })
 }

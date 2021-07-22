@@ -1,8 +1,9 @@
 import type { Database, InsertResult, UpdateResult } from '../sql'
+import { PassThrough, Writable } from 'stream'
 import type { Queue, QueueRun, TaskRun } from '../../../common/entities'
 import type { Logger } from 'pino'
+import type { Readable } from 'stream'
 import type { WrappedNodeRedisClient } from 'handy-redis'
-import { Writable } from 'stream'
 import { createQueueRun } from '../../../common/entities'
 import { pipeline } from '../stream'
 import { sql } from '../sql'
@@ -82,6 +83,36 @@ export class QueueRunner {
   }
 
   /**
+   * Creates a task run reader.
+   *
+   * Returns a PassThrough if the parameters contain a `payload`. The PassThrough emits the payload exactly once.
+   *
+   * Executes the generator query of the queue as a stream otherwise.
+   *
+   * @param queue - The queue
+   * @param parameters - The parameters
+   * @returns The reader
+   */
+  public async createTaskRunReader (queue: Queue, parameters?: Record<string, unknown>): Promise<Readable> {
+    if (parameters?.payload !== undefined) {
+      const reader = new PassThrough({
+        objectMode: true
+      })
+
+      reader.end(parameters.payload)
+      return reader
+    }
+
+    const database = this.databases[queue.database ?? '']
+
+    if (database === undefined) {
+      throw new Error('Database is undefined')
+    }
+
+    return database.stream(queue.query ?? '', parameters)
+  }
+
+  /**
    * Creates a task run writer.
    *
    * The writer receives a payload and inserts a task run based on the queue run and the payload into the database.
@@ -118,7 +149,7 @@ export class QueueRunner {
    *
    * Creates a queue run and inserts it into the database.
    *
-   * Executes the generator query of the queue as a stream and passes the results to the task writer.
+   * Creates a task run reader and passes the results to the task run writer.
    *
    * Updates the queue run and triggers dependant queues if all task runs have been triggered and have finished successfully.
    *
@@ -127,7 +158,7 @@ export class QueueRunner {
    * Updates the queue run if an error occurred while triggering the task runs.
    *
    * @param queue - The queue
-   * @param parameters - The parameters for the generator query
+   * @param parameters - The parameters
    */
   public async run (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
     const queueRun: QueueRun = createQueueRun({ queue })
@@ -136,14 +167,8 @@ export class QueueRunner {
     queueRun.id = queueRunId
 
     try {
-      const database = this.databases[queue.database ?? '']
-
-      if (database === undefined) {
-        throw new Error('Database is undefined')
-      }
-
       await pipeline(
-        await database.stream(queue.query ?? '', parameters),
+        await this.createTaskRunReader(queue, parameters),
         this.createTaskRunWriter(queueRun)
       )
 

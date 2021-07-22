@@ -3,6 +3,7 @@ import type { Job } from 'node-schedule'
 import type { Logger } from 'pino'
 import type { Queue } from '../../../common/entities'
 import { QueueRunner } from '../../helpers/queue/queue-runner'
+import type { TaskRun } from '../../../common/entities/base'
 import type { TaskRunner } from './task-runner'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createNodeRedisClient } from 'handy-redis'
@@ -24,13 +25,6 @@ export interface QueuerMessage {
 }
 
 export interface QueuerOptions {
-  /**
-   * The channel to trigger queue runs.
-   *
-   * @defaultValue `process.env.QUEUE_CHANNEL` or 'queue'
-   */
-  channel?: string
-
   /**
    * The database containing the queues.
    *
@@ -79,13 +73,6 @@ export interface QueuerOptions {
  * Manages queues.
  */
 export class Queuer {
-  /**
-   * The channel to trigger queue runs.
-   *
-   * @defaultValue `process.env.QUEUE_CHANNEL` or 'queue'
-   */
-  public channel: string
-
   /**
    * The database containing the queues.
    *
@@ -163,7 +150,6 @@ export class Queuer {
    * @param options - The queuer options
    */
   public constructor (options: QueuerOptions) {
-    this.channel = options.channel ?? process.env.QUEUE_CHANNEL ?? 'queue'
     this.database = options.database
     this.databases = options.databases
     this.logger = options.logger.child({ name: 'queuer' })
@@ -216,6 +202,26 @@ export class Queuer {
   }
 
   /**
+   * Checks whether a value is an Array.
+   *
+   * @param value - The value
+   * @returns The result
+   */
+  public isArray<T = unknown>(value: unknown): value is T[] {
+    return Array.isArray(value)
+  }
+
+  /**
+   * Checks whether a value is a plain Object.
+   *
+   * @param value - The value
+   * @returns The result
+   */
+  public isObject<T extends Record<string, unknown>>(value: unknown): value is T {
+    return typeof value === 'object' && value !== null
+  }
+
+  /**
    * Sets up the queuer.
    *
    * Sets `storeDuplicate` and registers an `error` event listener on `store` and `storeDuplicate`.
@@ -243,7 +249,6 @@ export class Queuer {
    */
   public async start (setup = true): Promise<void> {
     this.logger.info({
-      channel: this.channel,
       names: this.names,
       schedule: this.schedule
     }, 'Starting queuer')
@@ -315,24 +320,38 @@ export class Queuer {
   /**
    * Handles a listener trigger.
    *
-   * Parses the message and selects the queue with the ID from the message
+   * Parses the message and decides which action should be taken based on the channel:
    *
-   * Runs the queue with the parameters from the message.
+   * * `queue-run` Runs the queue with the parameters from the message
+   * * `queue-stop` Updates the task runs belonging to the queue run
    *
    * @param message - The message received by the listener
    */
-  protected async handleListener (message: string): Promise<void> {
+  protected async handleListener (channel: string, message: string): Promise<void> {
     try {
       const {
         id,
         parameters
       } = JSON.parse(message) as QueuerMessage
 
-      if (id !== undefined) {
-        const queue = await this.selectQueue(id)
+      if (
+        typeof id === 'number' && (
+          parameters === undefined ||
+          this.isObject(parameters)
+        )
+      ) {
+        if (channel === 'queue-run') {
+          const queue = await this.selectQueue(id)
 
-        if (queue !== undefined) {
-          await this.run(queue, parameters)
+          if (queue !== undefined) {
+            await this.run(queue, parameters)
+          }
+        } else if (channel === 'queue-stop') {
+          await this.updateTaskRuns({
+            fkey_queue_run_id: id,
+            reason: String(parameters?.reason ?? 'queue-stop'),
+            status: String(parameters?.status ?? 'err')
+          })
         }
       }
     } catch (error: unknown) {
@@ -430,15 +449,15 @@ export class Queuer {
    * Start the listener.
    */
   protected async startListener (): Promise<void> {
-    this.storeDuplicate?.nodeRedis.on('message', (ch, message) => {
+    this.storeDuplicate?.nodeRedis.on('message', (channel, message) => {
       this
-        .handleListener(message)
+        .handleListener(channel, message)
         .catch((error: unknown) => {
           this.logger.error({ context: 'start-listener' }, String(error))
         })
     })
 
-    await this.storeDuplicate?.subscribe(this.channel)
+    await this.storeDuplicate?.subscribe('queue-run', 'queue-stop')
   }
 
   /**
@@ -452,7 +471,7 @@ export class Queuer {
    * Stops the listener.
    */
   protected async stopListener (): Promise<void> {
-    await this.storeDuplicate?.unsubscribe(this.channel)
+    await this.storeDuplicate?.unsubscribe('queue-run', 'queue-stop')
     await this.storeDuplicate?.quit()
   }
 
@@ -475,5 +494,31 @@ export class Queuer {
         .next()
         .toDate()
     })
+  }
+
+  /**
+   * Updates task runs.
+   *
+   * Sets `reason` and `status` of all task runs which:
+   *
+   * * are still pending
+   * * are not yet started
+   * * belong to the given queue run
+   *
+   * @param taskRun - The generic task run
+   * @returns The update result
+   */
+  protected async updateTaskRuns (taskRun: Pick<TaskRun, 'fkey_queue_run_id' | 'reason' | 'status'>): Promise<UpdateResult> {
+    return this.database.update<TaskRun>(sql`
+      UPDATE task_run
+      SET
+        date_updated = NOW(),
+        reason = $(reason),
+        status = $(status)
+      WHERE
+        date_started IS NULL AND
+        fkey_queue_run_id = $(fkey_queue_run_id) AND
+        status = 'pending'
+    `, taskRun)
   }
 }

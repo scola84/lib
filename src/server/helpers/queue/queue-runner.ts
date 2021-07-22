@@ -152,7 +152,7 @@ export class QueueRunner {
       const queues = await this.selectQueues(queueRun)
 
       await Promise.all(queues.map(async ({ id }): Promise<number> => {
-        return this.store.publish('queue', JSON.stringify({
+        return this.store.publish('queue-run', JSON.stringify({
           id,
           parameters: {
             id: queueRun.id
@@ -239,7 +239,7 @@ export class QueueRunner {
   }
 
   /**
-   * Updates the queue run.
+   * Updates a queue run.
    *
    * Sets `status` to 'err' and `reason` to the error message.
    *
@@ -262,7 +262,7 @@ export class QueueRunner {
   }
 
   /**
-   *  Updates the queue run.
+   *  Updates a queue run.
    *
    * Sets `status` to 'ok' and `aggr_total` to the total of task runs which have been triggered.
    *

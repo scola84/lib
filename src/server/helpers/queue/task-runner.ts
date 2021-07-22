@@ -15,13 +15,6 @@ import waitUntil from 'async-wait-until'
 
 export interface TaskRunnerOptions extends DuplexOptions {
   /**
-   * The channel to trigger queue runs.
-   *
-   * @defaultValue `process.env.QUEUE_CHANNEL` or 'queue'
-   */
-  channel: string
-
-  /**
    * The concurrency.
    *
    * @defaultValue `process.env.QUEUE_CONCURRENCY` or 1
@@ -97,13 +90,6 @@ export abstract class TaskRunner {
   public static options?: Partial<TaskRunnerOptions>
 
   /**
-   * The channel to trigger queue runs.
-   *
-   * @defaultValue `process.env.QUEUE_CHANNEL` or 'queue'
-   */
-  public channel: string
-
-  /**
    * The concurrency.
    *
    * @defaultValue `process.env.QUEUE_CONCURRENCY` or 1
@@ -141,7 +127,14 @@ export abstract class TaskRunner {
    *
    * @see https://www.npmjs.com/package/fastq
    */
-  public queue?: fastq
+  public queue?: fastq<number>
+
+  /**
+   * The queuer.
+   *
+   * @see {@link Queuer}
+   */
+  public queuer: Queuer
 
   /**
    * The schema.
@@ -210,19 +203,20 @@ export abstract class TaskRunner {
       throw new Error('Option "store" is undefined')
     }
 
-    if (options.queuer !== undefined) {
-      options.queuer.add(this)
+    if (runnerOptions.queuer === undefined) {
+      throw new Error('Option "queuer" is undefined')
     }
 
-    this.channel = runnerOptions.channel ?? process.env.QUEUE_CHANNEL ?? 'queue'
     this.concurrency = Number(runnerOptions.concurrency ?? process.env.QUEUE_CONCURRENCY ?? 1)
     this.database = runnerOptions.database
     this.host = runnerOptions.host ?? process.env.HOSTNAME ?? ''
     this.logger = runnerOptions.logger?.child({ name: runnerOptions.name })
     this.name = runnerOptions.name
+    this.queuer = runnerOptions.queuer
     this.schema = runnerOptions.schema ?? {}
     this.store = runnerOptions.store
     this.timeout = runnerOptions.timeout ?? 5 * 60 * 1000
+    this.queuer.add(this)
   }
 
   /**
@@ -235,8 +229,8 @@ export abstract class TaskRunner {
    * @returns The queue
    */
   public createQueue (): fastq {
-    const queue = promise<unknown, TaskRun>(async (taskRun) => {
-      return this.handleTaskRun(taskRun)
+    const queue = promise<unknown, number>(async (id) => {
+      return this.handleTaskRun(id)
     }, this.concurrency)
 
     queue.drain = () => {
@@ -312,7 +306,6 @@ export abstract class TaskRunner {
    */
   public start (setup = true): void {
     this.logger?.info({
-      channel: this.channel,
       concurrency: this.concurrency,
       host: this.host,
       timeout: this.timeout
@@ -350,7 +343,7 @@ export abstract class TaskRunner {
   }
 
   /**
-   * Finishes the task run.
+   * Finishes a task run.
    *
    * Sets `status` of the task run to 'ok' if it is pending.
    *
@@ -371,7 +364,7 @@ export abstract class TaskRunner {
     const queues = await this.selectQueues(taskRun)
 
     await Promise.all(queues.map(async ({ id }) => {
-      await this.store.publish(this.channel, JSON.stringify({
+      await this.store.publish('queue-run', JSON.stringify({
         id,
         parameters: {
           id: taskRun.queueRun.id
@@ -381,28 +374,32 @@ export abstract class TaskRunner {
   }
 
   /**
-   * Handles the task run.
+   * Handles a task run.
    *
-   * Starts the task run.
+   * Selects and runs the task run.
    *
    * Sets `reason` and `status` of the task run if an error is caught.
    *
-   * Finishes the task run.
+   * Finishes the task run
    *
-   * @param taskRun - The task run
+   * @param taskRun - The ID of the task run
    */
-  protected async handleTaskRun (taskRun: TaskRun): Promise<void> {
+  protected async handleTaskRun (id: number): Promise<void> {
     try {
-      await this.runTask(taskRun)
-    } catch (error: unknown) {
-      taskRun.reason = String(error)
-      taskRun.status = 'err'
-    } finally {
-      try {
-        await this.finishTaskRun(taskRun)
-      } catch (error: unknown) {
-        this.logger?.error({ context: 'handle-task-run' }, String(error))
+      const taskRun = await this.selectTaskRun(Number(id))
+
+      if (taskRun !== undefined) {
+        try {
+          await this.runTask(taskRun)
+        } catch (error: unknown) {
+          taskRun.reason = String(error)
+          taskRun.status = 'err'
+        } finally {
+          await this.finishTaskRun(taskRun)
+        }
       }
+    } catch (error: unknown) {
+      this.logger?.error({ context: 'handle-task-run' }, String(error))
     }
   }
 
@@ -440,45 +437,32 @@ export abstract class TaskRunner {
   /**
    * Pushes a task run.
    *
-   * Pops the ID of a task run from the head of the store list at `name`. Blocks for the amount of milliseconds given by `timeout`.
+   * Pops the ID of the task run from the head of the store list at `name`. Blocks for the amount of milliseconds given by `timeout`.
    *
-   * Selects the task run and the queue run.
-   *
-   * Updates the task run and pushes it onto the queue.
+   * Updates the task run and pushes the ID onto the queue.
    */
   protected async pushTaskRun (): Promise<void> {
     const [,id] = await this.storeDuplicate?.blpop([this.name], this.timeout / 1000) ?? []
 
-    if (id === undefined) {
-      return
-    }
+    if (id !== undefined) {
+      const taskRun = {
+        id: Number(id)
+      }
 
-    try {
-      const taskRun = await this.selectTaskRun(Number(id))
-      const queueRun = await this.selectQueueRun(taskRun)
-
-      taskRun.queueRun = queueRun
       await this.updateTaskRunOnPush(taskRun)
-      this.queue?.push(taskRun)
-    } catch (error: unknown) {
-      this.logger?.error({ context: 'push-task-run' }, String(error))
+      this.queue?.push(taskRun.id)
     }
   }
 
   /**
    * Runs a task.
    *
-   * Checks whether `status` of the task run is still 'pending', otherwise returns.
-   *
-   * Updates the task run, validates `options` and/or `payload` and calls `run`.
+   * Selects the queue run. Updates the task run, validates `options` and/or `payload` and calls `run`.
    *
    * @param taskRun - The task run
    */
   protected async runTask (taskRun: TaskRun): Promise<void> {
-    if (taskRun.status !== 'pending') {
-      return
-    }
-
+    taskRun.queueRun = await this.selectQueueRun(taskRun)
     await this.updateTaskRunOnRun(taskRun)
 
     if (this.validator?.getSchema('options') !== undefined) {
@@ -540,14 +524,18 @@ export abstract class TaskRunner {
   /**
    * Selects a task run.
    *
+   * Only returns the task run if it is pending.
+   *
    * @param id - The ID of the task run
    * @returns The task run
    */
-  protected async selectTaskRun (id: number): Promise<TaskRun> {
-    return this.database.selectOne<TaskRun, TaskRun>(sql`
+  protected async selectTaskRun (id: number): Promise<TaskRun | undefined> {
+    return this.database.select<TaskRun, TaskRun>(sql`
       SELECT *
       FROM task_run
-      WHERE id = $(id)
+      WHERE
+        id = $(id) AND
+        status = 'pending'
     `, {
       id
     })
@@ -603,29 +591,31 @@ export abstract class TaskRunner {
   }
 
   /**
-   * Update a task run.
+   * Updates a task run.
    *
-   * Sets `date_queued`.
+   * Sets `date_queued` and `host`.
    *
    * @param taskRun - The task run
    * @returns The update result
    */
-  protected async updateTaskRunOnPush (taskRun: TaskRun): Promise<UpdateResult> {
+  protected async updateTaskRunOnPush (taskRun: Pick<TaskRun, 'id'>): Promise<UpdateResult> {
     return this.database.update<TaskRun>(sql`
       UPDATE task_run
       SET
         date_queued = NOW(),
-        date_updated = NOW()
+        date_updated = NOW(),
+        host = $(host)
       WHERE id = $(id)
     `, {
+      host: this.host,
       id: taskRun.id
     })
   }
 
   /**
-   * Update a task run.
+   * Updates a task run.
    *
-   * Sets `date_started` and `host`.
+   * Sets `date_started`.
    *
    * @param taskRun - The task run
    * @returns The update result
@@ -635,11 +625,9 @@ export abstract class TaskRunner {
       UPDATE task_run
       SET
         date_started = NOW(),
-        date_updated = NOW(),
-        host = $(host)
+        date_updated = NOW()
       WHERE id = $(id)
     `, {
-      host: this.host,
       id: taskRun.id
     })
   }

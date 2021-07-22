@@ -116,6 +116,26 @@ export class Server {
   }
 
   /**
+   * Checks whether a value is an Array.
+   *
+   * @param value - The value
+   * @returns The result
+   */
+  public isArray<T = unknown>(value: unknown): value is T[] {
+    return Array.isArray(value)
+  }
+
+  /**
+   * Checks whether a value is a plain Object.
+   *
+   * @param value - The value
+   * @returns The result
+   */
+  public isObject<T extends Record<string, unknown>>(value: unknown): value is T {
+    return typeof value === 'object' && value !== null
+  }
+
+  /**
    * Sets up the server.
    *
    * Sets `fastify`.

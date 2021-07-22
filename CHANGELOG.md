@@ -1,3 +1,27 @@
+# [23.0.0](https://github.com/scola84/lib/compare/v22.0.8...v23.0.0) (2021-07-22)
+
+
+### Bug Fixes
+
+* **client:** add scola namespace as prefix to updaters ([83125fa](https://github.com/scola84/lib/commit/83125fa18fbb5416de4c77aa91547b7f5cca9542))
+* **client:** make type guards non-static ([20dfca1](https://github.com/scola84/lib/commit/20dfca1a10057cdd5926b5ecf7c438be97e86a89))
+* **stream:** improve pipeline ([af6d704](https://github.com/scola84/lib/commit/af6d704c9e9eb349c9deee591e99f3c9231a0679))
+
+
+### Features
+
+* **fastify:** add database and store to RouteHandler ([d851739](https://github.com/scola84/lib/commit/d851739b953907cac8cb81f7a9ebd3a0a875e0ce))
+* **fastify:** add type guards to Server ([672d168](https://github.com/scola84/lib/commit/672d1682dbe94a76e0d1ab0bd088f65f44e044c1))
+* **queue:** implement queue stop ([d6dbb6b](https://github.com/scola84/lib/commit/d6dbb6b7b6b465f68df186785e8a3062e45f4a35))
+* **queue:** implement single payloads for queue runs ([8c6fac5](https://github.com/scola84/lib/commit/8c6fac5e90d3be9b4a429446e1b05a03e9881748))
+* improve client elements ([73f31fc](https://github.com/scola84/lib/commit/73f31fc60e7347a0cd6b01ab343004bf35c53df3))
+
+
+### BREAKING CHANGES
+
+* **queue:** The channel to run a queue has changed.
+* Elements have different properties and behaviour.
+
 ## [22.0.8](https://github.com/scola84/lib/compare/v22.0.7...v22.0.8) (2021-07-02)
 
 

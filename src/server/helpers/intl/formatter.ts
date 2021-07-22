@@ -47,7 +47,7 @@ export class Formatter {
    *   name: 'world'
    * })
    *
-   * // string = 'Hello world'
+   * console.log(string) // string = 'Hello world'
    * ```
    */
   public format (code: string, language = Formatter.lang, data?: Record<string, unknown>): string {
@@ -72,7 +72,7 @@ export class Formatter {
    * const formatter = new Formatter()
    * const key = formatter.lookup('Hello {name}', 'en')
    *
-   * // key = 'hello'
+   * console.log(key) // key = 'hello'
    * ```
    */
   public lookup (string: string, language = Formatter.lang): string | undefined {

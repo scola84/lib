@@ -61,7 +61,7 @@ export abstract class Connection {
    *   c1: 'v1'
    * })
    *
-   * // query = 'SELECT * FROM t1 WHERE c1 = "v1"' in MySQL
+   * console.log(query) // query = 'SELECT * FROM t1 WHERE c1 = "v1"' in MySQL
    * ```
    *
    * @example
@@ -77,7 +77,7 @@ export abstract class Connection {
    *   ]
    * })
    *
-   * // query = 'INSERT INTO t1 VALUES ("v1"), ("v2")' in MySQL
+   * console.log(query) // query = 'INSERT INTO t1 VALUES ("v1"), ("v2")' in MySQL
    * ```
    */
   public abstract format: (query: string, values: Record<string, unknown>) => string
@@ -99,7 +99,7 @@ export abstract class Connection {
    *   c1: 'v1'
    * })
    *
-   * // count = 1 if there is one row with c1 = v1
+   * console.log(count) // count = 1 if there is one row with c1 = v1
    * ```
    */
   public abstract delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult>
@@ -141,7 +141,7 @@ export abstract class Connection {
    *   c1: 'v1'
    * })
    *
-   * // id = 1
+   * console.log(id) // id = 1
    * ```
    */
   public abstract insert<Values, ID = number>(query: string, values?: Partial<Values>, key?: string): Promise<InsertResult<ID>>
@@ -163,7 +163,7 @@ export abstract class Connection {
    *   c1: 'v1'
    * })
    *
-   * // result = [{ id: 1 }]
+   * console.log(result) // result = [{ id: 1 }]
    * ```
    *
    * @example
@@ -179,7 +179,7 @@ export abstract class Connection {
    *   ]
    * })
    *
-   * // result = [{ id: 1 }, { id: 2 }]
+   * console.log(result) // result = [{ id: 1 }, { id: 2 }]
    * ```
    */
   public abstract insertAll<Values, ID = number>(query: string, values?: Partial<Values>, key?: string): Promise<Array<InsertResult<ID>>>
@@ -201,7 +201,7 @@ export abstract class Connection {
    *   c1: 'v1'
    * })
    *
-   * // id = 1
+   * console.log(id) // id = 1
    * ```
    */
   public abstract insertOne<Values, ID = number>(query: string, values?: Partial<Values>, key?: string): Promise<InsertResult<ID>>
@@ -257,7 +257,7 @@ export abstract class Connection {
    *   id: 1
    * })
    *
-   * // result = { id: 1, c1: 'v1' }
+   * console.log(result) // result = { id: 1, c1: 'v1' }
    * ```
    */
   public abstract select<Values, Result>(query: string, values?: Partial<Values>): Promise<Result | undefined>
@@ -281,7 +281,7 @@ export abstract class Connection {
    *   id: 1
    * })
    *
-   * // result = [{ id: 1, c1: 'v1' }]
+   * console.log(result) // result = [{ id: 1, c1: 'v1' }]
    * ```
    */
   public abstract selectAll<Values, Result>(query: string, values?: Partial<Values>): Promise<Result[]>
@@ -306,7 +306,7 @@ export abstract class Connection {
    *   id: 1
    * })
    *
-   * // result = { id: 1, c1: 'v1' }
+   * console.log(result) // result = { id: 1, c1: 'v1' }
    * ```
    */
   public abstract selectOne<Values, Result>(query: string, values?: Partial<Values>): Promise<Result>
@@ -328,8 +328,7 @@ export abstract class Connection {
    * `)
    *
    * reader.on('data', (row) => {
-   *   console.log(row)
-   *   // row = { id: 1, c1: 'v1' }
+   *   console.log(row) // row = { id: 1, c1: 'v1' }
    * })
    * ```
    */
@@ -353,7 +352,7 @@ export abstract class Connection {
    *   id: 1
    * })
    *
-   * // count = 1
+   * console.log(count) // count = 1
    * ```
    */
   public abstract update<Values>(query: string, values?: Partial<Values>): Promise<UpdateResult>

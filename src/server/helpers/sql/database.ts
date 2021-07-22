@@ -59,7 +59,7 @@ export abstract class Database {
    *   c1: 'v1'
    * })
    *
-   * // query = 'SELECT * FROM t1 WHERE c1 = "v1"' in MySQL
+   * console.log(query) // query = 'SELECT * FROM t1 WHERE c1 = "v1"' in MySQL
    * ```
    *
    * @example
@@ -75,7 +75,7 @@ export abstract class Database {
    *   ]
    * })
    *
-   * // query = 'INSERT INTO t1 VALUES ("v1"), ("v2")' in MySQL
+   * console.log(query) // query = 'INSERT INTO t1 VALUES ("v1"), ("v2")' in MySQL
    * ```
    */
   public abstract format: (query: string, values: Record<string, unknown>) => string
@@ -115,7 +115,7 @@ export abstract class Database {
    *   c1: 'v1'
    * })
    *
-   * // count = 1 if there is one row with c1 = v1
+   * console.log(count) // count = 1 if there is one row with c1 = v1
    * ```
    */
   public async delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult> {
@@ -175,7 +175,7 @@ export abstract class Database {
    *   c1: 'v1'
    * })
    *
-   * // id = 1
+   * console.log(id) // id = 1
    * ```
    */
   public async insert<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
@@ -207,7 +207,7 @@ export abstract class Database {
    *   c1: 'v1'
    * })
    *
-   * // result = [{ id: 1 }]
+   * console.log(result) // result = [{ id: 1 }]
    * ```
    *
    * @example
@@ -223,7 +223,7 @@ export abstract class Database {
    *   ]
    * })
    *
-   * // result = [{ id: 1 }, { id: 2 }]
+   * console.log(result) // result = [{ id: 1 }, { id: 2 }]
    * ```
    */
   public async insertAll<Values, ID = number>(query: string, values?: Partial<Values>): Promise<Array<InsertResult<ID>>> {
@@ -255,7 +255,7 @@ export abstract class Database {
    *   c1: 'v1'
    * })
    *
-   * // id = 1
+   * console.log(id) // id = 1
    * ```
    */
   public async insertOne<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
@@ -336,7 +336,7 @@ export abstract class Database {
    *   id: 1
    * })
    *
-   * // result = { id: 1, c1: 'v1' }
+   * console.log(result) // result = { id: 1, c1: 'v1' }
    * ```
    */
   public async select<Values, Result>(query: string, values?: Partial<Values>): Promise<Result | undefined> {
@@ -370,7 +370,7 @@ export abstract class Database {
    *   id: 1
    * })
    *
-   * // result = [{ id: 1, c1: 'v1' }]
+   * console.log(result) // result = [{ id: 1, c1: 'v1' }]
    * ```
    */
   public async selectAll<Values, Result>(query: string, values?: Partial<Values>): Promise<Result[]> {
@@ -405,7 +405,7 @@ export abstract class Database {
    *   id: 1
    * })
    *
-   * // result = { id: 1, c1: 'v1' }
+   * console.log(result) // result = { id: 1, c1: 'v1' }
    * ```
    */
   public async selectOne<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
@@ -437,8 +437,7 @@ export abstract class Database {
    * `)
    *
    * reader.on('data', (row) => {
-   *   console.log(row)
-   *   // row = { id: 1, c1: 'v1' }
+   *   console.log(row) // row = { id: 1, c1: 'v1' }
    * })
    * ```
    */
@@ -473,7 +472,7 @@ export abstract class Database {
    *   id: 1
    * })
    *
-   * // count = 1
+   * console.log(count) // count = 1
    * ```
    */
   public async update<Values>(query: string, values?: Partial<Values>): Promise<UpdateResult> {

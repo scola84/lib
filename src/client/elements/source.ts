@@ -1,6 +1,5 @@
 import { customElement, property } from 'lit/decorators.js'
 import { RequestElement } from './request'
-import type { RequestEvent } from './request'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -14,10 +13,8 @@ declare global {
 
 @customElement('scola-source')
 export class SourceElement extends RequestElement {
-  @property({
-    attribute: false
-  })
-  public data?: unknown
+  @property()
+  public event?: string
 
   @property()
   public type: string
@@ -25,6 +22,8 @@ export class SourceElement extends RequestElement {
   protected handleMessageBound: (event: MessageEvent) => void
 
   protected source?: EventSource
+
+  protected tries = 0
 
   protected updaters = SourceElement.updaters
 
@@ -35,28 +34,50 @@ export class SourceElement extends RequestElement {
 
   public abort (): void {
     this.source?.close()
+
+    this.event
+      ?.split(' ')
+      .forEach((event) => {
+        this.source?.removeEventListener(event, this.handleMessageBound)
+      })
   }
 
   public disconnectedCallback (): void {
     this.abort()
-
-    this.event?.split(' ').forEach((event) => {
-      this.source?.removeEventListener(event, this.handleMessageBound)
-    })
-
     super.disconnectedCallback()
   }
 
-  public start (detail?: RequestEvent['detail']): void {
-    this.source = new EventSource(this.createURL(detail).toString())
+  public start (options?: Record<string, unknown>): void {
+    this.source = new EventSource(this.createURL(options).toString())
 
-    this.event?.split(' ').forEach((event) => {
-      this.source?.addEventListener(event, this.handleMessageBound)
-    })
+    this.source.onerror = () => {
+      this.restart()
+      this.abort()
+    }
+
+    this.source.onopen = () => {
+      this.tries = 0
+    }
+
+    this.event
+      ?.split(' ')
+      .forEach((event) => {
+        this.source?.addEventListener(event, this.handleMessageBound)
+      })
   }
 
   protected handleMessage (event: MessageEvent<string>): void {
     this.data = JSON.parse(event.data)
     this.type = event.type
+  }
+
+  protected restart (options?: Record<string, unknown>): void {
+    if (this.source?.readyState === this.source?.CLOSED) {
+      this.tries += 1
+
+      window.setTimeout(() => {
+        this.start(options)
+      }, this.tries * 1000)
+    }
   }
 }

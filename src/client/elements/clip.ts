@@ -1,82 +1,36 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
-import type { NodeEvent } from './node'
-import type { ViewMoveEvent } from './view'
-import { css } from 'lit'
+import { isObject } from '../../common'
+import styles from '../styles/clip'
 
 declare global {
   interface HTMLElementEventMap {
-    'scola-clip-content': ClipEvent
-    'scola-clip-content-or-inner': ClipEvent
-    'scola-clip-inner': ClipEvent
-    'scola-clip-nested': ClipEvent
-    'scola-clip-outer': ClipEvent
+    'scola-clip-content': CustomEvent
+    'scola-clip-content-or-inner': CustomEvent
+    'scola-clip-inner': CustomEvent
+    'scola-clip-nested': CustomEvent
+    'scola-clip-outer': CustomEvent
   }
 
   interface HTMLElementTagNameMap {
     'scola-clip': ClipElement
   }
-}
 
-export interface ClipEvent extends NodeEvent {
-  detail: Record<string, unknown> & {
-    id?: string
-  } | null
+  interface WindowEventMap {
+    'scola-clip-content': CustomEvent
+    'scola-clip-content-or-inner': CustomEvent
+    'scola-clip-inner': CustomEvent
+    'scola-clip-nested': CustomEvent
+    'scola-clip-outer': CustomEvent
+  }
 }
 
 @customElement('scola-clip')
 export class ClipElement extends NodeElement {
   public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
-    css`
-      slot[name="body"] slot[name] {
-        z-index: 2;
-      }
-
-      :host([type="content"]) slot:not([name])::slotted(*) {
-        display: flex;
-        flex: 0 0 100%;
-        height: 100%;
-        width: 100%;
-      }
-
-      :host([type="content"][resize]) slot:not([name])::slotted([hidden]) {
-        display: none;
-      }
-
-      :host([type="outer"]) slot[name="after"]::slotted(*),
-      :host([type="outer"]) slot[name="before"]::slotted(*) {
-        position: absolute;
-        z-index: 2;
-      }
-
-      :host([type="outer"][flow="column"]) slot[name="after"]::slotted(*) {
-        bottom: 0;
-      }
-
-      :host([type="outer"][flow="column"]) slot[name="before"]::slotted(*) {
-        top: 0;
-      }
-
-      :host([type="outer"][flow="row"]) slot[name="after"]::slotted(*) {
-        right: 0;
-      }
-
-      :host([type="outer"][flow="row"][dir="rtl"]) slot[name="after"]::slotted(*) {
-        left: 0;
-        right: auto;
-      }
-
-      :host([type="outer"][flow="row"]) slot[name="before"]::slotted(*) {
-        left: 0;
-      }
-
-      :host([type="outer"][flow="row"][dir="rtl"]) slot[name="before"]::slotted(*) {
-        left: auto;
-        right: 0;
-      }
-    `
+    styles
   ]
 
   @property()
@@ -89,29 +43,31 @@ export class ClipElement extends NodeElement {
   public innerHidden?: boolean
 
   @property({
+    reflect: true
+  })
+  public mode?: 'content' | 'inner' | 'nested' | 'outer'
+
+  @property({
     reflect: true,
     type: Boolean
   })
   public resize?: boolean
 
-  @property({
-    reflect: true
-  })
-  public type?: 'content' | 'inner' | 'nested' | 'outer'
+  public get contentElements (): NodeListOf<HTMLElement> {
+    return this.querySelectorAll<HTMLElement>(':scope > :not([slot])')
+  }
 
-  protected contentElements: NodeListOf<HTMLElement>
+  protected handleContentBound: (event: CustomEvent) => void
 
-  protected handleContentBound: (event: NodeEvent) => void
-
-  protected handleContentOrInnerBound: (event: NodeEvent) => void
+  protected handleContentOrInnerBound: (event: CustomEvent) => void
 
   protected handleElement?: HTMLElement | null
 
-  protected handleInnerBound: (event: NodeEvent) => void
+  protected handleInnerBound: (event: CustomEvent) => void
 
-  protected handleNestedBound: (event: NodeEvent) => void
+  protected handleNestedBound: (event: CustomEvent) => void
 
-  protected handleOuterBound: (event: NodeEvent) => void
+  protected handleOuterBound: (event: CustomEvent) => void
 
   protected outerElements: NodeListOf<HTMLElement>
 
@@ -120,7 +76,6 @@ export class ClipElement extends NodeElement {
   public constructor () {
     super()
     this.dir = document.dir
-    this.contentElements = this.querySelectorAll<HTMLElement>(':scope > :not([slot])')
     this.handleElement = this.querySelector<HTMLElement>(':scope > [is="handle"]')
     this.outerElements = this.querySelectorAll<HTMLElement>(':scope > [slot="after"], :scope > [slot="before"]')
     this.handleContentBound = this.handleContent.bind(this)
@@ -157,7 +112,7 @@ export class ClipElement extends NodeElement {
     this.addEventListener('scola-clip-outer', this.handleOuterBound)
     this.addEventListener('scola-view-move', this.handleViewMove.bind(this))
 
-    switch (this.type) {
+    switch (this.mode) {
       case 'content':
         this.firstUpdatedContent()
         break
@@ -261,23 +216,24 @@ export class ClipElement extends NodeElement {
       toFactor = -1
     }
 
-    const from = this.defaultSlotElement[scrollName]
     const index = contentElements.indexOf(element)
     const size = parseFloat(style[dimensionName])
 
-    if (Number.isNaN(size)) {
-      return
+    if (
+      index > -1 &&
+      !Number.isNaN(size)
+    ) {
+      const from = this.defaultSlotElement[scrollName]
+      const to = index * size * toFactor
+
+      contentElements.forEach((contentElement) => {
+        contentElement.hidden = contentElement !== element
+      })
+
+      await this.ease(from, to, (value) => {
+        this.defaultSlotElement[scrollName] = value
+      }, duration)
     }
-
-    const to = index * size * toFactor
-
-    contentElements.forEach((contentElement) => {
-      contentElement.hidden = contentElement !== element
-    })
-
-    await this.ease(from, to, (value) => {
-      this.defaultSlotElement[scrollName] = value
-    }, duration)
   }
 
   public async showContentOrInner (element: HTMLElement, duration = this.duration): Promise<void> {
@@ -441,9 +397,9 @@ export class ClipElement extends NodeElement {
       slotName === 'after' ||
       slotName === 'before'
     ) {
-      value = parseInt(style.width, 10)
+      value = parseFloat(style.width)
     } else {
-      value = parseInt(style.height, 10)
+      value = parseFloat(style.height)
     }
 
     if (Number.isNaN(value)) {
@@ -485,9 +441,9 @@ export class ClipElement extends NodeElement {
     let value = 0
 
     if (this.flow === 'row') {
-      value = parseInt(style.width, 10)
+      value = parseFloat(style.width)
     } else {
-      value = parseInt(style.height, 10)
+      value = parseFloat(style.height)
     }
 
     if (Number.isNaN(value)) {
@@ -553,63 +509,80 @@ export class ClipElement extends NodeElement {
       })
   }
 
-  protected handleContent (event: ClipEvent): void {
+  protected handleContent (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      const element = this.querySelector<HTMLElement>(`#${event.detail?.id ?? ''}`)
+      if (
+        isObject(event.detail?.data) &&
+        typeof event.detail?.data.id === 'string'
+      ) {
+        const element = this.querySelector<HTMLElement>(`#${event.detail.data.id}`)
 
-      if (element instanceof HTMLElement) {
-        event.cancelBubble = true
-        this.showContent(element).catch(() => {})
+        if (element instanceof HTMLElement) {
+          event.cancelBubble = true
+          this.showContent(element).catch(() => {})
+        }
       }
     }
   }
 
-  protected handleContentOrInner (event: ClipEvent): void {
+  protected handleContentOrInner (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      if (event.detail?.id === undefined) {
+      if (
+        isObject(event.detail?.data) &&
+        typeof event.detail?.data.id === 'string'
+      ) {
+        const element = this.querySelector<HTMLElement>(`#${event.detail.data.id}`)
+
+        if (element instanceof HTMLElement) {
+          event.cancelBubble = true
+          this.toggleContentOrInner(element).catch(() => {})
+        }
+      } else {
         this.toggleInner().catch(() => {})
-        return
-      }
-
-      const element = this.querySelector<HTMLElement>(`#${event.detail.id}`)
-
-      if (element instanceof HTMLElement) {
-        event.cancelBubble = true
-        this.toggleContentOrInner(element).catch(() => {})
       }
     }
   }
 
-  protected handleInner (event: ClipEvent): void {
+  protected handleInner (event: CustomEvent): void {
     if (this.isTarget(event)) {
       event.cancelBubble = true
       this.toggleInner().catch(() => {})
     }
   }
 
-  protected handleNested (event: ClipEvent): void {
+  protected handleNested (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      const element = this.querySelector<HTMLElement>(`#${event.detail?.id ?? ''}`)
+      if (
+        isObject(event.detail?.data) &&
+        typeof event.detail?.data.id === 'string'
+      ) {
+        const element = this.querySelector<HTMLElement>(`#${event.detail.data.id}`)
 
-      if (element instanceof HTMLElement) {
-        event.cancelBubble = true
-        this.toggleNested(element).catch(() => {})
+        if (element instanceof HTMLElement) {
+          event.cancelBubble = true
+          this.toggleNested(element).catch(() => {})
+        }
       }
     }
   }
 
-  protected handleOuter (event: ClipEvent): void {
+  protected handleOuter (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      const element = this.querySelector<HTMLElement>(`#${event.detail?.id ?? ''}`)
+      if (
+        isObject(event.detail?.data) &&
+        typeof event.detail?.data.id === 'string'
+      ) {
+        const element = this.querySelector<HTMLElement>(`#${event.detail.data.id}`)
 
-      if (element instanceof HTMLElement) {
-        event.cancelBubble = true
-        this.toggleOuter(element).catch(() => {})
+        if (element instanceof HTMLElement) {
+          event.cancelBubble = true
+          this.toggleOuter(element).catch(() => {})
+        }
       }
     }
   }
 
-  protected handleViewMove (event: ViewMoveEvent): void {
+  protected handleViewMove (event: CustomEvent): void {
     const path = event.composedPath()
 
     if (
@@ -662,7 +635,7 @@ export class ClipElement extends NodeElement {
         return Math.max(left, right)
       }, 0)
 
-    element.style.setProperty('z-index', `${zIndex}`)
+    element.style.setProperty('z-index', zIndex.toString())
   }
 
   protected setZIndexRelative (element: HTMLElement): void {
@@ -672,7 +645,7 @@ export class ClipElement extends NodeElement {
       if (assignedElement instanceof HTMLElement) {
         assignedElement.style.setProperty(
           'z-index',
-          `${1 + assignedElements.length - assignedElements.indexOf(assignedElement)}`
+          (1 + assignedElements.length - assignedElements.indexOf(assignedElement)).toString()
         )
       }
     })

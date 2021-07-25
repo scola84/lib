@@ -1,101 +1,121 @@
+import { customElement, property } from 'lit/decorators.js'
 import type { InputElement } from './input'
-import type { LogEvent } from './node'
+import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
-import { RequestElement } from './request'
-import type { SourceElement } from './source'
-import { customElement } from 'lit/decorators.js'
+import updaters from '../updaters/form'
 
 declare global {
+  interface HTMLElementEventMap {
+    'scola-form-submit': CustomEvent
+  }
+
   interface HTMLElementTagNameMap {
     'scola-form': FormElement
+  }
+
+  interface WindowEventMap {
+    'scola-form-submit': CustomEvent
   }
 }
 
 @customElement('scola-form')
-export class FormElement extends RequestElement {
+export class FormElement extends NodeElement {
   public static updaters = {
-    ...RequestElement.updaters,
-    'scola-source': (source: FormElement, target: SourceElement): void => {
-      source.inputElements.forEach((inputElement) => {
-        if (source.isObject(target.data)) {
-          inputElement.setValue(target.data)
-        }
-      })
-    }
+    ...NodeElement.updaters,
+    ...updaters
   }
 
-  public data?: Record<string, unknown>
-
+  @property()
   public method = 'POST'
 
-  public wait = true
-
-  protected updaters = FormElement.updaters
-
-  protected get hasFiles (): boolean {
+  public get hasFiles (): boolean {
     return this.querySelector<HTMLInputElement>('input[type="file"]') !== null
   }
 
-  protected get inputElements (): NodeListOf<InputElement> {
+  public get inputElements (): NodeListOf<InputElement> {
     return this.querySelectorAll<InputElement>('scola-input, scola-picker, scola-select, scola-slider')
+  }
+
+  protected handleSubmitBound: (event: CustomEvent) => void
+
+  protected updaters = FormElement.updaters
+
+  public constructor () {
+    super()
+    this.handleSubmitBound = this.handleSubmit.bind(this)
+  }
+
+  public connectedCallback (): void {
+    window.addEventListener('scola-form-submit', this.handleSubmitBound)
+    super.connectedCallback()
+  }
+
+  public disconnectedCallback (): void {
+    window.removeEventListener('scola-form-submit', this.handleSubmitBound)
+    super.disconnectedCallback()
   }
 
   public firstUpdated (properties: PropertyValues): void {
     this.addEventListener('keydown', this.handleKeydown.bind(this))
     this.addEventListener('scola-log', this.handleLog.bind(this))
+    this.addEventListener('scola-form-submit', this.handleSubmitBound)
     super.firstUpdated(properties)
   }
 
-  protected createBody (): FormData | URLSearchParams {
-    let data = null
+  public submit (): void {
+    let body: FormData | URLSearchParams = new URLSearchParams()
 
     if (this.hasFiles) {
-      data = new FormData()
-    } else {
-      data = new URLSearchParams()
+      body = new FormData()
     }
-
-    return Array
-      .from(this.inputElements)
-      .reduce((result, inputElement: InputElement) => {
-        inputElement.appendValueTo(result)
-        return result
-      }, data)
-  }
-
-  protected async handleFetch (): Promise<void> {
-    await super.handleFetch()
 
     this.inputElements.forEach((inputElement) => {
-      if (this.data !== undefined) {
-        if (this.code === 'err_400') {
-          inputElement.setError(this.data)
-        } else if (this.request?.method === 'GET') {
-          inputElement.setValue(this.data)
-        }
-      }
+      inputElement.appendValueTo(body)
     })
 
-    if (
-      this.request?.method !== 'GET' &&
-      this.code?.startsWith('ok_') === true
-    ) {
-      this.dispatchEvents()
+    this.dispatchEvent(new CustomEvent('scola-request-start', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        data: {
+          body,
+          method: this.method
+        },
+        origin: this
+      }
+    }))
+  }
+
+  public update (properties: PropertyValues): void {
+    if (properties.has('data')) {
+      this.inputElements.forEach((inputElement) => {
+        inputElement.data = this.data
+      })
     }
+
+    window.requestAnimationFrame(() => {
+      this
+        .querySelector('[is="error"]:not([hidden])')
+        ?.closest('scola-input')
+        ?.scrollIntoView({
+          behavior: 'smooth'
+        })
+    })
+
+    super.update(properties)
   }
 
   protected handleKeydown (event: KeyboardEvent): void {
-    if (event.key !== 'Enter') {
-      return
+    if (event.key === 'Enter') {
+      event.cancelBubble = true
+      this.submit()
     }
-
-    event.cancelBubble = true
-    this.start()
   }
 
-  protected handleLog (event: LogEvent): void {
-    if (event.detail?.code === 'err_400') {
+  protected handleSubmit (event: CustomEvent): void {
+    if (this.isTarget(event)) {
       event.cancelBubble = true
+      this.submit()
     }
   }
 }

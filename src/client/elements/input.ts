@@ -1,8 +1,10 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
+import { isObject, isPrimitive } from '../../common'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
-import { css } from 'lit'
+import styles from '../styles/input'
+import updaters from '../updaters/input'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -16,62 +18,29 @@ export class InputElement extends NodeElement {
 
   public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
-    css`
-      input,
-      textarea {
-        background: none;
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
-        color: inherit;
-        font-family: inherit;
-        font-size: inherit;
-        outline: none;
-        padding: 0;
-        width: 100%;
-        -moz-appearance: textfield;
-        -webkit-appearance: textfield;
-      }
-
-      input::placeholder,
-      textarea::placeholder {
-        color: inherit;
-        opacity: 0.35;
-      }
-
-      input[type="search"]::-webkit-search-decoration,
-      input[type="search"]::-webkit-search-cancel-button,
-      input[type="search"]::-webkit-search-results-button,
-      input[type="search"]::-webkit-search-results-decoration {
-        display: none;
-      }
-
-      slot:not([name])::slotted(input),
-      slot:not([name])::slotted(textarea) {
-        opacity: 0;
-        position: absolute;
-        width: 0;
-        z-index: -1;
-      }
-
-      slot::slotted([hidden]) {
-        display: none;
-      }
-    `
+    styles
   ]
+
+  public static updaters = {
+    ...NodeElement.updaters,
+    ...updaters
+  }
 
   @property({
     type: Boolean
   })
   public save?: boolean
 
+  @property({
+    attribute: false
+  })
+  public storage = InputElement.storage
+
   public inputElement?: HTMLInputElement | null
 
   protected clearElement?: NodeElement | null
 
   protected errorElement?: FormatElement | null
-
-  protected storage = InputElement.storage
 
   protected updaters = InputElement.updaters
 
@@ -102,18 +71,13 @@ export class InputElement extends NodeElement {
   public clearValue (value = ''): void {
     if (this.inputElement instanceof HTMLInputElement) {
       this.inputElement.value = value
-
-      if (this.clearElement instanceof NodeElement) {
-        this.clearElement.hidden = true
-      }
-
-      this.requestUpdate()
+      this.toggleClear(true)
     }
   }
 
   public connectedCallback (): void {
     if (this.save === true) {
-      this.loadValue()
+      this.loadState()
     }
 
     super.connectedCallback()
@@ -130,89 +94,72 @@ export class InputElement extends NodeElement {
     this.addEventListener('click', this.handleClick.bind(this))
     this.addEventListener('scola-input-clear', this.handleClear.bind(this))
     this.inputElement?.addEventListener('input', this.handleInput.bind(this))
+
+    if (this.cursor === undefined) {
+      this.setCursor()
+    }
+
     super.firstUpdated(properties)
   }
 
-  public setError (data: Record<string, unknown>): void {
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.isDefined(this.inputElement, data)
-    ) {
-      if (this.errorElement instanceof FormatElement) {
-        Object.assign(this.errorElement, data[this.inputElement.name])
-        this.errorElement.hidden = false
+  public toggleClear (force?: boolean): void {
+    if (this.clearElement instanceof NodeElement) {
+      if (force === undefined) {
+        this.clearElement.hidden = !this.clearElement.hidden
+      } else {
+        this.clearElement.hidden = force
       }
     }
   }
 
-  public setInput (data: Record<string, unknown>): void {
-    if (this.inputElement instanceof HTMLInputElement) {
-      if (data.name !== undefined) {
-        this.inputElement.name = String(data.name)
-      }
-
-      if (data.value !== undefined) {
-        this.inputElement.value = String(data.value)
-        this.requestUpdate()
-      }
-    }
-  }
-
-  public setValue (data: Record<string, unknown>): void {
-    this.clearError()
-
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.isDefined(this.inputElement, data)
-    ) {
-      this.inputElement.value = String(data[this.inputElement.name])
-
-      if (this.clearElement instanceof NodeElement) {
-        this.clearElement.hidden = this.inputElement.value === ''
-      }
-
-      this.requestUpdate()
-    }
-  }
-
-  public updated (properties: PropertyValues): void {
+  public update (properties: PropertyValues): void {
     if (properties.has('disabled')) {
       if (this.inputElement instanceof HTMLInputElement) {
         this.inputElement.disabled = this.disabled === true
       }
+    } else if (properties.has('data')) {
+      if (isObject(this.data)) {
+        this.setData(this.data)
+      }
     }
 
-    super.updated(properties)
+    super.update(properties)
+  }
+
+  protected createEventData (): Record<string, unknown> {
+    if (this.inputElement instanceof HTMLInputElement) {
+      return {
+        [this.inputElement.name]: this.inputElement.value
+      }
+    }
+
+    return {}
   }
 
   protected handleClear (): void {
     this.clearValue()
   }
 
+  protected handleClick (event: MouseEvent): void
+
   protected handleClick (): void {
+    if (this !== document.activeElement) {
+      this.inputElement?.focus()
+    }
+
     this.clearError()
   }
 
   protected handleInput (): void {
-    this.clearError()
-
     if (this.save === true) {
-      this.saveValue()
+      this.saveState()
     }
 
     if (this.inputElement instanceof HTMLInputElement) {
-      if (this.clearElement instanceof NodeElement) {
-        this.clearElement.hidden = this.inputElement.value === ''
-      }
-
-      this.requestUpdate()
+      this.toggleClear(this.inputElement.value === '')
     }
 
-    this.dispatchEvents()
-  }
-
-  protected isDefined (inputElement: HTMLInputElement, data: Record<string, unknown>): boolean {
-    return data[inputElement.name] !== undefined
+    this.dispatchEvents(this.createEventData())
   }
 
   protected isSuccessful (inputElement: HTMLInputElement): boolean {
@@ -223,19 +170,92 @@ export class InputElement extends NodeElement {
     )
   }
 
-  protected loadValue (): void {
+  protected loadState (): void {
     if (this.inputElement instanceof HTMLInputElement) {
-      this.inputElement.value = this.storage.getItem(this.id) ?? ''
-      this.requestUpdate()
+      this.inputElement.value = this.storage.getItem(`input-${this.id}`) ?? ''
     }
   }
 
-  protected saveValue (): void {
+  protected saveState (): void {
     if (this.inputElement instanceof HTMLInputElement) {
       if (this.inputElement.value === '') {
-        this.storage.removeItem(this.id)
+        this.storage.removeItem(`input-${this.id}`)
       } else {
-        this.storage.setItem(this.id, this.inputElement.value)
+        this.storage.setItem(`input-${this.id}`, this.inputElement.value)
+      }
+    }
+  }
+
+  protected setCursor (): void {
+    switch (this.inputElement?.type) {
+      case 'date':
+      case 'datetime-local':
+      case 'email':
+      case 'month':
+      case 'number':
+      case 'password':
+      case 'search':
+      case 'tel':
+      case 'text':
+      case 'time':
+      case 'url':
+      case 'week':
+        this.cursor = 'text'
+        break
+      case 'checkbox':
+      case 'color':
+      case 'file':
+      case 'radio':
+        this.cursor = 'pointer'
+        break
+      default:
+        this.cursor = 'default'
+        break
+    }
+  }
+
+  protected setData (data: Record<string, unknown>): void {
+    this.clearError()
+
+    if (this.inputElement instanceof HTMLInputElement) {
+      const datum = data[this.inputElement.name]
+
+      if (isObject(datum)) {
+        this.setError(datum)
+      } else if (datum !== undefined) {
+        this.setValue(data)
+      } else if (data.value !== undefined) {
+        this.setInput(data)
+      }
+    }
+
+    this.dispatchEvents(this.createEventData())
+  }
+
+  protected setError (data: Record<string, unknown>): void {
+    if (this.errorElement instanceof FormatElement) {
+      Object.assign(this.errorElement, data)
+      this.errorElement.hidden = false
+    }
+  }
+
+  protected setInput (data: Record<string, unknown>): void {
+    if (this.inputElement instanceof HTMLInputElement) {
+      const { value } = data
+
+      if (isPrimitive(value)) {
+        this.inputElement.value = value.toString()
+      }
+    }
+  }
+
+  protected setValue (data: Record<string, unknown>): void {
+    if (this.inputElement instanceof HTMLInputElement) {
+      const value = data[this.inputElement.name]
+
+      if (isPrimitive(value)) {
+        this.inputElement.value = value.toString()
+        this.toggleClear(this.inputElement.value === '')
       }
     }
   }

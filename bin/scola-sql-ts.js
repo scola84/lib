@@ -84,7 +84,10 @@ try {
     throw new Error(`Client for dialect "${dialect}" is undefined`)
   }
 
-  fs.mkdirSync(target, { recursive: true })
+  fs.mkdirSync(target, {
+    recursive: true
+  })
+
   url.hostname = url.hostname || '127.0.0.1'
   url.username = url.username || 'root'
   url.password = url.password || 'root'

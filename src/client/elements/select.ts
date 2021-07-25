@@ -1,9 +1,9 @@
 import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
-import { css, html } from 'lit'
 import { customElement, property, query } from 'lit/decorators.js'
-import { ClipElement } from './clip'
 import { InputElement } from './input'
-import type { NodeElement } from './node'
+import { html } from 'lit'
+import styles from '../styles/select'
+import updaters from '../updaters/select'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -15,107 +15,12 @@ declare global {
 export class SelectElement extends InputElement {
   public static styles: CSSResultGroup[] = [
     ...InputElement.styles,
-    css`
-      input {
-        display: none;
-      }
-
-      :host([switch]) input[type="range"] {
-        border-radius: 0.875rem;
-        box-sizing: border-box;
-        display: inline-flex;
-        height: 1.75rem;
-        margin: 0;
-        opacity: 1;
-        padding: 0.125rem;
-        pointer-events: none;
-        transition: background 250ms cubic-bezier(0.83, 0, 0.17, 1);
-        width: 2.75rem;
-        -moz-appearance: none;
-        -webkit-appearance: none;
-      }
-
-      :host([fill="aux-1"]) input[type="range"] {
-        background: var(--scola-select-fill-aux-1, #ddd);
-      }
-
-      :host([fill="aux-2"]) input[type="range"] {
-        background: var(--scola-select-fill-aux-2, #ccc);
-      }
-
-      :host([fill="aux-3"]) input[type="range"] {
-        background: var(--scola-select-fill-aux-3, #bbb);
-      }
-
-      :host([checked]) input[type="range"] {
-        background: var(--scola-select-fill-checked, #000);
-      }
-
-      :host([checked][fill-checked="sig-1"]) input[type="range"] {
-        background: var(--scola-select-fill-checked-sig-1, #b22222);
-      }
-
-      :host([checked][fill-checked="sig-2"]) input[type="range"] {
-        background: var(--scola-select-fill-checked-sig-2, #008000);
-      }
-
-      input[type="range"]::-moz-range-thumb {
-        background: var(--scola-select-fill-thumb, #fff);
-        border: none;
-        border-radius: 50%;
-        box-shadow: 0 0 0.25rem rgba(0, 0, 0, 0.25);
-        height: 1.5rem;
-        width: 1.5rem;
-        -moz-appearance: none;
-        -webkit-appearance: none;
-      }
-
-      input[type="range"]::-webkit-slider-thumb {
-        background: var(--scola-select-fill-thumb, #fff);
-        border: none;
-        border-radius: 50%;
-        box-shadow: 0 0 0.25rem rgba(0, 0, 0, 0.25);
-        height: 1.5rem;
-        width: 1.5rem;
-        -moz-appearance: none;
-        -webkit-appearance: none;
-      }
-
-      slot[name="after"]::slotted([is="off"]),
-      slot[name="before"]::slotted([is="off"]),
-      slot[name="after"]::slotted([is="on"]),
-      slot[name="before"]::slotted([is="on"]) {
-        display: none;
-      }
-
-      :host(:not([checked])) slot[name="after"]::slotted([is="off"]),
-      :host(:not([checked])) slot[name="before"]::slotted([is="off"]),
-      :host([checked]) slot[name="after"]::slotted([is="on"]),
-      :host([checked]) slot[name="before"]::slotted([is="on"]) {
-        display: inline-flex;
-      }
-
-      slot[name="body"] {
-        cursor: pointer;
-      }
-    `
+    styles
   ]
 
   public static updaters = {
     ...InputElement.updaters,
-    'scola-clip': (source: SelectElement, target: NodeElement, properties: PropertyValues): void => {
-      if (properties.has('hidden')) {
-        source.toggleChecked(!target.hidden).catch(() => {})
-      } else if (
-        source.checked === true &&
-        target.parentElement instanceof ClipElement
-      ) {
-        target.parentElement.toggleContentOrInner(target).catch(() => {})
-      }
-    },
-    'scola-select': (source: SelectElement, target: SelectElement): void => {
-      source.toggleChecked(target.checked).catch(() => {})
-    }
+    ...updaters
   }
 
   @property({
@@ -142,6 +47,8 @@ export class SelectElement extends InputElement {
   protected updaters = SelectElement.updaters
 
   public appendValueTo (formData: FormData | URLSearchParams): void {
+    this.clearError()
+
     if (
       this.inputElement instanceof HTMLInputElement &&
       this.isSuccessful(this.inputElement)
@@ -191,27 +98,24 @@ export class SelectElement extends InputElement {
   public setInput (data: Record<string, unknown>): void {
     super.setInput(data)
 
-    if (this.inputElement instanceof HTMLInputElement) {
-      if (data.checked === true) {
-        this.toggleChecked(true).catch(() => {})
-      }
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      data.checked === true
+    ) {
+      this.toggleChecked(true, 0).catch(() => {})
     }
   }
 
   public setValue (data: Record<string, unknown>): void {
-    this.clearError()
-
     if (
       this.inputElement instanceof HTMLInputElement &&
-      this.isDefined(this.inputElement, data)
+      data[this.inputElement.name] === this.inputElement.value
     ) {
-      if (data[this.inputElement.name] === this.inputElement.value) {
-        this.toggleChecked(true).catch(() => {})
-      }
+      this.toggleChecked(true, 0).catch(() => {})
     }
   }
 
-  public async toggleChecked (force?: boolean): Promise<void> {
+  public async toggleChecked (force?: boolean, duration = this.duration): Promise<void> {
     if (
       force !== undefined &&
       this.checked === force
@@ -234,12 +138,12 @@ export class SelectElement extends InputElement {
     }
 
     await this.ease(from, to, (value) => {
-      this.rangeElement.value = `${value}`
-    })
+      this.rangeElement.value = value.toString()
+    }, duration)
   }
 
-  protected handleClick (): void {
-    super.handleClick()
+  protected handleClick (event: MouseEvent): void {
+    super.handleClick(event)
 
     if (this.inputElement?.type === 'checkbox') {
       this.handleClickCheckbox()

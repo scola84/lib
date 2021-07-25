@@ -5,8 +5,8 @@ import { URL } from 'url'
 import { createPool } from 'mysql2/promise'
 import { format } from '../format'
 import { format as formatValue } from './format'
-import lodash from 'lodash'
 import { parse } from 'query-string'
+import { set } from '../../../../common'
 
 /**
  * Manages MySQL connections.
@@ -39,7 +39,7 @@ export class MysqlDatabase extends Database {
         parseNumbers: true
       }))
       .forEach(([name, value]) => {
-        lodash.set(options, name, value)
+        set(options, name, value)
       })
 
     return createPool(options)

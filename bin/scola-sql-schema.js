@@ -59,7 +59,9 @@ try {
     targetFile = `.docker/${dialect}/initdb.d/${context}/${database}.sql`
   }
 
-  fs.mkdirSync(path.dirname(targetFile), { recursive: true })
+  fs.mkdirSync(path.dirname(targetFile), {
+    recursive: true
+  })
 
   if (dialect.includes('mysql')) {
     const excludeFlags = (exclude ?? [])

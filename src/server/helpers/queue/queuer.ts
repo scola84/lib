@@ -152,10 +152,13 @@ export class Queuer {
   public constructor (options: QueuerOptions) {
     this.database = options.database
     this.databases = options.databases
-    this.logger = options.logger.child({ name: 'queuer' })
     this.names = options.names ?? process.env.QUEUE_NAMES ?? '%'
     this.schedule = options.schedule ?? process.env.QUEUE_SCHEDULE ?? '* * * * *'
     this.store = options.store
+
+    this.logger = options.logger.child({
+      name: 'queuer'
+    })
   }
 
   /**
@@ -202,13 +205,16 @@ export class Queuer {
   }
 
   /**
-   * Checks whether a value is an Array.
+   * Checks whether a value is null or undefined.
    *
    * @param value - The value
    * @returns The result
    */
-  public isArray<T = unknown>(value: unknown): value is T[] {
-    return Array.isArray(value)
+  public isNil (value: unknown): value is null | undefined {
+    return (
+      value === null ||
+      value === undefined
+    )
   }
 
   /**
@@ -217,8 +223,27 @@ export class Queuer {
    * @param value - The value
    * @returns The result
    */
-  public isObject<T extends Record<string, unknown>>(value: unknown): value is T {
-    return typeof value === 'object' && value !== null
+  public isObject (value: unknown): value is Record<string, unknown> {
+    return (
+      typeof value === 'object' &&
+      value !== null
+    )
+  }
+
+  /**
+   * Checks whether a value is a primitive.
+   *
+   * @param value - The value
+   * @returns The result
+   */
+  public isPrimitive (value: unknown): value is BigInt | boolean | number | string | symbol {
+    return (
+      typeof value === 'bigint' ||
+      typeof value === 'boolean' ||
+      typeof value === 'number' ||
+      typeof value === 'string' ||
+      typeof value === 'symbol'
+    )
   }
 
   /**
@@ -230,11 +255,15 @@ export class Queuer {
     this.storeDuplicate = this.createStoreDuplicate()
 
     this.store.nodeRedis.on('error', (error) => {
-      this.logger.error({ context: 'setup' }, String(error))
+      this.logger.error({
+        context: 'setup'
+      }, String(error))
     })
 
     this.storeDuplicate.nodeRedis.on('error', (error) => {
-      this.logger.error({ context: 'setup' }, String(error))
+      this.logger.error({
+        context: 'setup'
+      }, String(error))
     })
   }
 
@@ -355,7 +384,9 @@ export class Queuer {
         }
       }
     } catch (error: unknown) {
-      this.logger.error({ context: 'handle-listener' }, String(error))
+      this.logger.error({
+        context: 'handle-listener'
+      }, String(error))
     }
   }
 
@@ -376,7 +407,9 @@ export class Queuer {
       this.queueRunners.add(queueRunner)
       await queueRunner.run(queue, parameters)
     } catch (error: unknown) {
-      this.logger.error({ context: 'run' }, String(error))
+      this.logger.error({
+        context: 'run'
+      }, String(error))
     } finally {
       this.queueRunners.delete(queueRunner)
     }
@@ -440,7 +473,9 @@ export class Queuer {
       this
         .handleJob(date)
         .catch((error: unknown) => {
-          this.logger.error({ context: 'start-job' }, String(error))
+          this.logger.error({
+            context: 'start-job'
+          }, String(error))
         })
     })
   }
@@ -453,7 +488,9 @@ export class Queuer {
       this
         .handleListener(channel, message)
         .catch((error: unknown) => {
-          this.logger.error({ context: 'start-listener' }, String(error))
+          this.logger.error({
+            context: 'start-listener'
+          }, String(error))
         })
     })
 

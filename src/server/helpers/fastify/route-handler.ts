@@ -123,10 +123,13 @@ export abstract class RouteHandler {
     }
 
     this.database = handlerOptions.database
-    this.logger = handlerOptions.logger?.child({ name: handlerOptions.url })
     this.options = handlerOptions
     this.server = handlerOptions.server
     this.store = handlerOptions.store
+
+    this.logger = handlerOptions.logger?.child({
+      name: handlerOptions.url
+    })
   }
 
   /**
@@ -182,7 +185,9 @@ export abstract class RouteHandler {
       .status(500)
       .send({})
 
-    this.logger?.error({ context: 'handle-error' }, String(error))
+    this.logger?.error({
+      context: 'handle-error'
+    }, String(error))
   }
 
   /**
@@ -204,7 +209,9 @@ export abstract class RouteHandler {
       try {
         await this.handleError(request, reply, error)
       } catch (replyError: unknown) {
-        this.logger?.error({ context: 'handle-route' }, String(replyError))
+        this.logger?.error({
+          context: 'handle-route'
+        }, String(replyError))
       }
     }
   }
@@ -247,8 +254,14 @@ export abstract class RouteHandler {
    *}
    * ```
    */
-  protected normalizeValidationResults (results: ValidationResult[] = []): Record<string, unknown> {
-    return results.reduce<Record<string, unknown>>((result, { dataPath, keyword, params }) => {
+  protected normalizeValidationResults (validationResults: ValidationResult[] = []): Record<string, unknown> {
+    return validationResults.reduce<Record<string, unknown>>((result, validationResult) => {
+      const {
+        dataPath,
+        keyword,
+        params
+      } = validationResult
+
       if (keyword === 'required') {
         result[String(params.missingProperty)] = {
           code: 'err_input_required'

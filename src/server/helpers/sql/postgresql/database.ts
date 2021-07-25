@@ -5,8 +5,8 @@ import { PostgresqlConnection } from './connection'
 import { URL } from 'url'
 import { format } from '../format'
 import { format as formatValue } from './format'
-import lodash from 'lodash'
 import { parse } from 'query-string'
+import { set } from '../../../../common'
 
 types.setTypeParser(types.builtins.INT8, parseInt)
 
@@ -38,7 +38,7 @@ export class PostgresqlDatabase extends Database {
         parseNumbers: true
       }))
       .forEach(([name, value]) => {
-        lodash.set(options, name, value)
+        set(options, name, value)
       })
 
     return new Pool(options)

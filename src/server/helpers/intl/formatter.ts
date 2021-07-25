@@ -1,4 +1,4 @@
-import Format from 'intl-messageformat'
+import { format } from '../../../common'
 
 /**
  * Defines language-specific collections of strings once and manages them throughout the application.
@@ -21,13 +21,13 @@ export class Formatter {
   /**
    * Formats a string according to Intl MessageFormat.
    *
-   * Uses the first argument as a key to resolve the string from the collection of strings of the given language.
+   * Uses the first argument as the code to resolve the string from the collection of strings of the given language.
    *
-   * Uses the first argument directly as the string to be formatted if the key cannot be found.
+   * Uses the first argument directly as the string to be formatted if the code cannot be found.
    *
    * The string may contain parameters written as `{name}`, which will be replaced by the value found in the data. See the documentation (https://formatjs.io/docs/intl-messageformat) for more elaborate examples, e.g. to format plurals or dates.
    *
-   * @param string - The key of the string or the string to be formatted
+   * @param code - The code of the string or the string to be formatted
    * @param language - The language of the string
    * @param data - The data to format parameters inside the string
    * @throws any Intl MessageFormat error
@@ -51,15 +51,15 @@ export class Formatter {
    * ```
    */
   public format (code: string, language = Formatter.lang, data?: Record<string, unknown>): string {
-    return String(new Format(Formatter.strings[language]?.[code] ?? code, language).format(data))
+    return format(Formatter.strings, code, language, data)
   }
 
   /**
-   * Looks up the key of the string in the collection of strings of the given language.
+   * Looks up the code of the string in the collection of strings of the given language.
    *
    * @param string - The string
    * @param language - The language of the string
-   * @returns The key or `undefined` if the string was not found
+   * @returns The code or `undefined` if the string was not found
    *
    * @example
    * ```ts
@@ -70,9 +70,9 @@ export class Formatter {
    * }
    *
    * const formatter = new Formatter()
-   * const key = formatter.lookup('Hello {name}', 'en')
+   * const code = formatter.lookup('Hello {name}', 'en')
    *
-   * console.log(key) // key = 'hello'
+   * console.log(code) // code = 'hello'
    * ```
    */
   public lookup (string: string, language = Formatter.lang): string | undefined {

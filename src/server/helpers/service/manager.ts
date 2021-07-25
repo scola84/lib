@@ -166,12 +166,15 @@ export class ServiceManager {
   public constructor (options: ServiceManagerOptions) {
     this.databases = options.databases
     this.names = options.names ?? process.env.SERVICE_NAMES?.split(':') ?? '*'
-    this.logger = options.logger?.child({ name: 'service-manager' })
     this.queuer = options.queuer
     this.server = options.server
     this.services = options.services
     this.signal = options.signal ?? 'SIGTERM'
     this.types = options.types ?? process.env.SERVICE_TYPES?.split(':') ?? '*'
+
+    this.logger = options.logger?.child({
+      name: 'service-manager'
+    })
   }
 
   /**
@@ -202,19 +205,8 @@ export class ServiceManager {
           this.queuer?.setup()
         }
 
-        Object.entries(this.services).forEach(([sn, service]) => {
-          Object.entries(service).forEach(([tn, type]) => {
-            Object.entries(type).forEach(([fn, factory]) => {
-              if (isMatch(`${sn}.${tn}.${fn}`, this.names)) {
-                factory()
-              }
-            })
-          })
-        })
-
-        await Promise.all(Object.values(this.databases ?? {}).map(async (database) => {
-          return database.start()
-        }))
+        this.startServices()
+        await this.startDatabases()
 
         if (isMatch('server', this.types)) {
           await this.server?.start(false)
@@ -229,7 +221,10 @@ export class ServiceManager {
         }
       })
       .catch((error) => {
-        this.logger?.error({ context: 'start' }, String(error))
+        this.logger?.error({
+          context: 'start'
+        }, String(error))
+
         this.process.exit()
       })
   }
@@ -238,7 +233,7 @@ export class ServiceManager {
    * Stops the service manager.
    *
    * Stops `queuer`, `server`, which are responsible for stopping the services
-   * they manage. Stop `databases`.
+   * they manage. Stops `databases`.
    *
    * Exits `process` after the delegates have been stopped.
    */
@@ -260,15 +255,52 @@ export class ServiceManager {
           await this.queuer?.stop()
         }
 
-        await Promise.all(Object.values(this.databases ?? {}).map(async (database) => {
-          return database.stop()
-        }))
+        await this.stopDatabases()
       })
       .catch((error) => {
-        this.logger?.error({ context: 'stop' }, String(error))
+        this.logger?.error({
+          context: 'stop'
+        }, String(error))
       })
       .finally(() => {
         this.process.exit()
       })
+  }
+
+  /**
+   * Starts `databases`.
+   */
+  protected async startDatabases (): Promise<void> {
+    const databases = Object.values(this.databases ?? {})
+
+    await Promise.all(databases.map(async (database) => {
+      return database.start()
+    }))
+  }
+
+  /**
+   * Starts `services` depending on `names`.
+   */
+  protected startServices (): void {
+    Object.entries(this.services).forEach(([sn, service]) => {
+      Object.entries(service).forEach(([tn, type]) => {
+        Object.entries(type).forEach(([fn, factory]) => {
+          if (isMatch(`${sn}.${tn}.${fn}`, this.names)) {
+            factory()
+          }
+        })
+      })
+    })
+  }
+
+  /**
+   * Stops `databases`.
+   */
+  protected async stopDatabases (): Promise<void> {
+    const databases = Object.values(this.databases ?? {})
+
+    await Promise.all(databases.map(async (database) => {
+      return database.stop()
+    }))
   }
 }

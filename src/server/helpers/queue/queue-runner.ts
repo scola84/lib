@@ -78,8 +78,11 @@ export class QueueRunner {
   public constructor (options: QueueRunnerOptions) {
     this.database = options.database
     this.databases = options.databases
-    this.logger = options.logger?.child({ name: 'queue-runner' })
     this.store = options.store
+
+    this.logger = options.logger?.child({
+      name: 'queue-runner'
+    })
   }
 
   /**
@@ -161,7 +164,10 @@ export class QueueRunner {
    * @param parameters - The parameters
    */
   public async run (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
-    const queueRun: QueueRun = createQueueRun({ queue })
+    const queueRun = createQueueRun({
+      queue
+    })
+
     const { id: queueRunId } = await this.insertQueueRun(queueRun)
 
     queueRun.id = queueRunId
@@ -188,7 +194,9 @@ export class QueueRunner {
       try {
         await this.updateQueueRunErr(queueRun, error)
       } catch (updateError: unknown) {
-        this.logger?.error({ context: 'run' }, String(updateError))
+        this.logger?.error({
+          context: 'run'
+        }, String(updateError))
       }
     }
   }

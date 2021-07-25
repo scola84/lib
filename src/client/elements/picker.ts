@@ -1,16 +1,16 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
+import { isObject, isPrimitive } from '../../common'
 import { DialogElement } from './dialog'
 import { FormatElement } from './format'
 import { InputElement } from './input'
 import { NodeElement } from './node'
-import type { NodeEvent } from './node'
-import { SelectElement } from './select'
-import { css } from 'lit'
+import type { SelectElement } from './select'
 import { customElement } from 'lit/decorators.js'
+import styles from '../styles/picker'
 
 declare global {
   interface HTMLElementEventMap {
-    'scola-picker-pick': NodeEvent
+    'scola-picker-pick': CustomEvent
   }
 
   interface HTMLElementTagNameMap {
@@ -22,18 +22,7 @@ declare global {
 export class PickerElement extends InputElement {
   public static styles: CSSResultGroup[] = [
     ...InputElement.styles,
-    css`
-      input {
-        opacity: 0;
-        position: absolute;
-        width: 0;
-        z-index: -1;
-      }
-
-      slot[name="body"] {
-        cursor: pointer;
-      }
-    `
+    styles
   ]
 
   protected dialogElement?: DialogElement | null
@@ -49,7 +38,6 @@ export class PickerElement extends InputElement {
     this.dialogElement = this.querySelector<DialogElement>('scola-dialog')
     this.previewElement = this.querySelector<NodeElement>('[is="preview"]')
     this.valueElement = this.querySelector<FormatElement>('[is="value"]')
-    this.dialogElement?.addEventListener('scola-picker-pick', this.handlePick.bind(this))
   }
 
   public appendValueTo (data: FormData | URLSearchParams): void {
@@ -84,11 +72,20 @@ export class PickerElement extends InputElement {
       case 'color':
         this.clearValueColor()
         break
+      case 'date':
+        this.clearValueDate()
+        break
       case 'file':
         this.clearValueFile()
         break
       case 'radio':
         this.clearValueRadio()
+        break
+      case 'text':
+        this.clearValueText()
+        break
+      case 'time':
+        this.clearValueTime()
         break
       default:
         break
@@ -99,9 +96,10 @@ export class PickerElement extends InputElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    super.firstUpdated(properties)
+    this.dialogElement?.addEventListener('scola-picker-pick', this.handlePick.bind(this))
     this.setValuePreview()
     this.setValueText()
+    super.firstUpdated(properties)
   }
 
   public setValue (data: Record<string, unknown>): void {
@@ -114,13 +112,17 @@ export class PickerElement extends InputElement {
     super.clearValue('#000000')
   }
 
+  protected clearValueDate (): void {
+    super.clearValue()
+  }
+
   protected clearValueFile (): void {
     super.clearValue()
   }
 
   protected clearValueRadio (): void {
-    Array.from(this.dialogElement
-      ?.querySelectorAll<SelectElement>('scola-select') ?? [])
+    Array
+      .from(this.dialogElement?.querySelectorAll<SelectElement>('scola-select') ?? [])
       .forEach((selectElement) => {
         selectElement.toggleChecked(false).catch(() => {})
       })
@@ -128,10 +130,27 @@ export class PickerElement extends InputElement {
     super.clearValue()
   }
 
-  protected handleClick (): void {
+  protected clearValueText (): void {
+    Array
+      .from(this.dialogElement?.querySelectorAll<SelectElement>('scola-select') ?? [])
+      .forEach((selectElement) => {
+        selectElement.toggleChecked(false).catch(() => {})
+      })
+
+    super.clearValue()
+  }
+
+  protected clearValueTime (): void {
+    super.clearValue()
+  }
+
+  protected handleClick (event: MouseEvent): void {
     switch (this.inputElement?.type) {
       case 'color':
         this.handleClickColor()
+        break
+      case 'date':
+        this.handleClickDate()
         break
       case 'file':
         this.handleClickFile()
@@ -139,58 +158,136 @@ export class PickerElement extends InputElement {
       case 'radio':
         this.handleClickRadio()
         break
+      case 'text':
+        this.handleClickText()
+        break
+      case 'time':
+        this.handleClickTime()
+        break
       default:
         break
     }
+
+    super.handleClick(event)
   }
 
   protected handleClickColor (): void {
-    super.handleClick()
+    this.inputElement?.click()
+  }
+
+  protected handleClickDate (): void {
     this.inputElement?.click()
   }
 
   protected handleClickFile (): void {
-    super.handleClick()
     this.inputElement?.click()
   }
 
   protected handleClickRadio (): void {
-    super.handleClick()
+    this.showDialog()
+  }
 
-    if (this.dialogElement instanceof DialogElement) {
-      this.dialogElement.anchorElement = this
-      this.dialogElement.querySelector<HTMLElement>(':first-child')?.style.setProperty('max-width', `${this.getBoundingClientRect().width}px`)
-      this.dialogElement.show().catch(() => {})
-    }
+  protected handleClickText (): void {
+    this.showDialog()
+  }
+
+  protected handleClickTime (): void {
+    this.inputElement?.click()
   }
 
   protected handleInput (): void {
+    switch (this.inputElement?.type) {
+      case 'text':
+        this.handleInputText()
+        break
+      default:
+        break
+    }
+
     super.handleInput()
     this.setValuePreview()
     this.setValueText()
   }
 
-  protected handlePick (): void {
-    this.dialogElement?.hide()
+  protected handleInputText (): void {
+    this.showDialog()
+  }
 
-    const checkedElement = Array.from(this.dialogElement
-      ?.querySelectorAll<SelectElement>('scola-select') ?? [])
-      .find((element) => {
-        return element.checked
-      })
+  protected handlePick (event: CustomEvent<Record<string, unknown> | null>): void {
+    this.hideDialog()
 
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      checkedElement instanceof SelectElement
-    ) {
-      const data = {
-        [this.inputElement.name]: checkedElement.inputElement?.value,
-        [`${this.inputElement.name}_text`]: checkedElement.inputElement?.nextElementSibling?.textContent
+    switch (this.inputElement?.type) {
+      case 'radio':
+        this.handlePickRadio(event)
+        break
+      case 'text':
+        this.handlePickText(event)
+        break
+      default:
+        break
+    }
+
+    if (this.save === true) {
+      this.saveState()
+    }
+
+    if (this.inputElement instanceof HTMLInputElement) {
+      this.toggleClear(this.inputElement.value === '')
+    }
+
+    this.dispatchEvents(this.createEventData(), event)
+  }
+
+  protected handlePickRadio (event: CustomEvent<Record<string, unknown> | null>): void {
+    if (this.inputElement instanceof HTMLInputElement) {
+      const data: Record<string, unknown> = {}
+
+      if (isObject(event.detail?.data)) {
+        data[this.inputElement.name] = event.detail?.data[this.inputElement.name]
+
+        if (event.detail?.origin instanceof InputElement) {
+          data[`${this.inputElement.name}_text`] = event.detail.origin.inputElement?.nextElementSibling?.textContent
+        }
       }
 
       super.setValue(data)
-      super.handleInput()
+      this.setValuePreview()
       this.setValueText(data)
+    }
+  }
+
+  protected handlePickText (event: CustomEvent<Record<string, unknown> | null>): void {
+    if (this.inputElement instanceof HTMLInputElement) {
+      const data: Record<string, unknown> = {}
+
+      if (isObject(event.detail?.data)) {
+        data[this.inputElement.name] = event.detail?.data[this.inputElement.name]
+      }
+
+      super.setValue(data)
+      this.setValuePreview()
+      this.setValueText(data)
+    }
+  }
+
+  protected hideDialog (): void {
+    if (this.dialogElement instanceof DialogElement) {
+      this.dialogElement.hide().catch(() => {})
+    }
+  }
+
+  protected setCursor (): void {
+    switch (this.inputElement?.type) {
+      case 'color':
+      case 'date':
+      case 'file':
+      case 'radio':
+      case 'time':
+        this.cursor = 'pointer'
+        break
+      default:
+        super.setCursor()
+        break
     }
   }
 
@@ -218,11 +315,20 @@ export class PickerElement extends InputElement {
       case 'color':
         this.setValueTextColor()
         break
+      case 'date':
+        this.setValueTextDate()
+        break
       case 'file':
         this.setValueTextFile()
         break
       case 'radio':
         this.setValueTextRadio(data)
+        break
+      case 'text':
+        this.setValueTextText(data)
+        break
+      case 'time':
+        this.setValueTextTime()
         break
       default:
         break
@@ -234,20 +340,24 @@ export class PickerElement extends InputElement {
       this.inputElement instanceof HTMLInputElement &&
       this.valueElement instanceof FormatElement
     ) {
-      const { value: hex } = this.inputElement
+      const { value } = this.inputElement
+      const hex = value
 
-      const [red, green, blue] =
-        hex
-          .slice(1)
-          .match(/.{2}/gu)
-          ?.map((part) => {
-            return parseInt(part, 16)
-          }) ?? []
+      const [
+        red,
+        green,
+        blue
+      ] = value
+        .slice(1)
+        .match(/.{2}/gu)
+        ?.map((part) => {
+          return parseInt(part, 16)
+        }) ?? []
 
-      let count = 1
+      let count = 0
 
-      if (hex === '') {
-        count = 0
+      if (value !== '') {
+        count = 1
       }
 
       this.valueElement.data = {
@@ -256,6 +366,28 @@ export class PickerElement extends InputElement {
         green,
         hex,
         red
+      }
+    }
+  }
+
+  protected setValueTextDate (): void {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.valueElement instanceof FormatElement
+    ) {
+      const { value } = this.inputElement
+
+      let count = 0
+      let date = null
+
+      if (value !== '') {
+        count = 1
+        date = new Date(value)
+      }
+
+      this.valueElement.data = {
+        count,
+        date
       }
     }
   }
@@ -270,8 +402,8 @@ export class PickerElement extends InputElement {
       this.valueElement.data = {
         count: files.length,
         name: files[0]?.name,
-        size: files.reduce((total, file) => {
-          return total + file.size
+        size: files.reduce((result, file) => {
+          return result + file.size
         }, 0)
       }
     }
@@ -292,6 +424,45 @@ export class PickerElement extends InputElement {
         count,
         text: data?.[`${this.inputElement.name}_text`]
       }
+    }
+  }
+
+  protected setValueTextText (data?: Record<string, unknown>): void {
+    if (this.inputElement instanceof HTMLInputElement) {
+      const value = data?.[`${this.inputElement.name}_text`]
+
+      if (isPrimitive(value)) {
+        this.inputElement.value = value.toString()
+      }
+    }
+  }
+
+  protected setValueTextTime (): void {
+    if (
+      this.inputElement instanceof HTMLInputElement &&
+      this.valueElement instanceof FormatElement
+    ) {
+      const { value } = this.inputElement
+
+      let count = 0
+      let time = null
+
+      if (value !== '') {
+        count = 1
+        time = new Date(`${new Date().toDateString()} ${value}`)
+      }
+
+      this.valueElement.data = {
+        count,
+        time
+      }
+    }
+  }
+
+  protected showDialog (): void {
+    if (this.dialogElement instanceof DialogElement) {
+      this.dialogElement.anchorElement = this
+      this.dialogElement.show().catch(() => {})
     }
   }
 }

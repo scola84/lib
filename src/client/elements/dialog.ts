@@ -2,13 +2,13 @@ import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import type { AppElement } from './app'
 import { NodeElement } from './node'
-import type { NodeEvent } from './node'
-import { css } from 'lit'
+import { isObject } from '../../common'
+import styles from '../styles/dialog'
 
 declare global {
   interface HTMLElementEventMap {
-    'scola-dialog-hide': NodeEvent
-    'scola-dialog-show': NodeEvent
+    'scola-dialog-hide': CustomEvent
+    'scola-dialog-show': CustomEvent
   }
 
   interface HTMLElementTagNameMap {
@@ -16,17 +16,17 @@ declare global {
   }
 
   interface WindowEventMap {
-    'scola-dialog-hide': NodeEvent
-    'scola-dialog-show': NodeEvent
+    'scola-dialog-hide': CustomEvent
+    'scola-dialog-show': CustomEvent
   }
 }
 
-export type HorizontalFrom =
+type HorizontalFrom =
   | 'screen-center'
   | 'screen-end'
   | 'screen-start'
 
-export type HorizontalTo =
+type HorizontalTo =
   | 'center'
   | 'end-at-start'
   | 'end'
@@ -36,12 +36,12 @@ export type HorizontalTo =
   | 'start-at-end'
   | 'start'
 
-export type VerticalFrom =
+type VerticalFrom =
   | 'screen-bottom'
   | 'screen-center'
   | 'screen-top'
 
-export type VerticalTo =
+type VerticalTo =
   | 'bottom-at-top'
   | 'bottom'
   | 'center'
@@ -51,20 +51,27 @@ export type VerticalTo =
   | 'top-at-bottom'
   | 'top'
 
-export interface DialogFrom {
+interface DialogFrom {
   horizontal?: HorizontalFrom
   vertical?: VerticalFrom
 }
 
-export interface DialogTo {
+interface DialogTo {
   horizontal?: HorizontalTo
   vertical?: VerticalTo
 }
 
-export interface DialogPosition {
+interface DialogPosition {
   left: number
   opacity?: number
   top: number
+}
+
+interface Rect {
+  height: number
+  left: number
+  top: number
+  width: number
 }
 
 const htoAlternatives: Record<HorizontalTo, HorizontalTo[]> = {
@@ -93,175 +100,11 @@ const vtoAlternatives: Record<VerticalTo, VerticalTo[]> = {
 export class DialogElement extends NodeElement {
   public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
-    css`
-      :host {
-        display: contents;
-        position: inherit;
-      }
-
-      :host([hidden]) {
-        display: none;
-      }
-
-      slot:not([name])::slotted(*) {
-        flex: none;
-        position: absolute;
-        z-index: 9;
-      }
-
-      :host([hto-real="start-at-end"][hspacing="large"]) slot::slotted(*) {
-        margin-left: 0.75rem;
-      }
-
-      :host([hto-real="start-at-end"][hspacing="large"][dir="rtl"]) slot::slotted(*) {
-        margin-left: -0.75rem;
-      }
-
-      :host([hto-real="start-at-end"][hspacing="medium"]) slot::slotted(*) {
-        margin-left: 0.5rem;
-      }
-
-      :host([hto-real="start-at-end"][hspacing="medium"][dir="rtl"]) slot::slotted(*) {
-        margin-left: -0.5rem;
-      }
-
-      :host([hto-real="start-at-end"][hspacing="small"]) slot::slotted(*) {
-        margin-left: 0.25rem;
-      }
-
-      :host([hto-real="start-at-end"][hspacing="small"][dir="rtl"]) slot::slotted(*) {
-        margin-left: -0.25rem;
-      }
-
-      :host([hto-real="start"][hspacing="large"]) slot::slotted(*) {
-        margin-left: -0.75rem;
-      }
-
-      :host([hto-real="start"][hspacing="large"][dir="rtl"]) slot::slotted(*) {
-        margin-left: 0.75rem;
-      }
-
-      :host([hto-real="start"][hspacing="medium"]) slot::slotted(*) {
-        margin-left: -0.5rem;
-      }
-
-      :host([hto-real="start"][hspacing="medium"][dir="rtl"]) slot::slotted(*) {
-        margin-left: 0.5rem;
-      }
-
-      :host([hto-real="start"][hspacing="small"]) slot::slotted(*) {
-        margin-left: -0.25rem;
-      }
-
-      :host([hto-real="start"][hspacing="small"][dir="rtl"]) slot::slotted(*) {
-        margin-left: 0.25rem;
-      }
-
-      :host([hto-real="end-at-start"][hspacing="large"]) slot::slotted(*) {
-        margin-left: -0.75rem;
-      }
-
-      :host([hto-real="end-at-start"][hspacing="large"][dir="rtl"]) slot::slotted(*) {
-        margin-left: 0.75rem;
-      }
-
-      :host([hto-real="end-at-start"][hspacing="medium"]) slot::slotted(*) {
-        margin-left: -0.5rem;
-      }
-
-      :host([hto-real="end-at-start"][hspacing="medium"][dir="rtl"]) slot::slotted(*) {
-        margin-left: 0.5rem;
-      }
-
-      :host([hto-real="end-at-start"][hspacing="small"]) slot::slotted(*) {
-        margin-left: -0.25rem;
-      }
-
-      :host([hto-real="end-at-start"][hspacing="small"][dir="rtl"]) slot::slotted(*) {
-        margin-left: 0.25rem;
-      }
-
-      :host([hto-real="end"][hspacing="large"]) slot::slotted(*) {
-        margin-left: 0.75rem;
-      }
-
-      :host([hto-real="end"][hspacing="large"][dir="rtl"]) slot::slotted(*) {
-        margin-left: -0.75rem;
-      }
-
-      :host([hto-real="end"][hspacing="medium"]) slot::slotted(*) {
-        margin-left: 0.5rem;
-      }
-
-      :host([hto-real="end"][hspacing="medium"][dir="rtl"]) slot::slotted(*) {
-        margin-left: -0.5rem;
-      }
-
-      :host([hto-real="end"][hspacing="small"]) slot::slotted(*) {
-        margin-left: 0.25rem;
-      }
-
-      :host([hto-real="end"][hspacing="small"][dir="rtl"]) slot::slotted(*) {
-        margin-left: -0.25rem;
-      }
-
-      :host([vto-real="top"][vspacing="large"]) slot::slotted(*) {
-        margin-top: -0.75rem;
-      }
-
-      :host([vto-real="top"][vspacing="medium"]) slot::slotted(*) {
-        margin-top: -0.5rem;
-      }
-
-      :host([vto-real="top"][vspacing="small"]) slot::slotted(*) {
-        margin-top: -0.25rem;
-      }
-
-      :host([vto-real="top-at-bottom"][vspacing="large"]) slot::slotted(*) {
-        margin-top: 0.75rem;
-      }
-
-      :host([vto-real="top-at-bottom"][vspacing="medium"]) slot::slotted(*) {
-        margin-top: 0.5rem;
-      }
-
-      :host([vto-real="top-at-bottom"][vspacing="small"]) slot::slotted(*) {
-        margin-top: 0.25rem;
-      }
-
-      :host([vto-real="bottom"][vspacing="large"]) slot::slotted(*) {
-        margin-top: 0.75rem;
-      }
-
-      :host([vto-real="bottom"][vspacing="medium"]) slot::slotted(*) {
-        margin-top: 0.5rem;
-      }
-
-      :host([vto-real="bottom"][vspacing="small"]) slot::slotted(*) {
-        margin-top: 0.25rem;
-      }
-
-      :host([vto-real="bottom-at-top"][vspacing="large"]) slot::slotted(*) {
-        margin-top: -0.75rem;
-      }
-
-      :host([vto-real="bottom-at-top"][vspacing="medium"]) slot::slotted(*) {
-        margin-top: -0.5rem;
-      }
-
-      :host([vto-real="bottom-at-top"][vspacing="small"]) slot::slotted(*) {
-        margin-top: -0.25rem;
-      }
-    `
+    styles
   ]
 
   @property()
   public hfrom?: HorizontalFrom
-
-  @property({
-    attribute: 'hfrom-screen'
-  })
-  public hfromScreen?: HorizontalFrom
 
   @property({
     reflect: true
@@ -272,28 +115,54 @@ export class DialogElement extends NodeElement {
   public hto?: HorizontalTo
 
   @property({
-    attribute: 'hto-real',
-    reflect: true
-  })
-  public htoReal?: HorizontalTo
-
-  @property({
-    attribute: 'hto-screen'
-  })
-  public htoScreen?: HorizontalTo
-
-  @property({
     type: Boolean
   })
   public locked?: boolean
 
-  @property()
-  public vfrom?: VerticalFrom
+  @property({
+    attribute: 'real-hto',
+    reflect: true
+  })
+  public realHto?: HorizontalTo
 
   @property({
-    attribute: 'vfrom-screen'
+    attribute: 'real-vto',
+    reflect: true
   })
-  public vfromScreen?: VerticalFrom
+  public realVto?: VerticalTo
+
+  @property({
+    attribute: 'screen-height'
+  })
+  public screenHeight?: NodeElement['height']
+
+  @property({
+    attribute: 'screen-hfrom'
+  })
+  public screenHfrom?: HorizontalFrom
+
+  @property({
+    attribute: 'screen-hto'
+  })
+  public screenHto?: HorizontalTo
+
+  @property({
+    attribute: 'screen-vfrom'
+  })
+  public screenVfrom?: VerticalFrom
+
+  @property({
+    attribute: 'screen-vto'
+  })
+  public screenVto?: VerticalTo
+
+  @property({
+    attribute: 'screen-width'
+  })
+  public screenWidth?: NodeElement['width']
+
+  @property()
+  public vfrom?: VerticalFrom
 
   @property({
     reflect: true
@@ -303,40 +172,25 @@ export class DialogElement extends NodeElement {
   @property()
   public vto?: VerticalTo
 
-  @property({
-    attribute: 'vto-real',
-    reflect: true
-  })
-  public vtoReal?: VerticalTo
-
-  @property({
-    attribute: 'vto-screen'
-  })
-  public vtoScreen?: VerticalTo
-
   public anchorElement?: HTMLElement | null
 
-  public get assignedElement (): HTMLElement | undefined {
-    const assignedElement = this.defaultSlotElement
-      .assignedElements()
-      .pop()
+  public contentElement?: HTMLElement | null
 
-    if (assignedElement instanceof HTMLElement) {
-      return assignedElement
-    }
+  public position?: DialogPosition | null
 
-    return undefined
-  }
+  public scrimElement?: HTMLElement | null
 
   protected handleClickBound: (event: Event) => void
 
-  protected handleHideBound: (event: NodeEvent) => void
+  protected handleHideBound: (event: CustomEvent) => void
+
+  protected handleKeydownBound: (event: KeyboardEvent) => void
 
   protected handleResizeBound: () => void
 
   protected handleScrollBound: () => void
 
-  protected handleShowBound: (event: NodeEvent) => void
+  protected handleShowBound: (event: CustomEvent) => void
 
   protected originElement?: HTMLElement | null
 
@@ -345,9 +199,12 @@ export class DialogElement extends NodeElement {
   public constructor () {
     super()
     this.dir = document.dir
+    this.contentElement = this.querySelector<HTMLElement>('[is="content"]')
+    this.scrimElement = this.querySelector<HTMLElement>('[is="scrim"]')
     this.originElement = this.parentElement
     this.handleClickBound = this.handleClick.bind(this)
     this.handleHideBound = this.handleHide.bind(this)
+    this.handleKeydownBound = this.handleKeydown.bind(this)
     this.handleResizeBound = this.handleResize.bind(this)
     this.handleScrollBound = this.handleScroll.bind(this)
     this.handleShowBound = this.handleShow.bind(this)
@@ -368,13 +225,16 @@ export class DialogElement extends NodeElement {
   public firstUpdated (properties: PropertyValues): void {
     this.addEventListener('scola-dialog-hide', this.handleHideBound)
     this.addEventListener('scola-dialog-show', this.handleShowBound)
+    this.addEventListener('scola-view-move', this.handleViewMove.bind(this))
     super.firstUpdated(properties)
   }
 
   public async hide (duration = this.duration): Promise<void> {
-    window.removeEventListener('click', this.handleClickBound)
-    window.removeEventListener('resize', this.handleResizeBound)
-    window.removeEventListener('scola-scroll', this.handleScrollBound)
+    if (this.hidden) {
+      return
+    }
+
+    this.prepareHide()
 
     const {
       from,
@@ -386,7 +246,18 @@ export class DialogElement extends NodeElement {
       to.opacity = 0
     }
 
-    await this.assignedElement
+    this.scrimElement
+      ?.animate([{
+        opacity: 1
+      }, {
+        opacity: 0
+      }], {
+        duration,
+        easing: this.easing,
+        fill: 'forwards'
+      })
+
+    await this.contentElement
       ?.animate([{
         left: `${from.left}px`,
         opacity: from.opacity ?? 1,
@@ -402,8 +273,7 @@ export class DialogElement extends NodeElement {
       })
       .finished
       .then(() => {
-        this.originElement?.appendChild(this)
-        this.toggleAttribute('hidden', true)
+        this.finishHide()
       })
   }
 
@@ -412,12 +282,7 @@ export class DialogElement extends NodeElement {
       return
     }
 
-    document
-      .querySelector<AppElement>('scola-app')
-      ?.shadowRoot
-      ?.appendChild(this)
-
-    this.toggleAttribute('hidden', false)
+    await this.prepareShow()
 
     const {
       from,
@@ -429,7 +294,18 @@ export class DialogElement extends NodeElement {
       to.opacity = 1
     }
 
-    await this.assignedElement
+    this.scrimElement
+      ?.animate([{
+        opacity: 0
+      }, {
+        opacity: 1
+      }], {
+        duration,
+        easing: this.easing,
+        fill: 'forwards'
+      })
+
+    await this.contentElement
       ?.animate([{
         left: `${from.left}px`,
         opacity: from.opacity ?? 1,
@@ -445,9 +321,7 @@ export class DialogElement extends NodeElement {
       })
       .finished
       .then(() => {
-        window.addEventListener('click', this.handleClickBound)
-        window.addEventListener('resize', this.handleResizeBound)
-        window.addEventListener('scola-scroll', this.handleScrollBound)
+        this.finishShow()
       })
   }
 
@@ -463,7 +337,7 @@ export class DialogElement extends NodeElement {
       .querySelector<AppElement>('scola-app')
       ?.getBoundingClientRect() ?? {}
 
-    const { width: elementWidth = 0 } = this.assignedElement
+    const { width: elementWidth = 0 } = this.contentElement
       ?.getBoundingClientRect() ?? {}
 
     let { dir } = this
@@ -492,7 +366,7 @@ export class DialogElement extends NodeElement {
       .querySelector<AppElement>('scola-app')
       ?.getBoundingClientRect() ?? {}
 
-    const { height: elementHeight = 0 } = this.assignedElement
+    const { height: elementHeight = 0 } = this.contentElement
       ?.getBoundingClientRect() ?? {}
 
     switch (from.vertical) {
@@ -514,44 +388,46 @@ export class DialogElement extends NodeElement {
     }
 
     if (
-      this.htoReal !== this.hto &&
-      this.vtoReal !== this.hto &&
-      this.htoReal?.includes('screen') !== undefined &&
-      this.vtoReal?.includes('screen') !== undefined
+      this.realHto !== this.hto &&
+      this.realVto !== this.hto &&
+      this.realHto?.includes('screen') !== undefined &&
+      this.realVto?.includes('screen') !== undefined
     ) {
-      from.horizontal = this.hfromScreen ?? from.horizontal
-      from.vertical = this.vfromScreen ?? from.vertical
-    }
-
-    let left = '0'
-    let top = '0'
-
-    if (this.assignedElement instanceof HTMLElement) {
-      ({ left, top } = window.getComputedStyle(this.assignedElement))
+      from.horizontal = this.screenHfrom ?? from.horizontal
+      from.vertical = this.screenVfrom ?? from.vertical
     }
 
     const toPosition = {
-      left: parseFloat(left),
-      top: parseFloat(top)
+      left: 0,
+      top: 0
     }
 
-    if (
-      Number.isNaN(toPosition.left) ||
-      Number.isNaN(toPosition.top)
-    ) {
-      toPosition.left = 0
-      toPosition.top = 0
+    if (this.contentElement instanceof HTMLElement) {
+      const style = window.getComputedStyle(this.contentElement)
+
+      toPosition.left = parseFloat(style.left)
+      toPosition.top = parseFloat(style.top)
+
+      if (
+        Number.isNaN(toPosition.left) ||
+        Number.isNaN(toPosition.top)
+      ) {
+        toPosition.left = 0
+        toPosition.top = 0
+      }
     }
 
-    let fromPosition = { ...toPosition }
+    let fromPosition = {
+      ...toPosition
+    }
 
     if (from.horizontal !== undefined) {
       fromPosition = this.calculateFromPosition(from)
     }
 
     return {
-      from: fromPosition,
-      to: toPosition
+      from: toPosition,
+      to: fromPosition
     }
   }
 
@@ -575,22 +451,20 @@ export class DialogElement extends NodeElement {
       to.vertical !== this.vto &&
       to.vertical?.includes('screen') !== undefined
     )) {
-      to.horizontal = this.htoScreen ?? to.horizontal
-      to.vertical = this.vtoScreen ?? to.vertical
-      toPosition = this.findToPosition(to)
-      from.horizontal = this.hfromScreen ?? from.horizontal
-      from.vertical = this.vfromScreen ?? from.vertical
+      toPosition = this.findScreenPosition(from, to)
     }
 
     if (to.horizontal !== undefined) {
-      this.htoReal = to.horizontal
+      this.realHto = to.horizontal
     }
 
     if (to.vertical !== undefined) {
-      this.vtoReal = to.vertical
+      this.realVto = to.vertical
     }
 
-    let fromPosition = { ...toPosition }
+    let fromPosition = {
+      ...toPosition
+    }
 
     if (
       from.horizontal !== undefined &&
@@ -608,18 +482,33 @@ export class DialogElement extends NodeElement {
   protected calculateToPosition (to: DialogTo): DialogPosition {
     const appElement = document.querySelector<AppElement>('scola-app')
     const appRect = appElement?.getBoundingClientRect()
-    const elementRect = this.assignedElement?.getBoundingClientRect()
-    const anchorRect = this.anchorElement?.getBoundingClientRect()
+    const elementRect = this.contentElement?.getBoundingClientRect()
 
     if (
       appRect === undefined ||
-      elementRect === undefined ||
-      anchorRect === undefined
+      elementRect === undefined
     ) {
       return {
         left: 0,
         top: 0
       }
+    }
+
+    let anchorRect = {
+      height: 0,
+      left: 0,
+      top: 0,
+      width: 0
+    }
+
+    if (isObject(this.position)) {
+      anchorRect = {
+        ...anchorRect,
+        left: this.position.left,
+        top: this.position.top
+      }
+    } else if (this.anchorElement instanceof HTMLElement) {
+      anchorRect = this.anchorElement.getBoundingClientRect()
     }
 
     return {
@@ -628,7 +517,7 @@ export class DialogElement extends NodeElement {
     }
   }
 
-  protected calculateToPositionLeft (to: DialogTo, appRect: DOMRect, elementRect: DOMRect, anchorRect: DOMRect): number {
+  protected calculateToPositionLeft (to: DialogTo, appRect: Rect, elementRect: Rect, anchorRect: Rect): number {
     let { left } = anchorRect
     let { dir } = this
 
@@ -676,7 +565,7 @@ export class DialogElement extends NodeElement {
     return left
   }
 
-  protected calculateToPositionTop (to: DialogTo, app: DOMRect, element: DOMRect, anchor: DOMRect): number {
+  protected calculateToPositionTop (to: DialogTo, app: Rect, element: Rect, anchor: Rect): number {
     let top = anchor.top + anchor.height
 
     switch (to.vertical) {
@@ -710,11 +599,45 @@ export class DialogElement extends NodeElement {
     return top
   }
 
+  protected findScreenPosition (from: DialogFrom, to: DialogTo): DialogPosition {
+    to.horizontal = this.screenHto ?? to.horizontal
+    to.vertical = this.screenVto ?? to.vertical
+    from.horizontal = this.screenHfrom ?? from.horizontal
+    from.vertical = this.screenVfrom ?? from.vertical
+
+    if (this.screenWidth !== undefined) {
+      this.contentElement?.setAttribute('width', this.screenWidth)
+    }
+
+    if (this.screenHeight !== undefined) {
+      this.contentElement?.setAttribute('height', this.screenHeight)
+    }
+
+    if (this.width === 'auto') {
+      this.contentElement?.style.removeProperty('max-width')
+    }
+
+    return this.findToPosition(to)
+  }
+
+  protected findScrollParentElements (): NodeElement[] {
+    const parents = []
+
+    let element = this.closest<NodeElement>('[scrollbar]')
+
+    while (element !== null) {
+      parents.push(element)
+      element = element.parentElement?.closest<NodeElement>('[scrollbar]') ?? null
+    }
+
+    return parents
+  }
+
   protected findToPosition (to: DialogTo): DialogPosition {
     const {
       height: elementHeight = Infinity,
       width: elementWidth = Infinity
-    } = this.assignedElement
+    } = this.contentElement
       ?.getBoundingClientRect() ?? {}
 
     const {
@@ -750,37 +673,96 @@ export class DialogElement extends NodeElement {
     return position
   }
 
+  protected finishHide (): void {
+    this.originElement?.appendChild(this)
+
+    this
+      .findScrollParentElements()
+      .forEach((parentElement) => {
+        parentElement.shadowBody.removeEventListener('scroll', this.handleScrollBound)
+      })
+
+    this.anchorElement = null
+    this.hidden = true
+    this.position = null
+  }
+
+  protected finishShow (): void {
+    this.contentElement?.style.removeProperty('opacity')
+    window.addEventListener('click', this.handleClickBound)
+    window.addEventListener('keydown', this.handleKeydownBound)
+    window.addEventListener('resize', this.handleResizeBound)
+  }
+
   protected handleClick (event: Event): void {
     if (
-      this.assignedElement instanceof HTMLElement &&
-      !event.composedPath().includes(this.assignedElement) &&
+      this.contentElement instanceof HTMLElement &&
+      !event.composedPath().includes(this.contentElement) &&
       this.locked !== true
     ) {
       this.hide().catch(() => {})
     }
   }
 
-  protected handleHide (event: NodeEvent): void {
+  protected handleHide (event: CustomEvent): void {
     if (this.isTarget(event)) {
       event.cancelBubble = true
       this.hide().catch(() => {})
     }
   }
 
+  protected handleKeydown (event: KeyboardEvent): void {
+    if (
+      event.key === 'Escape' &&
+      this.locked !== true
+    ) {
+      event.cancelBubble = true
+      this.hide().catch(() => {})
+    }
+  }
+
   protected handleResize (): void {
-    this.show().catch(() => {})
+    const { to } = this.calculateShowPositions()
+
+    this.contentElement?.animate({
+      left: `${to.left}px`,
+      to: `${to.top}px`
+    }, {
+      fill: 'forwards'
+    })
   }
 
   protected handleScroll (): void {
-    this.hide().catch(() => {})
+    this.hide(0).catch(() => {})
   }
 
-  protected handleShow (event: NodeEvent): void {
+  protected handleShow (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
       event.cancelBubble = true
-      this.anchorElement = event.detail?.origin
+
+      if (isObject(event.detail?.data)) {
+        if (event.detail?.origin instanceof HTMLElement) {
+          this.anchorElement = event.detail.origin
+        }
+
+        if (
+          isObject(event.detail?.data.position) &&
+          typeof event.detail?.data.position.left === 'number' &&
+          typeof event.detail.data.position.top === 'number'
+        ) {
+          this.position = {
+            left: event.detail.data.position.left,
+            top: event.detail.data.position.top
+          }
+        }
+      }
+
       this.show().catch(() => {})
     }
+  }
+
+  protected handleViewMove (): void {
+    this.show().catch(() => {})
   }
 
   protected isSame (from: DialogPosition, to: DialogPosition): boolean {
@@ -788,5 +770,40 @@ export class DialogElement extends NodeElement {
       from.left === to.left &&
       from.top === to.top
     )
+  }
+
+  protected prepareHide (): void {
+    window.removeEventListener('click', this.handleClickBound)
+    window.removeEventListener('keydown', this.handleKeydownBound)
+    window.removeEventListener('resize', this.handleResizeBound)
+  }
+
+  protected async prepareShow (): Promise<void> {
+    this.hidden = false
+
+    this
+      .findScrollParentElements()
+      .forEach((parentElement) => {
+        parentElement.shadowBody.addEventListener('scroll', this.handleScrollBound)
+      })
+
+    document
+      .querySelector<AppElement>('scola-app')
+      ?.shadowRoot
+      ?.appendChild(this)
+
+    this.contentElement?.style.setProperty('opacity', '0')
+    this.scrimElement?.style.setProperty('opacity', '0')
+
+    if (
+      this.width === 'auto' &&
+      this.anchorElement instanceof HTMLElement
+    ) {
+      this.contentElement?.style.setProperty('max-width', `${this.anchorElement.getBoundingClientRect().width}px`)
+    }
+
+    await new Promise((resolve) => {
+      window.setTimeout(resolve)
+    })
   }
 }

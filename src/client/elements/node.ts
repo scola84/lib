@@ -1,10 +1,12 @@
 import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
-import { LitElement, css, html } from 'lit'
+import { LitElement, html } from 'lit'
+import { cast, isObject, isPrimitive } from '../../common'
 import { customElement, property, query } from 'lit/decorators.js'
+import styles from '../styles/node'
 
 declare global {
   interface HTMLElementEventMap {
-    'scola-log': LogEvent
+    'scola-log': CustomEvent
   }
 
   interface HTMLElementTagNameMap {
@@ -12,48 +14,28 @@ declare global {
   }
 
   interface WindowEventMap {
-    [key: string]: NodeEvent
+    'scola-node-params-set': CustomEvent
+    'scola-node-params-toggle': CustomEvent
+    'scola-node-props-set': CustomEvent
+    'scola-node-props-toggle': CustomEvent
   }
 }
 
-export enum LogLevel {
-  all = 1,
-  info = 2,
-  warn = 3,
-  err = 4,
-  off = 5
-}
-
-export interface Log {
-  code?: string
-  data?: unknown
-  error?: Error
-  level: keyof typeof LogLevel
-  origin: HTMLElement
-  template?: TemplateResult
-  timeout?: number
-}
-
-export interface LogEvent extends CustomEvent {
-  detail: Log | null
-}
-
-export interface NodeEvent extends CustomEvent {
-  detail:
-  | (Record<string, unknown> & {
-    origin?: HTMLElement
-    target?: string
-  })
-  | null
-}
-
-export interface Updaters {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: (source: any, target: any, properties: PropertyValues) => void
+const LogLevel = {
+  all: 1,
+  err: 4,
+  info: 2,
+  off: 5,
+  warn: 3
 }
 
 export interface Presets {
   ''?: Record<string, string | unknown>
+}
+
+export interface Updaters {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: ((observer: any, observable: any, properties: PropertyValues) => void) | undefined
 }
 
 @customElement('scola-node')
@@ -65,999 +47,7 @@ export class NodeElement extends LitElement {
   public static presets: Presets
 
   public static styles: CSSResultGroup[] = [
-    css`
-      :host {
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        position: relative;
-      }
-
-      :host([at-large]),
-      :host([at-medium]),
-      :host([at-small]) {
-        display: none;
-      }
-
-      @media (max-width: 810px) {
-        :host([at-small]) {
-          display: inline-flex;
-        }
-      }
-
-      @media (min-width: 811px) and (max-width: 1080px) {
-        :host([at-medium]) {
-          display: inline-flex;
-        }
-      }
-
-      @media not all and (max-width: 1080px) {
-        :host([at-large]) {
-          display: inline-flex;
-        }
-      }
-
-      :host([cols]),
-      :host([rows]) {
-        width: 100%;
-      }
-
-      @media (min-width: 512px) {
-        :host([cols="1"]) {
-          width: 4rem;
-        }
-
-        :host([cols="2"]) {
-          width: 8rem;
-        }
-
-        :host([cols="3"]) {
-          width: 12rem;
-        }
-
-        :host([cols="4"]) {
-          width: 16rem;
-        }
-
-        :host([cols="5"]) {
-          width: 20rem;
-        }
-
-        :host([cols="6"]) {
-          width: 24rem;
-        }
-
-        :host([cols="7"]) {
-          width: 28rem;
-        }
-
-        :host([cols="8"]) {
-          width: 32rem;
-        }
-
-        :host([cols="9"]) {
-          width: 36rem;
-        }
-
-        :host([cols="10"]) {
-          width: 40rem;
-        }
-
-        :host([cols="11"]) {
-          width: 44rem;
-        }
-
-        :host([cols="12"]) {
-          width: 48rem;
-        }
-
-        :host([cols="13"]) {
-          width: 52rem;
-        }
-
-        :host([cols="14"]) {
-          width: 56rem;
-        }
-
-        :host([cols="15"]) {
-          width: 60rem;
-        }
-
-        :host([cols="16"]) {
-          width: 64rem;
-        }
-
-        :host([cols="17"]) {
-          width: 68rem;
-        }
-
-        :host([cols="18"]) {
-          width: 72rem;
-        }
-
-        :host([cols="19"]) {
-          width: 76rem;
-        }
-
-        :host([cols="20"]) {
-          width: 80rem;
-        }
-      }
-
-      :host([disabled]) {
-        filter: grayscale(50%) opacity(50%);
-        pointer-events: none;
-      }
-
-      :host([height="auto"]) {
-        height: auto;
-      }
-
-      :host([height="flex"]) {
-        flex: 1;
-      }
-
-      :host([height="max"]) {
-        height: 100%;
-      }
-
-      :host([hmargin="large"]),
-      :host([margin="large"]) {
-        margin-left: 0.75rem;
-        margin-right: 0.75rem;
-      }
-
-      :host([hmargin="medium"]),
-      :host([margin="medium"]) {
-        margin-left: 0.5rem;
-        margin-right: 0.5rem;
-      }
-
-      :host([hmargin="small"]),
-      :host([margin="small"]) {
-        margin-left: 0.25rem;
-        margin-right: 0.25rem;
-      }
-
-      :host([hposition]),
-      :host([vposition]) {
-        position: absolute;
-        z-index: 9;
-      }
-
-      :host([hposition="end"]) {
-        right: 0;
-      }
-
-      :host([hposition="end"][dir="rtl"]) {
-        left: 0;
-        right: auto;
-      }
-
-      :host([hposition="start"]) {
-        left: 0;
-      }
-
-      :host([hposition="start"][dir="rtl"]) {
-        left: auto;
-        right: 0;
-      }
-
-      :host([inner-backdrop="large"]) slot:not([name]) {
-        backdrop-filter: blur(0.75rem);
-        -webkit-backdrop-filter: blur(0.75rem);
-      }
-
-      :host([inner-backdrop="medium"]) slot:not([name]) {
-        backdrop-filter: blur(0.5rem);
-        -webkit-backdrop-filter: blur(0.5rem);
-      }
-
-      :host([inner-backdrop="small"]) slot:not([name]) {
-        backdrop-filter: blur(0.25rem);
-        -webkit-backdrop-filter: blur(0.25rem);
-      }
-
-      :host([inner-height]),
-      :host([inner-height]) slot:not([name]) {
-        height: 100%;
-      }
-
-      @media (min-height: 384px) {
-        :host([inner-height="small-auto"]),
-        :host([inner-height="small"]) {
-          height: auto;
-        }
-
-        :host([inner-height="small"]) slot:not([name]) {
-          height: 336px;
-        }
-      }
-
-      @media (min-height: 544px) {
-        :host([inner-height="medium-auto"]),
-        :host([inner-height="medium"]) {
-          height: auto;
-        }
-
-        :host([inner-height="medium"]) slot:not([name]) {
-          height: 496px;
-        }
-      }
-
-      @media (min-height: 704px) {
-        :host([inner-height="large-auto"]),
-        :host([inner-height="large"]) {
-          height: auto;
-        }
-
-        :host([inner-height="large"]) slot:not([name]) {
-          height: 656px;
-        }
-      }
-
-      :host([inner-width]),
-      :host([inner-width]) slot:not([name]) {
-        width: 100%;
-      }
-
-      @media (min-width: 384px) {
-        :host([inner-width="small-auto"]),
-        :host([inner-width="small"]) {
-          width: auto;
-        }
-
-        :host([inner-width="small"]) slot:not([name]) {
-          width: 336px;
-        }
-      }
-
-      @media (min-width: 544px) {
-        :host([inner-width="medium-auto"]),
-        :host([inner-width="medium"]) {
-          width: auto;
-        }
-
-        :host([inner-width="medium"]) slot:not([name]) {
-          width: 496px;
-        }
-      }
-
-      @media (min-width: 704px) {
-        :host([inner-width="large-auto"]),
-        :host([inner-width="large"]) {
-          width: auto;
-        }
-
-        :host([inner-width="large"]) slot:not([name]) {
-          width: 656px;
-        }
-      }
-
-      :host([outer-backdrop="large"]) {
-        backdrop-filter: blur(0.75rem);
-        -webkit-backdrop-filter: blur(0.75rem);
-      }
-
-      :host([outer-backdrop="medium"]) {
-        backdrop-filter: blur(0.5rem);
-        -webkit-backdrop-filter: blur(0.5rem);
-      }
-
-      :host([outer-backdrop="small"]) {
-        backdrop-filter: blur(0.25rem);
-        -webkit-backdrop-filter: blur(0.25rem);
-      }
-
-      :host([outer-height]) {
-        height: 100%;
-      }
-
-      @media (min-height: 384px) {
-        :host([outer-height="small"]) {
-          height: 336px;
-        }
-      }
-
-      @media (min-height: 544px) {
-        :host([outer-height="medium"]) {
-          height: 496px;
-        }
-      }
-
-      @media (min-height: 704px) {
-        :host([outer-height="large"]) {
-          height: 656px;
-        }
-      }
-
-      @media not screen and (min-width: 384px) {
-        @media (min-height: 384px) {
-          :host([outer-height="small"][outer-width="small"]) {
-            height: 100%;
-          }
-        }
-
-        @media (min-height: 544px) {
-          :host([outer-height="medium"][outer-width="small"]) {
-            height: 100%;
-          }
-        }
-
-        @media (min-height: 704px) {
-          :host([outer-height="large"][outer-width="small"]) {
-            height: 100%;
-          }
-        }
-      }
-
-      @media not screen and (min-width: 544px) {
-        @media (min-height: 384px) {
-          :host([outer-height="small"][outer-width="medium"]) {
-            height: 100%;
-          }
-        }
-
-        @media (min-height: 544px) {
-          :host([outer-height="medium"][outer-width="medium"]) {
-            height: 100%;
-          }
-        }
-
-        @media (min-height: 704px) {
-          :host([outer-height="large"][outer-width="medium"]) {
-            height: 100%;
-          }
-        }
-      }
-
-      @media not screen and (min-width: 704px) {
-        @media (min-height: 384px) {
-          :host([outer-height="small"][outer-width="large"]) {
-            height: 100%;
-          }
-        }
-
-        @media (min-height: 544px) {
-          :host([outer-height="medium"][outer-width="large"]) {
-            height: 100%;
-          }
-        }
-
-        @media (min-height: 704px) {
-          :host([outer-height="large"][outer-width="large"]) {
-            height: 100%;
-          }
-        }
-      }
-
-      :host([outer-shadow="large"]) {
-        box-shadow: var(--scola-node-outer-shadow-large, 0 0 0.75rem rgba(0, 0, 0, 0.35));
-        z-index: 1;
-      }
-
-      :host([outer-shadow="medium"]) {
-        box-shadow: var(--scola-node-outer-shadow-medium, 0 0 0.5rem rgba(0, 0, 0, 0.35));
-        z-index: 1;
-      }
-
-      :host([outer-shadow="min"]) {
-        box-shadow: 0 0 0 1px var(--scola-node-outer-shadow-min, #eee);
-        z-index: 1;
-      }
-
-      :host([outer-shadow="small"]) {
-        box-shadow: var(--scola-node-outer-shadow-small, 0 0 0.25rem rgba(0, 0, 0, 0.35));
-        z-index: 1;
-      }
-
-      @media (-webkit-min-device-pixel-ratio: 2) {
-        :host([outer-shadow="min"]) {
-          box-shadow: 0 0 0 1px var(--scola-node-outer-shadow-min, #eee);
-        }
-      }
-
-      :host([outer-shadow][hidden]) {
-        box-shadow: none;
-      }
-
-      :host([outer-width]) {
-        width: 100%;
-      }
-
-      @media (min-width: 384px) {
-        :host([outer-width="small"]) {
-          width: 336px;
-        }
-      }
-
-      @media (min-width: 544px) {
-        :host([outer-width="medium"]) {
-          width: 496px;
-        }
-      }
-
-      @media (min-width: 704px) {
-        :host([outer-width="large"]) {
-          width: 656px;
-        }
-      }
-
-      @media not screen and (min-height: 384px) {
-        @media (min-width: 384px) {
-          :host([outer-height="small"][outer-width="small"]) {
-            width: 100%;
-          }
-        }
-
-        @media (min-width: 544px) {
-          :host([outer-height="small"][outer-width="medium"]) {
-            width: 100%;
-          }
-        }
-
-        @media (min-width: 704px) {
-          :host([outer-height="small"][outer-width="large"]) {
-            width: 100%;
-          }
-        }
-      }
-
-      @media not screen and (min-height: 544px) {
-        @media (min-width: 384px) {
-          :host([outer-height="medium"][outer-width="small"]) {
-            width: 100%;
-          }
-        }
-
-        @media (min-width: 544px) {
-          :host([outer-height="medium"][outer-width="medium"]) {
-            width: 100%;
-          }
-        }
-
-        @media (min-width: 704px) {
-          :host([outer-height="medium"][outer-width="large"]) {
-            width: 100%;
-          }
-        }
-      }
-
-      @media not screen and (min-height: 704px) {
-        @media (min-width: 384px) {
-          :host([outer-height="large"][outer-width="small"]) {
-            width: 100%;
-          }
-        }
-
-        @media (min-width: 544px) {
-          :host([outer-height="large"][outer-width="medium"]) {
-            width: 100%;
-          }
-        }
-
-        @media (min-width: 704px) {
-          :host([outer-height="large"][outer-width="large"]) {
-            width: 100%;
-          }
-        }
-      }
-
-      :host([rows="1"]) {
-        height: 4rem;
-      }
-
-      :host([rows="2"]) {
-        height: 8rem;
-      }
-
-      :host([rows="3"]) {
-        height: 12rem;
-      }
-
-      :host([rows="4"]) {
-        height: 16rem;
-      }
-
-      :host([rows="5"]) {
-        height: 20rem;
-      }
-
-      :host([rows="6"]) {
-        height: 24rem;
-      }
-
-      :host([rows="7"]) {
-        height: 28rem;
-      }
-
-      :host([rows="8"]) {
-        height: 32rem;
-      }
-
-      :host([spacing="large"]) {
-        padding: 0.75rem;
-      }
-
-      :host([spacing="medium"]) {
-        padding: 0.5rem;
-      }
-
-      :host([spacing="small"]) {
-        padding: 0.25rem;
-      }
-
-      :host([vmargin="large"]),
-      :host([margin="large"]) {
-        margin-bottom: 0.75rem;
-        margin-top: 0.75rem;
-      }
-
-      :host([vmargin="medium"]),
-      :host([margin="medium"]) {
-        margin-bottom: 0.5rem;
-        margin-top: 0.5rem;
-      }
-
-      :host([vmargin="small"]),
-      :host([margin="small"]) {
-        margin-bottom: 0.25rem;
-        margin-top: 0.25rem;
-      }
-
-      :host([vposition="bottom"]) {
-        bottom: 0;
-      }
-
-      :host([vposition="top"]) {
-        top: 0;
-      }
-
-      :host([weight="bold"]) {
-        font-weight: 700;
-      }
-
-      :host([weight="light"]) {
-        font-weight: 300;
-      }
-
-      :host([weight="medium"]) {
-        font-weight: 500;
-      }
-
-      :host([width="auto"]) {
-        flex: 1 0 auto;
-        max-width: 100%;
-      }
-
-      :host([width="flex"]) {
-        flex: 1;
-      }
-
-      :host([width="max"]) {
-        width: 100%;
-      }
-
-      slot[name="body"] {
-        box-sizing: border-box;
-        display: inherit;
-        overflow: inherit;
-        position: relative;
-      }
-
-      :host([case="lower"]) slot[name="body"] {
-        text-transform: lowercase;
-      }
-
-      :host([case="title"]) slot[name="body"] {
-        text-transform: capitalize;
-      }
-
-      :host([case="upper"]) slot[name="body"] {
-        text-transform: uppercase;
-      }
-
-      :host([color="aux-1"]) slot[name="body"] {
-        color: var(--scola-node-color-aux-1, #000);
-      }
-
-      :host([color="aux-2"]) slot[name="body"] {
-        color: var(--scola-node-color-aux-2, #777);
-      }
-
-      :host([color="aux-3"]) slot[name="body"] {
-        color: var(--scola-node-color-aux-3, #fff);
-      }
-
-      :host([color="error"]) slot[name="body"] {
-        color: var(--scola-node-color-aux-3, #b22222);
-      }
-
-      :host([color="sig-1"]) slot[name="body"] {
-        color: var(--scola-node-color-sig-1, #b22222);
-      }
-
-      :host([color="sig-2"]) slot[name="body"] {
-        color: var(--scola-node-color-sig-2, #008000);
-      }
-
-      :host([rows]) slot[name="body"] {
-        flex: 1;
-      }
-
-      :host([fill="aux-1"]) slot[name="body"] {
-        background: var(--scola-node-fill-aux-1, #fff);
-      }
-
-      :host([fill="aux-2"]) slot[name="body"] {
-        background: var(--scola-node-fill-aux-2, #eee);
-      }
-
-      :host([fill="aux-3"]) slot[name="body"] {
-        background: var(--scola-node-fill-aux-3, #ddd);
-      }
-
-      :host([fill="error"]) slot[name="body"] {
-        background: var(--scola-node-fill-error, #b22222);
-      }
-
-      :host([fill="sig-1"]) slot[name="body"] {
-        background: var(--scola-node-fill-sig-1, #b22222);
-      }
-
-      :host([fill="sig-2"]) slot[name="body"] {
-        background: var(--scola-node-fill-sig-2, #008000);
-      }
-
-      :host([fill="translucent"]) slot[name="body"] {
-        background: var(--scola-node-fill-translucent, rgba(255, 255, 255, 0.25));
-      }
-
-      @media (hover) {
-        :host([fill-hover="aux-1"]) slot[name="body"]:hover {
-          background: var(--scola-node-fill-hover-aux-1, #ddd);
-        }
-
-        :host([fill-hover="aux-2"]) slot[name="body"]:hover {
-          background: var(--scola-node-fill-hover-aux-2, #ccc);
-        }
-
-        :host([fill-hover="aux-3"]) slot[name="body"]:hover {
-          background: var(--scola-node-fill-hover-aux-3, #bbb);
-        }
-
-        :host([fill-hover="sig-1"]) slot[name="body"]:hover {
-          background: var(--scola-node-fill-hover-sig-1, #9a0000);
-        }
-
-        :host([fill-hover="sig-2"]) slot[name="body"]:hover {
-          background: var(--scola-node-fill-hover-sig-2, #009000);
-        }
-
-        :host([fill="aux-1"][scrollbar]) slot[name="body"]:hover {
-          scrollbar-color: var(--scola-scrollbar-color-aux-1, #ddd) transparent;
-        }
-
-        :host([fill="aux-2"][scrollbar]) slot[name="body"]:hover {
-          scrollbar-color: var(--scola-scrollbar-color-aux-2, #ccc) transparent;
-        }
-
-        :host([fill="aux-3"][scrollbar]) slot[name="body"]:hover {
-          scrollbar-color: var(--scola-scrollbar-color-aux-3, #bbb) transparent;
-        }
-
-        :host([fill="aux-1"][scrollbar]) slot[name="body"]:hover::-webkit-scrollbar-thumb {
-          background: var(--scola-scrollbar-color-aux-1, #ddd);
-        }
-
-        :host([fill="aux-2"][scrollbar]) slot[name="body"]:hover::-webkit-scrollbar-thumb {
-          background: var(--scola-scrollbar-color-aux-2, #ccc);
-        }
-
-        :host([fill="aux-3"][scrollbar]) slot[name="body"]:hover::-webkit-scrollbar-thumb {
-          background: var(--scola-scrollbar-color-aux-3, #bbb);
-        }
-      }
-
-      :host([fill-active="aux-1"]) slot[name="body"]:active {
-        background: var(--scola-node-fill-active-aux-1, #ccc);
-      }
-
-      :host([fill-active="aux-2"]) slot[name="body"]:active {
-        background: var(--scola-node-fill-active-aux-2, #bbb);
-      }
-
-      :host([fill-active="aux-3"]) slot[name="body"]:active {
-        background: var(--scola-node-fill-active-aux-3, #aaa);
-      }
-
-      :host([fill-active="sig-1"]) slot[name="body"]:active {
-        background: var(--scola-node-fill-active-sig-1, #8a0000);
-      }
-
-      :host([fill-active="sig-2"]) slot[name="body"]:active {
-        background: var(--scola-node-fill-active-sig-2, #00bf00);
-      }
-
-      :host([flow="column"]) slot[name="body"] {
-        flex-direction: column;
-      }
-
-      :host([flow="row"]) slot[name="body"] {
-        flex-direction: row;
-      }
-
-      :host([font="large"]) slot[name="body"] {
-        font-size: 1.25rem;
-      }
-
-      :host([font="medium"]) slot[name="body"] {
-        font-size: 1.125rem;
-      }
-
-      :host([font="small"]) slot[name="body"] {
-        font-size: 0.875rem;
-      }
-
-      :host([halign="center"][flow="column"]) slot[name="body"] {
-        align-items: center;
-      }
-
-      :host([halign="end"][flow="column"]) slot[name="body"] {
-        align-items: flex-end;
-      }
-
-      :host([halign="start"][flow="column"]) slot[name="body"] {
-        align-items: flex-start;
-      }
-
-      :host([halign="between"][flow="row"]) slot[name="body"] {
-        justify-content: space-between;
-      }
-
-      :host([halign="center"][flow="row"]) slot[name="body"] {
-        justify-content: center;
-      }
-
-      :host([halign="end"][flow="row"]) slot[name="body"] {
-        justify-content: flex-end;
-      }
-
-      :host([halign="evenly"][flow="row"]) slot[name="body"] {
-        justify-content: space-evenly;
-      }
-
-      :host([halign="start"][flow="row"]) slot[name="body"] {
-        justify-content: flex-start;
-      }
-
-      :host([height="auto"]) slot[name="body"] {
-        flex: 1 0 auto;
-        max-height: 100%;
-      }
-
-      :host([height="flex"]) slot[name="body"] {
-        flex: 1;
-      }
-
-      :host([height="large"]) slot[name="body"] {
-        height: 4.25rem;
-      }
-
-      :host([height="max"]) slot[name="body"] {
-        height: 100%;
-      }
-
-      :host([height="medium"]) slot[name="body"] {
-        height: 3.25rem;
-      }
-
-      :host([height="min"]) slot[name="body"] {
-        height: 1px;
-      }
-
-      :host([height="small"]) slot[name="body"] {
-        height: 2.25rem;
-      }
-
-      :host([hpadding="large"]) slot[name="body"],
-      :host([padding="large"]) slot[name="body"] {
-        padding-left: 0.75rem;
-        padding-right: 0.75rem;
-      }
-
-      :host([hpadding="medium"]) slot[name="body"],
-      :host([padding="medium"]) slot[name="body"] {
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
-      }
-
-      :host([hpadding="small"]) slot[name="body"],
-      :host([padding="small"]) slot[name="body"] {
-        padding-left: 0.25rem;
-        padding-right: 0.25rem;
-      }
-
-      :host([inner-shadow="large"]) slot[name="body"] {
-        box-shadow: var(--scola-node-inner-shadow-large, 0 0 0.75rem rgba(0, 0, 0, 0.35));
-      }
-
-      :host([inner-shadow="medium"]) slot[name="body"] {
-        box-shadow: var(--scola-node-inner-shadow-medium, 0 0 0.5rem rgba(0, 0, 0, 0.35));
-      }
-
-      :host([inner-shadow="small"]) slot[name="body"] {
-        box-shadow: var(--scola-node-inner-shadow-small, 0 0 0.25rem rgba(0, 0, 0, 0.35));
-      }
-
-      :host([line="large"]) slot[name="body"] {
-        line-height: 1.5rem;
-      }
-
-      :host([line="medium"]) slot[name="body"] {
-        line-height: 1.25rem;
-      }
-
-      :host([line="small"]) slot[name="body"] {
-        line-height: 0.75rem;
-      }
-
-      :host([round]) slot[name="body"] {
-        will-change: transform;
-      }
-
-      :host([round="large"]) slot[name="body"] {
-        border-radius: 0.75rem;
-      }
-
-      :host([round="medium"]) slot[name="body"] {
-        border-radius: 0.5rem;
-      }
-
-      :host([round="max"]) slot[name="body"] {
-        border-radius: 50%;
-      }
-
-      :host([round="small"]) slot[name="body"] {
-        border-radius: 0.25rem;
-      }
-
-      :host([scrollbar]) slot[name="body"] {
-        overflow: auto;
-        scrollbar-color: transparent transparent;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      :host([scrollbar="large"]) slot[name="body"] {
-        scrollbar-width: auto;
-      }
-
-      :host([scrollbar="small"]) slot[name="body"] {
-        scrollbar-width: thin;
-      }
-
-      :host([scrollbar][height="flex"]) slot[name="body"] {
-        display: block;
-      }
-
-      :host([scrollbar="large"]) slot[name="body"]::-webkit-scrollbar {
-        height: 0.75rem;
-        width: 0.75rem;
-      }
-
-      :host([scrollbar="small"]) slot[name="body"]::-webkit-scrollbar {
-        height: 0.25rem;
-        width: 0.25rem;
-      }
-
-      :host([valign="between"][flow="column"]) slot[name="body"] {
-        justify-content: space-between;
-      }
-
-      :host([valign="center"][flow="column"]) slot[name="body"] {
-        justify-content: center;
-      }
-
-      :host([valign="end"][flow="column"]) slot[name="body"] {
-        justify-content: flex-end;
-      }
-
-      :host([valign="evenly"][flow="column"]) slot[name="body"] {
-        justify-content: space-evenly;
-      }
-
-      :host([valign="start"][flow="column"]) slot[name="body"] {
-        justify-content: flex-start;
-      }
-
-      :host([valign="center"][flow="row"]) slot[name="body"] {
-        align-items: center;
-      }
-
-      :host([valign="end"][flow="row"]) slot[name="body"] {
-        align-items: flex-end;
-      }
-
-      :host([valign="start"][flow="row"]) slot[name="body"] {
-        align-items: flex-start;
-      }
-
-      :host([vpadding="large"]) slot[name="body"],
-      :host([padding="large"]) slot[name="body"] {
-        padding-bottom: 0.75rem;
-        padding-top: 0.75rem;
-      }
-
-      :host([vpadding="medium"]) slot[name="body"],
-      :host([padding="medium"]) slot[name="body"] {
-        padding-bottom: 0.5rem;
-        padding-top: 0.5rem;
-      }
-
-      :host([vpadding="small"]) slot[name="body"],
-      :host([padding="small"]) slot[name="body"] {
-        padding-bottom: 0.25rem;
-        padding-top: 0.25rem;
-      }
-
-      :host([width="auto"]) slot[name="body"] {
-        width: auto;
-      }
-
-      :host([width="large"]) slot[name="body"] {
-        width: 4.25rem;
-      }
-
-      :host([width="max"]) slot[name="body"] {
-        width: 100%;
-      }
-
-      :host([width="medium"]) slot[name="body"] {
-        width: 3.25rem;
-      }
-
-      :host([width="min"]) slot[name="body"] {
-        width: 1px;
-      }
-
-      :host([width="small"]) slot[name="body"] {
-        width: 2.25rem;
-      }
-
-      :host([wrap]) slot[name="body"] {
-        flex-wrap: wrap;
-      }
-
-      slot[name="footer"]::slotted(*),
-      slot[name="header"]::slotted(*) {
-        z-index: 1;
-      }
-
-      slot[name="body"] slot {
-        align-items: inherit;
-        display: inherit;
-        flex-direction: inherit;
-        justify-content: inherit;
-      }
-
-      slot:not([name]) {
-        flex: 1;
-        flex-wrap: inherit;
-        overflow: inherit;
-      }
-
-      :host([no-wrap]) slot:not([name]) {
-        display: inline-block;
-        overflow: inherit;
-        text-align: inherit;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      :host([scrollbar][flow="row"]) slot:not([name]) {
-        flex: 1 0 auto;
-      }
-    `
+    styles
   ]
 
   public static updaters: Updaters = {}
@@ -1094,10 +84,19 @@ export class NodeElement extends LitElement {
   public color?: 'aux-1' | 'aux-2' | 'aux-3' | 'error' | 'sig-1' | 'sig-2'
 
   @property({
-    reflect: true,
-    type: Number
+    attribute: 'context-menu'
   })
-  public cols?: number
+  public contextMenu?: string
+
+  @property({
+    reflect: true
+  })
+  public cursor?: 'default' | 'pointer' | 'text'
+
+  @property({
+    attribute: false
+  })
+  public data?: unknown
 
   @property({
     reflect: true
@@ -1110,6 +109,14 @@ export class NodeElement extends LitElement {
   })
   public disabled?: boolean
 
+  @property()
+  public dispatch?: string
+
+  @property({
+    attribute: 'dispatch-filter'
+  })
+  public dispatchFilter?: string
+
   @property({
     type: Number
   })
@@ -1117,9 +124,6 @@ export class NodeElement extends LitElement {
 
   @property()
   public easing = NodeElement.easing
-
-  @property()
-  public event?: string
 
   @property({
     reflect: true
@@ -1156,7 +160,7 @@ export class NodeElement extends LitElement {
   @property({
     reflect: true
   })
-  public height?: 'auto' | 'flex' | 'large' | 'max' | 'medium' | 'min' | 'small'
+  public height?: string | 'auto' | 'flex' | 'max' | 'min'
 
   @property({
     reflect: true,
@@ -1187,9 +191,10 @@ export class NodeElement extends LitElement {
 
   @property({
     attribute: 'inner-height',
-    reflect: true
+    reflect: true,
+    type: Number
   })
-  public innerHeight?: 'large-auto' | 'large' | 'medium-auto' | 'medium' | 'small-auto' | 'small'
+  public innerHeight?: number | 'max' | 'min'
 
   @property({
     attribute: 'inner-shadow',
@@ -1199,9 +204,10 @@ export class NodeElement extends LitElement {
 
   @property({
     attribute: 'inner-width',
-    reflect: true
+    reflect: true,
+    type: Number
   })
-  public innerWidth: 'large-auto' | 'large' | 'medium-auto' | 'medium' | 'small-auto' | 'small'
+  public innerWidth?: number | 'max' | 'min'
 
   @property()
   public is?: string
@@ -1214,23 +220,17 @@ export class NodeElement extends LitElement {
   @property({
     attribute: 'log-level'
   })
-  public logLevel: Log['level'] = 'off'
+  public logLevel: keyof typeof LogLevel = 'off'
 
   @property({
     attribute: false
   })
-  public logs: Log[] = []
+  public logs: Array<Record<string, unknown>> = []
 
   @property({
     reflect: true
   })
   public margin?: 'large' | 'medium' | 'small'
-
-  @property({
-    attribute: 'no-context',
-    type: Boolean
-  })
-  public noContext?: boolean
 
   @property({
     attribute: 'no-wrap',
@@ -1243,16 +243,15 @@ export class NodeElement extends LitElement {
   public observe?: string
 
   @property({
+    attribute: 'observe-scope'
+  })
+  public observeScope: 'body' | 'view' = 'view'
+
+  @property({
     attribute: 'outer-backdrop',
     reflect: true
   })
   public outerBackdrop?: 'large' | 'medium' | 'small'
-
-  @property({
-    attribute: 'outer-height',
-    reflect: true
-  })
-  public outerHeight?: 'large' | 'medium' | 'small'
 
   @property({
     attribute: 'outer-shadow',
@@ -1261,15 +260,14 @@ export class NodeElement extends LitElement {
   public outerShadow?: 'large' | 'medium' | 'min' | 'small'
 
   @property({
-    attribute: 'outer-width',
-    reflect: true
-  })
-  public outerWidth?: 'large' | 'medium' | 'small'
-
-  @property({
     reflect: true
   })
   public padding?: 'large' | 'medium' | 'small'
+
+  @property({
+    attribute: false
+  })
+  public parameters: Record<string, unknown> = {}
 
   @property()
   public preset?: keyof Presets
@@ -1280,12 +278,6 @@ export class NodeElement extends LitElement {
   public round?: 'large' | 'max' | 'medium' | 'small'
 
   @property({
-    reflect: true,
-    type: Number
-  })
-  public rows?: number
-
-  @property({
     reflect: true
   })
   public scrollbar?: 'large' | 'small'
@@ -1294,12 +286,6 @@ export class NodeElement extends LitElement {
     reflect: true
   })
   public spacing?: 'large' | 'medium' | 'small'
-
-  @property()
-  public target?: string
-
-  @property()
-  public updater?: string
 
   @property({
     reflect: true
@@ -1329,13 +315,25 @@ export class NodeElement extends LitElement {
   @property({
     reflect: true
   })
-  public width?: 'auto' | 'flex' | 'large' | 'max' | 'medium' | 'min' | 'small'
+  public width?: string | 'auto' | 'flex' | 'max' | 'min'
 
   @property({
     reflect: true,
     type: Boolean
   })
   public wrap?: boolean
+
+  public get shadowBody (): HTMLSlotElement {
+    return this.bodySlotElement
+  }
+
+  public get dataLeafElements (): NodeListOf<NodeElement> {
+    return this.querySelectorAll<NodeElement>('scola-button, scola-format, scola-input, scola-media, scola-picker, scola-select, scola-slider')
+  }
+
+  public get dataNodeElements (): NodeListOf<NodeElement> {
+    return this.querySelectorAll<NodeElement>('scola-form, scola-list, scola-svg')
+  }
 
   @query('slot[name="body"]', true)
   protected bodySlotElement: HTMLSlotElement
@@ -1355,54 +353,107 @@ export class NodeElement extends LitElement {
   @query('slot[name="suffix"]', true)
   protected suffixSlotElement: HTMLSlotElement
 
+  protected handleParamsSetBound: (event: CustomEvent) => void
+
+  protected handleParamsToggleBound: (event: CustomEvent) => void
+
+  protected handlePropsSetBound: (event: CustomEvent) => void
+
+  protected handlePropsToggleBound: (event: CustomEvent) => void
+
+  protected observeRootElement?: HTMLElement
+
   protected observers: Set<NodeElement> = new Set<NodeElement>()
 
   protected updaters = NodeElement.updaters
+
+  public constructor () {
+    super()
+    this.handleParamsSetBound = this.handleParamsSet.bind(this)
+    this.handleParamsToggleBound = this.handleParamsToggle.bind(this)
+    this.handlePropsSetBound = this.handlePropsSet.bind(this)
+    this.handlePropsToggleBound = this.handlePropsToggle.bind(this)
+  }
 
   public addObserver (element: NodeElement): void {
     this.observers.add(element)
   }
 
   public connectedCallback (): void {
-    this.preset?.split(' ').forEach((presetName) => {
-      const properties: Record<string, unknown> = {}
+    this.preset
+      ?.split(' ')
+      .forEach((presetName) => {
+        const properties: Record<string, unknown> = {}
 
-      Object.keys(NodeElement.presets[presetName as keyof Presets] ?? {}).forEach((propertyName) => {
-        if (this[propertyName as keyof NodeElement] === undefined) {
-          properties[propertyName] =
-              NodeElement.presets[presetName as keyof Presets]?.[propertyName]
-        }
+        Object
+          .entries(NodeElement.presets[presetName as keyof Presets] ?? {})
+          .forEach(([propertyName, propertyValue]) => {
+            if (this[propertyName as keyof NodeElement] === undefined) {
+              properties[propertyName] = propertyValue
+            }
+          })
+
+        Object.assign(this, properties)
       })
 
-      Object.assign(this, properties)
-    })
-
-    if (this.id.length > 0) {
-      this.id = this.replaceParams(this.id, this.closest('scola-view')?.view?.params)
-    }
-
     if (this.observe !== undefined) {
-      this.observe = this.replaceParams(this.observe, this.closest('scola-view')?.view?.params)
+      this.observeRootElement = this.findObserveRootElement()
     }
 
-    if (this.target !== undefined) {
-      this.target = this.replaceParams(this.target, this.closest('scola-view')?.view?.params)
-    }
-
+    window.addEventListener('scola-node-params-set', this.handleParamsSetBound)
+    window.addEventListener('scola-node-params-toggle', this.handleParamsToggleBound)
+    window.addEventListener('scola-node-props-set', this.handlePropsSetBound)
+    window.addEventListener('scola-node-props-toggle', this.handlePropsToggleBound)
     super.connectedCallback()
   }
 
   public disconnectedCallback (): void {
-    this.observe?.split(' ').forEach((observeId) => {
-      const target = document.getElementById(observeId)
+    if (!this.isConnected) {
+      this.observe
+        ?.split(' ')
+        .forEach((id) => {
+          const element = this.observeRootElement?.querySelector(`#${id}`)
 
-      if (target instanceof NodeElement) {
-        target.removeObserver(this)
-      }
-    })
+          if (element instanceof NodeElement) {
+            element.removeObserver(this)
+          }
+        })
 
-    this.observers.clear()
+      this.observers.clear()
+    }
+
     super.disconnectedCallback()
+  }
+
+  public findObserveRootElement (): HTMLElement {
+    if (this.observeScope === 'body') {
+      return document.body
+    }
+
+    let element: HTMLElement | null = this as HTMLElement
+
+    while (element !== null) {
+      if (element.parentNode?.nodeName.toLowerCase() === 'scola-view') {
+        return element
+      }
+
+      if (element instanceof HTMLSlotElement) {
+        const rootNode = element.getRootNode()
+
+        if (
+          rootNode instanceof ShadowRoot &&
+          rootNode.host instanceof HTMLElement
+        ) {
+          element = rootNode.host
+        } else {
+          element = element.parentElement
+        }
+      } else {
+        element = element.parentElement
+      }
+    }
+
+    return document.body
   }
 
   public firstUpdated (properties: PropertyValues): void {
@@ -1410,34 +461,44 @@ export class NodeElement extends LitElement {
       this.addEventListener('scola-log', this.handleLog.bind(this))
     }
 
-    if (this.noContext === true) {
+    if (this.contextMenu !== undefined) {
       this.addEventListener('contextmenu', this.handleContextmenu.bind(this))
     }
 
-    this.observe?.split(' ').forEach((observeId) => {
-      const target = document.getElementById(observeId)
+    this.observe
+      ?.split(' ')
+      .forEach((observe) => {
+        const [id] = observe.split('.') as Array<string | undefined>
 
-      if (target instanceof NodeElement) {
-        this.observedUpdated(properties, target)
-        target.addObserver(this)
-      }
-    })
+        if (id !== undefined) {
+          const element = this.observeRootElement?.querySelector(`#${id}`)
+
+          if (element instanceof NodeElement) {
+            this.observedUpdate(properties, element)
+            element.addObserver(this)
+          }
+        }
+      })
 
     super.firstUpdated(properties)
   }
 
-  public isArray<T = unknown>(value: unknown): value is T[] {
-    return Array.isArray(value)
-  }
+  public observedUpdate (properties: PropertyValues, element: NodeElement): void {
+    this.observe
+      ?.split(' ')
+      .forEach((observe) => {
+        const [
+          id,
+          name
+        ] = observe.split('.') as Array<string | undefined>
 
-  public isObject<T extends Record<string, unknown>>(value: unknown): value is T {
-    return typeof value === 'object' && value !== null
-  }
-
-  public observedUpdated (properties: PropertyValues, target: NodeElement): void {
-    this.updater?.split(' ').forEach((updaterName) => {
-      this.updaters[updaterName](this, target, properties)
-    })
+        if (
+          id === element.id &&
+          name !== undefined
+        ) {
+          this.updaters[name]?.(this, element, properties)
+        }
+      })
   }
 
   public removeObserver (element: NodeElement): void {
@@ -1458,35 +519,113 @@ export class NodeElement extends LitElement {
     `
   }
 
-  public updated (properties: PropertyValues): void {
-    this.observers.forEach((observer) => {
-      observer.observedUpdated(properties, this)
-    })
+  public setParameters (parameters: Record<string, unknown>): void {
+    Object
+      .entries(parameters)
+      .forEach(([key, value]) => {
+        this.parameters[key] = cast(value)
+      })
+
+    this.requestUpdate('parameters')
   }
 
-  protected dispatchEvents (detail?: NodeEvent['detail']): void {
-    const events = this.event?.split(' ') ?? []
-    const targets = this.target?.split(' ') ?? []
+  public setProperties (properties: Record<string, unknown>): void {
+    Object
+      .entries(properties)
+      .forEach(([key, value]) => {
+        Object.assign(this, {
+          [key]: cast(value)
+        })
+      })
+  }
 
-    events.forEach((event, index) => {
-      this.dispatchEvent(new CustomEvent<NodeEvent['detail']>(event, {
-        bubbles: true,
-        composed: true,
-        detail: {
-          ...detail,
-          ...this.dataset,
-          origin: this,
-          target: targets[index]
+  public toggleParameters (parameters: Record<string, unknown>): void {
+    Object
+      .entries(parameters)
+      .forEach(([key, value]) => {
+        const castValue = cast(value)
+
+        if (this.parameters[key] === castValue) {
+          this.parameters[key] = undefined
+        } else {
+          this.parameters[key] = castValue
         }
-      }))
+      })
+
+    this.requestUpdate('parameters')
+  }
+
+  public toggleProperties (properties: Record<string, unknown>): void {
+    Object
+      .entries(properties)
+      .forEach(([key, value]) => {
+        const castValue = cast(value)
+
+        if (this[key as keyof NodeElement] === castValue) {
+          Object.assign(this, {
+            [key]: undefined
+          })
+        } else {
+          Object.assign(this, {
+            [key]: castValue
+          })
+        }
+      })
+  }
+
+  public update (properties: PropertyValues): void {
+    this.observers.forEach((observer) => {
+      observer.observedUpdate(properties, this)
     })
+
+    super.update(properties)
+  }
+
+  protected dispatchEvents (data?: Record<string, unknown>, cause?: CustomEvent<Record<string, unknown> | null>): void {
+    let filter = '.*'
+
+    if (
+      isObject(cause?.detail) &&
+      typeof cause?.detail.filter === 'string'
+    ) {
+      ({ filter } = cause.detail)
+    }
+
+    this.dispatch
+      ?.split(' ')
+      .forEach((dispatch) => {
+        let [
+          id,
+          event
+        ] = dispatch.split('.') as Array<string | undefined>
+
+        if (id !== undefined) {
+          if (event === undefined) {
+            event = id
+            id = undefined
+          }
+
+          if (new RegExp(filter, 'u').test(dispatch)) {
+            this.dispatchEvent(new CustomEvent(event, {
+              bubbles: true,
+              composed: true,
+              detail: {
+                data,
+                filter: this.dispatchFilter,
+                origin: this,
+                target: id
+              }
+            }))
+          }
+        }
+      })
   }
 
   protected async ease (from: number, to: number, callback: (value: number) => void, duration = this.duration): Promise<void> {
     return new Promise((resolve) => {
       const element = document.body.appendChild(document.createElement('div'))
 
-      element.animate([{
+      const animation = element.animate([{
         left: `${from}px`
       }, {
         left: `${to}px`
@@ -1497,11 +636,9 @@ export class NodeElement extends LitElement {
       })
 
       function frame (): void {
-        const value = window.getComputedStyle(element).left
+        callback(parseFloat(window.getComputedStyle(element).left))
 
-        callback(parseFloat(value))
-
-        if (value === `${to}px`) {
+        if (animation.playState === 'finished') {
           element.remove()
           resolve()
         } else {
@@ -1513,27 +650,95 @@ export class NodeElement extends LitElement {
     })
   }
 
-  protected handleContextmenu (event: Event): boolean {
+  protected handleContextmenu (event: MouseEvent): boolean {
     event.preventDefault()
+
+    if (
+      this.contextMenu === undefined ||
+      this.contextMenu === 'off'
+    ) {
+      return false
+    }
+
+    this.dispatchEvent(new CustomEvent('scola-dialog-show', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        data: {
+          position: {
+            left: event.clientX,
+            top: event.clientY
+          }
+        },
+        origin: this,
+        target: this.contextMenu
+      }
+    }))
+
     return false
   }
 
-  protected handleLog (event: LogEvent): void {
-    if (event.detail !== null && LogLevel[event.detail.level] >= LogLevel[this.logLevel]) {
+  protected handleLog (event: CustomEvent<Record<string, unknown> | null>): void {
+    if (
+      isObject(event.detail?.data) &&
+      typeof event.detail?.data.level === 'string' &&
+      LogLevel[event.detail.data.level as keyof typeof LogLevel] >= LogLevel[this.logLevel]
+    ) {
       event.cancelBubble = true
 
-      if (event.detail.code === undefined) {
+      if (event.detail.data.code === undefined) {
         this.logs = []
       } else {
-        this.logs.push(event.detail)
+        this.logs = this.logs.concat(event.detail.data)
       }
-
-      this.requestUpdate('logs')
     }
   }
 
-  protected isTarget (event: NodeEvent, element: Element = this): boolean {
-    if (event.detail?.target !== undefined) {
+  protected handleParamsSet (event: CustomEvent<Record<string, unknown> | null>): void {
+    if (this.isTarget(event)) {
+      event.cancelBubble = true
+
+      if (isObject(event.detail?.data)) {
+        this.setParameters(event.detail?.data ?? {})
+      }
+    }
+  }
+
+  protected handleParamsToggle (event: CustomEvent<Record<string, unknown> | null>): void {
+    if (this.isTarget(event)) {
+      event.cancelBubble = true
+
+      if (isObject(event.detail?.data)) {
+        this.toggleParameters(event.detail?.data ?? {})
+      }
+    }
+  }
+
+  protected handlePropsSet (event: CustomEvent<Record<string, unknown> | null>): void {
+    if (this.isTarget(event)) {
+      event.cancelBubble = true
+
+      if (isObject(event.detail?.data)) {
+        this.setProperties(event.detail?.data ?? {})
+      }
+    }
+  }
+
+  protected handlePropsToggle (event: CustomEvent<Record<string, unknown> | null>): void {
+    if (this.isTarget(event)) {
+      event.cancelBubble = true
+
+      if (isObject(event.detail?.data)) {
+        this.toggleProperties(event.detail?.data ?? {})
+      }
+    }
+  }
+
+  protected isTarget (event: CustomEvent, element: Element = this): boolean {
+    if (
+      isObject(event.detail) &&
+      event.detail.target !== undefined
+    ) {
       if (event.detail.target !== element.id) {
         return false
       }
@@ -1544,9 +749,17 @@ export class NodeElement extends LitElement {
     return true
   }
 
-  protected replaceParams (string: string, params?: URLSearchParams): string {
-    return (string.match(/:\w+/gu) ?? []).reduce((result, match) => {
-      return result.replace(new RegExp(match, 'gu'), String(params?.get(match.slice(1)) ?? match))
-    }, string)
+  protected replaceParameters (string: string, parameters?: Record<string, unknown>): string {
+    return string
+      .match(/:\w+/gu)
+      ?.reduce((result, match) => {
+        const value = parameters?.[match.slice(1)]
+
+        if (isPrimitive(value)) {
+          return result.replace(new RegExp(match, 'gu'), value.toString())
+        }
+
+        return result
+      }, string) ?? ''
   }
 }

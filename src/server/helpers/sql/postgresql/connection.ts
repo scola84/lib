@@ -27,7 +27,12 @@ export class PostgresqlConnection extends Connection {
 
   public async delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult> {
     await this.query(query, values)
-    return { count: 0 }
+
+    const result = {
+      count: 0
+    }
+
+    return result
   }
 
   public async depopulate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
@@ -140,6 +145,11 @@ export class PostgresqlConnection extends Connection {
 
   public async update<Values>(query: string, values?: Values): Promise<UpdateResult> {
     await this.query(query, values)
-    return { count: 0 }
+
+    const result = {
+      count: 0
+    }
+
+    return result
   }
 }

@@ -1,8 +1,10 @@
 import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
-import { css, html, svg } from 'lit'
 import { customElement, property, query } from 'lit/decorators.js'
+import { html, svg } from 'lit'
 import { NodeElement } from './node'
 import type { RequestElement } from './request'
+import styles from '../styles/progress'
+import updaters from '../updaters/progress'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -15,169 +17,24 @@ declare global {
 export class ProgressElement extends NodeElement {
   public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
-    css`
-      :host {
-        align-items: center;
-        justify-content: center;
-      }
-
-      :host(:not([started])) {
-        display: none;
-      }
-
-      :host([type="circle"][size="large"]) slot[name="body"] {
-        height: 2rem;
-        width: 2rem;
-      }
-
-      :host([type="circle"][size="medium"]) slot[name="body"] {
-        height: 1.5rem;
-        width: 1.5rem;
-      }
-
-      :host([type="circle"][size="small"]) slot[name="body"] {
-        height: 1rem;
-        width: 1rem;
-      }
-
-      :host([type="rect"][stroke="large"]) slot[name="body"] {
-        height: 0.5rem;
-      }
-
-      :host([type="rect"][stroke="medium"]) slot[name="body"] {
-        height: 0.25rem;
-      }
-
-      :host([type="rect"][stroke="min"]) slot[name="body"] {
-        height: 1px;
-      }
-
-      :host([type="rect"][stroke="small"]) slot[name="body"] {
-        height: 0.125rem;
-      }
-
-      :host([fill]) slot[name="body"] {
-        background: none;
-      }
-
-      :host([type="rect"]) svg {
-        display: flex;
-        flex: 1;
-      }
-
-      circle {
-        fill: transparent;
-        transform: rotate(-90deg);
-        transform-origin: 50% 50%;
-      }
-
-      :host([started][mode="indeterminate"]) circle {
-        animation: spin 1s infinite ease-in-out;
-        stroke-dashoffset: 1rem !important;
-      }
-
-      :host([started][mode="indeterminate"]) rect {
-        animation: flow 1s infinite ease-in-out;
-        width: 33% !important;
-      }
-
-      :host([type="circle"][stroke="large"]) circle {
-        stroke-width: 0.5rem;
-      }
-
-      :host([type="circle"][stroke="medium"]) circle {
-        stroke-width: 0.25rem;
-      }
-
-      :host([type="circle"][stroke="min"]) circle {
-        stroke-width: 1px;
-      }
-
-      :host([type="circle"][stroke="small"]) circle {
-        stroke-width: 0.125rem;
-      }
-
-      :host([fill="aux-1"][type="circle"]) circle {
-        stroke: var(--scola-node-fill-aux-1, #fff);
-      }
-
-      :host([fill="aux-2"][type="circle"]) circle {
-        stroke: var(--scola-node-fill-aux-2, #eee);
-      }
-
-      :host([fill="aux-3"][type="circle"]) circle {
-        stroke: var(--scola-node-fill-aux-3, #ddd);
-      }
-
-      :host([fill="aux-4"][type="circle"]) circle {
-        stroke: var(--scola-node-fill-aux-4, rgba(255, 255, 255, 0.25));
-      }
-
-      :host([fill="sig-1"][type="circle"]) circle {
-        stroke: var(--scola-node-fill-sig-1, #b22222);
-      }
-
-      :host([fill="sig-2"][type="circle"]) circle {
-        stroke: var(--scola-node-fill-sig-2, #008000);
-      }
-
-      :host([fill="aux-1"][type="rect"]) rect {
-        fill: var(--scola-node-fill-aux-1, #fff);
-      }
-
-      :host([fill="aux-2"][type="rect"]) rect {
-        fill: var(--scola-node-fill-aux-2, #eee);
-      }
-
-      :host([fill="aux-3"][type="rect"]) rect {
-        fill: var(--scola-node-fill-aux-3, #ddd);
-      }
-
-      :host([fill="aux-4"][type="rect"]) rect {
-        fill: var(--scola-node-fill-aux-4, rgba(255, 255, 255, 0.25));
-      }
-
-      :host([fill="sig-1"][type="rect"]) rect {
-        fill: var(--scola-node-fill-sig-1, #b22222);
-      }
-
-      :host([fill="sig-2"][type="rect"]) rect {
-        fill: var(--scola-node-fill-sig-2, #008000);
-      }
-
-      @keyframes flow {
-        0% {
-          transform: translateX(-33%);
-        }
-
-        100% {
-          transform: translateX(100%);
-        }
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-    `
+    styles
   ]
 
   public static updaters = {
     ...NodeElement.updaters,
-    'scola-request': (source: ProgressElement, target: RequestElement, properties: PropertyValues): void => {
-      if (
-        properties.has('loaded') ||
-        properties.has('total')
-      ) {
-        source.updateRequest(target).catch(() => {})
-      }
-    }
+    ...updaters
   }
+
+  @property({
+    reflect: true,
+    type: Boolean
+  })
+  public busy?: boolean
+
+  @property({
+    type: Number
+  })
+  public fraction = 1 / 50
 
   @property()
   public method?: RequestElement['method']
@@ -191,12 +48,6 @@ export class ProgressElement extends NodeElement {
     reflect: true
   })
   public size?: 'large' | 'medium' | 'small'
-
-  @property({
-    reflect: true,
-    type: Boolean
-  })
-  public started?: boolean
 
   @property({
     reflect: true
@@ -252,9 +103,9 @@ export class ProgressElement extends NodeElement {
       this.method === element.request?.method
     ) {
       if (this.mode === 'indeterminate') {
-        this.started = element.started
+        this.busy = element.busy
       } else {
-        this.started = true
+        this.busy = true
 
         if (this.type === 'circle') {
           await this.updateRequestCircle(element)
@@ -286,18 +137,20 @@ export class ProgressElement extends NodeElement {
   }
 
   protected async updateRequestCircle (element: RequestElement): Promise<void> {
-    if (element.total === 0) {
-      return
+    let { fraction } = this
+
+    if (
+      element.loaded > 0 &&
+      element.total > 0
+    ) {
+      fraction = element.loaded / element.total
+    } else if (element.busy === false) {
+      fraction = 0
     }
 
     const cf = this.radius * 2 * Math.PI
-    const to = cf - element.loaded / element.total * cf
-
-    let { from = cf } = this
-
-    if (from < to) {
-      from = to
-    }
+    const to = cf - (fraction * cf)
+    const { from = cf } = this
 
     this.from = to
 
@@ -306,26 +159,31 @@ export class ProgressElement extends NodeElement {
         this.circleElement?.setAttribute('stroke-dashoffset', `${value}px`)
       })
       .then(() => {
-        if (element.loaded === element.total) {
-          this.circleElement?.setAttribute('stroke-dashoffset', `${cf}px`)
+        if (
+          to === 0 ||
+          to === cf
+        ) {
+          this.busy = false
           this.from = cf
-          this.started = false
+          this.circleElement?.setAttribute('stroke-dashoffset', `${cf}px`)
         }
       })
   }
 
   protected async updateRequestRect (element: RequestElement): Promise<void> {
-    if (element.total === 0) {
-      return
+    let { fraction } = this
+
+    if (
+      element.loaded > 0 &&
+      element.total > 0
+    ) {
+      fraction = element.loaded / element.total
+    } else if (element.busy === false) {
+      fraction = 0
     }
 
-    const to = Math.round(element.loaded / element.total * 100)
-
-    let { from = 0 } = this
-
-    if (from > to) {
-      from = to
-    }
+    const to = fraction * 100
+    const { from = 0 } = this
 
     this.from = to
 
@@ -334,10 +192,13 @@ export class ProgressElement extends NodeElement {
         this.rectElement?.setAttribute('width', `${value}%`)
       })
       .then(() => {
-        if (element.loaded === element.total) {
-          this.rectElement?.setAttribute('width', '0%')
+        if (
+          to === 0 ||
+          to === 100
+        ) {
+          this.busy = false
           this.from = 0
-          this.started = false
+          this.rectElement?.setAttribute('width', '0%')
         }
       })
   }

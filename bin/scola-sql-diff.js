@@ -57,7 +57,9 @@ try {
     targetFile = '/tmp/scola-sql-diff-out.sql'
   }
 
-  fs.mkdirSync(path.dirname(targetFile), { recursive: true })
+  fs.mkdirSync(path.dirname(targetFile), {
+    recursive: true
+  })
 
   child.execSync([
     `cat .docker/mysql/initdb.d/${context}/${database}.sql`,

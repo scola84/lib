@@ -210,12 +210,16 @@ export abstract class TaskRunner {
     this.concurrency = Number(runnerOptions.concurrency ?? process.env.QUEUE_CONCURRENCY ?? 1)
     this.database = runnerOptions.database
     this.host = runnerOptions.host ?? process.env.HOSTNAME ?? ''
-    this.logger = runnerOptions.logger?.child({ name: runnerOptions.name })
     this.name = runnerOptions.name
     this.queuer = runnerOptions.queuer
     this.schema = runnerOptions.schema ?? {}
     this.store = runnerOptions.store
     this.timeout = runnerOptions.timeout ?? 5 * 60 * 1000
+
+    this.logger = runnerOptions.logger?.child({
+      name: runnerOptions.name
+    })
+
     this.queuer.add(this)
   }
 
@@ -293,7 +297,9 @@ export abstract class TaskRunner {
     this.validator = this.createValidator()
 
     this.storeDuplicate.nodeRedis.on('error', (error) => {
-      this.logger?.error({ context: 'setup' }, String(error))
+      this.logger?.error({
+        context: 'setup'
+      }, String(error))
     })
   }
 
@@ -399,7 +405,9 @@ export abstract class TaskRunner {
         }
       }
     } catch (error: unknown) {
-      this.logger?.error({ context: 'handle-task-run' }, String(error))
+      this.logger?.error({
+        context: 'handle-task-run'
+      }, String(error))
     }
   }
 
@@ -430,7 +438,9 @@ export abstract class TaskRunner {
           return
         }
 
-        this.logger?.error({ context: 'push' }, String(error))
+        this.logger?.error({
+          context: 'push'
+        }, String(error))
       })
   }
 

@@ -1,10 +1,9 @@
 import { customElement, property } from 'lit/decorators.js'
-import Format from 'intl-messageformat'
+import { format, isObject } from '../../common'
 import { NodeElement } from './node'
-import type { SourceElement } from './source'
 import type { TemplateResult } from 'lit'
-import type { ViewElement } from './view'
 import { html } from 'lit'
+import updaters from '../updaters/format'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -20,45 +19,42 @@ export class FormatElement extends NodeElement {
 
   public static updaters = {
     ...NodeElement.updaters,
-    'scola-source': (source: FormatElement, target: SourceElement): void => {
-      if (source.isObject(target.data)) {
-        source.data = target.data
-      }
-    },
-    'scola-view': (source: FormatElement, target: ViewElement): void => {
-      source.data = {
-        title: target.view?.element?.viewTitle
-      }
-    }
+    ...updaters
   }
 
   @property()
   public code?: string
 
   @property({
-    attribute: false
+    attribute: 'show-title',
+    type: Boolean
   })
-  public data?: Record<string, unknown>
+  public showTitle?: boolean
 
   protected updaters = FormatElement.updaters
 
-  public format (code: string, language = FormatElement.lang, data?: Record<string, unknown>): string {
-    return String(new Format(FormatElement.strings[language]?.[code] ?? code, language).format(data))
-  }
-
   public render (): TemplateResult {
-    const code = this.code ?? ''
-    const data = this.data ?? this.dataset
+    let data: Record<string, unknown> = this.dataset
+
+    if (isObject(this.data)) {
+      ({ data } = this)
+    }
 
     let language: string | undefined = this.lang
 
     if (language === '') {
-      language = undefined
+      language = FormatElement.lang
+    }
+
+    const string = format(FormatElement.strings, this.code ?? '', language, data)
+
+    if (this.showTitle === true) {
+      this.title = string
     }
 
     const template = html`
       <slot name="body">
-        <slot>${this.format(code, language, data)}</slot>
+        <slot>${string}</slot>
       </slot>
     `
 

@@ -1,18 +1,23 @@
 import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
-import type { Log, NodeEvent } from './node'
-import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import type { ButtonElement } from './button'
-import type { FormatElement } from './format'
+import { FormatElement } from './format'
 import { NodeElement } from './node'
+import { html } from 'lit'
+import { isObject } from '../../common'
+import styles from '../styles/log'
+import updaters from '../updaters/log'
 
 declare global {
   interface HTMLElementEventMap {
-    'scola-log-hide': NodeEvent
+    'scola-log-hide': CustomEvent
   }
 
   interface HTMLElementTagNameMap {
     'scola-log': LogElement
+  }
+
+  interface WindowEventMap {
+    'scola-log-hide': CustomEvent
   }
 }
 
@@ -20,21 +25,12 @@ declare global {
 export class LogElement extends NodeElement {
   public static styles: CSSResultGroup[] = [
     ...NodeElement.styles,
-    css`
-      :host([hidden]) {
-        display: flex;
-        height: 0;
-      }
-    `
+    styles
   ]
 
   public static updaters = {
     ...NodeElement.updaters,
-    'scola-node': (source: LogElement, target: NodeElement, properties: PropertyValues): void => {
-      if (properties.has('logs')) {
-        source.updateNode(target).catch(() => {})
-      }
-    }
+    ...updaters
   }
 
   @property({
@@ -42,11 +38,9 @@ export class LogElement extends NodeElement {
   })
   public timeout?: number
 
-  public logs: Log[]
+  public logs: Array<Record<string, unknown>>
 
-  protected handleHideBound: (event: NodeEvent) => void
-
-  protected log?: Log
+  protected handleHideBound: (event: CustomEvent) => void
 
   protected templateElement?: NodeElement | null
 
@@ -75,13 +69,13 @@ export class LogElement extends NodeElement {
     super.firstUpdated(properties)
   }
 
-  public async hide (duration = this.duration): Promise<void> {
+  public async hide (): Promise<void> {
     if (this.hidden) {
       return
     }
 
     if (this.logs.length > 0) {
-      await this.showNext(duration)
+      this.showNext()
       return
     }
 
@@ -91,53 +85,26 @@ export class LogElement extends NodeElement {
       }, {
         marginTop: `-${this.defaultSlotElement.scrollHeight}px`
       }], {
-        duration,
+        duration: this.duration,
         easing: this.easing,
         fill: 'forwards'
       })
       .finished
       .then(() => {
         this.hidden = true
-        this.log = undefined
+        this.data = undefined
       })
   }
 
   public render (): TemplateResult {
-    const element = this.log?.template ?? this.templateElement?.cloneNode(true)
-
-    if (element instanceof NodeElement) {
-      element.removeAttribute('slot')
-
-      element
-        .querySelectorAll<ButtonElement>('scola-button')
-        .forEach((buttonElement) => {
-          if (this.isObject(this.log?.data)) {
-            buttonElement.data = this.log.data
-          }
-        })
-
-      element
-        .querySelectorAll<FormatElement>('scola-format')
-        .forEach((formatElement) => {
-          formatElement.code = this.log?.code
-
-          if (this.isObject(this.log?.data)) {
-            formatElement.data = this.log.data
-          }
-        })
-    }
-
     return html`
       <slot name="body">
-        <slot>${element}</slot>
+        <slot>${this.renderTemplate()}</slot>
       </slot>
     `
   }
 
-  public async show (log: Log, duration = this.duration): Promise<void> {
-    this.log = log
-    this.requestUpdate()
-
+  public async show (): Promise<void> {
     if (!this.hidden) {
       return
     }
@@ -146,7 +113,7 @@ export class LogElement extends NodeElement {
     this.defaultSlotElement.style.setProperty('position', 'absolute')
 
     await new Promise((resolve) => {
-      setTimeout(resolve)
+      window.setTimeout(resolve)
     })
 
     this.hidden = false
@@ -161,7 +128,7 @@ export class LogElement extends NodeElement {
         opacity: 1,
         position: 'relative'
       }], {
-        duration,
+        duration: this.duration,
         easing: this.easing,
         fill: 'forwards'
       })
@@ -172,7 +139,7 @@ export class LogElement extends NodeElement {
       })
   }
 
-  public async showNext (duration = this.duration): Promise<void> {
+  public showNext (): void {
     if (this.timeoutId !== undefined) {
       window.clearTimeout(this.timeoutId)
       this.timeoutId = undefined
@@ -180,56 +147,102 @@ export class LogElement extends NodeElement {
 
     const log = this.logs.shift()
 
-    if (log === undefined) {
-      await this.hide(duration)
+    if (!isObject(log)) {
+      this.hide().catch(() => {})
       return
     }
 
-    await this.show(log, duration)
+    this.data = log
 
-    let { timeout = this.timeout } = log
+    let { timeout } = this
+
+    if (typeof log.timeout === 'number') {
+      ({ timeout } = log)
+    }
 
     if (timeout === 0) {
       timeout = 3000
     }
 
     this.timeoutId = window.setTimeout(() => {
-      this.showNext(duration).catch(() => {})
+      this.showNext()
     }, timeout)
   }
 
-  public async updateNode (element: NodeElement, duration = this.duration): Promise<void> {
+  public update (properties: PropertyValues): void {
+    if (properties.has('data')) {
+      if (this.data !== undefined) {
+        this.show().catch(() => {})
+      }
+    }
+
+    super.update(properties)
+  }
+
+  public updateNode (element: NodeElement): void {
     if (this.timeout === undefined) {
-      await this.updateNodeImmediate(element, duration)
+      this.updateNodeImmediate(element)
     } else {
-      await this.updateNodeTimeout(element, duration)
+      this.updateNodeTimeout(element)
     }
   }
 
-  protected handleHide (event: NodeEvent): void {
+  protected handleHide (event: CustomEvent): void {
     if (this.isTarget(event)) {
+      event.cancelBubble = true
       this.hide().catch(() => {})
     }
   }
 
-  protected async updateNodeImmediate (element: NodeElement, duration = this.duration): Promise<void> {
-    const log = element.logs
-      .splice(0)
-      .pop()
+  protected renderTemplate (): Node | TemplateResult | undefined {
+    const log = this.data
 
-    if (log === undefined) {
-      await this.hide(duration)
+    if (!isObject(log)) {
+      return this.templateElement?.cloneNode(true)
+    }
+
+    let element = null
+
+    if (log.template instanceof HTMLElement) {
+      element = log.template
+    } else {
+      element = this.templateElement?.cloneNode(true)
+    }
+
+    if (element instanceof NodeElement) {
+      element.removeAttribute('slot')
+
+      element.dataLeafElements.forEach((dataLeafElement) => {
+        dataLeafElement.data = log.data
+
+        if (
+          dataLeafElement instanceof FormatElement &&
+          typeof log.code === 'string'
+        ) {
+          dataLeafElement.code = log.code
+        }
+      })
+    }
+
+    return element
+  }
+
+  protected updateNodeImmediate (element: NodeElement): void {
+    if (element.logs.length === 0) {
+      this.hide().catch(() => {})
       return
     }
 
-    await this.show(log, duration)
+    this.data = element.logs
+      .splice(0)
+      .pop()
   }
 
-  protected async updateNodeTimeout (element: NodeElement, duration = this.duration): Promise<void> {
+  protected updateNodeTimeout (element: NodeElement): void {
     this.logs.splice(this.logs.length, 0, ...element.logs.splice(0))
 
     if (this.hidden) {
-      await this.showNext(duration)
+      this.showNext()
     }
   }
 }

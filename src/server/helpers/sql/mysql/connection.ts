@@ -30,8 +30,13 @@ export class MysqlConnection extends Connection {
   }
 
   public async delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult> {
-    const result = await this.query<Values, ResultSetHeader>(query, values)
-    return { count: result.affectedRows }
+    const { affectedRows } = await this.query<Values, ResultSetHeader>(query, values)
+
+    const result = {
+      count: affectedRows
+    }
+
+    return result
   }
 
   public async depopulate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
@@ -59,18 +64,33 @@ export class MysqlConnection extends Connection {
   }
 
   public async insert<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
-    const result = await this.query<Values, { insertId: ID }>(query, values)
-    return { id: result.insertId }
+    const { insertId } = await this.query<Values, { insertId: ID }>(query, values)
+
+    const result = {
+      id: insertId
+    }
+
+    return result
   }
 
   public async insertAll<Values, ID = number>(query: string, values?: Partial<Values>): Promise<Array<InsertResult<ID>>> {
-    const result = await this.query<Values, { insertId: ID }>(query, values)
-    return [{ id: result.insertId }]
+    const { insertId } = await this.query<Values, { insertId: ID }>(query, values)
+
+    const result = [{
+      id: insertId
+    }]
+
+    return result
   }
 
   public async insertOne<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
-    const result = await this.query<Values, { insertId: ID }>(query, values)
-    return { id: result.insertId }
+    const { insertId } = await this.query<Values, { insertId: ID }>(query, values)
+
+    const result = {
+      id: insertId
+    }
+
+    return result
   }
 
   public async populate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
@@ -134,7 +154,12 @@ export class MysqlConnection extends Connection {
   }
 
   public async update<Values>(query: string, values?: Partial<Values>): Promise<UpdateResult> {
-    const result = await this.query<Values, ResultSetHeader>(query, values)
-    return { count: result.affectedRows }
+    const { affectedRows } = await this.query<Values, ResultSetHeader>(query, values)
+
+    const result = {
+      count: affectedRows
+    }
+
+    return result
   }
 }

@@ -87,9 +87,12 @@ export class Server {
    */
   public constructor (options: ServerOptions = {}) {
     this.address = options.address ?? '0.0.0.0'
-    this.logger = options.logger?.child({ name: 'server' })
     this.options = options
     this.port = options.port ?? 3000
+
+    this.logger = options.logger?.child({
+      name: 'server'
+    })
 
     this.plugins = options.plugins ?? {
       cookie: fastifyCookie,
@@ -113,26 +116,6 @@ export class Server {
       },
       ...this.options
     })
-  }
-
-  /**
-   * Checks whether a value is an Array.
-   *
-   * @param value - The value
-   * @returns The result
-   */
-  public isArray<T = unknown>(value: unknown): value is T[] {
-    return Array.isArray(value)
-  }
-
-  /**
-   * Checks whether a value is a plain Object.
-   *
-   * @param value - The value
-   * @returns The result
-   */
-  public isObject<T extends Record<string, unknown>>(value: unknown): value is T {
-    return typeof value === 'object' && value !== null
   }
 
   /**

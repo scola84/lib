@@ -26,8 +26,13 @@ export class MssqlConnection extends Connection {
   }
 
   public async delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult> {
-    const result = await this.query<Values, IResult<unknown>>(query, values)
-    return { count: result.rowsAffected[0] }
+    const { rowsAffected } = await this.query<Values, IResult<unknown>>(query, values)
+
+    const result = {
+      count: rowsAffected[0]
+    }
+
+    return result
   }
 
   public async depopulate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
@@ -155,7 +160,12 @@ export class MssqlConnection extends Connection {
   }
 
   public async update<Values>(query: string, values?: Partial<Values>): Promise<UpdateResult> {
-    const result = await this.query<Values, IResult<unknown>>(query, values)
-    return { count: result.rowsAffected[0] }
+    const { rowsAffected } = await this.query<Values, IResult<unknown>>(query, values)
+
+    const result = {
+      count: rowsAffected[0]
+    }
+
+    return result
   }
 }

@@ -5,8 +5,8 @@ import { URL } from 'url'
 import type { config } from 'mssql'
 import { format } from '../format'
 import { format as formatValue } from './format'
-import lodash from 'lodash'
 import { parse } from 'query-string'
+import { set } from '../../../../common'
 
 /**
  * Manages MSSQL connections.
@@ -40,7 +40,7 @@ export class MssqlDatabase extends Database {
         parseNumbers: true
       }))
       .forEach(([name, value]) => {
-        lodash.set(options, name, value)
+        set(options, name, value)
       })
 
     return new ConnectionPool(options)

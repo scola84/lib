@@ -1,5 +1,5 @@
 import { escape } from 'sqlstring'
-import lodash from 'lodash'
+import { isObject } from '../../../../common'
 
 /**
  * Escape the value.
@@ -10,7 +10,7 @@ import lodash from 'lodash'
  * @returns The formatted value
  */
 export function format (value: unknown): string {
-  if (lodash.isPlainObject(value)) {
+  if (isObject(value)) {
     return escape(JSON.stringify(value))
   }
 

@@ -146,12 +146,12 @@ export class PickerElement extends InputElement {
 
   protected handleClickColor (): void {
     super.handleClick()
-    this.inputElement?.dispatchEvent(new MouseEvent('click'))
+    this.inputElement?.click()
   }
 
   protected handleClickFile (): void {
     super.handleClick()
-    this.inputElement?.dispatchEvent(new MouseEvent('click'))
+    this.inputElement?.click()
   }
 
   protected handleClickRadio (): void {

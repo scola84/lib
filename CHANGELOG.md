@@ -1,3 +1,22 @@
+# [24.0.0](https://github.com/scola84/lib/compare/v23.0.0...v24.0.0) (2021-08-03)
+
+
+### Bug Fixes
+
+* **client:** use click method instead of custom event ([91e23cb](https://github.com/scola84/lib/commit/91e23cb10c3d3da141c80fce7902115e92cc5ef2))
+
+
+### Features
+
+* **client:** add interval to event ([6332482](https://github.com/scola84/lib/commit/63324829d4910239a3748e044c190c71915bb20f))
+* **client:** implement svg ([6169270](https://github.com/scola84/lib/commit/61692701fe82fa454196790a166313d4cab964d6))
+* **client:** improve elements ([7450ce5](https://github.com/scola84/lib/commit/7450ce5b0e2b77aa91d76e1442572de9ab62b267))
+
+
+### BREAKING CHANGES
+
+* **client:** Most interfaces have changed.
+
 # [23.0.0](https://github.com/scola84/lib/compare/v22.0.8...v23.0.0) (2021-07-22)
 
 

@@ -32,7 +32,7 @@ export class SvgElement extends NodeElement {
   })
   public scale?: number
 
-  public svgElement?: SVGElement | null
+  public svgElement: SVGElement
 
   protected drawers = SvgElement.drawers
 
@@ -42,7 +42,14 @@ export class SvgElement extends NodeElement {
 
   public constructor () {
     super()
-    this.svgElement = this.querySelector<SVGElement>('svg')
+
+    const svgElement = this.querySelector<SVGElement>('svg')
+
+    if (svgElement === null) {
+      throw new Error('Svg element not found')
+    }
+
+    this.svgElement = svgElement
     this.handleDrawBound = this.handleDraw.bind(this)
   }
 
@@ -82,9 +89,7 @@ export class SvgElement extends NodeElement {
       height = width * this.scale
     }
 
-    if (this.svgElement instanceof SVGElement) {
-      this.svgElement.setAttribute('viewBox', `0,0,${width},${height}`)
-    }
+    this.svgElement.setAttribute('viewBox', `0,0,${width},${height}`)
   }
 
   public update (properties: PropertyValues): void {

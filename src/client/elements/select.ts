@@ -49,10 +49,7 @@ export class SelectElement extends InputElement {
   public appendValueTo (formData: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.isSuccessful(this.inputElement)
-    ) {
+    if (this.isSuccessful(this.inputElement)) {
       if (this.inputElement.checked) {
         formData.append(this.inputElement.name, this.inputElement.value)
       }
@@ -60,18 +57,18 @@ export class SelectElement extends InputElement {
   }
 
   public connectedCallback (): void {
-    this.inputElement = this.querySelector<HTMLInputElement>(':scope > input, :scope > textarea')
+    this.inputElement = this.querySelector<HTMLInputElement>(':scope > input, :scope > textarea') ?? this.inputElement
     super.connectedCallback()
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    this.checked = this.inputElement?.checked
+    this.checked = this.inputElement.checked
 
     if (this.switch !== true) {
       this.duration = 0
     }
 
-    if (this.inputElement?.checked === true) {
+    if (this.inputElement.checked) {
       this.rangeElement.value = '1'
     } else {
       this.rangeElement.value = '0'
@@ -98,19 +95,13 @@ export class SelectElement extends InputElement {
   public setInput (data: Record<string, unknown>): void {
     super.setInput(data)
 
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      data.checked === true
-    ) {
+    if (data.checked === true) {
       this.toggleChecked(true, 0).catch(() => {})
     }
   }
 
   public setValue (data: Record<string, unknown>): void {
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      data[this.inputElement.name] === this.inputElement.value
-    ) {
+    if (data[this.inputElement.name] === this.inputElement.value) {
       this.toggleChecked(true, 0).catch(() => {})
     }
   }
@@ -123,15 +114,13 @@ export class SelectElement extends InputElement {
       return
     }
 
-    if (this.inputElement instanceof HTMLInputElement) {
-      this.checked = force ?? !(this.checked === true)
-      this.inputElement.checked = this.checked
-    }
+    this.checked = force ?? !(this.checked === true)
+    this.inputElement.checked = this.checked
 
     let from = 0
     let to = 0
 
-    if (this.inputElement?.checked === true) {
+    if (this.inputElement.checked) {
       to = 1
     } else {
       from = 1
@@ -145,7 +134,7 @@ export class SelectElement extends InputElement {
   protected handleClick (event: MouseEvent): void {
     super.handleClick(event)
 
-    if (this.inputElement?.type === 'checkbox') {
+    if (this.inputElement.type === 'checkbox') {
       this.handleClickCheckbox()
     } else {
       this.handleClickRadio()

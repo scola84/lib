@@ -174,11 +174,11 @@ export class DialogElement extends NodeElement {
 
   public anchorElement?: HTMLElement | null
 
-  public contentElement?: HTMLElement | null
+  public contentElement: HTMLElement | null
 
   public position?: DialogPosition | null
 
-  public scrimElement?: HTMLElement | null
+  public scrimElement: HTMLElement | null
 
   protected handleClickBound: (event: Event) => void
 
@@ -192,7 +192,7 @@ export class DialogElement extends NodeElement {
 
   protected handleShowBound: (event: CustomEvent) => void
 
-  protected originElement?: HTMLElement | null
+  protected originElement: HTMLElement | null
 
   protected updaters = DialogElement.updaters
 
@@ -200,8 +200,8 @@ export class DialogElement extends NodeElement {
     super()
     this.dir = document.dir
     this.contentElement = this.querySelector<HTMLElement>('[is="content"]')
-    this.scrimElement = this.querySelector<HTMLElement>('[is="scrim"]')
     this.originElement = this.parentElement
+    this.scrimElement = this.querySelector<HTMLElement>('[is="scrim"]')
     this.handleClickBound = this.handleClick.bind(this)
     this.handleHideBound = this.handleHide.bind(this)
     this.handleKeydownBound = this.handleKeydown.bind(this)

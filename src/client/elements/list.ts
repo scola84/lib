@@ -56,7 +56,7 @@ export class ListElement extends NodeElement {
   @state()
   protected count?: number
 
-  protected emptyElement?: NodeElement | null
+  protected emptyElement: NodeElement | null
 
   protected handleScrollBound: () => void
 
@@ -66,7 +66,7 @@ export class ListElement extends NodeElement {
 
   protected scrollParentElement?: HTMLElement | null
 
-  protected templateElement?: NodeElement | null
+  protected templateElement: NodeElement | null
 
   protected templateFunction: (item: unknown) => Node | TemplateResult | undefined
 
@@ -152,14 +152,14 @@ export class ListElement extends NodeElement {
   }
 
   protected calculateCount (): number {
-    const height = parseFloat(this.templateElement?.height ?? '0')
-    const { clientHeight: bodyHeight } = this.scrollParentElement ?? {}
+    const { clientHeight: parentHeight } = this.scrollParentElement ?? {}
+    const templateHeight = parseFloat(this.templateElement?.height ?? '0')
 
     if (
-      typeof height === 'number' &&
-      typeof bodyHeight === 'number'
+      typeof parentHeight === 'number' &&
+      typeof templateHeight === 'number'
     ) {
-      return Math.ceil((bodyHeight / (height * 16)) * this.countFactor)
+      return Math.ceil((parentHeight / (templateHeight * 16)) * this.countFactor)
     }
 
     return 0

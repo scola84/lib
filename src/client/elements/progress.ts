@@ -60,10 +60,10 @@ export class ProgressElement extends NodeElement {
   public type?: 'circle' | 'rect'
 
   @query('circle', true)
-  protected circleElement?: SVGCircleElement
+  protected circleElement: SVGCircleElement | null
 
   @query('rect', true)
-  protected rectElement?: SVGRectElement
+  protected rectElement: SVGRectElement | null
 
   protected from?: number
 

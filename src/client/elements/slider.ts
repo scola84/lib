@@ -40,7 +40,7 @@ export class SliderElement extends InputElement {
 
   protected updaters = SliderElement.updaters
 
-  protected valueElement?: FormatElement | null
+  protected valueElement: FormatElement | null
 
   public constructor () {
     super()
@@ -53,10 +53,7 @@ export class SliderElement extends InputElement {
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.isSuccessful(this.inputElement)
-    ) {
+    if (this.isSuccessful(this.inputElement)) {
       data.append(this.inputElement.name, this.inputElement.value)
     }
   }
@@ -76,9 +73,9 @@ export class SliderElement extends InputElement {
   public firstUpdated (properties: PropertyValues): void {
     this.addEventListener('scola-slider-max', this.handleMaxBound)
     this.addEventListener('scola-slider-min', this.handleMinBound)
-    this.inputElement?.addEventListener('input', this.handleSlide.bind(this))
-    this.inputElement?.style.setProperty('--max', this.inputElement.max)
-    this.inputElement?.style.setProperty('--min', this.inputElement.min)
+    this.inputElement.addEventListener('input', this.handleSlide.bind(this))
+    this.inputElement.style.setProperty('--max', this.inputElement.max)
+    this.inputElement.style.setProperty('--min', this.inputElement.min)
     this.setValueStyle()
     this.setValueText()
     super.firstUpdated(properties)
@@ -89,13 +86,12 @@ export class SliderElement extends InputElement {
       name,
       max = '',
       value = ''
-    } = this.inputElement ?? {}
+    } = this.inputElement
 
     const from = parseFloat(value)
     const to = parseFloat(max)
 
     if (
-      name !== undefined &&
       !Number.isNaN(from) &&
       !Number.isNaN(to)
     ) {
@@ -112,13 +108,12 @@ export class SliderElement extends InputElement {
       name,
       min = '',
       value = ''
-    } = this.inputElement ?? {}
+    } = this.inputElement
 
     const from = parseFloat(value)
     const to = parseFloat(min)
 
     if (
-      name !== undefined &&
       !Number.isNaN(from) &&
       !Number.isNaN(to)
     ) {
@@ -161,14 +156,11 @@ export class SliderElement extends InputElement {
   }
 
   protected setValueStyle (): void {
-    this.inputElement?.style.setProperty('--val', this.inputElement.value)
+    this.inputElement.style.setProperty('--val', this.inputElement.value)
   }
 
   protected setValueText (): void {
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.valueElement instanceof FormatElement
-    ) {
+    if (this.valueElement instanceof FormatElement) {
       this.valueElement.data = {
         value: this.inputElement.value
       }

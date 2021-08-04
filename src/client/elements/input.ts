@@ -36,28 +36,32 @@ export class InputElement extends NodeElement {
   })
   public storage = InputElement.storage
 
-  public inputElement?: HTMLInputElement | null
+  public inputElement: HTMLInputElement
 
-  protected clearElement?: NodeElement | null
+  protected clearElement: NodeElement | null
 
-  protected errorElement?: FormatElement | null
+  protected errorElement: FormatElement | null
 
   protected updaters = InputElement.updaters
 
   public constructor () {
     super()
+
+    const inputElement = this.querySelector<HTMLInputElement>(':scope > input, :scope > textarea')
+
+    if (inputElement === null) {
+      throw new Error('Input element not found')
+    }
+
     this.clearElement = this.querySelector<NodeElement>('[is="clear"]')
     this.errorElement = this.querySelector<FormatElement>('[is="error"]')
-    this.inputElement = this.querySelector<HTMLInputElement>(':scope > input, :scope > textarea')
+    this.inputElement = inputElement
   }
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.isSuccessful(this.inputElement)
-    ) {
+    if (this.isSuccessful(this.inputElement)) {
       data.append(this.inputElement.name, this.inputElement.value)
     }
   }
@@ -69,10 +73,8 @@ export class InputElement extends NodeElement {
   }
 
   public clearValue (value = ''): void {
-    if (this.inputElement instanceof HTMLInputElement) {
-      this.inputElement.value = value
-      this.toggleClear(true)
-    }
+    this.inputElement.value = value
+    this.toggleClear(true)
   }
 
   public connectedCallback (): void {
@@ -84,7 +86,7 @@ export class InputElement extends NodeElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    const inputElement = this.inputElement?.cloneNode(true)
+    const inputElement = this.inputElement.cloneNode(true)
 
     if (inputElement instanceof HTMLInputElement) {
       this.inputElement = inputElement
@@ -93,7 +95,7 @@ export class InputElement extends NodeElement {
 
     this.addEventListener('click', this.handleClick.bind(this))
     this.addEventListener('scola-input-clear', this.handleClear.bind(this))
-    this.inputElement?.addEventListener('input', this.handleInput.bind(this))
+    this.inputElement.addEventListener('input', this.handleInput.bind(this))
 
     if (this.cursor === undefined) {
       this.setCursor()
@@ -114,9 +116,7 @@ export class InputElement extends NodeElement {
 
   public update (properties: PropertyValues): void {
     if (properties.has('disabled')) {
-      if (this.inputElement instanceof HTMLInputElement) {
-        this.inputElement.disabled = this.disabled === true
-      }
+      this.inputElement.disabled = this.disabled === true
     } else if (properties.has('data')) {
       if (isObject(this.data)) {
         this.setData(this.data)
@@ -127,13 +127,9 @@ export class InputElement extends NodeElement {
   }
 
   protected createEventData (): Record<string, unknown> {
-    if (this.inputElement instanceof HTMLInputElement) {
-      return {
-        [this.inputElement.name]: this.inputElement.value
-      }
+    return {
+      [this.inputElement.name]: this.inputElement.value
     }
-
-    return {}
   }
 
   protected handleClear (): void {
@@ -144,7 +140,7 @@ export class InputElement extends NodeElement {
 
   protected handleClick (): void {
     if (this !== document.activeElement) {
-      this.inputElement?.focus()
+      this.inputElement.focus()
     }
 
     this.clearError()
@@ -155,10 +151,7 @@ export class InputElement extends NodeElement {
       this.saveState()
     }
 
-    if (this.inputElement instanceof HTMLInputElement) {
-      this.toggleClear(this.inputElement.value === '')
-    }
-
+    this.toggleClear(this.inputElement.value === '')
     this.dispatchEvents(this.createEventData())
   }
 
@@ -171,23 +164,19 @@ export class InputElement extends NodeElement {
   }
 
   protected loadState (): void {
-    if (this.inputElement instanceof HTMLInputElement) {
-      this.inputElement.value = this.storage.getItem(`input-${this.id}`) ?? ''
-    }
+    this.inputElement.value = this.storage.getItem(`input-${this.id}`) ?? ''
   }
 
   protected saveState (): void {
-    if (this.inputElement instanceof HTMLInputElement) {
-      if (this.inputElement.value === '') {
-        this.storage.removeItem(`input-${this.id}`)
-      } else {
-        this.storage.setItem(`input-${this.id}`, this.inputElement.value)
-      }
+    if (this.inputElement.value === '') {
+      this.storage.removeItem(`input-${this.id}`)
+    } else {
+      this.storage.setItem(`input-${this.id}`, this.inputElement.value)
     }
   }
 
   protected setCursor (): void {
-    switch (this.inputElement?.type) {
+    switch (this.inputElement.type) {
       case 'date':
       case 'datetime-local':
       case 'email':
@@ -217,16 +206,14 @@ export class InputElement extends NodeElement {
   protected setData (data: Record<string, unknown>): void {
     this.clearError()
 
-    if (this.inputElement instanceof HTMLInputElement) {
-      const datum = data[this.inputElement.name]
+    const datum = data[this.inputElement.name]
 
-      if (isObject(datum)) {
-        this.setError(datum)
-      } else if (datum !== undefined) {
-        this.setValue(data)
-      } else if (data.value !== undefined) {
-        this.setInput(data)
-      }
+    if (isObject(datum)) {
+      this.setError(datum)
+    } else if (datum !== undefined) {
+      this.setValue(data)
+    } else if (data.value !== undefined) {
+      this.setInput(data)
     }
 
     this.dispatchEvents(this.createEventData())
@@ -240,23 +227,19 @@ export class InputElement extends NodeElement {
   }
 
   protected setInput (data: Record<string, unknown>): void {
-    if (this.inputElement instanceof HTMLInputElement) {
-      const { value } = data
+    const { value } = data
 
-      if (isPrimitive(value)) {
-        this.inputElement.value = value.toString()
-      }
+    if (isPrimitive(value)) {
+      this.inputElement.value = value.toString()
     }
   }
 
   protected setValue (data: Record<string, unknown>): void {
-    if (this.inputElement instanceof HTMLInputElement) {
-      const value = data[this.inputElement.name]
+    const value = data[this.inputElement.name]
 
-      if (isPrimitive(value)) {
-        this.inputElement.value = value.toString()
-        this.toggleClear(this.inputElement.value === '')
-      }
+    if (isPrimitive(value)) {
+      this.inputElement.value = value.toString()
+      this.toggleClear(this.inputElement.value === '')
     }
   }
 }

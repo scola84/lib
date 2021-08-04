@@ -20,13 +20,20 @@ export class MediaElement extends NodeElement {
   @property()
   public name?: string
 
-  public mediaElement?: HTMLElement | null
+  public mediaElement: HTMLAudioElement | HTMLPictureElement | HTMLVideoElement
 
   protected updaters = MediaElement.updaters
 
   public constructor () {
     super()
-    this.mediaElement = this.querySelector<HTMLElement>('audio, picture, video')
+
+    const mediaElement = this.querySelector<HTMLAudioElement | HTMLPictureElement | HTMLVideoElement>('audio, picture, video')
+
+    if (mediaElement === null) {
+      throw new Error('Media element not found')
+    }
+
+    this.mediaElement = mediaElement
   }
 
   public update (properties: PropertyValues): void {
@@ -53,13 +60,7 @@ export class MediaElement extends NodeElement {
   }
 
   protected addSource (source: Record<string, unknown>): void {
-    if (this.mediaElement instanceof HTMLPictureElement) {
-      if (typeof source.srcset === 'string') {
-        this.mediaElement.appendChild(this.createSourceElement(source))
-      }
-
-      this.mediaElement.appendChild(this.createImageElement(source))
-    } else if (
+    if (
       this.mediaElement instanceof HTMLAudioElement ||
       this.mediaElement instanceof HTMLVideoElement
     ) {
@@ -68,19 +69,23 @@ export class MediaElement extends NodeElement {
       }
 
       this.mediaElement.appendChild(this.createSourceElement(source))
+    } else if (this.mediaElement instanceof HTMLPictureElement) {
+      if (typeof source.srcset === 'string') {
+        this.mediaElement.appendChild(this.createSourceElement(source))
+      }
+
+      this.mediaElement.appendChild(this.createImageElement(source))
     }
   }
 
   protected addSources (sources: unknown[]): void {
-    if (this.mediaElement instanceof HTMLElement) {
-      this.mediaElement.innerHTML = ''
+    this.mediaElement.innerHTML = ''
 
-      sources.forEach((source) => {
-        if (isObject(source)) {
-          this.addSource(source)
-        }
-      })
-    }
+    sources.forEach((source) => {
+      if (isObject(source)) {
+        this.addSource(source)
+      }
+    })
   }
 
   protected createImageElement (source: Record<string, unknown>): HTMLImageElement {

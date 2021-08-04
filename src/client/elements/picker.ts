@@ -25,13 +25,13 @@ export class PickerElement extends InputElement {
     styles
   ]
 
-  protected dialogElement?: DialogElement | null
+  protected dialogElement: DialogElement | null
 
-  protected previewElement?: NodeElement | null
+  protected previewElement: NodeElement | null
 
   protected updaters = PickerElement.updaters
 
-  protected valueElement?: FormatElement | null
+  protected valueElement: FormatElement | null
 
   public constructor () {
     super()
@@ -43,10 +43,7 @@ export class PickerElement extends InputElement {
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.isSuccessful(this.inputElement)
-    ) {
+    if (this.isSuccessful(this.inputElement)) {
       const {
         files,
         name
@@ -68,7 +65,7 @@ export class PickerElement extends InputElement {
   }
 
   public clearValue (): void {
-    switch (this.inputElement?.type) {
+    switch (this.inputElement.type) {
       case 'color':
         this.clearValueColor()
         break
@@ -145,7 +142,7 @@ export class PickerElement extends InputElement {
   }
 
   protected handleClick (event: MouseEvent): void {
-    switch (this.inputElement?.type) {
+    switch (this.inputElement.type) {
       case 'color':
         this.handleClickColor()
         break
@@ -172,15 +169,15 @@ export class PickerElement extends InputElement {
   }
 
   protected handleClickColor (): void {
-    this.inputElement?.click()
+    this.inputElement.click()
   }
 
   protected handleClickDate (): void {
-    this.inputElement?.click()
+    this.inputElement.click()
   }
 
   protected handleClickFile (): void {
-    this.inputElement?.click()
+    this.inputElement.click()
   }
 
   protected handleClickRadio (): void {
@@ -192,11 +189,11 @@ export class PickerElement extends InputElement {
   }
 
   protected handleClickTime (): void {
-    this.inputElement?.click()
+    this.inputElement.click()
   }
 
   protected handleInput (): void {
-    switch (this.inputElement?.type) {
+    switch (this.inputElement.type) {
       case 'text':
         this.handleInputText()
         break
@@ -216,7 +213,7 @@ export class PickerElement extends InputElement {
   protected handlePick (event: CustomEvent<Record<string, unknown> | null>): void {
     this.hideDialog()
 
-    switch (this.inputElement?.type) {
+    switch (this.inputElement.type) {
       case 'radio':
         this.handlePickRadio(event)
         break
@@ -231,43 +228,36 @@ export class PickerElement extends InputElement {
       this.saveState()
     }
 
-    if (this.inputElement instanceof HTMLInputElement) {
-      this.toggleClear(this.inputElement.value === '')
-    }
-
+    this.toggleClear(this.inputElement.value === '')
     this.dispatchEvents(this.createEventData(), event)
   }
 
   protected handlePickRadio (event: CustomEvent<Record<string, unknown> | null>): void {
-    if (this.inputElement instanceof HTMLInputElement) {
-      const data: Record<string, unknown> = {}
+    const data: Record<string, unknown> = {}
 
-      if (isObject(event.detail?.data)) {
-        data[this.inputElement.name] = event.detail?.data[this.inputElement.name]
+    if (isObject(event.detail?.data)) {
+      data[this.inputElement.name] = event.detail?.data[this.inputElement.name]
 
-        if (event.detail?.origin instanceof InputElement) {
-          data[`${this.inputElement.name}_text`] = event.detail.origin.inputElement?.nextElementSibling?.textContent
-        }
+      if (event.detail?.origin instanceof InputElement) {
+        data[`${this.inputElement.name}_text`] = event.detail.origin.inputElement.nextElementSibling?.textContent
       }
-
-      super.setValue(data)
-      this.setValuePreview()
-      this.setValueText(data)
     }
+
+    super.setValue(data)
+    this.setValuePreview()
+    this.setValueText(data)
   }
 
   protected handlePickText (event: CustomEvent<Record<string, unknown> | null>): void {
-    if (this.inputElement instanceof HTMLInputElement) {
-      const data: Record<string, unknown> = {}
+    const data: Record<string, unknown> = {}
 
-      if (isObject(event.detail?.data)) {
-        data[this.inputElement.name] = event.detail?.data[this.inputElement.name]
-      }
-
-      super.setValue(data)
-      this.setValuePreview()
-      this.setValueText(data)
+    if (isObject(event.detail?.data)) {
+      data[this.inputElement.name] = event.detail?.data[this.inputElement.name]
     }
+
+    super.setValue(data)
+    this.setValuePreview()
+    this.setValueText(data)
   }
 
   protected hideDialog (): void {
@@ -277,7 +267,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setCursor (): void {
-    switch (this.inputElement?.type) {
+    switch (this.inputElement.type) {
       case 'color':
       case 'date':
       case 'file':
@@ -292,7 +282,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setValuePreview (): void {
-    switch (this.inputElement?.type) {
+    switch (this.inputElement.type) {
       case 'color':
         this.setValuePreviewColor()
         break
@@ -302,16 +292,13 @@ export class PickerElement extends InputElement {
   }
 
   protected setValuePreviewColor (): void {
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.previewElement instanceof NodeElement
-    ) {
+    if (this.previewElement instanceof NodeElement) {
       this.previewElement.style.setProperty('background', this.inputElement.value)
     }
   }
 
   protected setValueText (data?: Record<string, unknown>): void {
-    switch (this.inputElement?.type) {
+    switch (this.inputElement.type) {
       case 'color':
         this.setValueTextColor()
         break
@@ -336,10 +323,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setValueTextColor (): void {
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.valueElement instanceof FormatElement
-    ) {
+    if (this.valueElement instanceof FormatElement) {
       const { value } = this.inputElement
       const hex = value
 
@@ -371,10 +355,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setValueTextDate (): void {
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.valueElement instanceof FormatElement
-    ) {
+    if (this.valueElement instanceof FormatElement) {
       const { value } = this.inputElement
 
       let count = 0
@@ -393,10 +374,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setValueTextFile (): void {
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.valueElement instanceof FormatElement
-    ) {
+    if (this.valueElement instanceof FormatElement) {
       const files = Array.from(this.inputElement.files ?? [])
 
       this.valueElement.data = {
@@ -410,10 +388,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setValueTextRadio (data?: Record<string, unknown>): void {
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.valueElement instanceof FormatElement
-    ) {
+    if (this.valueElement instanceof FormatElement) {
       let count = 0
 
       if (data?.[`${this.inputElement.name}_text`] !== undefined) {
@@ -428,20 +403,15 @@ export class PickerElement extends InputElement {
   }
 
   protected setValueTextText (data?: Record<string, unknown>): void {
-    if (this.inputElement instanceof HTMLInputElement) {
-      const value = data?.[`${this.inputElement.name}_text`]
+    const value = data?.[`${this.inputElement.name}_text`]
 
-      if (isPrimitive(value)) {
-        this.inputElement.value = value.toString()
-      }
+    if (isPrimitive(value)) {
+      this.inputElement.value = value.toString()
     }
   }
 
   protected setValueTextTime (): void {
-    if (
-      this.inputElement instanceof HTMLInputElement &&
-      this.valueElement instanceof FormatElement
-    ) {
+    if (this.valueElement instanceof FormatElement) {
       const { value } = this.inputElement
 
       let count = 0

@@ -42,7 +42,7 @@ export class LogElement extends NodeElement {
 
   protected handleHideBound: (event: CustomEvent) => void
 
-  protected templateElement?: NodeElement | null
+  protected templateElement: NodeElement | null
 
   protected timeoutId?: number
 

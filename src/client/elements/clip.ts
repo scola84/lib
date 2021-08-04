@@ -61,7 +61,7 @@ export class ClipElement extends NodeElement {
 
   protected handleContentOrInnerBound: (event: CustomEvent) => void
 
-  protected handleElement?: HTMLElement | null
+  protected handleElement: HTMLElement | null
 
   protected handleInnerBound: (event: CustomEvent) => void
 

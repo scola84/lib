@@ -202,12 +202,12 @@ export class ViewElement extends ClipElement {
 
     let parameters = Object
       .entries(this.view.parameters ?? {})
-      .map(([key, value]) => {
+      .map(([name, value]) => {
         if (isPrimitive(value)) {
-          return `${key}=${value.toString()}`
+          return `${name}=${value.toString()}`
         }
 
-        return key
+        return name
       })
       .join('&')
 
@@ -222,7 +222,7 @@ export class ViewElement extends ClipElement {
     const element = document.createElement(view.name)
 
     if (delta < 0) {
-      this.insertBefore(element, this.querySelector<HTMLElement>(':not([slot])'))
+      this.insertBefore(element, this.querySelector<HTMLElement>(':scope > :not([slot])'))
       this.setScroll(element)
     } else {
       this.appendChild(element)
@@ -247,9 +247,9 @@ export class ViewElement extends ClipElement {
           .replaceParameters(options.parameters, options)
           .split('&')
           .reduce((object, parameter) => {
-            const [key, value] = parameter.split('=')
+            const [name, value] = parameter.split('=')
             return {
-              [key]: cast(value),
+              [name]: cast(value),
               ...object
             }
           }, {})
@@ -263,8 +263,6 @@ export class ViewElement extends ClipElement {
 
   protected handleAppend (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
-
       const view = this.createView(event.detail?.data)
 
       if (this.isSame(this.view, view)) {
@@ -293,8 +291,6 @@ export class ViewElement extends ClipElement {
 
   protected handleBack (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
-
       if (
         ViewElement.mode === 'push' &&
         this.save === true
@@ -309,8 +305,6 @@ export class ViewElement extends ClipElement {
 
   protected handleForward (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
-
       if (
         ViewElement.mode === 'push' &&
         this.save === true
@@ -325,8 +319,6 @@ export class ViewElement extends ClipElement {
 
   protected handleHome (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
-
       if (
         ViewElement.mode === 'push' &&
         this.save === true
@@ -423,27 +415,26 @@ export class ViewElement extends ClipElement {
     }
   }
 
-  protected saveState (location = true, storage = true): void {
-    const pointers: Record<string, number> = {}
+  protected saveState (location = true): void {
+    if (this.save === true) {
+      const pointers: Record<string, number> = {}
 
-    const path = viewElements.reduce((result, viewElement) => {
-      if (viewElement.save === true) {
-        if (storage) {
+      const path = viewElements.reduce((result, viewElement) => {
+        if (viewElement.save === true) {
           viewElement.storage.setItem(`view-${viewElement.id}`, JSON.stringify(viewElement.toObject()))
+          pointers[viewElement.id] = viewElement.pointer
+          return `${result}${viewElement.toString()}`
         }
 
-        pointers[viewElement.id] = viewElement.pointer
-        return `${result}${viewElement.toString()}`
-      }
+        return result
+      }, '')
 
-      return result
-    }, '')
-
-    if (location) {
-      if (ViewElement.mode === 'push') {
-        window.history.pushState(pointers, '', path)
-      } else {
-        window.history.replaceState(pointers, '', path)
+      if (location) {
+        if (ViewElement.mode === 'push') {
+          window.history.pushState(pointers, '', path)
+        } else {
+          window.history.replaceState(pointers, '', path)
+        }
       }
     }
   }

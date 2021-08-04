@@ -242,9 +242,9 @@ export class RequestElement extends NodeElement {
 
     Object
       .entries(this.parameters)
-      .forEach(([key, value]) => {
+      .forEach(([name, value]) => {
         if (isPrimitive(value)) {
-          url.searchParams.append(key, value.toString())
+          url.searchParams.append(name, value.toString())
         }
       })
 
@@ -293,7 +293,6 @@ export class RequestElement extends NodeElement {
 
   protected handleAbort (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
       this.abort()
     }
   }
@@ -343,8 +342,6 @@ export class RequestElement extends NodeElement {
 
   protected handleStart (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
-
       if (isObject(event.detail?.data)) {
         this.start(event.detail?.data)
       } else {
@@ -355,8 +352,6 @@ export class RequestElement extends NodeElement {
 
   protected handleToggle (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
-
       if (isObject(event.detail?.data)) {
         this.toggle(event.detail?.data)
       } else {

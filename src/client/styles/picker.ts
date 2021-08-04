@@ -2,8 +2,10 @@ import { css } from 'lit'
 
 export default css`
   input:not([type="text"]) {
-    height: 0;
+    appearance: none;
+    margin: 0;
     opacity: 0;
+    padding: 0;
     position: absolute;
     width: 0;
     z-index: -1;
@@ -25,5 +27,5 @@ export default css`
     padding: 0;
     position: absolute;
     width: 100%;
-}
+  }
 `

@@ -66,17 +66,17 @@ export default css`
     -webkit-appearance: none;
   }
 
-  slot[name="after"]::slotted([is="off"]),
-  slot[name="before"]::slotted([is="off"]),
-  slot[name="after"]::slotted([is="on"]),
-  slot[name="before"]::slotted([is="on"]) {
+  slot[name="after"]::slotted([as="off"]),
+  slot[name="before"]::slotted([as="off"]),
+  slot[name="after"]::slotted([as="on"]),
+  slot[name="before"]::slotted([as="on"]) {
     display: none;
   }
 
-  :host(:not([checked])) slot[name="after"]::slotted([is="off"]),
-  :host(:not([checked])) slot[name="before"]::slotted([is="off"]),
-  :host([checked]) slot[name="after"]::slotted([is="on"]),
-  :host([checked]) slot[name="before"]::slotted([is="on"]) {
+  :host(:not([checked])) slot[name="after"]::slotted([as="off"]),
+  :host(:not([checked])) slot[name="before"]::slotted([as="off"]),
+  :host([checked]) slot[name="after"]::slotted([as="on"]),
+  :host([checked]) slot[name="before"]::slotted([as="on"]) {
     display: inline-flex;
   }
 `

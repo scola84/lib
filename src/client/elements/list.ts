@@ -1,15 +1,18 @@
 import type { PropertyValues, TemplateResult } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
+import { html, render } from 'lit'
 import { isArray, isObject, isPrimitive } from '../../common'
 import { NodeElement } from './node'
 import { RequestElement } from './request'
-import { html } from 'lit'
 import { repeat } from 'lit/directives/repeat.js'
 import updaters from '../updaters/list'
 
 declare global {
   interface HTMLElementEventMap {
+    'scola-list-add': CustomEvent
+    'scola-list-delete': CustomEvent
     'scola-list-start': CustomEvent
+    'scola-list-toggle': CustomEvent
   }
 
   interface HTMLElementTagNameMap {
@@ -17,7 +20,10 @@ declare global {
   }
 
   interface WindowEventMap {
+    'scola-list-add': CustomEvent
+    'scola-list-delete': CustomEvent
     'scola-list-start': CustomEvent
+    'scola-list-toggle': CustomEvent
   }
 }
 
@@ -40,6 +46,9 @@ export class ListElement extends NodeElement {
   public items: unknown[] = []
 
   @property()
+  public key = 'id'
+
+  @property()
   public mode?: 'cursor' | 'offset'
 
   @property({
@@ -58,9 +67,15 @@ export class ListElement extends NodeElement {
 
   protected emptyElement: NodeElement | null
 
+  protected handleAddBound: (event: CustomEvent) => void
+
+  protected handleDeleteBound: (event: CustomEvent) => void
+
   protected handleScrollBound: () => void
 
   protected handleStartBound: (event: CustomEvent) => void
+
+  protected handleToggleBound: (event: CustomEvent) => void
 
   protected keyFunction: (item: unknown, index: number) => unknown
 
@@ -76,8 +91,11 @@ export class ListElement extends NodeElement {
     super()
     this.emptyElement = this.querySelector<NodeElement>(':scope > [slot="empty"]')
     this.templateElement = this.querySelector<NodeElement>(':scope > [slot="template"]')
+    this.handleAddBound = this.handleAdd.bind(this)
+    this.handleDeleteBound = this.handleDelete.bind(this)
     this.handleScrollBound = this.handleScroll.bind(this)
     this.handleStartBound = this.handleStart.bind(this)
+    this.handleToggleBound = this.handleToggle.bind(this)
     this.keyFunction = this.getKey.bind(this)
 
     if (this.templateElement === null) {
@@ -87,15 +105,49 @@ export class ListElement extends NodeElement {
     }
   }
 
+  public addItem (item: Record<string, unknown>): boolean {
+    const index = this.items.findIndex((findItem) => {
+      return this.getKey(item) === this.getKey(findItem)
+    })
+
+    if (index === -1) {
+      this.items.push(item)
+      this.requestUpdate('items')
+      return true
+    }
+
+    return false
+  }
+
   public connectedCallback (): void {
     this.scrollParentElement?.addEventListener('scroll', this.handleScrollBound)
+    window.addEventListener('scola-list-add', this.handleAddBound)
+    window.addEventListener('scola-list-delete', this.handleDeleteBound)
     window.addEventListener('scola-list-start', this.handleStartBound)
+    window.addEventListener('scola-list-toggle', this.handleToggleBound)
     super.connectedCallback()
+  }
+
+  public deleteItem (item: Record<string, unknown>): boolean {
+    const index = this.items.findIndex((findItem) => {
+      return this.getKey(item) === this.getKey(findItem)
+    })
+
+    if (index > -1) {
+      this.items.splice(index, 1)
+      this.requestUpdate('items')
+      return true
+    }
+
+    return false
   }
 
   public disconnectedCallback (): void {
     this.scrollParentElement?.removeEventListener('scroll', this.handleScrollBound)
+    window.removeEventListener('scola-list-add', this.handleAddBound)
+    window.removeEventListener('scola-list-delete', this.handleDeleteBound)
     window.removeEventListener('scola-list-start', this.handleStartBound)
+    window.removeEventListener('scola-list-toggle', this.handleToggleBound)
     super.disconnectedCallback()
   }
 
@@ -109,24 +161,27 @@ export class ListElement extends NodeElement {
     }
 
     this.scrollParentElement?.addEventListener('scroll', this.handleScrollBound)
+    this.addEventListener('scola-list-add', this.handleAddBound)
+    this.addEventListener('scola-list-delete', this.handleDeleteBound)
     this.addEventListener('scola-list-start', this.handleStartBound)
+    this.addEventListener('scola-list-toggle', this.handleToggleBound)
+
+    if (this.mode === undefined) {
+      this.handleEmpty()
+    }
+
     super.firstUpdated(properties)
   }
 
-  public render (): TemplateResult {
-    return html`
-      <slot name="header"></slot>
-      <slot name="body">
-        <slot name="before"></slot>
-        <slot name="prefix"></slot>
-        <slot>
-          ${repeat(this.items, this.keyFunction, this.templateFunction)}
-        </slot>
-        <slot name="suffix"></slot>
-        <slot name="after"></slot>
-      </slot>
-      <slot name="footer"></slot>
-    `
+  public getKey (item: unknown, index?: number): unknown {
+    if (
+      isObject(item) &&
+      isPrimitive(item[this.key])
+    ) {
+      return item[this.key]
+    }
+
+    return index
   }
 
   public start (): void {
@@ -134,20 +189,33 @@ export class ListElement extends NodeElement {
     this.data = undefined
   }
 
+  public toggleItem (item: Record<string, unknown>): void {
+    const added = this.addItem(item)
+
+    if (!added) {
+      this.deleteItem(item)
+    }
+  }
+
   public update (properties: PropertyValues): void {
-    if (properties.has('data')) {
+    if (properties.has('count')) {
+      this.items = []
+      this.dispatchRequestEvent()
+    } else if (properties.has('data')) {
       if (isArray(this.data)) {
-        this.items.push(...(this.data))
+        this.items.push(...this.data)
         this.handleEmpty()
       } else if (this.data === undefined) {
         this.items = []
         this.dispatchRequestEvent()
       }
-    } else if (properties.has('count')) {
-      this.items = []
-      this.dispatchRequestEvent()
+    } else if (properties.has('items')) {
+      if (this.mode === undefined) {
+        this.handleEmpty()
+      }
     }
 
+    render(repeat(this.items, this.keyFunction, this.templateFunction), this)
     super.update(properties)
   }
 
@@ -205,15 +273,24 @@ export class ListElement extends NodeElement {
     }))
   }
 
-  protected getKey (item: unknown, index: number): string {
-    if (
-      isObject(item) &&
-      isPrimitive(item.id)
-    ) {
-      return item.id.toString()
-    }
+  protected handleAdd (event: CustomEvent<Record<string, unknown> | null>): void {
+    if (this.isTarget(event)) {
+      const data = event.detail?.data
 
-    return index.toString()
+      if (isObject(data)) {
+        this.addItem(data)
+      }
+    }
+  }
+
+  protected handleDelete (event: CustomEvent<Record<string, unknown> | null>): void {
+    if (this.isTarget(event)) {
+      const data = event.detail?.data
+
+      if (isObject(data)) {
+        this.deleteItem(data)
+      }
+    }
   }
 
   protected handleEmpty (): void {
@@ -240,8 +317,17 @@ export class ListElement extends NodeElement {
 
   protected handleStart (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
       this.start()
+    }
+  }
+
+  protected handleToggle (event: CustomEvent<Record<string, unknown> | null>): void {
+    if (this.isTarget(event)) {
+      const data = event.detail?.data
+
+      if (isObject(data)) {
+        this.toggleItem(data)
+      }
     }
   }
 

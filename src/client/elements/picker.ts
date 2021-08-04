@@ -1,8 +1,9 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
-import { isObject, isPrimitive } from '../../common'
+import { isArray, isObject, isPrimitive } from '../../common'
 import { DialogElement } from './dialog'
 import { FormatElement } from './format'
 import { InputElement } from './input'
+import type { ListElement } from './list'
 import { NodeElement } from './node'
 import type { SelectElement } from './select'
 import { customElement } from 'lit/decorators.js'
@@ -27,6 +28,8 @@ export class PickerElement extends InputElement {
 
   protected dialogElement: DialogElement | null
 
+  protected listElement: ListElement | null
+
   protected previewElement: NodeElement | null
 
   protected updaters = PickerElement.updaters
@@ -35,15 +38,16 @@ export class PickerElement extends InputElement {
 
   public constructor () {
     super()
-    this.dialogElement = this.querySelector<DialogElement>('scola-dialog')
-    this.previewElement = this.querySelector<NodeElement>('[is="preview"]')
-    this.valueElement = this.querySelector<FormatElement>('[is="value"]')
+    this.dialogElement = this.querySelector<DialogElement>(':scope > scola-dialog')
+    this.listElement = this.querySelector<ListElement>(':scope > scola-list')
+    this.previewElement = this.querySelector<NodeElement>('[as="preview"]')
+    this.valueElement = this.querySelector<FormatElement>('[as="value"]')
   }
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (this.isSuccessful(this.inputElement)) {
+    if (this.isSuccessful) {
       const {
         files,
         name
@@ -66,6 +70,9 @@ export class PickerElement extends InputElement {
 
   public clearValue (): void {
     switch (this.inputElement.type) {
+      case 'checkbox':
+        this.clearValueCheckbox()
+        break
       case 'color':
         this.clearValueColor()
         break
@@ -99,10 +106,14 @@ export class PickerElement extends InputElement {
     super.firstUpdated(properties)
   }
 
-  public setValue (data: Record<string, unknown>): void {
-    super.setValue(data)
-    this.setValuePreview()
-    this.setValueText(data)
+  protected clearValueCheckbox (): void {
+    Array
+      .from(this.dialogElement?.querySelectorAll<SelectElement>('scola-select') ?? [])
+      .forEach((selectElement) => {
+        selectElement.toggleChecked(false).catch(() => {})
+      })
+
+    super.clearValue()
   }
 
   protected clearValueColor (): void {
@@ -143,6 +154,9 @@ export class PickerElement extends InputElement {
 
   protected handleClick (event: MouseEvent): void {
     switch (this.inputElement.type) {
+      case 'checkbox':
+        this.handleClickCheckbox()
+        break
       case 'color':
         this.handleClickColor()
         break
@@ -166,6 +180,10 @@ export class PickerElement extends InputElement {
     }
 
     super.handleClick(event)
+  }
+
+  protected handleClickCheckbox (): void {
+    this.showDialog()
   }
 
   protected handleClickColor (): void {
@@ -213,51 +231,20 @@ export class PickerElement extends InputElement {
   protected handlePick (event: CustomEvent<Record<string, unknown> | null>): void {
     this.hideDialog()
 
-    switch (this.inputElement.type) {
-      case 'radio':
-        this.handlePickRadio(event)
-        break
-      case 'text':
-        this.handlePickText(event)
-        break
-      default:
-        break
+    const data = event.detail?.data
+
+    if (isObject(data)) {
+      super.setInput(data)
+      this.setValuePreview()
+      this.setValueText(data)
     }
 
     if (this.save === true) {
       this.saveState()
     }
 
-    this.toggleClear(this.inputElement.value === '')
+    this.toggleClear(this.isEmpty)
     this.dispatchEvents(this.createEventData(), event)
-  }
-
-  protected handlePickRadio (event: CustomEvent<Record<string, unknown> | null>): void {
-    const data: Record<string, unknown> = {}
-
-    if (isObject(event.detail?.data)) {
-      data[this.inputElement.name] = event.detail?.data[this.inputElement.name]
-
-      if (event.detail?.origin instanceof InputElement) {
-        data[`${this.inputElement.name}_text`] = event.detail.origin.inputElement.nextElementSibling?.textContent
-      }
-    }
-
-    super.setValue(data)
-    this.setValuePreview()
-    this.setValueText(data)
-  }
-
-  protected handlePickText (event: CustomEvent<Record<string, unknown> | null>): void {
-    const data: Record<string, unknown> = {}
-
-    if (isObject(event.detail?.data)) {
-      data[this.inputElement.name] = event.detail?.data[this.inputElement.name]
-    }
-
-    super.setValue(data)
-    this.setValuePreview()
-    this.setValueText(data)
   }
 
   protected hideDialog (): void {
@@ -268,6 +255,7 @@ export class PickerElement extends InputElement {
 
   protected setCursor (): void {
     switch (this.inputElement.type) {
+      case 'checkbox':
       case 'color':
       case 'date':
       case 'file':
@@ -279,6 +267,56 @@ export class PickerElement extends InputElement {
         super.setCursor()
         break
     }
+  }
+
+  protected setData (data: Record<string, unknown>): void {
+    this.clearError()
+
+    const value = data[this.name]
+
+    if (isObject(value)) {
+      if (value.code !== undefined) {
+        this.setError(value)
+      } else if (value.value !== undefined) {
+        this.setInput(value)
+      }
+    } else if (isArray(value)) {
+      this.setList(value)
+    } else if (data.value !== undefined) {
+      this.setInput(data)
+    } else if (value !== undefined) {
+      this.setValue(value)
+    }
+  }
+
+  protected setInput (data: Record<string, unknown>): void {
+    super.setInput(data)
+    this.setValuePreview()
+    this.setValueText(data)
+  }
+
+  protected setList (data: unknown[]): void {
+    switch (this.inputElement.type) {
+      case 'checkbox':
+        this.setListCheckbox(data)
+        break
+      default:
+        break
+    }
+  }
+
+  protected setListCheckbox (data: unknown[]): void {
+    data.forEach((item) => {
+      if (isObject(item)) {
+        this.listElement?.addItem(item)
+      }
+    })
+  }
+
+  protected setValue (value: unknown): void {
+    super.setValue(value)
+    this.setValuePreview()
+    this.setValueText({})
   }
 
   protected setValuePreview (): void {
@@ -391,22 +429,22 @@ export class PickerElement extends InputElement {
     if (this.valueElement instanceof FormatElement) {
       let count = 0
 
-      if (data?.[`${this.inputElement.name}_text`] !== undefined) {
+      if (data?.label !== undefined) {
         count = 1
       }
 
       this.valueElement.data = {
         count,
-        text: data?.[`${this.inputElement.name}_text`]
+        label: data?.label
       }
     }
   }
 
   protected setValueTextText (data?: Record<string, unknown>): void {
-    const value = data?.[`${this.inputElement.name}_text`]
+    const value = data?.label
 
     if (isPrimitive(value)) {
-      this.inputElement.value = value.toString()
+      this.value = value.toString()
     }
   }
 

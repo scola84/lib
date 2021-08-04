@@ -95,7 +95,7 @@ export class FormElement extends NodeElement {
 
     window.requestAnimationFrame(() => {
       this
-        .querySelector('[is="error"]:not([hidden])')
+        .querySelector('[as="error"]:not([hidden])')
         ?.closest('scola-input')
         ?.scrollIntoView({
           behavior: 'smooth'
@@ -114,7 +114,6 @@ export class FormElement extends NodeElement {
 
   protected handleSubmit (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
       this.submit()
     }
   }

@@ -4,7 +4,6 @@ import type { NodeElement } from '../elements/node'
 import type { ProgressElement } from '../elements/progress'
 import type { PropertyValues } from 'lit'
 import type { RequestElement } from '../elements/request'
-import type { SourceElement } from '../elements/source'
 import type { ViewElement } from '../elements/view'
 
 export default {
@@ -118,11 +117,6 @@ export default {
   'scola-request': (observer: ButtonElement, observable: RequestElement, properties: PropertyValues): void => {
     if (properties.has('busy')) {
       observer.busy = observable.busy
-    }
-  },
-  'scola-source': (observer: ButtonElement, observable: SourceElement, properties: PropertyValues): void => {
-    if (properties.has('data')) {
-      observer.data = observable.data
     }
   },
   'scola-view-back': (observer: ButtonElement, observable: ViewElement, properties: PropertyValues): void => {

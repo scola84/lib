@@ -94,6 +94,46 @@ export default css`
     );
   }
 
+  :host([fill="aux-1"][fill-progress="sig-1"]) input::-webkit-slider-runnable-track {
+    background: linear-gradient(
+      to right,
+      var(--scola-slider-fill-progress-sig-1, #b22222),
+      var(--scola-slider-fill-progress-sig-1, #b22222) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ddd) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ddd)
+    );
+  }
+
+  :host([fill="aux-1"][fill-progress="sig-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
+    background: linear-gradient(
+      to left,
+      var(--scola-slider-fill-progress-sig-1, #b22222),
+      var(--scola-slider-fill-progress-sig-1, #b22222) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ddd) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ddd)
+    );
+  }
+
+  :host([fill="aux-1"][fill-progress="sig-2"]) input::-webkit-slider-runnable-track {
+    background: linear-gradient(
+      to right,
+      var(--scola-slider-fill-progress-sig-1, #008000),
+      var(--scola-slider-fill-progress-sig-1, #008000) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ddd) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ddd)
+    );
+  }
+
+  :host([fill="aux-1"][fill-progress="sig-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
+    background: linear-gradient(
+      to left,
+      var(--scola-slider-fill-progress-sig-1, #008000),
+      var(--scola-slider-fill-progress-sig-1, #008000) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ddd) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ddd)
+    );
+  }
+
   :host([fill="aux-2"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
@@ -109,6 +149,46 @@ export default css`
       to left,
       var(--scola-slider-fill-progress-sig-1, #000),
       var(--scola-slider-fill-progress-sig-1, #000) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ccc) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ccc)
+    );
+  }
+
+  :host([fill="aux-2"][fill-progress="sig-1"]) input::-webkit-slider-runnable-track {
+    background: linear-gradient(
+      to right,
+      var(--scola-slider-fill-progress-sig-1, #b22222),
+      var(--scola-slider-fill-progress-sig-1, #b22222) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ccc) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ccc)
+    );
+  }
+
+  :host([fill="aux-2"][fill-progress="sig-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
+    background: linear-gradient(
+      to left,
+      var(--scola-slider-fill-progress-sig-1, #b22222),
+      var(--scola-slider-fill-progress-sig-1, #b22222) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ccc) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ccc)
+    );
+  }
+
+  :host([fill="aux-2"][fill-progress="sig-2"]) input::-webkit-slider-runnable-track {
+    background: linear-gradient(
+      to right,
+      var(--scola-slider-fill-progress-sig-1, #008000),
+      var(--scola-slider-fill-progress-sig-1, #008000) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ccc) var(--sx),
+      var(--scola-slider-fill-track-aux-1, #ccc)
+    );
+  }
+
+  :host([fill="aux-2"][fill-progress="sig-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
+    background: linear-gradient(
+      to left,
+      var(--scola-slider-fill-progress-sig-1, #008000),
+      var(--scola-slider-fill-progress-sig-1, #008000) var(--sx),
       var(--scola-slider-fill-track-aux-1, #ccc) var(--sx),
       var(--scola-slider-fill-track-aux-1, #ccc)
     );
@@ -134,47 +214,7 @@ export default css`
     );
   }
 
-  :host([fill-progress="sig-1"][fill="aux-1"]) input::-webkit-slider-runnable-track {
-    background: linear-gradient(
-      to right,
-      var(--scola-slider-fill-progress-sig-1, #b22222),
-      var(--scola-slider-fill-progress-sig-1, #b22222) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ddd) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ddd)
-    );
-  }
-
-  :host([fill-progress="sig-1"][fill="aux-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
-    background: linear-gradient(
-      to left,
-      var(--scola-slider-fill-progress-sig-1, #b22222),
-      var(--scola-slider-fill-progress-sig-1, #b22222) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ddd) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ddd)
-    );
-  }
-
-  :host([fill-progress="sig-1"][fill="aux-2"]) input::-webkit-slider-runnable-track {
-    background: linear-gradient(
-      to right,
-      var(--scola-slider-fill-progress-sig-1, #b22222),
-      var(--scola-slider-fill-progress-sig-1, #b22222) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ccc) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ccc)
-    );
-  }
-
-  :host([fill-progress="sig-1"][fill="aux-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
-    background: linear-gradient(
-      to left,
-      var(--scola-slider-fill-progress-sig-1, #b22222),
-      var(--scola-slider-fill-progress-sig-1, #b22222) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ccc) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ccc)
-    );
-  }
-
-  :host([fill-progress="sig-1"][fill="aux-3"]) input::-webkit-slider-runnable-track {
+  :host([fill="aux-3"][fill-progress="sig-1"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--scola-slider-fill-progress-sig-1, #b22222),
@@ -184,7 +224,7 @@ export default css`
     );
   }
 
-  :host([fill-progress="sig-1"][fill="aux-3"][dir="rtl"]) input::-webkit-slider-runnable-track {
+  :host([fill="aux-3"][fill-progress="sig-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to left,
       var(--scola-slider-fill-progress-sig-1, #b22222),
@@ -194,47 +234,7 @@ export default css`
     );
   }
 
-  :host([fill-progress="sig-2"][fill="aux-1"]) input::-webkit-slider-runnable-track {
-    background: linear-gradient(
-      to right,
-      var(--scola-slider-fill-progress-sig-1, #008000),
-      var(--scola-slider-fill-progress-sig-1, #008000) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ddd) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ddd)
-    );
-  }
-
-  :host([fill-progress="sig-2"][fill="aux-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
-    background: linear-gradient(
-      to left,
-      var(--scola-slider-fill-progress-sig-1, #008000),
-      var(--scola-slider-fill-progress-sig-1, #008000) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ddd) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ddd)
-    );
-  }
-
-  :host([fill-progress="sig-2"][fill="aux-2"]) input::-webkit-slider-runnable-track {
-    background: linear-gradient(
-      to right,
-      var(--scola-slider-fill-progress-sig-1, #008000),
-      var(--scola-slider-fill-progress-sig-1, #008000) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ccc) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ccc)
-    );
-  }
-
-  :host([fill-progress="sig-2"][fill="aux-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
-    background: linear-gradient(
-      to left,
-      var(--scola-slider-fill-progress-sig-1, #008000),
-      var(--scola-slider-fill-progress-sig-1, #008000) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ccc) var(--sx),
-      var(--scola-slider-fill-track-aux-1, #ccc)
-    );
-  }
-
-  :host([fill-progress="sig-2"][fill="aux-3"]) input::-webkit-slider-runnable-track {
+  :host([fill="aux-3"][fill-progress="sig-2"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--scola-slider-fill-progress-sig-1, #008000),
@@ -244,7 +244,7 @@ export default css`
     );
   }
 
-  :host([fill-progress="sig-2"][fill="aux-3"][dir="rtl"]) input::-webkit-slider-runnable-track {
+  :host([fill="aux-3"][fill-progress="sig-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to left,
       var(--scola-slider-fill-progress-sig-1, #008000),

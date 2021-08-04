@@ -1,7 +1,7 @@
 import { css } from 'lit'
 
 export default css`
-  :host([rtl][dir="rtl"]) {
+  :host([dir="rtl"][rtl]) {
     transform: scaleX(-1);
   }
 

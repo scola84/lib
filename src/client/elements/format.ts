@@ -31,13 +31,20 @@ export class FormatElement extends NodeElement {
   })
   public showTitle?: boolean
 
+  public get shadowContent (): string {
+    return this.defaultSlotElement.textContent ?? ''
+  }
+
   protected updaters = FormatElement.updaters
 
   public render (): TemplateResult {
     let data: Record<string, unknown> = this.dataset
 
     if (isObject(this.data)) {
-      ({ data } = this)
+      data = {
+        ...data,
+        ...this.data
+      }
     }
 
     let language: string | undefined = this.lang

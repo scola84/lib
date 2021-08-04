@@ -1,6 +1,6 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
+import { cast, isObject, isPrimitive } from '../../common'
 import { customElement, property } from 'lit/decorators.js'
-import { isObject, isPrimitive } from '../../common'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
 import styles from '../styles/input'
@@ -32,11 +32,42 @@ export class InputElement extends NodeElement {
   public save?: boolean
 
   @property({
+    type: Boolean
+  })
+  public skip?: boolean
+
+  @property({
     attribute: false
   })
   public storage = InputElement.storage
 
   public inputElement: HTMLInputElement
+
+  public get isEmpty (): boolean {
+    return this.inputElement.value === ''
+  }
+
+  public get isSuccessful (): boolean {
+    return !(
+      this.inputElement.disabled ||
+      this.isEmpty ||
+      this.name === '' ||
+      this.skip === true ||
+      this.slot === 'template'
+    )
+  }
+
+  public get name (): string {
+    return this.inputElement.name
+  }
+
+  public get value (): boolean | number | string {
+    return cast(this.inputElement.value)
+  }
+
+  public set value (value: boolean | number | string) {
+    this.inputElement.value = value.toString()
+  }
 
   protected clearElement: NodeElement | null
 
@@ -53,16 +84,16 @@ export class InputElement extends NodeElement {
       throw new Error('Input element not found')
     }
 
-    this.clearElement = this.querySelector<NodeElement>('[is="clear"]')
-    this.errorElement = this.querySelector<FormatElement>('[is="error"]')
+    this.clearElement = this.querySelector<NodeElement>('[as="clear"]')
+    this.errorElement = this.querySelector<FormatElement>('[as="error"]')
     this.inputElement = inputElement
   }
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (this.isSuccessful(this.inputElement)) {
-      data.append(this.inputElement.name, this.inputElement.value)
+    if (this.isSuccessful) {
+      data.append(this.name, this.inputElement.value)
     }
   }
 
@@ -73,7 +104,7 @@ export class InputElement extends NodeElement {
   }
 
   public clearValue (value = ''): void {
-    this.inputElement.value = value
+    this.value = value
     this.toggleClear(true)
   }
 
@@ -128,7 +159,8 @@ export class InputElement extends NodeElement {
 
   protected createEventData (): Record<string, unknown> {
     return {
-      [this.inputElement.name]: this.inputElement.value
+      name: this.name,
+      value: this.value
     }
   }
 
@@ -151,24 +183,16 @@ export class InputElement extends NodeElement {
       this.saveState()
     }
 
-    this.toggleClear(this.inputElement.value === '')
+    this.toggleClear(this.isEmpty)
     this.dispatchEvents(this.createEventData())
   }
 
-  protected isSuccessful (inputElement: HTMLInputElement): boolean {
-    return !(
-      inputElement.name === '' ||
-      inputElement.value === '' ||
-      inputElement.disabled
-    )
-  }
-
   protected loadState (): void {
-    this.inputElement.value = this.storage.getItem(`input-${this.id}`) ?? ''
+    this.value = this.storage.getItem(`input-${this.id}`) ?? ''
   }
 
   protected saveState (): void {
-    if (this.inputElement.value === '') {
+    if (this.isEmpty) {
       this.storage.removeItem(`input-${this.id}`)
     } else {
       this.storage.setItem(`input-${this.id}`, this.inputElement.value)
@@ -206,17 +230,19 @@ export class InputElement extends NodeElement {
   protected setData (data: Record<string, unknown>): void {
     this.clearError()
 
-    const datum = data[this.inputElement.name]
+    const value = data[this.name]
 
-    if (isObject(datum)) {
-      this.setError(datum)
-    } else if (datum !== undefined) {
-      this.setValue(data)
+    if (isObject(value)) {
+      if (value.code !== undefined) {
+        this.setError(value)
+      } else if (value.value !== undefined) {
+        this.setInput(value)
+      }
     } else if (data.value !== undefined) {
       this.setInput(data)
+    } else if (value !== undefined) {
+      this.setValue(value)
     }
-
-    this.dispatchEvents(this.createEventData())
   }
 
   protected setError (data: Record<string, unknown>): void {
@@ -227,19 +253,16 @@ export class InputElement extends NodeElement {
   }
 
   protected setInput (data: Record<string, unknown>): void {
-    const { value } = data
-
-    if (isPrimitive(value)) {
-      this.inputElement.value = value.toString()
+    if (isPrimitive(data.value)) {
+      this.value = data.value.toString()
+      this.toggleClear(this.isEmpty)
     }
   }
 
-  protected setValue (data: Record<string, unknown>): void {
-    const value = data[this.inputElement.name]
-
+  protected setValue (value: unknown): void {
     if (isPrimitive(value)) {
-      this.inputElement.value = value.toString()
-      this.toggleClear(this.inputElement.value === '')
+      this.value = value.toString()
+      this.toggleClear(this.isEmpty)
     }
   }
 }

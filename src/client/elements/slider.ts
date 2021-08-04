@@ -47,14 +47,14 @@ export class SliderElement extends InputElement {
     this.dir = document.dir
     this.handleMaxBound = this.handleMax.bind(this)
     this.handleMinBound = this.handleMin.bind(this)
-    this.valueElement = this.querySelector<FormatElement>('[is="value"]')
+    this.valueElement = this.querySelector<FormatElement>('[as="value"]')
   }
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (this.isSuccessful(this.inputElement)) {
-      data.append(this.inputElement.name, this.inputElement.value)
+    if (this.isSuccessful) {
+      data.append(this.name, this.inputElement.value)
     }
   }
 
@@ -139,14 +139,12 @@ export class SliderElement extends InputElement {
 
   protected handleMax (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
       this.setMax().catch(() => {})
     }
   }
 
   protected handleMin (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
       this.setMin().catch(() => {})
     }
   }
@@ -162,7 +160,7 @@ export class SliderElement extends InputElement {
   protected setValueText (): void {
     if (this.valueElement instanceof FormatElement) {
       this.valueElement.data = {
-        value: this.inputElement.value
+        value: this.value
       }
     }
   }

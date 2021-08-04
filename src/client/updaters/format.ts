@@ -1,12 +1,15 @@
 import type { FormatElement } from '../elements/format'
-import type { PropertyValues } from 'lit'
-import type { SourceElement } from '../elements/source'
+import type { InputElement } from '../elements'
 import type { ViewElement } from '../elements/view'
 
 export default {
-  'scola-source': (observer: FormatElement, observable: SourceElement, properties: PropertyValues): void => {
-    if (properties.has('data')) {
-      observer.data = observable.data
+  'scola-input': (observer: FormatElement, observable: InputElement): void => {
+    if (observable.isEmpty) {
+      observer.data = {}
+    } else {
+      observer.data = {
+        value: observable.value
+      }
     }
   },
   'scola-view': (observer: FormatElement, observable: ViewElement): void => {

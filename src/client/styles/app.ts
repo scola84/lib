@@ -23,8 +23,8 @@ export default css`
     --scola-button-fill-activated-sig-1: var(--scola-fill-9, #b22222);
     --scola-button-fill-activated-sig-2: var(--scola-fill-10, #008000);
     --scola-node-outer-shadow-large: var(--scola-shadow-1, 0 0 0.75rem rgba(0, 0, 0, 0.35));
-    --scola-node-outer-shadow-line: var(--scola-shadow-4, #eee);
     --scola-node-outer-shadow-medium: var(--scola-shadow-2, 0 0 0.5rem rgba(0, 0, 0, 0.35));
+    --scola-node-outer-shadow-min: var(--scola-shadow-4, #eee);
     --scola-node-outer-shadow-small: var(--scola-shadow-3, 0 0 0.25rem rgba(0, 0, 0, 0.35));
     --scola-node-color-aux-1: var(--scola-color-1, #000);
     --scola-node-color-aux-2: var(--scola-color-2, #777);
@@ -327,42 +327,22 @@ export default css`
     }
   }
 
-  @media not all and (max-height: 1080px) {
-    :host([mode="outer"][flow="column"]) slot[name="after"]::slotted(*) {
-      position: relative;
-    }
-
-    :host([mode="outer"][flow="column"]) slot[name="after"]::slotted(:not([outer-shadow="line"])) {
-      box-shadow: none;
-    }
-  }
-
-  @media not all and (max-height: 810px) {
-    :host([mode="outer"][flow="column"]) slot[name="before"]::slotted(*) {
-      position: relative;
-    }
-
-    :host([mode="outer"][flow="column"]) slot[name="before"]::slotted(:not([outer-shadow="line"])) {
-      box-shadow: none;
-    }
-  }
-
-  @media not all and (max-width: 1080px) {
+  @media (min-width: 1024px) {
     :host([mode="outer"][flow="row"]) slot[name="after"]::slotted(*) {
       position: relative;
     }
 
-    :host([mode="outer"][flow="row"]) slot[name="after"]::slotted(:not([outer-shadow="line"])) {
+    :host([mode="outer"][flow="row"]) slot[name="after"]::slotted(:not([outer-shadow="min"])) {
       box-shadow: none;
     }
   }
 
-  @media not all and (max-width: 810px) {
+  @media (min-width: 768px) {
     :host([mode="outer"][flow="row"]) slot[name="before"]::slotted(*) {
       position: relative;
     }
 
-    :host([mode="outer"][flow="row"]) slot[name="before"]::slotted(:not([outer-shadow="line"])) {
+    :host([mode="outer"][flow="row"]) slot[name="before"]::slotted(:not([outer-shadow="min"])) {
       box-shadow: none;
     }
   }

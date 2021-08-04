@@ -1,13 +1,21 @@
 import { css } from 'lit'
 
 export default css`
-  :host {
+  :host(:not([busy])) {
+    display: none;
+  }
+
+  :host([type="circle"]) {
     align-items: center;
     justify-content: center;
   }
 
-  :host(:not([busy])) {
-    display: none;
+  :host([fill]) slot[name="body"] {
+    background: none;
+  }
+
+  :host([type="circle"]) slot[name="body"] {
+    display: inline-block;
   }
 
   :host([type="circle"][size="large"]) slot[name="body"] {
@@ -41,29 +49,39 @@ export default css`
     height: 0.125rem;
   }
 
-  :host([fill]) slot[name="body"] {
-    background: none;
-  }
-
-  :host([type="rect"]) svg {
-    display: flex;
-    flex: 1;
-  }
-
   circle {
     fill: transparent;
     transform: rotate(-90deg);
     transform-origin: 50% 50%;
   }
 
-  :host([busy][mode="indeterminate"]) circle {
-    animation: spin 1s infinite ease-in-out;
-    stroke-dashoffset: 1rem !important;
+  :host([type="circle"][fill="aux-1"]) circle {
+    stroke: var(--scola-node-fill-aux-1, #fff);
   }
 
-  :host([busy][mode="indeterminate"]) rect {
-    animation: flow 1s infinite ease-in-out;
-    width: 33% !important;
+  :host([type="circle"][fill="aux-2"]) circle {
+    stroke: var(--scola-node-fill-aux-2, #eee);
+  }
+
+  :host([type="circle"][fill="aux-3"]) circle {
+    stroke: var(--scola-node-fill-aux-3, #ddd);
+  }
+
+  :host([type="circle"][fill="aux-4"]) circle {
+    stroke: var(--scola-node-fill-aux-4, rgba(255, 255, 255, 0.25));
+  }
+
+  :host([type="circle"][fill="sig-1"]) circle {
+    stroke: var(--scola-node-fill-sig-1, #b22222);
+  }
+
+  :host([type="circle"][fill="sig-2"]) circle {
+    stroke: var(--scola-node-fill-sig-2, #008000);
+  }
+
+  :host([type="circle"][mode="indeterminate"][busy]) circle {
+    animation: spin 1s infinite ease-in-out;
+    stroke-dashoffset: 1rem !important;
   }
 
   :host([type="circle"][stroke="large"]) circle {
@@ -82,52 +100,38 @@ export default css`
     stroke-width: 0.125rem;
   }
 
-  :host([fill="aux-1"][type="circle"]) circle {
-    stroke: var(--scola-node-fill-aux-1, #fff);
-  }
-
-  :host([fill="aux-2"][type="circle"]) circle {
-    stroke: var(--scola-node-fill-aux-2, #eee);
-  }
-
-  :host([fill="aux-3"][type="circle"]) circle {
-    stroke: var(--scola-node-fill-aux-3, #ddd);
-  }
-
-  :host([fill="aux-4"][type="circle"]) circle {
-    stroke: var(--scola-node-fill-aux-4, rgba(255, 255, 255, 0.25));
-  }
-
-  :host([fill="sig-1"][type="circle"]) circle {
-    stroke: var(--scola-node-fill-sig-1, #b22222);
-  }
-
-  :host([fill="sig-2"][type="circle"]) circle {
-    stroke: var(--scola-node-fill-sig-2, #008000);
-  }
-
-  :host([fill="aux-1"][type="rect"]) rect {
+  :host([type="rect"][fill="aux-1"]) rect {
     fill: var(--scola-node-fill-aux-1, #fff);
   }
 
-  :host([fill="aux-2"][type="rect"]) rect {
+  :host([type="rect"][fill="aux-2"]) rect {
     fill: var(--scola-node-fill-aux-2, #eee);
   }
 
-  :host([fill="aux-3"][type="rect"]) rect {
+  :host([type="rect"][fill="aux-3"]) rect {
     fill: var(--scola-node-fill-aux-3, #ddd);
   }
 
-  :host([fill="aux-4"][type="rect"]) rect {
+  :host([type="rect"][fill="aux-4"]) rect {
     fill: var(--scola-node-fill-aux-4, rgba(255, 255, 255, 0.25));
   }
 
-  :host([fill="sig-1"][type="rect"]) rect {
+  :host([type="rect"][fill="sig-1"]) rect {
     fill: var(--scola-node-fill-sig-1, #b22222);
   }
 
-  :host([fill="sig-2"][type="rect"]) rect {
+  :host([type="rect"][fill="sig-2"]) rect {
     fill: var(--scola-node-fill-sig-2, #008000);
+  }
+
+  :host([type="rect"][mode="indeterminate"][busy]) rect {
+    animation: flow 1s infinite ease-in-out;
+    width: 33% !important;
+  }
+
+  svg {
+    height: 100%;
+    width: 100%;
   }
 
   @keyframes flow {

@@ -52,26 +52,8 @@ export class NodeElement extends LitElement {
 
   public static updaters: Updaters = {}
 
-  @property({
-    attribute: 'at-large',
-    reflect: true,
-    type: Boolean
-  })
-  public atLarge?: boolean
-
-  @property({
-    attribute: 'at-medium',
-    reflect: true,
-    type: Boolean
-  })
-  public atMedium?: boolean
-
-  @property({
-    attribute: 'at-small',
-    reflect: true,
-    type: Boolean
-  })
-  public atSmall?: boolean
+  @property()
+  public as?: string
 
   @property({
     reflect: true
@@ -118,6 +100,11 @@ export class NodeElement extends LitElement {
   public dispatchFilter?: string
 
   @property({
+    reflect: true
+  })
+  public display?: string
+
+  @property({
     type: Number
   })
   public duration = NodeElement.duration
@@ -160,7 +147,7 @@ export class NodeElement extends LitElement {
   @property({
     reflect: true
   })
-  public height?: string | 'auto' | 'flex' | 'max' | 'min'
+  public height?: string
 
   @property({
     reflect: true,
@@ -171,12 +158,12 @@ export class NodeElement extends LitElement {
   @property({
     reflect: true
   })
-  public hmargin?: 'large' | 'medium' | 'small'
+  public hmargin?: string
 
   @property({
     reflect: true
   })
-  public hpadding?: 'large' | 'medium' | 'small'
+  public hpadding?: string
 
   @property({
     reflect: true
@@ -191,10 +178,9 @@ export class NodeElement extends LitElement {
 
   @property({
     attribute: 'inner-height',
-    reflect: true,
-    type: Number
+    reflect: true
   })
-  public innerHeight?: number | 'max' | 'min'
+  public innerHeight?: string
 
   @property({
     attribute: 'inner-shadow',
@@ -203,14 +189,16 @@ export class NodeElement extends LitElement {
   public innerShadow?: 'large' | 'medium' | 'small'
 
   @property({
-    attribute: 'inner-width',
-    reflect: true,
-    type: Number
+    attribute: 'inner-spacing',
+    reflect: true
   })
-  public innerWidth?: number | 'max' | 'min'
+  public innerSpacing?: string
 
-  @property()
-  public is?: string
+  @property({
+    attribute: 'inner-width',
+    reflect: true
+  })
+  public innerWidth?: string
 
   @property({
     reflect: true
@@ -230,7 +218,7 @@ export class NodeElement extends LitElement {
   @property({
     reflect: true
   })
-  public margin?: 'large' | 'medium' | 'small'
+  public margin?: string
 
   @property({
     attribute: 'no-wrap',
@@ -257,12 +245,7 @@ export class NodeElement extends LitElement {
     attribute: 'outer-shadow',
     reflect: true
   })
-  public outerShadow?: 'large' | 'medium' | 'min' | 'small'
-
-  @property({
-    reflect: true
-  })
-  public padding?: 'large' | 'medium' | 'small'
+  public outerShadow?: string
 
   @property({
     attribute: false
@@ -275,7 +258,7 @@ export class NodeElement extends LitElement {
   @property({
     reflect: true
   })
-  public round?: 'large' | 'max' | 'medium' | 'small'
+  public round?: string
 
   @property({
     reflect: true
@@ -285,7 +268,7 @@ export class NodeElement extends LitElement {
   @property({
     reflect: true
   })
-  public spacing?: 'large' | 'medium' | 'small'
+  public spacing?: string
 
   @property({
     reflect: true
@@ -295,12 +278,12 @@ export class NodeElement extends LitElement {
   @property({
     reflect: true
   })
-  public vmargin?: 'large' | 'medium' | 'small'
+  public vmargin?: string
 
   @property({
     reflect: true
   })
-  public vpadding?: 'large' | 'medium' | 'small'
+  public vpadding?: string
 
   @property({
     reflect: true
@@ -315,13 +298,17 @@ export class NodeElement extends LitElement {
   @property({
     reflect: true
   })
-  public width?: string | 'auto' | 'flex' | 'max' | 'min'
+  public width?: string
 
   @property({
     reflect: true,
     type: Boolean
   })
   public wrap?: boolean
+
+  public get breakpoint (): string {
+    return window.getComputedStyle(this, '::after').content.slice(1, -1)
+  }
 
   public get shadowBody (): HTMLSlotElement {
     return this.bodySlotElement
@@ -334,6 +321,12 @@ export class NodeElement extends LitElement {
   public get dataNodeElements (): NodeListOf<NodeElement> {
     return this.querySelectorAll<NodeElement>('scola-form, scola-list, scola-svg')
   }
+
+  @query('slot[name="after"]', true)
+  protected afterSlotElement: HTMLSlotElement
+
+  @query('slot[name="before"]', true)
+  protected beforeSlotElement: HTMLSlotElement
 
   @query('slot[name="body"]', true)
   protected bodySlotElement: HTMLSlotElement
@@ -360,8 +353,6 @@ export class NodeElement extends LitElement {
   protected handlePropsSetBound: (event: CustomEvent) => void
 
   protected handlePropsToggleBound: (event: CustomEvent) => void
-
-  protected observeRootElement?: HTMLElement
 
   protected observers: Set<NodeElement> = new Set<NodeElement>()
 
@@ -396,10 +387,6 @@ export class NodeElement extends LitElement {
         Object.assign(this, properties)
       })
 
-    if (this.observe !== undefined) {
-      this.observeRootElement = this.findObserveRootElement()
-    }
-
     window.addEventListener('scola-node-params-set', this.handleParamsSetBound)
     window.addEventListener('scola-node-params-toggle', this.handleParamsToggleBound)
     window.addEventListener('scola-node-props-set', this.handlePropsSetBound)
@@ -411,11 +398,15 @@ export class NodeElement extends LitElement {
     if (!this.isConnected) {
       this.observe
         ?.split(' ')
-        .forEach((id) => {
-          const element = this.observeRootElement?.querySelector(`#${id}`)
+        .forEach((observe) => {
+          const [,id] = observe.split('@') as Array<string | undefined>
 
-          if (element instanceof NodeElement) {
-            element.removeObserver(this)
+          if (id !== undefined) {
+            const element = document.getElementById(id)
+
+            if (element instanceof NodeElement) {
+              element.removeObserver(this)
+            }
           }
         })
 
@@ -423,37 +414,6 @@ export class NodeElement extends LitElement {
     }
 
     super.disconnectedCallback()
-  }
-
-  public findObserveRootElement (): HTMLElement {
-    if (this.observeScope === 'body') {
-      return document.body
-    }
-
-    let element: HTMLElement | null = this as HTMLElement
-
-    while (element !== null) {
-      if (element.parentNode?.nodeName.toLowerCase() === 'scola-view') {
-        return element
-      }
-
-      if (element instanceof HTMLSlotElement) {
-        const rootNode = element.getRootNode()
-
-        if (
-          rootNode instanceof ShadowRoot &&
-          rootNode.host instanceof HTMLElement
-        ) {
-          element = rootNode.host
-        } else {
-          element = element.parentElement
-        }
-      } else {
-        element = element.parentElement
-      }
-    }
-
-    return document.body
   }
 
   public firstUpdated (properties: PropertyValues): void {
@@ -468,10 +428,10 @@ export class NodeElement extends LitElement {
     this.observe
       ?.split(' ')
       .forEach((observe) => {
-        const [id] = observe.split('.') as Array<string | undefined>
+        const [,id] = observe.split('@') as Array<string | undefined>
 
         if (id !== undefined) {
-          const element = this.observeRootElement?.querySelector(`#${id}`)
+          const element = document.getElementById(id)
 
           if (element instanceof NodeElement) {
             this.observedUpdate(properties, element)
@@ -488,15 +448,15 @@ export class NodeElement extends LitElement {
       ?.split(' ')
       .forEach((observe) => {
         const [
-          id,
-          name
-        ] = observe.split('.') as Array<string | undefined>
+          updaterName,
+          id
+        ] = observe.split('@') as Array<string | undefined>
 
         if (
           id === element.id &&
-          name !== undefined
+          updaterName !== undefined
         ) {
-          this.updaters[name]?.(this, element, properties)
+          this.updaters[updaterName]?.(this, element, properties)
         }
       })
   }
@@ -522,8 +482,8 @@ export class NodeElement extends LitElement {
   public setParameters (parameters: Record<string, unknown>): void {
     Object
       .entries(parameters)
-      .forEach(([key, value]) => {
-        this.parameters[key] = cast(value)
+      .forEach(([name, value]) => {
+        this.parameters[name] = cast(value)
       })
 
     this.requestUpdate('parameters')
@@ -532,9 +492,9 @@ export class NodeElement extends LitElement {
   public setProperties (properties: Record<string, unknown>): void {
     Object
       .entries(properties)
-      .forEach(([key, value]) => {
+      .forEach(([name, value]) => {
         Object.assign(this, {
-          [key]: cast(value)
+          [name]: cast(value)
         })
       })
   }
@@ -542,13 +502,13 @@ export class NodeElement extends LitElement {
   public toggleParameters (parameters: Record<string, unknown>): void {
     Object
       .entries(parameters)
-      .forEach(([key, value]) => {
+      .forEach(([name, value]) => {
         const castValue = cast(value)
 
-        if (this.parameters[key] === castValue) {
-          this.parameters[key] = undefined
+        if (this.parameters[name] === castValue) {
+          this.parameters[name] = undefined
         } else {
-          this.parameters[key] = castValue
+          this.parameters[name] = castValue
         }
       })
 
@@ -558,16 +518,16 @@ export class NodeElement extends LitElement {
   public toggleProperties (properties: Record<string, unknown>): void {
     Object
       .entries(properties)
-      .forEach(([key, value]) => {
+      .forEach(([name, value]) => {
         const castValue = cast(value)
 
-        if (this[key as keyof NodeElement] === castValue) {
+        if (this[name as keyof NodeElement] === castValue) {
           Object.assign(this, {
-            [key]: undefined
+            [name]: undefined
           })
         } else {
           Object.assign(this, {
-            [key]: castValue
+            [name]: castValue
           })
         }
       })
@@ -594,19 +554,14 @@ export class NodeElement extends LitElement {
     this.dispatch
       ?.split(' ')
       .forEach((dispatch) => {
-        let [
-          id,
-          event
-        ] = dispatch.split('.') as Array<string | undefined>
+        if (new RegExp(filter, 'u').test(dispatch)) {
+          const [
+            eventType,
+            id
+          ] = dispatch.split('@') as Array<string | undefined>
 
-        if (id !== undefined) {
-          if (event === undefined) {
-            event = id
-            id = undefined
-          }
-
-          if (new RegExp(filter, 'u').test(dispatch)) {
-            this.dispatchEvent(new CustomEvent(event, {
+          if (eventType !== undefined) {
+            this.dispatchEvent(new CustomEvent(eventType, {
               bubbles: true,
               composed: true,
               detail: {
@@ -696,56 +651,93 @@ export class NodeElement extends LitElement {
 
   protected handleParamsSet (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
+      const data = event.detail?.data
 
-      if (isObject(event.detail?.data)) {
-        this.setParameters(event.detail?.data ?? {})
+      if (isObject(data)) {
+        if (
+          typeof data.name === 'string' &&
+          typeof data.value === 'string'
+        ) {
+          this.setParameters({
+            [data.name]: data.value
+          })
+        } else {
+          this.setParameters(data)
+        }
       }
     }
   }
 
   protected handleParamsToggle (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
+      const data = event.detail?.data
 
-      if (isObject(event.detail?.data)) {
-        this.toggleParameters(event.detail?.data ?? {})
+      if (isObject(data)) {
+        if (
+          typeof data.name === 'string' &&
+          typeof data.value === 'string'
+        ) {
+          this.toggleParameters({
+            [data.name]: data.value
+          })
+        } else {
+          this.toggleParameters(data)
+        }
       }
     }
   }
 
   protected handlePropsSet (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
+      const data = event.detail?.data
 
-      if (isObject(event.detail?.data)) {
-        this.setProperties(event.detail?.data ?? {})
+      if (isObject(data)) {
+        if (
+          typeof data.name === 'string' &&
+          typeof data.value === 'string'
+        ) {
+          this.setProperties({
+            [data.name]: data.value
+          })
+        } else {
+          this.setProperties(data)
+        }
       }
     }
   }
 
   protected handlePropsToggle (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
+      const data = event.detail?.data
 
-      if (isObject(event.detail?.data)) {
-        this.toggleProperties(event.detail?.data ?? {})
+      if (isObject(data)) {
+        if (
+          typeof data.name === 'string' &&
+          typeof data.value === 'string'
+        ) {
+          this.toggleProperties({
+            [data.name]: data.value
+          })
+        } else {
+          this.toggleProperties(data)
+        }
       }
     }
   }
 
-  protected isTarget (event: CustomEvent, element: Element = this): boolean {
+  protected isTarget (event: CustomEvent, cancel = true): boolean {
     if (
       isObject(event.detail) &&
       event.detail.target !== undefined
     ) {
-      if (event.detail.target !== element.id) {
+      if (event.detail.target !== this.id) {
         return false
       }
-    } else if (!event.composedPath().includes(element)) {
+    } else if (!event.composedPath().includes(this)) {
       return false
     }
 
+    event.cancelBubble = cancel
     return true
   }
 

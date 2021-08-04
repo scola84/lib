@@ -36,6 +36,11 @@ export class ProgressElement extends NodeElement {
   })
   public fraction = 1 / 50
 
+  @property({
+    type: Number
+  })
+  public loaded?: number
+
   @property()
   public method?: RequestElement['method']
 
@@ -53,6 +58,11 @@ export class ProgressElement extends NodeElement {
     reflect: true
   })
   public stroke?: 'large' | 'medium' | 'min' | 'small'
+
+  @property({
+    type: Number
+  })
+  public total?: number
 
   @property({
     reflect: true
@@ -97,55 +107,37 @@ export class ProgressElement extends NodeElement {
     `
   }
 
-  public async updateRequest (element: RequestElement): Promise<void> {
-    if (
-      this.method === undefined ||
-      this.method === element.request?.method
-    ) {
+  public update (properties: PropertyValues): void {
+    if (properties.has('loaded')) {
       if (this.mode === 'indeterminate') {
-        this.busy = element.busy
+        this.busy = (
+          this.total === 0 ||
+          this.loaded !== this.total
+        )
       } else {
         this.busy = true
 
         if (this.type === 'circle') {
-          await this.updateRequestCircle(element)
+          this.drawCircle().catch(() => {})
         } else {
-          await this.updateRequestRect(element)
+          this.drawRect().catch(() => {})
         }
       }
     }
+
+    super.update(properties)
   }
 
-  protected firstUpdatedCircle (): void {
-    if (this.circleElement instanceof SVGCircleElement) {
-      const strokeWidth = parseFloat(window.getComputedStyle(this.circleElement).strokeWidth)
-      const width = parseFloat(window.getComputedStyle(this.bodySlotElement).width)
-
-      if (
-        Number.isFinite(strokeWidth) &&
-        Number.isFinite(width)
-      ) {
-        this.radius = (width - strokeWidth) / 2
-      }
-
-      const cf = this.radius * 2 * Math.PI
-
-      this.circleElement.setAttribute('r', `${this.radius}`)
-      this.circleElement.setAttribute('stroke-dasharray', `${cf}px ${cf}px`)
-      this.circleElement.setAttribute('stroke-dashoffset', `${cf}px`)
-    }
-  }
-
-  protected async updateRequestCircle (element: RequestElement): Promise<void> {
+  protected async drawCircle (): Promise<void> {
     let { fraction } = this
 
     if (
-      element.loaded > 0 &&
-      element.total > 0
+      this.loaded !== undefined &&
+      this.total !== undefined &&
+      this.loaded > 0 &&
+      this.total > 0
     ) {
-      fraction = element.loaded / element.total
-    } else if (element.busy === false) {
-      fraction = 0
+      fraction = this.loaded / this.total
     }
 
     const cf = this.radius * 2 * Math.PI
@@ -170,16 +162,16 @@ export class ProgressElement extends NodeElement {
       })
   }
 
-  protected async updateRequestRect (element: RequestElement): Promise<void> {
+  protected async drawRect (): Promise<void> {
     let { fraction } = this
 
     if (
-      element.loaded > 0 &&
-      element.total > 0
+      this.loaded !== undefined &&
+      this.total !== undefined &&
+      this.loaded > 0 &&
+      this.total > 0
     ) {
-      fraction = element.loaded / element.total
-    } else if (element.busy === false) {
-      fraction = 0
+      fraction = this.loaded / this.total
     }
 
     const to = fraction * 100
@@ -201,5 +193,25 @@ export class ProgressElement extends NodeElement {
           this.rectElement?.setAttribute('width', '0%')
         }
       })
+  }
+
+  protected firstUpdatedCircle (): void {
+    if (this.circleElement instanceof SVGCircleElement) {
+      const strokeWidth = parseFloat(window.getComputedStyle(this.circleElement).strokeWidth)
+      const width = parseFloat(window.getComputedStyle(this.bodySlotElement).width)
+
+      if (
+        Number.isFinite(strokeWidth) &&
+        Number.isFinite(width)
+      ) {
+        this.radius = (width - strokeWidth) / 2
+      }
+
+      const cf = this.radius * 2 * Math.PI
+
+      this.circleElement.setAttribute('r', `${this.radius}`)
+      this.circleElement.setAttribute('stroke-dasharray', `${cf}px ${cf}px`)
+      this.circleElement.setAttribute('stroke-dashoffset', `${cf}px`)
+    }
   }
 }

@@ -17,7 +17,7 @@ declare global {
 }
 
 export interface Drawers {
-  [key: string]: (source: SvgElement) => void
+  [key: string]: ((source: SvgElement) => void) | undefined
 }
 
 @customElement('scola-svg')
@@ -43,18 +43,18 @@ export class SvgElement extends NodeElement {
   public constructor () {
     super()
 
-    const svgElement = this.querySelector<SVGElement>('svg')
+    const svgElement = this.querySelector<SVGElement>(':scope > svg')
 
     if (svgElement === null) {
       throw new Error('Svg element not found')
     }
 
+    this.observer = new ResizeObserver(this.handleResize.bind(this))
     this.svgElement = svgElement
     this.handleDrawBound = this.handleDraw.bind(this)
   }
 
   public connectedCallback (): void {
-    this.observer = new ResizeObserver(this.handleResize.bind(this))
     this.observer.observe(this)
     window.addEventListener('scola-svg-draw', this.handleDrawBound)
     super.connectedCallback()
@@ -70,7 +70,7 @@ export class SvgElement extends NodeElement {
     this.drawer
       ?.split(' ')
       .forEach((drawerName) => {
-        this.drawers[drawerName](this)
+        this.drawers[drawerName]?.(this)
       })
   }
 
@@ -79,7 +79,24 @@ export class SvgElement extends NodeElement {
     super.firstUpdated(properties)
   }
 
-  public resize (): void {
+  public update (properties: PropertyValues): void {
+    this.setViewBox()
+    this.draw()
+    super.update(properties)
+  }
+
+  protected handleDraw (event: CustomEvent): void {
+    if (this.isTarget(event)) {
+      this.draw()
+    }
+  }
+
+  protected handleResize (): void {
+    this.setViewBox()
+    this.draw()
+  }
+
+  protected setViewBox (): void {
     let {
       width,
       height
@@ -90,23 +107,5 @@ export class SvgElement extends NodeElement {
     }
 
     this.svgElement.setAttribute('viewBox', `0,0,${width},${height}`)
-  }
-
-  public update (properties: PropertyValues): void {
-    this.resize()
-    this.draw()
-    super.update(properties)
-  }
-
-  protected handleDraw (event: CustomEvent): void {
-    if (this.isTarget(event)) {
-      event.cancelBubble = true
-      this.draw()
-    }
-  }
-
-  protected handleResize (): void {
-    this.resize()
-    this.draw()
   }
 }

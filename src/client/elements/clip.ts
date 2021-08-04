@@ -76,7 +76,7 @@ export class ClipElement extends NodeElement {
   public constructor () {
     super()
     this.dir = document.dir
-    this.handleElement = this.querySelector<HTMLElement>(':scope > [is="handle"]')
+    this.handleElement = this.querySelector<HTMLElement>(':scope > [as="handle"]')
     this.outerElements = this.querySelectorAll<HTMLElement>(':scope > [slot="after"], :scope > [slot="before"]')
     this.handleContentBound = this.handleContent.bind(this)
     this.handleContentOrInnerBound = this.handleContentOrInner.bind(this)
@@ -510,7 +510,7 @@ export class ClipElement extends NodeElement {
   }
 
   protected handleContent (event: CustomEvent<Record<string, unknown> | null>): void {
-    if (this.isTarget(event)) {
+    if (this.isTarget(event, false)) {
       if (
         isObject(event.detail?.data) &&
         typeof event.detail?.data.id === 'string'
@@ -526,7 +526,7 @@ export class ClipElement extends NodeElement {
   }
 
   protected handleContentOrInner (event: CustomEvent<Record<string, unknown> | null>): void {
-    if (this.isTarget(event)) {
+    if (this.isTarget(event, false)) {
       if (
         isObject(event.detail?.data) &&
         typeof event.detail?.data.id === 'string'
@@ -545,13 +545,12 @@ export class ClipElement extends NodeElement {
 
   protected handleInner (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
       this.toggleInner().catch(() => {})
     }
   }
 
   protected handleNested (event: CustomEvent<Record<string, unknown> | null>): void {
-    if (this.isTarget(event)) {
+    if (this.isTarget(event, false)) {
       if (
         isObject(event.detail?.data) &&
         typeof event.detail?.data.id === 'string'
@@ -567,7 +566,7 @@ export class ClipElement extends NodeElement {
   }
 
   protected handleOuter (event: CustomEvent<Record<string, unknown> | null>): void {
-    if (this.isTarget(event)) {
+    if (this.isTarget(event, false)) {
       if (
         isObject(event.detail?.data) &&
         typeof event.detail?.data.id === 'string'

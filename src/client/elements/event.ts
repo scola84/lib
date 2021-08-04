@@ -90,7 +90,6 @@ export class EventElement extends NodeElement {
 
   protected handleEvent (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
       this.dispatchEvents(this.createEventData(event), event)
     }
   }

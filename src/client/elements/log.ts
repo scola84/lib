@@ -34,13 +34,18 @@ export class LogElement extends NodeElement {
   }
 
   @property({
+    attribute: false
+  })
+  public logs: Array<Record<string, unknown>>
+
+  @property({
     type: Number
   })
   public timeout?: number
 
-  public logs: Array<Record<string, unknown>>
-
   protected handleHideBound: (event: CustomEvent) => void
+
+  protected log?: Record<string, unknown>
 
   protected templateElement: NodeElement | null
 
@@ -92,7 +97,6 @@ export class LogElement extends NodeElement {
       .finished
       .then(() => {
         this.hidden = true
-        this.data = undefined
       })
   }
 
@@ -152,7 +156,8 @@ export class LogElement extends NodeElement {
       return
     }
 
-    this.data = log
+    this.log = log
+    this.show().catch(() => {})
 
     let { timeout } = this
 
@@ -170,32 +175,28 @@ export class LogElement extends NodeElement {
   }
 
   public update (properties: PropertyValues): void {
-    if (properties.has('data')) {
-      if (this.data !== undefined) {
-        this.show().catch(() => {})
+    if (properties.has('logs')) {
+      if (this.logs.length > 0) {
+        if (this.timeout === undefined) {
+          this.log = this.logs.shift()
+          this.show().catch(() => {})
+        } else {
+          this.showNext()
+        }
       }
     }
 
     super.update(properties)
   }
 
-  public updateNode (element: NodeElement): void {
-    if (this.timeout === undefined) {
-      this.updateNodeImmediate(element)
-    } else {
-      this.updateNodeTimeout(element)
-    }
-  }
-
   protected handleHide (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
       this.hide().catch(() => {})
     }
   }
 
   protected renderTemplate (): Node | TemplateResult | undefined {
-    const log = this.data
+    const { log } = this
 
     if (!isObject(log)) {
       return this.templateElement?.cloneNode(true)
@@ -225,24 +226,5 @@ export class LogElement extends NodeElement {
     }
 
     return element
-  }
-
-  protected updateNodeImmediate (element: NodeElement): void {
-    if (element.logs.length === 0) {
-      this.hide().catch(() => {})
-      return
-    }
-
-    this.data = element.logs
-      .splice(0)
-      .pop()
-  }
-
-  protected updateNodeTimeout (element: NodeElement): void {
-    this.logs.splice(this.logs.length, 0, ...element.logs.splice(0))
-
-    if (this.hidden) {
-      this.showNext()
-    }
   }
 }

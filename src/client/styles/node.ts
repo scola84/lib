@@ -1,6 +1,26 @@
+/* eslint-disable max-lines-per-function */
+
 import { css, unsafeCSS } from 'lit'
 
-const sizes = new Array(64).fill('')
+const breakpoints = [{
+  name: '',
+  query: '@media all'
+}, {
+  name: '@mobile',
+  query: '@media not all and (min-width: 768px)'
+}, {
+  name: '@tablet',
+  query: '@media (min-width: 768px) and (max-width: 1024px)'
+}, {
+  name: '@desktop',
+  query: '@media not all and (max-width: 1024px)'
+}]
+
+const sizes = new Array(64)
+  .fill('')
+  .map((fill, index) => {
+    return index + 1
+  })
 
 export default css`
   :host {
@@ -10,104 +30,16 @@ export default css`
     position: relative;
   }
 
-  :host([at-large]),
-  :host([at-medium]),
-  :host([at-small]) {
-    display: none;
-  }
-
-  @media (max-width: 810px) {
-    :host([at-small]) {
-      display: inline-flex;
-    }
-  }
-
-  @media (min-width: 811px) and (max-width: 1080px) {
-    :host([at-medium]) {
-      display: inline-flex;
-    }
-  }
-
-  @media not all and (max-width: 1080px) {
-    :host([at-large]) {
-      display: inline-flex;
-    }
-  }
-
   :host([disabled]) {
     filter: grayscale(50%) opacity(50%);
     pointer-events: none;
   }
 
-  :host([height="auto"]) {
-    flex: 1 0 auto;
-    max-height: 100%;
+  :host([display]) {
+    display: none;
   }
 
-  :host([height="flex"]) {
-    flex: 1;
-  }
-
-  :host([height="max"]) {
-    height: 100%;
-  }
-
-  :host([height="min"]) {
-    height: 1px;
-  }
-
-  ${sizes.reduce((result, fill, index) => {
-    return css`
-      ${result}
-
-      :host([height="${index + 1}"]) {
-        height: ${unsafeCSS(`${index + 1}rem`)};
-      }
-
-      @media (max-height: ${index + 1}rem) {
-        :host([height="${index + 1}"]) {
-          height: 100%;
-        }
-
-        :host([height="${index + 1}"][margin]),
-        :host([height="${index + 1}"][vmargin]) {
-          margin-bottom: 0;
-          margin-top: 0;
-        }
-
-        :host([height="${index + 1}"][width][snap]) {
-          width: 100%;
-        }
-
-        :host([height="${index + 1}"][width][snap][hmargin]),
-        :host([height="${index + 1}"][width][snap][margin]) {
-          margin-left: 0;
-          margin-right: 0;
-        }
-      }
-    `
-  }, css``)}
-
-  :host([hmargin="large"]),
-  :host([margin="large"]) {
-    margin-left: 0.75rem;
-    margin-right: 0.75rem;
-  }
-
-  :host([hmargin="medium"]),
-  :host([margin="medium"]) {
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
-  }
-
-  :host([hmargin="small"]),
-  :host([margin="small"]) {
-    margin-left: 0.25rem;
-    margin-right: 0.25rem;
-  }
-
-  :host([hposition]),
-  :host([vposition]) {
+  :host([hposition]) {
     position: absolute;
     z-index: 9;
   }
@@ -130,30 +62,6 @@ export default css`
     right: 0;
   }
 
-  ${sizes.reduce((result, fill, index) => {
-    return css`
-      @media (max-height: ${index + 1}rem) {
-        :host([inner-height="${index + 1}"]) {
-          height: 100%;
-        }
-      }
-
-      ${result}
-    `
-  }, css``)}
-
-  ${sizes.reduce((result, fill, index) => {
-    return css`
-      @media (max-width: ${index + 1}rem) {
-        :host([inner-width="${index + 1}"]) {
-          width: 100%;
-        }
-      }
-
-      ${result}
-    `
-  }, css``)}
-
   :host([outer-backdrop="large"]) {
     backdrop-filter: blur(0.75rem);
     -webkit-backdrop-filter: blur(0.75rem);
@@ -169,64 +77,9 @@ export default css`
     -webkit-backdrop-filter: blur(0.25rem);
   }
 
-  :host([outer-shadow="large"]) {
-    box-shadow: var(--scola-node-outer-shadow-large, 0 0 0.75rem rgba(0, 0, 0, 0.35));
-    z-index: 1;
-  }
-
-  :host([outer-shadow="medium"]) {
-    box-shadow: var(--scola-node-outer-shadow-medium, 0 0 0.5rem rgba(0, 0, 0, 0.35));
-    z-index: 1;
-  }
-
-  :host([outer-shadow="min"]) {
-    box-shadow: 0 0 0 1px var(--scola-node-outer-shadow-min, #eee);
-    z-index: 1;
-  }
-
-  :host([outer-shadow="small"]) {
-    box-shadow: var(--scola-node-outer-shadow-small, 0 0 0.25rem rgba(0, 0, 0, 0.35));
-    z-index: 1;
-  }
-
-  @media (-webkit-min-device-pixel-ratio: 2) {
-    :host([outer-shadow="min"]) {
-      box-shadow: 0 0 0 1px var(--scola-node-outer-shadow-min, #eee);
-    }
-  }
-
-  :host([outer-shadow][hidden]) {
-    box-shadow: none;
-  }
-
-  :host([spacing="large"]) {
-    padding: 0.75rem;
-  }
-
-  :host([spacing="medium"]) {
-    padding: 0.5rem;
-  }
-
-  :host([spacing="small"]) {
-    padding: 0.25rem;
-  }
-
-  :host([vmargin="large"]),
-  :host([margin="large"]) {
-    margin-bottom: 0.75rem;
-    margin-top: 0.75rem;
-  }
-
-  :host([vmargin="medium"]),
-  :host([margin="medium"]) {
-    margin-bottom: 0.5rem;
-    margin-top: 0.5rem;
-  }
-
-  :host([vmargin="small"]),
-  :host([margin="small"]) {
-    margin-bottom: 0.25rem;
-    margin-top: 0.25rem;
+  :host([vposition]) {
+    position: absolute;
+    z-index: 9;
   }
 
   :host([vposition="bottom"]) {
@@ -248,55 +101,6 @@ export default css`
   :host([weight="medium"]) {
     font-weight: 500;
   }
-
-  :host([width="auto"]) {
-    flex: 1 0 auto;
-    max-width: 100%;
-  }
-
-  :host([width="flex"]) {
-    flex: 1;
-  }
-
-  :host([width="max"]) {
-    width: 100%;
-  }
-
-  :host([width="min"]) {
-    width: 1px;
-  }
-
-  ${sizes.reduce((result, fill, index) => {
-    return css`
-      ${result}
-
-      :host([width="${index + 1}"]) {
-        width: ${unsafeCSS(`${index + 1}rem`)};
-      }
-
-      @media (max-width: ${index + 1}rem) {
-        :host([width="${index + 1}"]) {
-          width: 100%;
-        }
-
-        :host([width="${index + 1}"][hmargin]),
-        :host([width="${index + 1}"][margin]) {
-          margin-left: 0;
-          margin-right: 0;
-        }
-
-        :host([width="${index + 1}"][height][snap]) {
-          height: 100%;
-        }
-
-        :host([width="${index + 1}"][height][snap][margin]),
-        :host([width="${index + 1}"][height][snap][vmargin]) {
-          margin-bottom: 0;
-          margin-top: 0;
-        }
-      }
-    `
-  }, css``)}
 
   slot[name="body"] {
     box-sizing: border-box;
@@ -503,24 +307,6 @@ export default css`
     flex: 1;
   }
 
-  :host([hpadding="large"]) slot[name="body"],
-  :host([padding="large"]) slot[name="body"] {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-  }
-
-  :host([hpadding="medium"]) slot[name="body"],
-  :host([padding="medium"]) slot[name="body"] {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-
-  :host([hpadding="small"]) slot[name="body"],
-  :host([padding="small"]) slot[name="body"] {
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
-  }
-
   :host([inner-shadow="large"]) slot[name="body"] {
     box-shadow: var(--scola-node-inner-shadow-large, 0 0 0.75rem rgba(0, 0, 0, 0.35));
   }
@@ -549,43 +335,27 @@ export default css`
     will-change: transform;
   }
 
-  :host([round="large"]) slot[name="body"] {
-    border-radius: 0.75rem;
-  }
-
-  :host([round="medium"]) slot[name="body"] {
-    border-radius: 0.5rem;
-  }
-
-  :host([round="max"]) slot[name="body"] {
-    border-radius: 50%;
-  }
-
-  :host([round="small"]) slot[name="body"] {
-    border-radius: 0.25rem;
-  }
-
   :host([scrollbar]) slot[name="body"] {
     overflow: auto;
     scrollbar-color: transparent transparent;
     -webkit-overflow-scrolling: touch;
   }
 
-  :host([scrollbar="large"]) slot[name="body"] {
-    scrollbar-width: auto;
-  }
-
-  :host([scrollbar="small"]) slot[name="body"] {
-    scrollbar-width: thin;
-  }
-
   :host([scrollbar][height]) slot[name="body"] {
     display: block;
+  }
+
+  :host([scrollbar="large"]) slot[name="body"] {
+    scrollbar-width: auto;
   }
 
   :host([scrollbar="large"]) slot[name="body"]::-webkit-scrollbar {
     height: 0.75rem;
     width: 0.75rem;
+  }
+
+  :host([scrollbar="small"]) slot[name="body"] {
+    scrollbar-width: thin;
   }
 
   :host([scrollbar="small"]) slot[name="body"]::-webkit-scrollbar {
@@ -625,24 +395,6 @@ export default css`
     align-items: flex-start;
   }
 
-  :host([vpadding="large"]) slot[name="body"],
-  :host([padding="large"]) slot[name="body"] {
-    padding-bottom: 0.75rem;
-    padding-top: 0.75rem;
-  }
-
-  :host([vpadding="medium"]) slot[name="body"],
-  :host([padding="medium"]) slot[name="body"] {
-    padding-bottom: 0.5rem;
-    padding-top: 0.5rem;
-  }
-
-  :host([vpadding="small"]) slot[name="body"],
-  :host([padding="small"]) slot[name="body"] {
-    padding-bottom: 0.25rem;
-    padding-top: 0.25rem;
-  }
-
   :host([wrap]) slot[name="body"] {
     flex-wrap: wrap;
   }
@@ -680,54 +432,6 @@ export default css`
     -webkit-backdrop-filter: blur(0.25rem);
   }
 
-  :host([inner-height="max"]) slot:not([name]) {
-    height: 100%;
-  }
-
-  :host([inner-height="min"]) slot:not([name]) {
-    height: 1px;
-  }
-
-  ${sizes.reduce((result, fill, index) => {
-    return css`
-      ${result}
-
-      :host([inner-height="${index + 1}"]) slot:not([name]) {
-        height: ${unsafeCSS(`${index + 1}rem`)};
-      }
-
-      @media (max-height: ${index + 1}rem) {
-        :host([inner-height="${index + 1}"]) slot:not([name]) {
-          height: 100%;
-        }
-      }
-    `
-  }, css``)}
-
-  :host([inner-width="max"]) slot:not([name]) {
-    width: 100%;
-  }
-
-  :host([inner-width="min"]) slot:not([name]) {
-    width: 1px;
-  }
-
-  ${sizes.reduce((result, fill, index) => {
-    return css`
-      ${result}
-
-      :host([inner-width="${index + 1}"]) slot:not([name]) {
-        width: ${unsafeCSS(`${index + 1}rem`)};
-      }
-
-      @media (max-width: ${index + 1}rem) {
-        :host([inner-width="${index + 1}"]) slot:not([name]) {
-          width: 100%;
-        }
-      }
-    `
-  }, css``)}
-
   :host([no-wrap]) slot:not([name]) {
     display: inline-block;
     overflow: inherit;
@@ -739,4 +443,226 @@ export default css`
   :host([scrollbar][flow="row"]) slot:not([name]) {
     flex: 1 0 auto;
   }
+
+  ${breakpoints.reduce((breakpointResult, breakpoint) => {
+    const unsafe = {
+      name: unsafeCSS(breakpoint.name),
+      query: unsafeCSS(breakpoint.query)
+    }
+
+    return css`
+      ${breakpointResult}
+
+      ${unsafe.query} ${unsafeCSS('{')}
+        :host::after {
+          content: "${unsafe.name}";
+          display: none;
+        }
+
+        :host([display~="${unsafe.name}"]) {
+          display: inline-flex;
+        }
+
+        :host([height~="auto${unsafe.name}"]) {
+          flex: 1 0 auto;
+          max-height: 100%;
+        }
+
+        :host([height~="flex${unsafe.name}"]) {
+          flex: 1;
+        }
+
+        :host([height~="max${unsafe.name}"]) {
+          height: 100%;
+        }
+
+        :host([height~="min${unsafe.name}"]) {
+          height: 1px;
+        }
+
+        :host([hmargin~="large${unsafe.name}"]) {
+          margin-left: 0.75rem;
+          margin-right: 0.75rem;
+        }
+
+        :host([hmargin~="medium${unsafe.name}"]) {
+          margin-left: 0.5rem;
+          margin-right: 0.5rem;
+        }
+
+        :host([hmargin~="small${unsafe.name}"]) {
+          margin-left: 0.25rem;
+          margin-right: 0.25rem;
+        }
+
+        :host([margin~="large${unsafe.name}"]) {
+          margin: 0.75rem;
+        }
+
+        :host([margin~="medium${unsafe.name}"]) {
+          margin: 0.5rem;
+        }
+
+        :host([margin~="small${unsafe.name}"]) {
+          margin: 0.25rem;
+        }
+
+        :host([outer-shadow~="large${unsafe.name}"]) {
+          box-shadow: var(--scola-node-outer-shadow-large, 0 0 0.75rem rgba(0, 0, 0, 0.35));
+        }
+
+        :host([outer-shadow~="medium${unsafe.name}"]) {
+          box-shadow: var(--scola-node-outer-shadow-medium, 0 0 0.5rem rgba(0, 0, 0, 0.35));
+        }
+
+        :host([outer-shadow~="min${unsafe.name}"]) {
+          box-shadow: 0 0 0 1px var(--scola-node-outer-shadow-min, #eee);
+        }
+
+        :host([outer-shadow~="small${unsafe.name}"]) {
+          box-shadow: var(--scola-node-outer-shadow-small, 0 0 0.25rem rgba(0, 0, 0, 0.35));
+        }
+
+        :host([spacing~="large${unsafe.name}"]) {
+          padding: 0.75rem;
+        }
+
+        :host([spacing~="medium${unsafe.name}"]) {
+          padding: 0.5rem;
+        }
+
+        :host([spacing~="small${unsafe.name}"]) {
+          padding: 0.25rem;
+        }
+
+        :host([vmargin~="large${unsafe.name}"]) {
+          margin-bottom: 0.75rem;
+          margin-top: 0.75rem;
+        }
+
+        :host([vmargin~="medium${unsafe.name}"]) {
+          margin-bottom: 0.5rem;
+          margin-top: 0.5rem;
+        }
+
+        :host([vmargin~="small${unsafe.name}"]) {
+          margin-bottom: 0.25rem;
+          margin-top: 0.25rem;
+        }
+
+        :host([width~="auto${unsafe.name}"]) {
+          flex: 1 0 auto;
+          max-width: 100%;
+        }
+
+        :host([width~="flex${unsafe.name}"]) {
+          flex: 1;
+        }
+
+        :host([width~="max${unsafe.name}"]) {
+          width: 100%;
+        }
+
+        :host([width~="min${unsafe.name}"]) {
+          width: 1px;
+        }
+
+        :host([hpadding~="large${unsafe.name}"]) slot[name="body"] {
+          padding-left: 0.75rem;
+          padding-right: 0.75rem;
+        }
+
+        :host([hpadding~="medium${unsafe.name}"]) slot[name="body"] {
+          padding-left: 0.5rem;
+          padding-right: 0.5rem;
+        }
+
+        :host([hpadding~="small${unsafe.name}"]) slot[name="body"] {
+          padding-left: 0.25rem;
+          padding-right: 0.25rem;
+        }
+
+        :host([round~="large${unsafe.name}"]) slot[name="body"] {
+          border-radius: 0.75rem;
+        }
+
+        :host([round~="medium${unsafe.name}"]) slot[name="body"] {
+          border-radius: 0.5rem;
+        }
+
+        :host([round~="max${unsafe.name}"]) slot[name="body"] {
+          border-radius: 50%;
+        }
+
+        :host([round~="small${unsafe.name}"]) slot[name="body"] {
+          border-radius: 0.25rem;
+        }
+
+        :host([vpadding~="large${unsafe.name}"]) slot[name="body"] {
+          padding-bottom: 0.75rem;
+          padding-top: 0.75rem;
+        }
+
+        :host([vpadding~="medium${unsafe.name}"]) slot[name="body"] {
+          padding-bottom: 0.5rem;
+          padding-top: 0.5rem;
+        }
+
+        :host([vpadding~="small${unsafe.name}"]) slot[name="body"] {
+          padding-bottom: 0.25rem;
+          padding-top: 0.25rem;
+        }
+
+        :host([inner-height~="max${unsafe.name}"]) slot:not([name]) {
+          height: 100%;
+        }
+
+        :host([inner-height~="min${unsafe.name}"]) slot:not([name]) {
+          height: 1px;
+        }
+
+        :host([inner-spacing~="large${unsafe.name}"]) slot:not([name]) {
+          padding: 0.75rem;
+        }
+
+        :host([inner-spacing~="medium${unsafe.name}"]) slot:not([name]) {
+          padding: 0.5rem;
+        }
+
+        :host([inner-spacing~="small${unsafe.name}"]) slot:not([name]) {
+          padding: 0.25rem;
+        }
+
+        :host([inner-width~="max${unsafe.name}"]) slot:not([name]) {
+          width: 100%;
+        }
+
+        :host([inner-width~="min${unsafe.name}"]) slot:not([name]) {
+          width: 1px;
+        }
+
+        ${sizes.reduce((sizeResult, size) => {
+          return css`
+            ${sizeResult}
+
+            :host([height~="${size}${unsafe.name}"]) {
+              height: ${unsafeCSS(`${size}rem`)};
+            }
+
+            :host([width~="${size}${unsafe.name}"]) {
+              width: ${unsafeCSS(`${size}rem`)};
+            }
+
+            :host([inner-height~="${size}${unsafe.name}"]) slot:not([name]) {
+              height: ${unsafeCSS(`${size}rem`)};
+            }
+
+            :host([inner-width~="${size}${unsafe.name}"]) slot:not([name]) {
+              width: ${unsafeCSS(`${size}rem`)};
+            }
+          `
+        }, css``)}
+      ${unsafeCSS('}')}
+    `
+  }, css``)}
 `

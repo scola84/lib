@@ -21,44 +21,14 @@ declare global {
   }
 }
 
-type HorizontalFrom =
-  | 'screen-center'
-  | 'screen-end'
-  | 'screen-start'
-
-type HorizontalTo =
-  | 'center'
-  | 'end-at-start'
-  | 'end'
-  | 'screen-center'
-  | 'screen-end'
-  | 'screen-start'
-  | 'start-at-end'
-  | 'start'
-
-type VerticalFrom =
-  | 'screen-bottom'
-  | 'screen-center'
-  | 'screen-top'
-
-type VerticalTo =
-  | 'bottom-at-top'
-  | 'bottom'
-  | 'center'
-  | 'screen-bottom'
-  | 'screen-center'
-  | 'screen-top'
-  | 'top-at-bottom'
-  | 'top'
-
 interface DialogFrom {
-  horizontal?: HorizontalFrom
-  vertical?: VerticalFrom
+  horizontal?: string
+  vertical?: string
 }
 
 interface DialogTo {
-  horizontal?: HorizontalTo
-  vertical?: VerticalTo
+  horizontal?: string
+  vertical?: string
 }
 
 interface DialogPosition {
@@ -74,7 +44,7 @@ interface Rect {
   width: number
 }
 
-const htoAlternatives: Record<HorizontalTo, HorizontalTo[]> = {
+const htoAlternatives: Record<string, string[]> = {
   'center': ['center', 'start', 'end', 'screen-center'],
   'end': ['end', 'start', 'center', 'screen-center'],
   'end-at-start': ['end-at-start', 'start-at-end', 'screen-center'],
@@ -85,7 +55,7 @@ const htoAlternatives: Record<HorizontalTo, HorizontalTo[]> = {
   'start-at-end': ['start-at-end', 'end-at-start', 'screen-center']
 }
 
-const vtoAlternatives: Record<VerticalTo, VerticalTo[]> = {
+const vtoAlternatives: Record<string, string[]> = {
   'bottom': ['bottom', 'top', 'center', 'screen-center'],
   'bottom-at-top': ['bottom-at-top', 'top-at-bottom', 'screen-center'],
   'center': ['center', 'top', 'bottom', 'screen-center'],
@@ -103,8 +73,13 @@ export class DialogElement extends NodeElement {
     styles
   ]
 
+  @property({
+    reflect: true
+  })
+  public hcalc?: string
+
   @property()
-  public hfrom?: HorizontalFrom
+  public hfrom?: string
 
   @property({
     reflect: true
@@ -112,7 +87,7 @@ export class DialogElement extends NodeElement {
   public hspacing?: 'large' | 'medium' | 'small'
 
   @property()
-  public hto?: HorizontalTo
+  public hto?: string
 
   @property({
     type: Boolean
@@ -120,49 +95,12 @@ export class DialogElement extends NodeElement {
   public locked?: boolean
 
   @property({
-    attribute: 'real-hto',
     reflect: true
   })
-  public realHto?: HorizontalTo
-
-  @property({
-    attribute: 'real-vto',
-    reflect: true
-  })
-  public realVto?: VerticalTo
-
-  @property({
-    attribute: 'screen-height'
-  })
-  public screenHeight?: NodeElement['height']
-
-  @property({
-    attribute: 'screen-hfrom'
-  })
-  public screenHfrom?: HorizontalFrom
-
-  @property({
-    attribute: 'screen-hto'
-  })
-  public screenHto?: HorizontalTo
-
-  @property({
-    attribute: 'screen-vfrom'
-  })
-  public screenVfrom?: VerticalFrom
-
-  @property({
-    attribute: 'screen-vto'
-  })
-  public screenVto?: VerticalTo
-
-  @property({
-    attribute: 'screen-width'
-  })
-  public screenWidth?: NodeElement['width']
+  public vcalc?: string
 
   @property()
-  public vfrom?: VerticalFrom
+  public vfrom?: string
 
   @property({
     reflect: true
@@ -170,7 +108,7 @@ export class DialogElement extends NodeElement {
   public vspacing?: 'large' | 'medium' | 'small'
 
   @property()
-  public vto?: VerticalTo
+  public vto?: string
 
   public anchorElement?: HTMLElement | null
 
@@ -180,17 +118,19 @@ export class DialogElement extends NodeElement {
 
   public scrimElement: HTMLElement | null
 
+  protected busy = false
+
   protected handleClickBound: (event: Event) => void
 
   protected handleHideBound: (event: CustomEvent) => void
 
   protected handleKeydownBound: (event: KeyboardEvent) => void
 
-  protected handleResizeBound: () => void
-
   protected handleScrollBound: () => void
 
   protected handleShowBound: (event: CustomEvent) => void
+
+  protected observer: ResizeObserver
 
   protected originElement: HTMLElement | null
 
@@ -199,13 +139,13 @@ export class DialogElement extends NodeElement {
   public constructor () {
     super()
     this.dir = document.dir
-    this.contentElement = this.querySelector<HTMLElement>('[is="content"]')
+    this.observer = new ResizeObserver(this.handleResize.bind(this))
+    this.contentElement = this.querySelector<HTMLElement>(':scope > [as="content"]')
     this.originElement = this.parentElement
-    this.scrimElement = this.querySelector<HTMLElement>('[is="scrim"]')
+    this.scrimElement = this.querySelector<HTMLElement>(':scope > [as="scrim"]')
     this.handleClickBound = this.handleClick.bind(this)
     this.handleHideBound = this.handleHide.bind(this)
     this.handleKeydownBound = this.handleKeydown.bind(this)
-    this.handleResizeBound = this.handleResize.bind(this)
     this.handleScrollBound = this.handleScroll.bind(this)
     this.handleShowBound = this.handleShow.bind(this)
   }
@@ -217,6 +157,7 @@ export class DialogElement extends NodeElement {
   }
 
   public disconnectedCallback (): void {
+    this.observer.disconnect()
     window.removeEventListener('scola-dialog-hide', this.handleHideBound)
     window.removeEventListener('scola-dialog-show', this.handleShowBound)
     super.disconnectedCallback()
@@ -230,7 +171,10 @@ export class DialogElement extends NodeElement {
   }
 
   public async hide (duration = this.duration): Promise<void> {
-    if (this.hidden) {
+    if (
+      this.hidden ||
+      this.busy
+    ) {
       return
     }
 
@@ -278,7 +222,10 @@ export class DialogElement extends NodeElement {
   }
 
   public async show (duration = this.duration): Promise<void> {
-    if (!this.hidden) {
+    if (
+      !this.hidden ||
+      this.busy
+    ) {
       return
     }
 
@@ -382,22 +329,14 @@ export class DialogElement extends NodeElement {
   }
 
   protected calculateHidePositions (): { from: DialogPosition, to: DialogPosition } {
+    const regExp = new RegExp(`(?<=(?<position>[^@\\s]+))${this.breakpoint}`, 'u')
+
     const from = {
-      horizontal: this.hfrom,
-      vertical: this.vfrom
+      horizontal: this.hfrom?.match(regExp)?.groups?.position,
+      vertical: this.vfrom?.match(regExp)?.groups?.position
     }
 
-    if (
-      this.realHto !== this.hto &&
-      this.realVto !== this.hto &&
-      this.realHto?.includes('screen') !== undefined &&
-      this.realVto?.includes('screen') !== undefined
-    ) {
-      from.horizontal = this.screenHfrom ?? from.horizontal
-      from.vertical = this.screenVfrom ?? from.vertical
-    }
-
-    const toPosition = {
+    const fromPosition = {
       left: 0,
       top: 0
     }
@@ -405,61 +344,53 @@ export class DialogElement extends NodeElement {
     if (this.contentElement instanceof HTMLElement) {
       const style = window.getComputedStyle(this.contentElement)
 
-      toPosition.left = parseFloat(style.left)
-      toPosition.top = parseFloat(style.top)
+      fromPosition.left = parseFloat(style.left)
+      fromPosition.top = parseFloat(style.top)
 
       if (
-        Number.isNaN(toPosition.left) ||
-        Number.isNaN(toPosition.top)
+        Number.isNaN(fromPosition.left) ||
+        Number.isNaN(fromPosition.top)
       ) {
-        toPosition.left = 0
-        toPosition.top = 0
+        fromPosition.left = 0
+        fromPosition.top = 0
       }
     }
 
-    let fromPosition = {
-      ...toPosition
+    let toPosition = {
+      ...fromPosition
     }
 
-    if (from.horizontal !== undefined) {
-      fromPosition = this.calculateFromPosition(from)
+    if (typeof from.horizontal === 'string') {
+      toPosition = this.calculateFromPosition(from)
     }
 
     return {
-      from: toPosition,
-      to: fromPosition
+      from: fromPosition,
+      to: toPosition
     }
   }
 
   protected calculateShowPositions (): { from: DialogPosition, to: DialogPosition } {
+    const regExp = new RegExp(`(?<=(?<position>[^@\\s]+))${this.breakpoint}`, 'u')
+
     const from = {
-      horizontal: this.hfrom,
-      vertical: this.vfrom
+      horizontal: this.hfrom?.match(regExp)?.groups?.position,
+      vertical: this.vfrom?.match(regExp)?.groups?.position
     }
 
     const to = {
-      horizontal: this.hto,
-      vertical: this.vto
+      horizontal: this.hto?.match(regExp)?.groups?.position,
+      vertical: this.vto?.match(regExp)?.groups?.position
     }
 
-    let toPosition = this.findToPosition(to)
+    const toPosition = this.findToPosition(to)
 
-    if ((
-      to.horizontal !== this.hto &&
-      to.horizontal?.includes('screen') !== undefined
-    ) || (
-      to.vertical !== this.vto &&
-      to.vertical?.includes('screen') !== undefined
-    )) {
-      toPosition = this.findScreenPosition(from, to)
+    if (typeof to.horizontal === 'string') {
+      this.hcalc = to.horizontal
     }
 
-    if (to.horizontal !== undefined) {
-      this.realHto = to.horizontal
-    }
-
-    if (to.vertical !== undefined) {
-      this.realVto = to.vertical
+    if (typeof to.vertical === 'string') {
+      this.vcalc = to.vertical
     }
 
     let fromPosition = {
@@ -467,8 +398,8 @@ export class DialogElement extends NodeElement {
     }
 
     if (
-      from.horizontal !== undefined &&
-      from.vertical !== undefined
+      typeof from.horizontal === 'string' &&
+      typeof from.vertical === 'string'
     ) {
       fromPosition = this.calculateFromPosition(from)
     }
@@ -590,34 +521,13 @@ export class DialogElement extends NodeElement {
         top = (app.height - element.height) / 2
         break
       case 'screen-top':
-        top = 0
+        top = -element.height
         break
       default:
         break
     }
 
     return top
-  }
-
-  protected findScreenPosition (from: DialogFrom, to: DialogTo): DialogPosition {
-    to.horizontal = this.screenHto ?? to.horizontal
-    to.vertical = this.screenVto ?? to.vertical
-    from.horizontal = this.screenHfrom ?? from.horizontal
-    from.vertical = this.screenVfrom ?? from.vertical
-
-    if (this.screenWidth !== undefined) {
-      this.contentElement?.setAttribute('width', this.screenWidth)
-    }
-
-    if (this.screenHeight !== undefined) {
-      this.contentElement?.setAttribute('height', this.screenHeight)
-    }
-
-    if (this.width === 'auto') {
-      this.contentElement?.style.removeProperty('max-width')
-    }
-
-    return this.findToPosition(to)
   }
 
   protected findScrollParentElements (): NodeElement[] {
@@ -652,7 +562,7 @@ export class DialogElement extends NodeElement {
       top: 0
     }
 
-    htoAlternatives[to.horizontal ?? 'center'].some((hto: HorizontalTo): boolean => {
+    htoAlternatives[to.horizontal ?? 'center'].some((hto: string): boolean => {
       to.horizontal = hto
       position = this.calculateToPosition(to)
       return (
@@ -661,7 +571,7 @@ export class DialogElement extends NodeElement {
       )
     })
 
-    vtoAlternatives[to.vertical ?? 'center'].some((vto: VerticalTo): boolean => {
+    vtoAlternatives[to.vertical ?? 'center'].some((vto: string): boolean => {
       to.vertical = vto
       position = this.calculateToPosition(to)
       return (
@@ -683,15 +593,22 @@ export class DialogElement extends NodeElement {
       })
 
     this.anchorElement = null
+    this.busy = false
     this.hidden = true
     this.position = null
   }
 
   protected finishShow (): void {
     this.contentElement?.style.removeProperty('opacity')
+
+    if (this.anchorElement instanceof HTMLElement) {
+      this.observer.observe(this.anchorElement)
+    }
+
+    this.observer.observe(document.body)
     window.addEventListener('click', this.handleClickBound)
     window.addEventListener('keydown', this.handleKeydownBound)
-    window.addEventListener('resize', this.handleResizeBound)
+    this.busy = false
   }
 
   protected handleClick (event: Event): void {
@@ -706,7 +623,6 @@ export class DialogElement extends NodeElement {
 
   protected handleHide (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
       this.hide().catch(() => {})
     }
   }
@@ -722,14 +638,8 @@ export class DialogElement extends NodeElement {
   }
 
   protected handleResize (): void {
-    const { to } = this.calculateShowPositions()
-
-    this.contentElement?.animate({
-      left: `${to.left}px`,
-      to: `${to.top}px`
-    }, {
-      fill: 'forwards'
-    })
+    this.setMaxWidth()
+    this.setPosition()
   }
 
   protected handleScroll (): void {
@@ -738,10 +648,8 @@ export class DialogElement extends NodeElement {
 
   protected handleShow (event: CustomEvent<Record<string, unknown> | null>): void {
     if (this.isTarget(event)) {
-      event.cancelBubble = true
-
       if (isObject(event.detail?.data)) {
-        if (event.detail?.origin instanceof HTMLElement) {
+        if (event.detail?.origin instanceof NodeElement) {
           this.anchorElement = event.detail.origin
         }
 
@@ -773,12 +681,19 @@ export class DialogElement extends NodeElement {
   }
 
   protected prepareHide (): void {
+    this.busy = true
+
+    if (this.anchorElement instanceof HTMLElement) {
+      this.observer.unobserve(this.anchorElement)
+    }
+
+    this.observer.unobserve(document.body)
     window.removeEventListener('click', this.handleClickBound)
     window.removeEventListener('keydown', this.handleKeydownBound)
-    window.removeEventListener('resize', this.handleResizeBound)
   }
 
   protected async prepareShow (): Promise<void> {
+    this.busy = true
     this.hidden = false
 
     this
@@ -794,16 +709,34 @@ export class DialogElement extends NodeElement {
 
     this.contentElement?.style.setProperty('opacity', '0')
     this.scrimElement?.style.setProperty('opacity', '0')
-
-    if (
-      this.width === 'auto' &&
-      this.anchorElement instanceof HTMLElement
-    ) {
-      this.contentElement?.style.setProperty('max-width', `${this.anchorElement.getBoundingClientRect().width}px`)
-    }
+    this.setMaxWidth()
 
     await new Promise((resolve) => {
       window.setTimeout(resolve)
+    })
+  }
+
+  protected setMaxWidth (): void {
+    if (
+      this.anchorElement instanceof HTMLElement &&
+      this.contentElement instanceof NodeElement
+    ) {
+      if (this.contentElement.width?.includes(`flex${this.breakpoint}`) === true) {
+        this.contentElement.style.setProperty('width', `${this.anchorElement.getBoundingClientRect().width}px`)
+      } else {
+        this.contentElement.style.removeProperty('width')
+      }
+    }
+  }
+
+  protected setPosition (): void {
+    const { to } = this.calculateShowPositions()
+
+    this.contentElement?.animate({
+      left: `${to.left}px`,
+      top: `${to.top}px`
+    }, {
+      fill: 'forwards'
     })
   }
 }

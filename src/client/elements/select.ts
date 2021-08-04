@@ -1,7 +1,8 @@
-import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
-import { customElement, property, query } from 'lit/decorators.js'
+import type { CSSResultGroup, PropertyValues } from 'lit'
+import { cast, isObject } from '../../common'
+import { customElement, property } from 'lit/decorators.js'
+import type { FormatElement } from './format'
 import { InputElement } from './input'
-import { html } from 'lit'
 import styles from '../styles/select'
 import updaters from '../updaters/select'
 
@@ -41,75 +42,49 @@ export class SelectElement extends InputElement {
   })
   public switch?: boolean
 
-  @query('input[type="range"]', true)
-  protected rangeElement: HTMLInputElement
+  public get isChecked (): boolean {
+    return this.inputElement.checked
+  }
+
+  protected rangeElement?: HTMLInputElement
 
   protected updaters = SelectElement.updaters
 
   public appendValueTo (formData: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (this.isSuccessful(this.inputElement)) {
-      if (this.inputElement.checked) {
-        formData.append(this.inputElement.name, this.inputElement.value)
+    if (this.isSuccessful) {
+      if (this.isChecked) {
+        formData.append(this.name, this.inputElement.value)
       }
     }
   }
 
-  public connectedCallback (): void {
-    this.inputElement = this.querySelector<HTMLInputElement>(':scope > input, :scope > textarea') ?? this.inputElement
-    super.connectedCallback()
-  }
-
   public firstUpdated (properties: PropertyValues): void {
-    this.checked = this.inputElement.checked
+    this.checked = this.isChecked
 
-    if (this.switch !== true) {
-      this.duration = 0
-    }
+    if (this.switch === true) {
+      this.rangeElement = document.createElement('input')
+      this.rangeElement.type = 'range'
 
-    if (this.inputElement.checked) {
-      this.rangeElement.value = '1'
+      if (this.isChecked) {
+        this.rangeElement.value = '100'
+      } else {
+        this.rangeElement.value = '0'
+      }
+
+      this.shadowBody.insertBefore(this.rangeElement, this.afterSlotElement)
     } else {
-      this.rangeElement.value = '0'
+      this.duration = 0
     }
 
     super.firstUpdated(properties)
   }
 
-  public render (): TemplateResult {
-    return html`
-      <slot name="header"></slot>
-      <slot name="body">
-        <slot name="before"></slot>
-        <slot name="prefix"></slot>
-        <slot></slot>
-        <slot name="suffix"></slot>
-        <input type="range" min="0" max="1" step="0.01" value="0" disabled />
-        <slot name="after"></slot>
-      </slot>
-      <slot name="footer"></slot>
-    `
-  }
-
-  public setInput (data: Record<string, unknown>): void {
-    super.setInput(data)
-
-    if (data.checked === true) {
-      this.toggleChecked(true, 0).catch(() => {})
-    }
-  }
-
-  public setValue (data: Record<string, unknown>): void {
-    if (data[this.inputElement.name] === this.inputElement.value) {
-      this.toggleChecked(true, 0).catch(() => {})
-    }
-  }
-
   public async toggleChecked (force?: boolean, duration = this.duration): Promise<void> {
     if (
       force !== undefined &&
-      this.checked === force
+      this.isChecked === force
     ) {
       return
     }
@@ -117,18 +92,33 @@ export class SelectElement extends InputElement {
     this.checked = force ?? !(this.checked === true)
     this.inputElement.checked = this.checked
 
+    const { rangeElement } = this
+
+    if (rangeElement === undefined) {
+      return
+    }
+
     let from = 0
     let to = 0
 
-    if (this.inputElement.checked) {
-      to = 1
+    if (this.isChecked) {
+      to = 100
     } else {
-      from = 1
+      from = 100
     }
 
     await this.ease(from, to, (value) => {
-      this.rangeElement.value = value.toString()
+      rangeElement.value = value.toString()
     }, duration)
+  }
+
+  protected createEventData (): Record<string, unknown> {
+    return {
+      checked: this.checked,
+      label: this.querySelector<FormatElement>('scola-format[as="value"]')?.shadowContent ?? this.querySelector('[as="value"]')?.textContent,
+      name: this.name,
+      value: this.value
+    }
   }
 
   protected handleClick (event: MouseEvent): void {
@@ -161,5 +151,37 @@ export class SelectElement extends InputElement {
         super.handleInput()
       })
       .catch(() => {})
+  }
+
+  protected setData (data: Record<string, unknown>): void {
+    this.clearError()
+
+    const value = data[this.name]
+
+    if (isObject(value)) {
+      if (value.code !== undefined) {
+        this.setError(value)
+      } else if (value.value !== undefined) {
+        this.setValue(value.value)
+      }
+    } else if (data.value !== undefined) {
+      this.setInput(data)
+    } else if (value !== undefined) {
+      this.setValue(value)
+    }
+  }
+
+  protected setInput (data: Record<string, unknown>): void {
+    super.setInput(data)
+
+    if (cast(data.checked) === true) {
+      this.toggleChecked(true, 0).catch(() => {})
+    }
+  }
+
+  protected setValue (value: unknown): void {
+    if (value === this.value) {
+      this.toggleChecked(true, 0).catch(() => {})
+    }
   }
 }

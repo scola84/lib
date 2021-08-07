@@ -1,3 +1,20 @@
+# [25.0.0](https://github.com/scola84/lib/compare/v24.0.0...v25.0.0) (2021-08-07)
+
+
+### Bug Fixes
+
+* **client:** make child elements non-optional ([a3479d6](https://github.com/scola84/lib/commit/a3479d69f2f5abc7b36ade80ddb25ad0103771cb))
+
+
+### Features
+
+* **client:** improve elements ([8dfff54](https://github.com/scola84/lib/commit/8dfff54a8025d7e0ccf8c546127c136654e0b73f))
+
+
+### BREAKING CHANGES
+
+* **client:** Quite some interfaces have changed.
+
 # [24.0.0](https://github.com/scola84/lib/compare/v23.0.0...v24.0.0) (2021-08-03)
 
 

@@ -1,12 +1,11 @@
 {
   "handler": {
     "body": [
-      "import type { FastifyReply, FastifyRequest, RequestGenericInterface } from 'fastify'",
+      "import type { FastifyReply, FastifyRequest } from 'fastify'",
       "import { RouteHandler } from '@scola/lib'",
       "import type { RouteHandlerOptions } from '@scola/lib'",
-      "import Schema from 'fluent-json-schema'",
       "",
-      "interface ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Request extends RequestGenericInterface {",
+      "interface ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Request {",
       "",
       "}",
       "",
@@ -32,6 +31,7 @@
   "runner": {
     "body": [
       "import type { TaskRun, TaskRunnerOptions } from '@scola/lib'",
+      "import Schema from 'fluent-json-schema'",
       "import { TaskRunner } from '@scola/lib'",
       "",
       "interface Options {",
@@ -51,6 +51,11 @@
       "}",
       "",
       "export class ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Runner extends TaskRunner {",
+      "  public schema = {",
+      "    payload: Schema",
+      "      .object()",
+      "  }",
+      "",        
       "  public constructor (options: ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}RunnerOptions) {",
       "    super(options)",
       "  }",

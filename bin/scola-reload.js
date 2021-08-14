@@ -12,7 +12,7 @@ Description:
     * docker-compose up --detach <service>
 
 Example:
-  $ scola dc-reload postgres
+  $ scola reload postgres
 `)
 
 program

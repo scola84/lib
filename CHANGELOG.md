@@ -1,3 +1,15 @@
+# [25.1.0](https://github.com/scola84/lib/compare/v25.0.0...v25.1.0) (2021-08-14)
+
+
+### Bug Fixes
+
+* **bin:** convert bigint/serial to strings again ([ad78e3c](https://github.com/scola84/lib/commit/ad78e3c03eb35979a2cf513608312655015e27fc))
+
+
+### Features
+
+* **docker:** add yarn flag to ignore optional dependencies ([c31b4f2](https://github.com/scola84/lib/commit/c31b4f2e9237881bb1eae82f4fd14da7d7a7783a))
+
 # [25.0.0](https://github.com/scola84/lib/compare/v24.0.0...v25.0.0) (2021-08-07)
 
 

@@ -3,7 +3,7 @@ services:
   node:
     command: >
       sh -c "
-        yarn install --frozen-lockfile --production &&
+        yarn install --frozen-lockfile --ignore-optional --production &&
         yarn run exec
       "
     depends_on:

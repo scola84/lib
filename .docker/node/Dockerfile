@@ -10,5 +10,5 @@ COPY ./dist/server /usr/src/app/dist/server
 COPY ./package.json /usr/src/app/package.json
 COPY ./yarn.lock /usr/src/app/yarn.lock
 
-RUN yarn install --frozen-lockfile --production
+RUN yarn install --frozen-lockfile --ignore-optional --production
 CMD ["node", "dist/server/cjs.js"]

@@ -1,3 +1,10 @@
+## [25.1.1](https://github.com/scola84/lib/compare/v25.1.0...v25.1.1) (2021-08-14)
+
+
+### Bug Fixes
+
+* trigger release ([d51d3ef](https://github.com/scola84/lib/commit/d51d3ef955add9355658d285bc7ca161355e709c))
+
 # [25.1.0](https://github.com/scola84/lib/compare/v25.0.0...v25.1.0) (2021-08-14)
 
 

@@ -39,30 +39,12 @@
         "maxEOF": 0
       }
     ],
+    "no-ternary": "off",
     "no-undefined": "off",
     "no-unused-vars": [
       "error",
       {
         "vars": "local"
-      }
-    ],
-    "object-curly-newline": [
-      "error",
-      {
-        "ExportDeclaration": {
-          "consistent": true
-        },
-        "ImportDeclaration": {
-          "consistent": true
-        },
-        "ObjectExpression": {
-          "multiline": true,
-          "minProperties": 1
-        },
-        "ObjectPattern": {
-          "multiline": true,
-          "minProperties": 2
-        }
       }
     ],
     "padding-line-between-statements": [

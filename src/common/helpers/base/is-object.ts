@@ -8,7 +8,10 @@
 export function isObject (value: unknown): value is Record<string, unknown> {
   return (
     typeof value === 'object' &&
-    !Array.isArray(value) &&
-    value !== null
+    value !== null &&
+    !Array.isArray(value) && (
+      typeof Buffer === 'undefined' ||
+      !Buffer.isBuffer(value)
+    )
   )
 }

@@ -1,3 +1,10 @@
+## [25.1.2](https://github.com/scola84/lib/compare/v25.1.1...v25.1.2) (2021-08-17)
+
+
+### Bug Fixes
+
+* **bin:** make properties non-optional in sql-ts ([d4cec8a](https://github.com/scola84/lib/commit/d4cec8a745bab5def74edda0ddf6ab133a0f9789))
+
 ## [25.1.1](https://github.com/scola84/lib/compare/v25.1.0...v25.1.1) (2021-08-14)
 
 

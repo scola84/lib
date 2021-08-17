@@ -1,3 +1,10 @@
+# [25.2.0](https://github.com/scola84/lib/compare/v25.1.2...v25.2.0) (2021-08-17)
+
+
+### Features
+
+* **sql:** allow DSN to be undefined ([9518aa9](https://github.com/scola84/lib/commit/9518aa960a5891f1c0f7538858d36d7699abf1b6))
+
 ## [25.1.2](https://github.com/scola84/lib/compare/v25.1.1...v25.1.2) (2021-08-17)
 
 

@@ -11,8 +11,8 @@ Description:
 
   Reads all tables from the database at <source>. Creates an interface for 
   every table with the sorted column names as property names and the column
-  types as property types. Writes every interface to a file named "{table}.ts"
-  in <target>.
+  types as property types. Makes all properties non-optional. Writes every
+  interface to a file named "{table}.ts" in <target>.
 
   Creates import/export statements for every interface. Creates an interface
   called Entities, containing a named list of entity arrays. Writes the
@@ -106,6 +106,15 @@ try {
       database.tables = database.tables.filter((table) => {
         return url.pathname.includes('queue') || table.schema !== 'queue'
       })
+
+      return database
+    })
+    .then((database) => {
+      for (const table of database.tables) {
+        table.columns.forEach((column) => {
+          column.optional = false
+        })
+      }
 
       return database
     })

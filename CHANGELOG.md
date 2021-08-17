@@ -1,3 +1,10 @@
+## [25.2.1](https://github.com/scola84/lib/compare/v25.2.0...v25.2.1) (2021-08-17)
+
+
+### Bug Fixes
+
+* **base:** check if value is Buffer in isObject ([afcaf60](https://github.com/scola84/lib/commit/afcaf6058c84f6443ccc45c19c4be2f930acb173))
+
 # [25.2.0](https://github.com/scola84/lib/compare/v25.1.2...v25.2.0) (2021-08-17)
 
 

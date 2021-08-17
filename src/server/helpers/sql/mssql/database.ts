@@ -20,15 +20,32 @@ export class MssqlDatabase extends Database {
     return Promise.resolve(new MssqlConnection(this.pool.request()))
   }
 
-  public createPool (): ConnectionPool {
-    const url = new URL(this.dsn ?? 'mssql://')
+  public async start (): Promise<void> {
+    if (this.dsn !== undefined) {
+      this.pool = this.createPool(this.dsn, this.password)
+      await this.pool.connect()
+
+      if (this.population !== undefined) {
+        await this.populate(this.population)
+      }
+    }
+  }
+
+  public async stop (): Promise<void> {
+    if (this.dsn !== undefined) {
+      await this.pool.close()
+    }
+  }
+
+  protected createPool (dsn: string, password?: string): ConnectionPool {
+    const url = new URL(dsn)
 
     const options: config = {
       database: url.pathname.slice(1),
       options: {
         encrypt: false
       },
-      password: this.password,
+      password,
       port: Number(url.port),
       server: url.hostname,
       user: decodeURIComponent(url.username)
@@ -44,18 +61,5 @@ export class MssqlDatabase extends Database {
       })
 
     return new ConnectionPool(options)
-  }
-
-  public async start (): Promise<void> {
-    this.pool = this.createPool()
-    await this.pool.connect()
-
-    if (this.population !== undefined) {
-      await this.populate(this.population)
-    }
-  }
-
-  public async stop (): Promise<void> {
-    await this.pool.close()
   }
 }

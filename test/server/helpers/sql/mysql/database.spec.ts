@@ -8,11 +8,11 @@ import { sql } from '../../../../../src/server/helpers/sql/tag'
 describe('MysqlConnection', () => {
   describe('should', () => {
     it('create a pool with options', createAPoolWithOptions)
-    it('create a pool without options', createAPoolWithoutOptions)
     it('delete one row', deleteOneRow)
     it('depopulate', depopulate)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
+    it('not fail to start and stop when DSN is undefined', notFailToStartAndStopWhenDsnIsUndefined)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
     it('populate', populate)
     it('query', query)
@@ -67,23 +67,18 @@ afterAll(async () => {
   await helpers.pool.end()
 })
 
-function createAPoolWithOptions (): void {
+async function createAPoolWithOptions (): Promise<void> {
   const database = new MysqlDatabase({
     dsn: helpers.dsn,
     password: helpers.password
   })
 
-  const pool = database.createPool() as unknown as ExtendedPool
+  await database.start()
+
+  const pool = database.pool as unknown as ExtendedPool
 
   expect(pool.pool.constructor.name).equal('Pool')
   expect(pool.pool.config.connectionLimit).equal(15)
-}
-
-function createAPoolWithoutOptions (): void {
-  const database = new MysqlDatabase()
-  const pool = database.createPool() as unknown as ExtendedPool
-
-  expect(pool.pool.constructor.name).equal('Pool')
 }
 
 async function deleteOneRow (): Promise<void> {
@@ -214,6 +209,13 @@ async function insertOneRow (): Promise<void> {
   } finally {
     await database.stop()
   }
+}
+
+async function notFailToStartAndStopWhenDsnIsUndefined (): Promise<void> {
+  const database = new MysqlDatabase()
+
+  await database.start()
+  await database.stop()
 }
 
 async function parseABigIntAsANumber (): Promise<void> {

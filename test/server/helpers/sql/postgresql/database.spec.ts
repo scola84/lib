@@ -7,11 +7,11 @@ import { sql } from '../../../../../src/server/helpers/sql/tag'
 describe('PostgresqlConnection', () => {
   describe('should', () => {
     it('create a pool with options', createAPoolWithOptions)
-    it('create a pool without options', createAPoolWithoutOptions)
     it('delete one row', deleteOneRow)
     it('depopulate', depopulate)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
+    it('not fail to start and stop when DSN is undefined', notFailToStartAndStopWhenDsnIsUndefined)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
     it('populate', populate)
     it('query', query)
@@ -62,23 +62,18 @@ afterAll(async () => {
   await helpers.pool.end()
 })
 
-function createAPoolWithOptions (): void {
+async function createAPoolWithOptions (): Promise<void> {
   const database = new PostgresqlDatabase({
     dsn: helpers.dsn,
     password: helpers.password
   })
 
-  const pool = database.createPool() as unknown as ExtendedPool
+  await database.start()
+
+  const pool = database.pool as unknown as ExtendedPool
 
   expect(pool).instanceOf(Pool)
   expect(pool.options.max).equal(15)
-}
-
-function createAPoolWithoutOptions (): void {
-  const database = new PostgresqlDatabase()
-  const pool = database.createPool() as unknown as ExtendedPool
-
-  expect(pool).instanceOf(Pool)
 }
 
 async function deleteOneRow (): Promise<void> {
@@ -187,6 +182,13 @@ async function insertOneRow (): Promise<void> {
   } finally {
     await database.stop()
   }
+}
+
+async function notFailToStartAndStopWhenDsnIsUndefined (): Promise<void> {
+  const database = new PostgresqlDatabase()
+
+  await database.start()
+  await database.stop()
 }
 
 async function parseABigIntAsANumber (): Promise<void> {

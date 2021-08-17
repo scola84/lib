@@ -491,6 +491,20 @@ export abstract class Database {
   public abstract connect (): Promise<Connection>
 
   /**
+   * Starts the database client.
+   *
+   * Sets `pool` and populates the database if `dsn` is defined.
+   */
+  public abstract start (): Promise<void>
+
+  /**
+   * Stops the database client if `dsn` is defined.
+   *
+   * Closes the connection pool.
+   */
+  public abstract stop (): Promise<void>
+
+  /**
    * Creates a connection pool.
    *
    * Parses `dsn` as the pool options.
@@ -499,21 +513,9 @@ export abstract class Database {
    *
    * Parses the query string of `dsn`, casts boolean and number values and adds the key/value pairs to the pool options.
    *
+   * @param dsn - The DSN of the connection pool
+   * @param password - The password of the connection pool
    * @returns The connection pool
    */
-  public abstract createPool (): unknown
-
-  /**
-   * Starts the database client.
-   *
-   * Sets `pool` and populates the database.
-   */
-  public abstract start (): Promise<void>
-
-  /**
-   * Stops the database client.
-   *
-   * Closes the connection pool.
-   */
-  public abstract stop (): Promise<void>
+  protected abstract createPool (dsn: string, password?: string): unknown
 }

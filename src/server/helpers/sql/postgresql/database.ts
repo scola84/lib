@@ -22,10 +22,26 @@ export class PostgresqlDatabase extends Database {
     return new PostgresqlConnection(await this.pool.connect())
   }
 
-  public createPool (): Pool {
-    const url = new URL(this.dsn ?? 'postgres://')
+  public async start (): Promise<void> {
+    if (this.dsn !== undefined) {
+      this.pool = this.createPool(this.dsn, this.password)
 
-    url.password = this.password ?? url.password
+      if (this.population !== undefined) {
+        await this.populate(this.population)
+      }
+    }
+  }
+
+  public async stop (): Promise<void> {
+    if (this.dsn !== undefined) {
+      await this.pool.end()
+    }
+  }
+
+  protected createPool (dsn: string, password?: string): Pool {
+    const url = new URL(dsn)
+
+    url.password = String(password)
 
     const options: PoolConfig = {
       connectionString: url.toString(),
@@ -42,17 +58,5 @@ export class PostgresqlDatabase extends Database {
       })
 
     return new Pool(options)
-  }
-
-  public async start (): Promise<void> {
-    this.pool = this.createPool()
-
-    if (this.population !== undefined) {
-      await this.populate(this.population)
-    }
-  }
-
-  public async stop (): Promise<void> {
-    await this.pool.end()
   }
 }

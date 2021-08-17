@@ -20,14 +20,30 @@ export class MysqlDatabase extends Database {
     return new MysqlConnection(await this.pool.getConnection())
   }
 
-  public createPool (): Pool {
-    const url = new URL(this.dsn ?? 'mysql://')
+  public async start (): Promise<void> {
+    if (this.dsn !== undefined) {
+      this.pool = this.createPool(this.dsn, this.password)
+
+      if (this.population !== undefined) {
+        await this.populate(this.population)
+      }
+    }
+  }
+
+  public async stop (): Promise<void> {
+    if (this.dsn !== undefined) {
+      await this.pool.end()
+    }
+  }
+
+  protected createPool (dsn: string, password?: string): Pool {
+    const url = new URL(dsn)
 
     const options: PoolOptions = {
       database: url.pathname.slice(1),
       decimalNumbers: true,
       host: url.hostname,
-      password: this.password,
+      password,
       port: Number(url.port),
       supportBigNumbers: true,
       user: decodeURIComponent(url.username)
@@ -43,17 +59,5 @@ export class MysqlDatabase extends Database {
       })
 
     return createPool(options)
-  }
-
-  public async start (): Promise<void> {
-    this.pool = this.createPool()
-
-    if (this.population !== undefined) {
-      await this.populate(this.population)
-    }
-  }
-
-  public async stop (): Promise<void> {
-    await this.pool.end()
   }
 }

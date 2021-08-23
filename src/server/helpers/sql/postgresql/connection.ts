@@ -4,7 +4,7 @@ import PgQueryStream from 'pg-query-stream'
 import type { PoolClient } from 'pg'
 import type { Readable } from 'stream'
 import { format } from '../format'
-import { format as formatValue } from './format'
+import { formatters } from './formatters'
 import { sql } from '../tag'
 
 /**
@@ -13,7 +13,7 @@ import { sql } from '../tag'
 export class PostgresqlConnection extends Connection {
   public connection: PoolClient
 
-  public format = format(formatValue)
+  public format = format(formatters)
 
   /**
    * Creates a PostgreSQL connection.

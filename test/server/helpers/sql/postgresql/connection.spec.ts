@@ -135,24 +135,24 @@ async function depopulate (): Promise<void> {
 async function formatAQuery (): Promise<void> {
   const expectedQuery = `
     SELECT *
-    FROM test_connection
+    FROM "scola"."test_connection"
     WHERE
-      test = '1' AND
-      test = NULL AND
-      test = '1' AND
-      test = '{"number":3}'::jsonb AND
-      test = 'value'
+      "test" = '1' AND
+      "test" = NULL AND
+      "test" = '1' AND
+      "test" = '{"number":3}'::jsonb AND
+      "test" = 'value'
   `
 
   const rawQuery = `
     SELECT *
-    FROM test_connection
+    FROM $[scola.test_connection]
     WHERE
-      test = $(test1) AND
-      test = $(test2) AND
-      test = $(test1) AND
-      test = $(test3) AND
-      test = $(test4)
+      $[test] = $(test1) AND
+      $[test] = $(test2) AND
+      $[test] = $(test1) AND
+      $[test] = $(test3) AND
+      $[test] = $(test4)
   `
 
   const rawValues = {

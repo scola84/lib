@@ -4,7 +4,7 @@ import { MysqlConnection } from './connection'
 import { URL } from 'url'
 import { createPool } from 'mysql2/promise'
 import { format } from '../format'
-import { format as formatValue } from './format'
+import { formatters } from './formatters'
 import { parse } from 'query-string'
 import { set } from '../../../../common'
 
@@ -12,7 +12,7 @@ import { set } from '../../../../common'
  * Manages MySQL connections.
  */
 export class MysqlDatabase extends Database {
-  public format = format(formatValue)
+  public format = format(formatters)
 
   public pool: Pool
 

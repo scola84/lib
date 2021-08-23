@@ -4,7 +4,7 @@ import type { PoolConfig } from 'pg'
 import { PostgresqlConnection } from './connection'
 import { URL } from 'url'
 import { format } from '../format'
-import { format as formatValue } from './format'
+import { formatters } from './formatters'
 import { parse } from 'query-string'
 import { set } from '../../../../common'
 
@@ -14,7 +14,7 @@ types.setTypeParser(types.builtins.INT8, parseInt)
  * Manages PostgreSQL connections.
  */
 export class PostgresqlDatabase extends Database {
-  public format = format(formatValue)
+  public format = format(formatters)
 
   public pool: Pool
 

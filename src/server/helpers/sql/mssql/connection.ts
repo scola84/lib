@@ -4,7 +4,7 @@ import { Connection } from '../connection'
 import type { Readable } from 'stream'
 import { Transform } from 'stream'
 import { format } from '../format'
-import { format as formatValue } from './format'
+import { formatters } from './formatters'
 import { sql } from '../tag'
 
 /**
@@ -13,7 +13,7 @@ import { sql } from '../tag'
 export class MssqlConnection extends Connection {
   public connection: Request
 
-  public format = format(formatValue)
+  public format = format(formatters)
 
   /**
    * Creates a MSSQL connection.

@@ -42,9 +42,9 @@ export abstract class Connection {
   /**
    * Formats a query to a dialect-specific form.
    *
-   * Replaces all parameters in the query with the given values. A parameter should be written as `$(name)`.
+   * Delimits identifiers. An identifier should be written as $[name].
    *
-   * Escapes all values, stringifies objects to JSON and arrays of arrays to bulk INSERTs.
+   * Replaces parameters with the given values. Stringifies and delimits the parameter when possible. A parameter should be written as `$(name)`.
    *
    * @param query - The query
    * @param values - The values
@@ -56,19 +56,19 @@ export abstract class Connection {
    * const query = connection.format(sql`
    *   SELECT *
    *   FROM t1
-   *   WHERE c1 = $(c1)
+   *   WHERE $[c1] = $(c1)
    * `, {
    *   c1: 'v1'
    * })
    *
-   * console.log(query) // query = 'SELECT * FROM t1 WHERE c1 = "v1"' in MySQL
+   * console.log(query) // query = 'SELECT * FROM t1 WHERE `c1` = "v1"' in MySQL
    * ```
    *
    * @example
    * ```ts
    * const query = connection.format(sql`
    *   INSERT
-   *   INTO t1 (c1)
+   *   INTO t1 ($[c1])
    *   VALUES $(values)
    * `, {
    *   values: [
@@ -77,7 +77,7 @@ export abstract class Connection {
    *   ]
    * })
    *
-   * console.log(query) // query = 'INSERT INTO t1 VALUES ("v1"), ("v2")' in MySQL
+   * console.log(query) // query = 'INSERT INTO t1 (`c1`) VALUES ("v1"), ("v2")' in MySQL
    * ```
    */
   public abstract format: (query: string, values: Record<string, unknown>) => string

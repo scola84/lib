@@ -4,7 +4,7 @@ import type { Connection as BaseConnection } from 'mysql'
 import { Connection } from '../connection'
 import type { Readable } from 'stream'
 import { format } from '../format'
-import { format as formatValue } from './format'
+import { formatters } from './formatters'
 import { sql } from '../tag'
 
 interface StreamConnection extends PoolConnection {
@@ -17,7 +17,7 @@ interface StreamConnection extends PoolConnection {
 export class MysqlConnection extends Connection {
   public connection: PoolConnection
 
-  public format = format(formatValue)
+  public format = format(formatters)
 
   /**
    * Creates a MySQL connection.

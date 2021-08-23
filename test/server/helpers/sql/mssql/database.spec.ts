@@ -41,7 +41,7 @@ class Helpers {
 const helpers = new Helpers()
 
 beforeAll(async () => {
-  helpers.dsn = 'mssql://sa@localhost:1433/scola?parseJSON=true'
+  helpers.dsn = 'mssql://sa@localhost:1433/scola?parseJSON=true&options.encrypt=false'
   helpers.password = 'rootRoot1'
 
   helpers.pool = new ConnectionPool({

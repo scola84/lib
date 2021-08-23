@@ -1,4 +1,5 @@
 import type { ConnectionOptions, Pool } from 'mysql2/promise'
+import mock, { restore } from 'mock-fs'
 import { MysqlDatabase } from '../../../../../src/server/helpers/sql/mysql'
 import { createPool } from 'mysql2/promise'
 import type denque from 'denque'
@@ -8,6 +9,7 @@ import { sql } from '../../../../../src/server/helpers/sql/tag'
 describe('MysqlConnection', () => {
   describe('should', () => {
     it('create a pool with options', createAPoolWithOptions)
+    it('create a pool with SSL options', createAPoolWithSslOptions)
     it('delete one row', deleteOneRow)
     it('depopulate', depopulate)
     it('insert a bulk of rows', insertABulkOfRows)
@@ -27,7 +29,13 @@ describe('MysqlConnection', () => {
 
 interface ExtendedPool {
   pool: {
-    config: ConnectionOptions
+    config: ConnectionOptions & {
+      connectionConfig: {
+        ssl: {
+          ca: string
+        }
+      }
+    }
     _allConnections: denque
     _freeConnections: denque
   }
@@ -79,6 +87,25 @@ async function createAPoolWithOptions (): Promise<void> {
 
   expect(pool.pool.constructor.name).equal('Pool')
   expect(pool.pool.config.connectionLimit).equal(15)
+}
+
+async function createAPoolWithSslOptions (): Promise<void> {
+  const database = new MysqlDatabase({
+    dsn: `${helpers.dsn}&ssl.ca=/path/to/ca`,
+    password: helpers.password
+  })
+
+  mock({
+    '/path/to/ca': 'CA certificate'
+  })
+
+  await database.start()
+  restore()
+
+  const pool = database.pool as unknown as ExtendedPool
+
+  expect(pool.pool.constructor.name).equal('Pool')
+  expect(pool.pool.config.connectionConfig.ssl.ca.toString()).equal('CA certificate')
 }
 
 async function deleteOneRow (): Promise<void> {

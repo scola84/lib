@@ -1,3 +1,4 @@
+import mock, { restore } from 'mock-fs'
 import { Pool } from 'pg'
 import type { PoolConfig } from 'pg'
 import { PostgresqlDatabase } from '../../../../../src/server/helpers/sql/postgresql'
@@ -7,6 +8,7 @@ import { sql } from '../../../../../src/server/helpers/sql/tag'
 describe('PostgresqlConnection', () => {
   describe('should', () => {
     it('create a pool with options', createAPoolWithOptions)
+    it('create a pool with SSL options', createAPoolWithSslOptions)
     it('delete one row', deleteOneRow)
     it('depopulate', depopulate)
     it('insert a bulk of rows', insertABulkOfRows)
@@ -25,7 +27,11 @@ describe('PostgresqlConnection', () => {
 })
 
 interface ExtendedPool {
-  options: PoolConfig
+  options: PoolConfig & {
+    ssl: {
+      ca: string
+    }
+  }
 }
 
 class Helpers {
@@ -74,6 +80,25 @@ async function createAPoolWithOptions (): Promise<void> {
 
   expect(pool).instanceOf(Pool)
   expect(pool.options.max).equal(15)
+}
+
+async function createAPoolWithSslOptions (): Promise<void> {
+  const database = new PostgresqlDatabase({
+    dsn: `${helpers.dsn}&ssl.ca=/path/to/ca`,
+    password: helpers.password
+  })
+
+  mock({
+    '/path/to/ca': 'CA certificate'
+  })
+
+  await database.start()
+  restore()
+
+  const pool = database.pool as unknown as ExtendedPool
+
+  expect(pool).instanceOf(Pool)
+  expect(pool.options.ssl.ca.toString()).equal('CA certificate')
 }
 
 async function deleteOneRow (): Promise<void> {

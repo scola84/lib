@@ -1,4 +1,5 @@
 import type { Pool, PoolOptions } from 'mysql2/promise'
+import { isObject, set } from '../../../../common'
 import { Database } from '../database'
 import { MysqlConnection } from './connection'
 import { URL } from 'url'
@@ -6,7 +7,7 @@ import { createPool } from 'mysql2/promise'
 import { format } from '../format'
 import { formatters } from './formatters'
 import { parse } from 'query-string'
-import { set } from '../../../../common'
+import { readFileSync } from 'fs-extra'
 
 /**
  * Manages MySQL connections.
@@ -46,7 +47,7 @@ export class MysqlDatabase extends Database {
       password,
       port: Number(url.port),
       supportBigNumbers: true,
-      user: decodeURIComponent(url.username)
+      user: url.username
     }
 
     Object
@@ -57,6 +58,18 @@ export class MysqlDatabase extends Database {
       .forEach(([name, value]) => {
         set(options, name, value)
       })
+
+    const sslNames = ['ca', 'cert', 'key']
+
+    sslNames.forEach((name) => {
+      if (isObject(options.ssl)) {
+        const value = options.ssl[name]
+
+        if (typeof value === 'string') {
+          options.ssl[name] = readFileSync(value)
+        }
+      }
+    })
 
     return createPool(options)
   }

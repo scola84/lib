@@ -42,13 +42,10 @@ export class MssqlDatabase extends Database {
 
     const options: config = {
       database: url.pathname.slice(1),
-      options: {
-        encrypt: false
-      },
       password,
       port: Number(url.port),
       server: url.hostname,
-      user: decodeURIComponent(url.username)
+      user: url.username
     }
 
     Object

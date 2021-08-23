@@ -1,4 +1,5 @@
 import { Pool, types } from 'pg'
+import { isObject, set } from '../../../../common'
 import { Database } from '../database'
 import type { PoolConfig } from 'pg'
 import { PostgresqlConnection } from './connection'
@@ -6,7 +7,7 @@ import { URL } from 'url'
 import { format } from '../format'
 import { formatters } from './formatters'
 import { parse } from 'query-string'
-import { set } from '../../../../common'
+import { readFileSync } from 'fs-extra'
 
 types.setTypeParser(types.builtins.INT8, parseInt)
 
@@ -44,8 +45,12 @@ export class PostgresqlDatabase extends Database {
     url.password = String(password)
 
     const options: PoolConfig = {
-      connectionString: url.toString(),
-      connectionTimeoutMillis: 10000
+      connectionTimeoutMillis: 10000,
+      database: url.pathname.slice(1),
+      host: url.hostname,
+      password,
+      port: Number(url.port),
+      user: url.username
     }
 
     Object
@@ -56,6 +61,18 @@ export class PostgresqlDatabase extends Database {
       .forEach(([name, value]) => {
         set(options, name, value)
       })
+
+    const sslNames = ['ca', 'cert', 'key']
+
+    sslNames.forEach((name) => {
+      if (isObject(options.ssl)) {
+        const value = options.ssl[name]
+
+        if (typeof value === 'string') {
+          options.ssl[name] = readFileSync(value)
+        }
+      }
+    })
 
     return new Pool(options)
   }

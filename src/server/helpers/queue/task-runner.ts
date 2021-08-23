@@ -396,6 +396,7 @@ export abstract class TaskRunner {
 
       if (taskRun !== undefined) {
         try {
+          taskRun.queueRun = await this.selectQueueRun(taskRun)
           await this.runTask(taskRun)
         } catch (error: unknown) {
           taskRun.reason = String(error)
@@ -472,7 +473,10 @@ export abstract class TaskRunner {
    * @param taskRun - The task run
    */
   protected async runTask (taskRun: TaskRun): Promise<void> {
-    taskRun.queueRun = await this.selectQueueRun(taskRun)
+    if (taskRun.status === 'err') {
+      return
+    }
+
     await this.updateTaskRunOnRun(taskRun)
 
     if (this.validator?.getSchema('options') !== undefined) {
@@ -534,8 +538,6 @@ export abstract class TaskRunner {
   /**
    * Selects a task run.
    *
-   * Only returns the task run if it is pending.
-   *
    * @param id - The ID of the task run
    * @returns The task run
    */
@@ -543,9 +545,7 @@ export abstract class TaskRunner {
     return this.database.select<TaskRun, TaskRun>(sql`
       SELECT *
       FROM task_run
-      WHERE
-        id = $(id) AND
-        status = 'pending'
+      WHERE id = $(id)
     `, {
       id
     })

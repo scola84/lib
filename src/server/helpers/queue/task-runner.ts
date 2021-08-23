@@ -371,7 +371,8 @@ export abstract class TaskRunner {
     const queues = await this.selectQueues(taskRun)
 
     await Promise.all(queues.map(async ({ id }) => {
-      await this.store.publish('queue-run', JSON.stringify({
+      await this.store.publish('queue', JSON.stringify({
+        command: 'run',
         id,
         parameters: {
           id: taskRun.queueRun.id

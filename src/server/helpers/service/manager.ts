@@ -242,11 +242,7 @@ export class ServiceManager {
     Promise
       .resolve()
       .then(async () => {
-        this.logger?.info({
-          names: this.names,
-          signal: this.signal,
-          types: this.types
-        }, 'Stopping service manager')
+        this.logger?.info('Stopping service manager')
 
         if (isMatch('server', this.types)) {
           await this.server?.stop()

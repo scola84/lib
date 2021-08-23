@@ -14,16 +14,8 @@ import { scheduleJob } from 'node-schedule'
 import { sql } from '../sql'
 import waitUntil from 'async-wait-until'
 
-export interface QueuerMessage {
-  /**
-   * The ID of the queue.
-   */
-  id?: number
-
-  /**
-   * The parameters to provide to the generator query.
-   */
-  parameters?: Struct
+export interface Commands {
+  [key: string]: (queuer: Queuer, message: Record<string, unknown>) => Promise<void> | void
 }
 
 export interface QueuerOptions {
@@ -64,17 +56,44 @@ export interface QueuerOptions {
   schedule?: string
 
   /**
-   * The store to trigger task runs.
+   * The store to execute commands.
    *
    * @see https://www.npmjs.com/package/handy-redis
    */
   store: WrappedNodeRedisClient
+
+  /**
+   * Whether the queuer is suspended.
+   */
+  suspended?: boolean
 }
 
 /**
  * Manages queues.
  */
 export class Queuer {
+  /**
+   * The commands which can be executed through the 'queue' channel.
+   */
+  public static commands: Commands = {
+    resume: (queuer: Queuer): void => {
+      queuer.resume()
+    },
+    run: async (queuer: Queuer, message: Record<string, unknown>): Promise<void> => {
+      if (typeof message.id === 'number') {
+        await queuer.run(message.id, message.parameters)
+      }
+    },
+    skip: async (queuer: Queuer, message: Record<string, unknown>): Promise<void> => {
+      if (typeof message.id === 'number') {
+        await queuer.skip(message.id)
+      }
+    },
+    suspend: (queuer: Queuer): void => {
+      queuer.suspend()
+    }
+  }
+
   /**
    * The database containing the queues.
    *
@@ -126,18 +145,23 @@ export class Queuer {
   public schedule: string
 
   /**
-   * The store to trigger task runs.
+   * The store to execute commands.
    *
    * @see https://www.npmjs.com/package/handy-redis
    */
   public store: WrappedNodeRedisClient
 
   /**
-   * The store duplicate to trigger queue runs.
+   * The store duplicate to execute commands.
    *
    * @see https://www.npmjs.com/package/handy-redis
    */
   public storeDuplicate?: WrappedNodeRedisClient
+
+  /**
+   * Whether the queuer is suspended.
+   */
+  public suspended: boolean
 
   /**
    * The active task runners.
@@ -145,6 +169,11 @@ export class Queuer {
    * @see {@link TaskRunner}
    */
   public taskRunners: Set<TaskRunner> = new Set()
+
+  /**
+   * The commands which can be executed through the 'queue' channel.
+   */
+  protected commands = Queuer.commands
 
   /**
    * Creates a queuer.
@@ -157,6 +186,7 @@ export class Queuer {
     this.names = options.names ?? process.env.QUEUE_NAMES ?? '%'
     this.schedule = options.schedule ?? process.env.QUEUE_SCHEDULE ?? '* * * * *'
     this.store = options.store
+    this.suspended = options.suspended ?? false
 
     this.logger = options.logger.child({
       name: 'queuer'
@@ -207,6 +237,33 @@ export class Queuer {
   }
 
   /**
+   * Resumes the queuer.
+   */
+  public resume (): void {
+    this.logger.info('Resuming queuer')
+    this.suspended = false
+  }
+
+  /**
+   * Runs a queue run.
+   *
+   * @param id - The ID of the queue
+   * @param parameters - The parameters
+   * @see {@link QueueRunner.run}
+   */
+  public async run (id: number, parameters?: unknown): Promise<void> {
+    const queue = await this.selectQueue(id)
+
+    if (queue !== undefined) {
+      if (isStruct(parameters)) {
+        await this.runQueue(queue, parameters)
+      } else {
+        await this.runQueue(queue)
+      }
+    }
+  }
+
+  /**
    * Sets up the queuer.
    *
    * Sets `storeDuplicate` and registers an `error` event listener on `store` and `storeDuplicate`.
@@ -224,6 +281,21 @@ export class Queuer {
       this.logger.error({
         context: 'setup'
       }, String(error))
+    })
+  }
+
+  /**
+   * Skips the remainder of a queue run.
+   *
+   * Updates all task runs by setting their `status` to 'err' and `reason` to 'skipped'.
+   *
+   * @param id - The ID of the queue run
+   */
+  public async skip (id: number): Promise<void> {
+    await this.updateTaskRuns({
+      fkey_queue_run_id: id,
+      reason: 'skipped',
+      status: 'err'
     })
   }
 
@@ -270,7 +342,9 @@ export class Queuer {
     this.stopJob()
     await this.stopListener()
 
-    await Promise.all(Array.from(this.taskRunners).map(async (taskRunner) => {
+    const runners = Array.from(this.taskRunners)
+
+    await Promise.all(runners.map(async (taskRunner) => {
       await taskRunner.stop()
     }))
 
@@ -284,11 +358,19 @@ export class Queuer {
   }
 
   /**
+   * Suspends the queuer.
+   */
+  public suspend (): void {
+    this.logger.info('Suspending queuer')
+    this.suspended = true
+  }
+
+  /**
    * Handles a job trigger.
    *
    * Selects the queues which should be run.
    *
-   * Updates `schedule_next` of all queues.
+   * Updates `schedule_next` of all selected queues.
    *
    * Runs the queues of which `schedule_next` is not `null`.
    *
@@ -301,52 +383,30 @@ export class Queuer {
       await this.updateQueue(queue)
 
       if (queue.schedule_next !== null) {
-        await this.run(queue)
+        await this.runQueue(queue)
       }
     }))
   }
 
   /**
-   * Handles a listener trigger.
+   * Handles a listener message.
    *
-   * Parses the message and decides which action should be taken based on the channel:
-   *
-   * * `queue-run` Runs the queue with the parameters from the message
-   * * `queue-stop` Updates the task runs belonging to the queue run
+   * Parses the message and executes the command.
    *
    * @param message - The message received by the listener
    */
-  protected async handleListener (channel: string, message: string): Promise<void> {
-    try {
-      const {
-        id,
-        parameters
-      } = JSON.parse(message) as QueuerMessage
+  protected async handleListener (message: string): Promise<void> {
+    const parsedMessage: unknown = JSON.parse(message)
+
+    if (isStruct(parsedMessage)) {
+      const { command } = parsedMessage
 
       if (
-        typeof id === 'number' && (
-          parameters === undefined ||
-          isStruct(parameters)
-        )
+        typeof command === 'string' &&
+        typeof this.commands[command] === 'function'
       ) {
-        if (channel === 'queue-run') {
-          const queue = await this.selectQueue(id)
-
-          if (queue !== undefined) {
-            await this.run(queue, parameters)
-          }
-        } else if (channel === 'queue-stop') {
-          await this.updateTaskRuns({
-            fkey_queue_run_id: id,
-            reason: String(parameters?.reason ?? 'queue-stop'),
-            status: String(parameters?.status ?? 'err')
-          })
-        }
+        await this.commands[command](this, parsedMessage)
       }
-    } catch (error: unknown) {
-      this.logger.error({
-        context: 'handle-listener'
-      }, String(error))
     }
   }
 
@@ -357,21 +417,25 @@ export class Queuer {
    *
    * Runs the queue runner and deletes it from the set of active queue runners when it has finished.
    *
+   * Executes only if the queuer is not suspended.
+   *
    * @param queue - The queue
    * @param parameters - The parameters
    */
-  protected async run (queue: Queue, parameters?: Struct): Promise<void> {
-    const queueRunner = this.createQueueRunner()
+  protected async runQueue (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
+    if (!this.suspended) {
+      const queueRunner = this.createQueueRunner()
 
-    try {
-      this.queueRunners.add(queueRunner)
-      await queueRunner.run(queue, parameters)
-    } catch (error: unknown) {
-      this.logger.error({
-        context: 'run'
-      }, String(error))
-    } finally {
-      this.queueRunners.delete(queueRunner)
+      try {
+        this.queueRunners.add(queueRunner)
+        await queueRunner.run(queue, parameters)
+      } catch (error: unknown) {
+        this.logger.error({
+          context: 'run'
+        }, String(error))
+      } finally {
+        this.queueRunners.delete(queueRunner)
+      }
     }
   }
 
@@ -427,6 +491,8 @@ export class Queuer {
 
   /**
    * Starts the job.
+   *
+   * Runs the job according to `schedule`.
    */
   protected startJob (): void {
     this.job = this.createJob(this.schedule, (date) => {
@@ -442,11 +508,13 @@ export class Queuer {
 
   /**
    * Start the listener.
+   *
+   * Subscribes to the 'queue' channel of the store.
    */
   protected async startListener (): Promise<void> {
     this.storeDuplicate?.nodeRedis.on('message', (channel, message) => {
       this
-        .handleListener(channel, message)
+        .handleListener(message)
         .catch((error: unknown) => {
           this.logger.error({
             context: 'start-listener'
@@ -454,7 +522,7 @@ export class Queuer {
         })
     })
 
-    await this.storeDuplicate?.subscribe('queue-run', 'queue-stop')
+    await this.storeDuplicate?.subscribe('queue')
   }
 
   /**
@@ -468,7 +536,7 @@ export class Queuer {
    * Stops the listener.
    */
   protected async stopListener (): Promise<void> {
-    await this.storeDuplicate?.unsubscribe('queue-run', 'queue-stop')
+    await this.storeDuplicate?.unsubscribe('queue')
     await this.storeDuplicate?.quit()
   }
 

@@ -158,11 +158,7 @@ export class Server {
    * Closes `fastify`.
    */
   public async stop (): Promise<void> {
-    this.logger?.info({
-      address: this.address,
-      port: this.port
-    }, 'Stopping server')
-
+    this.logger?.info('Stopping server')
     await this.fastify?.close()
   }
 }

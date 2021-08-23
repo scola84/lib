@@ -1,3 +1,11 @@
+# [25.3.0](https://github.com/scola84/lib/compare/v25.2.1...v25.3.0) (2021-08-23)
+
+
+### Features
+
+* **sql:** format identifiers too ([5a6d7bf](https://github.com/scola84/lib/commit/5a6d7bf94622b1d7711e7e82a13b6bfdfc57a6f2))
+* **sql:** read SSL files ([24eb93e](https://github.com/scola84/lib/commit/24eb93ee23635c6281c4a38796abe278a24d57ca))
+
 ## [25.2.1](https://github.com/scola84/lib/compare/v25.2.0...v25.2.1) (2021-08-17)
 
 

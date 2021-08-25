@@ -1,3 +1,11 @@
+# [25.4.0](https://github.com/scola84/lib/compare/v25.3.0...v25.4.0) (2021-08-25)
+
+
+### Features
+
+* **dialog:** allow extending show + drag ([4b986ba](https://github.com/scola84/lib/commit/4b986ba1eeeff4dc9ece5d29a80b092ca944782c))
+* **queue:** update aggregates when stopping a queue run ([bb91e0b](https://github.com/scola84/lib/commit/bb91e0b7835da96a6ac1f100ad9c77164b24e918))
+
 # [25.3.0](https://github.com/scola84/lib/compare/v25.2.1...v25.3.0) (2021-08-23)
 
 

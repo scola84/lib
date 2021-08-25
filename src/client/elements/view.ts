@@ -101,16 +101,15 @@ export class ViewElement extends ClipElement {
   }
 
   public connectedCallback (): void {
+    if (this.save === true) {
+      this.loadState()
+    }
+
     window.addEventListener('popstate', this.handlePopstateBound)
     window.addEventListener('scola-view-append', this.handleAppendBound)
     window.addEventListener('scola-view-back', this.handleBackBound)
     window.addEventListener('scola-view-forward', this.handleForwardBound)
     window.addEventListener('scola-view-home', this.handleHomeBound)
-
-    if (this.save === true) {
-      this.loadState()
-    }
-
     super.connectedCallback()
   }
 

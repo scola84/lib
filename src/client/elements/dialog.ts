@@ -1,7 +1,10 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import type { AppElement } from './app'
+import type { InteractEvent } from '@interactjs/core/InteractEvent'
+import type { Interactable } from '@interactjs/core/Interactable'
 import { NodeElement } from './node'
+import interact from 'interactjs'
 import { isObject } from '../../common'
 import styles from '../styles/dialog'
 
@@ -21,20 +24,21 @@ declare global {
   }
 }
 
-interface DialogFrom {
+interface ContentPosition {
   horizontal?: string
   vertical?: string
 }
 
-interface DialogTo {
-  horizontal?: string
-  vertical?: string
-}
-
-interface DialogPosition {
+interface ContentStyle {
   left: number
   opacity?: number
   top: number
+}
+
+interface Positions {
+  extension: ContentPosition
+  from: ContentPosition
+  to: ContentPosition
 }
 
 interface Rect {
@@ -43,6 +47,13 @@ interface Rect {
   top: number
   width: number
 }
+
+interface Styles {
+  from: ContentStyle
+  to: ContentStyle
+}
+
+type Direction = 'down' | 'left' | 'none' | 'right' | 'up'
 
 const htoAlternatives: Record<string, string[]> = {
   'center': ['center', 'start', 'end', 'screen-center'],
@@ -73,10 +84,16 @@ export class DialogElement extends NodeElement {
     styles
   ]
 
+  @property()
+  public drag?: string
+
   @property({
     reflect: true
   })
   public hcalc?: string
+
+  @property()
+  public hext?: string
 
   @property()
   public hfrom?: string
@@ -100,6 +117,9 @@ export class DialogElement extends NodeElement {
   public vcalc?: string
 
   @property()
+  public vext?: string
+
+  @property()
   public vfrom?: string
 
   @property({
@@ -112,13 +132,13 @@ export class DialogElement extends NodeElement {
 
   public anchorElement?: HTMLElement | null
 
-  public contentElement: HTMLElement | null
-
-  public position?: DialogPosition | null
-
-  public scrimElement: HTMLElement | null
+  public contentElement: HTMLElement
 
   protected busy = false
+
+  protected contentStyle?: ContentStyle | null
+
+  protected dragInteractable?: Interactable
 
   protected handleClickBound: (event: Event) => void
 
@@ -130,17 +150,25 @@ export class DialogElement extends NodeElement {
 
   protected handleShowBound: (event: CustomEvent) => void
 
-  protected observer: ResizeObserver
-
   protected originElement: HTMLElement | null
+
+  protected resizeObserver?: ResizeObserver
+
+  protected scrimElement: HTMLElement | null
 
   protected updaters = DialogElement.updaters
 
   public constructor () {
     super()
+
+    const contentElement = this.querySelector<HTMLElement>(':scope > [as="content"]')
+
+    if (contentElement === null) {
+      throw new Error('Content element is null')
+    }
+
     this.dir = document.dir
-    this.observer = new ResizeObserver(this.handleResize.bind(this))
-    this.contentElement = this.querySelector<HTMLElement>(':scope > [as="content"]')
+    this.contentElement = contentElement
     this.originElement = this.parentElement
     this.scrimElement = this.querySelector<HTMLElement>(':scope > [as="scrim"]')
     this.handleClickBound = this.handleClick.bind(this)
@@ -151,16 +179,46 @@ export class DialogElement extends NodeElement {
   }
 
   public connectedCallback (): void {
+    this.setUpResize()
+
+    if (this.drag?.includes(this.breakpoint) === true) {
+      this.setUpDrag()
+    }
+
     window.addEventListener('scola-dialog-hide', this.handleHideBound)
     window.addEventListener('scola-dialog-show', this.handleShowBound)
     super.connectedCallback()
   }
 
   public disconnectedCallback (): void {
-    this.observer.disconnect()
+    this.tearDownResize()
+    this.tearDownDrag()
     window.removeEventListener('scola-dialog-hide', this.handleHideBound)
     window.removeEventListener('scola-dialog-show', this.handleShowBound)
     super.disconnectedCallback()
+  }
+
+  public async extend (duration = this.duration): Promise<void> {
+    if (this.busy) {
+      return
+    }
+
+    const { to } = this.calculateShowStyles(false)
+
+    await this.contentElement
+      .animate([{
+        left: `${to.left}px`,
+        opacity: to.opacity ?? 1,
+        top: `${to.top}px`,
+        transform: 'translate(0px, 0px)'
+      }], {
+        duration,
+        easing: this.easing
+      })
+      .finished
+      .then(() => {
+        this.finishExtend(to)
+      })
   }
 
   public firstUpdated (properties: PropertyValues): void {
@@ -183,41 +241,62 @@ export class DialogElement extends NodeElement {
     const {
       from,
       to
-    } = this.calculateHidePositions()
+    } = this.calculateHideStyles()
 
-    if (this.isSame(to, from)) {
-      from.opacity = 1
-      to.opacity = 0
+    await Promise.all([
+      this.scrimElement
+        ?.animate([{
+          opacity: 1
+        }, {
+          opacity: 0
+        }], {
+          duration,
+          easing: this.easing
+        })
+        .finished
+        .then(() => {
+          this.scrimElement?.style.setProperty('opacity', '0')
+        }),
+      this.contentElement
+        .animate([{
+          left: `${from.left}px`,
+          opacity: from.opacity ?? 1,
+          top: `${from.top}px`
+        }, {
+          left: `${to.left}px`,
+          opacity: to.opacity ?? 1,
+          top: `${to.top}px`
+        }], {
+          duration,
+          easing: this.easing
+        })
+        .finished
+        .then(() => {
+          this.finishHide(to)
+        })
+    ])
+  }
+
+  public async resize (duration = this.duration): Promise<void> {
+    if (this.busy) {
+      return
     }
 
-    this.scrimElement
-      ?.animate([{
-        opacity: 1
-      }, {
-        opacity: 0
-      }], {
-        duration,
-        easing: this.easing,
-        fill: 'forwards'
-      })
+    const { to } = this.calculateShowStyles()
 
     await this.contentElement
-      ?.animate([{
-        left: `${from.left}px`,
-        opacity: from.opacity ?? 1,
-        top: `${from.top}px`
-      }, {
+      .animate([{
         left: `${to.left}px`,
         opacity: to.opacity ?? 1,
-        top: `${to.top}px`
+        top: `${to.top}px`,
+        transform: 'translate(0px, 0px)'
       }], {
         duration,
-        easing: this.easing,
-        fill: 'forwards'
+        easing: this.easing
       })
       .finished
       .then(() => {
-        this.finishHide()
+        this.finishResize(to)
       })
   }
 
@@ -234,58 +313,112 @@ export class DialogElement extends NodeElement {
     const {
       from,
       to
-    } = this.calculateShowPositions()
+    } = this.calculateShowStyles()
 
-    if (this.isSame(to, from)) {
-      from.opacity = 0
-      to.opacity = 1
-    }
-
-    this.scrimElement
-      ?.animate([{
-        opacity: 0
-      }, {
-        opacity: 1
-      }], {
-        duration,
-        easing: this.easing,
-        fill: 'forwards'
-      })
-
-    await this.contentElement
-      ?.animate([{
-        left: `${from.left}px`,
-        opacity: from.opacity ?? 1,
-        top: `${from.top}px`
-      }, {
-        left: `${to.left}px`,
-        opacity: to.opacity ?? 1,
-        top: `${to.top}px`
-      }], {
-        duration,
-        easing: this.easing,
-        fill: 'forwards'
-      })
-      .finished
-      .then(() => {
-        this.finishShow()
-      })
+    await Promise.all([
+      this.scrimElement
+        ?.animate([{
+          opacity: 0
+        }, {
+          opacity: 1
+        }], {
+          duration,
+          easing: this.easing
+        })
+        .finished
+        .then(() => {
+          this.scrimElement?.style.setProperty('opacity', '1')
+        }),
+      this.contentElement
+        .animate([{
+          left: `${from.left}px`,
+          opacity: from.opacity ?? 1,
+          top: `${from.top}px`
+        }, {
+          left: `${to.left}px`,
+          opacity: to.opacity ?? 1,
+          top: `${to.top}px`
+        }], {
+          duration,
+          easing: this.easing
+        })
+        .finished
+        .then(() => {
+          this.finishShow(to)
+        })
+    ])
   }
 
-  protected calculateFromPosition (from: DialogFrom): DialogPosition {
+  protected calculateExtendStyle (style: ContentStyle, from: ContentPosition, extension: ContentPosition): ContentStyle {
     return {
-      left: this.calculateFromPositionLeft(from),
-      top: this.calculateFromPositionTop(from)
+      left: this.calculateExtendStyleLeft(style, from, extension),
+      top: this.calculateExtendStyleTop(style, from, extension)
     }
   }
 
-  protected calculateFromPositionLeft (from: DialogFrom): number {
+  protected calculateExtendStyleLeft (style: ContentStyle, from: ContentPosition, extension: ContentPosition): number {
+    const { width: appWidth = Infinity } = document
+      .querySelector<AppElement>('scola-app')
+      ?.getBoundingClientRect() ?? {}
+
+    let { left } = style
+    let { dir } = this
+
+    if (dir === '') {
+      dir = 'ltr'
+    }
+
+    switch (`${from.horizontal ?? ''}-${dir}`) {
+      case 'screen-end-ltr':
+      case 'screen-start-rtl':
+        left = appWidth * (100 - Number(extension.horizontal ?? 100)) / 100
+        break
+      case 'screen-end-rtl':
+      case 'screen-start-ltr':
+        left = -appWidth * (100 - Number(extension.horizontal ?? 100)) / 100
+        break
+      default:
+        break
+    }
+
+    return left
+  }
+
+  protected calculateExtendStyleTop (style: ContentStyle, from: ContentPosition, extension: ContentPosition): number {
+    const { height: appHeight = Infinity } = document
+      .querySelector<AppElement>('scola-app')
+      ?.getBoundingClientRect() ?? {}
+
+    let { top } = style
+
+    switch (from.vertical) {
+      case 'screen-bottom':
+        top = appHeight * (100 - Number(extension.vertical ?? 100)) / 100
+        break
+      case 'screen-top':
+        top = -appHeight * (100 - Number(extension.vertical ?? 100)) / 100
+        break
+      default:
+        break
+    }
+
+    return top
+  }
+
+  protected calculateFromStyle (from: ContentPosition): ContentStyle {
+    return {
+      left: this.calculateFromStyleLeft(from),
+      top: this.calculateFromStyleTop(from)
+    }
+  }
+
+  protected calculateFromStyleLeft (from: ContentPosition): number {
     const { width: appWidth = Infinity } = document
       .querySelector<AppElement>('scola-app')
       ?.getBoundingClientRect() ?? {}
 
     const { width: elementWidth = 0 } = this.contentElement
-      ?.getBoundingClientRect() ?? {}
+      .getBoundingClientRect()
 
     let { dir } = this
 
@@ -308,13 +441,13 @@ export class DialogElement extends NodeElement {
     }
   }
 
-  protected calculateFromPositionTop (from: DialogFrom): number {
+  protected calculateFromStyleTop (from: ContentPosition): number {
     const { height: appHeight = Infinity } = document
       .querySelector<AppElement>('scola-app')
       ?.getBoundingClientRect() ?? {}
 
     const { height: elementHeight = 0 } = this.contentElement
-      ?.getBoundingClientRect() ?? {}
+      .getBoundingClientRect()
 
     switch (from.vertical) {
       case 'screen-bottom':
@@ -328,15 +461,10 @@ export class DialogElement extends NodeElement {
     }
   }
 
-  protected calculateHidePositions (): { from: DialogPosition, to: DialogPosition } {
-    const regExp = new RegExp(`(?<=(?<position>[^@\\s]+))${this.breakpoint}`, 'u')
+  protected calculateHideStyles (): Styles {
+    const { from } = this.determinePositions()
 
-    const from = {
-      horizontal: this.hfrom?.match(regExp)?.groups?.position,
-      vertical: this.vfrom?.match(regExp)?.groups?.position
-    }
-
-    const fromPosition = {
+    const fromStyle: ContentStyle = {
       left: 0,
       top: 0
     }
@@ -344,46 +472,54 @@ export class DialogElement extends NodeElement {
     if (this.contentElement instanceof HTMLElement) {
       const style = window.getComputedStyle(this.contentElement)
 
-      fromPosition.left = parseFloat(style.left)
-      fromPosition.top = parseFloat(style.top)
+      fromStyle.left = parseFloat(style.left)
+      fromStyle.top = parseFloat(style.top)
 
       if (
-        Number.isNaN(fromPosition.left) ||
-        Number.isNaN(fromPosition.top)
+        Number.isNaN(fromStyle.left) ||
+        Number.isNaN(fromStyle.top)
       ) {
-        fromPosition.left = 0
-        fromPosition.top = 0
+        fromStyle.left = 0
+        fromStyle.top = 0
       }
     }
 
-    let toPosition = {
-      ...fromPosition
+    let toStyle = {
+      ...fromStyle
     }
 
     if (typeof from.horizontal === 'string') {
-      toPosition = this.calculateFromPosition(from)
+      toStyle = this.calculateFromStyle(from)
+    }
+
+    if (this.isSame(toStyle, fromStyle)) {
+      fromStyle.opacity = 1
+      toStyle.opacity = 0
     }
 
     return {
-      from: fromPosition,
-      to: toPosition
+      from: fromStyle,
+      to: toStyle
     }
   }
 
-  protected calculateShowPositions (): { from: DialogPosition, to: DialogPosition } {
-    const regExp = new RegExp(`(?<=(?<position>[^@\\s]+))${this.breakpoint}`, 'u')
+  protected calculateShowStyles (extend = true): Styles {
+    const {
+      extension,
+      from,
+      to
+    } = this.determinePositions()
 
-    const from = {
-      horizontal: this.hfrom?.match(regExp)?.groups?.position,
-      vertical: this.vfrom?.match(regExp)?.groups?.position
+    let toStyle = this.findToStyle(to)
+
+    if (
+      extend && (
+        typeof extension.horizontal === 'string' ||
+        typeof extension.vertical === 'string'
+      )
+    ) {
+      toStyle = this.calculateExtendStyle(toStyle, from, extension)
     }
-
-    const to = {
-      horizontal: this.hto?.match(regExp)?.groups?.position,
-      vertical: this.vto?.match(regExp)?.groups?.position
-    }
-
-    const toPosition = this.findToPosition(to)
 
     if (typeof to.horizontal === 'string') {
       this.hcalc = to.horizontal
@@ -393,32 +529,34 @@ export class DialogElement extends NodeElement {
       this.vcalc = to.vertical
     }
 
-    let fromPosition = {
-      ...toPosition
+    let fromStyle = {
+      ...toStyle
     }
 
     if (
       typeof from.horizontal === 'string' &&
       typeof from.vertical === 'string'
     ) {
-      fromPosition = this.calculateFromPosition(from)
+      fromStyle = this.calculateFromStyle(from)
+    }
+
+    if (this.isSame(toStyle, fromStyle)) {
+      fromStyle.opacity = 0
+      toStyle.opacity = 1
     }
 
     return {
-      from: fromPosition,
-      to: toPosition
+      from: fromStyle,
+      to: toStyle
     }
   }
 
-  protected calculateToPosition (to: DialogTo): DialogPosition {
+  protected calculateToStyle (to: ContentPosition): ContentStyle {
     const appElement = document.querySelector<AppElement>('scola-app')
     const appRect = appElement?.getBoundingClientRect()
-    const elementRect = this.contentElement?.getBoundingClientRect()
+    const elementRect = this.contentElement.getBoundingClientRect()
 
-    if (
-      appRect === undefined ||
-      elementRect === undefined
-    ) {
+    if (appRect === undefined) {
       return {
         left: 0,
         top: 0
@@ -432,23 +570,23 @@ export class DialogElement extends NodeElement {
       width: 0
     }
 
-    if (isObject(this.position)) {
+    if (isObject(this.contentStyle)) {
       anchorRect = {
         ...anchorRect,
-        left: this.position.left,
-        top: this.position.top
+        left: this.contentStyle.left,
+        top: this.contentStyle.top
       }
     } else if (this.anchorElement instanceof HTMLElement) {
       anchorRect = this.anchorElement.getBoundingClientRect()
     }
 
     return {
-      left: this.calculateToPositionLeft(to, appRect, elementRect, anchorRect),
-      top: this.calculateToPositionTop(to, appRect, elementRect, anchorRect)
+      left: this.calculateToStyleLeft(to, appRect, elementRect, anchorRect),
+      top: this.calculateToStyleTop(to, appRect, elementRect, anchorRect)
     }
   }
 
-  protected calculateToPositionLeft (to: DialogTo, appRect: Rect, elementRect: Rect, anchorRect: Rect): number {
+  protected calculateToStyleLeft (to: ContentPosition, appRect: Rect, elementRect: Rect, anchorRect: Rect): number {
     let { left } = anchorRect
     let { dir } = this
 
@@ -496,7 +634,7 @@ export class DialogElement extends NodeElement {
     return left
   }
 
-  protected calculateToPositionTop (to: DialogTo, app: Rect, element: Rect, anchor: Rect): number {
+  protected calculateToStyleTop (to: ContentPosition, app: Rect, element: Rect, anchor: Rect): number {
     let top = anchor.top + anchor.height
 
     switch (to.vertical) {
@@ -530,6 +668,70 @@ export class DialogElement extends NodeElement {
     return top
   }
 
+  protected determineDirection (): Direction {
+    const {
+      from,
+      to
+    } = this.determinePositions()
+
+    let direction: Direction = 'none'
+
+    const { dir } = this
+
+    switch (`${from.horizontal ?? ''}-${to.horizontal ?? ''}-${dir}`) {
+      case 'screen-start-screen-start-ltr':
+      case 'screen-end-screen-start-rtl':
+        direction = 'right'
+        break
+      case 'screen-end-screen-start-ltr':
+      case 'screen-start-screen-start-rtl':
+        direction = 'left'
+        break
+      default:
+        break
+    }
+
+    switch (`${from.vertical ?? ''}-${to.vertical ?? ''}`) {
+      case 'screen-top-screen-bottom':
+        direction = 'down'
+        break
+      case 'screen-bottom-screen-bottom':
+        direction = 'up'
+        break
+      default:
+        break
+    }
+
+    return direction
+  }
+
+  protected determinePositions (): Positions {
+    const regExp = new RegExp(`(?<=(?<position>[^@\\s]+))${this.breakpoint}`, 'u')
+
+    const extension = {
+      horizontal: this.hext?.match(regExp)?.groups?.position,
+      vertical: this.vext?.match(regExp)?.groups?.position
+    }
+
+    const from = {
+      horizontal: this.hfrom?.match(regExp)?.groups?.position,
+      vertical: this.vfrom?.match(regExp)?.groups?.position
+    }
+
+    const to = {
+      horizontal: this.hto?.match(regExp)?.groups?.position,
+      vertical: this.vto?.match(regExp)?.groups?.position
+    }
+
+    const positions = {
+      extension,
+      from,
+      to
+    }
+
+    return positions
+  }
+
   protected findScrollParentElements (): NodeElement[] {
     const parents = []
 
@@ -543,12 +745,11 @@ export class DialogElement extends NodeElement {
     return parents
   }
 
-  protected findToPosition (to: DialogTo): DialogPosition {
+  protected findToStyle (to: ContentPosition): ContentStyle {
     const {
       height: elementHeight = Infinity,
       width: elementWidth = Infinity
-    } = this.contentElement
-      ?.getBoundingClientRect() ?? {}
+    } = this.contentElement.getBoundingClientRect()
 
     const {
       height: appHeight = Infinity,
@@ -557,34 +758,39 @@ export class DialogElement extends NodeElement {
       .querySelector<AppElement>('scola-app')
       ?.getBoundingClientRect() ?? {}
 
-    let position = {
+    let style = {
       left: 0,
       top: 0
     }
 
     htoAlternatives[to.horizontal ?? 'center'].some((hto: string): boolean => {
       to.horizontal = hto
-      position = this.calculateToPosition(to)
+      style = this.calculateToStyle(to)
       return (
-        position.left >= 0 &&
-        position.left + elementWidth <= appWidth
+        style.left >= 0 &&
+        style.left + elementWidth <= appWidth
       )
     })
 
     vtoAlternatives[to.vertical ?? 'center'].some((vto: string): boolean => {
       to.vertical = vto
-      position = this.calculateToPosition(to)
+      style = this.calculateToStyle(to)
       return (
-        position.top >= 0 &&
-        position.top + elementHeight <= appHeight
+        style.top >= 0 &&
+        style.top + elementHeight <= appHeight
       )
     })
 
-    return position
+    return style
   }
 
-  protected finishHide (): void {
+  protected finishExtend (to: ContentStyle): void {
+    this.setStyle(to)
+  }
+
+  protected finishHide (to: ContentStyle): void {
     this.originElement?.appendChild(this)
+    this.setStyle(to)
 
     this
       .findScrollParentElements()
@@ -594,18 +800,22 @@ export class DialogElement extends NodeElement {
 
     this.anchorElement = null
     this.busy = false
+    this.contentStyle = null
     this.hidden = true
-    this.position = null
   }
 
-  protected finishShow (): void {
-    this.contentElement?.style.removeProperty('opacity')
+  protected finishResize (to: ContentStyle): void {
+    this.setStyle(to)
+  }
+
+  protected finishShow (to: ContentStyle): void {
+    this.setStyle(to)
 
     if (this.anchorElement instanceof HTMLElement) {
-      this.observer.observe(this.anchorElement)
+      this.resizeObserver?.observe(this.anchorElement)
     }
 
-    this.observer.observe(document.body)
+    this.resizeObserver?.observe(document.body)
     window.addEventListener('click', this.handleClickBound)
     window.addEventListener('keydown', this.handleKeydownBound)
     this.busy = false
@@ -619,6 +829,41 @@ export class DialogElement extends NodeElement {
     ) {
       this.hide().catch(() => {})
     }
+  }
+
+  protected handleDragEnd (event: InteractEvent): void {
+    const direction = this.determineDirection()
+
+    if ((
+      direction === 'up' &&
+      event.velocity.y > 0
+    ) || (
+      direction === 'down' &&
+      event.velocity.y < 0
+    ) || (
+      direction === 'right' &&
+      event.velocity.x < 0
+    ) || (
+      direction === 'left' &&
+      event.velocity.x > 0
+    )) {
+      this.hide().catch(() => {})
+    } else {
+      this.extend().catch(() => {})
+    }
+  }
+
+  protected handleDragMove (event: InteractEvent): void {
+    const {
+      left = 0,
+      top = 0
+    } = ((/(?<left>[.\-\d]+)px(?<opt>, ?(?<top>[.\-\d]+)px)?/u).exec(this.contentElement.style.getPropertyValue('transform')))?.groups ?? {}
+
+    this.contentElement.style.setProperty('transform', `translate(${Number(left) + event.dx}px, ${Number(top) + event.dy}px)`)
+  }
+
+  protected handleDragTap (): void {
+    this.extend().catch(() => {})
   }
 
   protected handleHide (event: CustomEvent): void {
@@ -639,7 +884,7 @@ export class DialogElement extends NodeElement {
 
   protected handleResize (): void {
     this.setMaxWidth()
-    this.setPosition()
+    this.resize(0).catch(() => {})
   }
 
   protected handleScroll (): void {
@@ -654,13 +899,13 @@ export class DialogElement extends NodeElement {
         }
 
         if (
-          isObject(event.detail?.data.position) &&
-          typeof event.detail?.data.position.left === 'number' &&
-          typeof event.detail.data.position.top === 'number'
+          isObject(event.detail?.data.style) &&
+          typeof event.detail?.data.style.left === 'number' &&
+          typeof event.detail.data.style.top === 'number'
         ) {
-          this.position = {
-            left: event.detail.data.position.left,
-            top: event.detail.data.position.top
+          this.contentStyle = {
+            left: event.detail.data.style.left,
+            top: event.detail.data.style.top
           }
         }
       }
@@ -673,7 +918,7 @@ export class DialogElement extends NodeElement {
     this.show().catch(() => {})
   }
 
-  protected isSame (from: DialogPosition, to: DialogPosition): boolean {
+  protected isSame (from: ContentStyle, to: ContentStyle): boolean {
     return (
       from.left === to.left &&
       from.top === to.top
@@ -684,10 +929,10 @@ export class DialogElement extends NodeElement {
     this.busy = true
 
     if (this.anchorElement instanceof HTMLElement) {
-      this.observer.unobserve(this.anchorElement)
+      this.resizeObserver?.unobserve(this.anchorElement)
     }
 
-    this.observer.unobserve(document.body)
+    this.resizeObserver?.unobserve(document.body)
     window.removeEventListener('click', this.handleClickBound)
     window.removeEventListener('keydown', this.handleKeydownBound)
   }
@@ -707,7 +952,7 @@ export class DialogElement extends NodeElement {
       ?.shadowRoot
       ?.appendChild(this)
 
-    this.contentElement?.style.setProperty('opacity', '0')
+    this.contentElement.style.setProperty('opacity', '0')
     this.scrimElement?.style.setProperty('opacity', '0')
     this.setMaxWidth()
 
@@ -729,14 +974,56 @@ export class DialogElement extends NodeElement {
     }
   }
 
-  protected setPosition (): void {
-    const { to } = this.calculateShowPositions()
+  protected setStyle (to: ContentStyle): void {
+    this.contentElement.style.removeProperty('opacity')
+    this.contentElement.style.removeProperty('transform')
+    this.contentElement.style.setProperty('left', `${to.left}px`)
+    this.contentElement.style.setProperty('top', `${to.top}px`)
+  }
 
-    this.contentElement?.animate({
-      left: `${to.left}px`,
-      top: `${to.top}px`
-    }, {
-      fill: 'forwards'
-    })
+  protected setUpDrag (): void {
+    const direction = this.determineDirection()
+
+    let allowFrom: boolean | string = false
+    let lockAxis: 'x' | 'xy' | 'y' = 'xy'
+
+    if (this.contentElement.querySelector('[as="handle"]') !== null) {
+      allowFrom = '[as="handle"]'
+    }
+
+    if ((
+      direction === 'up' ||
+      direction === 'down'
+    )) {
+      lockAxis = 'y'
+    } else if ((
+      direction === 'left' ||
+      direction === 'right'
+    )) {
+      lockAxis = 'x'
+    }
+
+    this.dragInteractable = interact(this.contentElement)
+      .draggable({
+        allowFrom,
+        listeners: {
+          move: this.handleDragMove.bind(this)
+        },
+        lockAxis
+      })
+      .on('tap', this.handleDragTap.bind(this))
+      .on('dragend', this.handleDragEnd.bind(this))
+  }
+
+  protected setUpResize (): void {
+    this.resizeObserver = new ResizeObserver(this.handleResize.bind(this))
+  }
+
+  protected tearDownDrag (): void {
+    this.dragInteractable?.unset()
+  }
+
+  protected tearDownResize (): void {
+    this.resizeObserver?.disconnect()
   }
 }

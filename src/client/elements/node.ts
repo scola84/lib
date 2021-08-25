@@ -371,22 +371,7 @@ export class NodeElement extends LitElement {
   }
 
   public connectedCallback (): void {
-    this.preset
-      ?.split(' ')
-      .forEach((presetName) => {
-        const properties: Record<string, unknown> = {}
-
-        Object
-          .entries(NodeElement.presets[presetName as keyof Presets] ?? {})
-          .forEach(([propertyName, propertyValue]) => {
-            if (this[propertyName as keyof NodeElement] === undefined) {
-              properties[propertyName] = propertyValue
-            }
-          })
-
-        Object.assign(this, properties)
-      })
-
+    this.setUpPresets()
     window.addEventListener('scola-node-params-set', this.handleParamsSetBound)
     window.addEventListener('scola-node-params-toggle', this.handleParamsToggleBound)
     window.addEventListener('scola-node-props-set', this.handlePropsSetBound)
@@ -620,7 +605,7 @@ export class NodeElement extends LitElement {
       composed: true,
       detail: {
         data: {
-          position: {
+          style: {
             left: event.clientX,
             top: event.clientY
           }
@@ -753,5 +738,23 @@ export class NodeElement extends LitElement {
 
         return result
       }, string) ?? ''
+  }
+
+  protected setUpPresets (): void {
+    this.preset
+      ?.split(' ')
+      .forEach((presetName) => {
+        const properties: Record<string, unknown> = {}
+
+        Object
+          .entries(NodeElement.presets[presetName as keyof Presets] ?? {})
+          .forEach(([propertyName, propertyValue]) => {
+            if (this[propertyName as keyof NodeElement] === undefined) {
+              properties[propertyName] = propertyValue
+            }
+          })
+
+        Object.assign(this, properties)
+      })
   }
 }

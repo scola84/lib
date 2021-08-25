@@ -30,7 +30,7 @@ export class MediaElement extends NodeElement {
     const mediaElement = this.querySelector<HTMLAudioElement | HTMLPictureElement | HTMLVideoElement>(':scope > audio, :scope > picture, :scope > video')
 
     if (mediaElement === null) {
-      throw new Error('Media element not found')
+      throw new Error('Media element is null')
     }
 
     this.mediaElement = mediaElement

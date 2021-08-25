@@ -41,24 +41,17 @@ export class EventElement extends NodeElement {
   }
 
   public connectedCallback (): void {
-    window.addEventListener('scola-event', this.handleEventBound)
-
     if (this.interval !== undefined) {
-      this.intervalId = window.setInterval(() => {
-        this.dispatchEvents(this.createEventData())
-      }, this.interval)
+      this.setUpInterval()
     }
 
+    window.addEventListener('scola-event', this.handleEventBound)
     super.connectedCallback()
   }
 
   public disconnectedCallback (): void {
+    this.tearDownInterval()
     window.removeEventListener('scola-event', this.handleEventBound)
-
-    if (this.intervalId !== undefined) {
-      window.clearInterval(this.intervalId)
-    }
-
     super.disconnectedCallback()
   }
 
@@ -91,6 +84,18 @@ export class EventElement extends NodeElement {
   protected handleEvent (event: CustomEvent): void {
     if (this.isTarget(event)) {
       this.dispatchEvents(this.createEventData(event), event)
+    }
+  }
+
+  protected setUpInterval (): void {
+    this.intervalId = window.setInterval(() => {
+      this.dispatchEvents(this.createEventData())
+    }, this.interval)
+  }
+
+  protected tearDownInterval (): void {
+    if (this.intervalId !== undefined) {
+      window.clearInterval(this.intervalId)
     }
   }
 }

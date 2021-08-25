@@ -38,7 +38,7 @@ export class SvgElement extends NodeElement {
 
   protected handleDrawBound: (event: CustomEvent) => void
 
-  protected observer: ResizeObserver
+  protected resizeObserver?: ResizeObserver
 
   public constructor () {
     super()
@@ -46,22 +46,21 @@ export class SvgElement extends NodeElement {
     const svgElement = this.querySelector<SVGElement>(':scope > svg')
 
     if (svgElement === null) {
-      throw new Error('Svg element not found')
+      throw new Error('SVG element is null')
     }
 
-    this.observer = new ResizeObserver(this.handleResize.bind(this))
     this.svgElement = svgElement
     this.handleDrawBound = this.handleDraw.bind(this)
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this)
+    this.setUpResize()
     window.addEventListener('scola-svg-draw', this.handleDrawBound)
     super.connectedCallback()
   }
 
   public disconnectedCallback (): void {
-    this.observer.disconnect()
+    this.tearDownResize()
     window.removeEventListener('scola-svg-draw', this.handleDrawBound)
     super.disconnectedCallback()
   }
@@ -96,6 +95,11 @@ export class SvgElement extends NodeElement {
     this.draw()
   }
 
+  protected setUpResize (): void {
+    this.resizeObserver = new ResizeObserver(this.handleResize.bind(this))
+    this.resizeObserver.observe(this)
+  }
+
   protected setViewBox (): void {
     let {
       width,
@@ -107,5 +111,9 @@ export class SvgElement extends NodeElement {
     }
 
     this.svgElement.setAttribute('viewBox', `0,0,${width},${height}`)
+  }
+
+  protected tearDownResize (): void {
+    this.resizeObserver?.disconnect()
   }
 }

@@ -81,7 +81,7 @@ export class InputElement extends NodeElement {
     const inputElement = this.querySelector<HTMLInputElement>(':scope > input, :scope > textarea')
 
     if (inputElement === null) {
-      throw new Error('Input element not found')
+      throw new Error('Input element is null')
     }
 
     this.clearElement = this.querySelector<NodeElement>('[as="clear"]')

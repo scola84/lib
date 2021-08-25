@@ -26,6 +26,8 @@ declare global {
   }
 }
 
+type PropertyName = '' | 'marginBottom' | 'marginLeft' | 'marginRight' | 'marginTop'
+
 @customElement('scola-clip')
 export class ClipElement extends NodeElement {
   public static styles: CSSResultGroup[] = [
@@ -151,6 +153,11 @@ export class ClipElement extends NodeElement {
     }
 
     const name = this.determineInnerPropertyName()
+
+    if (name === '') {
+      return
+    }
+
     const to = this.determineInnerPropertyValue(this.defaultSlotElement)
 
     await this.defaultSlotElement
@@ -160,11 +167,11 @@ export class ClipElement extends NodeElement {
         [name]: `-${to}px`
       }], {
         duration,
-        easing: this.easing,
-        fill: 'forwards'
+        easing: this.easing
       })
       .finished
       .then(() => {
+        this.defaultSlotElement.style[name] = `-${to}px`
         this.innerHidden = true
       })
   }
@@ -179,6 +186,11 @@ export class ClipElement extends NodeElement {
     }
 
     const name = this.determineOuterPropertyName(element)
+
+    if (name === '') {
+      return
+    }
+
     const to = this.determineOuterPropertyValue(element)
 
     await element
@@ -186,8 +198,7 @@ export class ClipElement extends NodeElement {
         [name]: `-${to}px`
       }], {
         duration,
-        easing: this.easing,
-        fill: 'forwards'
+        easing: this.easing
       })
       .finished
       .then(() => {
@@ -195,6 +206,7 @@ export class ClipElement extends NodeElement {
           element.style.removeProperty('z-index')
         }
 
+        element.style[name] = `-${to}px`
         element.hidden = true
       })
   }
@@ -251,6 +263,11 @@ export class ClipElement extends NodeElement {
     this.defaultSlotElement.style.removeProperty('display')
 
     const name = this.determineInnerPropertyName()
+
+    if (name === '') {
+      return
+    }
+
     const from = this.determineInnerPropertyValue(this.defaultSlotElement)
 
     this.innerHidden = false
@@ -262,16 +279,23 @@ export class ClipElement extends NodeElement {
         [name]: '0px'
       }], {
         duration,
-        easing: this.easing,
-        fill: 'forwards'
+        easing: this.easing
       })
       .finished
+      .then(() => {
+        this.defaultSlotElement.style[name] = '0px'
+      })
   }
 
   public async showOuter (element: HTMLElement, duration = this.duration): Promise<void> {
     element.style.removeProperty('display')
 
     const name = this.determineOuterPropertyName(element)
+
+    if (name === '') {
+      return
+    }
+
     const from = this.determineOuterPropertyValue(element)
 
     if (window.getComputedStyle(element).position === 'absolute') {
@@ -289,10 +313,12 @@ export class ClipElement extends NodeElement {
         [name]: '0px'
       }], {
         duration,
-        easing: this.easing,
-        fill: 'forwards'
+        easing: this.easing
       })
       .finished
+      .then(() => {
+        element.style[name] = '0px'
+      })
   }
 
   public async toggleContent (element: HTMLElement, duration = this.duration): Promise<void> {
@@ -360,7 +386,7 @@ export class ClipElement extends NodeElement {
     }
   }
 
-  protected determineInnerPropertyName (): string {
+  protected determineInnerPropertyName (): PropertyName {
     const slotName = this.handleElement?.assignedSlot?.name ?? 'default'
 
     let { dir } = this
@@ -409,7 +435,7 @@ export class ClipElement extends NodeElement {
     return value
   }
 
-  protected determineOuterPropertyName (element: HTMLElement): string {
+  protected determineOuterPropertyName (element: HTMLElement): PropertyName {
     const flow = this.flow ?? ''
     const slotName = element.assignedSlot?.name ?? ''
 

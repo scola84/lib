@@ -84,18 +84,20 @@ export class LogElement extends NodeElement {
       return
     }
 
+    const { scrollHeight } = this.defaultSlotElement
+
     await this.defaultSlotElement
       .animate([{
         marginTop: '0px'
       }, {
-        marginTop: `-${this.defaultSlotElement.scrollHeight}px`
+        marginTop: `-${scrollHeight}px`
       }], {
         duration: this.duration,
-        easing: this.easing,
-        fill: 'forwards'
+        easing: this.easing
       })
       .finished
       .then(() => {
+        this.defaultSlotElement.style.setProperty('margin-top', `-${scrollHeight}px`)
         this.hidden = true
       })
   }
@@ -133,13 +135,13 @@ export class LogElement extends NodeElement {
         position: 'relative'
       }], {
         duration: this.duration,
-        easing: this.easing,
-        fill: 'forwards'
+        easing: this.easing
       })
       .finished
       .then(() => {
         this.defaultSlotElement.style.removeProperty('opacity')
         this.defaultSlotElement.style.removeProperty('position')
+        this.defaultSlotElement.style.setProperty('margin-top', '0px')
       })
   }
 

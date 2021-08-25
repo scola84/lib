@@ -12,6 +12,7 @@ export default css`
 
   slot:not([name])::slotted(*) {
     position: absolute;
+    touch-action: none;
     z-index: 9;
   }
 

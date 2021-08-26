@@ -3,6 +3,7 @@ import type { Database } from '../sql'
 import type { Logger } from 'pino'
 import type { Server } from './server'
 import type { WrappedNodeRedisClient } from 'handy-redis'
+import { isArray } from '../../../common'
 
 export interface RouteHandlerOptions extends RouteOptions {
   /**
@@ -170,13 +171,12 @@ export abstract class RouteHandler {
    * @param error - The error
    */
   protected async handleError (request: FastifyRequest, reply: FastifyReply, error?: unknown): Promise<void> {
-    if (
-      request.validationError !== undefined &&
-      Array.isArray(request.validationError.validation)
-    ) {
+    const validation = request.validationError?.validation as ValidationResult[]
+
+    if (isArray(validation)) {
       await reply
         .status(400)
-        .send(this.normalizeValidationResults(request.validationError.validation as ValidationResult[]))
+        .send(this.normalizeValidationResults(validation))
 
       return
     }

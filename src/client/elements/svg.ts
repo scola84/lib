@@ -54,14 +54,14 @@ export class SvgElement extends NodeElement {
   }
 
   public connectedCallback (): void {
-    this.setUpResize()
     window.addEventListener('scola-svg-draw', this.handleDrawBound)
+    this.setUpResize()
     super.connectedCallback()
   }
 
   public disconnectedCallback (): void {
-    this.tearDownResize()
     window.removeEventListener('scola-svg-draw', this.handleDrawBound)
+    this.tearDownResize()
     super.disconnectedCallback()
   }
 

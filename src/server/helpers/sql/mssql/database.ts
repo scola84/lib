@@ -6,7 +6,7 @@ import type { config } from 'mssql'
 import { format } from '../format'
 import { formatters } from './formatters'
 import { parse } from 'query-string'
-import { set } from '../../../../common'
+import { set } from 'lodash'
 
 /**
  * Manages MSSQL connections.

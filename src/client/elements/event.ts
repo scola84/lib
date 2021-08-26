@@ -41,17 +41,18 @@ export class EventElement extends NodeElement {
   }
 
   public connectedCallback (): void {
+    window.addEventListener('scola-event', this.handleEventBound)
+
     if (this.interval !== undefined) {
       this.setUpInterval()
     }
 
-    window.addEventListener('scola-event', this.handleEventBound)
     super.connectedCallback()
   }
 
   public disconnectedCallback (): void {
-    this.tearDownInterval()
     window.removeEventListener('scola-event', this.handleEventBound)
+    this.tearDownInterval()
     super.disconnectedCallback()
   }
 

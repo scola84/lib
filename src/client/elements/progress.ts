@@ -83,7 +83,7 @@ export class ProgressElement extends NodeElement {
 
   public firstUpdated (properties: PropertyValues): void {
     if (this.type === 'circle') {
-      this.firstUpdatedCircle()
+      this.setUpCircle()
     }
 
     super.firstUpdated(properties)
@@ -195,7 +195,7 @@ export class ProgressElement extends NodeElement {
       })
   }
 
-  protected firstUpdatedCircle (): void {
+  protected setUpCircle (): void {
     if (this.circleElement instanceof SVGCircleElement) {
       const strokeWidth = parseFloat(window.getComputedStyle(this.circleElement).strokeWidth)
       const width = parseFloat(window.getComputedStyle(this.bodySlotElement).width)

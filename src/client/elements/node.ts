@@ -21,7 +21,7 @@ declare global {
   }
 }
 
-const LogLevel = {
+const LogLevel: Record<string, number> = {
   all: 1,
   err: 4,
   info: 2,
@@ -371,31 +371,17 @@ export class NodeElement extends LitElement {
   }
 
   public connectedCallback (): void {
-    this.setUpPresets()
     window.addEventListener('scola-node-params-set', this.handleParamsSetBound)
     window.addEventListener('scola-node-params-toggle', this.handleParamsToggleBound)
     window.addEventListener('scola-node-props-set', this.handlePropsSetBound)
     window.addEventListener('scola-node-props-toggle', this.handlePropsToggleBound)
+    this.setUpPresets()
     super.connectedCallback()
   }
 
   public disconnectedCallback (): void {
     if (!this.isConnected) {
-      this.observe
-        ?.split(' ')
-        .forEach((observe) => {
-          const [,id] = observe.split('@') as Array<string | undefined>
-
-          if (id !== undefined) {
-            const element = document.getElementById(id)
-
-            if (element instanceof NodeElement) {
-              element.removeObserver(this)
-            }
-          }
-        })
-
-      this.observers.clear()
+      this.tearDownObservers()
     }
 
     super.disconnectedCallback()
@@ -410,21 +396,7 @@ export class NodeElement extends LitElement {
       this.addEventListener('contextmenu', this.handleContextmenu.bind(this))
     }
 
-    this.observe
-      ?.split(' ')
-      .forEach((observe) => {
-        const [,id] = observe.split('@') as Array<string | undefined>
-
-        if (id !== undefined) {
-          const element = document.getElementById(id)
-
-          if (element instanceof NodeElement) {
-            this.observedUpdate(properties, element)
-            element.addObserver(this)
-          }
-        }
-      })
-
+    this.setUpObservers(properties)
     super.firstUpdated(properties)
   }
 
@@ -432,10 +404,9 @@ export class NodeElement extends LitElement {
     this.observe
       ?.split(' ')
       .forEach((observe) => {
-        const [
-          updaterName,
-          id
-        ] = observe.split('@') as Array<string | undefined>
+        const parts = observe.split('@')
+        const updaterName = parts.shift()
+        const id = parts.shift()
 
         if (
           id === element.id &&
@@ -540,10 +511,9 @@ export class NodeElement extends LitElement {
       ?.split(' ')
       .forEach((dispatch) => {
         if (new RegExp(filter, 'u').test(dispatch)) {
-          const [
-            eventType,
-            id
-          ] = dispatch.split('@') as Array<string | undefined>
+          const parts = dispatch.split('@')
+          const eventType = parts.shift()
+          const id = parts.shift()
 
           if (eventType !== undefined) {
             this.dispatchEvent(new CustomEvent(eventType, {
@@ -622,7 +592,7 @@ export class NodeElement extends LitElement {
     if (
       isObject(event.detail?.data) &&
       typeof event.detail?.data.level === 'string' &&
-      LogLevel[event.detail.data.level as keyof typeof LogLevel] >= LogLevel[this.logLevel]
+      LogLevel[event.detail.data.level] >= LogLevel[this.logLevel]
     ) {
       event.cancelBubble = true
 
@@ -728,16 +698,34 @@ export class NodeElement extends LitElement {
 
   protected replaceParameters (string: string, parameters?: Record<string, unknown>): string {
     return string
-      .match(/:\w+/gu)
+      .match(/:[a-z]\w+/gu)
       ?.reduce((result, match) => {
+        const regExp = new RegExp(match, 'gu')
         const value = parameters?.[match.slice(1)]
 
         if (isPrimitive(value)) {
-          return result.replace(new RegExp(match, 'gu'), value.toString())
+          return result.replace(regExp, value.toString())
         }
 
-        return result
+        return result.replace(regExp, '')
       }, string) ?? ''
+  }
+
+  protected setUpObservers (properties: PropertyValues): void {
+    this.observe
+      ?.split(' ')
+      .forEach((observe) => {
+        const id = observe.split('@').pop()
+
+        if (id !== undefined) {
+          const element = document.getElementById(id)
+
+          if (element instanceof NodeElement) {
+            this.observedUpdate(properties, element)
+            element.addObserver(this)
+          }
+        }
+      })
   }
 
   protected setUpPresets (): void {
@@ -756,5 +744,23 @@ export class NodeElement extends LitElement {
 
         Object.assign(this, properties)
       })
+  }
+
+  protected tearDownObservers (): void {
+    this.observe
+      ?.split(' ')
+      .forEach((observe) => {
+        const id = observe.split('@').pop()
+
+        if (id !== undefined) {
+          const element = document.getElementById(id)
+
+          if (element instanceof NodeElement) {
+            element.removeObserver(this)
+          }
+        }
+      })
+
+    this.observers.clear()
   }
 }

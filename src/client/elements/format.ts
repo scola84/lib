@@ -1,8 +1,8 @@
 import { customElement, property } from 'lit/decorators.js'
 import { format, isObject } from '../../common'
 import { NodeElement } from './node'
-import type { TemplateResult } from 'lit'
-import { html } from 'lit'
+import type { PropertyValues } from 'lit'
+import marked from 'marked'
 import updaters from '../updaters/format'
 
 declare global {
@@ -26,6 +26,21 @@ export class FormatElement extends NodeElement {
   public code?: string
 
   @property({
+    type: Boolean
+  })
+  public marked?: boolean
+
+  @property({
+    attribute: false
+  })
+  public options: marked.MarkedOptions = {
+    breaks: true,
+    smartLists: true,
+    smartypants: true,
+    xhtml: true
+  }
+
+  @property({
     attribute: 'show-title',
     type: Boolean
   })
@@ -37,7 +52,15 @@ export class FormatElement extends NodeElement {
 
   protected updaters = FormatElement.updaters
 
-  public render (): TemplateResult {
+  public update (properties: PropertyValues): void {
+    if (properties.has('data')) {
+      this.setString()
+    }
+
+    super.update(properties)
+  }
+
+  protected setString (): void {
     let data: Record<string, unknown> = this.dataset
 
     if (isObject(this.data)) {
@@ -59,12 +82,10 @@ export class FormatElement extends NodeElement {
       this.title = string
     }
 
-    const template = html`
-      <slot name="body">
-        <slot>${string}</slot>
-      </slot>
-    `
-
-    return template
+    if (this.marked === true) {
+      this.innerHTML = marked(string, this.options)
+    } else {
+      this.textContent = string
+    }
   }
 }

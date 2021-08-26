@@ -51,7 +51,7 @@ export class PickerElement extends InputElement {
       const {
         files,
         name
-      } = this.inputElement
+      } = this.fieldElement
 
       if (
         files instanceof FileList &&
@@ -63,13 +63,13 @@ export class PickerElement extends InputElement {
             data.append(name, file, file.name)
           })
       } else {
-        data.append(name, this.inputElement.value)
+        data.append(name, this.fieldElement.value)
       }
     }
   }
 
   public clearValue (): void {
-    switch (this.inputElement.type) {
+    switch (this.fieldElement.type) {
       case 'checkbox':
         this.clearValueCheckbox()
         break
@@ -152,7 +152,7 @@ export class PickerElement extends InputElement {
   }
 
   protected handleClick (event: MouseEvent): void {
-    switch (this.inputElement.type) {
+    switch (this.fieldElement.type) {
       case 'checkbox':
         this.handleClickCheckbox()
         break
@@ -186,15 +186,15 @@ export class PickerElement extends InputElement {
   }
 
   protected handleClickColor (): void {
-    this.inputElement.click()
+    this.fieldElement.click()
   }
 
   protected handleClickDate (): void {
-    this.inputElement.click()
+    this.fieldElement.click()
   }
 
   protected handleClickFile (): void {
-    this.inputElement.click()
+    this.fieldElement.click()
   }
 
   protected handleClickRadio (): void {
@@ -206,11 +206,11 @@ export class PickerElement extends InputElement {
   }
 
   protected handleClickTime (): void {
-    this.inputElement.click()
+    this.fieldElement.click()
   }
 
   protected handleInput (): void {
-    switch (this.inputElement.type) {
+    switch (this.fieldElement.type) {
       case 'text':
         this.handleInputText()
         break
@@ -253,7 +253,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setCursor (): void {
-    switch (this.inputElement.type) {
+    switch (this.fieldElement.type) {
       case 'checkbox':
       case 'color':
       case 'date':
@@ -295,7 +295,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setList (data: unknown[]): void {
-    switch (this.inputElement.type) {
+    switch (this.fieldElement.type) {
       case 'checkbox':
         this.setListCheckbox(data)
         break
@@ -324,7 +324,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setValuePreview (): void {
-    switch (this.inputElement.type) {
+    switch (this.fieldElement.type) {
       case 'color':
         this.setValuePreviewColor()
         break
@@ -335,12 +335,12 @@ export class PickerElement extends InputElement {
 
   protected setValuePreviewColor (): void {
     if (this.previewElement instanceof NodeElement) {
-      this.previewElement.style.setProperty('background', this.inputElement.value)
+      this.previewElement.style.setProperty('background', this.fieldElement.value)
     }
   }
 
   protected setValueText (data?: Record<string, unknown>): void {
-    switch (this.inputElement.type) {
+    switch (this.fieldElement.type) {
       case 'color':
         this.setValueTextColor()
         break
@@ -366,7 +366,7 @@ export class PickerElement extends InputElement {
 
   protected setValueTextColor (): void {
     if (this.valueElement instanceof FormatElement) {
-      const { value } = this.inputElement
+      const { value } = this.fieldElement
       const hex = value
 
       const [
@@ -398,7 +398,7 @@ export class PickerElement extends InputElement {
 
   protected setValueTextDate (): void {
     if (this.valueElement instanceof FormatElement) {
-      const { value } = this.inputElement
+      const { value } = this.fieldElement
 
       let count = 0
       let date = null
@@ -417,7 +417,7 @@ export class PickerElement extends InputElement {
 
   protected setValueTextFile (): void {
     if (this.valueElement instanceof FormatElement) {
-      const files = Array.from(this.inputElement.files ?? [])
+      const files = Array.from(this.fieldElement.files ?? [])
 
       this.valueElement.data = {
         count: files.length,
@@ -454,7 +454,7 @@ export class PickerElement extends InputElement {
 
   protected setValueTextTime (): void {
     if (this.valueElement instanceof FormatElement) {
-      const { value } = this.inputElement
+      const { value } = this.fieldElement
 
       let count = 0
       let time = null

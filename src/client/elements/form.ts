@@ -1,8 +1,7 @@
 import { customElement, property } from 'lit/decorators.js'
-import type { InputElement } from './input'
+import type { FieldElement } from './field'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
-import updaters from '../updaters/form'
 
 declare global {
   interface HTMLElementEventMap {
@@ -20,11 +19,6 @@ declare global {
 
 @customElement('scola-form')
 export class FormElement extends NodeElement {
-  public static updaters = {
-    ...NodeElement.updaters,
-    ...updaters
-  }
-
   @property()
   public method = 'POST'
 
@@ -32,8 +26,8 @@ export class FormElement extends NodeElement {
     return this.querySelector<HTMLInputElement>('input[type="file"]') !== null
   }
 
-  public get inputElements (): NodeListOf<InputElement> {
-    return this.querySelectorAll<InputElement>('scola-input, scola-picker, scola-select, scola-slider')
+  public get fieldElements (): NodeListOf<FieldElement> {
+    return this.querySelectorAll<FieldElement>('scola-input, scola-picker, scola-select, scola-slider')
   }
 
   protected handleSubmitBound: (event: CustomEvent) => void
@@ -69,8 +63,8 @@ export class FormElement extends NodeElement {
       body = new FormData()
     }
 
-    this.inputElements.forEach((inputElement) => {
-      inputElement.appendValueTo(body)
+    this.fieldElements.forEach((fieldElement) => {
+      fieldElement.appendValueTo(body)
     })
 
     this.dispatchEvent(new CustomEvent('scola-request-start', {
@@ -88,19 +82,12 @@ export class FormElement extends NodeElement {
 
   public update (properties: PropertyValues): void {
     if (properties.has('data')) {
-      this.inputElements.forEach((inputElement) => {
-        inputElement.data = this.data
+      this.fieldElements.forEach((fieldElement) => {
+        fieldElement.data = this.data
       })
-    }
 
-    window.requestAnimationFrame(() => {
-      this
-        .querySelector('[as="error"]:not([hidden])')
-        ?.closest('scola-input')
-        ?.scrollIntoView({
-          behavior: 'smooth'
-        })
-    })
+      this.scrollToError()
+    }
 
     super.update(properties)
   }
@@ -116,5 +103,16 @@ export class FormElement extends NodeElement {
     if (this.isTarget(event)) {
       this.submit()
     }
+  }
+
+  protected scrollToError (): void {
+    window.requestAnimationFrame(() => {
+      this
+        .querySelector('[as="error"]:not([hidden])')
+        ?.closest('scola-input')
+        ?.scrollIntoView({
+          behavior: 'smooth'
+        })
+    })
   }
 }

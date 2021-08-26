@@ -1,10 +1,9 @@
 import { css } from 'lit'
 
 export default css`
-  input,
-  textarea {
+  input {
     background: none;
-    border: none;
+    border: 0;
     border-radius: 0;
     box-shadow: none;
     color: inherit;
@@ -18,8 +17,7 @@ export default css`
     -webkit-appearance: textfield;
   }
 
-  input::placeholder,
-  textarea::placeholder {
+  input::placeholder {
     color: inherit;
     opacity: 0.35;
   }
@@ -31,18 +29,18 @@ export default css`
     display: none;
   }
 
-  slot:not([name])::slotted(input),
-  slot:not([name])::slotted(textarea) {
+  slot::slotted([hidden]) {
+    display: none;
+  }
+
+  slot:not([name])::slotted(input) {
     appearance: none;
+    border: 0;
     margin: 0;
     opacity: 0;
     padding: 0;
     position: absolute;
     width: 0;
     z-index: -1;
-  }
-
-  slot::slotted([hidden]) {
-    display: none;
   }
 `

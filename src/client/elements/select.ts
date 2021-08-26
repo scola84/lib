@@ -43,7 +43,7 @@ export class SelectElement extends InputElement {
   public switch?: boolean
 
   public get isChecked (): boolean {
-    return this.inputElement.checked
+    return this.fieldElement.checked
   }
 
   protected switchElement?: HTMLInputElement
@@ -55,7 +55,7 @@ export class SelectElement extends InputElement {
 
     if (this.isSuccessful) {
       if (this.isChecked) {
-        formData.append(this.name, this.inputElement.value)
+        formData.append(this.name, this.fieldElement.value)
       }
     }
   }
@@ -81,7 +81,7 @@ export class SelectElement extends InputElement {
     }
 
     this.checked = force ?? !(this.checked === true)
-    this.inputElement.checked = this.checked
+    this.fieldElement.checked = this.checked
 
     const { switchElement } = this
 
@@ -115,7 +115,7 @@ export class SelectElement extends InputElement {
   protected handleClick (event: MouseEvent): void {
     super.handleClick(event)
 
-    if (this.inputElement.type === 'checkbox') {
+    if (this.fieldElement.type === 'checkbox') {
       this.handleClickCheckbox()
     } else {
       this.handleClickRadio()

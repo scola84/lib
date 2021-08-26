@@ -53,7 +53,11 @@ export class FormatElement extends NodeElement {
   protected updaters = FormatElement.updaters
 
   public update (properties: PropertyValues): void {
-    if (properties.has('data')) {
+    if (
+      properties.has('code') ||
+      properties.has('data') ||
+      properties.has('observe')
+    ) {
       this.setString()
     }
 
@@ -84,7 +88,7 @@ export class FormatElement extends NodeElement {
 
     if (this.marked === true) {
       this.innerHTML = marked(string, this.options)
-    } else {
+    } else if (this.childElementCount === 0) {
       this.textContent = string
     }
   }

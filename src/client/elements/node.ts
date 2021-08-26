@@ -3,6 +3,7 @@ import { LitElement, html } from 'lit'
 import { cast, isObject, isPrimitive } from '../../common'
 import { customElement, property, query } from 'lit/decorators.js'
 import styles from '../styles/node'
+import updaters from '../updaters/form'
 
 declare global {
   interface HTMLElementEventMap {
@@ -50,7 +51,7 @@ export class NodeElement extends LitElement {
     styles
   ]
 
-  public static updaters: Updaters = {}
+  public static updaters: Updaters = updaters
 
   @property()
   public as?: string
@@ -708,7 +709,7 @@ export class NodeElement extends LitElement {
         }
 
         return result.replace(regExp, '')
-      }, string) ?? ''
+      }, string) ?? string
   }
 
   protected setUpObservers (properties: PropertyValues): void {

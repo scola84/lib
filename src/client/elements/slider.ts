@@ -54,7 +54,7 @@ export class SliderElement extends InputElement {
     this.clearError()
 
     if (this.isSuccessful) {
-      data.append(this.name, this.inputElement.value)
+      data.append(this.name, this.fieldElement.value)
     }
   }
 
@@ -73,7 +73,7 @@ export class SliderElement extends InputElement {
   public firstUpdated (properties: PropertyValues): void {
     this.addEventListener('scola-slider-max', this.handleMaxBound)
     this.addEventListener('scola-slider-min', this.handleMinBound)
-    this.inputElement.addEventListener('input', this.handleSlide.bind(this))
+    this.fieldElement.addEventListener('input', this.handleSlide.bind(this))
     this.setUpValue()
     super.firstUpdated(properties)
   }
@@ -83,7 +83,7 @@ export class SliderElement extends InputElement {
       name,
       max = '',
       value = ''
-    } = this.inputElement
+    } = this.fieldElement
 
     const from = parseFloat(value)
     const to = parseFloat(max)
@@ -105,7 +105,7 @@ export class SliderElement extends InputElement {
       name,
       min = '',
       value = ''
-    } = this.inputElement
+    } = this.fieldElement
 
     const from = parseFloat(value)
     const to = parseFloat(min)
@@ -151,14 +151,14 @@ export class SliderElement extends InputElement {
   }
 
   protected setUpValue (): void {
-    this.inputElement.style.setProperty('--max', this.inputElement.max)
-    this.inputElement.style.setProperty('--min', this.inputElement.min)
+    this.fieldElement.style.setProperty('--max', this.fieldElement.max)
+    this.fieldElement.style.setProperty('--min', this.fieldElement.min)
     this.setValueStyle()
     this.setValueText()
   }
 
   protected setValueStyle (): void {
-    this.inputElement.style.setProperty('--val', this.inputElement.value)
+    this.fieldElement.style.setProperty('--val', this.fieldElement.value)
   }
 
   protected setValueText (): void {

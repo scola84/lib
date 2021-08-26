@@ -1,9 +1,7 @@
-import type { CSSResultGroup, TemplateResult } from 'lit'
+import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
-import { html } from 'lit'
 import styles from '../styles/icon'
-import { unsafeSVG } from 'lit/directives/unsafe-svg.js'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -44,24 +42,14 @@ export class IconElement extends NodeElement {
     this.dir = document.dir
   }
 
-  public render (): TemplateResult {
+  public update (properties: PropertyValues): void {
     if (
       this.name !== undefined &&
       IconElement.icons[this.name] !== undefined
     ) {
-      return html`
-        <slot name="body">
-          <slot>${unsafeSVG(IconElement.icons[this.name] ?? '')}</slot>
-        </slot>
-      `
+      this.innerHTML = IconElement.icons[this.name] ?? ''
     }
 
-    return html`
-      <slot name="body">
-        <slot>
-          <i></i>
-        </slot>
-      </slot>
-    `
+    super.update(properties)
   }
 }

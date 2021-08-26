@@ -26,7 +26,7 @@ declare global {
   }
 }
 
-type PropertyName = '' | 'marginBottom' | 'marginLeft' | 'marginRight' | 'marginTop'
+type PropertyName = 'marginBottom' | 'marginLeft' | 'marginRight' | 'marginTop'
 
 @customElement('scola-clip')
 export class ClipElement extends NodeElement {
@@ -116,13 +116,13 @@ export class ClipElement extends NodeElement {
 
     switch (this.mode) {
       case 'content':
-        this.firstUpdatedContent()
+        this.setUpContent()
         break
       case 'inner':
-        this.firstUpdatedInner()
+        this.setUpInner()
         break
       case 'outer':
-        this.firstUpdatedOuter()
+        this.setUpOuter()
         break
       default:
         break
@@ -153,11 +153,6 @@ export class ClipElement extends NodeElement {
     }
 
     const name = this.determineInnerPropertyName()
-
-    if (name === '') {
-      return
-    }
-
     const to = this.determineInnerPropertyValue(this.defaultSlotElement)
 
     await this.defaultSlotElement
@@ -186,11 +181,6 @@ export class ClipElement extends NodeElement {
     }
 
     const name = this.determineOuterPropertyName(element)
-
-    if (name === '') {
-      return
-    }
-
     const to = this.determineOuterPropertyValue(element)
 
     await element
@@ -263,11 +253,6 @@ export class ClipElement extends NodeElement {
     this.defaultSlotElement.style.removeProperty('display')
 
     const name = this.determineInnerPropertyName()
-
-    if (name === '') {
-      return
-    }
-
     const from = this.determineInnerPropertyValue(this.defaultSlotElement)
 
     this.innerHidden = false
@@ -291,11 +276,6 @@ export class ClipElement extends NodeElement {
     element.style.removeProperty('display')
 
     const name = this.determineOuterPropertyName(element)
-
-    if (name === '') {
-      return
-    }
-
     const from = this.determineOuterPropertyValue(element)
 
     if (window.getComputedStyle(element).position === 'absolute') {
@@ -407,9 +387,8 @@ export class ClipElement extends NodeElement {
         return 'marginBottom'
       case 'header-ltr':
       case 'header-rtl':
-        return 'marginTop'
       default:
-        return ''
+        return 'marginTop'
     }
   }
 
@@ -455,9 +434,8 @@ export class ClipElement extends NodeElement {
         return 'marginRight'
       case 'row-after-rtl':
       case 'row-before-ltr':
-        return 'marginLeft'
       default:
-        return ''
+        return 'marginLeft'
     }
   }
 
@@ -477,46 +455,6 @@ export class ClipElement extends NodeElement {
     }
 
     return value
-  }
-
-  protected firstUpdatedContent (): void {
-    this.defaultSlotElement.scrollLeft = 0
-    this.defaultSlotElement.scrollTop = 0
-
-    Array
-      .from(this.contentElements)
-      .forEach((contentElement, index) => {
-        if (
-          index === 0 &&
-          this.innerHidden === true
-        ) {
-          this.firstUpdatedInner()
-        }
-
-        if (!contentElement.hidden) {
-          contentElement.hidden = index !== 0
-        }
-      })
-  }
-
-  protected firstUpdatedInner (): void {
-    this.defaultSlotElement.style.setProperty('display', 'none')
-    this.innerHidden = true
-  }
-
-  protected firstUpdatedOuter (): void {
-    Array
-      .from(this.outerElements)
-      .forEach((outerElement) => {
-        window.requestAnimationFrame(() => {
-          if (
-            outerElement.hidden ||
-            window.getComputedStyle(outerElement).position === 'absolute'
-          ) {
-            this.hideOuter(outerElement, 0).catch(() => {})
-          }
-        })
-      })
   }
 
   protected handleClick (event: Event): void {
@@ -643,6 +581,46 @@ export class ClipElement extends NodeElement {
         ) {
           this.hideOuter(outerElement).catch(() => {})
         }
+      })
+  }
+
+  protected setUpContent (): void {
+    this.defaultSlotElement.scrollLeft = 0
+    this.defaultSlotElement.scrollTop = 0
+
+    Array
+      .from(this.contentElements)
+      .forEach((contentElement, index) => {
+        if (
+          index === 0 &&
+          this.innerHidden === true
+        ) {
+          this.setUpInner()
+        }
+
+        if (!contentElement.hidden) {
+          contentElement.hidden = index !== 0
+        }
+      })
+  }
+
+  protected setUpInner (): void {
+    this.defaultSlotElement.style.setProperty('display', 'none')
+    this.innerHidden = true
+  }
+
+  protected setUpOuter (): void {
+    Array
+      .from(this.outerElements)
+      .forEach((outerElement) => {
+        window.requestAnimationFrame(() => {
+          if (
+            outerElement.hidden ||
+            window.getComputedStyle(outerElement).position === 'absolute'
+          ) {
+            this.hideOuter(outerElement, 0).catch(() => {})
+          }
+        })
       })
   }
 

@@ -1,13 +1,14 @@
 import { Pool, types } from 'pg'
-import { isObject, set } from '../../../../common'
 import { Database } from '../database'
 import type { PoolConfig } from 'pg'
 import { PostgresqlConnection } from './connection'
 import { URL } from 'url'
 import { format } from '../format'
 import { formatters } from './formatters'
+import { isObject } from '../../../../common'
 import { parse } from 'query-string'
 import { readFileSync } from 'fs-extra'
+import { set } from 'lodash'
 
 types.setTypeParser(types.builtins.INT8, parseInt)
 

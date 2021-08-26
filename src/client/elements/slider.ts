@@ -74,10 +74,7 @@ export class SliderElement extends InputElement {
     this.addEventListener('scola-slider-max', this.handleMaxBound)
     this.addEventListener('scola-slider-min', this.handleMinBound)
     this.inputElement.addEventListener('input', this.handleSlide.bind(this))
-    this.inputElement.style.setProperty('--max', this.inputElement.max)
-    this.inputElement.style.setProperty('--min', this.inputElement.min)
-    this.setValueStyle()
-    this.setValueText()
+    this.setUpValue()
     super.firstUpdated(properties)
   }
 
@@ -151,6 +148,13 @@ export class SliderElement extends InputElement {
 
   protected handleSlide (): void {
     this.setValueStyle()
+  }
+
+  protected setUpValue (): void {
+    this.inputElement.style.setProperty('--max', this.inputElement.max)
+    this.inputElement.style.setProperty('--min', this.inputElement.min)
+    this.setValueStyle()
+    this.setValueText()
   }
 
   protected setValueStyle (): void {

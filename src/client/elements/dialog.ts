@@ -179,22 +179,22 @@ export class DialogElement extends NodeElement {
   }
 
   public connectedCallback (): void {
+    window.addEventListener('scola-dialog-hide', this.handleHideBound)
+    window.addEventListener('scola-dialog-show', this.handleShowBound)
     this.setUpResize()
 
     if (this.drag?.includes(this.breakpoint) === true) {
       this.setUpDrag()
     }
 
-    window.addEventListener('scola-dialog-hide', this.handleHideBound)
-    window.addEventListener('scola-dialog-show', this.handleShowBound)
     super.connectedCallback()
   }
 
   public disconnectedCallback (): void {
-    this.tearDownResize()
-    this.tearDownDrag()
     window.removeEventListener('scola-dialog-hide', this.handleHideBound)
     window.removeEventListener('scola-dialog-show', this.handleShowBound)
+    this.tearDownResize()
+    this.tearDownDrag()
     super.disconnectedCallback()
   }
 

@@ -1,13 +1,14 @@
 import type { Pool, PoolOptions } from 'mysql2/promise'
-import { isObject, set } from '../../../../common'
 import { Database } from '../database'
 import { MysqlConnection } from './connection'
 import { URL } from 'url'
 import { createPool } from 'mysql2/promise'
 import { format } from '../format'
 import { formatters } from './formatters'
+import { isObject } from '../../../../common'
 import { parse } from 'query-string'
 import { readFileSync } from 'fs-extra'
+import { set } from 'lodash'
 
 /**
  * Manages MySQL connections.

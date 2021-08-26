@@ -10,20 +10,19 @@
  * @see https://stackoverflow.com/a/175787
  */
 export function cast (value: unknown): boolean | number | string {
-  if (typeof value === 'boolean') {
-    return Boolean(value)
-  } else if (Number.isFinite(value)) {
-    return Number(value)
-  }
-
   if (
-    value === 'true' ||
+    value === true ||
+    value === 'true'
+  ) {
+    return true
+  } else if (
+    value === false ||
     value === 'false'
   ) {
-    return Boolean(JSON.parse(value))
+    return false
   } else if (
-    !isNaN(value as number) &&
-    !isNaN(parseFloat(value as string))
+    Number.isFinite(value) ||
+    !isNaN(parseFloat(String(value)))
   ) {
     return Number(value)
   }

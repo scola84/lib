@@ -101,8 +101,7 @@ export class PickerElement extends InputElement {
 
   public firstUpdated (properties: PropertyValues): void {
     this.dialogElement?.addEventListener('scola-picker-pick', this.handlePick.bind(this))
-    this.setValuePreview()
-    this.setValueText()
+    this.setUpValue()
     super.firstUpdated(properties)
   }
 
@@ -311,6 +310,11 @@ export class PickerElement extends InputElement {
         this.listElement?.addItem(item)
       }
     })
+  }
+
+  protected setUpValue (): void {
+    this.setValuePreview()
+    this.setValueText()
   }
 
   protected setValue (value: unknown): void {

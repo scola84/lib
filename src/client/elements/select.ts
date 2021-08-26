@@ -46,7 +46,7 @@ export class SelectElement extends InputElement {
     return this.inputElement.checked
   }
 
-  protected rangeElement?: HTMLInputElement
+  protected switchElement?: HTMLInputElement
 
   protected updaters = SelectElement.updaters
 
@@ -64,16 +64,7 @@ export class SelectElement extends InputElement {
     this.checked = this.isChecked
 
     if (this.switch === true) {
-      this.rangeElement = document.createElement('input')
-      this.rangeElement.type = 'range'
-
-      if (this.isChecked) {
-        this.rangeElement.value = '100'
-      } else {
-        this.rangeElement.value = '0'
-      }
-
-      this.shadowBody.insertBefore(this.rangeElement, this.afterSlotElement)
+      this.setUpSwitch()
     } else {
       this.duration = 0
     }
@@ -92,9 +83,9 @@ export class SelectElement extends InputElement {
     this.checked = force ?? !(this.checked === true)
     this.inputElement.checked = this.checked
 
-    const { rangeElement } = this
+    const { switchElement } = this
 
-    if (rangeElement === undefined) {
+    if (switchElement === undefined) {
       return
     }
 
@@ -108,7 +99,7 @@ export class SelectElement extends InputElement {
     }
 
     await this.ease(from, to, (value) => {
-      rangeElement.value = value.toString()
+      switchElement.value = value.toString()
     }, duration)
   }
 
@@ -177,6 +168,19 @@ export class SelectElement extends InputElement {
     if (cast(data.checked) === true) {
       this.toggleChecked(true, 0).catch(() => {})
     }
+  }
+
+  protected setUpSwitch (): void {
+    this.switchElement = document.createElement('input')
+    this.switchElement.type = 'range'
+
+    if (this.isChecked) {
+      this.switchElement.value = '100'
+    } else {
+      this.switchElement.value = '0'
+    }
+
+    this.shadowBody.insertBefore(this.switchElement, this.afterSlotElement)
   }
 
   protected setValue (value: unknown): void {

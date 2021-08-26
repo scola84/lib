@@ -260,10 +260,9 @@ export class RequestElement extends NodeElement {
           if (authError instanceof Error) {
             this.code = 'err_403'
             this.handleError(authError)
-            return
+          } else {
+            this.fetch(request)
           }
-
-          this.fetch(request)
         }
       }
     }))
@@ -279,11 +278,10 @@ export class RequestElement extends NodeElement {
       .then(async (response) => {
         if (response.status === 401) {
           this.dispatchAuth(request)
-          return
+        } else {
+          this.response = response
+          await this.handleFetch()
         }
-
-        this.response = response
-        await this.handleFetch()
       })
       .catch((error: unknown) => {
         this.code = 'err_fetch'

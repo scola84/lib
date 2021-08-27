@@ -2,7 +2,6 @@ import { customElement, property } from 'lit/decorators.js'
 import type { FieldElement } from './field'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
-import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -23,12 +22,16 @@ export class FormElement extends NodeElement {
   @property()
   public method = 'POST'
 
-  public get hasFiles (): boolean {
-    return this.querySelector<HTMLInputElement>('input[type="file"]') !== null
-  }
-
   public get fieldElements (): NodeListOf<FieldElement> {
     return this.querySelectorAll<FieldElement>('scola-input, scola-picker, scola-select, scola-slider')
+  }
+
+  public get hasFieldElements (): boolean {
+    return this.querySelector<FieldElement>('scola-input, scola-picker, scola-select, scola-slider') !== null
+  }
+
+  public get hasFileElements (): boolean {
+    return this.querySelector<HTMLInputElement>('input[type="file"]') !== null
   }
 
   protected handleSubmitBound: (event: CustomEvent) => void
@@ -60,7 +63,7 @@ export class FormElement extends NodeElement {
   public submit (): void {
     let body: FormData | URLSearchParams = new URLSearchParams()
 
-    if (this.hasFiles) {
+    if (this.hasFileElements) {
       body = new FormData()
     }
 
@@ -90,15 +93,7 @@ export class FormElement extends NodeElement {
   }
 
   protected handleData (): void {
-    this.fieldElements.forEach((fieldElement) => {
-      if (
-        isStruct(this.data) &&
-        fieldElement.name !== ''
-      ) {
-        fieldElement.data = this.data[fieldElement.name]
-      }
-    })
-
+    this.setLeafData()
     this.scrollToError()
   }
 

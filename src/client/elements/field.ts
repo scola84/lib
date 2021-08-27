@@ -104,6 +104,10 @@ export class FieldElement extends NodeElement {
       this.loadState()
     }
 
+    if (this.cursor === undefined) {
+      this.setCursor()
+    }
+
     super.connectedCallback()
   }
 
@@ -111,11 +115,6 @@ export class FieldElement extends NodeElement {
     this.addEventListener('click', this.handleClick.bind(this))
     this.addEventListener('scola-input-clear', this.handleClear.bind(this))
     this.fieldElement.addEventListener('input', this.handleInput.bind(this))
-
-    if (this.cursor === undefined) {
-      this.setCursor()
-    }
-
     super.firstUpdated(properties)
   }
 

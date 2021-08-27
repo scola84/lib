@@ -437,20 +437,20 @@ export class PickerElement extends InputElement {
   }
 
   protected setUpValue (): void {
-    this.setPreview()
     this.setLabel()
+    this.setPreview()
   }
 
   protected setValueFromPrimitive (data: Primitive): void {
     super.setValueFromPrimitive(data)
-    this.setPreview()
     this.setLabel({})
+    this.setPreview()
   }
 
   protected setValueFromStruct (data: Struct): void {
     super.setValueFromStruct(data)
-    this.setPreview()
     this.setLabel(data)
+    this.setPreview()
   }
 
   protected showDialog (): void {

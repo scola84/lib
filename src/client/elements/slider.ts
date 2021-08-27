@@ -146,7 +146,7 @@ export class SliderElement extends InputElement {
   }
 
   protected setUpValue (): void {
-    this.setStyle()
     this.setLabel()
+    this.setStyle()
   }
 }

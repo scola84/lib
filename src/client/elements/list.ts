@@ -352,17 +352,7 @@ export class ListElement extends NodeElement {
     if (element instanceof NodeElement) {
       element.removeAttribute('slot')
       element.data = item
-
-      element.dataLeafElements.forEach((dataLeafElement) => {
-        if (
-          isStruct(item) &&
-          dataLeafElement.name !== ''
-        ) {
-          dataLeafElement.data = item[dataLeafElement.name]
-        } else {
-          dataLeafElement.data = item
-        }
-      })
+      element.setLeafData()
     }
 
     return element

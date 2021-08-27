@@ -295,9 +295,7 @@ export class RequestElement extends NodeElement {
   }
 
   protected handleData (): void {
-    this.dataNodeElements.forEach((dataNodeElement) => {
-      dataNodeElement.data = this.data
-    })
+    this.setNodeData()
   }
 
   protected handleError (error: unknown): void {

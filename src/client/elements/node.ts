@@ -220,6 +220,12 @@ export class NodeElement extends LitElement {
   public name = ''
 
   @property({
+    attribute: 'no-data',
+    type: Boolean
+  })
+  public noData?: boolean
+
+  @property({
     attribute: 'no-wrap',
     reflect: true,
     type: Boolean
@@ -314,11 +320,19 @@ export class NodeElement extends LitElement {
   }
 
   public get dataLeafElements (): NodeListOf<NodeElement> {
-    return this.querySelectorAll<NodeElement>('scola-button, scola-format, scola-input, scola-media, scola-picker, scola-select, scola-slider')
+    return this.querySelectorAll<NodeElement>('scola-button, scola-format, scola-input, scola-media, scola-picker, scola-select, scola-slider, scola-svg, scola-textarea')
   }
 
   public get dataNodeElements (): NodeListOf<NodeElement> {
-    return this.querySelectorAll<NodeElement>('scola-form, scola-list, scola-svg')
+    return this.querySelectorAll<NodeElement>('scola-form, scola-list, scola-struct')
+  }
+
+  public get hasDataLeafElements (): boolean {
+    return this.querySelector<NodeElement>('scola-button, scola-format, scola-input, scola-media, scola-picker, scola-select, scola-slider, scola-svg, scola-textarea') !== null
+  }
+
+  public get hasDataNodeElements (): boolean {
+    return this.querySelector<NodeElement>('scola-form, scola-list, scola-struct') !== null
   }
 
   @query('slot[name="after"]', true)
@@ -376,7 +390,6 @@ export class NodeElement extends LitElement {
     window.addEventListener('scola-node-params-toggle', this.handleParamsToggleBound)
     window.addEventListener('scola-node-props-set', this.handlePropsSetBound)
     window.addEventListener('scola-node-props-toggle', this.handlePropsToggleBound)
-    this.setUpPresets()
     super.connectedCallback()
   }
 
@@ -397,6 +410,7 @@ export class NodeElement extends LitElement {
       this.addEventListener('contextmenu', this.handleContextmenu.bind(this))
     }
 
+    this.setUpPresets()
     this.setUpObservers(properties)
     super.firstUpdated(properties)
   }
@@ -434,6 +448,36 @@ export class NodeElement extends LitElement {
       </slot>
       <slot name="footer"></slot>
     `
+  }
+
+  public setLeafData (): void {
+    this.dataLeafElements.forEach((dataLeafElement) => {
+      if (dataLeafElement.noData !== true) {
+        if (dataLeafElement.name === '') {
+          dataLeafElement.data = this.data
+        } else if (
+          isStruct(this.data) &&
+          this.data[dataLeafElement.name] !== undefined
+        ) {
+          dataLeafElement.data = this.data[dataLeafElement.name]
+        }
+      }
+    })
+  }
+
+  public setNodeData (): void {
+    this.dataNodeElements.forEach((dataNodeElement) => {
+      if (dataNodeElement.noData !== true) {
+        if (dataNodeElement.name === '') {
+          dataNodeElement.data = this.data
+        } else if (
+          isStruct(this.data) &&
+          this.data[dataNodeElement.name] !== undefined
+        ) {
+          dataNodeElement.data = this.data[dataNodeElement.name]
+        }
+      }
+    })
   }
 
   public setParameters (parameters: Struct): void {

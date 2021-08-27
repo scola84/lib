@@ -1,7 +1,8 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
-import { cast, isObject } from '../../common'
+import type { Primitive, Struct } from '../../common'
 import { customElement, property } from 'lit/decorators.js'
 import { InputElement } from './input'
+import { cast } from '../../common'
 import styles from '../styles/select'
 import updaters from '../updaters/select'
 
@@ -45,19 +46,16 @@ export class SelectElement extends InputElement {
     return this.fieldElement.checked
   }
 
+  public get isSuccessful (): boolean {
+    return (
+      super.isSuccessful &&
+      this.isChecked
+    )
+  }
+
   protected switchElement?: HTMLInputElement
 
   protected updaters = SelectElement.updaters
-
-  public appendValueTo (formData: FormData | URLSearchParams): void {
-    this.clearError()
-
-    if (this.isSuccessful) {
-      if (this.isChecked) {
-        formData.append(this.name, this.fieldElement.value)
-      }
-    }
-  }
 
   public firstUpdated (properties: PropertyValues): void {
     this.checked = this.isChecked
@@ -102,12 +100,10 @@ export class SelectElement extends InputElement {
     }, duration)
   }
 
-  protected createEventData (): Record<string, unknown> {
+  protected createEventData (): Struct {
     return {
-      checked: this.checked,
-      label: this.querySelector('[as="value"]')?.textContent,
-      name: this.name,
-      value: this.value
+      ...super.createEventData(),
+      label: this.querySelector('[as="label"]')?.textContent
     }
   }
 
@@ -143,32 +139,6 @@ export class SelectElement extends InputElement {
       .catch(() => {})
   }
 
-  protected setData (data: Record<string, unknown>): void {
-    this.clearError()
-
-    const value = data[this.name]
-
-    if (isObject(value)) {
-      if (value.code !== undefined) {
-        this.setError(value)
-      } else if (value.value !== undefined) {
-        this.setValue(value.value)
-      }
-    } else if (data.value !== undefined) {
-      this.setInput(data)
-    } else if (value !== undefined) {
-      this.setValue(value)
-    }
-  }
-
-  protected setInput (data: Record<string, unknown>): void {
-    super.setInput(data)
-
-    if (cast(data.checked) === true) {
-      this.toggleChecked(true, 0).catch(() => {})
-    }
-  }
-
   protected setUpSwitch (): void {
     this.switchElement = document.createElement('input')
     this.switchElement.type = 'range'
@@ -182,8 +152,16 @@ export class SelectElement extends InputElement {
     this.shadowBody.insertBefore(this.switchElement, this.afterSlotElement)
   }
 
-  protected setValue (value: unknown): void {
-    if (value === this.value) {
+  protected setValueFromPrimitive (data: Primitive): void {
+    if (data === cast(this.value)) {
+      this.toggleChecked(true, 0).catch(() => {})
+    }
+  }
+
+  protected setValueFromStruct (data: Struct): void {
+    if (this.fieldElement.getAttribute('value') === null) {
+      super.setValueFromStruct(data)
+    } else if (data.value === cast(this.value)) {
       this.toggleChecked(true, 0).catch(() => {})
     }
   }

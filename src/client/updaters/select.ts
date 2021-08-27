@@ -3,7 +3,7 @@ import type { ListElement } from '../elements'
 import type { NodeElement } from '../elements/node'
 import type { PropertyValues } from 'lit'
 import type { SelectElement } from '../elements/select'
-import { isObject } from '../../common'
+import { isStruct } from '../../common'
 
 export default {
   'scola-clip': (observer: SelectElement, observable: NodeElement, properties: PropertyValues): void => {
@@ -24,7 +24,7 @@ export default {
       properties.has('observe')
     ) {
       observer.toggleChecked(observable.items.some((item) => {
-        if (isObject(item)) {
+        if (isStruct(item)) {
           return observable.getKey(observer.data) === observable.getKey(item)
         }
 

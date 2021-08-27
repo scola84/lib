@@ -1,3 +1,5 @@
+export type Struct<T = unknown> = Record<string, T>
+
 /**
  * Checks whether a value is a plain object.
  *
@@ -5,7 +7,7 @@
  * @returns The result
  * @see https://github.com/lodash/lodash/blob/2da024c/isPlainObject.js#L30
  */
-export function isObject (value: unknown): value is Record<string, unknown> {
+export function isStruct (value: unknown): value is Struct {
   if (Object.prototype.toString.call(value) !== '[object Object]') {
     return false
   }

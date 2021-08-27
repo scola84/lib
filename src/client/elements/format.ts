@@ -1,7 +1,8 @@
 import { customElement, property } from 'lit/decorators.js'
-import { format, isObject } from '../../common'
+import { format, isStruct } from '../../common'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
+import type { Struct } from '../../common'
 import marked from 'marked'
 import updaters from '../updaters/format'
 
@@ -15,7 +16,7 @@ declare global {
 export class FormatElement extends NodeElement {
   public static lang = 'en'
 
-  public static strings: Partial<Record<string, Record<string, string>>> = {}
+  public static strings: Partial<Struct<Struct<string>>> = {}
 
   public static updaters = {
     ...NodeElement.updaters,
@@ -61,9 +62,9 @@ export class FormatElement extends NodeElement {
   }
 
   protected setString (): void {
-    let data: Record<string, unknown> = this.dataset
+    let data: Struct = this.dataset
 
-    if (isObject(this.data)) {
+    if (isStruct(this.data)) {
       data = {
         ...data,
         ...this.data

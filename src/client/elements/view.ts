@@ -1,7 +1,8 @@
-import { cast, isArray, isNil, isObject, isPrimitive } from '../../common'
+import { cast, isArray, isNil, isPrimitive, isStruct } from '../../common'
 import { customElement, property, state } from 'lit/decorators.js'
 import { ClipElement } from './clip'
 import type { PropertyValues } from 'lit'
+import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -24,12 +25,12 @@ declare global {
   }
 }
 
-interface View extends Record<string, unknown>{
+interface View extends Struct{
   element?: HTMLElement & {
     viewTitle?: string
   }
   name: string
-  parameters?: Record<string, unknown>
+  parameters?: Struct
 }
 
 const viewElements: ViewElement[] = []
@@ -44,9 +45,6 @@ export class ViewElement extends ClipElement {
 
   @property()
   public base = ViewElement.base
-
-  @property()
-  public name?: string
 
   @property({
     type: Boolean
@@ -183,7 +181,7 @@ export class ViewElement extends ClipElement {
     }
   }
 
-  public toObject (): Record<string, unknown> {
+  public toObject (): Struct {
     return {
       pointer: this.pointer,
       views: this.views.map((view) => {
@@ -237,7 +235,7 @@ export class ViewElement extends ClipElement {
       parameters: {}
     }
 
-    if (isObject(options)) {
+    if (isStruct(options)) {
       if (typeof options.name === 'string') {
         view.name = options.name
       }
@@ -253,7 +251,7 @@ export class ViewElement extends ClipElement {
               ...object
             }
           }, {})
-      } else if (isObject(options.parameters)) {
+      } else if (isStruct(options.parameters)) {
         view.parameters = options.parameters
       }
     }
@@ -261,7 +259,7 @@ export class ViewElement extends ClipElement {
     return view
   }
 
-  protected handleAppend (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleAppend (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
       const view = this.createView(event.detail?.data)
 
@@ -347,7 +345,7 @@ export class ViewElement extends ClipElement {
   protected loadPointer (): void {
     const pointers: unknown = window.history.state
 
-    if (isObject(pointers)) {
+    if (isStruct(pointers)) {
       const pointer = pointers[this.id]
 
       if (typeof pointer === 'number') {
@@ -364,7 +362,7 @@ export class ViewElement extends ClipElement {
     const stateObject: unknown = JSON.parse(this.storage.getItem(`view-${this.id}`) ?? 'null')
     const stateString = window.location.pathname
 
-    if (isObject(stateObject)) {
+    if (isStruct(stateObject)) {
       this.loadStateFromObject(stateObject)
       this.loadPointer()
     } else {
@@ -372,7 +370,7 @@ export class ViewElement extends ClipElement {
     }
   }
 
-  protected loadStateFromObject (object: Record<string, unknown>): void {
+  protected loadStateFromObject (object: Struct): void {
     if (isArray(object.views)) {
       this.views = object.views.map((view) => {
         return this.createView(view)
@@ -405,7 +403,7 @@ export class ViewElement extends ClipElement {
   }
 
   protected loadStateFromViewElement (viewElement: ViewElement): void {
-    if (viewElement.name !== undefined) {
+    if (viewElement.name !== '') {
       this.views = [{
         name: viewElement.name,
         parameters: viewElement.parameters
@@ -417,7 +415,7 @@ export class ViewElement extends ClipElement {
 
   protected saveState (location = true): void {
     if (this.save === true) {
-      const pointers: Record<string, number> = {}
+      const pointers: Struct<number> = {}
 
       const path = viewElements.reduce((result, viewElement) => {
         if (viewElement.save === true) {

@@ -1,7 +1,8 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
-import { isObject } from '../../common'
+import type { Struct } from '../../common'
+import { isStruct } from '../../common'
 import styles from '../styles/button'
 import updaters from '../updaters/button'
 
@@ -54,9 +55,6 @@ export class ButtonElement extends NodeElement {
   })
   public fillActivated?: 'aux-1' | 'aux-2' | 'aux-3' | 'sig-1' | 'sig-2'
 
-  @property()
-  public name?: string
-
   @property({
     type: Boolean
   })
@@ -98,12 +96,12 @@ export class ButtonElement extends NodeElement {
     super.update(properties)
   }
 
-  protected createEventData (): Record<string, unknown> {
+  protected createEventData (): Struct {
     const data = {
       ...this.dataset
     }
 
-    if (isObject(this.data)) {
+    if (isStruct(this.data)) {
       Object.assign(data, this.data)
     }
 
@@ -118,7 +116,7 @@ export class ButtonElement extends NodeElement {
   protected loadState (): void {
     const state: unknown = JSON.parse(this.storage.getItem(`button-${this.id}`) ?? 'null')
 
-    if (isObject(state)) {
+    if (isStruct(state)) {
       if (typeof state.activated === 'boolean') {
         this.activated = state.activated
       }

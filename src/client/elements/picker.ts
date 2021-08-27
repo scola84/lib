@@ -1,5 +1,6 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
-import { isArray, isObject, isPrimitive } from '../../common'
+import type { Primitive, Struct } from '../../common'
+import { isArray, isPrimitive, isStruct } from '../../common'
 import { DialogElement } from './dialog'
 import { FormatElement } from './format'
 import { InputElement } from './input'
@@ -28,42 +29,37 @@ export class PickerElement extends InputElement {
 
   protected dialogElement: DialogElement | null
 
+  protected labelElement: FormatElement | null
+
   protected listElement: ListElement | null
 
   protected previewElement: NodeElement | null
 
   protected updaters = PickerElement.updaters
 
-  protected valueElement: FormatElement | null
-
   public constructor () {
     super()
     this.dialogElement = this.querySelector<DialogElement>(':scope > scola-dialog')
+    this.labelElement = this.querySelector<FormatElement>('[as="label"]')
     this.listElement = this.querySelector<ListElement>(':scope > scola-list')
     this.previewElement = this.querySelector<NodeElement>('[as="preview"]')
-    this.valueElement = this.querySelector<FormatElement>('[as="value"]')
   }
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
     if (this.isSuccessful) {
-      const {
-        files,
-        name
-      } = this.fieldElement
-
       if (
-        files instanceof FileList &&
+        this.fieldElement.files instanceof FileList &&
         data instanceof FormData
       ) {
         Array
-          .from(files)
+          .from(this.fieldElement.files)
           .forEach((file) => {
-            data.append(name, file, file.name)
+            data.append(this.name, file, file.name)
           })
       } else {
-        data.append(name, this.fieldElement.value)
+        data.append(this.name, this.fieldElement.value)
       }
     }
   }
@@ -95,8 +91,8 @@ export class PickerElement extends InputElement {
         break
     }
 
-    this.setValuePreview()
-    this.setValueText()
+    this.setPreview()
+    this.setLabel()
   }
 
   public firstUpdated (properties: PropertyValues): void {
@@ -209,6 +205,14 @@ export class PickerElement extends InputElement {
     this.fieldElement.click()
   }
 
+  protected handleData (): void {
+    if (isArray(this.data)) {
+      this.setList(this.data)
+    }
+
+    super.handleData()
+  }
+
   protected handleInput (): void {
     switch (this.fieldElement.type) {
       case 'text':
@@ -219,23 +223,21 @@ export class PickerElement extends InputElement {
     }
 
     super.handleInput()
-    this.setValuePreview()
-    this.setValueText()
+    this.setPreview()
+    this.setLabel()
   }
 
   protected handleInputText (): void {
     this.showDialog()
   }
 
-  protected handlePick (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handlePick (event: CustomEvent<Struct | null>): void {
     this.hideDialog()
 
     const data = event.detail?.data
 
-    if (isObject(data)) {
-      super.setInput(data)
-      this.setValuePreview()
-      this.setValueText(data)
+    if (isStruct(data)) {
+      this.setValueFromStruct(data)
     }
 
     if (this.save === true) {
@@ -252,120 +254,16 @@ export class PickerElement extends InputElement {
     }
   }
 
-  protected setCursor (): void {
-    switch (this.fieldElement.type) {
-      case 'checkbox':
-      case 'color':
-      case 'date':
-      case 'file':
-      case 'radio':
-      case 'time':
-        this.cursor = 'pointer'
-        break
-      default:
-        super.setCursor()
-        break
-    }
-  }
-
-  protected setData (data: Record<string, unknown>): void {
-    this.clearError()
-
-    const value = data[this.name]
-
-    if (isObject(value)) {
-      if (value.code !== undefined) {
-        this.setError(value)
-      } else if (value.value !== undefined) {
-        this.setInput(value)
-      }
-    } else if (isArray(value)) {
-      this.setList(value)
-    } else if (data.value !== undefined) {
-      this.setInput(data)
-    } else if (value !== undefined) {
-      this.setValue(value)
-    }
-  }
-
-  protected setInput (data: Record<string, unknown>): void {
-    super.setInput(data)
-    this.setValuePreview()
-    this.setValueText(data)
-  }
-
-  protected setList (data: unknown[]): void {
-    switch (this.fieldElement.type) {
-      case 'checkbox':
-        this.setListCheckbox(data)
-        break
-      default:
-        break
-    }
-  }
-
-  protected setListCheckbox (data: unknown[]): void {
+  protected setCheckboxList (data: unknown[]): void {
     data.forEach((item) => {
-      if (isObject(item)) {
+      if (isStruct(item)) {
         this.listElement?.addItem(item)
       }
     })
   }
 
-  protected setUpValue (): void {
-    this.setValuePreview()
-    this.setValueText()
-  }
-
-  protected setValue (value: unknown): void {
-    super.setValue(value)
-    this.setValuePreview()
-    this.setValueText({})
-  }
-
-  protected setValuePreview (): void {
-    switch (this.fieldElement.type) {
-      case 'color':
-        this.setValuePreviewColor()
-        break
-      default:
-        break
-    }
-  }
-
-  protected setValuePreviewColor (): void {
-    if (this.previewElement instanceof NodeElement) {
-      this.previewElement.style.setProperty('background', this.fieldElement.value)
-    }
-  }
-
-  protected setValueText (data?: Record<string, unknown>): void {
-    switch (this.fieldElement.type) {
-      case 'color':
-        this.setValueTextColor()
-        break
-      case 'date':
-        this.setValueTextDate()
-        break
-      case 'file':
-        this.setValueTextFile()
-        break
-      case 'radio':
-        this.setValueTextRadio(data)
-        break
-      case 'text':
-        this.setValueTextText(data)
-        break
-      case 'time':
-        this.setValueTextTime()
-        break
-      default:
-        break
-    }
-  }
-
-  protected setValueTextColor (): void {
-    if (this.valueElement instanceof FormatElement) {
+  protected setColorLabel (): void {
+    if (this.labelElement instanceof FormatElement) {
       const { value } = this.fieldElement
       const hex = value
 
@@ -386,7 +284,7 @@ export class PickerElement extends InputElement {
         count = 1
       }
 
-      this.valueElement.data = {
+      this.labelElement.data = {
         blue,
         count,
         green,
@@ -396,8 +294,30 @@ export class PickerElement extends InputElement {
     }
   }
 
-  protected setValueTextDate (): void {
-    if (this.valueElement instanceof FormatElement) {
+  protected setColorPreview (): void {
+    if (this.previewElement instanceof NodeElement) {
+      this.previewElement.style.setProperty('background', this.fieldElement.value)
+    }
+  }
+
+  protected setCursor (): void {
+    switch (this.fieldElement.type) {
+      case 'checkbox':
+      case 'color':
+      case 'date':
+      case 'file':
+      case 'radio':
+      case 'time':
+        this.cursor = 'pointer'
+        break
+      default:
+        super.setCursor()
+        break
+    }
+  }
+
+  protected setDateLabel (): void {
+    if (this.labelElement instanceof FormatElement) {
       const { value } = this.fieldElement
 
       let count = 0
@@ -408,18 +328,18 @@ export class PickerElement extends InputElement {
         date = new Date(value)
       }
 
-      this.valueElement.data = {
+      this.labelElement.data = {
         count,
         date
       }
     }
   }
 
-  protected setValueTextFile (): void {
-    if (this.valueElement instanceof FormatElement) {
+  protected setFileLabel (): void {
+    if (this.labelElement instanceof FormatElement) {
       const files = Array.from(this.fieldElement.files ?? [])
 
-      this.valueElement.data = {
+      this.labelElement.data = {
         count: files.length,
         name: files[0]?.name,
         size: files.reduce((result, file) => {
@@ -429,22 +349,67 @@ export class PickerElement extends InputElement {
     }
   }
 
-  protected setValueTextRadio (data?: Record<string, unknown>): void {
-    if (this.valueElement instanceof FormatElement) {
+  protected setLabel (data?: Struct): void {
+    switch (this.fieldElement.type) {
+      case 'color':
+        this.setColorLabel()
+        break
+      case 'date':
+        this.setDateLabel()
+        break
+      case 'file':
+        this.setFileLabel()
+        break
+      case 'radio':
+        this.setRadioLabel(data)
+        break
+      case 'text':
+        this.setTextLabel(data)
+        break
+      case 'time':
+        this.setTimeLabel()
+        break
+      default:
+        break
+    }
+  }
+
+  protected setList (data: unknown[]): void {
+    switch (this.fieldElement.type) {
+      case 'checkbox':
+        this.setCheckboxList(data)
+        break
+      default:
+        break
+    }
+  }
+
+  protected setPreview (): void {
+    switch (this.fieldElement.type) {
+      case 'color':
+        this.setColorPreview()
+        break
+      default:
+        break
+    }
+  }
+
+  protected setRadioLabel (data?: Struct): void {
+    if (this.labelElement instanceof FormatElement) {
       let count = 0
 
       if (data?.label !== undefined) {
         count = 1
       }
 
-      this.valueElement.data = {
+      this.labelElement.data = {
         count,
         label: data?.label
       }
     }
   }
 
-  protected setValueTextText (data?: Record<string, unknown>): void {
+  protected setTextLabel (data?: Struct): void {
     const value = data?.label
 
     if (isPrimitive(value)) {
@@ -452,8 +417,8 @@ export class PickerElement extends InputElement {
     }
   }
 
-  protected setValueTextTime (): void {
-    if (this.valueElement instanceof FormatElement) {
+  protected setTimeLabel (): void {
+    if (this.labelElement instanceof FormatElement) {
       const { value } = this.fieldElement
 
       let count = 0
@@ -464,11 +429,28 @@ export class PickerElement extends InputElement {
         time = new Date(`${new Date().toDateString()} ${value}`)
       }
 
-      this.valueElement.data = {
+      this.labelElement.data = {
         count,
         time
       }
     }
+  }
+
+  protected setUpValue (): void {
+    this.setPreview()
+    this.setLabel()
+  }
+
+  protected setValueFromPrimitive (data: Primitive): void {
+    super.setValueFromPrimitive(data)
+    this.setPreview()
+    this.setLabel({})
+  }
+
+  protected setValueFromStruct (data: Struct): void {
+    super.setValueFromStruct(data)
+    this.setPreview()
+    this.setLabel(data)
   }
 
   protected showDialog (): void {

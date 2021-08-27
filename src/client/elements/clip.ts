@@ -1,7 +1,8 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
-import { isObject } from '../../common'
+import type { Struct } from '../../common'
+import { isStruct } from '../../common'
 import styles from '../styles/clip'
 
 declare global {
@@ -177,7 +178,7 @@ export class ClipElement extends NodeElement {
     }
 
     if (window.getComputedStyle(element).position === 'relative') {
-      this.setZIndexRelative(element)
+      this.setRelativeZIndex(element)
     }
 
     const name = this.determineOuterPropertyName(element)
@@ -279,9 +280,9 @@ export class ClipElement extends NodeElement {
     const from = this.determineOuterPropertyValue(element)
 
     if (window.getComputedStyle(element).position === 'absolute') {
-      this.setZIndexAbsolute(element)
+      this.setAbsoluteZIndex(element)
     } else {
-      this.setZIndexRelative(element)
+      this.setRelativeZIndex(element)
     }
 
     element.hidden = false
@@ -473,10 +474,10 @@ export class ClipElement extends NodeElement {
       })
   }
 
-  protected handleContent (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleContent (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event, false)) {
       if (
-        isObject(event.detail?.data) &&
+        isStruct(event.detail?.data) &&
         typeof event.detail?.data.id === 'string'
       ) {
         const element = this.querySelector<HTMLElement>(`#${event.detail.data.id}`)
@@ -489,10 +490,10 @@ export class ClipElement extends NodeElement {
     }
   }
 
-  protected handleContentOrInner (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleContentOrInner (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event, false)) {
       if (
-        isObject(event.detail?.data) &&
+        isStruct(event.detail?.data) &&
         typeof event.detail?.data.id === 'string'
       ) {
         const element = this.querySelector<HTMLElement>(`#${event.detail.data.id}`)
@@ -513,10 +514,10 @@ export class ClipElement extends NodeElement {
     }
   }
 
-  protected handleNested (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleNested (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event, false)) {
       if (
-        isObject(event.detail?.data) &&
+        isStruct(event.detail?.data) &&
         typeof event.detail?.data.id === 'string'
       ) {
         const element = this.querySelector<HTMLElement>(`#${event.detail.data.id}`)
@@ -529,10 +530,10 @@ export class ClipElement extends NodeElement {
     }
   }
 
-  protected handleOuter (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleOuter (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event, false)) {
       if (
-        isObject(event.detail?.data) &&
+        isStruct(event.detail?.data) &&
         typeof event.detail?.data.id === 'string'
       ) {
         const element = this.querySelector<HTMLElement>(`#${event.detail.data.id}`)
@@ -584,6 +585,36 @@ export class ClipElement extends NodeElement {
       })
   }
 
+  protected setAbsoluteZIndex (element: HTMLElement): void {
+    const zIndex = 2 + Array
+      .from(this.outerElements)
+      .map((outerElement) => {
+        if (outerElement === element) {
+          return 0
+        }
+
+        return parseFloat(outerElement.style.getPropertyValue('z-index'))
+      })
+      .reduce((left, right) => {
+        return Math.max(left, right)
+      }, 0)
+
+    element.style.setProperty('z-index', zIndex.toString())
+  }
+
+  protected setRelativeZIndex (element: HTMLElement): void {
+    const assignedElements = Array.from(element.assignedSlot?.assignedElements() ?? [])
+
+    assignedElements.forEach((assignedElement) => {
+      if (assignedElement instanceof HTMLElement) {
+        assignedElement.style.setProperty(
+          'z-index',
+          (1 + assignedElements.length - assignedElements.indexOf(assignedElement)).toString()
+        )
+      }
+    })
+  }
+
   protected setUpContent (): void {
     this.defaultSlotElement.scrollLeft = 0
     this.defaultSlotElement.scrollTop = 0
@@ -622,35 +653,5 @@ export class ClipElement extends NodeElement {
           }
         })
       })
-  }
-
-  protected setZIndexAbsolute (element: HTMLElement): void {
-    const zIndex = 2 + Array
-      .from(this.outerElements)
-      .map((outerElement) => {
-        if (outerElement === element) {
-          return 0
-        }
-
-        return parseFloat(outerElement.style.getPropertyValue('z-index'))
-      })
-      .reduce((left, right) => {
-        return Math.max(left, right)
-      }, 0)
-
-    element.style.setProperty('z-index', zIndex.toString())
-  }
-
-  protected setZIndexRelative (element: HTMLElement): void {
-    const assignedElements = Array.from(element.assignedSlot?.assignedElements() ?? [])
-
-    assignedElements.forEach((assignedElement) => {
-      if (assignedElement instanceof HTMLElement) {
-        assignedElement.style.setProperty(
-          'z-index',
-          (1 + assignedElements.length - assignedElements.indexOf(assignedElement)).toString()
-        )
-      }
-    })
   }
 }

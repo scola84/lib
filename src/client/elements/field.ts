@@ -1,4 +1,5 @@
-import { cast, isObject, isPrimitive } from '../../common'
+import type { Primitive, Struct } from '../../common'
+import { cast, isPrimitive, isStruct } from '../../common'
 import { customElement, property } from 'lit/decorators.js'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
@@ -49,10 +50,6 @@ export class FieldElement extends NodeElement {
       this.skip === true ||
       this.slot === 'template'
     )
-  }
-
-  public get name (): string {
-    return this.fieldElement.name
   }
 
   public get value (): boolean | number | string {
@@ -133,18 +130,16 @@ export class FieldElement extends NodeElement {
   }
 
   public update (properties: PropertyValues): void {
-    if (properties.has('disabled')) {
-      this.fieldElement.disabled = this.disabled === true
-    } else if (properties.has('data')) {
-      if (isObject(this.data)) {
-        this.setData(this.data)
-      }
+    if (properties.has('data')) {
+      this.handleData()
+    } else if (properties.has('disabled')) {
+      this.handleDisabled()
     }
 
     super.update(properties)
   }
 
-  protected createEventData (): Record<string, unknown> {
+  protected createEventData (): Struct {
     return {
       name: this.name,
       value: this.value
@@ -163,6 +158,25 @@ export class FieldElement extends NodeElement {
     }
 
     this.clearError()
+  }
+
+  protected handleData (): void {
+    if (isPrimitive(this.data)) {
+      this.setValueFromPrimitive(this.data)
+    } else if (isStruct(this.data)) {
+      if (isPrimitive(this.data.code)) {
+        this.setError(this.data)
+      } else {
+        this.setValueFromStruct(this.data)
+      }
+    }
+
+    this.clearError()
+    this.toggleClear(this.isEmpty)
+  }
+
+  protected handleDisabled (): void {
+    this.fieldElement.disabled = this.disabled === true
   }
 
   protected handleInput (): void {
@@ -216,42 +230,18 @@ export class FieldElement extends NodeElement {
     }
   }
 
-  protected setData (data: Record<string, unknown>): void {
-    this.clearError()
-
-    const value = data[this.name]
-
-    if (isObject(value)) {
-      if (value.code !== undefined) {
-        this.setError(value)
-      } else if (value.value !== undefined) {
-        this.setInput(value)
-      }
-    } else if (data.value !== undefined) {
-      this.setInput(data)
-    } else if (value !== undefined) {
-      this.setValue(value)
-    }
+  protected setError (value: Struct): void {
+    Object.assign(this.errorElement, value)
+    this.errorElement?.removeAttribute('hidden')
   }
 
-  protected setError (data: Record<string, unknown>): void {
-    if (this.errorElement instanceof FormatElement) {
-      Object.assign(this.errorElement, data)
-      this.errorElement.hidden = false
-    }
+  protected setValueFromPrimitive (data: Primitive): void {
+    this.value = data.toString()
   }
 
-  protected setInput (data: Record<string, unknown>): void {
+  protected setValueFromStruct (data: Struct): void {
     if (isPrimitive(data.value)) {
       this.value = data.value.toString()
-      this.toggleClear(this.isEmpty)
-    }
-  }
-
-  protected setValue (value: unknown): void {
-    if (isPrimitive(value)) {
-      this.value = value.toString()
-      this.toggleClear(this.isEmpty)
     }
   }
 }

@@ -2,12 +2,13 @@ import type { Database } from '../sql'
 import type { Logger } from 'pino'
 import type { Queuer } from '../queue'
 import type { Server } from '../fastify'
+import type { Struct } from '../../../common'
 import { isMatch } from 'micromatch'
 
 export interface Services {
   [key: string]: {
-    queues?: Record<string, () => void>
-    routes?: Record<string, () => void>
+    queues?: Struct<() => void>
+    routes?: Struct<() => void>
   }
 }
 
@@ -17,7 +18,7 @@ export interface ServiceManagerOptions {
    *
    * @see {@link Database}
    */
-  databases?: Record<string, Database>
+  databases?: Struct<Database>
 
   /**
    * The logger.
@@ -89,7 +90,7 @@ export class ServiceManager {
    *
    * @see {@link Database}
    */
-  public databases?: Record<string, Database>
+  public databases?: Struct<Database>
 
   /**
    * The logger.

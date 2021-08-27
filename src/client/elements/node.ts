@@ -1,9 +1,9 @@
 import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
 import { LitElement, html } from 'lit'
-import { cast, isObject, isPrimitive } from '../../common'
+import { Struct, cast, isPrimitive, isStruct } from '../../common'
 import { customElement, property, query } from 'lit/decorators.js'
 import styles from '../styles/node'
-import updaters from '../updaters/form'
+import updaters from '../updaters/node'
 
 declare global {
   interface HTMLElementEventMap {
@@ -22,7 +22,7 @@ declare global {
   }
 }
 
-const LogLevel: Record<string, number> = {
+const LogLevel: Struct<number> = {
   all: 1,
   err: 4,
   info: 2,
@@ -31,7 +31,7 @@ const LogLevel: Record<string, number> = {
 }
 
 export interface Presets {
-  ''?: Record<string, string | unknown>
+  ''?: Struct<string | unknown>
 }
 
 export interface Updaters {
@@ -80,11 +80,6 @@ export class NodeElement extends LitElement {
     attribute: false
   })
   public data?: unknown
-
-  @property({
-    reflect: true
-  })
-  public dir: string
 
   @property({
     reflect: true,
@@ -214,12 +209,15 @@ export class NodeElement extends LitElement {
   @property({
     attribute: false
   })
-  public logs: Array<Record<string, unknown>> = []
+  public logs: Struct[] = []
 
   @property({
     reflect: true
   })
   public margin?: string
+
+  @property()
+  public name = ''
 
   @property({
     attribute: 'no-wrap',
@@ -251,7 +249,7 @@ export class NodeElement extends LitElement {
   @property({
     attribute: false
   })
-  public parameters: Record<string, unknown> = {}
+  public parameters: Struct = {}
 
   @property()
   public preset?: keyof Presets
@@ -438,7 +436,7 @@ export class NodeElement extends LitElement {
     `
   }
 
-  public setParameters (parameters: Record<string, unknown>): void {
+  public setParameters (parameters: Struct): void {
     Object
       .entries(parameters)
       .forEach(([name, value]) => {
@@ -448,7 +446,7 @@ export class NodeElement extends LitElement {
     this.requestUpdate('parameters')
   }
 
-  public setProperties (properties: Record<string, unknown>): void {
+  public setProperties (properties: Struct): void {
     Object
       .entries(properties)
       .forEach(([name, value]) => {
@@ -458,7 +456,7 @@ export class NodeElement extends LitElement {
       })
   }
 
-  public toggleParameters (parameters: Record<string, unknown>): void {
+  public toggleParameters (parameters: Struct): void {
     Object
       .entries(parameters)
       .forEach(([name, value]) => {
@@ -474,7 +472,7 @@ export class NodeElement extends LitElement {
     this.requestUpdate('parameters')
   }
 
-  public toggleProperties (properties: Record<string, unknown>): void {
+  public toggleProperties (properties: Struct): void {
     Object
       .entries(properties)
       .forEach(([name, value]) => {
@@ -500,11 +498,11 @@ export class NodeElement extends LitElement {
     super.update(properties)
   }
 
-  protected dispatchEvents (data?: Record<string, unknown>, cause?: CustomEvent<Record<string, unknown> | null>): void {
+  protected dispatchEvents (data?: Struct, cause?: CustomEvent<Struct | null>): void {
     let filter = '.*'
 
     if (
-      isObject(cause?.detail) &&
+      isStruct(cause?.detail) &&
       typeof cause?.detail.filter === 'string'
     ) {
       ({ filter } = cause.detail)
@@ -622,9 +620,9 @@ export class NodeElement extends LitElement {
     return false
   }
 
-  protected handleLog (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleLog (event: CustomEvent<Struct | null>): void {
     if (
-      isObject(event.detail?.data) &&
+      isStruct(event.detail?.data) &&
       typeof event.detail?.data.level === 'string' &&
       LogLevel[event.detail.data.level] >= LogLevel[this.logLevel]
     ) {
@@ -638,11 +636,11 @@ export class NodeElement extends LitElement {
     }
   }
 
-  protected handleParamsSet (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleParamsSet (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
       const data = event.detail?.data
 
-      if (isObject(data)) {
+      if (isStruct(data)) {
         if (
           typeof data.name === 'string' &&
           typeof data.value === 'string'
@@ -657,11 +655,11 @@ export class NodeElement extends LitElement {
     }
   }
 
-  protected handleParamsToggle (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleParamsToggle (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
       const data = event.detail?.data
 
-      if (isObject(data)) {
+      if (isStruct(data)) {
         if (
           typeof data.name === 'string' &&
           typeof data.value === 'string'
@@ -676,11 +674,11 @@ export class NodeElement extends LitElement {
     }
   }
 
-  protected handlePropsSet (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handlePropsSet (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
       const data = event.detail?.data
 
-      if (isObject(data)) {
+      if (isStruct(data)) {
         if (
           typeof data.name === 'string' &&
           typeof data.value === 'string'
@@ -695,11 +693,11 @@ export class NodeElement extends LitElement {
     }
   }
 
-  protected handlePropsToggle (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handlePropsToggle (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
       const data = event.detail?.data
 
-      if (isObject(data)) {
+      if (isStruct(data)) {
         if (
           typeof data.name === 'string' &&
           typeof data.value === 'string'
@@ -716,7 +714,7 @@ export class NodeElement extends LitElement {
 
   protected isTarget (event: CustomEvent, cancel = true): boolean {
     if (
-      isObject(event.detail) &&
+      isStruct(event.detail) &&
       event.detail.target !== undefined
     ) {
       if (event.detail.target !== this.id) {
@@ -730,7 +728,7 @@ export class NodeElement extends LitElement {
     return true
   }
 
-  protected replaceParameters (string: string, parameters?: Record<string, unknown>): string {
+  protected replaceParameters (string: string, parameters?: Struct): string {
     return string
       .match(/:[a-z]\w+/gu)
       ?.reduce((result, match) => {
@@ -770,7 +768,7 @@ export class NodeElement extends LitElement {
     this.preset
       ?.split(' ')
       .forEach((presetName) => {
-        const properties: Record<string, unknown> = {}
+        const properties: Struct = {}
 
         Object
           .entries(NodeElement.presets[presetName as keyof Presets] ?? {})

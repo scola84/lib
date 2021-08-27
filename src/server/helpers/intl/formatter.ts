@@ -1,3 +1,4 @@
+import type { Struct } from '../../../common'
 import { format } from '../../../common'
 
 /**
@@ -16,7 +17,7 @@ export class Formatter {
    *
    * @defaultValue `{}`
    */
-  public static strings: Partial<Record<string, Record<string, string>>> = {}
+  public static strings: Partial<Struct<Struct<string>>> = {}
 
   /**
    * Formats a string according to Intl MessageFormat.
@@ -50,7 +51,7 @@ export class Formatter {
    * console.log(string) // string = 'Hello world'
    * ```
    */
-  public format (code: string, language = Formatter.lang, data?: Record<string, unknown>): string {
+  public format (code: string, language = Formatter.lang, data?: Struct): string {
     return format(Formatter.strings, code, language, data)
   }
 

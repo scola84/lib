@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyPluginCallback, FastifyServerOptions } from 'fastify'
 import type { Logger } from 'pino'
+import type { Struct } from '../../../common'
 import { fastify } from 'fastify'
 import fastifyCookie from 'fastify-cookie'
 import fastifyFormbody from 'fastify-formbody'
@@ -24,7 +25,7 @@ export interface ServerOptions extends FastifyServerOptions {
   /**
    * The `fastify` plugins.
    */
-  plugins?: Record<string, FastifyPluginCallback>
+  plugins?: Struct<FastifyPluginCallback>
 
   /**
    * The `fastify` port.
@@ -71,7 +72,7 @@ export class Server {
    *
    * @see https://www.fastify.io/docs/master/Plugins/
    */
-  public plugins: Record<string, FastifyPluginCallback>
+  public plugins: Struct<FastifyPluginCallback>
 
   /**
    * The `fastify` port.

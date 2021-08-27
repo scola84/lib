@@ -1,8 +1,9 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { isObject, isPrimitive } from '../../common'
+import { isPrimitive, isStruct } from '../../common'
 import type { AuthEvent } from './auth'
 import { NodeElement } from './node'
+import type { Struct } from '../../common'
 import { css } from 'lit'
 
 declare global {
@@ -159,7 +160,7 @@ export class RequestElement extends NodeElement {
     }
   }
 
-  public start (options?: Record<string, unknown>): void {
+  public start (options?: Struct): void {
     if (this.busy === true) {
       return
     }
@@ -168,7 +169,7 @@ export class RequestElement extends NodeElement {
     this.fetch(this.createRequest(options))
   }
 
-  public toggle (options?: Record<string, unknown>): void {
+  public toggle (options?: Struct): void {
     if (this.busy === true) {
       this.abort()
     } else {
@@ -178,15 +179,13 @@ export class RequestElement extends NodeElement {
 
   public update (properties: PropertyValues): void {
     if (properties.has('data')) {
-      this.dataNodeElements.forEach((dataNodeElement) => {
-        dataNodeElement.data = this.data
-      })
+      this.handleData()
     }
 
     super.update(properties)
   }
 
-  protected createEventData (): Record<string, unknown> {
+  protected createEventData (): Struct {
     let {
       code,
       data
@@ -204,7 +203,7 @@ export class RequestElement extends NodeElement {
     }
   }
 
-  protected createRequest (options?: Record<string, unknown>): Request {
+  protected createRequest (options?: Struct): Request {
     return new Request(this.createURL(options).toString(), {
       cache: this.cache,
       credentials: this.credentials,
@@ -220,7 +219,7 @@ export class RequestElement extends NodeElement {
     })
   }
 
-  protected createURL (options?: Record<string, unknown>): URL {
+  protected createURL (options?: Struct): URL {
     const urlParts = [
       this.origin,
       this.base
@@ -295,6 +294,12 @@ export class RequestElement extends NodeElement {
     }
   }
 
+  protected handleData (): void {
+    this.dataNodeElements.forEach((dataNodeElement) => {
+      dataNodeElement.data = this.data
+    })
+  }
+
   protected handleError (error: unknown): void {
     this.busy = false
     this.loaded = this.total
@@ -338,9 +343,9 @@ export class RequestElement extends NodeElement {
     }
   }
 
-  protected handleStart (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleStart (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
-      if (isObject(event.detail?.data)) {
+      if (isStruct(event.detail?.data)) {
         this.start(event.detail?.data)
       } else {
         this.start()
@@ -348,9 +353,9 @@ export class RequestElement extends NodeElement {
     }
   }
 
-  protected handleToggle (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleToggle (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
-      if (isObject(event.detail?.data)) {
+      if (isStruct(event.detail?.data)) {
         this.toggle(event.detail?.data)
       } else {
         this.toggle()

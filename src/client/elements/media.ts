@@ -1,7 +1,8 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
-import { customElement, property } from 'lit/decorators.js'
-import { isArray, isObject } from '../../common'
+import { isArray, isStruct } from '../../common'
 import { NodeElement } from './node'
+import type { Struct } from '../../common'
+import { customElement } from 'lit/decorators.js'
 import styles from '../styles/media'
 
 declare global {
@@ -16,9 +17,6 @@ export class MediaElement extends NodeElement {
     ...NodeElement.styles,
     styles
   ]
-
-  @property()
-  public name?: string
 
   public mediaElement: HTMLAudioElement | HTMLPictureElement | HTMLVideoElement
 
@@ -38,28 +36,13 @@ export class MediaElement extends NodeElement {
 
   public update (properties: PropertyValues): void {
     if (properties.has('data')) {
-      if (
-        isObject(this.data) &&
-        typeof this.name === 'string'
-      ) {
-        const value = this.data[this.name]
-
-        if (typeof value === 'string') {
-          this.addSources([{
-            src: value
-          }])
-        } else if (isObject(value)) {
-          this.addSources([value])
-        } else if (isArray(value)) {
-          this.addSources(value)
-        }
-      }
+      this.handleData()
     }
 
     super.update(properties)
   }
 
-  protected addSource (source: Record<string, unknown>): void {
+  protected addSource (source: Struct): void {
     if (
       this.mediaElement instanceof HTMLAudioElement ||
       this.mediaElement instanceof HTMLVideoElement
@@ -82,13 +65,13 @@ export class MediaElement extends NodeElement {
     this.mediaElement.innerHTML = ''
 
     sources.forEach((source) => {
-      if (isObject(source)) {
+      if (isStruct(source)) {
         this.addSource(source)
       }
     })
   }
 
-  protected createImageElement (source: Record<string, unknown>): HTMLImageElement {
+  protected createImageElement (source: Struct): HTMLImageElement {
     const imageElement = document.createElement('img')
 
     if (typeof source.src === 'string') {
@@ -99,7 +82,7 @@ export class MediaElement extends NodeElement {
     return imageElement
   }
 
-  protected createSourceElement (source: Record<string, unknown>): HTMLSourceElement {
+  protected createSourceElement (source: Struct): HTMLSourceElement {
     const sourceElement = document.createElement('source')
 
     if (typeof source.media === 'string') {
@@ -118,5 +101,17 @@ export class MediaElement extends NodeElement {
 
     sourceElement.style.setProperty('max-width', '100%')
     return sourceElement
+  }
+
+  protected handleData (): void {
+    if (isArray(this.data)) {
+      this.addSources(this.data)
+    } else if (isStruct(this.data)) {
+      this.addSources([this.data])
+    } else if (typeof this.data === 'string') {
+      this.addSources([{
+        src: this.data
+      }])
+    }
   }
 }

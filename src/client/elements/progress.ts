@@ -96,15 +96,7 @@ export class ProgressElement extends NodeElement {
 
   public update (properties: PropertyValues): void {
     if (properties.has('loaded')) {
-      if (this.mode === 'indeterminate') {
-        this.busy = (
-          this.total === 0 ||
-          this.loaded !== this.total
-        )
-      } else {
-        this.busy = true
-        this.extend().catch(() => {})
-      }
+      this.handleLoaded()
     }
 
     super.update(properties)
@@ -175,6 +167,18 @@ export class ProgressElement extends NodeElement {
           this.progressElement.setAttribute('width', '0%')
         }
       })
+  }
+
+  protected handleLoaded (): void {
+    if (this.mode === 'indeterminate') {
+      this.busy = (
+        this.total === 0 ||
+        this.loaded !== this.total
+      )
+    } else {
+      this.busy = true
+      this.extend().catch(() => {})
+    }
   }
 
   protected setUpCircle (): void {

@@ -1,5 +1,5 @@
 export * from './cast'
 export * from './is-array'
 export * from './is-nil'
-export * from './is-object'
 export * from './is-primitive'
+export * from './is-struct'

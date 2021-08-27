@@ -3,10 +3,12 @@ import type { Job } from 'node-schedule'
 import type { Logger } from 'pino'
 import type { Queue } from '../../../common/entities'
 import { QueueRunner } from '../../helpers/queue/queue-runner'
+import type { Struct } from '../../../common'
 import type { TaskRun } from '../../../common/entities/base'
 import type { TaskRunner } from './task-runner'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createNodeRedisClient } from 'handy-redis'
+import { isStruct } from '../../../common'
 import { parseExpression } from 'cron-parser'
 import { scheduleJob } from 'node-schedule'
 import { sql } from '../sql'
@@ -21,7 +23,7 @@ export interface QueuerMessage {
   /**
    * The parameters to provide to the generator query.
    */
-  parameters?: Record<string, unknown>
+  parameters?: Struct
 }
 
 export interface QueuerOptions {
@@ -37,7 +39,7 @@ export interface QueuerOptions {
    *
    * @see {@link Database}
    */
-  databases: Partial<Record<string, Database>>
+  databases: Partial<Struct<Database>>
 
   /**
    * The logger.
@@ -85,7 +87,7 @@ export class Queuer {
    *
    * @see {@link Database}
    */
-  public databases: Partial<Record<string, Database>>
+  public databases: Partial<Struct<Database>>
 
   /**
    * The job to trigger queue runs.
@@ -202,48 +204,6 @@ export class Queuer {
    */
   public createStoreDuplicate (): WrappedNodeRedisClient {
     return createNodeRedisClient(this.store.nodeRedis.duplicate())
-  }
-
-  /**
-   * Checks whether a value is null or undefined.
-   *
-   * @param value - The value
-   * @returns The result
-   */
-  public isNil (value: unknown): value is null | undefined {
-    return (
-      value === null ||
-      value === undefined
-    )
-  }
-
-  /**
-   * Checks whether a value is a plain Object.
-   *
-   * @param value - The value
-   * @returns The result
-   */
-  public isObject (value: unknown): value is Record<string, unknown> {
-    return (
-      typeof value === 'object' &&
-      value !== null
-    )
-  }
-
-  /**
-   * Checks whether a value is a primitive.
-   *
-   * @param value - The value
-   * @returns The result
-   */
-  public isPrimitive (value: unknown): value is BigInt | boolean | number | string | symbol {
-    return (
-      typeof value === 'bigint' ||
-      typeof value === 'boolean' ||
-      typeof value === 'number' ||
-      typeof value === 'string' ||
-      typeof value === 'symbol'
-    )
   }
 
   /**
@@ -366,7 +326,7 @@ export class Queuer {
       if (
         typeof id === 'number' && (
           parameters === undefined ||
-          this.isObject(parameters)
+          isStruct(parameters)
         )
       ) {
         if (channel === 'queue-run') {
@@ -400,7 +360,7 @@ export class Queuer {
    * @param queue - The queue
    * @param parameters - The parameters
    */
-  protected async run (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
+  protected async run (queue: Queue, parameters?: Struct): Promise<void> {
     const queueRunner = this.createQueueRunner()
 
     try {

@@ -4,8 +4,9 @@ import type { AppElement } from './app'
 import type { InteractEvent } from '@interactjs/core/InteractEvent'
 import type { Interactable } from '@interactjs/core/Interactable'
 import { NodeElement } from './node'
+import type { Struct } from '../../common'
 import interact from 'interactjs'
-import { isObject } from '../../common'
+import { isStruct } from '../../common'
 import styles from '../styles/dialog'
 
 declare global {
@@ -55,7 +56,7 @@ interface Styles {
 
 type Direction = 'down' | 'left' | 'none' | 'right' | 'up'
 
-const htoAlternatives: Record<string, string[]> = {
+const htoAlternatives: Struct<string[]> = {
   'center': ['center', 'start', 'end', 'screen-center'],
   'end': ['end', 'start', 'center', 'screen-center'],
   'end-at-start': ['end-at-start', 'start-at-end', 'screen-center'],
@@ -66,7 +67,7 @@ const htoAlternatives: Record<string, string[]> = {
   'start-at-end': ['start-at-end', 'end-at-start', 'screen-center']
 }
 
-const vtoAlternatives: Record<string, string[]> = {
+const vtoAlternatives: Struct<string[]> = {
   'bottom': ['bottom', 'top', 'center', 'screen-center'],
   'bottom-at-top': ['bottom-at-top', 'top-at-bottom', 'screen-center'],
   'center': ['center', 'top', 'bottom', 'screen-center'],
@@ -570,7 +571,7 @@ export class DialogElement extends NodeElement {
       width: 0
     }
 
-    if (isObject(this.contentStyle)) {
+    if (isStruct(this.contentStyle)) {
       anchorRect = {
         ...anchorRect,
         left: this.contentStyle.left,
@@ -785,12 +786,12 @@ export class DialogElement extends NodeElement {
   }
 
   protected finishExtend (to: ContentStyle): void {
-    this.setStyle(to)
+    this.setContentStyleAfterFinish(to)
   }
 
   protected finishHide (to: ContentStyle): void {
     this.originElement?.appendChild(this)
-    this.setStyle(to)
+    this.setContentStyleAfterFinish(to)
 
     this
       .findScrollParentElements()
@@ -805,11 +806,11 @@ export class DialogElement extends NodeElement {
   }
 
   protected finishResize (to: ContentStyle): void {
-    this.setStyle(to)
+    this.setContentStyleAfterFinish(to)
   }
 
   protected finishShow (to: ContentStyle): void {
-    this.setStyle(to)
+    this.setContentStyleAfterFinish(to)
 
     if (this.anchorElement instanceof HTMLElement) {
       this.resizeObserver?.observe(this.anchorElement)
@@ -883,7 +884,7 @@ export class DialogElement extends NodeElement {
   }
 
   protected handleResize (): void {
-    this.setMaxWidth()
+    this.setContentWidth()
     this.resize(0).catch(() => {})
   }
 
@@ -891,15 +892,15 @@ export class DialogElement extends NodeElement {
     this.hide(0).catch(() => {})
   }
 
-  protected handleShow (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleShow (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
-      if (isObject(event.detail?.data)) {
+      if (isStruct(event.detail?.data)) {
         if (event.detail?.origin instanceof NodeElement) {
           this.anchorElement = event.detail.origin
         }
 
         if (
-          isObject(event.detail?.data.style) &&
+          isStruct(event.detail?.data.style) &&
           typeof event.detail?.data.style.left === 'number' &&
           typeof event.detail.data.style.top === 'number'
         ) {
@@ -954,14 +955,21 @@ export class DialogElement extends NodeElement {
 
     this.contentElement.style.setProperty('opacity', '0')
     this.scrimElement?.style.setProperty('opacity', '0')
-    this.setMaxWidth()
+    this.setContentWidth()
 
     await new Promise((resolve) => {
       window.setTimeout(resolve)
     })
   }
 
-  protected setMaxWidth (): void {
+  protected setContentStyleAfterFinish (to: ContentStyle): void {
+    this.contentElement.style.removeProperty('opacity')
+    this.contentElement.style.removeProperty('transform')
+    this.contentElement.style.setProperty('left', `${to.left}px`)
+    this.contentElement.style.setProperty('top', `${to.top}px`)
+  }
+
+  protected setContentWidth (): void {
     if (
       this.anchorElement instanceof HTMLElement &&
       this.contentElement instanceof NodeElement
@@ -972,13 +980,6 @@ export class DialogElement extends NodeElement {
         this.contentElement.style.removeProperty('width')
       }
     }
-  }
-
-  protected setStyle (to: ContentStyle): void {
-    this.contentElement.style.removeProperty('opacity')
-    this.contentElement.style.removeProperty('transform')
-    this.contentElement.style.setProperty('left', `${to.left}px`)
-    this.contentElement.style.setProperty('top', `${to.top}px`)
   }
 
   protected setUpDrag (): void {

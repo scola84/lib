@@ -3,6 +3,7 @@ import { Connection } from '../connection'
 import PgQueryStream from 'pg-query-stream'
 import type { PoolClient } from 'pg'
 import type { Readable } from 'stream'
+import type { Struct } from '../../../../common'
 import { format } from '../format'
 import { formatters } from './formatters'
 import { sql } from '../tag'
@@ -35,9 +36,9 @@ export class PostgresqlConnection extends Connection {
     return result
   }
 
-  public async depopulate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async depopulate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void> {
     await Promise.all(Object
-      .entries(population as Record<string, Array<Partial<unknown>>>)
+      .entries(population as Struct<Array<Partial<unknown>>>)
       .map(async ([table, rows]) => {
         return Promise.all(rows.map(async (object) => {
           await this.delete(sql`
@@ -84,9 +85,9 @@ export class PostgresqlConnection extends Connection {
     return object
   }
 
-  public async populate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async populate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void> {
     await Promise.all(Object
-      .entries(population as Record<string, Array<Partial<unknown>>>)
+      .entries(population as Struct<Array<Partial<unknown>>>)
       .map(async ([table, rows]) => {
         return Promise.all(rows.map(async (object) => {
           await this.insert(sql`

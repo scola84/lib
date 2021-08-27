@@ -23,7 +23,7 @@ export class IconElement extends NodeElement {
   ]
 
   @property()
-  public name?: keyof Icons
+  public name: keyof Icons
 
   @property({
     type: Boolean
@@ -43,13 +43,11 @@ export class IconElement extends NodeElement {
   }
 
   public update (properties: PropertyValues): void {
-    if (
-      this.name !== undefined &&
-      IconElement.icons[this.name] !== undefined
-    ) {
-      this.innerHTML = IconElement.icons[this.name] ?? ''
-    }
-
+    this.setIcon()
     super.update(properties)
+  }
+
+  protected setIcon (): void {
+    this.innerHTML = IconElement.icons[this.name] ?? ''
   }
 }

@@ -1,8 +1,9 @@
 import type { PropertyValues, TemplateResult } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { isArray, isObject, isPrimitive } from '../../common'
+import { isArray, isPrimitive, isStruct } from '../../common'
 import { NodeElement } from './node'
 import { RequestElement } from './request'
+import type { Struct } from '../../common'
 import { render } from 'lit'
 import { repeat } from 'lit/directives/repeat.js'
 import updaters from '../updaters/list'
@@ -107,7 +108,7 @@ export class ListElement extends NodeElement {
     this.templateFunction = this.renderTemplate.bind(this)
   }
 
-  public addItem (item: Record<string, unknown>): boolean {
+  public addItem (item: Struct): boolean {
     const index = this.items.findIndex((findItem) => {
       return this.getKey(item) === this.getKey(findItem)
     })
@@ -130,7 +131,7 @@ export class ListElement extends NodeElement {
     super.connectedCallback()
   }
 
-  public deleteItem (item: Record<string, unknown>): boolean {
+  public deleteItem (item: Struct): boolean {
     const index = this.items.findIndex((findItem) => {
       return this.getKey(item) === this.getKey(findItem)
     })
@@ -177,7 +178,7 @@ export class ListElement extends NodeElement {
 
   public getKey (item: unknown, index?: number): unknown {
     if (
-      isObject(item) &&
+      isStruct(item) &&
       isPrimitive(item[this.key])
     ) {
       return item[this.key]
@@ -191,7 +192,7 @@ export class ListElement extends NodeElement {
     this.data = undefined
   }
 
-  public toggleItem (item: Record<string, unknown>): void {
+  public toggleItem (item: Struct): void {
     const added = this.addItem(item)
 
     if (!added) {
@@ -201,20 +202,11 @@ export class ListElement extends NodeElement {
 
   public update (properties: PropertyValues): void {
     if (properties.has('count')) {
-      this.items = []
-      this.dispatchRequestEvent()
+      this.handleCount()
     } else if (properties.has('data')) {
-      if (isArray(this.data)) {
-        this.items.push(...this.data)
-        this.handleEmpty()
-      } else if (this.data === undefined) {
-        this.items = []
-        this.dispatchRequestEvent()
-      }
+      this.handleData()
     } else if (properties.has('items')) {
-      if (this.mode === undefined) {
-        this.handleEmpty()
-      }
+      this.handleItems()
     }
 
     render(repeat(this.items, this.keyFunction, this.templateFunction), this)
@@ -246,7 +238,7 @@ export class ListElement extends NodeElement {
       return
     }
 
-    const data: Record<string, unknown> = {
+    const data: Struct = {
       count: this.count
     }
 
@@ -254,7 +246,7 @@ export class ListElement extends NodeElement {
       const item = this.items.slice(-1).pop()
 
       if (
-        isObject(item) &&
+        isStruct(item) &&
         item.cursor !== undefined
       ) {
         data.cursor = item.cursor
@@ -275,21 +267,36 @@ export class ListElement extends NodeElement {
     }))
   }
 
-  protected handleAdd (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleAdd (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
       const data = event.detail?.data
 
-      if (isObject(data)) {
+      if (isStruct(data)) {
         this.addItem(data)
       }
     }
   }
 
-  protected handleDelete (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleCount (): void {
+    this.items = []
+    this.dispatchRequestEvent()
+  }
+
+  protected handleData (): void {
+    if (isArray(this.data)) {
+      this.items.push(...this.data)
+      this.handleEmpty()
+    } else if (this.data === undefined) {
+      this.items = []
+      this.dispatchRequestEvent()
+    }
+  }
+
+  protected handleDelete (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
       const data = event.detail?.data
 
-      if (isObject(data)) {
+      if (isStruct(data)) {
         this.deleteItem(data)
       }
     }
@@ -302,6 +309,12 @@ export class ListElement extends NodeElement {
       } else {
         this.emptyElement.slot = 'empty'
       }
+    }
+  }
+
+  protected handleItems (): void {
+    if (this.mode === undefined) {
+      this.handleEmpty()
     }
   }
 
@@ -323,11 +336,11 @@ export class ListElement extends NodeElement {
     }
   }
 
-  protected handleToggle (event: CustomEvent<Record<string, unknown> | null>): void {
+  protected handleToggle (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
       const data = event.detail?.data
 
-      if (isObject(data)) {
+      if (isStruct(data)) {
         this.toggleItem(data)
       }
     }
@@ -341,7 +354,14 @@ export class ListElement extends NodeElement {
       element.data = item
 
       element.dataLeafElements.forEach((dataLeafElement) => {
-        dataLeafElement.data = item
+        if (
+          isStruct(item) &&
+          dataLeafElement.name !== ''
+        ) {
+          dataLeafElement.data = item[dataLeafElement.name]
+        } else {
+          dataLeafElement.data = item
+        }
       })
     }
 

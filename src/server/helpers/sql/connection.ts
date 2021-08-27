@@ -1,4 +1,5 @@
 import type { Readable } from 'stream'
+import type { Struct } from '../../../common'
 
 /**
  * The result of a DELETE query.
@@ -80,7 +81,7 @@ export abstract class Connection {
    * console.log(query) // query = 'INSERT INTO t1 (`c1`) VALUES ("v1"), ("v2")' in MySQL
    * ```
    */
-  public abstract format: (query: string, values: Record<string, unknown>) => string
+  public abstract format: (query: string, values: Struct) => string
 
   /**
    * Deletes zero or more rows from the database.
@@ -120,7 +121,7 @@ export abstract class Connection {
    * })
    * ```
    */
-  public abstract depopulate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void>
+  public abstract depopulate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void>
 
   /**
    * Inserts one row into the database.
@@ -222,7 +223,7 @@ export abstract class Connection {
    * })
    * ```
    */
-  public abstract populate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void>
+  public abstract populate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void>
 
   /**
    * Executes any query against the database.

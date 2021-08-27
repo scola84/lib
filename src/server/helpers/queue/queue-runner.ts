@@ -3,6 +3,7 @@ import { PassThrough, Writable } from 'stream'
 import type { Queue, QueueRun, TaskRun } from '../../../common/entities'
 import type { Logger } from 'pino'
 import type { Readable } from 'stream'
+import type { Struct } from '../../../common'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createQueueRun } from '../../../common/entities'
 import { pipeline } from '../stream'
@@ -21,7 +22,7 @@ export interface QueueRunnerOptions {
    *
    * @see {@link Database}
    */
-  databases: Partial<Record<string, Database>>
+  databases: Partial<Struct<Database>>
 
   /**
    * The logger.
@@ -54,7 +55,7 @@ export class QueueRunner {
    *
    * @see {@link Database}
    */
-  public databases: Partial<Record<string, Database>>
+  public databases: Partial<Struct<Database>>
 
   /**
    * The logger.
@@ -96,7 +97,7 @@ export class QueueRunner {
    * @param parameters - The parameters
    * @returns The reader
    */
-  public async createTaskRunReader (queue: Queue, parameters?: Record<string, unknown>): Promise<Readable> {
+  public async createTaskRunReader (queue: Queue, parameters?: Struct): Promise<Readable> {
     if (parameters?.payload !== undefined) {
       const reader = new PassThrough({
         objectMode: true
@@ -163,7 +164,7 @@ export class QueueRunner {
    * @param queue - The queue
    * @param parameters - The parameters
    */
-  public async run (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
+  public async run (queue: Queue, parameters?: Struct): Promise<void> {
     const queueRun = createQueueRun({
       queue
     })

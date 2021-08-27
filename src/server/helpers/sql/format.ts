@@ -1,3 +1,5 @@
+import type { Struct } from '../../../common'
+
 interface formatters {
   /**
    * Formats an identifier.
@@ -31,7 +33,7 @@ interface formatters {
  * @returns A formatting function
  */
 export function format (formatters: formatters) {
-  return (query: string, values: Record<string, unknown> = {}): string => {
+  return (query: string, values: Struct = {}): string => {
     return (query.match(/\$[([][\w\s.]+[\])]/gu) ?? []).reduce((result, match) => {
       const key = match.slice(2, -1)
 

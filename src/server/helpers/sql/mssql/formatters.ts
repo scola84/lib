@@ -1,5 +1,5 @@
 import { escape } from 'sqlstring'
-import { isObject } from '../../../../common'
+import { isStruct } from '../../../../common'
 
 function identifier (value: string): string {
   return `[${value.replace(/\./gu, '].[')}]`
@@ -7,7 +7,7 @@ function identifier (value: string): string {
 
 function parameter (value: unknown): string {
   if (
-    isObject(value) ||
+    isStruct(value) ||
     typeof value === 'boolean'
   ) {
     return escape(JSON.stringify(value))

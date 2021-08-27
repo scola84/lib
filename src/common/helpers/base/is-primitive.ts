@@ -1,3 +1,5 @@
+export type Primitive = BigInt | boolean | number | string | symbol
+
 /**
  * Checks whether a value is a primitive, excluding `null` and `undefined`.
  *
@@ -5,7 +7,7 @@
  * @returns The result
  * @see https://developer.mozilla.org/en-US/docs/Glossary/Primitive
  */
-export function isPrimitive (value: unknown): value is BigInt | boolean | number | string | symbol {
+export function isPrimitive (value: unknown): value is Primitive {
   return (
     typeof value === 'bigint' ||
     typeof value === 'boolean' ||

@@ -5,7 +5,7 @@ import { URL } from 'url'
 import { createPool } from 'mysql2/promise'
 import { format } from '../format'
 import { formatters } from './formatters'
-import { isObject } from '../../../../common'
+import { isStruct } from '../../../../common'
 import { parse } from 'query-string'
 import { readFileSync } from 'fs-extra'
 import { set } from 'lodash'
@@ -63,7 +63,7 @@ export class MysqlDatabase extends Database {
     const sslNames = ['ca', 'cert', 'key']
 
     sslNames.forEach((name) => {
-      if (isObject(options.ssl)) {
+      if (isStruct(options.ssl)) {
         const value = options.ssl[name]
 
         if (typeof value === 'string') {

@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest, FastifySchema, RouteOptions, Validat
 import type { Database } from '../sql'
 import type { Logger } from 'pino'
 import type { Server } from './server'
+import type { Struct } from '../../../common'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { isArray } from '../../../common'
 
@@ -254,8 +255,8 @@ export abstract class RouteHandler {
    *}
    * ```
    */
-  protected normalizeValidationResults (validationResults: ValidationResult[] = []): Record<string, unknown> {
-    return validationResults.reduce<Record<string, unknown>>((result, validationResult) => {
+  protected normalizeValidationResults (validationResults: ValidationResult[] = []): Struct {
+    return validationResults.reduce<Struct>((result, validationResult) => {
       const {
         dataPath,
         keyword,

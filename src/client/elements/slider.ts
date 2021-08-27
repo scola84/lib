@@ -38,16 +38,16 @@ export class SliderElement extends InputElement {
 
   protected handleMinBound: (event: CustomEvent) => void
 
-  protected updaters = SliderElement.updaters
+  protected labelElement: FormatElement | null
 
-  protected valueElement: FormatElement | null
+  protected updaters = SliderElement.updaters
 
   public constructor () {
     super()
     this.dir = document.dir
     this.handleMaxBound = this.handleMax.bind(this)
     this.handleMinBound = this.handleMin.bind(this)
-    this.valueElement = this.querySelector<FormatElement>('[as="value"]')
+    this.labelElement = this.querySelector<FormatElement>('[as="label"]')
   }
 
   public connectedCallback (): void {
@@ -65,14 +65,12 @@ export class SliderElement extends InputElement {
   public firstUpdated (properties: PropertyValues): void {
     this.addEventListener('scola-slider-max', this.handleMaxBound)
     this.addEventListener('scola-slider-min', this.handleMinBound)
-    this.fieldElement.addEventListener('input', this.handleSlide.bind(this))
     this.setUpValue()
     super.firstUpdated(properties)
   }
 
   public async setMax (): Promise<void> {
     const {
-      name,
       max = '',
       value = ''
     } = this.fieldElement
@@ -85,16 +83,13 @@ export class SliderElement extends InputElement {
       !Number.isNaN(to)
     ) {
       await this.ease(from, to, (newValue) => {
-        this.data = {
-          [name]: newValue
-        }
+        this.data = newValue
       })
     }
   }
 
   public async setMin (): Promise<void> {
     const {
-      name,
       min = '',
       value = ''
     } = this.fieldElement
@@ -107,23 +102,21 @@ export class SliderElement extends InputElement {
       !Number.isNaN(to)
     ) {
       await this.ease(from, to, (newValue) => {
-        this.data = {
-          [name]: newValue
-        }
+        this.data = newValue
       })
     }
   }
 
   public update (properties: PropertyValues): void {
     super.update(properties)
-    this.setValueStyle()
-    this.setValueText()
+    this.setLabel()
+    this.setStyle()
   }
 
   protected handleInput (): void {
     super.handleInput()
-    this.setValueStyle()
-    this.setValueText()
+    this.setLabel()
+    this.setStyle()
   }
 
   protected handleMax (event: CustomEvent): void {
@@ -138,26 +131,22 @@ export class SliderElement extends InputElement {
     }
   }
 
-  protected handleSlide (): void {
-    this.setValueStyle()
-  }
-
-  protected setUpValue (): void {
-    this.fieldElement.style.setProperty('--max', this.fieldElement.max)
-    this.fieldElement.style.setProperty('--min', this.fieldElement.min)
-    this.setValueStyle()
-    this.setValueText()
-  }
-
-  protected setValueStyle (): void {
-    this.fieldElement.style.setProperty('--val', this.fieldElement.value)
-  }
-
-  protected setValueText (): void {
-    if (this.valueElement instanceof FormatElement) {
-      this.valueElement.data = {
+  protected setLabel (): void {
+    if (this.labelElement instanceof FormatElement) {
+      this.labelElement.data = {
         value: this.value
       }
     }
+  }
+
+  protected setStyle (): void {
+    this.fieldElement.style.setProperty('--max', this.fieldElement.max)
+    this.fieldElement.style.setProperty('--min', this.fieldElement.min)
+    this.fieldElement.style.setProperty('--val', this.fieldElement.value)
+  }
+
+  protected setUpValue (): void {
+    this.setStyle()
+    this.setLabel()
   }
 }

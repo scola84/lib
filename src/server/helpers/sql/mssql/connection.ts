@@ -2,6 +2,7 @@ import type { DeleteResult, InsertResult, UpdateResult } from '../connection'
 import type { IResult, Request } from 'mssql'
 import { Connection } from '../connection'
 import type { Readable } from 'stream'
+import type { Struct } from '../../../../common'
 import { Transform } from 'stream'
 import { format } from '../format'
 import { formatters } from './formatters'
@@ -35,9 +36,9 @@ export class MssqlConnection extends Connection {
     return result
   }
 
-  public async depopulate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async depopulate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void> {
     await Promise.all(Object
-      .entries(population as Record<string, Array<Partial<unknown>>>)
+      .entries(population as Struct<Array<Partial<unknown>>>)
       .map(async ([table, rows]) => {
         return Promise.all(rows.map(async (object) => {
           await this.delete(sql`
@@ -86,9 +87,9 @@ export class MssqlConnection extends Connection {
     return object
   }
 
-  public async populate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async populate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void> {
     await Promise.all(Object
-      .entries(population as Record<string, Array<Partial<unknown>>>)
+      .entries(population as Struct<Array<Partial<unknown>>>)
       .map(async ([table, rows]) => {
         return Promise.all(rows.map(async (object) => {
           await this.insert(sql`

@@ -1,7 +1,8 @@
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
-import { isObject } from '../../common'
+import type { Struct } from '../../common'
+import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -66,16 +67,16 @@ export class EventElement extends NodeElement {
     super.firstUpdated(properties)
   }
 
-  protected createEventData (event?: CustomEvent<Record<string, unknown> | null>): Record<string, unknown> {
+  protected createEventData (event?: CustomEvent<Struct | null>): Struct {
     const data = {
       ...this.dataset
     }
 
-    if (isObject(this.data)) {
+    if (isStruct(this.data)) {
       Object.assign(data, this.data)
     }
 
-    if (isObject(event?.detail?.data)) {
+    if (isStruct(event?.detail?.data)) {
       Object.assign(data, event?.detail?.data)
     }
 

@@ -2,7 +2,8 @@ import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
-import { isObject } from '../../common'
+import type { Struct } from '../../common'
+import { isStruct } from '../../common'
 import { render } from 'lit'
 import styles from '../styles/log'
 import updaters from '../updaters/log'
@@ -36,7 +37,7 @@ export class LogElement extends NodeElement {
   @property({
     attribute: false
   })
-  public logs: Array<Record<string, unknown>>
+  public logs: Struct[]
 
   @property({
     type: Number
@@ -45,7 +46,7 @@ export class LogElement extends NodeElement {
 
   protected handleHideBound: (event: CustomEvent) => void
 
-  protected log?: Record<string, unknown>
+  protected log?: Struct
 
   protected templateElement: NodeElement | null
 
@@ -145,7 +146,7 @@ export class LogElement extends NodeElement {
 
     const log = this.logs.shift()
 
-    if (!isObject(log)) {
+    if (!isStruct(log)) {
       this.hide().catch(() => {})
       return
     }
@@ -172,14 +173,7 @@ export class LogElement extends NodeElement {
 
   public update (properties: PropertyValues): void {
     if (properties.has('logs')) {
-      if (this.logs.length > 0) {
-        if (
-          this.timeout === undefined ||
-          this.timeoutId === undefined
-        ) {
-          this.showNext()
-        }
-      }
+      this.handleLogs()
     }
 
     super.update(properties)
@@ -191,7 +185,18 @@ export class LogElement extends NodeElement {
     }
   }
 
-  protected renderTemplate (log: Record<string, unknown>): Node | TemplateResult | undefined {
+  protected handleLogs (): void {
+    if (this.logs.length > 0) {
+      if (
+        this.timeout === undefined ||
+        this.timeoutId === undefined
+      ) {
+        this.showNext()
+      }
+    }
+  }
+
+  protected renderTemplate (log: Struct): Node | TemplateResult | undefined {
     let element = null
 
     if (log.template instanceof HTMLElement) {

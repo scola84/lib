@@ -5,6 +5,7 @@ import Ajv from 'ajv'
 import type { Logger } from 'pino'
 import type { ObjectSchema } from 'fluent-json-schema'
 import type { Queuer } from './queuer'
+import type { Struct } from '../../../common'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createNodeRedisClient } from 'handy-redis'
 import type { queue as fastq } from 'fastq'
@@ -61,7 +62,7 @@ export interface TaskRunnerOptions extends DuplexOptions {
    *
    * @see https://www.npmjs.com/package/fluent-json-schema
    */
-  schema: Record<string, ObjectSchema>
+  schema: Struct<ObjectSchema>
 
   /**
    * The store to trigger queue runs.
@@ -143,7 +144,7 @@ export abstract class TaskRunner {
    *
    * @see https://www.npmjs.com/package/fluent-json-schema
    */
-  public schema: Record<string, ObjectSchema>
+  public schema: Struct<ObjectSchema>
 
   /**
    * The store to trigger queue runs.

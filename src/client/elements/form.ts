@@ -2,6 +2,7 @@ import { customElement, property } from 'lit/decorators.js'
 import type { FieldElement } from './field'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
+import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -82,14 +83,23 @@ export class FormElement extends NodeElement {
 
   public update (properties: PropertyValues): void {
     if (properties.has('data')) {
-      this.fieldElements.forEach((fieldElement) => {
-        fieldElement.data = this.data
-      })
-
-      this.scrollToError()
+      this.handleData()
     }
 
     super.update(properties)
+  }
+
+  protected handleData (): void {
+    this.fieldElements.forEach((fieldElement) => {
+      if (
+        isStruct(this.data) &&
+        fieldElement.name !== ''
+      ) {
+        fieldElement.data = this.data[fieldElement.name]
+      }
+    })
+
+    this.scrollToError()
   }
 
   protected handleKeydown (event: KeyboardEvent): void {

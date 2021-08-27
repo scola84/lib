@@ -1,5 +1,6 @@
 import type { Connection, DeleteResult, InsertResult, UpdateResult } from './connection'
 import type { Readable } from 'stream'
+import type { Struct } from '../../../common'
 
 export interface DatabaseOptions {
   /**
@@ -15,7 +16,7 @@ export interface DatabaseOptions {
   /**
    * The population to add to the database at startup.
    */
-  population?: Partial<Record<string, Array<Partial<unknown>>>>
+  population?: Partial<Struct<Array<Partial<unknown>>>>
 }
 
 /**
@@ -35,7 +36,7 @@ export abstract class Database {
   /**
    * The population to add to the database at startup.
    */
-  public population?: Partial<Record<string, Array<Partial<unknown>>>>
+  public population?: Partial<Struct<Array<Partial<unknown>>>>
 
   /**
    * Formats a query to a dialect-specific form.
@@ -78,7 +79,7 @@ export abstract class Database {
    * console.log(query) // query = 'INSERT INTO t1 (`c1`) VALUES ("v1"), ("v2")' in MySQL
    * ```
    */
-  public abstract format: (query: string, values: Record<string, unknown>) => string
+  public abstract format: (query: string, values: Struct) => string
 
   /**
    * The connection pool.
@@ -146,7 +147,7 @@ export abstract class Database {
    * })
    * ```
    */
-  public async depopulate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async depopulate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void> {
     const connection = await this.connect()
 
     try {
@@ -286,7 +287,7 @@ export abstract class Database {
    * })
    * ```
    */
-  public async populate (population: Partial<Record<string, Array<Partial<unknown>>>>): Promise<void> {
+  public async populate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void> {
     const connection = await this.connect()
 
     try {

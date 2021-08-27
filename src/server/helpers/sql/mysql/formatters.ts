@@ -1,12 +1,12 @@
 import { escape } from 'sqlstring'
-import { isObject } from '../../../../common'
+import { isStruct } from '../../../../common'
 
 function identifier (value: string): string {
   return `\`${value.replace(/\./gu, '`.`')}\``
 }
 
 function parameter (value: unknown): string {
-  if (isObject(value)) {
+  if (isStruct(value)) {
     return escape(JSON.stringify(value))
   }
 

@@ -1,5 +1,6 @@
 import { customElement, property } from 'lit/decorators.js'
 import { RequestElement } from './request'
+import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -16,9 +17,6 @@ export class SourceElement extends RequestElement {
   @property()
   public event?: string
 
-  @property()
-  public type: string
-
   protected handleMessageBound: (event: MessageEvent) => void
 
   protected source?: EventSource
@@ -33,7 +31,11 @@ export class SourceElement extends RequestElement {
   }
 
   public abort (): void {
-    this.source?.close()
+    if (this.source !== undefined) {
+      this.source.close()
+      this.source.onerror = null
+      this.source.onopen = null
+    }
 
     this.event
       ?.split(' ')
@@ -47,17 +49,20 @@ export class SourceElement extends RequestElement {
     super.disconnectedCallback()
   }
 
-  public start (options?: Record<string, unknown>): void {
+  public restart (options?: Struct): void {
+    if (this.source?.readyState === this.source?.CLOSED) {
+      this.tries += 1
+
+      window.setTimeout(() => {
+        this.start(options)
+      }, this.tries * 1000)
+    }
+  }
+
+  public start (options?: Struct): void {
     this.source = new EventSource(this.createURL(options).toString())
-
-    this.source.onerror = () => {
-      this.restart()
-      this.abort()
-    }
-
-    this.source.onopen = () => {
-      this.tries = 0
-    }
+    this.source.onerror = this.handleError.bind(this)
+    this.source.onopen = this.handleOpen.bind(this)
 
     this.event
       ?.split(' ')
@@ -66,18 +71,20 @@ export class SourceElement extends RequestElement {
       })
   }
 
-  protected handleMessage (event: MessageEvent<string>): void {
-    this.data = JSON.parse(event.data)
-    this.type = event.type
+  protected handleError (): void {
+    this.restart()
+    this.abort()
   }
 
-  protected restart (options?: Record<string, unknown>): void {
-    if (this.source?.readyState === this.source?.CLOSED) {
-      this.tries += 1
-
-      window.setTimeout(() => {
-        this.start(options)
-      }, this.tries * 1000)
+  protected handleMessage (event: MessageEvent<string>): void {
+    try {
+      this.data = JSON.parse(event.data)
+    } catch (error: unknown) {
+      this.handleError()
     }
+  }
+
+  protected handleOpen (): void {
+    this.tries = 0
   }
 }

@@ -46,10 +46,6 @@ export class FormatElement extends NodeElement {
   })
   public showTitle?: boolean
 
-  public get shadowContent (): string {
-    return this.defaultSlotElement.textContent ?? ''
-  }
-
   protected updaters = FormatElement.updaters
 
   public update (properties: PropertyValues): void {

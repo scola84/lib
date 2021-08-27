@@ -50,14 +50,6 @@ export class SliderElement extends InputElement {
     this.valueElement = this.querySelector<FormatElement>('[as="value"]')
   }
 
-  public appendValueTo (data: FormData | URLSearchParams): void {
-    this.clearError()
-
-    if (this.isSuccessful) {
-      data.append(this.name, this.fieldElement.value)
-    }
-  }
-
   public connectedCallback (): void {
     window.addEventListener('scola-slider-max', this.handleMaxBound)
     window.addEventListener('scola-slider-min', this.handleMinBound)

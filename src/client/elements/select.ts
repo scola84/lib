@@ -1,7 +1,6 @@
 import type { CSSResultGroup, PropertyValues } from 'lit'
 import { cast, isObject } from '../../common'
 import { customElement, property } from 'lit/decorators.js'
-import type { FormatElement } from './format'
 import { InputElement } from './input'
 import styles from '../styles/select'
 import updaters from '../updaters/select'
@@ -106,7 +105,7 @@ export class SelectElement extends InputElement {
   protected createEventData (): Record<string, unknown> {
     return {
       checked: this.checked,
-      label: this.querySelector<FormatElement>('scola-format[as="value"]')?.shadowContent ?? this.querySelector('[as="value"]')?.textContent,
+      label: this.querySelector('[as="value"]')?.textContent,
       name: this.name,
       value: this.value
     }

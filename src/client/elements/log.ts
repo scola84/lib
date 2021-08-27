@@ -2,8 +2,8 @@ import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
-import { html } from 'lit'
 import { isObject } from '../../common'
+import { render } from 'lit'
 import styles from '../styles/log'
 import updaters from '../updaters/log'
 
@@ -102,14 +102,6 @@ export class LogElement extends NodeElement {
       })
   }
 
-  public render (): TemplateResult {
-    return html`
-      <slot name="body">
-        <slot>${this.renderTemplate()}</slot>
-      </slot>
-    `
-  }
-
   public async show (): Promise<void> {
     if (!this.hidden) {
       return
@@ -158,7 +150,7 @@ export class LogElement extends NodeElement {
       return
     }
 
-    this.log = log
+    render(this.renderTemplate(log), this)
     this.show().catch(() => {})
 
     let { timeout } = this
@@ -171,18 +163,20 @@ export class LogElement extends NodeElement {
       timeout = 3000
     }
 
-    this.timeoutId = window.setTimeout(() => {
-      this.showNext()
-    }, timeout)
+    if (timeout !== undefined) {
+      this.timeoutId = window.setTimeout(() => {
+        this.showNext()
+      }, timeout)
+    }
   }
 
   public update (properties: PropertyValues): void {
     if (properties.has('logs')) {
       if (this.logs.length > 0) {
-        if (this.timeout === undefined) {
-          this.log = this.logs.shift()
-          this.show().catch(() => {})
-        } else {
+        if (
+          this.timeout === undefined ||
+          this.timeoutId === undefined
+        ) {
           this.showNext()
         }
       }
@@ -197,13 +191,7 @@ export class LogElement extends NodeElement {
     }
   }
 
-  protected renderTemplate (): Node | TemplateResult | undefined {
-    const { log } = this
-
-    if (!isObject(log)) {
-      return this.templateElement?.cloneNode(true)
-    }
-
+  protected renderTemplate (log: Record<string, unknown>): Node | TemplateResult | undefined {
     let element = null
 
     if (log.template instanceof HTMLElement) {

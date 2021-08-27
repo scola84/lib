@@ -78,13 +78,13 @@ export class ClipElement extends NodeElement {
   public constructor () {
     super()
     this.dir = document.dir
-    this.handleElement = this.querySelector<HTMLElement>(':scope > [as="handle"]')
-    this.outerElements = this.querySelectorAll<HTMLElement>(':scope > [slot="after"], :scope > [slot="before"]')
     this.handleContentBound = this.handleContent.bind(this)
     this.handleContentOrInnerBound = this.handleContentOrInner.bind(this)
+    this.handleElement = this.querySelector<HTMLElement>(':scope > [as="handle"]')
     this.handleInnerBound = this.handleInner.bind(this)
     this.handleNestedBound = this.handleNested.bind(this)
     this.handleOuterBound = this.handleOuter.bind(this)
+    this.outerElements = this.querySelectorAll<HTMLElement>(':scope > [slot="after"], :scope > [slot="before"]')
   }
 
   public connectedCallback (): void {

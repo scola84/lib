@@ -49,8 +49,8 @@ export class SvgElement extends NodeElement {
       throw new Error('SVG element is null')
     }
 
-    this.svgElement = svgElement
     this.handleDrawBound = this.handleDraw.bind(this)
+    this.svgElement = svgElement
   }
 
   public connectedCallback (): void {

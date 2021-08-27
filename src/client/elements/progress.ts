@@ -1,6 +1,5 @@
-import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
-import { customElement, property, query } from 'lit/decorators.js'
-import { html, svg } from 'lit'
+import type { CSSResultGroup, PropertyValues } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
 import type { RequestElement } from './request'
 import styles from '../styles/progress'
@@ -69,42 +68,30 @@ export class ProgressElement extends NodeElement {
   })
   public type?: 'circle' | 'rect'
 
-  @query('circle', true)
-  protected circleElement: SVGCircleElement | null
-
-  @query('rect', true)
-  protected rectElement: SVGRectElement | null
-
   protected from?: number
+
+  protected progressElement: SVGCircleElement | SVGRectElement
 
   protected radius = 0
 
   protected updaters = ProgressElement.updaters
 
+  public async extend (): Promise<void> {
+    if (this.progressElement instanceof SVGCircleElement) {
+      await this.extendCircle()
+    } else {
+      await this.extendRect()
+    }
+  }
+
   public firstUpdated (properties: PropertyValues): void {
     if (this.type === 'circle') {
       this.setUpCircle()
+    } else {
+      this.setUpRect()
     }
 
     super.firstUpdated(properties)
-  }
-
-  public render (): TemplateResult {
-    let shape = svg``
-
-    if (this.type === 'circle') {
-      shape = svg`<circle cx="50%" cy="50%"/>`
-    } else {
-      shape = svg`<rect height="100%"/>`
-    }
-
-    return html`
-      <slot name="body">
-        <svg>
-          ${shape}
-        </svg>
-      </slot>
-    `
   }
 
   public update (properties: PropertyValues): void {
@@ -116,19 +103,14 @@ export class ProgressElement extends NodeElement {
         )
       } else {
         this.busy = true
-
-        if (this.type === 'circle') {
-          this.drawCircle().catch(() => {})
-        } else {
-          this.drawRect().catch(() => {})
-        }
+        this.extend().catch(() => {})
       }
     }
 
     super.update(properties)
   }
 
-  protected async drawCircle (): Promise<void> {
+  protected async extendCircle (): Promise<void> {
     let { fraction } = this
 
     if (
@@ -148,7 +130,7 @@ export class ProgressElement extends NodeElement {
 
     await this
       .ease(from, to, (value) => {
-        this.circleElement?.setAttribute('stroke-dashoffset', `${value}px`)
+        this.progressElement.setAttribute('stroke-dashoffset', `${value}px`)
       })
       .then(() => {
         if (
@@ -157,12 +139,12 @@ export class ProgressElement extends NodeElement {
         ) {
           this.busy = false
           this.from = cf
-          this.circleElement?.setAttribute('stroke-dashoffset', `${cf}px`)
+          this.progressElement.setAttribute('stroke-dashoffset', `${cf}px`)
         }
       })
   }
 
-  protected async drawRect (): Promise<void> {
+  protected async extendRect (): Promise<void> {
     let { fraction } = this
 
     if (
@@ -181,7 +163,7 @@ export class ProgressElement extends NodeElement {
 
     await this
       .ease(from, to, (value) => {
-        this.rectElement?.setAttribute('width', `${value}%`)
+        this.progressElement.setAttribute('width', `${value}%`)
       })
       .then(() => {
         if (
@@ -190,28 +172,51 @@ export class ProgressElement extends NodeElement {
         ) {
           this.busy = false
           this.from = 0
-          this.rectElement?.setAttribute('width', '0%')
+          this.progressElement.setAttribute('width', '0%')
         }
       })
   }
 
   protected setUpCircle (): void {
-    if (this.circleElement instanceof SVGCircleElement) {
-      const strokeWidth = parseFloat(window.getComputedStyle(this.circleElement).strokeWidth)
-      const width = parseFloat(window.getComputedStyle(this.bodySlotElement).width)
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
 
-      if (
-        Number.isFinite(strokeWidth) &&
-        Number.isFinite(width)
-      ) {
-        this.radius = (width - strokeWidth) / 2
-      }
+    svg.appendChild(circle)
+    circle.setAttribute('cx', '50%')
+    circle.setAttribute('cy', '50%')
 
-      const cf = this.radius * 2 * Math.PI
+    if (circle instanceof SVGCircleElement) {
+      this.bodySlotElement.insertBefore(svg, this.suffixSlotElement)
+      this.progressElement = circle
+    }
 
-      this.circleElement.setAttribute('r', `${this.radius}`)
-      this.circleElement.setAttribute('stroke-dasharray', `${cf}px ${cf}px`)
-      this.circleElement.setAttribute('stroke-dashoffset', `${cf}px`)
+    const strokeWidth = parseFloat(window.getComputedStyle(this.progressElement).strokeWidth)
+    const width = parseFloat(window.getComputedStyle(this.bodySlotElement).width)
+
+    if (
+      Number.isFinite(strokeWidth) &&
+      Number.isFinite(width)
+    ) {
+      this.radius = (width - strokeWidth) / 2
+    }
+
+    const cf = this.radius * 2 * Math.PI
+
+    this.progressElement.setAttribute('r', `${this.radius}`)
+    this.progressElement.setAttribute('stroke-dasharray', `${cf}px ${cf}px`)
+    this.progressElement.setAttribute('stroke-dashoffset', `${cf}px`)
+  }
+
+  protected setUpRect (): void {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+
+    svg.appendChild(rect)
+    rect.setAttribute('height', '100%')
+
+    if (rect instanceof SVGRectElement) {
+      this.bodySlotElement.insertBefore(svg, this.suffixSlotElement)
+      this.progressElement = rect
     }
   }
 }

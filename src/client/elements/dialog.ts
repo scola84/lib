@@ -169,13 +169,13 @@ export class DialogElement extends NodeElement {
 
     this.dir = document.dir
     this.contentElement = contentElement
-    this.originElement = this.parentElement
-    this.scrimElement = this.querySelector<HTMLElement>(':scope > [as="scrim"]')
     this.handleClickBound = this.handleClick.bind(this)
     this.handleHideBound = this.handleHide.bind(this)
     this.handleKeydownBound = this.handleKeydown.bind(this)
     this.handleScrollBound = this.handleScroll.bind(this)
     this.handleShowBound = this.handleShow.bind(this)
+    this.originElement = this.parentElement
+    this.scrimElement = this.querySelector<HTMLElement>(':scope > [as="scrim"]')
   }
 
   public connectedCallback (): void {

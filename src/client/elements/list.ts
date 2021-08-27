@@ -1,9 +1,9 @@
 import type { PropertyValues, TemplateResult } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { html, render } from 'lit'
 import { isArray, isObject, isPrimitive } from '../../common'
 import { NodeElement } from './node'
 import { RequestElement } from './request'
+import { render } from 'lit'
 import { repeat } from 'lit/directives/repeat.js'
 import updaters from '../updaters/list'
 
@@ -89,20 +89,22 @@ export class ListElement extends NodeElement {
 
   public constructor () {
     super()
+
+    const templateElement = this.querySelector<NodeElement>(':scope > [slot="template"]')
+
+    if (templateElement === null) {
+      throw new Error('Template element is null')
+    }
+
     this.emptyElement = this.querySelector<NodeElement>(':scope > [slot="empty"]')
-    this.templateElement = this.querySelector<NodeElement>(':scope > [slot="template"]')
     this.handleAddBound = this.handleAdd.bind(this)
     this.handleDeleteBound = this.handleDelete.bind(this)
     this.handleScrollBound = this.handleScroll.bind(this)
     this.handleStartBound = this.handleStart.bind(this)
     this.handleToggleBound = this.handleToggle.bind(this)
     this.keyFunction = this.getKey.bind(this)
-
-    if (this.templateElement === null) {
-      this.templateFunction = this.renderItem.bind(this)
-    } else {
-      this.templateFunction = this.renderTemplate.bind(this)
-    }
+    this.templateElement = templateElement
+    this.templateFunction = this.renderTemplate.bind(this)
   }
 
   public addItem (item: Record<string, unknown>): boolean {
@@ -329,12 +331,6 @@ export class ListElement extends NodeElement {
         this.toggleItem(data)
       }
     }
-  }
-
-  protected renderItem (item: unknown): TemplateResult {
-    return html`
-      <scola-node height="3">${JSON.stringify(item)}</scola-node>
-    `
   }
 
   protected renderTemplate (item: unknown): Node | undefined {

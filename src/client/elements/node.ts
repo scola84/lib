@@ -355,6 +355,8 @@ export class NodeElement extends LitElement {
 
   protected handlePropsToggleBound: (event: CustomEvent) => void
 
+  protected observeRootElement?: HTMLElement
+
   protected observers: Set<NodeElement> = new Set<NodeElement>()
 
   protected updaters = NodeElement.updaters
@@ -561,6 +563,37 @@ export class NodeElement extends LitElement {
     })
   }
 
+  protected findObserveRootElement (): HTMLElement {
+    if (this.observeScope === 'body') {
+      return document.body
+    }
+
+    let element: HTMLElement | null = this as HTMLElement
+
+    while (element !== null) {
+      if (element.parentNode?.nodeName.toLowerCase() === 'scola-view') {
+        return element
+      }
+
+      if (element instanceof HTMLSlotElement) {
+        const rootNode = element.getRootNode()
+
+        if (
+          rootNode instanceof ShadowRoot &&
+             rootNode.host instanceof HTMLElement
+        ) {
+          element = rootNode.host
+        } else {
+          element = element.parentElement
+        }
+      } else {
+        element = element.parentElement
+      }
+    }
+
+    return document.body
+  }
+
   protected handleContextmenu (event: MouseEvent): boolean {
     event.preventDefault()
 
@@ -713,13 +746,17 @@ export class NodeElement extends LitElement {
   }
 
   protected setUpObservers (properties: PropertyValues): void {
+    if (this.observe !== undefined) {
+      this.observeRootElement = this.findObserveRootElement()
+    }
+
     this.observe
       ?.split(' ')
       .forEach((observe) => {
         const id = observe.split('@').pop()
 
         if (id !== undefined) {
-          const element = document.getElementById(id)
+          const element = this.observeRootElement?.querySelector(`#${id}`)
 
           if (element instanceof NodeElement) {
             this.observedUpdate(properties, element)
@@ -754,7 +791,7 @@ export class NodeElement extends LitElement {
         const id = observe.split('@').pop()
 
         if (id !== undefined) {
-          const element = document.getElementById(id)
+          const element = this.observeRootElement?.querySelector(`#${id}`)
 
           if (element instanceof NodeElement) {
             element.removeObserver(this)

@@ -131,7 +131,7 @@ export default css`
       --scola-shadow-1: 0 0 0.75rem rgba(0, 0, 0, 0.35);
       --scola-shadow-2: 0 0 0.5rem rgba(0, 0, 0, 0.35);
       --scola-shadow-3: 0 0 0.25rem rgba(0, 0, 0, 0.35);
-      --scola-shadow-4: #eee;
+      --scola-shadow-4: #111;
     }
   }
 
@@ -221,7 +221,7 @@ export default css`
     --scola-shadow-1: 0 0 0.75rem rgba(0, 0, 0, 0.35);
     --scola-shadow-2: 0 0 0.5rem rgba(0, 0, 0, 0.35);
     --scola-shadow-3: 0 0 0.25rem rgba(0, 0, 0, 0.35);
-    --scola-shadow-4: #eee;
+    --scola-shadow-4: rgba(0, 0, 0, 0.15);
     --scola-scrollbar-color-translucent-aux-1: transparent;
     --scola-scrollbar-color-translucent-aux-2: transparent;
     --scola-scrollbar-color-translucent-aux-3: transparent;
@@ -254,7 +254,7 @@ export default css`
       --scola-shadow-1: 0 0 0.75rem rgba(0, 0, 0, 0.35);
       --scola-shadow-2: 0 0 0.5rem rgba(0, 0, 0, 0.35);
       --scola-shadow-3: 0 0 0.25rem rgba(0, 0, 0, 0.35);
-      --scola-shadow-4: #eee;
+      --scola-shadow-4: rgba(0, 0, 0, 0.15);
       --scola-scrollbar-color-translucent-aux-1: transparent;
       --scola-scrollbar-color-translucent-aux-2: transparent;
       --scola-scrollbar-color-translucent-aux-3: transparent;
@@ -287,7 +287,7 @@ export default css`
     --scola-shadow-1: 0 0 0.75rem rgba(0, 0, 0, 0.35);
     --scola-shadow-2: 0 0 0.5rem rgba(0, 0, 0, 0.35);
     --scola-shadow-3: 0 0 0.25rem rgba(0, 0, 0, 0.35);
-    --scola-shadow-4: #eee;
+    --scola-shadow-4: rgba(255, 255, 255, 0.15);
     --scola-scrollbar-color-translucent-aux-1: transparent;
     --scola-scrollbar-color-translucent-aux-2: transparent;
     --scola-scrollbar-color-translucent-aux-3: transparent;
@@ -320,7 +320,7 @@ export default css`
       --scola-shadow-1: 0 0 0.75rem rgba(0, 0, 0, 0.35);
       --scola-shadow-2: 0 0 0.5rem rgba(0, 0, 0, 0.35);
       --scola-shadow-3: 0 0 0.25rem rgba(0, 0, 0, 0.35);
-      --scola-shadow-4: #eee;
+      --scola-shadow-4: rgba(255, 255, 255, 0.15);
       --scola-scrollbar-color-translucent-aux-1: transparent;
       --scola-scrollbar-color-translucent-aux-2: transparent;
       --scola-scrollbar-color-translucent-aux-3: transparent;

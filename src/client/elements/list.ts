@@ -122,15 +122,6 @@ export class ListElement extends NodeElement {
     return false
   }
 
-  public connectedCallback (): void {
-    this.scrollParentElement?.addEventListener('scroll', this.handleScrollBound)
-    window.addEventListener('scola-list-add', this.handleAddBound)
-    window.addEventListener('scola-list-delete', this.handleDeleteBound)
-    window.addEventListener('scola-list-start', this.handleStartBound)
-    window.addEventListener('scola-list-toggle', this.handleToggleBound)
-    super.connectedCallback()
-  }
-
   public deleteItem (item: Struct): boolean {
     const index = this.items.findIndex((findItem) => {
       return this.getKey(item) === this.getKey(findItem)
@@ -146,28 +137,12 @@ export class ListElement extends NodeElement {
   }
 
   public disconnectedCallback (): void {
-    this.scrollParentElement?.removeEventListener('scroll', this.handleScrollBound)
-    window.removeEventListener('scola-list-add', this.handleAddBound)
-    window.removeEventListener('scola-list-delete', this.handleDeleteBound)
-    window.removeEventListener('scola-list-start', this.handleStartBound)
-    window.removeEventListener('scola-list-toggle', this.handleToggleBound)
+    this.tearDownParentListeners()
     super.disconnectedCallback()
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    if (this.scrollParent === undefined) {
-      this.scrollParentElement = this.bodySlotElement
-    } else {
-      this.scrollParentElement = document
-        .querySelector<NodeElement>(`#${this.scrollParent}`)
-        ?.shadowBody
-    }
-
-    this.scrollParentElement?.addEventListener('scroll', this.handleScrollBound)
-    this.addEventListener('scola-list-add', this.handleAddBound)
-    this.addEventListener('scola-list-delete', this.handleDeleteBound)
-    this.addEventListener('scola-list-start', this.handleStartBound)
-    this.addEventListener('scola-list-toggle', this.handleToggleBound)
+    this.setUpParentListeners()
 
     if (this.mode === undefined) {
       this.handleEmpty()
@@ -356,5 +331,45 @@ export class ListElement extends NodeElement {
     }
 
     return element
+  }
+
+  protected setUpElementListeners (): void {
+    this.addEventListener('scola-list-add', this.handleAddBound)
+    this.addEventListener('scola-list-delete', this.handleDeleteBound)
+    this.addEventListener('scola-list-start', this.handleStartBound)
+    this.addEventListener('scola-list-toggle', this.handleToggleBound)
+    super.setUpElementListeners()
+  }
+
+  protected setUpParentListeners (): void {
+    if (this.scrollParent === undefined) {
+      this.scrollParentElement = this.bodySlotElement
+    } else {
+      this.scrollParentElement = document
+        .querySelector<NodeElement>(`#${this.scrollParent}`)
+        ?.shadowBody
+    }
+
+    this.scrollParentElement?.addEventListener('scroll', this.handleScrollBound)
+  }
+
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-list-add', this.handleAddBound)
+    window.addEventListener('scola-list-delete', this.handleDeleteBound)
+    window.addEventListener('scola-list-start', this.handleStartBound)
+    window.addEventListener('scola-list-toggle', this.handleToggleBound)
+    super.setUpWindowListeners()
+  }
+
+  protected tearDownParentListeners (): void {
+    this.scrollParentElement?.removeEventListener('scroll', this.handleScrollBound)
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-list-add', this.handleAddBound)
+    window.removeEventListener('scola-list-delete', this.handleDeleteBound)
+    window.removeEventListener('scola-list-start', this.handleStartBound)
+    window.removeEventListener('scola-list-toggle', this.handleToggleBound)
+    super.tearDownWindowListeners()
   }
 }

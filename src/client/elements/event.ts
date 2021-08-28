@@ -42,8 +42,6 @@ export class EventElement extends NodeElement {
   }
 
   public connectedCallback (): void {
-    window.addEventListener('scola-event', this.handleEventBound)
-
     if (this.interval !== undefined) {
       this.setUpInterval()
     }
@@ -52,8 +50,6 @@ export class EventElement extends NodeElement {
   }
 
   public disconnectedCallback (): void {
-    window.removeEventListener('scola-event', this.handleEventBound)
-
     if (this.interval !== undefined) {
       this.tearDownInterval()
     }
@@ -62,8 +58,6 @@ export class EventElement extends NodeElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    this.addEventListener('scola-event', this.handleEventBound)
-
     if (this.wait !== true) {
       this.dispatchEvents(this.createEventData())
     }
@@ -93,15 +87,30 @@ export class EventElement extends NodeElement {
     }
   }
 
+  protected setUpElementListeners (): void {
+    this.addEventListener('scola-event', this.handleEventBound)
+    super.setUpElementListeners()
+  }
+
   protected setUpInterval (): void {
     this.intervalId = window.setInterval(() => {
       this.dispatchEvents(this.createEventData())
     }, this.interval)
   }
 
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-event', this.handleEventBound)
+    super.setUpWindowListeners()
+  }
+
   protected tearDownInterval (): void {
     if (this.intervalId !== undefined) {
       window.clearInterval(this.intervalId)
     }
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-event', this.handleEventBound)
+    super.tearDownWindowListeners()
   }
 }

@@ -135,24 +135,7 @@ export class RequestElement extends NodeElement {
     this.controller = new AbortController()
   }
 
-  public connectedCallback (): void {
-    window.addEventListener('scola-request-abort', this.handleAbortBound)
-    window.addEventListener('scola-request-start', this.handleStartBound)
-    window.addEventListener('scola-request-toggle', this.handleToggleBound)
-    super.connectedCallback()
-  }
-
-  public disconnectedCallback (): void {
-    window.removeEventListener('scola-request-abort', this.handleAbortBound)
-    window.removeEventListener('scola-request-start', this.handleStartBound)
-    window.removeEventListener('scola-request-toggle', this.handleToggleBound)
-    super.disconnectedCallback()
-  }
-
   public firstUpdated (properties: PropertyValues): void {
-    this.addEventListener('scola-request-abort', this.handleAbortBound)
-    this.addEventListener('scola-request-start', this.handleStartBound)
-    this.addEventListener('scola-request-toggle', this.handleToggleBound)
     super.firstUpdated(properties)
 
     if (this.wait !== true) {
@@ -359,5 +342,26 @@ export class RequestElement extends NodeElement {
         this.toggle()
       }
     }
+  }
+
+  protected setUpElementListeners (): void {
+    this.addEventListener('scola-request-abort', this.handleAbortBound)
+    this.addEventListener('scola-request-start', this.handleStartBound)
+    this.addEventListener('scola-request-toggle', this.handleToggleBound)
+    super.setUpElementListeners()
+  }
+
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-request-abort', this.handleAbortBound)
+    window.addEventListener('scola-request-start', this.handleStartBound)
+    window.addEventListener('scola-request-toggle', this.handleToggleBound)
+    super.setUpWindowListeners()
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-request-abort', this.handleAbortBound)
+    window.removeEventListener('scola-request-start', this.handleStartBound)
+    window.removeEventListener('scola-request-toggle', this.handleToggleBound)
+    super.tearDownWindowListeners()
   }
 }

@@ -24,16 +24,6 @@ export class StructElement extends NodeElement {
     this.handleSetDataBound = this.handleSetData.bind(this)
   }
 
-  public connectedCallback (): void {
-    window.addEventListener('scola-struct-set-data', this.handleSetDataBound)
-    super.connectedCallback()
-  }
-
-  public disconnectedCallback (): void {
-    window.removeEventListener('scola-struct-set-data', this.handleSetDataBound)
-    super.disconnectedCallback()
-  }
-
   public update (properties: PropertyValues): void {
     if (properties.has('data')) {
       this.handleData()
@@ -52,5 +42,15 @@ export class StructElement extends NodeElement {
 
   protected handleSetData (event: CustomEvent<Struct | null>): void {
     this.data = event.detail?.data
+  }
+
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-struct-set-data', this.handleSetDataBound)
+    super.setUpWindowListeners()
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-struct-set-data', this.handleSetDataBound)
+    this.tearDownWindowListeners()
   }
 }

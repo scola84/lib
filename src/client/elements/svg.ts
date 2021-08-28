@@ -54,13 +54,11 @@ export class SvgElement extends NodeElement {
   }
 
   public connectedCallback (): void {
-    window.addEventListener('scola-svg-draw', this.handleDrawBound)
     this.setUpResize()
     super.connectedCallback()
   }
 
   public disconnectedCallback (): void {
-    window.removeEventListener('scola-svg-draw', this.handleDrawBound)
     this.tearDownResize()
     super.disconnectedCallback()
   }
@@ -71,11 +69,6 @@ export class SvgElement extends NodeElement {
       .forEach((drawerName) => {
         this.drawers[drawerName]?.(this)
       })
-  }
-
-  public firstUpdated (properties: PropertyValues): void {
-    this.addEventListener('scola-svg-draw', this.handleDrawBound)
-    super.firstUpdated(properties)
   }
 
   public update (properties: PropertyValues): void {
@@ -95,9 +88,19 @@ export class SvgElement extends NodeElement {
     this.draw()
   }
 
+  protected setUpElementListeners (): void {
+    this.addEventListener('scola-svg-draw', this.handleDrawBound)
+    super.setUpElementListeners()
+  }
+
   protected setUpResize (): void {
     this.resizeObserver = new ResizeObserver(this.handleResize.bind(this))
     this.resizeObserver.observe(this)
+  }
+
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-svg-draw', this.handleDrawBound)
+    super.setUpWindowListeners()
   }
 
   protected setViewBox (): void {
@@ -115,5 +118,10 @@ export class SvgElement extends NodeElement {
 
   protected tearDownResize (): void {
     this.resizeObserver?.disconnect()
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-svg-draw', this.handleDrawBound)
+    super.tearDownWindowListeners()
   }
 }

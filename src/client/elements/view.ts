@@ -99,12 +99,6 @@ export class ViewElement extends ClipElement {
   }
 
   public connectedCallback (): void {
-    window.addEventListener('popstate', this.handlePopstateBound)
-    window.addEventListener('scola-view-append', this.handleAppendBound)
-    window.addEventListener('scola-view-back', this.handleBackBound)
-    window.addEventListener('scola-view-forward', this.handleForwardBound)
-    window.addEventListener('scola-view-home', this.handleHomeBound)
-
     if (this.save === true) {
       this.loadState()
     }
@@ -112,20 +106,7 @@ export class ViewElement extends ClipElement {
     super.connectedCallback()
   }
 
-  public disconnectedCallback (): void {
-    window.removeEventListener('popstate', this.handlePopstateBound)
-    window.removeEventListener('scola-view-append', this.handleAppendBound)
-    window.removeEventListener('scola-view-back', this.handleBackBound)
-    window.removeEventListener('scola-view-forward', this.handleForwardBound)
-    window.removeEventListener('scola-view-home', this.handleHomeBound)
-    super.disconnectedCallback()
-  }
-
   public firstUpdated (properties: PropertyValues): void {
-    this.addEventListener('scola-view-append', this.handleAppendBound)
-    this.addEventListener('scola-view-back', this.handleBackBound)
-    this.addEventListener('scola-view-forward', this.handleForwardBound)
-    this.addEventListener('scola-view-home', this.handleHomeBound)
     this.go(0, false)
     super.firstUpdated(properties)
   }
@@ -458,5 +439,31 @@ export class ViewElement extends ClipElement {
     if (!Number.isNaN(size)) {
       this.defaultSlotElement[scrollName] += scrollFactor * size
     }
+  }
+
+  protected setUpElementListeners (): void {
+    this.addEventListener('scola-view-append', this.handleAppendBound)
+    this.addEventListener('scola-view-back', this.handleBackBound)
+    this.addEventListener('scola-view-forward', this.handleForwardBound)
+    this.addEventListener('scola-view-home', this.handleHomeBound)
+    super.setUpElementListeners()
+  }
+
+  protected setUpWindowListeners (): void {
+    window.addEventListener('popstate', this.handlePopstateBound)
+    window.addEventListener('scola-view-append', this.handleAppendBound)
+    window.addEventListener('scola-view-back', this.handleBackBound)
+    window.addEventListener('scola-view-forward', this.handleForwardBound)
+    window.addEventListener('scola-view-home', this.handleHomeBound)
+    super.setUpWindowListeners()
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('popstate', this.handlePopstateBound)
+    window.removeEventListener('scola-view-append', this.handleAppendBound)
+    window.removeEventListener('scola-view-back', this.handleBackBound)
+    window.removeEventListener('scola-view-forward', this.handleForwardBound)
+    window.removeEventListener('scola-view-home', this.handleHomeBound)
+    super.tearDownWindowListeners()
   }
 }

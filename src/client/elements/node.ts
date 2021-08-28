@@ -15,10 +15,10 @@ declare global {
   }
 
   interface WindowEventMap {
-    'scola-node-params-set': CustomEvent
-    'scola-node-params-toggle': CustomEvent
-    'scola-node-props-set': CustomEvent
-    'scola-node-props-toggle': CustomEvent
+    'scola-node-set-params': CustomEvent
+    'scola-node-set-props': CustomEvent
+    'scola-node-toggle-params': CustomEvent
+    'scola-node-toggle-props': CustomEvent
   }
 }
 
@@ -139,6 +139,18 @@ export class NodeElement extends LitElement {
     reflect: true
   })
   public halign?: 'between' | 'center' | 'end' | 'evenly' | 'start'
+
+  @property({
+    attribute: 'handle-params',
+    type: Boolean
+  })
+  public handleParams?: boolean
+
+  @property({
+    attribute: 'handle-props',
+    type: Boolean
+  })
+  public handleProps?: boolean
 
   @property({
     reflect: true
@@ -359,13 +371,13 @@ export class NodeElement extends LitElement {
   @query('slot[name="suffix"]', true)
   protected suffixSlotElement: HTMLSlotElement
 
-  protected handleParamsSetBound: (event: CustomEvent) => void
+  protected handleSetParamsBound: (event: CustomEvent) => void
 
-  protected handleParamsToggleBound: (event: CustomEvent) => void
+  protected handleSetPropsBound: (event: CustomEvent) => void
 
-  protected handlePropsSetBound: (event: CustomEvent) => void
+  protected handleToggleParamsBound: (event: CustomEvent) => void
 
-  protected handlePropsToggleBound: (event: CustomEvent) => void
+  protected handleTogglePropsBound: (event: CustomEvent) => void
 
   protected observeRootElement?: HTMLElement
 
@@ -375,10 +387,10 @@ export class NodeElement extends LitElement {
 
   public constructor () {
     super()
-    this.handleParamsSetBound = this.handleParamsSet.bind(this)
-    this.handleParamsToggleBound = this.handleParamsToggle.bind(this)
-    this.handlePropsSetBound = this.handlePropsSet.bind(this)
-    this.handlePropsToggleBound = this.handlePropsToggle.bind(this)
+    this.handleSetParamsBound = this.handleSetParams.bind(this)
+    this.handleSetPropsBound = this.handleSetProps.bind(this)
+    this.handleToggleParamsBound = this.handleToggleParams.bind(this)
+    this.handleTogglePropsBound = this.handleToggleProps.bind(this)
   }
 
   public addObserver (element: NodeElement): void {
@@ -386,14 +398,13 @@ export class NodeElement extends LitElement {
   }
 
   public connectedCallback (): void {
-    window.addEventListener('scola-node-params-set', this.handleParamsSetBound)
-    window.addEventListener('scola-node-params-toggle', this.handleParamsToggleBound)
-    window.addEventListener('scola-node-props-set', this.handlePropsSetBound)
-    window.addEventListener('scola-node-props-toggle', this.handlePropsToggleBound)
+    this.setUpWindowListeners()
     super.connectedCallback()
   }
 
   public disconnectedCallback (): void {
+    this.tearDownWindowListeners()
+
     if (!this.isConnected) {
       this.tearDownObservers()
     }
@@ -402,16 +413,9 @@ export class NodeElement extends LitElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    if (this.logLevel !== 'off') {
-      this.addEventListener('scola-log', this.handleLog.bind(this))
-    }
-
-    if (this.contextMenu !== undefined) {
-      this.addEventListener('contextmenu', this.handleContextmenu.bind(this))
-    }
-
-    this.setUpPresets()
+    this.setUpElementListeners()
     this.setUpObservers(properties)
+    this.setUpPresets()
     super.firstUpdated(properties)
   }
 
@@ -680,7 +684,7 @@ export class NodeElement extends LitElement {
     }
   }
 
-  protected handleParamsSet (event: CustomEvent<Struct | null>): void {
+  protected handleSetParams (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
       const data = event.detail?.data
 
@@ -699,26 +703,7 @@ export class NodeElement extends LitElement {
     }
   }
 
-  protected handleParamsToggle (event: CustomEvent<Struct | null>): void {
-    if (this.isTarget(event)) {
-      const data = event.detail?.data
-
-      if (isStruct(data)) {
-        if (
-          typeof data.name === 'string' &&
-          typeof data.value === 'string'
-        ) {
-          this.toggleParameters({
-            [data.name]: data.value
-          })
-        } else {
-          this.toggleParameters(data)
-        }
-      }
-    }
-  }
-
-  protected handlePropsSet (event: CustomEvent<Struct | null>): void {
+  protected handleSetProps (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
       const data = event.detail?.data
 
@@ -737,7 +722,26 @@ export class NodeElement extends LitElement {
     }
   }
 
-  protected handlePropsToggle (event: CustomEvent<Struct | null>): void {
+  protected handleToggleParams (event: CustomEvent<Struct | null>): void {
+    if (this.isTarget(event)) {
+      const data = event.detail?.data
+
+      if (isStruct(data)) {
+        if (
+          typeof data.name === 'string' &&
+          typeof data.value === 'string'
+        ) {
+          this.toggleParameters({
+            [data.name]: data.value
+          })
+        } else {
+          this.toggleParameters(data)
+        }
+      }
+    }
+  }
+
+  protected handleToggleProps (event: CustomEvent<Struct | null>): void {
     if (this.isTarget(event)) {
       const data = event.detail?.data
 
@@ -787,6 +791,16 @@ export class NodeElement extends LitElement {
       }, string) ?? string
   }
 
+  protected setUpElementListeners (): void {
+    if (this.logLevel !== 'off') {
+      this.addEventListener('scola-log', this.handleLog.bind(this))
+    }
+
+    if (this.contextMenu !== undefined) {
+      this.addEventListener('contextmenu', this.handleContextmenu.bind(this))
+    }
+  }
+
   protected setUpObservers (properties: PropertyValues): void {
     if (this.observe !== undefined) {
       this.observeRootElement = this.findObserveRootElement()
@@ -826,6 +840,18 @@ export class NodeElement extends LitElement {
       })
   }
 
+  protected setUpWindowListeners (): void {
+    if (this.handleParams === true) {
+      window.addEventListener('scola-node-set-params', this.handleSetParamsBound)
+      window.addEventListener('scola-node-toggle-params', this.handleToggleParamsBound)
+    }
+
+    if (this.handleProps === true) {
+      window.addEventListener('scola-node-set-props', this.handleSetPropsBound)
+      window.addEventListener('scola-node-toggle-props', this.handleTogglePropsBound)
+    }
+  }
+
   protected tearDownObservers (): void {
     this.observe
       ?.split(' ')
@@ -842,5 +868,17 @@ export class NodeElement extends LitElement {
       })
 
     this.observers.clear()
+  }
+
+  protected tearDownWindowListeners (): void {
+    if (this.handleParams === true) {
+      window.removeEventListener('scola-node-set-params', this.handleSetParamsBound)
+      window.removeEventListener('scola-node-toggle-params', this.handleToggleParamsBound)
+    }
+
+    if (this.handleProps === true) {
+      window.removeEventListener('scola-node-set-props', this.handleSetPropsBound)
+      window.removeEventListener('scola-node-toggle-props', this.handleTogglePropsBound)
+    }
   }
 }

@@ -43,23 +43,6 @@ export class FormElement extends NodeElement {
     this.handleSubmitBound = this.handleSubmit.bind(this)
   }
 
-  public connectedCallback (): void {
-    window.addEventListener('scola-form-submit', this.handleSubmitBound)
-    super.connectedCallback()
-  }
-
-  public disconnectedCallback (): void {
-    window.removeEventListener('scola-form-submit', this.handleSubmitBound)
-    super.disconnectedCallback()
-  }
-
-  public firstUpdated (properties: PropertyValues): void {
-    this.addEventListener('keydown', this.handleKeydown.bind(this))
-    this.addEventListener('scola-log', this.handleLog.bind(this))
-    this.addEventListener('scola-form-submit', this.handleSubmitBound)
-    super.firstUpdated(properties)
-  }
-
   public submit (): void {
     let body: FormData | URLSearchParams = new URLSearchParams()
 
@@ -119,5 +102,22 @@ export class FormElement extends NodeElement {
           behavior: 'smooth'
         })
     })
+  }
+
+  protected setUpElementListeners (): void {
+    this.addEventListener('keydown', this.handleKeydown.bind(this))
+    this.addEventListener('scola-log', this.handleLog.bind(this))
+    this.addEventListener('scola-form-submit', this.handleSubmitBound)
+    super.setUpElementListeners()
+  }
+
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-form-submit', this.handleSubmitBound)
+    super.setUpWindowListeners()
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-form-submit', this.handleSubmitBound)
+    super.tearDownWindowListeners()
   }
 }

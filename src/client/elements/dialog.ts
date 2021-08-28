@@ -1,6 +1,6 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import type { AppElement } from './app'
+import type { CSSResultGroup } from 'lit'
 import type { InteractEvent } from '@interactjs/core/InteractEvent'
 import type { Interactable } from '@interactjs/core/Interactable'
 import { NodeElement } from './node'
@@ -180,8 +180,6 @@ export class DialogElement extends NodeElement {
   }
 
   public connectedCallback (): void {
-    window.addEventListener('scola-dialog-hide', this.handleHideBound)
-    window.addEventListener('scola-dialog-show', this.handleShowBound)
     this.setUpResize()
 
     if (this.drag?.includes(this.breakpoint) === true) {
@@ -192,10 +190,8 @@ export class DialogElement extends NodeElement {
   }
 
   public disconnectedCallback (): void {
-    window.removeEventListener('scola-dialog-hide', this.handleHideBound)
-    window.removeEventListener('scola-dialog-show', this.handleShowBound)
-    this.tearDownResize()
     this.tearDownDrag()
+    this.tearDownResize()
     super.disconnectedCallback()
   }
 
@@ -220,13 +216,6 @@ export class DialogElement extends NodeElement {
       .then(() => {
         this.finishExtend(to)
       })
-  }
-
-  public firstUpdated (properties: PropertyValues): void {
-    this.addEventListener('scola-dialog-hide', this.handleHideBound)
-    this.addEventListener('scola-dialog-show', this.handleShowBound)
-    this.addEventListener('scola-view-move', this.handleViewMove.bind(this))
-    super.firstUpdated(properties)
   }
 
   public async hide (duration = this.duration): Promise<void> {
@@ -1016,8 +1005,21 @@ export class DialogElement extends NodeElement {
       .on('dragend', this.handleDragEnd.bind(this))
   }
 
+  protected setUpElementListeners (): void {
+    this.addEventListener('scola-dialog-hide', this.handleHideBound)
+    this.addEventListener('scola-dialog-show', this.handleShowBound)
+    this.addEventListener('scola-view-move', this.handleViewMove.bind(this))
+    super.setUpElementListeners()
+  }
+
   protected setUpResize (): void {
     this.resizeObserver = new ResizeObserver(this.handleResize.bind(this))
+  }
+
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-dialog-hide', this.handleHideBound)
+    window.addEventListener('scola-dialog-show', this.handleShowBound)
+    super.setUpWindowListeners()
   }
 
   protected tearDownDrag (): void {
@@ -1026,5 +1028,11 @@ export class DialogElement extends NodeElement {
 
   protected tearDownResize (): void {
     this.resizeObserver?.disconnect()
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-dialog-hide', this.handleHideBound)
+    window.removeEventListener('scola-dialog-show', this.handleShowBound)
+    super.tearDownWindowListeners()
   }
 }

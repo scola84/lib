@@ -88,33 +88,7 @@ export class ClipElement extends NodeElement {
     this.outerElements = this.querySelectorAll<HTMLElement>(':scope > [slot="after"], :scope > [slot="before"]')
   }
 
-  public connectedCallback (): void {
-    window.addEventListener('scola-clip-content', this.handleContentBound)
-    window.addEventListener('scola-clip-content-or-inner', this.handleContentOrInnerBound)
-    window.addEventListener('scola-clip-inner', this.handleInnerBound)
-    window.addEventListener('scola-clip-nested', this.handleNestedBound)
-    window.addEventListener('scola-clip-outer', this.handleOuterBound)
-    super.connectedCallback()
-  }
-
-  public disconnectedCallback (): void {
-    window.removeEventListener('scola-clip-content', this.handleContentBound)
-    window.removeEventListener('scola-clip-content-or-inner', this.handleContentOrInnerBound)
-    window.removeEventListener('scola-clip-inner', this.handleInnerBound)
-    window.removeEventListener('scola-clip-nested', this.handleNestedBound)
-    window.removeEventListener('scola-clip-outer', this.handleOuterBound)
-    super.disconnectedCallback()
-  }
-
   public firstUpdated (properties: PropertyValues): void {
-    this.addEventListener('click', this.handleClick.bind(this))
-    this.addEventListener('scola-clip-content', this.handleContentBound)
-    this.addEventListener('scola-clip-content-or-inner', this.handleContentOrInnerBound)
-    this.addEventListener('scola-clip-inner', this.handleInnerBound)
-    this.addEventListener('scola-clip-nested', this.handleNestedBound)
-    this.addEventListener('scola-clip-outer', this.handleOuterBound)
-    this.addEventListener('scola-view-move', this.handleViewMove.bind(this))
-
     switch (this.mode) {
       case 'content':
         this.setUpContent()
@@ -635,6 +609,17 @@ export class ClipElement extends NodeElement {
       })
   }
 
+  protected setUpElementListeners (): void {
+    this.addEventListener('click', this.handleClick.bind(this))
+    this.addEventListener('scola-clip-content', this.handleContentBound)
+    this.addEventListener('scola-clip-content-or-inner', this.handleContentOrInnerBound)
+    this.addEventListener('scola-clip-inner', this.handleInnerBound)
+    this.addEventListener('scola-clip-nested', this.handleNestedBound)
+    this.addEventListener('scola-clip-outer', this.handleOuterBound)
+    this.addEventListener('scola-view-move', this.handleViewMove.bind(this))
+    super.setUpElementListeners()
+  }
+
   protected setUpInner (): void {
     this.defaultSlotElement.style.setProperty('display', 'none')
     this.innerHidden = true
@@ -653,5 +638,23 @@ export class ClipElement extends NodeElement {
           }
         })
       })
+  }
+
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-clip-content', this.handleContentBound)
+    window.addEventListener('scola-clip-content-or-inner', this.handleContentOrInnerBound)
+    window.addEventListener('scola-clip-inner', this.handleInnerBound)
+    window.addEventListener('scola-clip-nested', this.handleNestedBound)
+    window.addEventListener('scola-clip-outer', this.handleOuterBound)
+    super.setUpWindowListeners()
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-clip-content', this.handleContentBound)
+    window.removeEventListener('scola-clip-content-or-inner', this.handleContentOrInnerBound)
+    window.removeEventListener('scola-clip-inner', this.handleInnerBound)
+    window.removeEventListener('scola-clip-nested', this.handleNestedBound)
+    window.removeEventListener('scola-clip-outer', this.handleOuterBound)
+    super.tearDownWindowListeners()
   }
 }

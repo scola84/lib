@@ -60,21 +60,6 @@ export class LogElement extends NodeElement {
     this.templateElement = this.querySelector<NodeElement>(':scope > [slot="template"]')
   }
 
-  public connectedCallback (): void {
-    window.addEventListener('scola-log-hide', this.handleHideBound)
-    super.connectedCallback()
-  }
-
-  public disconnectedCallback (): void {
-    window.removeEventListener('scola-log-hide', this.handleHideBound)
-    super.disconnectedCallback()
-  }
-
-  public firstUpdated (properties: PropertyValues): void {
-    this.addEventListener('scola-log-hide', this.handleHideBound)
-    super.firstUpdated(properties)
-  }
-
   public async hide (): Promise<void> {
     if (this.hidden) {
       return
@@ -221,5 +206,20 @@ export class LogElement extends NodeElement {
     }
 
     return element
+  }
+
+  protected setUpElementListeners (): void {
+    this.addEventListener('scola-log-hide', this.handleHideBound)
+    super.setUpElementListeners()
+  }
+
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-log-hide', this.handleHideBound)
+    super.setUpWindowListeners()
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-log-hide', this.handleHideBound)
+    super.tearDownWindowListeners()
   }
 }

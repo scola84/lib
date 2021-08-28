@@ -50,21 +50,7 @@ export class SliderElement extends InputElement {
     this.labelElement = this.querySelector<FormatElement>('[as="label"]')
   }
 
-  public connectedCallback (): void {
-    window.addEventListener('scola-slider-max', this.handleMaxBound)
-    window.addEventListener('scola-slider-min', this.handleMinBound)
-    super.connectedCallback()
-  }
-
-  public disconnectedCallback (): void {
-    window.removeEventListener('scola-slider-max', this.handleMaxBound)
-    window.removeEventListener('scola-slider-min', this.handleMinBound)
-    super.disconnectedCallback()
-  }
-
   public firstUpdated (properties: PropertyValues): void {
-    this.addEventListener('scola-slider-max', this.handleMaxBound)
-    this.addEventListener('scola-slider-min', this.handleMinBound)
     this.setUpValue()
     super.firstUpdated(properties)
   }
@@ -145,8 +131,26 @@ export class SliderElement extends InputElement {
     this.fieldElement.style.setProperty('--val', this.fieldElement.value)
   }
 
+  protected setUpElementListeners (): void {
+    this.addEventListener('scola-slider-max', this.handleMaxBound)
+    this.addEventListener('scola-slider-min', this.handleMinBound)
+    super.setUpElementListeners()
+  }
+
   protected setUpValue (): void {
     this.setLabel()
     this.setStyle()
+  }
+
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-slider-max', this.handleMaxBound)
+    window.addEventListener('scola-slider-min', this.handleMinBound)
+    super.setUpWindowListeners()
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-slider-max', this.handleMaxBound)
+    window.removeEventListener('scola-slider-min', this.handleMinBound)
+    super.tearDownWindowListeners()
   }
 }

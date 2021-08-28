@@ -1,6 +1,6 @@
+import { Primitive, isArray, isPrimitive, isStruct } from '../../common'
 import type { PropertyValues, TemplateResult } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { isArray, isPrimitive, isStruct } from '../../common'
 import { NodeElement } from './node'
 import { RequestElement } from './request'
 import type { Struct } from '../../common'
@@ -41,6 +41,9 @@ export class ListElement extends NodeElement {
   })
   public countFactor = 2
 
+  @property()
+  public filter?: Primitive
+
   @property({
     attribute: false
   })
@@ -62,6 +65,9 @@ export class ListElement extends NodeElement {
     attribute: 'scroll-parent'
   })
   public scrollParent?: string
+
+  @property()
+  public sort?: string
 
   @state()
   protected count?: number
@@ -184,7 +190,7 @@ export class ListElement extends NodeElement {
       this.handleItems()
     }
 
-    render(repeat(this.items, this.keyFunction, this.templateFunction), this)
+    render(repeat(this.prepareItems(), this.keyFunction, this.templateFunction), this)
     super.update(properties)
   }
 
@@ -240,6 +246,24 @@ export class ListElement extends NodeElement {
         origin: this
       }
     }))
+  }
+
+  protected filterItems (items: unknown[], filter: string): unknown[] {
+    const [
+      filterValue
+    ] = filter.split(':')
+
+    return items.filter((item) => {
+      if (isStruct(item)) {
+        return Object
+          .entries(item)
+          .some(([, value]) => {
+            return String(value).includes(filterValue)
+          })
+      }
+
+      return false
+    })
   }
 
   protected handleAdd (event: CustomEvent<Struct | null>): void {
@@ -321,6 +345,27 @@ export class ListElement extends NodeElement {
     }
   }
 
+  protected prepareItems (): unknown[] {
+    let { items } = this
+
+    if (
+      this.filter !== undefined ||
+      this.sort !== undefined
+    ) {
+      items = [...items]
+
+      if (this.filter !== undefined) {
+        items = this.filterItems(items, this.filter.toString())
+      }
+
+      if (this.sort !== undefined) {
+        items = this.sortItems(items, this.sort)
+      }
+    }
+
+    return items
+  }
+
   protected renderTemplate (item: unknown): Node | undefined {
     const element = this.templateElement?.cloneNode(true)
 
@@ -359,6 +404,36 @@ export class ListElement extends NodeElement {
     window.addEventListener('scola-list-start', this.handleStartBound)
     window.addEventListener('scola-list-toggle', this.handleToggleBound)
     super.setUpWindowListeners()
+  }
+
+  protected sortItems (items: unknown[], sort: string): unknown[] {
+    const [
+      sortName,
+      sortOrder
+    ] = sort.split(':')
+
+    return items.sort((left, right) => {
+      let compare = 0
+
+      if (
+        isStruct(left) &&
+        isStruct(right)
+      ) {
+        const lv = String(left[sortName])
+        const rv = String(right[sortName])
+
+        compare = lv.localeCompare(rv, undefined, {
+          numeric: true,
+          sensitivity: 'base'
+        })
+
+        if (sortOrder === 'desc') {
+          compare *= -1
+        }
+      }
+
+      return compare
+    })
   }
 
   protected tearDownParentListeners (): void {

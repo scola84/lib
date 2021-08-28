@@ -691,7 +691,7 @@ export class NodeElement extends LitElement {
       if (isStruct(data)) {
         if (
           typeof data.name === 'string' &&
-          typeof data.value === 'string'
+          isPrimitive(data.value)
         ) {
           this.setParameters({
             [data.name]: data.value
@@ -710,7 +710,7 @@ export class NodeElement extends LitElement {
       if (isStruct(data)) {
         if (
           typeof data.name === 'string' &&
-          typeof data.value === 'string'
+          isPrimitive(data.value)
         ) {
           this.setProperties({
             [data.name]: data.value
@@ -729,7 +729,7 @@ export class NodeElement extends LitElement {
       if (isStruct(data)) {
         if (
           typeof data.name === 'string' &&
-          typeof data.value === 'string'
+          isPrimitive(data.value)
         ) {
           this.toggleParameters({
             [data.name]: data.value
@@ -748,7 +748,7 @@ export class NodeElement extends LitElement {
       if (isStruct(data)) {
         if (
           typeof data.name === 'string' &&
-          typeof data.value === 'string'
+          isPrimitive(data.value)
         ) {
           this.toggleProperties({
             [data.name]: data.value

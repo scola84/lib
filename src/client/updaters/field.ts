@@ -1,11 +1,11 @@
-import type { InputElement } from '../elements/input'
-import type { NodeElement } from '../elements'
+import type { FieldElement } from '../elements/field'
+import type { NodeElement } from '../elements/node'
 import type { PropertyValues } from 'lit'
 import type { RequestElement } from '../elements/request'
 import { isPrimitive } from '../../common'
 
 export default {
-  'scola-node-params': (observer: InputElement, observable: NodeElement, properties: PropertyValues): void => {
+  'scola-node-params': (observer: FieldElement, observable: NodeElement, properties: PropertyValues): void => {
     if (properties.has('observe')) {
       observable.setParameters({
         [observer.name]: observer.value
@@ -18,7 +18,7 @@ export default {
       }
     }
   },
-  'scola-node-props': (observer: InputElement, observable: NodeElement, properties: PropertyValues): void => {
+  'scola-node-props': (observer: FieldElement, observable: NodeElement, properties: PropertyValues): void => {
     if (properties.has('observe')) {
       observable.setProperties({
         [observer.name]: observer.value
@@ -31,7 +31,7 @@ export default {
       }
     }
   },
-  'scola-request': (observer: InputElement, observable: RequestElement, properties: PropertyValues): void => {
+  'scola-request': (observer: FieldElement, observable: RequestElement, properties: PropertyValues): void => {
     if (properties.has('observe')) {
       if (!observer.isEmpty) {
         observable.setParameters({

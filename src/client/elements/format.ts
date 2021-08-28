@@ -1,5 +1,5 @@
 import { customElement, property } from 'lit/decorators.js'
-import { format, isStruct } from '../../common'
+import { format, isStruct, lookup } from '../../common'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
@@ -48,6 +48,10 @@ export class FormatElement extends NodeElement {
   public showTitle?: boolean
 
   protected updaters = FormatElement.updaters
+
+  public static lookup (string: string, language = FormatElement.lang): string | undefined {
+    return lookup(FormatElement.strings, string, language)
+  }
 
   public update (properties: PropertyValues): void {
     if (

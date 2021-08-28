@@ -73,19 +73,19 @@ export default {
     if (properties.has('observe')) {
       if (observer.activated === true) {
         observable.setParameters(observer.name
-          ?.split(' ')
+          .split(' ')
           .reduce((result, name) => {
             return {
               ...result,
               [name]: observer.dataset[name]
             }
-          }, {}) ?? {})
+          }, {}))
       }
     } else {
       observer.activated = observer.name
-        ?.split(' ')
+        .split(' ')
         .every((name) => {
-          return String(observable.parameters[name]) === observer.dataset[name]
+          return observable.parameters[name] === observer.dataset[name]
         })
     }
   },
@@ -93,19 +93,19 @@ export default {
     if (properties.has('observe')) {
       if (observer.activated === true) {
         observable.setProperties(observer.name
-          ?.split(' ')
+          .split(' ')
           .reduce((result, name) => {
             return {
               ...result,
               [name]: observer.dataset[name]
             }
-          }, {}) ?? {})
+          }, {}))
       }
     } else {
       observer.activated = observer.name
-        ?.split(' ')
+        .split(' ')
         .every((name) => {
-          return String(observable[name as keyof NodeElement]) === observer.dataset[name]
+          return observable[name as keyof NodeElement] === observer.dataset[name]
         })
     }
   },

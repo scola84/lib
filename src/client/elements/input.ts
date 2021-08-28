@@ -18,6 +18,8 @@ export class InputElement extends FieldElement {
 
   public fieldElement: HTMLInputElement
 
+  protected updaters = InputElement.updaters
+
   public firstUpdated (properties: PropertyValues): void {
     const fieldElement = this.fieldElement.cloneNode(true)
 

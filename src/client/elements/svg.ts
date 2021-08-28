@@ -40,6 +40,8 @@ export class SvgElement extends NodeElement {
 
   protected resizeObserver?: ResizeObserver
 
+  protected updaters = SvgElement.updaters
+
   public constructor () {
     super()
 

@@ -29,6 +29,8 @@ export class TextAreaElement extends FieldElement {
 
   public fieldElement: HTMLTextAreaElement
 
+  protected updaters = TextAreaElement.updaters
+
   public firstUpdated (properties: PropertyValues): void {
     const fieldElement = this.fieldElement.cloneNode(true)
 

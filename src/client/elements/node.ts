@@ -141,18 +141,6 @@ export class NodeElement extends LitElement {
   public halign?: 'between' | 'center' | 'end' | 'evenly' | 'start'
 
   @property({
-    attribute: 'handle-params',
-    type: Boolean
-  })
-  public handleParams?: boolean
-
-  @property({
-    attribute: 'handle-props',
-    type: Boolean
-  })
-  public handleProps?: boolean
-
-  @property({
     reflect: true
   })
   public height?: string
@@ -212,6 +200,9 @@ export class NodeElement extends LitElement {
     reflect: true
   })
   public line?: 'large' | 'medium' | 'small'
+
+  @property()
+  public listen?: string
 
   @property({
     attribute: 'log-level'
@@ -841,12 +832,12 @@ export class NodeElement extends LitElement {
   }
 
   protected setUpWindowListeners (): void {
-    if (this.handleParams === true) {
+    if (this.listen?.includes('params') === true) {
       window.addEventListener('scola-node-set-params', this.handleSetParamsBound)
       window.addEventListener('scola-node-toggle-params', this.handleToggleParamsBound)
     }
 
-    if (this.handleProps === true) {
+    if (this.listen?.includes('props') === true) {
       window.addEventListener('scola-node-set-props', this.handleSetPropsBound)
       window.addEventListener('scola-node-toggle-props', this.handleTogglePropsBound)
     }
@@ -871,12 +862,12 @@ export class NodeElement extends LitElement {
   }
 
   protected tearDownWindowListeners (): void {
-    if (this.handleParams === true) {
+    if (this.listen?.includes('params') === true) {
       window.removeEventListener('scola-node-set-params', this.handleSetParamsBound)
       window.removeEventListener('scola-node-toggle-params', this.handleToggleParamsBound)
     }
 
-    if (this.handleProps === true) {
+    if (this.listen?.includes('props') === true) {
       window.removeEventListener('scola-node-set-props', this.handleSetPropsBound)
       window.removeEventListener('scola-node-toggle-props', this.handleTogglePropsBound)
     }

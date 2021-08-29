@@ -49,6 +49,8 @@ export class FieldElement extends NodeElement {
 
   public fieldElement: HTMLInputElement | HTMLTextAreaElement
 
+  public listen = 'input'
+
   public get isEmpty (): boolean {
     return this.fieldElement.value === ''
   }
@@ -199,6 +201,12 @@ export class FieldElement extends NodeElement {
     this.requestUpdate('value')
   }
 
+  protected handleKeydown (event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      this.handleInput()
+    }
+  }
+
   protected loadState (): void {
     this.value = this.storage.getItem(`input-${this.id}`) ?? ''
   }
@@ -272,7 +280,15 @@ export class FieldElement extends NodeElement {
   protected setUpElementListeners (): void {
     this.addEventListener('click', this.handleClick.bind(this))
     this.addEventListener('scola-input-clear', this.handleClear.bind(this))
-    this.fieldElement.addEventListener('input', debounce(this.debounce, this.handleInput.bind(this)))
+
+    if (this.listen.includes('input')) {
+      this.fieldElement.addEventListener('input', debounce(this.debounce, this.handleInput.bind(this)))
+    }
+
+    if (this.listen.includes('keydown')) {
+      this.addEventListener('keydown', this.handleKeydown.bind(this))
+    }
+
     super.setUpElementListeners()
   }
 

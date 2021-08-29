@@ -4,6 +4,7 @@ import { customElement, property } from 'lit/decorators.js'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
+import { debounce } from 'throttle-debounce'
 import updaters from '../updaters/field'
 
 declare global {
@@ -20,6 +21,11 @@ export class FieldElement extends NodeElement {
     ...NodeElement.updaters,
     ...updaters
   }
+
+  @property({
+    type: Number
+  })
+  public debounce = 250
 
   @property({
     type: Boolean
@@ -114,13 +120,6 @@ export class FieldElement extends NodeElement {
     }
 
     super.connectedCallback()
-  }
-
-  public firstUpdated (properties: PropertyValues): void {
-    this.addEventListener('click', this.handleClick.bind(this))
-    this.addEventListener('scola-input-clear', this.handleClear.bind(this))
-    this.fieldElement.addEventListener('input', this.handleInput.bind(this))
-    super.firstUpdated(properties)
   }
 
   public toggleClear (force?: boolean): void {
@@ -268,6 +267,13 @@ export class FieldElement extends NodeElement {
   protected setError (value: Struct): void {
     Object.assign(this.errorElement, value)
     this.errorElement?.removeAttribute('hidden')
+  }
+
+  protected setUpElementListeners (): void {
+    this.addEventListener('click', this.handleClick.bind(this))
+    this.addEventListener('scola-input-clear', this.handleClear.bind(this))
+    this.fieldElement.addEventListener('input', debounce(this.debounce, this.handleInput.bind(this)))
+    super.setUpElementListeners()
   }
 
   protected setValueFromPrimitive (data: Primitive): void {

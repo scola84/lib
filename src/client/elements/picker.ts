@@ -96,7 +96,6 @@ export class PickerElement extends InputElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    this.dialogElement?.addEventListener('scola-picker-pick', this.handlePick.bind(this))
     this.setUpValue()
     super.firstUpdated(properties)
   }
@@ -434,6 +433,11 @@ export class PickerElement extends InputElement {
         time
       }
     }
+  }
+
+  protected setUpElementListeners (): void {
+    this.dialogElement?.addEventListener('scola-picker-pick', this.handlePick.bind(this))
+    super.setUpElementListeners()
   }
 
   protected setUpValue (): void {

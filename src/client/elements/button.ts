@@ -83,11 +83,6 @@ export class ButtonElement extends NodeElement {
     super.connectedCallback()
   }
 
-  public firstUpdated (properties: PropertyValues): void {
-    this.addEventListener('click', this.handleClick.bind(this))
-    super.firstUpdated(properties)
-  }
-
   public update (properties: PropertyValues): void {
     if (this.save === true) {
       this.saveState()
@@ -129,5 +124,10 @@ export class ButtonElement extends NodeElement {
     }
 
     this.storage.setItem(`button-${this.id}`, JSON.stringify(state))
+  }
+
+  protected setUpElementListeners (): void {
+    this.addEventListener('click', this.handleClick.bind(this))
+    super.setUpElementListeners()
   }
 }

@@ -149,11 +149,6 @@ export class ListElement extends NodeElement {
 
   public firstUpdated (properties: PropertyValues): void {
     this.setUpParentListeners()
-
-    if (this.mode === undefined) {
-      this.handleEmpty()
-    }
-
     super.firstUpdated(properties)
   }
 
@@ -183,14 +178,16 @@ export class ListElement extends NodeElement {
 
   public update (properties: PropertyValues): void {
     if (properties.has('count')) {
-      this.handleCount()
+      this.resetItems()
     } else if (properties.has('data')) {
       this.handleData()
-    } else if (properties.has('items')) {
-      this.handleItems()
+    } else if (
+      properties.has('filter') ||
+      properties.has('sort')
+    ) {
+      this.renderItems()
     }
 
-    render(repeat(this.prepareItems(), this.keyFunction, this.templateFunction), this)
     super.update(properties)
   }
 
@@ -276,18 +273,12 @@ export class ListElement extends NodeElement {
     }
   }
 
-  protected handleCount (): void {
-    this.items = []
-    this.dispatchRequestEvent()
-  }
-
   protected handleData (): void {
     if (isArray(this.data)) {
       this.items.push(...this.data)
-      this.handleEmpty()
+      this.renderItems()
     } else if (this.data === undefined) {
-      this.items = []
-      this.dispatchRequestEvent()
+      this.resetItems()
     }
   }
 
@@ -298,22 +289,6 @@ export class ListElement extends NodeElement {
       if (isStruct(data)) {
         this.deleteItem(data)
       }
-    }
-  }
-
-  protected handleEmpty (): void {
-    if (this.emptyElement instanceof NodeElement) {
-      if (this.items.length === 0) {
-        this.emptyElement.slot = ''
-      } else {
-        this.emptyElement.slot = 'empty'
-      }
-    }
-  }
-
-  protected handleItems (): void {
-    if (this.mode === undefined) {
-      this.handleEmpty()
     }
   }
 
@@ -345,7 +320,7 @@ export class ListElement extends NodeElement {
     }
   }
 
-  protected prepareItems (): unknown[] {
+  protected renderItems (): void {
     let { items } = this
 
     if (
@@ -363,7 +338,15 @@ export class ListElement extends NodeElement {
       }
     }
 
-    return items
+    render(repeat(items, this.keyFunction, this.templateFunction), this)
+
+    if (this.emptyElement instanceof NodeElement) {
+      if (this.querySelector(':scope > :not([slot])') === null) {
+        this.emptyElement.slot = ''
+      } else {
+        this.emptyElement.slot = 'empty'
+      }
+    }
   }
 
   protected renderTemplate (item: unknown): Node | undefined {
@@ -376,6 +359,11 @@ export class ListElement extends NodeElement {
     }
 
     return element
+  }
+
+  protected resetItems (): void {
+    this.items = []
+    this.dispatchRequestEvent()
   }
 
   protected setUpElementListeners (): void {

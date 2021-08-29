@@ -1,5 +1,5 @@
-import type { Struct } from '../../../common'
-import { format } from '../../../common'
+import type { Query, Struct } from '../../../common'
+import { format, lookup, parse } from '../../../common'
 
 /**
  * Defines language-specific collections of strings once and manages them throughout the application.
@@ -13,7 +13,7 @@ export class Formatter {
   public static lang = 'en'
 
   /**
-   * The language-specific collections of strings.
+   * The language-specific collection of strings.
    *
    * @defaultValue `{}`
    */
@@ -56,7 +56,7 @@ export class Formatter {
   }
 
   /**
-   * Looks up the code of the string in the collection of strings of the given language.
+   * Looks up the code of the string.
    *
    * @param string - The string
    * @param language - The language of the string
@@ -77,14 +77,38 @@ export class Formatter {
    * ```
    */
   public lookup (string: string, language = Formatter.lang): string | undefined {
-    const strings = Formatter.strings[language] ?? {}
+    return lookup(Formatter.strings, string, language)
+  }
 
-    const foundCode = Object
-      .keys(strings)
-      .find((code) => {
-        return strings[code].toLowerCase() === string.toLowerCase()
-      })
-
-    return foundCode
+  /**
+   * Parses a string into an array of queries.
+   *
+   * @param string - The string
+   * @param language - The language of the string
+   * @returns The queries
+   *
+   * @example
+   * ```ts
+   * Formatter.strings = {
+   *   en: {
+   *     spaced_name: 'Spaced Name'
+   *   }
+   * }
+   *
+   * const formatter = new Formatter()
+   * const queries = formatter.parse('"Spaced Name":"Spaced Value" regular', 'en')
+   *
+   * console.log(queries)
+   *
+   * // queries = [{
+   * //   name: 'spaced_name',
+   * //   value: 'Spaced Value'
+   * // }, {
+   * //   value: 'regular'
+   * // }]
+   * ```
+   */
+  public parse (string: string, language = Formatter.lang): Query[] {
+    return parse(Formatter.strings, string, language)
   }
 }

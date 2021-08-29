@@ -1,9 +1,10 @@
-import { Primitive, isArray, isPrimitive, isStruct } from '../../common'
 import type { PropertyValues, TemplateResult } from 'lit'
+import type { Query, Struct } from '../../common'
 import { customElement, property, state } from 'lit/decorators.js'
+import { isArray, isPrimitive, isStruct } from '../../common'
+import { FormatElement } from './format'
 import { NodeElement } from './node'
 import { RequestElement } from './request'
-import type { Struct } from '../../common'
 import { render } from 'lit'
 import { repeat } from 'lit/directives/repeat.js'
 import updaters from '../updaters/list'
@@ -42,7 +43,7 @@ export class ListElement extends NodeElement {
   public countFactor = 2
 
   @property()
-  public filter?: Primitive
+  public filter?: string
 
   @property({
     attribute: false
@@ -245,18 +246,20 @@ export class ListElement extends NodeElement {
     }))
   }
 
-  protected filterItems (items: unknown[], filter: string): unknown[] {
-    const [
-      filterValue
-    ] = filter.split(':')
-
+  protected filterItems (items: unknown[], queries: Query[]): unknown[] {
     return items.filter((item) => {
       if (isStruct(item)) {
-        return Object
-          .entries(item)
-          .some(([, value]) => {
-            return String(value).includes(filterValue)
-          })
+        return queries.every(({ name, value }) => {
+          if (name !== undefined) {
+            return String(item[name]).includes(value)
+          }
+
+          return Object
+            .entries(item)
+            .some(([, itemValue]) => {
+              return String(itemValue).includes(value)
+            })
+        })
       }
 
       return false
@@ -330,7 +333,7 @@ export class ListElement extends NodeElement {
       items = [...items]
 
       if (this.filter !== undefined) {
-        items = this.filterItems(items, this.filter.toString())
+        items = this.filterItems(items, FormatElement.parse(this.filter))
       }
 
       if (this.sort !== undefined) {
@@ -396,8 +399,8 @@ export class ListElement extends NodeElement {
 
   protected sortItems (items: unknown[], sort: string): unknown[] {
     const [
-      sortName,
-      sortOrder
+      name,
+      order
     ] = sort.split(':')
 
     return items.sort((left, right) => {
@@ -407,15 +410,15 @@ export class ListElement extends NodeElement {
         isStruct(left) &&
         isStruct(right)
       ) {
-        const lv = String(left[sortName])
-        const rv = String(right[sortName])
+        const lv = String(left[name])
+        const rv = String(right[name])
 
         compare = lv.localeCompare(rv, undefined, {
           numeric: true,
           sensitivity: 'base'
         })
 
-        if (sortOrder === 'desc') {
+        if (order === 'desc') {
           compare *= -1
         }
       }

@@ -1,8 +1,8 @@
+import type { Query, Strings, Struct } from '../../common'
 import { customElement, property } from 'lit/decorators.js'
-import { format, isStruct, lookup } from '../../common'
+import { format, isStruct, lookup, parse } from '../../common'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
-import type { Struct } from '../../common'
 import marked from 'marked'
 import updaters from '../updaters/format'
 
@@ -16,7 +16,7 @@ declare global {
 export class FormatElement extends NodeElement {
   public static lang = 'en'
 
-  public static strings: Partial<Struct<Struct<string>>> = {}
+  public static strings: Strings = {}
 
   public static updaters = {
     ...NodeElement.updaters,
@@ -51,6 +51,10 @@ export class FormatElement extends NodeElement {
 
   public static lookup (string: string, language = FormatElement.lang): string | undefined {
     return lookup(FormatElement.strings, string, language)
+  }
+
+  public static parse (string: string, language = FormatElement.lang): Query[] {
+    return parse(FormatElement.strings, string, language)
   }
 
   public update (properties: PropertyValues): void {

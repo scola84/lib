@@ -24,6 +24,11 @@ export class FieldElement extends NodeElement {
   @property({
     type: Boolean
   })
+  public parse?: boolean
+
+  @property({
+    type: Boolean
+  })
   public save?: boolean
 
   @property({
@@ -139,9 +144,15 @@ export class FieldElement extends NodeElement {
   }
 
   protected createEventData (): Struct {
+    let { value } = this
+
+    if (this.parse === true) {
+      value = this.parseValue(this.value.toString())
+    }
+
     return {
       name: this.name,
-      value: this.value
+      value
     }
   }
 
@@ -191,6 +202,30 @@ export class FieldElement extends NodeElement {
 
   protected loadState (): void {
     this.value = this.storage.getItem(`input-${this.id}`) ?? ''
+  }
+
+  protected parseValue (value: string): string {
+    return FormatElement
+      .parse(value)
+      .map((query) => {
+        let stringName = query.name
+        let stringValue = query.value
+
+        if (stringName?.includes(' ') === true) {
+          stringName = `"${stringName}"`
+        }
+
+        if (stringValue.includes(' ')) {
+          stringValue = `"${stringValue}"`
+        }
+
+        if (stringName === undefined) {
+          return stringValue
+        }
+
+        return `${stringName}:${stringValue}`
+      })
+      .join(' ')
   }
 
   protected saveState (): void {

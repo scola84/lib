@@ -508,12 +508,12 @@ export class NodeElement extends LitElement {
     Object
       .entries(parameters)
       .forEach(([name, value]) => {
-        const castValue = cast(value)
+        const newValue = cast(value)
 
-        if (this.parameters[name] === castValue) {
+        if (newValue === this.parameters[name]) {
           this.parameters[name] = undefined
         } else {
-          this.parameters[name] = castValue
+          this.parameters[name] = newValue
         }
       })
 
@@ -524,15 +524,15 @@ export class NodeElement extends LitElement {
     Object
       .entries(properties)
       .forEach(([name, value]) => {
-        const castValue = cast(value)
+        const newValue = cast(value)
 
-        if (this[name as keyof NodeElement] === castValue) {
+        if (newValue === this[name as keyof NodeElement]) {
           Object.assign(this, {
             [name]: undefined
           })
         } else {
           Object.assign(this, {
-            [name]: castValue
+            [name]: newValue
           })
         }
       })

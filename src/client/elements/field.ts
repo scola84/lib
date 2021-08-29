@@ -53,7 +53,7 @@ export class FieldElement extends NodeElement {
   }
 
   public get value (): boolean | number | string {
-    return cast(this.fieldElement.value)
+    return cast(this.fieldElement.value) ?? ''
   }
 
   public set value (value: boolean | number | string) {

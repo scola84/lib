@@ -160,6 +160,8 @@ export class FieldElement extends NodeElement {
   }
 
   protected handleData (): void {
+    this.clearError()
+
     if (isPrimitive(this.data)) {
       this.setValueFromPrimitive(this.data)
     } else if (isStruct(this.data)) {
@@ -170,7 +172,6 @@ export class FieldElement extends NodeElement {
       }
     }
 
-    this.clearError()
     this.toggleClear(this.isEmpty)
   }
 

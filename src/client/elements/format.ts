@@ -87,6 +87,11 @@ export class FormatElement extends NodeElement {
 
     const string = format(FormatElement.strings, this.code ?? '', language, data)
 
+    if (string === '') {
+      this.hidden = true
+      return
+    }
+
     if (this.showTitle === true) {
       this.title = string
     }
@@ -96,5 +101,7 @@ export class FormatElement extends NodeElement {
     } else if (this.childElementCount === 0) {
       this.textContent = string
     }
+
+    this.hidden = false
   }
 }

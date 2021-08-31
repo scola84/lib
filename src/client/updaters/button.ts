@@ -5,6 +5,7 @@ import type { ProgressElement } from '../elements/progress'
 import type { PropertyValues } from 'lit'
 import type { RequestElement } from '../elements/request'
 import type { ViewElement } from '../elements/view'
+import { cast } from '../../common'
 
 export default {
   'scola-clip-content': (observer: ButtonElement, observable: NodeElement, properties: PropertyValues): void => {
@@ -70,42 +71,30 @@ export default {
     }
   },
   'scola-node-params': (observer: ButtonElement, observable: NodeElement, properties: PropertyValues): void => {
-    if (properties.has('observe')) {
-      if (observer.activated === true) {
-        observable.setParameters(observer.name
-          .split(' ')
-          .reduce((result, name) => {
-            return {
-              ...result,
-              [name]: observer.dataset[name]
-            }
-          }, {}))
-      }
+    if (
+      properties.has('observe') &&
+      observer.activated === true
+    ) {
+      observable.setParameters(observer.dataset)
     } else {
-      observer.activated = observer.name
-        .split(' ')
-        .every((name) => {
-          return observable.parameters[name] === observer.dataset[name]
+      observer.activated = Object
+        .entries(observer.dataset)
+        .every(([name, value]) => {
+          return observable.parameters[name] === cast(value)
         })
     }
   },
   'scola-node-props': (observer: ButtonElement, observable: NodeElement, properties: PropertyValues): void => {
-    if (properties.has('observe')) {
-      if (observer.activated === true) {
-        observable.setProperties(observer.name
-          .split(' ')
-          .reduce((result, name) => {
-            return {
-              ...result,
-              [name]: observer.dataset[name]
-            }
-          }, {}))
-      }
+    if (
+      properties.has('observe') &&
+      observer.activated === true
+    ) {
+      observable.setProperties(observer.dataset)
     } else {
-      observer.activated = observer.name
-        .split(' ')
-        .every((name) => {
-          return observable[name as keyof NodeElement] === observer.dataset[name]
+      observer.activated = Object
+        .entries(observer.dataset)
+        .every(([name, value]) => {
+          return observable[name as keyof NodeElement] === cast(value)
         })
     }
   },

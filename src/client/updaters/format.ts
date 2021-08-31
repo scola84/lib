@@ -1,5 +1,6 @@
+import type { InputElement, RecorderElement } from '../elements'
 import type { FormatElement } from '../elements/format'
-import type { InputElement } from '../elements'
+import type { PropertyValues } from 'lit'
 import type { ViewElement } from '../elements/view'
 
 export default {
@@ -9,6 +10,13 @@ export default {
     } else {
       observer.data = {
         value: observable.value
+      }
+    }
+  },
+  'scola-recorder': (observer: FormatElement, observable: RecorderElement, properties: PropertyValues): void => {
+    if (properties.has('state')) {
+      observer.data = {
+        ...observable.state
       }
     }
   },

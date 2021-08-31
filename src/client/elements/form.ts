@@ -23,11 +23,11 @@ export class FormElement extends NodeElement {
   public method = 'POST'
 
   public get fieldElements (): NodeListOf<FieldElement> {
-    return this.querySelectorAll<FieldElement>('scola-input, scola-picker, scola-select, scola-slider')
+    return this.querySelectorAll<FieldElement>('scola-input, scola-picker, scola-select, scola-slider, scola-textarea')
   }
 
   public get hasFieldElements (): boolean {
-    return this.querySelector<FieldElement>('scola-input, scola-picker, scola-select, scola-slider') !== null
+    return this.querySelector<FieldElement>('scola-input, scola-picker, scola-select, scola-slider, scola-textarea') !== null
   }
 
   public get hasFileElements (): boolean {

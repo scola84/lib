@@ -5,6 +5,7 @@ import { FormatElement } from './format'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
 import { debounce } from 'throttle-debounce'
+import styles from '../styles/field'
 import updaters from '../updaters/field'
 
 declare global {
@@ -16,6 +17,11 @@ declare global {
 @customElement('scola-field')
 export class FieldElement extends NodeElement {
   public static storage: Storage = window.sessionStorage
+
+  public static styles = [
+    ...NodeElement.styles,
+    styles
+  ]
 
   public static updaters = {
     ...NodeElement.updaters,

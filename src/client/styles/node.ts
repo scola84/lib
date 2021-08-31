@@ -28,6 +28,7 @@ export default css`
     flex-direction: column;
     overflow: hidden;
     position: relative;
+    transition: opacity 250ms cubic-bezier(0.83, 0, 0.17, 1);
   }
 
   :host([disabled]) {
@@ -37,6 +38,10 @@ export default css`
 
   :host([display]) {
     display: none;
+  }
+
+  :host([hidden]) {
+    opacity: 0;
   }
 
   :host([hposition]) {
@@ -206,6 +211,10 @@ export default css`
       background: var(--scola-node-fill-hover-sig-2, #009000);
     }
 
+    :host([fill="translucent"]) slot[name="body"]:hover {
+      background: var(--scola-node-fill-translucent, rgba(255, 255, 255, 0.30));
+    }
+
     :host([fill="aux-1"][scrollbar]) slot[name="body"]:hover {
       scrollbar-color: var(--scola-scrollbar-color-aux-1, #ddd) transparent;
     }
@@ -249,6 +258,10 @@ export default css`
 
   :host([fill-active="sig-2"]) slot[name="body"]:active {
     background: var(--scola-node-fill-active-sig-2, #00bf00);
+  }
+
+  :host([fill-active="translucent"]) slot[name="body"]:active {
+    background: var(--scola-node-fill-translucent, rgba(255, 255, 255, 0.35));
   }
 
   :host([flow="column"]) slot[name="body"] {
@@ -329,10 +342,6 @@ export default css`
 
   :host([line="small"]) slot[name="body"] {
     line-height: 0.75rem;
-  }
-
-  :host([round]) slot[name="body"] {
-    will-change: transform;
   }
 
   :host([scrollbar]) slot[name="body"] {

@@ -1,4 +1,5 @@
 import { customElement, property } from 'lit/decorators.js'
+import type { PropertyValues } from 'lit'
 import { RequestElement } from './request'
 import type { Struct } from '../../common'
 
@@ -16,6 +17,9 @@ declare global {
 export class SourceElement extends RequestElement {
   @property()
   public event?: string
+
+  @property()
+  public type?: string
 
   protected handleMessageBound: (event: MessageEvent) => void
 
@@ -71,6 +75,18 @@ export class SourceElement extends RequestElement {
       })
   }
 
+  public update (properties: PropertyValues): void {
+    if (properties.has('data')) {
+      this.handleData()
+    }
+
+    super.update(properties)
+  }
+
+  protected handleData (): void {
+    this.setNodeData()
+  }
+
   protected handleError (): void {
     this.restart()
     this.abort()
@@ -79,6 +95,7 @@ export class SourceElement extends RequestElement {
   protected handleMessage (event: MessageEvent<string>): void {
     try {
       this.data = JSON.parse(event.data)
+      this.type = event.type
     } catch (error: unknown) {
       this.handleError()
     }

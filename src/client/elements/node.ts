@@ -327,7 +327,7 @@ export class NodeElement extends LitElement {
   }
 
   public get dataNodeElements (): NodeListOf<NodeElement> {
-    return this.querySelectorAll<NodeElement>('scola-form, scola-list, scola-struct')
+    return this.querySelectorAll<NodeElement>('scola-form, scola-list, scola-reloader, scola-struct')
   }
 
   public get hasDataLeafElements (): boolean {
@@ -335,7 +335,7 @@ export class NodeElement extends LitElement {
   }
 
   public get hasDataNodeElements (): boolean {
-    return this.querySelector<NodeElement>('scola-form, scola-list, scola-struct') !== null
+    return this.querySelector<NodeElement>('scola-form, scola-list, scola-reloader, scola-struct') !== null
   }
 
   @query('slot[name="after"]', true)

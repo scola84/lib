@@ -4,12 +4,14 @@ services:
     depends_on:
       - node
     image: "nginx:1-alpine"
-    networks:
-      - scola
     ports:
-      - "3000:3000"
+      - "80:80"
+      - "443:443"
     volumes:
-      - $PWD/dist/client:/usr/share/nginx/html/dist/client
+      - $PWD/dist/client.js:/usr/share/nginx/html/client.js
+      - $PWD/media:/usr/share/nginx/html/media
+      - $PWD/node_modules/@scola/lib/dist/worker.js:/usr/share/nginx/html/worker.js
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/html/index.html:/usr/share/nginx/html/index.html
       - ./nginx/snippets:/etc/nginx/snippets
+      - ./nginx/ssl:/etc/nginx/ssl

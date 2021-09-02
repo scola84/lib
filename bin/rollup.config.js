@@ -3,7 +3,6 @@ import copy from 'rollup-plugin-copy'
 import gzip from 'rollup-plugin-gzip'
 import minify from 'rollup-plugin-minify-html-literals'
 import minimist from 'minimist'
-import reload from 'rollup-plugin-livereload'
 import resolve from '@rollup/plugin-node-resolve'
 import svg from 'rollup-plugin-svgo'
 import terser from 'rollup-plugin-terser'
@@ -16,7 +15,7 @@ module.exports = [{
   input: 'src/client/index.ts',
   output: {
     dir: '.',
-    entryFileNames: 'dist/client/umd.js',
+    entryFileNames: 'dist/client.js',
     format: 'umd',
     name: pkg.name.replace(/\W+/gu, '')
   },
@@ -38,8 +37,7 @@ module.exports = [{
       tsconfig: 'src/client/tsconfig.json'
     }),
     (!arg.w && !arg.watch) && gzip(),
-    (!arg.w && !arg.watch) && terser.terser(),
-    (arg.l || arg.livereload) && reload('dist/client/umd.js')
+    (!arg.w && !arg.watch) && terser.terser()
   ]
 }, {
   external: (id) => {
@@ -52,7 +50,7 @@ module.exports = [{
   input: 'src/server/index.ts',
   output: {
     dir: '.',
-    entryFileNames: 'dist/server/cjs.js',
+    entryFileNames: 'dist/server.js',
     format: 'cjs'
   },
   plugins: [
@@ -75,3 +73,29 @@ module.exports = [{
     })
   ]
 }]
+
+if (pkg.name === '@scola/lib') {
+  module.exports.push({
+    input: 'src/worker/index.ts',
+    output: {
+      dir: '.',
+      entryFileNames: 'dist/worker.js',
+      format: 'umd',
+      name: pkg.name.replace(/\W+/gu, '')
+    },
+    plugins: [
+      commonjs(),
+      minify(),
+      resolve({
+        mainFields: ['browser', 'main', 'module']
+      }),
+      typescript({
+        declaration: true,
+        declarationDir: 'types',
+        tsconfig: 'src/worker/tsconfig.json'
+      }),
+      (!arg.w && !arg.watch) && gzip(),
+      (!arg.w && !arg.watch) && terser.terser()
+    ]
+  })
+}

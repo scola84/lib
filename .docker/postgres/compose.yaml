@@ -6,8 +6,6 @@ services:
       POSTGRES_PASSWORD: root
       POSTGRES_USER: root
     image: "postgres:13-alpine"
-    networks:
-      - scola
     ports:
       - "5432:5432"
     tmpfs:

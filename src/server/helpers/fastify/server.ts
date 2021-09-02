@@ -30,7 +30,7 @@ export interface ServerOptions extends FastifyServerOptions {
   /**
    * The `fastify` port.
    *
-   * @defaultValue 3000
+   * @defaultValue 80
    */
   port?: number
 }
@@ -77,7 +77,7 @@ export class Server {
   /**
    * The `fastify` port.
    *
-   * @defaultValue 3000
+   * @defaultValue 80
    */
   public port: number
 
@@ -89,7 +89,7 @@ export class Server {
   public constructor (options: ServerOptions = {}) {
     this.address = options.address ?? '0.0.0.0'
     this.options = options
-    this.port = options.port ?? 3000
+    this.port = options.port ?? 80
 
     this.logger = options.logger?.child({
       name: 'server'

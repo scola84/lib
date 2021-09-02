@@ -6,18 +6,15 @@ services:
         yarn install --frozen-lockfile --ignore-optional --production &&
         yarn run exec
       "
-    depends_on:
-      - redis
     env_file: $PWD/.env
     extra_hosts:
       - "host.docker.internal:host-gateway"
     image: "node:14"
-    networks:
-      - scola
     ports:
       - "9229:9229"
     volumes:
-      - $PWD/dist/server:/usr/src/app/dist/server
+      - $PWD/dist/client.js:/usr/src/app/client.js
+      - $PWD/dist/server.js:/usr/src/app/server.js
       - $PWD/package.json:/usr/src/app/package.json
       - $PWD/yarn.lock:/usr/src/app/yarn.lock
     working_dir: /usr/src/app

@@ -137,11 +137,11 @@ export class ClipElement extends NodeElement {
         [name]: `-${to}px`
       }], {
         duration,
-        easing: this.easing
+        easing: this.easing,
+        fill: 'forwards'
       })
       .finished
       .then(() => {
-        this.defaultSlotElement.style[name] = `-${to}px`
         this.innerHidden = true
       })
   }
@@ -163,7 +163,8 @@ export class ClipElement extends NodeElement {
         [name]: `-${to}px`
       }], {
         duration,
-        easing: this.easing
+        easing: this.easing,
+        fill: 'forwards'
       })
       .finished
       .then(() => {
@@ -171,7 +172,6 @@ export class ClipElement extends NodeElement {
           element.style.removeProperty('z-index')
         }
 
-        element.style[name] = `-${to}px`
         element.hidden = true
       })
   }
@@ -239,12 +239,10 @@ export class ClipElement extends NodeElement {
         [name]: '0px'
       }], {
         duration,
-        easing: this.easing
+        easing: this.easing,
+        fill: 'forwards'
       })
       .finished
-      .then(() => {
-        this.defaultSlotElement.style[name] = '0px'
-      })
   }
 
   public async showOuter (element: HTMLElement, duration = this.duration): Promise<void> {
@@ -268,12 +266,10 @@ export class ClipElement extends NodeElement {
         [name]: '0px'
       }], {
         duration,
-        easing: this.easing
+        easing: this.easing,
+        fill: 'forwards'
       })
       .finished
-      .then(() => {
-        element.style[name] = '0px'
-      })
   }
 
   public async toggleContent (element: HTMLElement, duration = this.duration): Promise<void> {

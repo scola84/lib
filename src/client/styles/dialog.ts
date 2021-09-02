@@ -8,6 +8,7 @@ export default css`
 
   :host([hidden]) {
     display: none;
+    opacity: 1;
   }
 
   slot:not([name])::slotted(*) {

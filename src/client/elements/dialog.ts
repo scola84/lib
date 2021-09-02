@@ -202,19 +202,22 @@ export class DialogElement extends NodeElement {
 
     const { to } = this.calculateShowStyles(false)
 
+    this.contentElement.style.setProperty('transition', `transform ${duration}ms ${this.easing}`)
+    this.contentElement.style.setProperty('transform', 'translate(0, 0)')
+
     await this.contentElement
       .animate([{
         left: `${to.left}px`,
         opacity: to.opacity ?? 1,
-        top: `${to.top}px`,
-        transform: 'translate(0px, 0px)'
+        top: `${to.top}px`
       }], {
         duration,
-        easing: this.easing
+        easing: this.easing,
+        fill: 'forwards'
       })
       .finished
       .then(() => {
-        this.finishExtend(to)
+        this.finishExtend()
       })
   }
 
@@ -241,12 +244,10 @@ export class DialogElement extends NodeElement {
           opacity: 0
         }], {
           duration,
-          easing: this.easing
+          easing: this.easing,
+          fill: 'forwards'
         })
-        .finished
-        .then(() => {
-          this.scrimElement?.style.setProperty('opacity', '0')
-        }),
+        .finished,
       this.contentElement
         .animate([{
           left: `${from.left}px`,
@@ -258,11 +259,12 @@ export class DialogElement extends NodeElement {
           top: `${to.top}px`
         }], {
           duration,
-          easing: this.easing
+          easing: this.easing,
+          fill: 'forwards'
         })
         .finished
         .then(() => {
-          this.finishHide(to)
+          this.finishHide()
         })
     ])
   }
@@ -274,19 +276,21 @@ export class DialogElement extends NodeElement {
 
     const { to } = this.calculateShowStyles()
 
+    this.contentElement.style.setProperty('transition', `transform ${duration}ms ${this.easing}`)
+    this.contentElement.style.setProperty('transform', 'translate(0, 0)')
+
     await this.contentElement
       .animate([{
         left: `${to.left}px`,
         opacity: to.opacity ?? 1,
-        top: `${to.top}px`,
-        transform: 'translate(0px, 0px)'
+        top: `${to.top}px`
       }], {
         duration,
         easing: this.easing
       })
       .finished
       .then(() => {
-        this.finishResize(to)
+        this.finishResize()
       })
   }
 
@@ -313,12 +317,10 @@ export class DialogElement extends NodeElement {
           opacity: 1
         }], {
           duration,
-          easing: this.easing
+          easing: this.easing,
+          fill: 'forwards'
         })
-        .finished
-        .then(() => {
-          this.scrimElement?.style.setProperty('opacity', '1')
-        }),
+        .finished,
       this.contentElement
         .animate([{
           left: `${from.left}px`,
@@ -330,11 +332,12 @@ export class DialogElement extends NodeElement {
           top: `${to.top}px`
         }], {
           duration,
-          easing: this.easing
+          easing: this.easing,
+          fill: 'forwards'
         })
         .finished
         .then(() => {
-          this.finishShow(to)
+          this.finishShow()
         })
     ])
   }
@@ -774,13 +777,13 @@ export class DialogElement extends NodeElement {
     return style
   }
 
-  protected finishExtend (to: ContentStyle): void {
-    this.setContentStyleAfterFinish(to)
+  protected finishExtend (): void {
+    this.setContentStyleAfterFinish()
   }
 
-  protected finishHide (to: ContentStyle): void {
+  protected finishHide (): void {
     this.originElement?.appendChild(this)
-    this.setContentStyleAfterFinish(to)
+    this.setContentStyleAfterFinish()
 
     this
       .findScrollParentElements()
@@ -794,13 +797,11 @@ export class DialogElement extends NodeElement {
     this.hidden = true
   }
 
-  protected finishResize (to: ContentStyle): void {
-    this.setContentStyleAfterFinish(to)
+  protected finishResize (): void {
+    this.setContentStyleAfterFinish()
   }
 
-  protected finishShow (to: ContentStyle): void {
-    this.setContentStyleAfterFinish(to)
-
+  protected finishShow (): void {
     if (this.anchorElement instanceof HTMLElement) {
       this.resizeObserver?.observe(this.anchorElement)
     }
@@ -951,11 +952,10 @@ export class DialogElement extends NodeElement {
     })
   }
 
-  protected setContentStyleAfterFinish (to: ContentStyle): void {
+  protected setContentStyleAfterFinish (): void {
     this.contentElement.style.removeProperty('opacity')
     this.contentElement.style.removeProperty('transform')
-    this.contentElement.style.setProperty('left', `${to.left}px`)
-    this.contentElement.style.setProperty('top', `${to.top}px`)
+    this.contentElement.style.removeProperty('transition')
   }
 
   protected setContentWidth (): void {

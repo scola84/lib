@@ -51,6 +51,6 @@ export class StructElement extends NodeElement {
 
   protected tearDownWindowListeners (): void {
     window.removeEventListener('scola-struct-set-data', this.handleSetDataBound)
-    this.tearDownWindowListeners()
+    super.tearDownWindowListeners()
   }
 }

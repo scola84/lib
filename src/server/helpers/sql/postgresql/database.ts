@@ -43,8 +43,6 @@ export class PostgresqlDatabase extends Database {
   protected createPool (dsn: string, password?: string): Pool {
     const url = new URL(dsn)
 
-    url.password = String(password)
-
     const options: PoolConfig = {
       connectionTimeoutMillis: 10000,
       database: url.pathname.slice(1),

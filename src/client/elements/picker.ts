@@ -1,4 +1,3 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import type { Primitive, Struct } from '../../common'
 import { isArray, isPrimitive, isStruct } from '../../common'
 import { DialogElement } from './dialog'
@@ -6,6 +5,7 @@ import { FormatElement } from './format'
 import { InputElement } from './input'
 import type { ListElement } from './list'
 import { NodeElement } from './node'
+import type { PropertyValues } from 'lit'
 import type { SelectElement } from './select'
 import { customElement } from 'lit/decorators.js'
 import styles from '../styles/picker'
@@ -22,7 +22,7 @@ declare global {
 
 @customElement('scola-picker')
 export class PickerElement extends InputElement {
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...InputElement.styles,
     styles
   ]

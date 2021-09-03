@@ -21,18 +21,13 @@ export class SourceElement extends RequestElement {
   @property()
   public type?: string
 
-  protected handleMessageBound: (event: MessageEvent) => void
+  protected handleMessageBound = this.handleMessage.bind(this)
 
   protected source?: EventSource
 
   protected tries = 0
 
   protected updaters = SourceElement.updaters
-
-  public constructor () {
-    super()
-    this.handleMessageBound = this.handleMessage.bind(this)
-  }
 
   public abort (): void {
     if (this.source !== undefined) {
@@ -84,7 +79,7 @@ export class SourceElement extends RequestElement {
   }
 
   protected handleData (): void {
-    this.setNodeData()
+    this.setDataOn(this.scopedDataNodeElements)
   }
 
   protected handleError (): void {

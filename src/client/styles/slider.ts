@@ -1,3 +1,5 @@
+// https://css-tricks.com/sliding-nightmare-understanding-range-input/
+
 import { css } from 'lit'
 
 export default css`

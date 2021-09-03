@@ -1,10 +1,10 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import { DateTime } from 'luxon'
 import type { IScannerControls } from '@zxing/browser'
 import { ImageCapture } from 'image-capture'
 import { MediaElement } from './media'
+import type { PropertyValues } from 'lit'
 import RtcRecorder from 'recordrtc'
 import styles from '../styles/recorder'
 
@@ -23,13 +23,13 @@ declare global {
 }
 
 export interface RecorderElementState {
+  dateStarted: Date | null
   duration: string
-  startDate: Date | null
 }
 
 @customElement('scola-recorder')
 export class RecorderElement extends MediaElement {
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...MediaElement.styles,
     styles
   ]
@@ -58,8 +58,8 @@ export class RecorderElement extends MediaElement {
   public mediaElement: HTMLVideoElement
 
   public state: RecorderElementState = {
-    duration: '',
-    startDate: null
+    dateStarted: null,
+    duration: ''
   }
 
   protected codeScanner?: IScannerControls
@@ -173,7 +173,7 @@ export class RecorderElement extends MediaElement {
           result !== undefined &&
           this.codeScanner !== undefined
         ) {
-          console.log(result)
+          // console.log(result)
           this.tearDownHelpers()
         }
       })
@@ -200,7 +200,7 @@ export class RecorderElement extends MediaElement {
     } else if (this.rtcRecorder !== undefined) {
       this.rtcRecorder.stopRecording(() => {
         if (this.rtcRecorder !== undefined) {
-          console.log(this.rtcRecorder.getBlob())
+          // console.log(this.rtcRecorder.getBlob())
           this.tearDownHelpers()
         }
       })
@@ -225,8 +225,8 @@ export class RecorderElement extends MediaElement {
 
           imageCapture
             .takePhoto(options)
-            .then((blob) => {
-              console.log(blob)
+            .then(() => {
+              // console.log(blob)
             })
             .catch(() => {})
             .finally(() => {
@@ -255,16 +255,16 @@ export class RecorderElement extends MediaElement {
 
   protected updateDuration (date?: Date): void {
     if (date === undefined) {
+      this.state.dateStarted = null
       this.state.duration = ''
-      this.state.startDate = null
     } else {
-      if (this.state.startDate === null) {
-        this.state.startDate = date
+      if (this.state.dateStarted === null) {
+        this.state.dateStarted = date
       }
 
       this.state.duration = DateTime
         .fromJSDate(date)
-        .diff(DateTime.fromJSDate(this.state.startDate))
+        .diff(DateTime.fromJSDate(this.state.dateStarted))
         .toFormat('hh:mm:ss')
     }
 

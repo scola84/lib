@@ -1,6 +1,6 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
+import type { PropertyValues } from 'lit'
 import type { RequestElement } from './request'
 import styles from '../styles/progress'
 import updaters from '../updaters/progress'
@@ -14,7 +14,7 @@ declare global {
 // https://css-tricks.com/building-progress-ring-quickly/
 @customElement('scola-progress')
 export class ProgressElement extends NodeElement {
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...NodeElement.styles,
     styles
   ]

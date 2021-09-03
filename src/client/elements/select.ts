@@ -1,7 +1,7 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import type { Primitive, Struct } from '../../common'
 import { customElement, property } from 'lit/decorators.js'
 import { InputElement } from './input'
+import type { PropertyValues } from 'lit'
 import { cast } from '../../common'
 import styles from '../styles/select'
 import updaters from '../updaters/select'
@@ -14,7 +14,7 @@ declare global {
 
 @customElement('scola-select')
 export class SelectElement extends InputElement {
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...InputElement.styles,
     styles
   ]

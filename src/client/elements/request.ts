@@ -1,8 +1,8 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { isPrimitive, isStruct } from '../../common'
 import type { AuthEvent } from './auth'
 import { NodeElement } from './node'
+import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
 import { css } from 'lit'
 
@@ -30,7 +30,7 @@ export class RequestElement extends NodeElement {
 
   public static origin = window.location.origin
 
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...NodeElement.styles,
     css`
       :host {
@@ -113,20 +113,13 @@ export class RequestElement extends NodeElement {
 
   protected controller = new AbortController()
 
-  protected handleAbortBound: (event: CustomEvent) => void
+  protected handleAbortBound = this.handleAbort.bind(this)
 
-  protected handleStartBound: (event: CustomEvent) => void
+  protected handleStartBound = this.handleStart.bind(this)
 
-  protected handleToggleBound: (event: CustomEvent) => void
+  protected handleToggleBound = this.handleToggle.bind(this)
 
   protected updaters = RequestElement.updaters
-
-  public constructor () {
-    super()
-    this.handleAbortBound = this.handleAbort.bind(this)
-    this.handleStartBound = this.handleStart.bind(this)
-    this.handleToggleBound = this.handleToggle.bind(this)
-  }
 
   public abort (): void {
     this.busy = false
@@ -278,7 +271,17 @@ export class RequestElement extends NodeElement {
   }
 
   protected handleData (): void {
-    this.setNodeData()
+    const status = this.response?.status ?? 200
+
+    if ((
+      this.request?.method === 'GET' &&
+      status === 200
+    ) || (
+      this.request?.method !== 'GET' &&
+      status >= 400
+    )) {
+      this.setDataOn(this.scopedDataNodeElements)
+    }
   }
 
   protected handleError (error: unknown): void {

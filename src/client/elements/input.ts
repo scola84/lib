@@ -1,5 +1,5 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import { FieldElement } from './field'
+import type { PropertyValues } from 'lit'
 import { customElement } from 'lit/decorators.js'
 import styles from '../styles/input'
 
@@ -11,7 +11,7 @@ declare global {
 
 @customElement('scola-input')
 export class InputElement extends FieldElement {
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...FieldElement.styles,
     styles
   ]

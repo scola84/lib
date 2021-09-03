@@ -393,7 +393,7 @@ export abstract class TaskRunner {
    */
   protected async handleTaskRun (id: number): Promise<void> {
     try {
-      const taskRun = await this.selectTaskRun(Number(id))
+      const taskRun = await this.selectTaskRun(id)
 
       if (taskRun !== undefined) {
         try {
@@ -424,7 +424,7 @@ export abstract class TaskRunner {
     this
       .pushTaskRun()
       .then(() => {
-        if (Number(this.queue?.length()) < this.concurrency) {
+        if ((this.queue?.length() ?? 0) < this.concurrency) {
           this.push()
         }
       })
@@ -456,9 +456,9 @@ export abstract class TaskRunner {
   protected async pushTaskRun (): Promise<void> {
     const [,id] = await this.storeDuplicate?.blpop([this.name], this.timeout / 1000) ?? []
 
-    if (id !== undefined) {
+    if (typeof id === 'number') {
       const taskRun = {
-        id: Number(id)
+        id
       }
 
       await this.updateTaskRunOnPush(taskRun)

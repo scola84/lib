@@ -15,14 +15,9 @@ declare global {
 
 @customElement('scola-struct')
 export class StructElement extends NodeElement {
-  protected handleSetDataBound: (event: CustomEvent) => void
+  protected handleSetDataBound = this.handleSetData.bind(this)
 
   protected updaters = StructElement.updaters
-
-  public constructor () {
-    super()
-    this.handleSetDataBound = this.handleSetData.bind(this)
-  }
 
   public update (properties: PropertyValues): void {
     if (properties.has('data')) {
@@ -34,9 +29,9 @@ export class StructElement extends NodeElement {
 
   protected handleData (): void {
     if (this.hasDataNodeElements) {
-      this.setNodeData()
+      this.setDataOn(this.dataNodeElements)
     } else {
-      this.setLeafData()
+      this.setDataOn(this.dataLeafElements)
     }
   }
 

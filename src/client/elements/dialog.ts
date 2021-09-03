@@ -1,6 +1,5 @@
 import { customElement, property } from 'lit/decorators.js'
 import type { AppElement } from './app'
-import type { CSSResultGroup } from 'lit'
 import type { InteractEvent } from '@interactjs/core/InteractEvent'
 import type { Interactable } from '@interactjs/core/Interactable'
 import { NodeElement } from './node'
@@ -80,7 +79,7 @@ const vtoAlternatives: Struct<string[]> = {
 
 @customElement('scola-dialog')
 export class DialogElement extends NodeElement {
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...NodeElement.styles,
     styles
   ]
@@ -141,15 +140,15 @@ export class DialogElement extends NodeElement {
 
   protected dragInteractable?: Interactable
 
-  protected handleClickBound: (event: Event) => void
+  protected handleClickBound = this.handleClick.bind(this)
 
-  protected handleHideBound: (event: CustomEvent) => void
+  protected handleHideBound = this.handleHide.bind(this)
 
-  protected handleKeydownBound: (event: KeyboardEvent) => void
+  protected handleKeydownBound = this.handleKeydown.bind(this)
 
-  protected handleScrollBound: () => void
+  protected handleScrollBound = this.handleScroll.bind(this)
 
-  protected handleShowBound: (event: CustomEvent) => void
+  protected handleShowBound = this.handleShow.bind(this)
 
   protected originElement: HTMLElement | null
 
@@ -170,11 +169,6 @@ export class DialogElement extends NodeElement {
 
     this.dir = document.dir
     this.contentElement = contentElement
-    this.handleClickBound = this.handleClick.bind(this)
-    this.handleHideBound = this.handleHide.bind(this)
-    this.handleKeydownBound = this.handleKeydown.bind(this)
-    this.handleScrollBound = this.handleScroll.bind(this)
-    this.handleShowBound = this.handleShow.bind(this)
     this.originElement = this.parentElement
     this.scrimElement = this.querySelector<HTMLElement>(':scope > [as="scrim"]')
   }
@@ -286,7 +280,8 @@ export class DialogElement extends NodeElement {
         top: `${to.top}px`
       }], {
         duration,
-        easing: this.easing
+        easing: this.easing,
+        fill: 'forwards'
       })
       .finished
       .then(() => {
@@ -699,7 +694,7 @@ export class DialogElement extends NodeElement {
   }
 
   protected determinePositions (): Positions {
-    const regExp = new RegExp(`(?<=(?<position>[^@\\s]+))${this.breakpoint}`, 'u')
+    const regExp = new RegExp(`(?<position>[^@\\s]+)${this.breakpoint}`, 'u')
 
     const extension = {
       horizontal: this.hext?.match(regExp)?.groups?.position,

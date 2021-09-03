@@ -46,5 +46,11 @@ export function format (strings: Strings, code: string, language: string, data?:
     string = code
   }
 
-  return String(new Format(string, language).format(data))
+  const formattedString = new Format(string, language).format(data)
+
+  if (typeof formattedString === 'string') {
+    return formattedString
+  }
+
+  return string
 }

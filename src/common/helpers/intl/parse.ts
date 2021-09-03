@@ -41,17 +41,17 @@ export function parse (strings: Strings, string: string, language: string): Quer
       const [
         name,
         value
-      ] = match.match(/(?:[^:"]+|"[^"]*")+/gu) as [string, string | undefined]
+      ] = match.match(/(?:[^:"]+|"[^"]*")+/gu) ?? []
 
-      if (value === undefined) {
+      if (typeof value === 'string') {
         return {
-          value: name.replace(/"/gu, '')
+          name: lookup(strings, name.replace(/"/gu, ''), language) ?? name,
+          value: value.replace(/"/gu, '')
         }
       }
 
       return {
-        name: lookup(strings, name.replace(/"/gu, ''), language) ?? name,
-        value: value.replace(/"/gu, '')
+        value: name.replace(/"/gu, '')
       }
     }) ?? []
 }

@@ -1,6 +1,6 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { FieldElement } from './field'
+import type { PropertyValues } from 'lit'
 import styles from '../styles/textarea'
 
 declare global {
@@ -11,7 +11,7 @@ declare global {
 
 @customElement('scola-textarea')
 export class TextAreaElement extends FieldElement {
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...FieldElement.styles,
     styles
   ]

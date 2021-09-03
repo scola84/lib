@@ -26,22 +26,13 @@ export class FormElement extends NodeElement {
     return this.querySelectorAll<FieldElement>('scola-input, scola-picker, scola-select, scola-slider, scola-textarea')
   }
 
-  public get hasFieldElements (): boolean {
-    return this.querySelector<FieldElement>('scola-input, scola-picker, scola-select, scola-slider, scola-textarea') !== null
-  }
-
   public get hasFileElements (): boolean {
     return this.querySelector<HTMLInputElement>('input[type="file"]') !== null
   }
 
-  protected handleSubmitBound: (event: CustomEvent) => void
+  protected handleSubmitBound = this.handleSubmit.bind(this)
 
   protected updaters = FormElement.updaters
-
-  public constructor () {
-    super()
-    this.handleSubmitBound = this.handleSubmit.bind(this)
-  }
 
   public submit (): void {
     let body: FormData | URLSearchParams = new URLSearchParams()
@@ -76,7 +67,7 @@ export class FormElement extends NodeElement {
   }
 
   protected handleData (): void {
-    this.setLeafData()
+    this.setDataOn(this.dataLeafElements)
     this.scrollToError()
   }
 

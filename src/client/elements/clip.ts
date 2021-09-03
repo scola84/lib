@@ -1,6 +1,6 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
+import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 import styles from '../styles/clip'
@@ -31,7 +31,7 @@ type PropertyName = 'marginBottom' | 'marginLeft' | 'marginRight' | 'marginTop'
 
 @customElement('scola-clip')
 export class ClipElement extends NodeElement {
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...NodeElement.styles,
     styles
   ]
@@ -60,32 +60,28 @@ export class ClipElement extends NodeElement {
     return this.querySelectorAll<HTMLElement>(':scope > :not([slot])')
   }
 
-  protected handleContentBound: (event: CustomEvent) => void
+  public get outerElements (): NodeListOf<HTMLElement> {
+    return this.querySelectorAll<HTMLElement>(':scope > [slot="after"], :scope > [slot="before"]')
+  }
 
-  protected handleContentOrInnerBound: (event: CustomEvent) => void
+  protected handleContentBound = this.handleContent.bind(this)
+
+  protected handleContentOrInnerBound = this.handleContentOrInner.bind(this)
 
   protected handleElement: HTMLElement | null
 
-  protected handleInnerBound: (event: CustomEvent) => void
+  protected handleInnerBound = this.handleInner.bind(this)
 
-  protected handleNestedBound: (event: CustomEvent) => void
+  protected handleNestedBound = this.handleNested.bind(this)
 
-  protected handleOuterBound: (event: CustomEvent) => void
-
-  protected outerElements: NodeListOf<HTMLElement>
+  protected handleOuterBound = this.handleOuter.bind(this)
 
   protected updaters = ClipElement.updaters
 
   public constructor () {
     super()
     this.dir = document.dir
-    this.handleContentBound = this.handleContent.bind(this)
-    this.handleContentOrInnerBound = this.handleContentOrInner.bind(this)
     this.handleElement = this.querySelector<HTMLElement>(':scope > [as="handle"]')
-    this.handleInnerBound = this.handleInner.bind(this)
-    this.handleNestedBound = this.handleNested.bind(this)
-    this.handleOuterBound = this.handleOuter.bind(this)
-    this.outerElements = this.querySelectorAll<HTMLElement>(':scope > [slot="after"], :scope > [slot="before"]')
   }
 
   public firstUpdated (properties: PropertyValues): void {

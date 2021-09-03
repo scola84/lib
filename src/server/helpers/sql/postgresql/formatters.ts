@@ -1,3 +1,4 @@
+import { isArray, isPrimitive, isStruct } from '../../../../common'
 import { literal } from 'pg-format'
 
 function identifier (value: string): string {
@@ -5,7 +6,18 @@ function identifier (value: string): string {
 }
 
 function parameter (value: unknown): string {
-  return literal(value as string)
+  if ((
+    isPrimitive(value) &&
+    typeof value !== 'symbol'
+  ) ||
+  isArray(value) ||
+  isStruct(value) ||
+  value instanceof Date
+  ) {
+    return literal(value)
+  }
+
+  return String(value)
 }
 
 export const formatters = {

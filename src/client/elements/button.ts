@@ -1,6 +1,6 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
+import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 import styles from '../styles/button'
@@ -16,7 +16,7 @@ declare global {
 export class ButtonElement extends NodeElement {
   public static storage: Storage = window.sessionStorage
 
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...NodeElement.styles,
     styles
   ]

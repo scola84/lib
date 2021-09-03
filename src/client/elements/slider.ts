@@ -1,7 +1,7 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { FormatElement } from './format'
 import { InputElement } from './input'
+import type { PropertyValues } from 'lit'
 import styles from '../styles/slider'
 
 declare global {
@@ -20,10 +20,9 @@ declare global {
   }
 }
 
-// https://css-tricks.com/sliding-nightmare-understanding-range-input/
 @customElement('scola-slider')
 export class SliderElement extends InputElement {
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...InputElement.styles,
     styles
   ]
@@ -34,9 +33,9 @@ export class SliderElement extends InputElement {
   })
   public fillProgress?: 'sig-1' | 'sig-2'
 
-  protected handleMaxBound: (event: CustomEvent) => void
+  protected handleMaxBound = this.handleMax.bind(this)
 
-  protected handleMinBound: (event: CustomEvent) => void
+  protected handleMinBound = this.handleMin.bind(this)
 
   protected labelElement: FormatElement | null
 
@@ -45,8 +44,6 @@ export class SliderElement extends InputElement {
   public constructor () {
     super()
     this.dir = document.dir
-    this.handleMaxBound = this.handleMax.bind(this)
-    this.handleMinBound = this.handleMin.bind(this)
     this.labelElement = this.querySelector<FormatElement>('[as="label"]')
   }
 

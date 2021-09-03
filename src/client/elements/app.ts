@@ -1,5 +1,4 @@
 import { customElement, property } from 'lit/decorators.js'
-import type { CSSResultGroup } from 'lit'
 import { ClipElement } from './clip'
 import type { DialogElement } from './dialog'
 import styles from '../styles/app'
@@ -12,7 +11,7 @@ declare global {
 
 @customElement('scola-app')
 export class AppElement extends ClipElement {
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...ClipElement.styles,
     styles
   ]
@@ -37,12 +36,12 @@ export class AppElement extends ClipElement {
 
   protected updaters = AppElement.updaters
 
-  protected get hasDialogs (): boolean {
+  protected get hasDialogElements (): boolean {
     return this.shadowRoot?.querySelector<DialogElement>('scola-dialog') !== null
   }
 
   protected handleClick (event: Event): void {
-    if (!this.hasDialogs) {
+    if (!this.hasDialogElements) {
       super.handleClick(event)
     }
   }

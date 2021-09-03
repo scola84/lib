@@ -36,7 +36,7 @@ export class SvgElement extends NodeElement {
 
   protected drawers = SvgElement.drawers
 
-  protected handleDrawBound: (event: CustomEvent) => void
+  protected handleDrawBound = this.handleDraw.bind(this)
 
   protected resizeObserver?: ResizeObserver
 
@@ -51,7 +51,6 @@ export class SvgElement extends NodeElement {
       throw new Error('SVG element is null')
     }
 
-    this.handleDrawBound = this.handleDraw.bind(this)
     this.svgElement = svgElement
   }
 

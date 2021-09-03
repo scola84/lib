@@ -1,5 +1,4 @@
 import type { Strings } from './strings'
-import type { Struct } from '../base'
 
 /**
  * Looks up the code of the string.
@@ -23,15 +22,16 @@ import type { Struct } from '../base'
  * ```
  */
 export function lookup (strings: Strings, string: string, language: string): string | undefined {
-  const languageStrings = strings[language] as Struct<string> | undefined
+  const languageStrings = strings[language]
 
   if (languageStrings === undefined) {
     return undefined
   }
 
   return Object
-    .keys(languageStrings)
-    .find((code) => {
-      return languageStrings[code].toLowerCase() === string.toLowerCase()
+    .entries(languageStrings)
+    .find(([, value]) => {
+      return value === string.toLowerCase()
     })
+    ?.shift()
 }

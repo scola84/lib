@@ -1,6 +1,6 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import { isArray, isStruct } from '../../common'
 import { NodeElement } from './node'
+import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
 import { customElement } from 'lit/decorators.js'
 import styles from '../styles/media'
@@ -13,7 +13,7 @@ declare global {
 
 @customElement('scola-media')
 export class MediaElement extends NodeElement {
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...NodeElement.styles,
     styles
   ]

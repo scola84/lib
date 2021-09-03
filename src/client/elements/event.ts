@@ -30,16 +30,11 @@ export class EventElement extends NodeElement {
   })
   public wait?: boolean
 
-  protected handleEventBound: (event: CustomEvent) => void
+  protected handleEventBound = this.handleEvent.bind(this)
 
   protected intervalId?: number
 
   protected updaters = EventElement.updaters
-
-  public constructor () {
-    super()
-    this.handleEventBound = this.handleEvent.bind(this)
-  }
 
   public connectedCallback (): void {
     if (this.interval !== undefined) {

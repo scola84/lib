@@ -1,5 +1,5 @@
-import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
 import { LitElement, html } from 'lit'
+import type { PropertyValues, TemplateResult } from 'lit'
 import { Struct, cast, isPrimitive, isStruct } from '../../common'
 import { customElement, property, query } from 'lit/decorators.js'
 import styles from '../styles/node'
@@ -47,7 +47,7 @@ export class NodeElement extends LitElement {
 
   public static presets: Presets
 
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     styles
   ]
 
@@ -338,6 +338,14 @@ export class NodeElement extends LitElement {
     return this.querySelector<NodeElement>('scola-form, scola-list, scola-reloader, scola-struct') !== null
   }
 
+  public get hasScopedNodeElements (): boolean {
+    return this.querySelector<NodeElement>(':scope > scola-form, :scope > scola-list, :scope > scola-reloader, :scope > scola-struct') !== null
+  }
+
+  public get scopedDataNodeElements (): NodeListOf<NodeElement> {
+    return this.querySelectorAll<NodeElement>(':scope > scola-form, :scope > scola-list, :scope > scola-reloader, :scope > scola-struct')
+  }
+
   @query('slot[name="after"]', true)
   protected afterSlotElement: HTMLSlotElement
 
@@ -362,27 +370,19 @@ export class NodeElement extends LitElement {
   @query('slot[name="suffix"]', true)
   protected suffixSlotElement: HTMLSlotElement
 
-  protected handleSetParamsBound: (event: CustomEvent) => void
+  protected handleSetParamsBound = this.handleSetParams.bind(this)
 
-  protected handleSetPropsBound: (event: CustomEvent) => void
+  protected handleSetPropsBound = this.handleSetProps.bind(this)
 
-  protected handleToggleParamsBound: (event: CustomEvent) => void
+  protected handleToggleParamsBound = this.handleToggleParams.bind(this)
 
-  protected handleTogglePropsBound: (event: CustomEvent) => void
+  protected handleTogglePropsBound = this.handleToggleProps.bind(this)
 
   protected observeRootElement?: HTMLElement
 
   protected observers: Set<NodeElement> = new Set<NodeElement>()
 
   protected updaters = NodeElement.updaters
-
-  public constructor () {
-    super()
-    this.handleSetParamsBound = this.handleSetParams.bind(this)
-    this.handleSetPropsBound = this.handleSetProps.bind(this)
-    this.handleToggleParamsBound = this.handleToggleParams.bind(this)
-    this.handleTogglePropsBound = this.handleToggleProps.bind(this)
-  }
 
   public addObserver (element: NodeElement): void {
     this.observers.add(element)
@@ -414,13 +414,14 @@ export class NodeElement extends LitElement {
     this.observe
       ?.split(' ')
       .forEach((observe) => {
-        const parts = observe.split('@')
-        const updaterName = parts.shift()
-        const id = parts.shift()
+        const [
+          updaterName,
+          id
+        ] = observe.split('@')
 
         if (
           id === element.id &&
-          updaterName !== undefined
+          typeof updaterName === 'string'
         ) {
           this.updaters[updaterName]?.(this, element, properties)
         }
@@ -445,31 +446,16 @@ export class NodeElement extends LitElement {
     `
   }
 
-  public setLeafData (): void {
-    this.dataLeafElements.forEach((dataLeafElement) => {
-      if (dataLeafElement.noData !== true) {
-        if (dataLeafElement.name === '') {
-          dataLeafElement.data = this.data
+  public setDataOn (elements: NodeListOf<NodeElement>): void {
+    elements.forEach((element) => {
+      if (element.noData !== true) {
+        if (element.name === '') {
+          element.data = this.data
         } else if (
           isStruct(this.data) &&
-          this.data[dataLeafElement.name] !== undefined
+          this.data[element.name] !== undefined
         ) {
-          dataLeafElement.data = this.data[dataLeafElement.name]
-        }
-      }
-    })
-  }
-
-  public setNodeData (): void {
-    this.dataNodeElements.forEach((dataNodeElement) => {
-      if (dataNodeElement.noData !== true) {
-        if (dataNodeElement.name === '') {
-          dataNodeElement.data = this.data
-        } else if (
-          isStruct(this.data) &&
-          this.data[dataNodeElement.name] !== undefined
-        ) {
-          dataNodeElement.data = this.data[dataNodeElement.name]
+          element.data = this.data[element.name]
         }
       }
     })
@@ -551,11 +537,12 @@ export class NodeElement extends LitElement {
       ?.split(' ')
       .forEach((dispatch) => {
         if (new RegExp(filter, 'u').test(dispatch)) {
-          const parts = dispatch.split('@')
-          const eventType = parts.shift()
-          const id = parts.shift()
+          const [
+            eventType,
+            id
+          ] = dispatch.split('@')
 
-          if (eventType !== undefined) {
+          if (typeof eventType === 'string') {
             this.dispatchEvent(new CustomEvent(eventType, {
               bubbles: true,
               composed: true,
@@ -795,22 +782,22 @@ export class NodeElement extends LitElement {
   protected setUpObservers (properties: PropertyValues): void {
     if (this.observe !== undefined) {
       this.observeRootElement = this.findObserveRootElement()
-    }
 
-    this.observe
-      ?.split(' ')
-      .forEach((observe) => {
-        const id = observe.split('@').pop()
+      this.observe
+        .split(' ')
+        .forEach((observe) => {
+          const [,id] = observe.split('@')
 
-        if (id !== undefined) {
-          const element = this.observeRootElement?.querySelector(`#${id}`)
+          if (typeof id === 'string') {
+            const element = this.observeRootElement?.querySelector(`#${id}`)
 
-          if (element instanceof NodeElement) {
-            this.observedUpdate(properties, element)
-            element.addObserver(this)
+            if (element instanceof NodeElement) {
+              this.observedUpdate(properties, element)
+              element.addObserver(this)
+            }
           }
-        }
-      })
+        })
+    }
   }
 
   protected setUpPresets (): void {
@@ -844,21 +831,23 @@ export class NodeElement extends LitElement {
   }
 
   protected tearDownObservers (): void {
-    this.observe
-      ?.split(' ')
-      .forEach((observe) => {
-        const id = observe.split('@').pop()
+    if (this.observe !== undefined) {
+      this.observe
+        .split(' ')
+        .forEach((observe) => {
+          const [,id] = observe.split('@')
 
-        if (id !== undefined) {
-          const element = this.observeRootElement?.querySelector(`#${id}`)
+          if (typeof id === 'string') {
+            const element = this.observeRootElement?.querySelector(`#${id}`)
 
-          if (element instanceof NodeElement) {
-            element.removeObserver(this)
+            if (element instanceof NodeElement) {
+              element.removeObserver(this)
+            }
           }
-        }
-      })
+        })
 
-    this.observers.clear()
+      this.observers.clear()
+    }
   }
 
   protected tearDownWindowListeners (): void {

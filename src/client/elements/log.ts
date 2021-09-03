@@ -1,11 +1,10 @@
-import type { CSSResultGroup, PropertyValues, TemplateResult } from 'lit'
+import type { PropertyValues, TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 import { render } from 'lit'
-import styles from '../styles/log'
 import updaters from '../updaters/log'
 
 declare global {
@@ -24,11 +23,6 @@ declare global {
 
 @customElement('scola-log')
 export class LogElement extends NodeElement {
-  public static styles: CSSResultGroup[] = [
-    ...NodeElement.styles,
-    styles
-  ]
-
   public static updaters = {
     ...NodeElement.updaters,
     ...updaters
@@ -44,11 +38,11 @@ export class LogElement extends NodeElement {
   })
   public timeout?: number
 
-  protected handleHideBound: (event: CustomEvent) => void
+  protected handleHideBound = this.handleHide.bind(this)
 
   protected log?: Struct
 
-  protected templateElement: NodeElement | null
+  protected templateElement: NodeElement
 
   protected timeoutId?: number
 
@@ -56,17 +50,23 @@ export class LogElement extends NodeElement {
 
   public constructor () {
     super()
-    this.handleHideBound = this.handleHide.bind(this)
-    this.templateElement = this.querySelector<NodeElement>(':scope > [slot="template"]')
+
+    const templateElement = this.querySelector<NodeElement>(':scope > [slot="template"]')
+
+    if (templateElement === null) {
+      throw new Error('Template element is null')
+    }
+
+    this.templateElement = templateElement
   }
 
-  public async hide (): Promise<void> {
+  public async hide (duration = this.duration): Promise<void> {
     if (this.hidden) {
       return
     }
 
     if (this.logs.length > 0) {
-      this.showNext()
+      this.showNext(duration)
       return
     }
 
@@ -78,7 +78,7 @@ export class LogElement extends NodeElement {
       }, {
         marginTop: `-${scrollHeight}px`
       }], {
-        duration: this.duration,
+        duration,
         easing: this.easing,
         fill: 'forwards'
       })
@@ -88,7 +88,7 @@ export class LogElement extends NodeElement {
       })
   }
 
-  public async show (): Promise<void> {
+  public async show (duration = this.duration): Promise<void> {
     if (!this.hidden) {
       return
     }
@@ -112,7 +112,7 @@ export class LogElement extends NodeElement {
         opacity: 1,
         position: 'relative'
       }], {
-        duration: this.duration,
+        duration,
         easing: this.easing,
         fill: 'forwards'
       })
@@ -123,7 +123,7 @@ export class LogElement extends NodeElement {
       })
   }
 
-  public showNext (): void {
+  public showNext (duration = this.duration): void {
     if (this.timeoutId !== undefined) {
       window.clearTimeout(this.timeoutId)
       this.timeoutId = undefined
@@ -132,12 +132,12 @@ export class LogElement extends NodeElement {
     const log = this.logs.shift()
 
     if (!isStruct(log)) {
-      this.hide().catch(() => {})
+      this.hide(duration).catch(() => {})
       return
     }
 
     render(this.renderTemplate(log), this)
-    this.show().catch(() => {})
+    this.show(duration).catch(() => {})
 
     let { timeout } = this
 
@@ -151,7 +151,7 @@ export class LogElement extends NodeElement {
 
     if (timeout !== undefined) {
       this.timeoutId = window.setTimeout(() => {
-        this.showNext()
+        this.showNext(duration)
       }, timeout)
     }
   }
@@ -187,7 +187,7 @@ export class LogElement extends NodeElement {
     if (log.template instanceof HTMLElement) {
       element = log.template
     } else {
-      element = this.templateElement?.cloneNode(true)
+      element = this.templateElement.cloneNode(true)
     }
 
     if (element instanceof NodeElement) {

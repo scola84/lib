@@ -1,6 +1,6 @@
-import type { CSSResultGroup, PropertyValues } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
+import type { PropertyValues } from 'lit'
 import styles from '../styles/icon'
 
 declare global {
@@ -17,7 +17,7 @@ export interface Icons {
 export class IconElement extends NodeElement {
   public static icons: Icons = {}
 
-  public static styles: CSSResultGroup[] = [
+  public static styles = [
     ...NodeElement.styles,
     styles
   ]

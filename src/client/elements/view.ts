@@ -33,7 +33,7 @@ interface View extends Struct{
   parameters?: Struct
 }
 
-const viewElements: ViewElement[] = []
+const viewElements = new Set<ViewElement>()
 
 @customElement('scola-view')
 export class ViewElement extends ClipElement {
@@ -66,15 +66,15 @@ export class ViewElement extends ClipElement {
 
   public mode: ClipElement['mode'] = 'content'
 
-  protected handleAppendBound: (event: CustomEvent) => void
+  protected handleAppendBound = this.handleAppend.bind(this)
 
-  protected handleBackBound: (event: CustomEvent) => void
+  protected handleBackBound = this.handleBack.bind(this)
 
-  protected handleForwardBound: (event: CustomEvent) => void
+  protected handleForwardBound = this.handleForward.bind(this)
 
-  protected handleHomeBound: (event: CustomEvent) => void
+  protected handleHomeBound = this.handleHome.bind(this)
 
-  protected handlePopstateBound: (event: Event) => void
+  protected handlePopstateBound = this.handlePopstate.bind(this)
 
   protected updaters = ViewElement.updaters
 
@@ -88,22 +88,19 @@ export class ViewElement extends ClipElement {
     return this.pointer > 0
   }
 
-  public constructor () {
-    super()
-    this.handleAppendBound = this.handleAppend.bind(this)
-    this.handleBackBound = this.handleBack.bind(this)
-    this.handleForwardBound = this.handleForward.bind(this)
-    this.handleHomeBound = this.handleHome.bind(this)
-    this.handlePopstateBound = this.handlePopstate.bind(this)
-    viewElements.push(this)
-  }
-
   public connectedCallback (): void {
+    viewElements.add(this)
+
     if (this.save === true) {
       this.loadState()
     }
 
     super.connectedCallback()
+  }
+
+  public disconnectedCallback (): void {
+    viewElements.delete(this)
+    super.disconnectedCallback()
   }
 
   public firstUpdated (properties: PropertyValues): void {
@@ -398,15 +395,17 @@ export class ViewElement extends ClipElement {
     if (this.save === true) {
       const pointers: Struct<number> = {}
 
-      const path = viewElements.reduce((result, viewElement) => {
-        if (viewElement.save === true) {
-          viewElement.storage.setItem(`view-${viewElement.id}`, JSON.stringify(viewElement.toObject()))
-          pointers[viewElement.id] = viewElement.pointer
-          return `${result}${viewElement.toString()}`
-        }
+      const path = Array
+        .from(viewElements)
+        .reduce((result, viewElement) => {
+          if (viewElement.save === true) {
+            viewElement.storage.setItem(`view-${viewElement.id}`, JSON.stringify(viewElement.toObject()))
+            pointers[viewElement.id] = viewElement.pointer
+            return `${result}${viewElement.toString()}`
+          }
 
-        return result
-      }, '')
+          return result
+        }, '')
 
       if (location) {
         if (ViewElement.mode === 'push') {

@@ -1,9 +1,9 @@
-import type { PropertyValues, TemplateResult } from 'lit'
 import type { Query, Struct } from '../../common'
 import { customElement, property, state } from 'lit/decorators.js'
 import { isArray, isPrimitive, isStruct } from '../../common'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
+import type { PropertyValues } from 'lit'
 import { RequestElement } from './request'
 import { render } from 'lit'
 import { repeat } from 'lit/directives/repeat.js'
@@ -75,23 +75,23 @@ export class ListElement extends NodeElement {
 
   protected emptyElement: NodeElement | null
 
-  protected handleAddBound: (event: CustomEvent) => void
+  protected handleAddBound = this.handleAdd.bind(this)
 
-  protected handleDeleteBound: (event: CustomEvent) => void
+  protected handleDeleteBound = this.handleDelete.bind(this)
 
-  protected handleScrollBound: () => void
+  protected handleScrollBound = this.handleScroll.bind(this)
 
-  protected handleStartBound: (event: CustomEvent) => void
+  protected handleStartBound = this.handleStart.bind(this)
 
-  protected handleToggleBound: (event: CustomEvent) => void
+  protected handleToggleBound = this.handleToggle.bind(this)
 
-  protected keyFunction: (item: unknown, index: number) => unknown
+  protected keyFunction = this.getKey.bind(this)
 
   protected scrollParentElement?: HTMLElement | null
 
-  protected templateElement: NodeElement | null
+  protected templateElement: NodeElement
 
-  protected templateFunction: (item: unknown) => Node | TemplateResult | undefined
+  protected templateFunction = this.renderTemplate.bind(this)
 
   protected updaters = ListElement.updaters
 
@@ -105,14 +105,7 @@ export class ListElement extends NodeElement {
     }
 
     this.emptyElement = this.querySelector<NodeElement>(':scope > [slot="empty"]')
-    this.handleAddBound = this.handleAdd.bind(this)
-    this.handleDeleteBound = this.handleDelete.bind(this)
-    this.handleScrollBound = this.handleScroll.bind(this)
-    this.handleStartBound = this.handleStart.bind(this)
-    this.handleToggleBound = this.handleToggle.bind(this)
-    this.keyFunction = this.getKey.bind(this)
     this.templateElement = templateElement
-    this.templateFunction = this.renderTemplate.bind(this)
   }
 
   public addItem (item: Struct): boolean {
@@ -127,6 +120,11 @@ export class ListElement extends NodeElement {
     }
 
     return false
+  }
+
+  public connectedCallback (): void {
+    this.setUpParentListeners()
+    super.connectedCallback()
   }
 
   public deleteItem (item: Struct): boolean {
@@ -184,6 +182,7 @@ export class ListElement extends NodeElement {
       this.handleData()
     } else if (
       properties.has('filter') ||
+      properties.has('items') ||
       properties.has('sort')
     ) {
       this.renderItems()
@@ -194,7 +193,7 @@ export class ListElement extends NodeElement {
 
   protected calculateCount (): number {
     const { clientHeight: parentHeight } = this.scrollParentElement ?? {}
-    const templateHeight = parseFloat(this.templateElement?.height ?? '0')
+    const templateHeight = parseFloat(this.templateElement.height ?? '0')
 
     if (
       typeof parentHeight === 'number' &&
@@ -222,13 +221,15 @@ export class ListElement extends NodeElement {
     }
 
     if (this.mode === 'cursor') {
-      const item = this.items.slice(-1).pop()
+      const lastItem = this.items
+        .slice(-1)
+        .pop()
 
       if (
-        isStruct(item) &&
-        item.cursor !== undefined
+        isStruct(lastItem) &&
+        lastItem.cursor !== undefined
       ) {
-        data.cursor = item.cursor
+        data.cursor = lastItem.cursor
       } else {
         data.cursor = ''
       }
@@ -279,6 +280,9 @@ export class ListElement extends NodeElement {
   protected handleData (): void {
     if (isArray(this.data)) {
       this.items.push(...this.data)
+      this.renderItems()
+    } else if (isStruct(this.data)) {
+      this.items.push(this.data)
       this.renderItems()
     } else if (this.data === undefined) {
       this.resetItems()
@@ -353,12 +357,12 @@ export class ListElement extends NodeElement {
   }
 
   protected renderTemplate (item: unknown): Node | undefined {
-    const element = this.templateElement?.cloneNode(true)
+    const element = this.templateElement.cloneNode(true)
 
     if (element instanceof NodeElement) {
       element.removeAttribute('slot')
       element.data = item
-      element.setLeafData()
+      element.setDataOn(element.dataLeafElements)
     }
 
     return element
@@ -386,6 +390,7 @@ export class ListElement extends NodeElement {
         ?.shadowBody
     }
 
+    this.scrollParentElement?.addEventListener('scroll', this.handleScrollBound)
     this.scrollParentElement?.addEventListener('scroll', this.handleScrollBound)
   }
 

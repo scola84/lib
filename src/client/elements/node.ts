@@ -741,7 +741,7 @@ export class NodeElement extends LitElement {
   protected isTarget (event: CustomEvent, cancel = true): boolean {
     if (
       isStruct(event.detail) &&
-      event.detail.target !== undefined
+      typeof event.detail.target === 'string'
     ) {
       if (event.detail.target !== this.id) {
         return false

@@ -516,6 +516,10 @@ export class Queuer {
         date_started IS NULL AND
         fkey_queue_run_id = $(fkey_queue_run_id) AND
         status = 'pending'
-    `, taskRun)
+    `, {
+      fkey_queue_run_id: taskRun.fkey_queue_run_id,
+      reason: taskRun.reason,
+      status: taskRun.status
+    })
   }
 }

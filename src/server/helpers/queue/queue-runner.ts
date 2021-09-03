@@ -131,15 +131,20 @@ export class QueueRunner {
   public createTaskRunWriter (queueRun: QueueRun): Writable {
     return new Writable({
       objectMode: true,
-      write: async (payload: unknown, encoding, finish) => {
+      write: async (chunk: unknown, encoding, finish) => {
         try {
-          queueRun.aggr_total += 1
+          let payload = {}
+
+          if (typeof chunk === 'object') {
+            payload = { ...chunk }
+          }
 
           await this.store.rpush(
             queueRun.name,
             `${(await this.insertTaskRun(queueRun, payload)).id}`
           )
 
+          queueRun.aggr_total += 1
           finish()
         } catch (error: unknown) {
           finish(new Error(String(error)))
@@ -233,7 +238,7 @@ export class QueueRunner {
    * @param payload - The payload of the task run
    * @returns The insert result
    */
-  protected async insertTaskRun (queueRun: QueueRun, payload: unknown): Promise<InsertResult> {
+  protected async insertTaskRun (queueRun: QueueRun, payload: Struct): Promise<InsertResult> {
     return this.database.insertOne<TaskRun>(sql`
       INSERT INTO task_run (
         fkey_queue_run_id,

@@ -1,6 +1,6 @@
 import type { Database, UpdateResult } from '../sql'
-import type { DuplexOptions, Readable, Transform, Writable } from 'stream'
 import type { Queue, QueueRun, TaskRun } from '../../../common/entities'
+import type { Readable, Transform, Writable } from 'stream'
 import Ajv from 'ajv'
 import type { Logger } from 'pino'
 import type { ObjectSchema } from 'fluent-json-schema'
@@ -14,7 +14,7 @@ import { promise } from 'fastq'
 import { sql } from '../sql'
 import waitUntil from 'async-wait-until'
 
-export interface TaskRunnerOptions extends DuplexOptions {
+export interface TaskRunnerOptions {
   /**
    * The concurrency.
    *
@@ -653,7 +653,7 @@ export abstract class TaskRunner {
    * @throws schema is undefined
    * @throws data is invalid
    */
-  protected validate<Data = unknown>(name: string, data: Data): Data {
+  protected validate<Data = Struct>(name: string, data: Data): Data {
     const schema = this.validator?.getSchema(name)
 
     if (schema === undefined) {

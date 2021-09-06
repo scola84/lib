@@ -123,8 +123,12 @@ export class Server {
    *
    * Sets `fastify`.
    */
-  public setup (): void {
+  public async setup (): Promise<void> {
     this.fastify = this.createFastify()
+
+    await Promise.all(Object.values(this.plugins).map((plugin) => {
+      return this.fastify?.register(plugin)
+    }))
   }
 
   /**
@@ -141,12 +145,8 @@ export class Server {
     }, 'Starting server')
 
     if (setup) {
-      this.setup()
+      await this.setup()
     }
-
-    await Promise.all(Object.values(this.plugins).map((plugin) => {
-      return this.fastify?.register(plugin)
-    }))
 
     await this.fastify?.listen(this.port, this.address)
   }

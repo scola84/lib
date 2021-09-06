@@ -523,7 +523,7 @@ export class NodeElement extends LitElement {
     super.update(properties)
   }
 
-  protected dispatchEvents (data?: Struct, cause?: CustomEvent<Struct | null>): void {
+  protected dispatchEvents (data?: unknown, cause?: CustomEvent<Struct | null>): void {
     let filter = '.*'
 
     if (

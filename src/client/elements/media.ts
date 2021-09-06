@@ -34,6 +34,18 @@ export class MediaElement extends NodeElement {
     this.mediaElement = mediaElement
   }
 
+  public disconnectedCallback (): void {
+    if (
+      isArray(this.data) ||
+      isStruct(this.data) ||
+      typeof this.data === 'string'
+    ) {
+      this.removeChildren()
+    }
+
+    super.disconnectedCallback()
+  }
+
   public update (properties: PropertyValues): void {
     if (properties.has('data')) {
       this.handleData()
@@ -76,6 +88,8 @@ export class MediaElement extends NodeElement {
 
     if (typeof source.src === 'string') {
       imageElement.src = source.src
+    } else if (source.blob instanceof Blob) {
+      imageElement.src = URL.createObjectURL(source.blob)
     }
 
     imageElement.style.setProperty('max-width', '100%')
@@ -89,14 +103,17 @@ export class MediaElement extends NodeElement {
       sourceElement.media = source.media
     }
 
-    if (typeof source.srcset === 'string') {
-      sourceElement.srcset = source.srcset
-    } else if (typeof source.src === 'string') {
-      sourceElement.src = source.src
-    }
-
     if (typeof source.type === 'string') {
       sourceElement.type = source.type
+    }
+
+    if (typeof source.src === 'string') {
+      sourceElement.src = source.src
+    } else if (typeof source.srcset === 'string') {
+      sourceElement.srcset = source.srcset
+    } else if (source.blob instanceof Blob) {
+      sourceElement.src = URL.createObjectURL(source.blob)
+      sourceElement.type = source.blob.type
     }
 
     sourceElement.style.setProperty('max-width', '100%')
@@ -104,6 +121,8 @@ export class MediaElement extends NodeElement {
   }
 
   protected handleData (): void {
+    this.removeChildren()
+
     if (isArray(this.data)) {
       this.addSources(this.data)
     } else if (isStruct(this.data)) {
@@ -113,5 +132,21 @@ export class MediaElement extends NodeElement {
         src: this.data
       }])
     }
+  }
+
+  protected removeChildren (): void {
+    this
+      .querySelectorAll<HTMLImageElement | HTMLSourceElement>('img, source')
+      .forEach((element) => {
+        element.remove()
+
+        if (element.src.startsWith('blob:')) {
+          URL.revokeObjectURL(element.src)
+        }
+
+        if (element.srcset.startsWith('blob:')) {
+          URL.revokeObjectURL(element.srcset)
+        }
+      })
   }
 }

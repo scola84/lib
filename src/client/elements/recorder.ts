@@ -168,12 +168,17 @@ export class RecorderElement extends MediaElement {
         delayBetweenScanSuccess: 1000
       })
 
-      this.codeScanner = reader.scan(this.mediaElement, (result) => {
+      this.codeScanner = reader.scan(this.mediaElement, (code) => {
         if (
-          result !== undefined &&
+          code !== undefined &&
           this.codeScanner !== undefined
         ) {
-          // console.log(result)
+          this.data = {
+            code,
+            value: code.getText()
+          }
+
+          this.dispatchEvents(this.data)
           this.tearDownHelpers()
         }
       })
@@ -200,7 +205,11 @@ export class RecorderElement extends MediaElement {
     } else if (this.rtcRecorder !== undefined) {
       this.rtcRecorder.stopRecording(() => {
         if (this.rtcRecorder !== undefined) {
-          // console.log(this.rtcRecorder.getBlob())
+          this.data = {
+            blob: this.rtcRecorder.getBlob()
+          }
+
+          this.dispatchEvents(this.data)
           this.tearDownHelpers()
         }
       })
@@ -225,10 +234,13 @@ export class RecorderElement extends MediaElement {
 
           imageCapture
             .takePhoto(options)
-            .then(() => {
-              // console.log(blob)
+            .then((blob) => {
+              this.data = {
+                blob
+              }
+
+              this.dispatchEvents(this.data)
             })
-            .catch(() => {})
             .finally(() => {
               this.recording = false
             })

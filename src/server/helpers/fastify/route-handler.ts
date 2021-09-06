@@ -119,14 +119,24 @@ export abstract class RouteHandler {
       ...options
     }
 
+    if (handlerOptions.method === undefined) {
+      throw new Error('Option "method" is undefined')
+    }
+
     if (handlerOptions.server === undefined) {
       throw new Error('Option "server" is undefined')
     }
 
+    if (handlerOptions.url === undefined) {
+      throw new Error('Option "url" is undefined')
+    }
+
     this.database = handlerOptions.database
+    this.method = handlerOptions.method
     this.options = handlerOptions
     this.server = handlerOptions.server
     this.store = handlerOptions.store
+    this.url = handlerOptions.url
 
     this.logger = handlerOptions.logger?.child({
       name: handlerOptions.url

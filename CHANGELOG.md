@@ -1,3 +1,11 @@
+## [25.4.1](https://github.com/scola84/lib/compare/v25.4.0...v25.4.1) (2021-09-06)
+
+
+### Bug Fixes
+
+* **fastify:** register the plugins in the setup of the server ([128a94d](https://github.com/scola84/lib/commit/128a94d0069ad58e7ca96657f84bfc3075907e7e))
+* **fastify:** set method and URL on the route handler ([c05b090](https://github.com/scola84/lib/commit/c05b09023dba0f413437052db3724bc0bc047213))
+
 # [25.4.0](https://github.com/scola84/lib/compare/v25.3.0...v25.4.0) (2021-08-25)
 
 

@@ -27,6 +27,8 @@ export class PickerElement extends InputElement {
     styles
   ]
 
+  public cursor: InputElement['cursor'] = 'pointer'
+
   protected dialogElement: DialogElement | null
 
   protected labelElement: FormatElement | null
@@ -43,25 +45,6 @@ export class PickerElement extends InputElement {
     this.labelElement = this.querySelector<FormatElement>('[as="label"]')
     this.listElement = this.querySelector<ListElement>(':scope > scola-list')
     this.previewElement = this.querySelector<NodeElement>('[as="preview"]')
-  }
-
-  public appendValueTo (data: FormData | URLSearchParams): void {
-    this.clearError()
-
-    if (this.isSuccessful) {
-      if (
-        this.fieldElement.files instanceof FileList &&
-        data instanceof FormData
-      ) {
-        Array
-          .from(this.fieldElement.files)
-          .forEach((file) => {
-            data.append(this.name, file, file.name)
-          })
-      } else {
-        data.append(this.name, this.fieldElement.value)
-      }
-    }
   }
 
   public clearValue (): void {
@@ -299,22 +282,6 @@ export class PickerElement extends InputElement {
     }
   }
 
-  protected setCursor (): void {
-    switch (this.fieldElement.type) {
-      case 'checkbox':
-      case 'color':
-      case 'date':
-      case 'file':
-      case 'radio':
-      case 'time':
-        this.cursor = 'pointer'
-        break
-      default:
-        super.setCursor()
-        break
-    }
-  }
-
   protected setDateLabel (): void {
     if (this.labelElement instanceof FormatElement) {
       const { value } = this.fieldElement
@@ -445,15 +412,15 @@ export class PickerElement extends InputElement {
     this.setPreview()
   }
 
-  protected setValueFromPrimitive (data: Primitive): void {
-    super.setValueFromPrimitive(data)
+  protected setValueFromPrimitive (primitive: Primitive): void {
+    super.setValueFromPrimitive(primitive)
     this.setLabel({})
     this.setPreview()
   }
 
-  protected setValueFromStruct (data: Struct): void {
-    super.setValueFromStruct(data)
-    this.setLabel(data)
+  protected setValueFromStruct (struct: Struct): void {
+    super.setValueFromStruct(struct)
+    this.setLabel(struct)
     this.setPreview()
   }
 

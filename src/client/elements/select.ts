@@ -158,10 +158,10 @@ export class SelectElement extends InputElement {
     }
   }
 
-  protected setValueFromStruct (data: Struct): void {
+  protected setValueFromStruct (struct: Struct): void {
     if (this.fieldElement.getAttribute('value') === null) {
-      super.setValueFromStruct(data)
-    } else if (data.value === cast(this.value)) {
+      super.setValueFromStruct(struct)
+    } else if (struct.value === cast(this.value)) {
       this.toggleChecked(true, 0).catch(() => {})
     }
   }

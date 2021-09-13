@@ -1,7 +1,12 @@
 import { css } from 'lit'
 
 export default css`
-  input:not([type="text"]) {
+  input[type="checkbox"],
+  input[type="color"],
+  input[type="date"],
+  input[type="file"],
+  input[type="radio"],
+  input[type="time"] {
     appearance: none;
     margin: 0;
     opacity: 0;

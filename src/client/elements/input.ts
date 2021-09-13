@@ -20,6 +20,25 @@ export class InputElement extends FieldElement {
 
   protected updaters = InputElement.updaters
 
+  public appendValueTo (data: FormData | URLSearchParams): void {
+    this.clearError()
+
+    if (this.isSuccessful) {
+      if (
+        this.fieldElement.files instanceof FileList &&
+        data instanceof FormData
+      ) {
+        Array
+          .from(this.fieldElement.files)
+          .forEach((file) => {
+            data.append(this.name, file, file.name)
+          })
+      } else {
+        data.append(this.name, this.fieldElement.value)
+      }
+    }
+  }
+
   public firstUpdated (properties: PropertyValues): void {
     const fieldElement = this.fieldElement.cloneNode(true)
 
@@ -29,5 +48,15 @@ export class InputElement extends FieldElement {
     }
 
     super.firstUpdated(properties)
+  }
+
+  protected setValueFromBlob (blob: Blob): void {
+    const transfer = new DataTransfer()
+
+    transfer.items.add(new File([blob], Date.now().toString(), {
+      type: blob.type
+    }))
+
+    this.fieldElement.files = transfer.files
   }
 }

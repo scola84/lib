@@ -1,12 +1,10 @@
 import type { Query, Struct } from '../../common'
 import { customElement, property, state } from 'lit/decorators.js'
-import { isArray, isPrimitive, isStruct } from '../../common'
+import { isArray, isStruct } from '../../common'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
 import { RequestElement } from './request'
-import { render } from 'lit'
-import { repeat } from 'lit/directives/repeat.js'
 import updaters from '../updaters/list'
 
 declare global {
@@ -73,6 +71,8 @@ export class ListElement extends NodeElement {
   @state()
   protected count?: number
 
+  protected elements = new Map<unknown, Node>()
+
   protected emptyElement: NodeElement | null
 
   protected handleAddBound = this.handleAdd.bind(this)
@@ -85,13 +85,9 @@ export class ListElement extends NodeElement {
 
   protected handleToggleBound = this.handleToggle.bind(this)
 
-  protected keyFunction = this.getKey.bind(this)
-
   protected scrollParentElement?: HTMLElement | null
 
   protected templateElement: NodeElement
-
-  protected templateFunction = this.renderTemplate.bind(this)
 
   protected updaters = ListElement.updaters
 
@@ -152,10 +148,7 @@ export class ListElement extends NodeElement {
   }
 
   public getKey (item: unknown, index?: number): unknown {
-    if (
-      isStruct(item) &&
-      isPrimitive(item[this.key])
-    ) {
+    if (isStruct(item)) {
       return item[this.key]
     }
 
@@ -345,7 +338,19 @@ export class ListElement extends NodeElement {
       }
     }
 
-    render(repeat(items, this.keyFunction, this.templateFunction), this)
+    items.forEach((item) => {
+      const key = this.getKey(item)
+
+      if (!this.elements.has(key)) {
+        this.elements.set(key, this.renderTemplate(item))
+      }
+
+      const element = this.elements.get(key)
+
+      if (element !== undefined) {
+        this.appendChild(element)
+      }
+    })
 
     if (this.emptyElement instanceof NodeElement) {
       if (this.querySelector(':scope > :not([slot])') === null) {
@@ -356,7 +361,7 @@ export class ListElement extends NodeElement {
     }
   }
 
-  protected renderTemplate (item: unknown): Node | undefined {
+  protected renderTemplate (item: unknown): Node {
     const element = this.templateElement.cloneNode(true)
 
     if (element instanceof NodeElement) {
@@ -369,6 +374,8 @@ export class ListElement extends NodeElement {
   }
 
   protected resetItems (): void {
+    this.elements.clear()
+    this.innerHTML = ''
     this.items = []
     this.dispatchRequestEvent()
   }

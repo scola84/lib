@@ -55,12 +55,12 @@ export class RecorderElement extends MediaElement {
   })
   public recording?: boolean
 
-  public mediaElement: HTMLVideoElement
-
   public state: RecorderElementState = {
     dateStarted: null,
     duration: ''
   }
+
+  public videoElement: HTMLVideoElement
 
   protected codeScanner?: IScannerControls
 
@@ -130,8 +130,8 @@ export class RecorderElement extends MediaElement {
       .getUserMedia(constraints)
       .then((stream) => {
         this.stream = stream
-        this.mediaElement.srcObject = stream
-        this.mediaElement.muted = true
+        this.videoElement.srcObject = stream
+        this.videoElement.muted = true
       })
       .catch(() => {})
   }
@@ -157,7 +157,7 @@ export class RecorderElement extends MediaElement {
   }
 
   protected tearDownStream (): void {
-    this.mediaElement.srcObject = null
+    this.videoElement.srcObject = null
     this.stream = undefined
   }
 
@@ -168,7 +168,7 @@ export class RecorderElement extends MediaElement {
         delayBetweenScanSuccess: 1000
       })
 
-      this.codeScanner = reader.scan(this.mediaElement, (code) => {
+      this.codeScanner = reader.scan(this.videoElement, (code) => {
         if (
           code !== undefined &&
           this.codeScanner !== undefined
@@ -205,8 +205,13 @@ export class RecorderElement extends MediaElement {
     } else if (this.rtcRecorder !== undefined) {
       this.rtcRecorder.stopRecording(() => {
         if (this.rtcRecorder !== undefined) {
+          const blob = this.rtcRecorder.getBlob()
+
           this.data = {
-            blob: this.rtcRecorder.getBlob()
+            blob,
+            ratio: this.videoElement.videoWidth / this.videoElement.videoHeight,
+            type: blob.type,
+            value: blob
           }
 
           this.dispatchEvents(this.data)
@@ -236,7 +241,10 @@ export class RecorderElement extends MediaElement {
             .takePhoto(options)
             .then((blob) => {
               this.data = {
-                blob
+                blob,
+                ratio: this.videoElement.videoWidth / this.videoElement.videoHeight,
+                type: blob.type,
+                value: blob
               }
 
               this.dispatchEvents(this.data)

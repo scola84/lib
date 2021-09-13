@@ -53,6 +53,8 @@ export class FieldElement extends NodeElement {
   })
   public storage = FieldElement.storage
 
+  public cursor: NodeElement['cursor'] = 'text'
+
   public fieldElement: HTMLInputElement | HTMLTextAreaElement
 
   public listen = 'input'
@@ -121,10 +123,6 @@ export class FieldElement extends NodeElement {
   public connectedCallback (): void {
     if (this.save === true) {
       this.loadState()
-    }
-
-    if (this.cursor === undefined) {
-      this.setCursor()
     }
 
     super.connectedCallback()
@@ -249,35 +247,6 @@ export class FieldElement extends NodeElement {
     }
   }
 
-  protected setCursor (): void {
-    switch (this.fieldElement.type) {
-      case 'date':
-      case 'datetime-local':
-      case 'email':
-      case 'month':
-      case 'number':
-      case 'password':
-      case 'search':
-      case 'tel':
-      case 'text':
-      case 'textarea':
-      case 'time':
-      case 'url':
-      case 'week':
-        this.cursor = 'text'
-        break
-      case 'checkbox':
-      case 'color':
-      case 'file':
-      case 'radio':
-        this.cursor = 'pointer'
-        break
-      default:
-        this.cursor = 'default'
-        break
-    }
-  }
-
   protected setError (value: Struct): void {
     Object.assign(this.errorElement, value)
     this.errorElement?.removeAttribute('hidden')
@@ -298,13 +267,19 @@ export class FieldElement extends NodeElement {
     super.setUpElementListeners()
   }
 
-  protected setValueFromPrimitive (data: Primitive): void {
-    this.value = data.toString()
+  protected setValueFromBlob (blob: Blob): void
+
+  protected setValueFromBlob (): void {}
+
+  protected setValueFromPrimitive (primitive: Primitive): void {
+    this.value = primitive.toString()
   }
 
-  protected setValueFromStruct (data: Struct): void {
-    if (isPrimitive(data.value)) {
-      this.value = data.value.toString()
+  protected setValueFromStruct (struct: Struct): void {
+    if (isPrimitive(struct.value)) {
+      this.setValueFromPrimitive(struct.value)
+    } else if (struct.value instanceof Blob) {
+      this.setValueFromBlob(struct.value)
     }
   }
 }

@@ -1,8 +1,8 @@
+import { customElement, property } from 'lit/decorators.js'
 import { isArray, isStruct } from '../../common'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
-import { customElement } from 'lit/decorators.js'
 import styles from '../styles/media'
 
 declare global {
@@ -18,27 +18,42 @@ export class MediaElement extends NodeElement {
     styles
   ]
 
-  public mediaElement: HTMLAudioElement | HTMLPictureElement | HTMLVideoElement
+  @property({
+    type: Boolean
+  })
+  public center?: boolean
+
+  public audioElement?: HTMLAudioElement
+
+  public pictureElement?: HTMLPictureElement
+
+  public videoElement?: HTMLVideoElement
 
   protected updaters = MediaElement.updaters
 
   public constructor () {
     super()
 
-    const mediaElement = this.querySelector<HTMLAudioElement | HTMLPictureElement | HTMLVideoElement>(':scope > audio, :scope > picture, :scope > video')
-
-    if (mediaElement === null) {
-      throw new Error('Media element is null')
-    }
-
-    this.mediaElement = mediaElement
+    this
+      .querySelectorAll<HTMLAudioElement | HTMLPictureElement | HTMLVideoElement>(':scope > audio, :scope > picture, :scope > video')
+      .forEach((mediaElement) => {
+        if (mediaElement instanceof HTMLAudioElement) {
+          this.audioElement = mediaElement
+        } else if (mediaElement instanceof HTMLPictureElement) {
+          this.pictureElement = mediaElement
+        } else if (mediaElement instanceof HTMLVideoElement) {
+          this.videoElement = mediaElement
+        }
+      })
   }
 
   public disconnectedCallback (): void {
     if (
-      isArray(this.data) ||
-      isStruct(this.data) ||
-      typeof this.data === 'string'
+      !this.isConnected && (
+        isArray(this.data) ||
+        isStruct(this.data) ||
+        typeof this.data === 'string'
+      )
     ) {
       this.removeChildren()
     }
@@ -54,33 +69,72 @@ export class MediaElement extends NodeElement {
     super.update(properties)
   }
 
-  protected addSource (source: Struct): void {
-    if (
-      this.mediaElement instanceof HTMLAudioElement ||
-      this.mediaElement instanceof HTMLVideoElement
-    ) {
+  protected addAudioSource (source: Struct): void {
+    if (this.audioElement instanceof HTMLAudioElement) {
+      this.audioElement.innerHTML = ''
+
       if (typeof source.poster === 'string') {
-        this.mediaElement.setAttribute('poster', source.poster)
+        this.audioElement.setAttribute('poster', source.poster)
       }
 
-      this.mediaElement.appendChild(this.createSourceElement(source))
-    } else if (this.mediaElement instanceof HTMLPictureElement) {
+      this.audioElement.appendChild(this.createSourceElement(source))
+    }
+  }
+
+  protected addImageSource (source: Struct): void {
+    if (this.pictureElement instanceof HTMLPictureElement) {
+      this.pictureElement.innerHTML = ''
+
       if (typeof source.srcset === 'string') {
-        this.mediaElement.appendChild(this.createSourceElement(source))
+        this.pictureElement.appendChild(this.createSourceElement(source))
       }
 
-      this.mediaElement.appendChild(this.createImageElement(source))
+      this.pictureElement.appendChild(this.createImageElement(source))
+    }
+  }
+
+  protected addSource (source: Struct): void {
+    if (typeof source.type === 'string') {
+      if (source.type.startsWith('audio')) {
+        this.addAudioSource(source)
+      } else if (source.type.startsWith('image')) {
+        this.addImageSource(source)
+      } else if (source.type.startsWith('video')) {
+        this.addVideoSource(source)
+      }
     }
   }
 
   protected addSources (sources: unknown[]): void {
-    this.mediaElement.innerHTML = ''
-
     sources.forEach((source) => {
       if (isStruct(source)) {
         this.addSource(source)
       }
     })
+  }
+
+  protected addVideoSource (source: Struct): void {
+    if (this.videoElement instanceof HTMLVideoElement) {
+      this.videoElement.innerHTML = ''
+
+      if (typeof source.poster === 'string') {
+        this.videoElement.setAttribute('poster', source.poster)
+      }
+
+      this.videoElement.appendChild(this.createSourceElement(source))
+    }
+  }
+
+  protected centerChildElement (childElement: HTMLElement, ratio: number): void {
+    if (Number(ratio) < 1) {
+      childElement.style.setProperty('max-width', '100%')
+      this.halign = undefined
+      this.valign = 'center'
+    } else {
+      childElement.style.setProperty('max-height', '100%')
+      this.halign = 'center'
+      this.valign = undefined
+    }
   }
 
   protected createImageElement (source: Struct): HTMLImageElement {
@@ -92,7 +146,10 @@ export class MediaElement extends NodeElement {
       imageElement.src = URL.createObjectURL(source.blob)
     }
 
-    imageElement.style.setProperty('max-width', '100%')
+    if (this.center === true) {
+      this.centerChildElement(imageElement, Number(source.ratio))
+    }
+
     return imageElement
   }
 
@@ -116,7 +173,10 @@ export class MediaElement extends NodeElement {
       sourceElement.type = source.blob.type
     }
 
-    sourceElement.style.setProperty('max-width', '100%')
+    if (this.center === true) {
+      this.centerChildElement(sourceElement, Number(source.ratio))
+    }
+
     return sourceElement
   }
 

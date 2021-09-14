@@ -4,7 +4,6 @@ import { isArray, isStruct } from '../../common'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
-import { RequestElement } from './request'
 import updaters from '../updaters/list'
 
 declare global {
@@ -30,7 +29,7 @@ declare global {
 @customElement('scola-list')
 export class ListElement extends NodeElement {
   public static updaters = {
-    ...RequestElement.updaters,
+    ...NodeElement.updaters,
     ...updaters
   }
 

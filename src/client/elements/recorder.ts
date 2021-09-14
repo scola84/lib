@@ -7,18 +7,11 @@ import { MediaElement } from './media'
 import type { PropertyValues } from 'lit'
 import RtcRecorder from 'recordrtc'
 import styles from '../styles/recorder'
+import updaters from '../updaters/recorder'
 
 declare global {
-  interface HTMLElementEventMap {
-    'scola-recorder-toggle': CustomEvent
-  }
-
   interface HTMLElementTagNameMap {
     'scola-recorder': RecorderElement
-  }
-
-  interface WindowEventMap {
-    'scola-recorder-toggle': CustomEvent
   }
 }
 
@@ -33,6 +26,11 @@ export class RecorderElement extends MediaElement {
     ...MediaElement.styles,
     styles
   ]
+
+  public static updaters = {
+    ...MediaElement.updaters,
+    ...updaters
+  }
 
   @property({
     reflect: true,
@@ -72,24 +70,26 @@ export class RecorderElement extends MediaElement {
 
   protected updaters = RecorderElement.updaters
 
-  public connectedCallback (): void {
-    this.setUpStream()
-    super.connectedCallback()
+  public disable (): void {
+    this.tearDownHelpers()
+    this.tearDownStream()
   }
 
   public disconnectedCallback (): void {
-    this.tearDownHelpers()
-    this.tearDownStream()
+    this.disable()
     super.disconnectedCallback()
+  }
+
+  public enable (): void {
+    this.setUpStream()
   }
 
   public update (properties: PropertyValues): void {
     if (properties.has('compose')) {
       // discard first update
     } else if (properties.has('back')) {
-      this.tearDownHelpers()
-      this.tearDownStream()
-      this.setUpStream()
+      this.disable()
+      this.enable()
     } else if (properties.has('mode')) {
       this.tearDownHelpers()
     } else if (properties.has('recording')) {
@@ -157,6 +157,12 @@ export class RecorderElement extends MediaElement {
   }
 
   protected tearDownStream (): void {
+    this.stream
+      ?.getTracks()
+      .forEach((track) => {
+        track.stop()
+      })
+
     this.videoElement.srcObject = null
     this.stream = undefined
   }

@@ -4,7 +4,8 @@ import type { AuthEvent } from './auth'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
-import { css } from 'lit'
+import styles from '../styles/request'
+import updaters from '../updaters/request'
 
 declare global {
   interface HTMLElementEventMap {
@@ -32,12 +33,13 @@ export class RequestElement extends NodeElement {
 
   public static styles = [
     ...NodeElement.styles,
-    css`
-      :host {
-        display: contents;
-      }
-    `
+    styles
   ]
+
+  public static updaters = {
+    ...NodeElement.updaters,
+    ...updaters
+  }
 
   @property()
   public base = RequestElement.base

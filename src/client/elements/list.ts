@@ -320,7 +320,7 @@ export class ListElement extends NodeElement {
     }
   }
 
-  protected renderItems (): void {
+  protected prepareItems (): unknown[] {
     let { items } = this
 
     if (
@@ -338,19 +338,34 @@ export class ListElement extends NodeElement {
       }
     }
 
-    items.forEach((item) => {
+    return items
+  }
+
+  protected renderItems (): void {
+    const items = this.prepareItems()
+
+    const keys = items.map((item) => {
       const key = this.getKey(item)
 
-      if (!this.elements.has(key)) {
-        this.elements.set(key, this.renderTemplate(item))
+      let element = this.elements.get(key)
+
+      if (element === undefined) {
+        element = this.renderTemplate(item)
+        this.elements.set(key, element)
       }
 
-      const element = this.elements.get(key)
-
-      if (element !== undefined) {
-        this.appendChild(element)
-      }
+      this.appendChild(element)
+      return key
     })
+
+    Array
+      .from(this.elements.entries())
+      .forEach(([key, element]) => {
+        if (!keys.includes(key)) {
+          element.parentElement?.removeChild(element)
+          this.elements.delete(key)
+        }
+      })
 
     if (this.emptyElement instanceof NodeElement) {
       if (this.querySelector(':scope > :not([slot])') === null) {

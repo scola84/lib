@@ -99,6 +99,10 @@ export class RecorderElement extends MediaElement {
     super.update(properties)
   }
 
+  protected createDispatchItems (): unknown[] {
+    return [this.data]
+  }
+
   protected setUpStream (): void {
     const constraints = {
       audio: {
@@ -184,7 +188,7 @@ export class RecorderElement extends MediaElement {
             value: code.getText()
           }
 
-          this.dispatchEvents(this.data)
+          this.dispatchEvents(this.createDispatchItems())
           this.tearDownHelpers()
         }
       })
@@ -218,12 +222,12 @@ export class RecorderElement extends MediaElement {
             file: new File([blob], name, {
               type: blob.type
             }),
-            name,
-            size: blob.size,
-            type: blob.type
+            filename: name,
+            filesize: blob.size,
+            filetype: blob.type
           }
 
-          this.dispatchEvents(this.data)
+          this.dispatchEvents(this.createDispatchItems())
           this.tearDownHelpers()
         }
       })
@@ -255,12 +259,12 @@ export class RecorderElement extends MediaElement {
                 file: new File([blob], name, {
                   type: blob.type
                 }),
-                name,
-                size: blob.size,
-                type: blob.type
+                filename: name,
+                filesize: blob.size,
+                filetype: blob.type
               }
 
-              this.dispatchEvents(this.data)
+              this.dispatchEvents(this.createDispatchItems())
             })
             .finally(() => {
               this.recording = false

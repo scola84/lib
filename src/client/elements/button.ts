@@ -1,7 +1,6 @@
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
-import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 import styles from '../styles/button'
 import updaters from '../updaters/button'
@@ -91,7 +90,7 @@ export class ButtonElement extends NodeElement {
     super.update(properties)
   }
 
-  protected createEventData (): Struct {
+  protected createDispatchItems (): unknown[] {
     const data = {
       ...this.dataset
     }
@@ -100,12 +99,12 @@ export class ButtonElement extends NodeElement {
       Object.assign(data, this.data)
     }
 
-    return data
+    return [data]
   }
 
   protected handleClick (event: Event): void {
     event.cancelBubble = this.cancel === true
-    this.dispatchEvents(this.createEventData())
+    this.dispatchEvents(this.createDispatchItems())
   }
 
   protected loadState (): void {

@@ -163,7 +163,7 @@ export class RequestElement extends NodeElement {
     super.update(properties)
   }
 
-  protected createEventData (): Struct {
+  protected createDispatchItems (): unknown[] {
     let {
       code,
       data
@@ -174,11 +174,11 @@ export class RequestElement extends NodeElement {
       data = undefined
     }
 
-    return {
+    return [{
       code,
       data,
       level: 'err'
-    }
+    }]
   }
 
   protected createRequest (options?: Struct): Request {
@@ -295,7 +295,7 @@ export class RequestElement extends NodeElement {
       error.name !== 'AbortError' &&
       new RegExp(this.statusFilter, 'u').test((this.response?.status ?? 200).toString())
     ) {
-      this.dispatchEvents(this.createEventData())
+      this.dispatchEvents(this.createDispatchItems())
     }
   }
 
@@ -325,7 +325,7 @@ export class RequestElement extends NodeElement {
     this.loaded = this.total
 
     if (new RegExp(this.statusFilter, 'u').test(status.toString())) {
-      this.dispatchEvents(this.createEventData())
+      this.dispatchEvents(this.createDispatchItems())
     }
   }
 

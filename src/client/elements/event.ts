@@ -54,13 +54,13 @@ export class EventElement extends NodeElement {
 
   public firstUpdated (properties: PropertyValues): void {
     if (this.wait !== true) {
-      this.dispatchEvents(this.createEventData())
+      this.dispatchEvents(this.createDispatchItems())
     }
 
     super.firstUpdated(properties)
   }
 
-  protected createEventData (event?: CustomEvent<Struct | null>): Struct {
+  protected createDispatchItems (event?: CustomEvent<Struct | null>): unknown[] {
     const data = {
       ...this.dataset
     }
@@ -73,12 +73,12 @@ export class EventElement extends NodeElement {
       Object.assign(data, event?.detail?.data)
     }
 
-    return data
+    return [data]
   }
 
   protected handleEvent (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      this.dispatchEvents(this.createEventData(event), event)
+      this.dispatchEvents(this.createDispatchItems(event), event)
     }
   }
 
@@ -89,7 +89,7 @@ export class EventElement extends NodeElement {
 
   protected setUpInterval (): void {
     this.intervalId = window.setInterval(() => {
-      this.dispatchEvents(this.createEventData())
+      this.dispatchEvents(this.createDispatchItems())
     }, this.interval)
   }
 

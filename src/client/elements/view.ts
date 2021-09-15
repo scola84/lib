@@ -337,26 +337,14 @@ export class ViewElement extends ClipElement {
   protected loadState (): void {
     this.loadStateFromViewElement(this)
 
-    const stateObject: unknown = JSON.parse(this.storage.getItem(`view-${this.id}`) ?? 'null')
+    const stateStruct: unknown = JSON.parse(this.storage.getItem(`view-${this.id}`) ?? 'null')
     const stateString = window.location.pathname
 
-    if (isStruct(stateObject)) {
-      this.loadStateFromObject(stateObject)
+    if (isStruct(stateStruct)) {
+      this.loadStateFromStruct(stateStruct)
       this.loadPointer()
     } else {
       this.loadStateFromString(stateString)
-    }
-  }
-
-  protected loadStateFromObject (object: Struct): void {
-    if (isArray(object.views)) {
-      this.views = object.views.map((view) => {
-        return this.createView(view)
-      })
-    }
-
-    if (typeof object.pointer === 'number') {
-      this.pointer = object.pointer
     }
   }
 
@@ -377,6 +365,18 @@ export class ViewElement extends ClipElement {
 
         this.pointer = this.views.length - 1
       }
+    }
+  }
+
+  protected loadStateFromStruct (struct: Struct): void {
+    if (isArray(struct.views)) {
+      this.views = struct.views.map((view) => {
+        return this.createView(view)
+      })
+    }
+
+    if (typeof struct.pointer === 'number') {
+      this.pointer = struct.pointer
     }
   }
 

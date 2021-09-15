@@ -51,6 +51,24 @@ export class InputElement extends FieldElement {
     super.firstUpdated(properties)
   }
 
+  protected createDispatchItems (): unknown[] {
+    if (this.fieldElement.files instanceof FileList) {
+      return Array
+        .from(this.fieldElement.files)
+        .map((file) => {
+          return {
+            file,
+            filename: file.name,
+            filesize: file.size,
+            filetype: file.type,
+            name: this.name
+          }
+        })
+    }
+
+    return super.createDispatchItems()
+  }
+
   protected setFile (file: File): void {
     const transfer = new DataTransfer()
 

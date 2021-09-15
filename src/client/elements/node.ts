@@ -523,39 +523,39 @@ export class NodeElement extends LitElement {
     super.update(properties)
   }
 
-  protected dispatchEvents (data?: unknown, cause?: CustomEvent<Struct | null>): void {
-    let filter = '.*'
+  protected dispatchEvents (items?: unknown[], cause?: CustomEvent<Struct | null>): void {
+    let filter = /.*/u
 
     if (
       isStruct(cause?.detail) &&
       typeof cause?.detail.filter === 'string'
     ) {
-      ({ filter } = cause.detail)
+      filter = new RegExp(cause.detail.filter, 'u')
     }
 
-    this.dispatch
-      ?.split(' ')
-      .forEach((dispatch) => {
-        if (new RegExp(filter, 'u').test(dispatch)) {
+    const events = this.dispatch?.split(' ')
+
+    items?.forEach((item) => {
+      events?.forEach((event) => {
+        if (filter.test(event)) {
           const [
             eventType,
             id
-          ] = dispatch.split('@')
+          ] = event.split('@')
 
-          if (typeof eventType === 'string') {
-            this.dispatchEvent(new CustomEvent(eventType, {
-              bubbles: true,
-              composed: true,
-              detail: {
-                data,
-                filter: this.dispatchFilter,
-                origin: this,
-                target: id
-              }
-            }))
-          }
+          this.dispatchEvent(new CustomEvent(eventType, {
+            bubbles: true,
+            composed: true,
+            detail: {
+              data: item,
+              filter: this.dispatchFilter,
+              origin: this,
+              target: id
+            }
+          }))
         }
       })
+    })
   }
 
   protected async ease (from: number, to: number, callback: (value: number) => void, duration = this.duration): Promise<void> {

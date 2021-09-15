@@ -1,8 +1,8 @@
 import type { Primitive, Struct } from '../../common'
+import { cast, isStruct } from '../../common'
 import { customElement, property } from 'lit/decorators.js'
 import { InputElement } from './input'
 import type { PropertyValues } from 'lit'
-import { cast } from '../../common'
 import styles from '../styles/select'
 import updaters from '../updaters/select'
 
@@ -53,9 +53,16 @@ export class SelectElement extends InputElement {
     )
   }
 
+  protected labelItem: HTMLElement | null
+
   protected switchElement?: HTMLInputElement
 
   protected updaters = SelectElement.updaters
+
+  public constructor () {
+    super()
+    this.labelItem = this.querySelector('[as="label"]')
+  }
 
   public firstUpdated (properties: PropertyValues): void {
     this.checked = this.isChecked
@@ -100,11 +107,19 @@ export class SelectElement extends InputElement {
     }, duration)
   }
 
-  protected createEventData (): Struct {
-    return {
-      ...super.createEventData(),
-      label: this.querySelector('[as="label"]')?.textContent
-    }
+  protected createDispatchItems (): unknown[] {
+    return super
+      .createDispatchItems()
+      .map((data) => {
+        if (isStruct(data)) {
+          return {
+            ...data,
+            label: this.labelItem?.textContent
+          }
+        }
+
+        return data
+      })
   }
 
   protected handleClick (event: MouseEvent): void {
@@ -152,8 +167,8 @@ export class SelectElement extends InputElement {
     this.shadowBody.insertBefore(this.switchElement, this.afterSlotElement)
   }
 
-  protected setValueFromPrimitive (data: Primitive): void {
-    if (data === cast(this.value)) {
+  protected setValueFromPrimitive (primitive: Primitive): void {
+    if (primitive === cast(this.value)) {
       this.toggleChecked(true, 0).catch(() => {})
     }
   }

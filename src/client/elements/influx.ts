@@ -43,6 +43,19 @@ export class InfluxElement extends NodeElement {
 
   protected handlePasteBound = this.handlePaste.bind(this)
 
+  protected createDispatchItems (files?: FileList): unknown[] {
+    return Array
+      .from(files ?? [])
+      .map((file) => {
+        return {
+          file,
+          filename: file.name,
+          filesize: file.size,
+          filetype: file.type
+        }
+      })
+  }
+
   protected handleBlur (event: Event): void {
     event.preventDefault()
     this.dragging = false
@@ -61,18 +74,8 @@ export class InfluxElement extends NodeElement {
 
   protected handleDrop (event: DragEvent): void {
     event.preventDefault()
+    this.dispatchEvents(this.createDispatchItems(event.dataTransfer?.files))
     this.dragging = false
-
-    Array
-      .from(event.dataTransfer?.files ?? [])
-      .forEach((file) => {
-        this.dispatchEvents({
-          file,
-          name: file.name,
-          size: file.size,
-          type: file.type
-        })
-      })
   }
 
   protected handleFocus (event: Event): void {
@@ -83,17 +86,7 @@ export class InfluxElement extends NodeElement {
 
   protected handlePaste (event: ClipboardEvent): void {
     event.preventDefault()
-
-    Array
-      .from(event.clipboardData?.files ?? [])
-      .forEach((file) => {
-        this.dispatchEvents({
-          file,
-          name: file.name,
-          size: file.size,
-          type: file.type
-        })
-      })
+    this.dispatchEvents(this.createDispatchItems(event.clipboardData?.files))
   }
 
   protected setUpElementListeners (): void {

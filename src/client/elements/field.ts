@@ -148,17 +148,17 @@ export class FieldElement extends NodeElement {
     super.update(properties)
   }
 
-  protected createEventData (): Struct {
+  protected createDispatchItems (): unknown[] {
     let { value } = this
 
     if (this.parse === true) {
       value = this.parseValue(this.value.toString())
     }
 
-    return {
+    return [{
       name: this.name,
       value
-    }
+    }]
   }
 
   protected handleClear (): void {
@@ -201,7 +201,7 @@ export class FieldElement extends NodeElement {
     }
 
     this.toggleClear(this.isEmpty)
-    this.dispatchEvents(this.createEventData())
+    this.dispatchEvents(this.createDispatchItems())
     this.requestUpdate('value')
   }
 

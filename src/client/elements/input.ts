@@ -1,5 +1,6 @@
 import { FieldElement } from './field'
 import type { PropertyValues } from 'lit'
+import type { Struct } from '../../common'
 import { customElement } from 'lit/decorators.js'
 import styles from '../styles/input'
 
@@ -50,13 +51,18 @@ export class InputElement extends FieldElement {
     super.firstUpdated(properties)
   }
 
-  protected setValueFromBlob (blob: Blob): void {
+  protected setFile (file: File): void {
     const transfer = new DataTransfer()
 
-    transfer.items.add(new File([blob], Date.now().toString(), {
-      type: blob.type
-    }))
-
+    transfer.items.add(file)
     this.fieldElement.files = transfer.files
+  }
+
+  protected setValueFromStruct (struct: Struct): void {
+    if (struct.file instanceof File) {
+      this.setFile(struct.file)
+    } else {
+      super.setValueFromStruct(struct)
+    }
   }
 }

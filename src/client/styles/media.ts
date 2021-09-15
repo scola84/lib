@@ -3,6 +3,7 @@ import { css } from 'lit'
 export default css`
   slot:not([name])::slotted(audio:not([autoplay]):empty),
   slot:not([name])::slotted(picture:empty),
+  slot:not([name])::slotted(scola-icon:not([name])),
   slot:not([name])::slotted(video:not([autoplay]):empty) {
     display: none;
   }

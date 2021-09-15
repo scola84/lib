@@ -1,5 +1,6 @@
 import { customElement, property } from 'lit/decorators.js'
 import { isArray, isStruct } from '../../common'
+import type { IconElement } from './icon'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
@@ -23,13 +24,15 @@ export class MediaElement extends NodeElement {
   })
   public center?: boolean
 
-  public audioElement?: HTMLAudioElement
+  protected audioElement?: HTMLAudioElement
 
-  public pictureElement?: HTMLPictureElement
+  protected iconElement: IconElement | null
 
-  public videoElement?: HTMLVideoElement
+  protected pictureElement?: HTMLPictureElement
 
   protected updaters = MediaElement.updaters
+
+  protected videoElement?: HTMLVideoElement
 
   public constructor () {
     super()
@@ -45,6 +48,8 @@ export class MediaElement extends NodeElement {
           this.videoElement = mediaElement
         }
       })
+
+    this.iconElement = this.querySelector<IconElement>(':scope > scola-icon')
   }
 
   public disconnectedCallback (): void {
@@ -71,8 +76,6 @@ export class MediaElement extends NodeElement {
 
   protected addAudioSource (source: Struct): void {
     if (this.audioElement instanceof HTMLAudioElement) {
-      this.audioElement.innerHTML = ''
-
       if (typeof source.poster === 'string') {
         this.audioElement.setAttribute('poster', source.poster)
       }
@@ -83,24 +86,40 @@ export class MediaElement extends NodeElement {
 
   protected addImageSource (source: Struct): void {
     if (this.pictureElement instanceof HTMLPictureElement) {
-      this.pictureElement.innerHTML = ''
-
       if (typeof source.srcset === 'string') {
         this.pictureElement.appendChild(this.createSourceElement(source))
       }
 
-      this.pictureElement.appendChild(this.createImageElement(source))
+      const imageElement = this.pictureElement.appendChild(this.createImageElement(source))
+
+      if (this.center === true) {
+        this.centerElement(this.pictureElement, imageElement).catch(() => {})
+      }
     }
   }
 
-  protected addSource (source: Struct): void {
-    if (typeof source.type === 'string') {
-      if (source.type.startsWith('audio')) {
-        this.addAudioSource(source)
-      } else if (source.type.startsWith('image')) {
-        this.addImageSource(source)
-      } else if (source.type.startsWith('video')) {
-        this.addVideoSource(source)
+  protected addSourceFromFile (file: File): void {
+    this.addSourceFromStruct({
+      src: URL.createObjectURL(file),
+      type: file.type
+    })
+  }
+
+  protected addSourceFromStruct (struct: Struct): void {
+    this.removeChildren()
+
+    if (typeof struct.type === 'string') {
+      if (struct.type.startsWith('audio')) {
+        this.addAudioSource(struct)
+        this.setIcon('audio', struct)
+      } else if (struct.type.startsWith('image')) {
+        this.addImageSource(struct)
+        this.setIcon('image', struct)
+      } else if (struct.type.startsWith('video')) {
+        this.addVideoSource(struct)
+        this.setIcon('video', struct)
+      } else {
+        this.setIcon('other', struct)
       }
     }
   }
@@ -108,32 +127,79 @@ export class MediaElement extends NodeElement {
   protected addSources (sources: unknown[]): void {
     sources.forEach((source) => {
       if (isStruct(source)) {
-        this.addSource(source)
+        this.addSourceFromStruct(source)
       }
     })
   }
 
   protected addVideoSource (source: Struct): void {
     if (this.videoElement instanceof HTMLVideoElement) {
-      this.videoElement.innerHTML = ''
-
       if (typeof source.poster === 'string') {
         this.videoElement.setAttribute('poster', source.poster)
       }
 
       this.videoElement.appendChild(this.createSourceElement(source))
+
+      if (this.center === true) {
+        this.centerElement(this.videoElement).catch(() => {})
+      }
     }
   }
 
-  protected centerChildElement (childElement: HTMLElement, ratio: number): void {
-    if (Number(ratio) < 1) {
-      childElement.style.setProperty('max-width', '100%')
+  protected async calculateAspectRatio (element: HTMLElement): Promise<number> {
+    return new Promise((resolve) => {
+      const clone = document.body.appendChild(element.cloneNode(true))
+
+      if (clone instanceof HTMLElement) {
+        clone.style.setProperty('opacity', '0')
+        clone.style.setProperty('position', 'absolute')
+        clone.style.setProperty('width', '16px')
+
+        clone.onload = () => {
+          const {
+            height = 0,
+            width = 0
+          } = clone.getBoundingClientRect()
+
+          if (height > 0) {
+            resolve(width / height)
+          } else {
+            resolve(1)
+          }
+
+          clone.onload = null
+          clone.onloadeddata = null
+          clone.remove()
+        }
+
+        clone.onloadeddata = clone.onload
+      }
+    })
+  }
+
+  protected async centerElement (element: HTMLElement, referenceElement?: HTMLElement): Promise<void> {
+    const aspectRatio = await this.calculateAspectRatio(referenceElement ?? element)
+
+    Array
+      .from(element.children)
+      .forEach((child) => {
+        if (child instanceof HTMLElement) {
+          if (aspectRatio < 1) {
+            child.style.setProperty('max-width', '100%')
+          } else {
+            child.style.setProperty('max-height', '100%')
+          }
+        }
+      })
+
+    if (aspectRatio < 1) {
       this.halign = undefined
       this.valign = 'center'
+      element.style.setProperty('max-width', '100%')
     } else {
-      childElement.style.setProperty('max-height', '100%')
       this.halign = 'center'
       this.valign = undefined
+      element.style.setProperty('max-height', '100%')
     }
   }
 
@@ -142,12 +208,6 @@ export class MediaElement extends NodeElement {
 
     if (typeof source.src === 'string') {
       imageElement.src = source.src
-    } else if (source.blob instanceof Blob) {
-      imageElement.src = URL.createObjectURL(source.blob)
-    }
-
-    if (this.center === true) {
-      this.centerChildElement(imageElement, Number(source.ratio))
     }
 
     return imageElement
@@ -168,13 +228,6 @@ export class MediaElement extends NodeElement {
       sourceElement.src = source.src
     } else if (typeof source.srcset === 'string') {
       sourceElement.srcset = source.srcset
-    } else if (source.blob instanceof Blob) {
-      sourceElement.src = URL.createObjectURL(source.blob)
-      sourceElement.type = source.blob.type
-    }
-
-    if (this.center === true) {
-      this.centerChildElement(sourceElement, Number(source.ratio))
     }
 
     return sourceElement
@@ -186,11 +239,15 @@ export class MediaElement extends NodeElement {
     if (isArray(this.data)) {
       this.addSources(this.data)
     } else if (isStruct(this.data)) {
-      this.addSources([this.data])
+      if (this.data.file instanceof File) {
+        this.addSourceFromFile(this.data.file)
+      } else {
+        this.addSourceFromStruct(this.data)
+      }
     } else if (typeof this.data === 'string') {
-      this.addSources([{
+      this.addSourceFromStruct({
         src: this.data
-      }])
+      })
     }
   }
 
@@ -208,5 +265,15 @@ export class MediaElement extends NodeElement {
           URL.revokeObjectURL(element.srcset)
         }
       })
+  }
+
+  protected setIcon (type: string, struct: Struct): void {
+    if (typeof struct.type === 'string') {
+      if (this.iconElement?.as?.includes(type) === true) {
+        this.iconElement.setAttribute('name', struct.type.split('/').pop() ?? '')
+      } else {
+        this.iconElement?.removeAttribute('name')
+      }
+    }
   }
 }

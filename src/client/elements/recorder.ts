@@ -212,12 +212,15 @@ export class RecorderElement extends MediaElement {
       this.rtcRecorder.stopRecording(() => {
         if (this.rtcRecorder !== undefined) {
           const blob = this.rtcRecorder.getBlob()
+          const name = blob.type.replace('/', '.')
 
           this.data = {
-            blob,
-            ratio: this.videoElement.videoWidth / this.videoElement.videoHeight,
-            type: blob.type,
-            value: blob
+            file: new File([blob], name, {
+              type: blob.type
+            }),
+            name,
+            size: blob.size,
+            type: blob.type
           }
 
           this.dispatchEvents(this.data)
@@ -246,11 +249,15 @@ export class RecorderElement extends MediaElement {
           imageCapture
             .takePhoto(options)
             .then((blob) => {
+              const name = blob.type.replace('/', '.')
+
               this.data = {
-                blob,
-                ratio: this.videoElement.videoWidth / this.videoElement.videoHeight,
-                type: blob.type,
-                value: blob
+                file: new File([blob], name, {
+                  type: blob.type
+                }),
+                name,
+                size: blob.size,
+                type: blob.type
               }
 
               this.dispatchEvents(this.data)

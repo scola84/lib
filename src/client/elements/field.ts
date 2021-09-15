@@ -267,10 +267,6 @@ export class FieldElement extends NodeElement {
     super.setUpElementListeners()
   }
 
-  protected setValueFromBlob (blob: Blob): void
-
-  protected setValueFromBlob (): void {}
-
   protected setValueFromPrimitive (primitive: Primitive): void {
     this.value = primitive.toString()
   }
@@ -278,8 +274,6 @@ export class FieldElement extends NodeElement {
   protected setValueFromStruct (struct: Struct): void {
     if (isPrimitive(struct.value)) {
       this.setValueFromPrimitive(struct.value)
-    } else if (struct.value instanceof Blob) {
-      this.setValueFromBlob(struct.value)
     }
   }
 }

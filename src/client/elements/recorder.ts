@@ -54,6 +54,11 @@ export class RecorderElement extends MediaElement {
   })
   public recording?: boolean
 
+  @property({
+    type: Boolean
+  })
+  public wait?: boolean
+
   public state: RecorderElementState = {
     dateStarted: null,
     duration: ''
@@ -83,6 +88,14 @@ export class RecorderElement extends MediaElement {
 
   public enable (): void {
     this.setUpStream()
+  }
+
+  public firstUpdated (properties: PropertyValues): void {
+    super.firstUpdated(properties)
+
+    if (this.wait !== true) {
+      this.enable()
+    }
   }
 
   public update (properties: PropertyValues): void {

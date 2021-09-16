@@ -4,6 +4,10 @@ import type { Struct } from '../../common'
 import { customElement } from 'lit/decorators.js'
 
 declare global {
+  interface HTMLElementEventMap {
+    'scola-struct-set-data': CustomEvent
+  }
+
   interface HTMLElementTagNameMap {
     'scola-struct': StructElement
   }
@@ -36,7 +40,14 @@ export class StructElement extends NodeElement {
   }
 
   protected handleSetData (event: CustomEvent<Struct | null>): void {
-    this.data = event.detail?.data
+    if (this.isTarget(event)) {
+      this.data = event.detail?.data
+    }
+  }
+
+  protected setUpElementListeners (): void {
+    this.addEventListener('scola-struct-set-data', this.handleSetDataBound)
+    super.setUpElementListeners()
   }
 
   protected setUpWindowListeners (): void {

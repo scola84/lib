@@ -10,4 +10,3 @@ COPY ./media /usr/share/nginx/html/media
 COPY ./node_modules/@scola/lib/.docker/nginx/conf.d/http.conf /etc/nginx/conf.d/http.conf
 COPY ./node_modules/@scola/lib/.docker/nginx/html/* /usr/share/nginx/html/
 COPY ./node_modules/@scola/lib/.docker/nginx/snippets/gui.conf /etc/nginx/snippets/gui.conf
-COPY ./node_modules/@scola/lib/dist/worker.js* /usr/share/nginx/html/

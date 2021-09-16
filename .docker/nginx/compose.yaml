@@ -10,7 +10,6 @@ services:
     volumes:
       - $PWD/dist/client.js:/usr/share/nginx/html/client.js
       - $PWD/media:/usr/share/nginx/html/media
-      - $PWD/node_modules/@scola/lib/dist/worker.js:/usr/share/nginx/html/worker.js
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/html/index.html:/usr/share/nginx/html/index.html
       - ./nginx/snippets:/etc/nginx/snippets

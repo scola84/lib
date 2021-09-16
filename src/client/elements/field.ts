@@ -131,6 +131,20 @@ export class FieldElement extends NodeElement {
     super.connectedCallback()
   }
 
+  public firstUpdated (properties: PropertyValues): void {
+    const fieldElement = this.fieldElement?.cloneNode(true)
+
+    if (
+      fieldElement instanceof HTMLInputElement ||
+      fieldElement instanceof HTMLTextAreaElement
+    ) {
+      this.fieldElement = fieldElement
+      this.bodySlotElement.insertBefore(fieldElement, this.suffixSlotElement)
+    }
+
+    super.firstUpdated(properties)
+  }
+
   public toggleClear (force?: boolean): void {
     if (this.clearElement instanceof NodeElement) {
       if (force === undefined) {

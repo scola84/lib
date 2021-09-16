@@ -1,5 +1,4 @@
 import { FieldElement } from './field'
-import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
 import { customElement } from 'lit/decorators.js'
 import styles from '../styles/input'
@@ -45,17 +44,6 @@ export class InputElement extends FieldElement {
         data.append(this.name, this.fieldElement.value)
       }
     }
-  }
-
-  public firstUpdated (properties: PropertyValues): void {
-    const fieldElement = this.fieldElement?.cloneNode(true)
-
-    if (fieldElement instanceof HTMLInputElement) {
-      this.fieldElement = fieldElement
-      this.bodySlotElement.insertBefore(fieldElement, this.suffixSlotElement)
-    }
-
-    super.firstUpdated(properties)
   }
 
   protected createDispatchItems (): unknown[] {

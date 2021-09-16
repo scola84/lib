@@ -32,18 +32,11 @@ export class TextAreaElement extends FieldElement {
   protected updaters = TextAreaElement.updaters
 
   public firstUpdated (properties: PropertyValues): void {
-    const fieldElement = this.fieldElement?.cloneNode(true)
-
-    if (fieldElement instanceof HTMLTextAreaElement) {
-      this.fieldElement = fieldElement
-      this.bodySlotElement.insertBefore(fieldElement, this.suffixSlotElement)
-    }
+    super.firstUpdated(properties)
 
     if (this.resize === 'auto') {
       this.setStyle()
     }
-
-    super.firstUpdated(properties)
   }
 
   protected handleInput (): void {

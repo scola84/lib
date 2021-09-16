@@ -5,11 +5,11 @@ import type { RequestElement } from '../elements/request'
 export default {
   'scola-dialog': (observer: RequestElement, observable: DialogElement, properties: PropertyValues): void => {
     if (properties.has('hidden')) {
-      if (!observable.hidden) {
-        window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (!observable.hidden) {
           observer.start()
-        })
-      }
+        }
+      })
     }
   }
 }

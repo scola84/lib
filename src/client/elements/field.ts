@@ -55,17 +55,17 @@ export class FieldElement extends NodeElement {
 
   public cursor: NodeElement['cursor'] = 'text'
 
-  public fieldElement: HTMLInputElement | HTMLTextAreaElement
+  public fieldElement: HTMLInputElement | HTMLTextAreaElement | null
 
   public listen = 'input'
 
   public get isEmpty (): boolean {
-    return this.fieldElement.value === ''
+    return this.fieldElement?.value === ''
   }
 
   public get isSuccessful (): boolean {
     return !(
-      this.fieldElement.disabled ||
+      this.fieldElement?.disabled === true ||
       this.isEmpty ||
       this.name === '' ||
       this.skip === true ||
@@ -74,11 +74,13 @@ export class FieldElement extends NodeElement {
   }
 
   public get value (): boolean | number | string {
-    return cast(this.fieldElement.value) ?? ''
+    return cast(this.fieldElement?.value) ?? ''
   }
 
   public set value (value: boolean | number | string) {
-    this.fieldElement.value = value.toString()
+    if (this.fieldElement !== null) {
+      this.fieldElement.value = value.toString()
+    }
   }
 
   protected clearElement: NodeElement | null
@@ -97,23 +99,16 @@ export class FieldElement extends NodeElement {
 
   public constructor () {
     super()
-
-    const fieldElement = this.querySelector<HTMLInputElement | HTMLTextAreaElement>(':scope > input, :scope > textarea')
-
-    if (fieldElement === null) {
-      throw new Error('Input element is null')
-    }
-
     this.clearElement = this.querySelector<NodeElement>('[as="clear"]')
     this.errorElement = this.querySelector<FormatElement>('[as="error"]')
-    this.fieldElement = fieldElement
+    this.fieldElement = this.querySelector<HTMLInputElement | HTMLTextAreaElement>(':scope > input, :scope > textarea')
   }
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
     if (this.isSuccessful) {
-      data.append(this.name, this.fieldElement.value)
+      data.append(this.name, this.fieldElement?.value ?? '')
     }
   }
 
@@ -177,7 +172,7 @@ export class FieldElement extends NodeElement {
 
   protected handleClick (): void {
     if (this !== document.activeElement) {
-      this.fieldElement.focus()
+      this.fieldElement?.focus()
     }
 
     this.clearError()
@@ -200,7 +195,9 @@ export class FieldElement extends NodeElement {
   }
 
   protected handleDisabled (): void {
-    this.fieldElement.disabled = this.disabled === true
+    if (this.fieldElement !== null) {
+      this.fieldElement.disabled = this.disabled === true
+    }
   }
 
   protected handleInput (): void {
@@ -251,7 +248,7 @@ export class FieldElement extends NodeElement {
     if (this.isEmpty) {
       this.storage.removeItem(`input-${this.id}`)
     } else {
-      this.storage.setItem(`input-${this.id}`, this.fieldElement.value)
+      this.storage.setItem(`input-${this.id}`, this.fieldElement?.value ?? '')
     }
   }
 
@@ -265,7 +262,7 @@ export class FieldElement extends NodeElement {
     this.addEventListener('scola-input-clear', this.handleClearBound)
 
     if (this.listen.includes('input')) {
-      this.fieldElement.addEventListener('input', debounce(this.debounce, this.handleInputBound))
+      this.fieldElement?.addEventListener('input', debounce(this.debounce, this.handleInputBound))
     }
 
     if (this.listen.includes('keydown')) {

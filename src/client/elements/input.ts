@@ -17,14 +17,21 @@ export class InputElement extends FieldElement {
     styles
   ]
 
-  public fieldElement: HTMLInputElement
+  public get hasFiles (): boolean {
+    return this.fieldElement?.files instanceof FileList
+  }
+
+  public fieldElement: HTMLInputElement | null
 
   protected updaters = InputElement.updaters
 
   public appendValueTo (data: FormData | URLSearchParams): void {
     this.clearError()
 
-    if (this.isSuccessful) {
+    if (
+      this.fieldElement instanceof HTMLInputElement &&
+      this.isSuccessful
+    ) {
       if (
         this.fieldElement.files instanceof FileList &&
         data instanceof FormData
@@ -41,7 +48,7 @@ export class InputElement extends FieldElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    const fieldElement = this.fieldElement.cloneNode(true)
+    const fieldElement = this.fieldElement?.cloneNode(true)
 
     if (fieldElement instanceof HTMLInputElement) {
       this.fieldElement = fieldElement
@@ -52,7 +59,7 @@ export class InputElement extends FieldElement {
   }
 
   protected createDispatchItems (): unknown[] {
-    if (this.fieldElement.files instanceof FileList) {
+    if (this.fieldElement?.files instanceof FileList) {
       return Array
         .from(this.fieldElement.files)
         .map((file) => {
@@ -70,10 +77,12 @@ export class InputElement extends FieldElement {
   }
 
   protected setFile (file: File): void {
-    const transfer = new DataTransfer()
+    if (this.fieldElement instanceof HTMLInputElement) {
+      const transfer = new DataTransfer()
 
-    transfer.items.add(file)
-    this.fieldElement.files = transfer.files
+      transfer.items.add(file)
+      this.fieldElement.files = transfer.files
+    }
   }
 
   protected setValueFromStruct (struct: Struct): void {

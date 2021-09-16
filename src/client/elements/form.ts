@@ -1,5 +1,6 @@
 import { customElement, property } from 'lit/decorators.js'
 import type { FieldElement } from './field'
+import { InputElement } from './input'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
 
@@ -26,8 +27,15 @@ export class FormElement extends NodeElement {
     return this.querySelectorAll<FieldElement>('scola-input, scola-picker, scola-select, scola-slider, scola-textarea')
   }
 
-  public get hasFileElements (): boolean {
-    return this.querySelector<HTMLInputElement>('input[type="file"]') !== null
+  public get hasFiles (): boolean {
+    return Array
+      .from(this.fieldElements)
+      .some((fieldElement) => {
+        return (
+          fieldElement instanceof InputElement &&
+          fieldElement.hasFiles
+        )
+      })
   }
 
   protected handleKeydownBound = this.handleKeydown.bind(this)
@@ -41,7 +49,7 @@ export class FormElement extends NodeElement {
   public submit (): void {
     let body: FormData | URLSearchParams = new URLSearchParams()
 
-    if (this.hasFileElements) {
+    if (this.hasFiles) {
       body = new FormData()
     }
 

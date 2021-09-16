@@ -42,8 +42,10 @@ export class SelectElement extends InputElement {
   })
   public switch?: boolean
 
+  public cursor: InputElement['cursor'] = 'pointer'
+
   public get isChecked (): boolean {
-    return this.fieldElement.checked
+    return this.fieldElement?.checked === true
   }
 
   public get isSuccessful (): boolean {
@@ -85,12 +87,9 @@ export class SelectElement extends InputElement {
     }
 
     this.checked = force ?? !(this.checked === true)
-    this.fieldElement.checked = this.checked
 
-    const { switchElement } = this
-
-    if (switchElement === undefined) {
-      return
+    if (this.fieldElement instanceof HTMLInputElement) {
+      this.fieldElement.checked = this.checked
     }
 
     let from = 0
@@ -103,7 +102,9 @@ export class SelectElement extends InputElement {
     }
 
     await this.ease(from, to, (value) => {
-      switchElement.value = value.toString()
+      if (this.switchElement instanceof HTMLInputElement) {
+        this.switchElement.value = value.toString()
+      }
     }, duration)
   }
 
@@ -125,7 +126,7 @@ export class SelectElement extends InputElement {
   protected handleClick (event: MouseEvent): void {
     super.handleClick(event)
 
-    if (this.fieldElement.type === 'checkbox') {
+    if (this.fieldElement?.type === 'checkbox') {
       this.handleClickCheckbox()
     } else {
       this.handleClickRadio()
@@ -170,11 +171,13 @@ export class SelectElement extends InputElement {
   protected setValueFromPrimitive (primitive: Primitive): void {
     if (primitive === cast(this.value)) {
       this.toggleChecked(true, 0).catch(() => {})
+    } else {
+      super.setValueFromPrimitive(primitive)
     }
   }
 
   protected setValueFromStruct (struct: Struct): void {
-    if (this.fieldElement.getAttribute('value') === null) {
+    if (this.fieldElement?.getAttribute('value') === null) {
       super.setValueFromStruct(struct)
     } else if (struct.value === cast(this.value)) {
       this.toggleChecked(true, 0).catch(() => {})

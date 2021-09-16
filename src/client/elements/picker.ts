@@ -50,7 +50,7 @@ export class PickerElement extends InputElement {
   }
 
   public clearValue (): void {
-    switch (this.fieldElement.type) {
+    switch (this.fieldElement?.type) {
       case 'checkbox':
         this.clearValueCheckbox()
         break
@@ -132,7 +132,7 @@ export class PickerElement extends InputElement {
   }
 
   protected handleClick (event: MouseEvent): void {
-    switch (this.fieldElement.type) {
+    switch (this.fieldElement?.type) {
       case 'checkbox':
         this.handleClickCheckbox()
         break
@@ -166,15 +166,15 @@ export class PickerElement extends InputElement {
   }
 
   protected handleClickColor (): void {
-    this.fieldElement.click()
+    this.fieldElement?.click()
   }
 
   protected handleClickDate (): void {
-    this.fieldElement.click()
+    this.fieldElement?.click()
   }
 
   protected handleClickFile (): void {
-    this.fieldElement.click()
+    this.fieldElement?.click()
   }
 
   protected handleClickRadio (): void {
@@ -186,7 +186,7 @@ export class PickerElement extends InputElement {
   }
 
   protected handleClickTime (): void {
-    this.fieldElement.click()
+    this.fieldElement?.click()
   }
 
   protected handleData (): void {
@@ -198,7 +198,7 @@ export class PickerElement extends InputElement {
   }
 
   protected handleInput (): void {
-    switch (this.fieldElement.type) {
+    switch (this.fieldElement?.type) {
       case 'text':
         this.handleInputText()
         break
@@ -248,7 +248,7 @@ export class PickerElement extends InputElement {
 
   protected setColorLabel (): void {
     if (this.labelElement instanceof FormatElement) {
-      const { value } = this.fieldElement
+      const { value = '' } = this.fieldElement ?? {}
       const hex = value
 
       const [
@@ -279,14 +279,17 @@ export class PickerElement extends InputElement {
   }
 
   protected setColorPreview (): void {
-    if (this.previewElement instanceof NodeElement) {
+    if (
+      this.fieldElement instanceof HTMLInputElement &&
+      this.previewElement instanceof NodeElement
+    ) {
       this.previewElement.style.setProperty('background', this.fieldElement.value)
     }
   }
 
   protected setDateLabel (): void {
     if (this.labelElement instanceof FormatElement) {
-      const { value } = this.fieldElement
+      const { value = '' } = this.fieldElement ?? {}
 
       let count = 0
       let date = null
@@ -305,7 +308,7 @@ export class PickerElement extends InputElement {
 
   protected setFileLabel (): void {
     if (this.labelElement instanceof FormatElement) {
-      const files = Array.from(this.fieldElement.files ?? [])
+      const files = Array.from(this.fieldElement?.files ?? [])
 
       this.labelElement.data = {
         count: files.length,
@@ -318,7 +321,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setLabel (data?: Struct): void {
-    switch (this.fieldElement.type) {
+    switch (this.fieldElement?.type) {
       case 'color':
         this.setColorLabel()
         break
@@ -343,7 +346,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setList (data: unknown[]): void {
-    switch (this.fieldElement.type) {
+    switch (this.fieldElement?.type) {
       case 'checkbox':
         this.setCheckboxList(data)
         break
@@ -353,7 +356,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setPreview (): void {
-    switch (this.fieldElement.type) {
+    switch (this.fieldElement?.type) {
       case 'color':
         this.setColorPreview()
         break
@@ -387,7 +390,7 @@ export class PickerElement extends InputElement {
 
   protected setTimeLabel (): void {
     if (this.labelElement instanceof FormatElement) {
-      const { value } = this.fieldElement
+      const { value = '' } = this.fieldElement ?? {}
 
       let count = 0
       let time = null

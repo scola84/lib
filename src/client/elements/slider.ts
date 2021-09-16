@@ -56,7 +56,7 @@ export class SliderElement extends InputElement {
     const {
       max = '',
       value = ''
-    } = this.fieldElement
+    } = this.fieldElement ?? {}
 
     const from = parseFloat(value)
     const to = parseFloat(max)
@@ -75,7 +75,7 @@ export class SliderElement extends InputElement {
     const {
       min = '',
       value = ''
-    } = this.fieldElement
+    } = this.fieldElement ?? {}
 
     const from = parseFloat(value)
     const to = parseFloat(min)
@@ -123,9 +123,11 @@ export class SliderElement extends InputElement {
   }
 
   protected setStyle (): void {
-    this.fieldElement.style.setProperty('--max', this.fieldElement.max)
-    this.fieldElement.style.setProperty('--min', this.fieldElement.min)
-    this.fieldElement.style.setProperty('--val', this.fieldElement.value)
+    if (this.fieldElement instanceof HTMLInputElement) {
+      this.fieldElement.style.setProperty('--max', this.fieldElement.max)
+      this.fieldElement.style.setProperty('--min', this.fieldElement.min)
+      this.fieldElement.style.setProperty('--val', this.fieldElement.value)
+    }
   }
 
   protected setUpElementListeners (): void {

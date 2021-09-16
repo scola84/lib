@@ -27,12 +27,12 @@ export class TextAreaElement extends FieldElement {
   })
   public resizeMax = Infinity
 
-  public fieldElement: HTMLTextAreaElement
+  public fieldElement: HTMLTextAreaElement | null
 
   protected updaters = TextAreaElement.updaters
 
   public firstUpdated (properties: PropertyValues): void {
-    const fieldElement = this.fieldElement.cloneNode(true)
+    const fieldElement = this.fieldElement?.cloneNode(true)
 
     if (fieldElement instanceof HTMLTextAreaElement) {
       this.fieldElement = fieldElement
@@ -40,7 +40,7 @@ export class TextAreaElement extends FieldElement {
     }
 
     if (this.resize === 'auto') {
-      this.resizeFieldElement()
+      this.setStyle()
     }
 
     super.firstUpdated(properties)
@@ -48,14 +48,16 @@ export class TextAreaElement extends FieldElement {
 
   protected handleInput (): void {
     if (this.resize === 'auto') {
-      this.resizeFieldElement()
+      this.setStyle()
     }
 
     super.handleInput()
   }
 
-  protected resizeFieldElement (): void {
-    this.fieldElement.style.setProperty('height', '0px')
-    this.fieldElement.style.setProperty('height', `${Math.min(this.resizeMax, this.fieldElement.scrollHeight)}px`)
+  protected setStyle (): void {
+    if (this.fieldElement instanceof HTMLTextAreaElement) {
+      this.fieldElement.style.setProperty('height', '0px')
+      this.fieldElement.style.setProperty('height', `${Math.min(this.resizeMax, this.fieldElement.scrollHeight)}px`)
+    }
   }
 }

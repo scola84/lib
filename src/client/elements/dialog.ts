@@ -142,13 +142,23 @@ export class DialogElement extends NodeElement {
 
   protected handleClickBound = this.handleClick.bind(this)
 
+  protected handleDragendBound = this.handleDragend.bind(this)
+
   protected handleHideBound = this.handleHide.bind(this)
 
   protected handleKeydownBound = this.handleKeydown.bind(this)
 
+  protected handleMoveBound = this.handleMove.bind(this)
+
+  protected handleResizeBound = this.handleResize.bind(this)
+
   protected handleScrollBound = this.handleScroll.bind(this)
 
   protected handleShowBound = this.handleShow.bind(this)
+
+  protected handleTapBound = this.handleTap.bind(this)
+
+  protected handleViewMoveBound = this.handleViewMove.bind(this)
 
   protected originElement: HTMLElement | null
 
@@ -817,7 +827,7 @@ export class DialogElement extends NodeElement {
     }
   }
 
-  protected handleDragEnd (event: InteractEvent): void {
+  protected handleDragend (event: InteractEvent): void {
     const direction = this.determineDirection()
 
     if ((
@@ -839,19 +849,6 @@ export class DialogElement extends NodeElement {
     }
   }
 
-  protected handleDragMove (event: InteractEvent): void {
-    const {
-      left = 0,
-      top = 0
-    } = ((/(?<left>[.\-\d]+)px(?<opt>, ?(?<top>[.\-\d]+)px)?/u).exec(this.contentElement.style.getPropertyValue('transform')))?.groups ?? {}
-
-    this.contentElement.style.setProperty('transform', `translate(${Number(left) + event.dx}px, ${Number(top) + event.dy}px)`)
-  }
-
-  protected handleDragTap (): void {
-    this.extend().catch(() => {})
-  }
-
   protected handleHide (event: CustomEvent): void {
     if (this.isTarget(event)) {
       this.hide().catch(() => {})
@@ -866,6 +863,15 @@ export class DialogElement extends NodeElement {
       event.cancelBubble = true
       this.hide().catch(() => {})
     }
+  }
+
+  protected handleMove (event: InteractEvent): void {
+    const {
+      left = 0,
+      top = 0
+    } = ((/(?<left>[.\-\d]+)px(?<opt>, ?(?<top>[.\-\d]+)px)?/u).exec(this.contentElement.style.getPropertyValue('transform')))?.groups ?? {}
+
+    this.contentElement.style.setProperty('transform', `translate(${Number(left) + event.dx}px, ${Number(top) + event.dy}px)`)
   }
 
   protected handleResize (): void {
@@ -898,6 +904,10 @@ export class DialogElement extends NodeElement {
 
       this.show().catch(() => {})
     }
+  }
+
+  protected handleTap (): void {
+    this.extend().catch(() => {})
   }
 
   protected handleViewMove (): void {
@@ -992,23 +1002,23 @@ export class DialogElement extends NodeElement {
       .draggable({
         allowFrom,
         listeners: {
-          move: this.handleDragMove.bind(this)
+          move: this.handleMoveBound
         },
         lockAxis
       })
-      .on('tap', this.handleDragTap.bind(this))
-      .on('dragend', this.handleDragEnd.bind(this))
+      .on('tap', this.handleTapBound)
+      .on('dragend', this.handleDragendBound)
   }
 
   protected setUpElementListeners (): void {
     this.addEventListener('scola-dialog-hide', this.handleHideBound)
     this.addEventListener('scola-dialog-show', this.handleShowBound)
-    this.addEventListener('scola-view-move', this.handleViewMove.bind(this))
+    this.addEventListener('scola-view-move', this.handleViewMoveBound)
     super.setUpElementListeners()
   }
 
   protected setUpResize (): void {
-    this.resizeObserver = new ResizeObserver(this.handleResize.bind(this))
+    this.resizeObserver = new ResizeObserver(this.handleResizeBound)
   }
 
   protected setUpWindowListeners (): void {

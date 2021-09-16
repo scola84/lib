@@ -21,7 +21,11 @@ export class SourceElement extends RequestElement {
   @property()
   public type?: string
 
+  protected handleErrorBound = this.handleError.bind(this)
+
   protected handleMessageBound = this.handleMessage.bind(this)
+
+  protected handleOpenBound = this.handleOpen.bind(this)
 
   protected source?: EventSource
 
@@ -60,8 +64,8 @@ export class SourceElement extends RequestElement {
 
   public start (options?: Struct): void {
     this.source = new EventSource(this.createURL(options).toString())
-    this.source.onerror = this.handleError.bind(this)
-    this.source.onopen = this.handleOpen.bind(this)
+    this.source.onerror = this.handleErrorBound
+    this.source.onopen = this.handleOpenBound
 
     this.event
       ?.split(' ')

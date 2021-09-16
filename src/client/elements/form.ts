@@ -30,6 +30,10 @@ export class FormElement extends NodeElement {
     return this.querySelector<HTMLInputElement>('input[type="file"]') !== null
   }
 
+  protected handleKeydownBound = this.handleKeydown.bind(this)
+
+  protected handleLogBound = this.handleLog.bind(this)
+
   protected handleSubmitBound = this.handleSubmit.bind(this)
 
   protected updaters = FormElement.updaters
@@ -96,8 +100,8 @@ export class FormElement extends NodeElement {
   }
 
   protected setUpElementListeners (): void {
-    this.addEventListener('keydown', this.handleKeydown.bind(this))
-    this.addEventListener('scola-log', this.handleLog.bind(this))
+    this.addEventListener('keydown', this.handleKeydownBound)
+    this.addEventListener('scola-log', this.handleLogBound)
     this.addEventListener('scola-form-submit', this.handleSubmitBound)
     super.setUpElementListeners()
   }

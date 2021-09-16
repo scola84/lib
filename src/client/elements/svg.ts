@@ -38,6 +38,8 @@ export class SvgElement extends NodeElement {
 
   protected handleDrawBound = this.handleDraw.bind(this)
 
+  protected handleResizeBound = this.handleResize.bind(this)
+
   protected resizeObserver?: ResizeObserver
 
   protected updaters = SvgElement.updaters
@@ -95,7 +97,7 @@ export class SvgElement extends NodeElement {
   }
 
   protected setUpResize (): void {
-    this.resizeObserver = new ResizeObserver(this.handleResize.bind(this))
+    this.resizeObserver = new ResizeObserver(this.handleResizeBound)
     this.resizeObserver.observe(this)
   }
 

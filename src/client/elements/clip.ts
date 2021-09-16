@@ -64,6 +64,8 @@ export class ClipElement extends NodeElement {
     return this.querySelectorAll<HTMLElement>(':scope > [slot="after"], :scope > [slot="before"]')
   }
 
+  protected handleClickBound = this.handleClick.bind(this)
+
   protected handleContentBound = this.handleContent.bind(this)
 
   protected handleContentOrInnerBound = this.handleContentOrInner.bind(this)
@@ -75,6 +77,8 @@ export class ClipElement extends NodeElement {
   protected handleNestedBound = this.handleNested.bind(this)
 
   protected handleOuterBound = this.handleOuter.bind(this)
+
+  protected handleViewMoveBound = this.handleViewMove.bind(this)
 
   protected updaters = ClipElement.updaters
 
@@ -602,13 +606,13 @@ export class ClipElement extends NodeElement {
   }
 
   protected setUpElementListeners (): void {
-    this.addEventListener('click', this.handleClick.bind(this))
+    this.addEventListener('click', this.handleClickBound)
     this.addEventListener('scola-clip-content', this.handleContentBound)
     this.addEventListener('scola-clip-content-or-inner', this.handleContentOrInnerBound)
     this.addEventListener('scola-clip-inner', this.handleInnerBound)
     this.addEventListener('scola-clip-nested', this.handleNestedBound)
     this.addEventListener('scola-clip-outer', this.handleOuterBound)
-    this.addEventListener('scola-view-move', this.handleViewMove.bind(this))
+    this.addEventListener('scola-view-move', this.handleViewMoveBound)
     super.setUpElementListeners()
   }
 

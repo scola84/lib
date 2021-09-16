@@ -31,6 +31,8 @@ export class PickerElement extends InputElement {
 
   protected dialogElement: DialogElement | null
 
+  protected handlePickBound = this.handlePick.bind(this)
+
   protected labelElement: FormatElement | null
 
   protected listElement: ListElement | null
@@ -403,7 +405,7 @@ export class PickerElement extends InputElement {
   }
 
   protected setUpElementListeners (): void {
-    this.dialogElement?.addEventListener('scola-picker-pick', this.handlePick.bind(this))
+    this.dialogElement?.addEventListener('scola-picker-pick', this.handlePickBound)
     super.setUpElementListeners()
   }
 

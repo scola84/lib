@@ -85,6 +85,14 @@ export class FieldElement extends NodeElement {
 
   protected errorElement: FormatElement | null
 
+  protected handleClearBound = this.handleClear.bind(this)
+
+  protected handleClickBound = this.handleClick.bind(this)
+
+  protected handleInputBound = this.handleInput.bind(this)
+
+  protected handleKeydownBound = this.handleKeydown.bind(this)
+
   protected updaters = FieldElement.updaters
 
   public constructor () {
@@ -253,15 +261,15 @@ export class FieldElement extends NodeElement {
   }
 
   protected setUpElementListeners (): void {
-    this.addEventListener('click', this.handleClick.bind(this))
-    this.addEventListener('scola-input-clear', this.handleClear.bind(this))
+    this.addEventListener('click', this.handleClickBound)
+    this.addEventListener('scola-input-clear', this.handleClearBound)
 
     if (this.listen.includes('input')) {
-      this.fieldElement.addEventListener('input', debounce(this.debounce, this.handleInput.bind(this)))
+      this.fieldElement.addEventListener('input', debounce(this.debounce, this.handleInputBound))
     }
 
     if (this.listen.includes('keydown')) {
-      this.addEventListener('keydown', this.handleKeydown.bind(this))
+      this.addEventListener('keydown', this.handleKeydownBound)
     }
 
     super.setUpElementListeners()

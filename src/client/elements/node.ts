@@ -370,6 +370,10 @@ export class NodeElement extends LitElement {
   @query('slot[name="suffix"]', true)
   protected suffixSlotElement: HTMLSlotElement
 
+  protected handleContextmenuBound = this.handleContextmenu.bind(this)
+
+  protected handleLogBound = this.handleLog.bind(this)
+
   protected handleSetParamsBound = this.handleSetParams.bind(this)
 
   protected handleSetPropsBound = this.handleSetProps.bind(this)
@@ -771,11 +775,11 @@ export class NodeElement extends LitElement {
 
   protected setUpElementListeners (): void {
     if (this.logLevel !== 'off') {
-      this.addEventListener('scola-log', this.handleLog.bind(this))
+      this.addEventListener('scola-log', this.handleLogBound)
     }
 
     if (this.contextMenu !== undefined) {
-      this.addEventListener('contextmenu', this.handleContextmenu.bind(this))
+      this.addEventListener('contextmenu', this.handleContextmenuBound)
     }
   }
 

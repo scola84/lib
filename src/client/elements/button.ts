@@ -72,6 +72,8 @@ export class ButtonElement extends NodeElement {
 
   public cursor: NodeElement['cursor'] = 'pointer'
 
+  protected handleClickBound = this.handleClick.bind(this)
+
   protected updaters = ButtonElement.updaters
 
   public connectedCallback (): void {
@@ -126,7 +128,7 @@ export class ButtonElement extends NodeElement {
   }
 
   protected setUpElementListeners (): void {
-    this.addEventListener('click', this.handleClick.bind(this))
+    this.addEventListener('click', this.handleClickBound)
     super.setUpElementListeners()
   }
 }

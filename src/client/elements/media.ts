@@ -148,18 +148,18 @@ export class MediaElement extends NodeElement {
 
   protected async calculateAspectRatio (element: HTMLElement): Promise<number> {
     return new Promise((resolve) => {
-      const clone = document.body.appendChild(element.cloneNode(true))
+      const clonedElement = document.body.appendChild(element.cloneNode(true))
 
-      if (clone instanceof HTMLElement) {
-        clone.style.setProperty('opacity', '0')
-        clone.style.setProperty('position', 'absolute')
-        clone.style.setProperty('width', '16px')
+      if (clonedElement instanceof HTMLElement) {
+        clonedElement.style.setProperty('opacity', '0')
+        clonedElement.style.setProperty('position', 'absolute')
+        clonedElement.style.setProperty('width', '16px')
 
-        clone.onload = () => {
+        clonedElement.onload = () => {
           const {
             height = 0,
             width = 0
-          } = clone.getBoundingClientRect()
+          } = clonedElement.getBoundingClientRect()
 
           if (height > 0) {
             resolve(width / height)
@@ -167,12 +167,12 @@ export class MediaElement extends NodeElement {
             resolve(1)
           }
 
-          clone.onload = null
-          clone.onloadeddata = null
-          clone.remove()
+          clonedElement.onload = null
+          clonedElement.onloadeddata = null
+          clonedElement.remove()
         }
 
-        clone.onloadeddata = clone.onload
+        clonedElement.onloadeddata = clonedElement.onload
       }
     })
   }

@@ -388,8 +388,11 @@ export class ListElement extends NodeElement {
   }
 
   protected resetItems (): void {
+    this.elements.forEach((element) => {
+      element.parentElement?.removeChild(element)
+    })
+
     this.elements.clear()
-    this.innerHTML = ''
     this.items = []
     this.dispatchRequestEvent()
   }

@@ -73,29 +73,3 @@ module.exports = [{
     })
   ]
 }]
-
-if (pkg.name === '@scola/lib') {
-  module.exports.push({
-    input: 'src/worker/index.ts',
-    output: {
-      dir: '.',
-      entryFileNames: 'dist/worker.js',
-      format: 'umd',
-      name: pkg.name.replace(/\W+/gu, '')
-    },
-    plugins: [
-      commonjs(),
-      minify(),
-      resolve({
-        mainFields: ['browser', 'main', 'module']
-      }),
-      typescript({
-        declaration: true,
-        declarationDir: 'types',
-        tsconfig: 'src/worker/tsconfig.json'
-      }),
-      (!arg.w && !arg.watch) && gzip(),
-      (!arg.w && !arg.watch) && terser.terser()
-    ]
-  })
-}

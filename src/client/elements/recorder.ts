@@ -1,7 +1,6 @@
+import type { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser'
 import { customElement, property } from 'lit/decorators.js'
-import { BrowserMultiFormatReader } from '@zxing/browser'
 import { DateTime } from 'luxon'
-import type { IScannerControls } from '@zxing/browser'
 import { ImageCapture } from 'image-capture'
 import { MediaElement } from './media'
 import type { PropertyValues } from 'lit'
@@ -22,6 +21,8 @@ export interface RecorderElementState {
 
 @customElement('scola-recorder')
 export class RecorderElement extends MediaElement {
+  public static codeReader?: BrowserMultiFormatReader
+
   public static styles = [
     ...MediaElement.styles,
     styles
@@ -173,12 +174,7 @@ export class RecorderElement extends MediaElement {
 
   protected toggleCodeRecording (): void {
     if (this.recording === true) {
-      const reader = new BrowserMultiFormatReader(undefined, {
-        delayBetweenScanAttempts: 1000,
-        delayBetweenScanSuccess: 1000
-      })
-
-      this.codeScanner = reader.scan(this.videoElement, (code) => {
+      this.codeScanner = RecorderElement.codeReader?.scan(this.videoElement, (code) => {
         if (
           code !== undefined &&
           this.codeScanner !== undefined

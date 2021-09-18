@@ -1,10 +1,9 @@
-import type { PropertyValues, TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
+import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
-import { render } from 'lit'
 import updaters from '../updaters/log'
 
 declare global {
@@ -37,6 +36,8 @@ export class LogElement extends NodeElement {
     type: Number
   })
   public timeout?: number
+
+  protected element?: Node
 
   protected handleHideBound = this.handleHide.bind(this)
 
@@ -136,7 +137,7 @@ export class LogElement extends NodeElement {
       return
     }
 
-    render(this.renderTemplate(log), this)
+    this.renderLog(log)
     this.show(duration).catch(() => {})
 
     let { timeout } = this
@@ -181,7 +182,19 @@ export class LogElement extends NodeElement {
     }
   }
 
-  protected renderTemplate (log: Struct): Node | TemplateResult | undefined {
+  protected renderLog (log: Struct): void {
+    if (this.element !== undefined) {
+      this.element.parentElement?.removeChild(this.element)
+    }
+
+    this.element = this.renderTemplate(log)
+
+    if (this.element !== undefined) {
+      this.appendChild(this.element)
+    }
+  }
+
+  protected renderTemplate (log: Struct): Node | undefined {
     let element = null
 
     if (log.template instanceof HTMLElement) {

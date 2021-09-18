@@ -9,6 +9,7 @@ import updaters from '../updaters/list'
 declare global {
   interface HTMLElementEventMap {
     'scola-list-add': CustomEvent
+    'scola-list-clear': CustomEvent
     'scola-list-delete': CustomEvent
     'scola-list-start': CustomEvent
     'scola-list-toggle': CustomEvent
@@ -20,6 +21,7 @@ declare global {
 
   interface WindowEventMap {
     'scola-list-add': CustomEvent
+    'scola-list-clear': CustomEvent
     'scola-list-delete': CustomEvent
     'scola-list-start': CustomEvent
     'scola-list-toggle': CustomEvent
@@ -76,6 +78,8 @@ export class ListElement extends NodeElement {
 
   protected handleAddBound = this.handleAdd.bind(this)
 
+  protected handleClearBound = this.handleClear.bind(this)
+
   protected handleDeleteBound = this.handleDelete.bind(this)
 
   protected handleScrollBound = this.handleScroll.bind(this)
@@ -115,6 +119,15 @@ export class ListElement extends NodeElement {
     }
 
     return false
+  }
+
+  public clearItems (): void {
+    this.elements.forEach((element) => {
+      element.parentElement?.removeChild(element)
+    })
+
+    this.elements.clear()
+    this.items.splice(0)
   }
 
   public connectedCallback (): void {
@@ -274,6 +287,13 @@ export class ListElement extends NodeElement {
     }
   }
 
+  protected handleClear (event: CustomEvent): void {
+    if (this.isTarget(event)) {
+      this.clearItems()
+      this.renderItems()
+    }
+  }
+
   protected handleData (): void {
     if (isArray(this.data)) {
       this.items.push(...this.data)
@@ -393,17 +413,13 @@ export class ListElement extends NodeElement {
   }
 
   protected resetItems (): void {
-    this.elements.forEach((element) => {
-      element.parentElement?.removeChild(element)
-    })
-
-    this.elements.clear()
-    this.items.splice(0)
+    this.clearItems()
     this.dispatchRequestEvent()
   }
 
   protected setUpElementListeners (): void {
     this.addEventListener('scola-list-add', this.handleAddBound)
+    this.addEventListener('scola-list-clear', this.handleClearBound)
     this.addEventListener('scola-list-delete', this.handleDeleteBound)
     this.addEventListener('scola-list-start', this.handleStartBound)
     this.addEventListener('scola-list-toggle', this.handleToggleBound)
@@ -425,6 +441,7 @@ export class ListElement extends NodeElement {
 
   protected setUpWindowListeners (): void {
     window.addEventListener('scola-list-add', this.handleAddBound)
+    window.addEventListener('scola-list-clear', this.handleClearBound)
     window.addEventListener('scola-list-delete', this.handleDeleteBound)
     window.addEventListener('scola-list-start', this.handleStartBound)
     window.addEventListener('scola-list-toggle', this.handleToggleBound)
@@ -467,6 +484,7 @@ export class ListElement extends NodeElement {
 
   protected tearDownWindowListeners (): void {
     window.removeEventListener('scola-list-add', this.handleAddBound)
+    window.removeEventListener('scola-list-clear', this.handleClearBound)
     window.removeEventListener('scola-list-delete', this.handleDeleteBound)
     window.removeEventListener('scola-list-start', this.handleStartBound)
     window.removeEventListener('scola-list-toggle', this.handleToggleBound)

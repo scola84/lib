@@ -92,11 +92,6 @@ export class RequestElement extends NodeElement {
   public referrerPolicy?: Request['referrerPolicy']
 
   @property({
-    attribute: 'status-filter'
-  })
-  public statusFilter = '^(?!400)'
-
-  @property({
     type: Number
   })
   public total: number
@@ -164,21 +159,16 @@ export class RequestElement extends NodeElement {
   }
 
   protected createDispatchItems (): unknown[] {
-    let {
-      code,
-      data
-    } = this
-
-    if (code?.startsWith('ok_') === true) {
-      code = undefined
-      data = undefined
+    const item: Struct = {
+      code: this.code,
+      data: this.data
     }
 
-    return [{
-      code,
-      data,
-      level: 'err'
-    }]
+    if (this.code?.startsWith('ok_') === false) {
+      item.level = 'err'
+    }
+
+    return [item]
   }
 
   protected createRequest (options?: Struct): Request {
@@ -292,8 +282,7 @@ export class RequestElement extends NodeElement {
 
     if (
       error instanceof Error &&
-      error.name !== 'AbortError' &&
-      new RegExp(this.statusFilter, 'u').test((this.response?.status ?? 200).toString())
+      error.name !== 'AbortError'
     ) {
       this.dispatchEvents(this.createDispatchItems())
     }
@@ -323,10 +312,7 @@ export class RequestElement extends NodeElement {
 
     this.busy = false
     this.loaded = this.total
-
-    if (new RegExp(this.statusFilter, 'u').test(status.toString())) {
-      this.dispatchEvents(this.createDispatchItems())
-    }
+    this.dispatchEvents(this.createDispatchItems())
   }
 
   protected handleStart (event: CustomEvent<Struct | null>): void {

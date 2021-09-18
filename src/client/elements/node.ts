@@ -205,6 +205,11 @@ export class NodeElement extends LitElement {
   public listen?: string
 
   @property({
+    attribute: 'log-code'
+  })
+  public logCode?: string
+
+  @property({
     attribute: 'log-level'
   })
   public logLevel: keyof typeof LogLevel = 'off'
@@ -651,17 +656,22 @@ export class NodeElement extends LitElement {
   }
 
   protected handleLog (event: CustomEvent<Struct | null>): void {
-    if (
-      isStruct(event.detail?.data) &&
-      typeof event.detail?.data.level === 'string' &&
-      LogLevel[event.detail.data.level] >= LogLevel[this.logLevel]
-    ) {
-      event.cancelBubble = true
+    if (isStruct(event.detail?.data)) {
+      if (typeof event.detail?.data.level === 'string') {
+        if (LogLevel[event.detail.data.level] >= LogLevel[this.logLevel]) {
+          event.cancelBubble = true
 
-      if (event.detail.data.code === undefined) {
-        this.logs = []
+          if (
+            this.logCode === undefined || (
+              typeof event.detail.data.code === 'string' &&
+              new RegExp(this.logCode, 'u').test(event.detail.data.code)
+            )
+          ) {
+            this.logs = this.logs.concat(event.detail.data)
+          }
+        }
       } else {
-        this.logs = this.logs.concat(event.detail.data)
+        this.logs = []
       }
     }
   }

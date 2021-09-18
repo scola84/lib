@@ -179,6 +179,8 @@ export class LogElement extends NodeElement {
       ) {
         this.showNext()
       }
+    } else {
+      this.hide().catch(() => {})
     }
   }
 

@@ -156,7 +156,12 @@ export class ListElement extends NodeElement {
 
   public start (): void {
     this.count = this.calculateCount()
-    this.data = undefined
+
+    if (this.data === undefined) {
+      this.resetItems()
+    } else {
+      this.data = undefined
+    }
   }
 
   public toggleItem (item: Struct): void {
@@ -393,7 +398,7 @@ export class ListElement extends NodeElement {
     })
 
     this.elements.clear()
-    this.items = []
+    this.items.splice(0)
     this.dispatchRequestEvent()
   }
 

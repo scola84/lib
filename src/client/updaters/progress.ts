@@ -11,8 +11,16 @@ export default {
       observer.method === undefined ||
       observer.method === observable.request?.method
     )) {
-      observer.loaded = observable.loaded
-      observer.total = observable.total
+      if (
+        observable.loaded === observer.loaded &&
+        observable.total === observer.loaded
+      ) {
+        observer.loaded = 1
+        observer.total = 1
+      } else {
+        observer.loaded = observable.loaded
+        observer.total = observable.total
+      }
     }
   }
 }

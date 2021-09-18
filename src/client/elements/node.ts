@@ -289,6 +289,11 @@ export class NodeElement extends LitElement {
   public valign?: 'between' | 'center' | 'end' | 'evenly' | 'start'
 
   @property({
+    attribute: 'view-title'
+  })
+  public viewTitle?: string
+
+  @property({
     reflect: true
   })
   public vmargin?: string

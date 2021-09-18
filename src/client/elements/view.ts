@@ -1,8 +1,10 @@
 import { cast, isArray, isNil, isPrimitive, isStruct } from '../../common'
 import { customElement, property, state } from 'lit/decorators.js'
 import { ClipElement } from './clip'
+import type { Config } from 'dompurify'
 import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
+import dompurify from 'dompurify'
 
 declare global {
   interface HTMLElementEventMap {
@@ -25,13 +27,17 @@ declare global {
   }
 }
 
-interface View extends Struct{
+interface View extends Struct {
   element?: HTMLElement & {
     viewTitle?: string
   }
   name: string
   parameters?: Struct
 }
+
+dompurify.addHook('uponSanitizeAttribute', (node, data) => {
+  data.forceKeepAttr = dompurify.isValidAttribute(node.nodeName.toLowerCase(), 'href', data.attrValue)
+})
 
 const viewElements = new Set<ViewElement>()
 
@@ -41,10 +47,49 @@ export class ViewElement extends ClipElement {
 
   public static mode: 'push' | 'replace'
 
+  public static origin = window.location.origin
+
+  public static sanitize: Config = {
+    ADD_TAGS: [
+      'scola-app',
+      'scola-auth',
+      'scola-button',
+      'scola-clip',
+      'scola-dialog',
+      'scola-event',
+      'scola-field',
+      'scola-form',
+      'scola-format',
+      'scola-icon',
+      'scola-influx',
+      'scola-input',
+      'scola-list',
+      'scola-log',
+      'scola-media',
+      'scola-node',
+      'scola-picker',
+      'scola-progress',
+      'scola-recorder',
+      'scola-reloader',
+      'scola-request',
+      'scola-select',
+      'scola-slider',
+      'scola-source',
+      'scola-struct',
+      'scola-svg',
+      'scola-textarea',
+      'scola-view',
+      'scola-worker'
+    ]
+  }
+
   public static storage: Storage = window.sessionStorage
 
   @property()
   public base = ViewElement.base
+
+  @property()
+  public origin = ViewElement.origin
 
   @property({
     type: Boolean
@@ -55,6 +100,9 @@ export class ViewElement extends ClipElement {
     attribute: false
   })
   public storage = ViewElement.storage
+
+  @property()
+  public url?: Request['url']
 
   @property({
     attribute: false
@@ -104,11 +152,14 @@ export class ViewElement extends ClipElement {
   }
 
   public firstUpdated (properties: PropertyValues): void {
-    this.go(0, false)
-    super.firstUpdated(properties)
+    this
+      .go(0, false, false)
+      .finally(() => {
+        super.firstUpdated(properties)
+      })
   }
 
-  public go (delta: number, dispatch = true): void {
+  public async go (delta: number, save = true, dispatch = true): Promise<void> {
     if (
       this.pointer + delta >= 0 &&
       this.pointer + delta <= this.views.length - 1
@@ -116,9 +167,7 @@ export class ViewElement extends ClipElement {
       this.pointer += delta
     }
 
-    const newView = this.views
-      .slice(this.pointer, this.pointer + 1)
-      .pop()
+    const newView = this.views[this.pointer] as View | undefined
 
     if (newView === undefined) {
       this.view = null
@@ -127,11 +176,16 @@ export class ViewElement extends ClipElement {
 
     this.view = newView
 
-    if (window.customElements.get(this.view.name) === undefined) {
-      return
+    if (this.view.element === undefined) {
+      this.view.element = await this.createElement(this.view, delta)
     }
 
-    this.view.element = this.view.element ?? this.createElement(this.view, delta)
+    if (
+      save &&
+      this.save === true
+    ) {
+      this.saveState()
+    }
 
     if (dispatch) {
       this.dispatchEvent(new CustomEvent('scola-view-move', {
@@ -145,17 +199,14 @@ export class ViewElement extends ClipElement {
     }
 
     if (this.view.element instanceof HTMLElement) {
-      this
-        .showContent(this.view.element)
-        .then(() => {
-          this.views.forEach((view) => {
-            if (view !== this.view) {
-              view.element?.remove()
-              delete view.element
-            }
-          })
-        })
-        .catch(() => {})
+      await this.showContent(this.view.element)
+
+      this.views.forEach((view) => {
+        if (view !== this.view) {
+          view.element?.remove()
+          delete view.element
+        }
+      })
     }
   }
 
@@ -194,14 +245,49 @@ export class ViewElement extends ClipElement {
     return `/${this.view.name}${parameters}@${this.id}`
   }
 
-  protected createElement (view: View, delta: number): HTMLElement {
-    const element = document.createElement(view.name)
+  protected appendView (options?: unknown): void {
+    const view = this.createView(options)
 
-    if (delta < 0) {
-      this.insertBefore(element, this.querySelector<HTMLElement>(':scope > :not([slot])'))
-      this.setScroll(element)
+    if (this.isSame(this.view, view)) {
+      this.go(0, false, true).catch(() => {})
+      return
+    }
+
+    viewElements.forEach((viewElement) => {
+      if (viewElement === this) {
+        viewElement.views.splice(viewElement.pointer + 1, viewElement.views.length - viewElement.pointer - 1, view)
+        viewElement.pointer = viewElement.views.length - 1
+      } else if (
+        ViewElement.mode === 'push' &&
+          this.save === true &&
+          viewElement.save === true
+      ) {
+        viewElement.views.splice(viewElement.pointer + 1, viewElement.views.length - viewElement.pointer - 1, viewElement.views[viewElement.pointer])
+        viewElement.pointer = viewElement.views.length - 1
+      }
+    })
+
+    this.go(0).catch(() => {})
+  }
+
+  protected async createElement (view: View, delta: number): Promise<HTMLElement | undefined> {
+    let element = null
+
+    if (window.customElements.get(view.name) !== undefined) {
+      element = document.createElement(view.name)
+    } else if (this.url === undefined) {
+      element = undefined
     } else {
-      this.appendChild(element)
+      element = await this.fetchElement(view.name)
+    }
+
+    if (element instanceof HTMLElement) {
+      if (delta < 0) {
+        this.insertBefore(element, this.querySelector<HTMLElement>(':scope > :not([slot])'))
+        this.setScroll(element)
+      } else {
+        this.appendChild(element)
+      }
     }
 
     return element
@@ -237,31 +323,46 @@ export class ViewElement extends ClipElement {
     return view
   }
 
-  protected handleAppend (event: CustomEvent<Struct | null>): void {
-    if (this.isTarget(event)) {
-      const view = this.createView(event.detail?.data)
+  protected async fetchElement (name: string): Promise<HTMLElement | undefined> {
+    try {
+      const urlParts = [
+        this.origin,
+        this.base,
+        this.url
+      ]
 
-      if (this.isSame(this.view, view)) {
-        this.go(0)
-        return
+      const parameters = {
+        name
       }
 
-      viewElements.forEach((viewElement) => {
-        if (viewElement === this) {
-          viewElement.views.splice(viewElement.pointer + 1, viewElement.views.length - viewElement.pointer - 1, view)
-          viewElement.pointer = viewElement.views.length - 1
-        } else if (
-          ViewElement.mode === 'push' &&
-          this.save === true &&
-          viewElement.save === true
-        ) {
-          viewElement.views.splice(viewElement.pointer + 1, viewElement.views.length - viewElement.pointer - 1, viewElement.views[viewElement.pointer])
-          viewElement.pointer = viewElement.views.length - 1
-        }
-      })
+      const url = new URL(this.replaceParameters(urlParts.join(''), parameters))
+      const response = await window.fetch(url.toString())
 
-      this.go(0)
-      this.saveState()
+      if (response.status === 200) {
+        const element = document.createElement('scola-node')
+
+        const html = dompurify.sanitize(await response.text(), {
+          ...ViewElement.sanitize,
+          RETURN_DOM_FRAGMENT: false
+        })
+
+        if (typeof html === 'string') {
+          element.innerHTML = html
+          element.viewTitle = element.firstElementChild?.getAttribute('view-title') ?? ''
+        }
+
+        return element
+      }
+    } catch (error: unknown) {
+      // discard error
+    }
+
+    return undefined
+  }
+
+  protected handleAppend (event: CustomEvent<Struct | null>): void {
+    if (this.isTarget(event)) {
+      this.appendView(event.detail?.data)
     }
   }
 
@@ -273,8 +374,7 @@ export class ViewElement extends ClipElement {
       ) {
         window.history.go(-1)
       } else {
-        this.go(-1)
-        this.saveState()
+        this.go(-1).catch(() => {})
       }
     }
   }
@@ -287,8 +387,7 @@ export class ViewElement extends ClipElement {
       ) {
         window.history.go(1)
       } else {
-        this.go(1)
-        this.saveState()
+        this.go(1).catch(() => {})
       }
     }
   }
@@ -301,16 +400,14 @@ export class ViewElement extends ClipElement {
       ) {
         window.history.go(-this.pointer)
       } else {
-        this.go(-this.pointer)
-        this.saveState()
+        this.go(-this.pointer).catch(() => {})
       }
     }
   }
 
   protected handlePopstate (): void {
     this.loadPointer()
-    this.go(0)
-    this.saveState(false)
+    this.go(0).catch(() => {})
   }
 
   protected isSame (left?: View | null, right?: View | null): boolean {
@@ -392,27 +489,25 @@ export class ViewElement extends ClipElement {
   }
 
   protected saveState (location = true): void {
-    if (this.save === true) {
-      const pointers: Struct<number> = {}
+    const pointers: Struct<number> = {}
 
-      const path = Array
-        .from(viewElements)
-        .reduce((result, viewElement) => {
-          if (viewElement.save === true) {
-            viewElement.storage.setItem(`view-${viewElement.id}`, JSON.stringify(viewElement.toObject()))
-            pointers[viewElement.id] = viewElement.pointer
-            return `${result}${viewElement.toString()}`
-          }
-
-          return result
-        }, '')
-
-      if (location) {
-        if (ViewElement.mode === 'push') {
-          window.history.pushState(pointers, '', path)
-        } else {
-          window.history.replaceState(pointers, '', path)
+    const path = Array
+      .from(viewElements)
+      .reduce((result, viewElement) => {
+        if (viewElement.save === true) {
+          viewElement.storage.setItem(`view-${viewElement.id}`, JSON.stringify(viewElement.toObject()))
+          pointers[viewElement.id] = viewElement.pointer
+          return `${result}${viewElement.toString()}`
         }
+
+        return result
+      }, '')
+
+    if (location) {
+      if (ViewElement.mode === 'push') {
+        window.history.pushState(pointers, '', path)
+      } else {
+        window.history.replaceState(pointers, '', path)
       }
     }
   }

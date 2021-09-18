@@ -9,8 +9,16 @@ import styles from '../styles/recorder'
 import updaters from '../updaters/recorder'
 
 declare global {
+  interface HTMLElementEventMap {
+    'scola-recorder-toggle': CustomEvent
+  }
+
   interface HTMLElementTagNameMap {
     'scola-recorder': RecorderElement
+  }
+
+  interface WindowEventMap {
+    'scola-recorder-toggle': CustomEvent
   }
 }
 
@@ -68,6 +76,8 @@ export class RecorderElement extends MediaElement {
 
   protected codeScanner?: IScannerControls
 
+  protected handleToggleBound = this.handleToggle.bind(this)
+
   protected intervalId?: number
 
   protected rtcRecorder?: RtcRecorder
@@ -106,8 +116,6 @@ export class RecorderElement extends MediaElement {
       this.enable()
     } else if (properties.has('mode')) {
       this.tearDownHelpers()
-    } else if (properties.has('recording')) {
-      this.toggleRecording()
     }
 
     super.update(properties)
@@ -115,6 +123,17 @@ export class RecorderElement extends MediaElement {
 
   protected createDispatchItems (): unknown[] {
     return [this.data]
+  }
+
+  protected handleToggle (event: CustomEvent): void {
+    if (this.isTarget(event)) {
+      this.toggleRecording()
+    }
+  }
+
+  protected setUpElementListeners (): void {
+    this.addEventListener('scola-recorder-toggle', this.handleToggleBound)
+    super.setUpElementListeners()
   }
 
   protected setUpStream (): void {
@@ -154,6 +173,11 @@ export class RecorderElement extends MediaElement {
       .catch(() => {})
   }
 
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-recorder-toggle', this.handleToggleBound)
+    super.setUpWindowListeners()
+  }
+
   protected tearDownHelpers (): void {
     if (this.codeScanner !== undefined) {
       this.codeScanner.stop()
@@ -183,6 +207,11 @@ export class RecorderElement extends MediaElement {
 
     this.videoElement.srcObject = null
     this.stream = undefined
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-recorder-toggle', this.handleToggleBound)
+    super.tearDownWindowListeners()
   }
 
   protected toggleCodeRecording (): void {
@@ -283,6 +312,8 @@ export class RecorderElement extends MediaElement {
   }
 
   protected toggleRecording (): void {
+    this.recording = this.recording === false
+
     switch (this.mode) {
       case 'audio':
       case 'video':

@@ -61,19 +61,19 @@ export class EventElement extends NodeElement {
   }
 
   protected createDispatchItems (event?: CustomEvent<Struct | null>): unknown[] {
-    const data = {
+    const item = {
       ...this.dataset
     }
 
     if (isStruct(this.data)) {
-      Object.assign(data, this.data)
+      Object.assign(item, this.data)
     }
 
     if (isStruct(event?.detail?.data)) {
-      Object.assign(data, event?.detail?.data)
+      Object.assign(item, event?.detail?.data)
     }
 
-    return [data]
+    return [item]
   }
 
   protected handleEvent (event: CustomEvent): void {

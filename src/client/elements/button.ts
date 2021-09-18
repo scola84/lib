@@ -93,15 +93,15 @@ export class ButtonElement extends NodeElement {
   }
 
   protected createDispatchItems (): unknown[] {
-    const data = {
+    const item = {
       ...this.dataset
     }
 
     if (isStruct(this.data)) {
-      Object.assign(data, this.data)
+      Object.assign(item, this.data)
     }
 
-    return [data]
+    return [item]
   }
 
   protected handleClick (event: Event): void {

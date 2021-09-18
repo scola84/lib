@@ -166,16 +166,16 @@ export class FieldElement extends NodeElement {
   }
 
   protected createDispatchItems (): unknown[] {
-    let { value } = this
-
-    if (this.parse === true) {
-      value = this.parseValue(this.value.toString())
+    const item = {
+      name: this.name,
+      value: this.value
     }
 
-    return [{
-      name: this.name,
-      value
-    }]
+    if (this.parse === true) {
+      item.value = this.parseValue(item.value.toString())
+    }
+
+    return [item]
   }
 
   protected handleClear (): void {

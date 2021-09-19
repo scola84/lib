@@ -45,11 +45,7 @@ const viewElements = new Set<ViewElement>()
 export class ViewElement extends ClipElement {
   public static base = ''
 
-  public static mode: 'push' | 'replace'
-
-  public static origin = window.location.origin
-
-  public static sanitize: Config = {
+  public static dompurifyOptions: Config = {
     ADD_TAGS: [
       'scola-app',
       'scola-auth',
@@ -82,6 +78,10 @@ export class ViewElement extends ClipElement {
       'scola-worker'
     ]
   }
+
+  public static mode: 'push' | 'replace'
+
+  public static origin = window.location.origin
 
   public static storage: Storage = window.sessionStorage
 
@@ -188,14 +188,7 @@ export class ViewElement extends ClipElement {
     }
 
     if (dispatch) {
-      this.dispatchEvent(new CustomEvent('scola-view-move', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          data: this.view,
-          origin: this
-        }
-      }))
+      this.dispatchEvents('scola-view-move', [this.view])
     }
 
     if (this.view.element instanceof HTMLElement) {
@@ -324,6 +317,8 @@ export class ViewElement extends ClipElement {
   }
 
   protected async fetchElement (name: string): Promise<HTMLElement | undefined> {
+    const element = document.createElement('scola-node')
+
     try {
       const urlParts = [
         this.origin,
@@ -339,25 +334,18 @@ export class ViewElement extends ClipElement {
       const response = await window.fetch(url.toString())
 
       if (response.status === 200) {
-        const element = document.createElement('scola-node')
-
-        const html = dompurify.sanitize(await response.text(), {
-          ...ViewElement.sanitize,
-          RETURN_DOM_FRAGMENT: false
-        })
+        const html = dompurify.sanitize(await response.text(), ViewElement.dompurifyOptions)
 
         if (typeof html === 'string') {
           element.innerHTML = html
           element.viewTitle = element.firstElementChild?.getAttribute('view-title') ?? ''
         }
-
-        return element
       }
     } catch (error: unknown) {
-      // discard error
+      this.handleError(error)
     }
 
-    return undefined
+    return element
   }
 
   protected handleAppend (event: CustomEvent<Struct | null>): void {
@@ -377,6 +365,10 @@ export class ViewElement extends ClipElement {
         this.go(-1).catch(() => {})
       }
     }
+  }
+
+  protected handleError (error: unknown): void {
+    this.dispatchError(error, 'err_view')
   }
 
   protected handleForward (event: CustomEvent): void {

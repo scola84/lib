@@ -91,11 +91,6 @@ export class NodeElement extends LitElement {
   public dispatch?: string
 
   @property({
-    attribute: 'dispatch-filter'
-  })
-  public dispatchFilter?: string
-
-  @property({
     reflect: true
   })
   public display?: string
@@ -537,39 +532,55 @@ export class NodeElement extends LitElement {
     super.update(properties)
   }
 
-  protected dispatchEvents (items?: unknown[], cause?: CustomEvent<Struct | null>): void {
-    let filter = /.*/u
+  protected dispatchError (error: unknown, code: string): void {
+    let message = ''
 
     if (
-      isStruct(cause?.detail) &&
-      typeof cause?.detail.filter === 'string'
+      error instanceof Error ||
+      error instanceof ErrorEvent
     ) {
-      filter = new RegExp(cause.detail.filter, 'u')
+      ({ message } = error)
+    } else {
+      message = String(error)
     }
 
-    const events = this.dispatch?.split(' ')
+    this.dispatchEvent(new CustomEvent('scola-log', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        data: {
+          code,
+          data: {
+            message
+          },
+          level: 'err'
+        },
+        origin: this
+      }
+    }))
+  }
 
-    items?.forEach((item) => {
-      events?.forEach((event) => {
-        if (filter.test(event)) {
-          const [
-            eventType,
-            id
-          ] = event.split('@')
+  protected dispatchEvents (dispatch = this.dispatch, items: unknown[] = [undefined]): void {
+    dispatch
+      ?.split(' ')
+      ?.forEach((event) => {
+        const [
+          eventType,
+          id
+        ] = event.split('@')
 
+        items.forEach((item) => {
           this.dispatchEvent(new CustomEvent(eventType, {
             bubbles: true,
             composed: true,
             detail: {
               data: item,
-              filter: this.dispatchFilter,
               origin: this,
               target: id
             }
           }))
-        }
+        })
       })
-    })
   }
 
   protected async ease (from: number, to: number, callback: (value: number) => void, duration = this.duration): Promise<void> {

@@ -220,7 +220,7 @@ export class FieldElement extends NodeElement {
     }
 
     this.toggleClear(this.isEmpty)
-    this.dispatchEvents(this.createDispatchItems())
+    this.dispatchEvents(this.dispatch, this.createDispatchItems())
     this.requestUpdate('value')
   }
 

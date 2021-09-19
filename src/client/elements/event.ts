@@ -54,7 +54,7 @@ export class EventElement extends NodeElement {
 
   public firstUpdated (properties: PropertyValues): void {
     if (this.wait !== true) {
-      this.dispatchEvents(this.createDispatchItems())
+      this.dispatchEvents(this.dispatch, this.createDispatchItems())
     }
 
     super.firstUpdated(properties)
@@ -78,7 +78,7 @@ export class EventElement extends NodeElement {
 
   protected handleEvent (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      this.dispatchEvents(this.createDispatchItems(event), event)
+      this.dispatchEvents(this.dispatch, this.createDispatchItems(event))
     }
   }
 
@@ -89,7 +89,7 @@ export class EventElement extends NodeElement {
 
   protected setUpInterval (): void {
     this.intervalId = window.setInterval(() => {
-      this.dispatchEvents(this.createDispatchItems())
+      this.dispatchEvents(this.dispatch, this.createDispatchItems())
     }, this.interval)
   }
 

@@ -106,7 +106,7 @@ export class ButtonElement extends NodeElement {
 
   protected handleClick (event: Event): void {
     event.cancelBubble = this.cancel === true
-    this.dispatchEvents(this.createDispatchItems())
+    this.dispatchEvents(this.dispatch, this.createDispatchItems())
   }
 
   protected loadState (): void {

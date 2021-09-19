@@ -74,7 +74,7 @@ export class InfluxElement extends NodeElement {
 
   protected handleDrop (event: DragEvent): void {
     event.preventDefault()
-    this.dispatchEvents(this.createDispatchItems(event.dataTransfer?.files))
+    this.dispatchEvents(this.dispatch, this.createDispatchItems(event.dataTransfer?.files))
     this.dragging = false
   }
 
@@ -86,7 +86,7 @@ export class InfluxElement extends NodeElement {
 
   protected handlePaste (event: ClipboardEvent): void {
     event.preventDefault()
-    this.dispatchEvents(this.createDispatchItems(event.clipboardData?.files))
+    this.dispatchEvents(this.dispatch, this.createDispatchItems(event.clipboardData?.files))
   }
 
   protected setUpElementListeners (): void {

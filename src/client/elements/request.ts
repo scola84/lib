@@ -284,7 +284,7 @@ export class RequestElement extends NodeElement {
       error instanceof Error &&
       error.name !== 'AbortError'
     ) {
-      this.dispatchEvents(this.createDispatchItems())
+      this.dispatchError(error, this.code ?? 'err_request')
     }
   }
 
@@ -312,7 +312,7 @@ export class RequestElement extends NodeElement {
 
     this.busy = false
     this.loaded = this.total
-    this.dispatchEvents(this.createDispatchItems())
+    this.dispatchEvents(this.dispatch, this.createDispatchItems())
   }
 
   protected handleStart (event: CustomEvent<Struct | null>): void {

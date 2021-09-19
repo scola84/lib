@@ -57,17 +57,10 @@ export class FormElement extends NodeElement {
       fieldElement.appendValueTo(body)
     })
 
-    this.dispatchEvent(new CustomEvent('scola-request-start', {
-      bubbles: true,
-      composed: true,
-      detail: {
-        data: {
-          body,
-          method: this.method
-        },
-        origin: this
-      }
-    }))
+    this.dispatchEvents('scola-request-start', [{
+      body,
+      method: this.method
+    }])
   }
 
   public update (properties: PropertyValues): void {

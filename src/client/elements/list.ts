@@ -247,14 +247,7 @@ export class ListElement extends NodeElement {
       data.offset = this.items.length
     }
 
-    this.dispatchEvent(new CustomEvent('scola-request-start', {
-      bubbles: true,
-      composed: true,
-      detail: {
-        data,
-        origin: this
-      }
-    }))
+    this.dispatchEvents('scola-request-start', [data])
   }
 
   protected filterItems (items: unknown[], queries: Query[]): unknown[] {

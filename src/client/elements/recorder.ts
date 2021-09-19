@@ -3,6 +3,7 @@ import { customElement, property } from 'lit/decorators.js'
 import { DateTime } from 'luxon'
 import { ImageCapture } from 'image-capture'
 import { MediaElement } from './media'
+import type { Options } from 'recordrtc'
 import type { PropertyValues } from 'lit'
 import RtcRecorder from 'recordrtc'
 import styles from '../styles/recorder'
@@ -30,6 +31,10 @@ export interface RecorderElementState {
 @customElement('scola-recorder')
 export class RecorderElement extends MediaElement {
   public static codeReader?: BrowserMultiFormatReader
+
+  public static recordrtcOptions: Options = {
+    disableLogs: true
+  }
 
   public static styles = [
     ...MediaElement.styles,
@@ -111,18 +116,50 @@ export class RecorderElement extends MediaElement {
   public update (properties: PropertyValues): void {
     if (properties.has('compose')) {
       // discard first update
-    } else if (properties.has('back')) {
+    } else if (
+      properties.has('back') ||
+      properties.has('mode')
+    ) {
       this.disable()
       this.enable()
-    } else if (properties.has('mode')) {
-      this.tearDownHelpers()
     }
 
     super.update(properties)
   }
 
-  protected createDispatchItems (): unknown[] {
-    return [this.data]
+  protected createAudioConstraints (): MediaStreamConstraints['audio'] {
+    return {
+      autoGainControl: true,
+      echoCancellation: true,
+      noiseSuppression: true
+    }
+  }
+
+  protected createVideoConstraints (): MediaStreamConstraints['video'] {
+    const facingMode = {
+      ideal: 'user'
+    }
+
+    if (this.back === true) {
+      facingMode.ideal = 'environment'
+    }
+
+    return {
+      facingMode,
+      height: {
+        ideal: 1080,
+        min: 360
+      },
+      width: {
+        ideal: 1920,
+        max: 1920,
+        min: 640
+      }
+    }
+  }
+
+  protected handleError (error: unknown): void {
+    this.dispatchError(error, 'err_recorder')
   }
 
   protected handleToggle (event: CustomEvent): void {
@@ -137,30 +174,21 @@ export class RecorderElement extends MediaElement {
   }
 
   protected setUpStream (): void {
-    const constraints = {
-      audio: {
-        autoGainControl: true,
-        echoCancellation: true,
-        noiseSuppression: true
-      },
-      video: {
-        facingMode: {
-          ideal: 'user'
-        },
-        height: {
-          ideal: 1080,
-          min: 360
-        },
-        width: {
-          ideal: 1920,
-          max: 1920,
-          min: 640
-        }
-      }
+    const constraints: MediaStreamConstraints = {}
+
+    if (
+      this.mode === 'audio' ||
+      this.mode === 'video'
+    ) {
+      constraints.audio = this.createAudioConstraints()
     }
 
-    if (this.back === true) {
-      constraints.video.facingMode.ideal = 'environment'
+    if (
+      this.mode === 'code' ||
+      this.mode === 'picture' ||
+      this.mode === 'video'
+    ) {
+      constraints.video = this.createVideoConstraints()
     }
 
     navigator.mediaDevices
@@ -170,7 +198,9 @@ export class RecorderElement extends MediaElement {
         this.videoElement.srcObject = stream
         this.videoElement.muted = true
       })
-      .catch(() => {})
+      .catch((error: unknown) => {
+        this.handleError(error)
+      })
   }
 
   protected setUpWindowListeners (): void {
@@ -226,7 +256,7 @@ export class RecorderElement extends MediaElement {
             value: code.getText()
           }
 
-          this.dispatchEvents(this.createDispatchItems())
+          this.dispatchEvents(this.dispatch, [this.data])
           this.tearDownHelpers()
         }
       })
@@ -239,7 +269,7 @@ export class RecorderElement extends MediaElement {
     if (this.recording === true) {
       if (this.stream !== undefined) {
         this.rtcRecorder = new RtcRecorder(this.stream, {
-          disableLogs: true,
+          ...RecorderElement.recordrtcOptions,
           type
         })
 
@@ -265,7 +295,7 @@ export class RecorderElement extends MediaElement {
             filetype: blob.type
           }
 
-          this.dispatchEvents(this.createDispatchItems())
+          this.dispatchEvents(this.dispatch, [this.data])
           this.tearDownHelpers()
         }
       })
@@ -302,7 +332,10 @@ export class RecorderElement extends MediaElement {
                 filetype: blob.type
               }
 
-              this.dispatchEvents(this.createDispatchItems())
+              this.dispatchEvents(this.dispatch, [this.data])
+            })
+            .catch((error: unknown) => {
+              this.handleError(error)
             })
             .finally(() => {
               this.recording = false

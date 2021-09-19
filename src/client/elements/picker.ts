@@ -229,7 +229,7 @@ export class PickerElement extends InputElement {
     }
 
     this.toggleClear(this.isEmpty)
-    this.dispatchEvents(this.createDispatchItems(), event)
+    this.dispatchEvents(this.dispatch, this.createDispatchItems())
   }
 
   protected hideDialog (): void {

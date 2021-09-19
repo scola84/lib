@@ -64,11 +64,8 @@ export class WorkerElement extends NodeElement {
     this.setDataOn(this.scopedDataNodeElements)
   }
 
-  protected handleError (event: ErrorEvent): void {
-    this.dispatchEvents([{
-      level: 'err',
-      message: event.message
-    }])
+  protected handleError (error: unknown): void {
+    this.dispatchError(error, 'err_worker')
   }
 
   protected handleMessage (event: MessageEvent): void {
@@ -76,10 +73,7 @@ export class WorkerElement extends NodeElement {
       try {
         this.data = JSON.parse(event.data)
       } catch (error: unknown) {
-        this.dispatchEvents([{
-          level: 'err',
-          message: String(error)
-        }])
+        this.handleError(error)
       }
     }
   }

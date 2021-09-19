@@ -3,6 +3,7 @@ import type { AppElement } from './app'
 import type { InteractEvent } from '@interactjs/core/InteractEvent'
 import type { Interactable } from '@interactjs/core/Interactable'
 import { NodeElement } from './node'
+import type { Options } from '@interactjs/types'
 import type { Struct } from '../../common'
 import interact from 'interactjs'
 import { isStruct } from '../../common'
@@ -79,6 +80,8 @@ const vtoAlternatives: Struct<string[]> = {
 
 @customElement('scola-dialog')
 export class DialogElement extends NodeElement {
+  public static interactOptions?: Options
+
   public static styles = [
     ...NodeElement.styles,
     styles
@@ -1000,6 +1003,7 @@ export class DialogElement extends NodeElement {
 
     this.dragInteractable = interact(this.contentElement)
       .draggable({
+        ...DialogElement.interactOptions,
         allowFrom,
         listeners: {
           move: this.handleMoveBound

@@ -16,6 +16,13 @@ declare global {
 export class FormatElement extends NodeElement {
   public static lang = 'en'
 
+  public static markedOptions: marked.MarkedOptions = {
+    breaks: true,
+    smartLists: true,
+    smartypants: true,
+    xhtml: true
+  }
+
   public static strings: Strings = {}
 
   public static updaters = {
@@ -30,16 +37,6 @@ export class FormatElement extends NodeElement {
     type: Boolean
   })
   public marked?: boolean
-
-  @property({
-    attribute: false
-  })
-  public options: marked.MarkedOptions = {
-    breaks: true,
-    smartLists: true,
-    smartypants: true,
-    xhtml: true
-  }
 
   @property({
     attribute: 'show-title',
@@ -97,7 +94,7 @@ export class FormatElement extends NodeElement {
     }
 
     if (this.marked === true) {
-      this.innerHTML = marked(string, this.options)
+      this.innerHTML = marked(string, FormatElement.markedOptions)
     } else if (this.childElementCount === 0) {
       this.textContent = string
     }

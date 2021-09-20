@@ -34,6 +34,12 @@ export class FormatElement extends NodeElement {
   public code?: string
 
   @property({
+    attribute: 'hide-empty',
+    type: Boolean
+  })
+  public hideEmpty?: boolean
+
+  @property({
     type: Boolean
   })
   public marked?: boolean
@@ -85,7 +91,10 @@ export class FormatElement extends NodeElement {
     const string = format(FormatElement.strings, this.code ?? '', language, data)
 
     if (string === '') {
-      this.hidden = true
+      if (this.hideEmpty === true) {
+        this.hidden = true
+      }
+
       return
     }
 

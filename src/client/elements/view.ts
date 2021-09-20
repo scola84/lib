@@ -159,50 +159,6 @@ export class ViewElement extends ClipElement {
       })
   }
 
-  public async go (delta: number, save = true, dispatch = true): Promise<void> {
-    if (
-      this.pointer + delta >= 0 &&
-      this.pointer + delta <= this.views.length - 1
-    ) {
-      this.pointer += delta
-    }
-
-    const newView = this.views[this.pointer] as View | undefined
-
-    if (newView === undefined) {
-      this.view = null
-      return
-    }
-
-    this.view = newView
-
-    if (this.view.element === undefined) {
-      this.view.element = await this.createElement(this.view, delta)
-    }
-
-    if (
-      save &&
-      this.save === true
-    ) {
-      this.saveState()
-    }
-
-    if (dispatch) {
-      this.dispatchEvents('scola-view-move', [this.view])
-    }
-
-    if (this.view.element instanceof HTMLElement) {
-      await this.showContent(this.view.element)
-
-      this.views.forEach((view) => {
-        if (view !== this.view) {
-          view.element?.remove()
-          delete view.element
-        }
-      })
-    }
-  }
-
   public toObject (): Struct {
     return {
       pointer: this.pointer,
@@ -346,6 +302,50 @@ export class ViewElement extends ClipElement {
     }
 
     return element
+  }
+
+  protected async go (delta: number, save = true, dispatch = true): Promise<void> {
+    if (
+      this.pointer + delta >= 0 &&
+      this.pointer + delta <= this.views.length - 1
+    ) {
+      this.pointer += delta
+    }
+
+    const newView = this.views[this.pointer] as View | undefined
+
+    if (newView === undefined) {
+      this.view = null
+      return
+    }
+
+    this.view = newView
+
+    if (this.view.element === undefined) {
+      this.view.element = await this.createElement(this.view, delta)
+    }
+
+    if (
+      save &&
+      this.save === true
+    ) {
+      this.saveState()
+    }
+
+    if (dispatch) {
+      this.dispatchEvents('scola-view-move', [this.view])
+    }
+
+    if (this.view.element instanceof HTMLElement) {
+      await this.showContent(this.view.element)
+
+      this.views.forEach((view) => {
+        if (view !== this.view) {
+          view.element?.remove()
+          delete view.element
+        }
+      })
+    }
   }
 
   protected handleAppend (event: CustomEvent<Struct | null>): void {

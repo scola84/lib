@@ -1,6 +1,8 @@
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
+import type { Struct } from '../../common'
+import type d3 from 'd3'
 
 declare global {
   interface HTMLElementEventMap {
@@ -16,21 +18,40 @@ declare global {
   }
 }
 
+type Drawer = (source: SvgElement) => void
+
 export interface Drawers {
-  [key: string]: ((source: SvgElement) => void) | undefined
+  [key: string]: Drawer | undefined
 }
 
 @customElement('scola-svg')
 export class SvgElement extends NodeElement {
+  public static base = ''
+
+  public static d3?: Partial<typeof d3>
+
   public static drawers: Drawers = {}
+
+  public static origin = window.location.origin
+
+  @property()
+  public base = SvgElement.base
 
   @property()
   public drawer?: string
+
+  @property()
+  public origin = SvgElement.origin
 
   @property({
     type: Number
   })
   public scale?: number
+
+  @property()
+  public url?: Request['url']
+
+  public d3 = SvgElement.d3
 
   public svgElement: SVGElement
 
@@ -41,6 +62,8 @@ export class SvgElement extends NodeElement {
   protected handleResizeBound = this.handleResize.bind(this)
 
   protected resizeObserver?: ResizeObserver
+
+  protected scriptElement?: HTMLScriptElement
 
   protected updaters = SvgElement.updaters
 
@@ -66,29 +89,84 @@ export class SvgElement extends NodeElement {
     super.disconnectedCallback()
   }
 
-  public draw (): void {
-    this.drawer
-      ?.split(' ')
-      .forEach((drawerName) => {
-        this.drawers[drawerName]?.(this)
-      })
+  public update (properties: PropertyValues): void {
+    this.draw().catch(() => {})
+    super.update(properties)
   }
 
-  public update (properties: PropertyValues): void {
-    this.setViewBox()
-    this.draw()
-    super.update(properties)
+  protected async draw (): Promise<void> {
+    try {
+      this.setViewBox()
+
+      if (this.drawer !== undefined) {
+        const drawer = await this.getDrawer(this.drawer)
+
+        if (typeof drawer === 'function') {
+          drawer(this)
+        }
+      }
+    } catch (error: unknown) {
+      this.handleError(error)
+    }
+  }
+
+  protected async fetchDrawer (drawer: string): Promise<Drawer | undefined> {
+    return new Promise((resolve) => {
+      const urlParts = [
+        this.origin,
+        this.base,
+        this.url
+      ]
+
+      const parameters = {
+        name: drawer
+      }
+
+      const src = new URL(this.replaceParameters(urlParts.join(''), parameters)).toString()
+
+      if (this.scriptElement?.src === src) {
+        resolve((window as unknown as Struct)[drawer] as Drawer)
+        return
+      }
+
+      this.scriptElement?.remove()
+
+      const scriptElement = document.createElement('script')
+
+      scriptElement.onload = () => {
+        resolve((window as unknown as Struct)[drawer] as Drawer)
+        scriptElement.onload = null
+      }
+
+      this.scriptElement = scriptElement
+      this.scriptElement.src = src
+      document.head.appendChild(this.scriptElement)
+    })
+  }
+
+  protected async getDrawer (drawer: string): Promise<Drawer | undefined> {
+    if (this.drawers[drawer] !== undefined) {
+      return this.drawers[drawer]
+    } else if (this.url !== undefined) {
+      return this.fetchDrawer(drawer)
+    }
+
+    return undefined
   }
 
   protected handleDraw (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      this.draw()
+      this.draw().catch(() => {})
     }
+  }
+
+  protected handleError (error: unknown): void {
+    this.dispatchError(error, 'err_svg')
   }
 
   protected handleResize (): void {
     this.setViewBox()
-    this.draw()
+    this.draw().catch(() => {})
   }
 
   protected setUpElementListeners (): void {

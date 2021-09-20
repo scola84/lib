@@ -114,7 +114,7 @@ export class RecorderElement extends MediaElement {
   }
 
   public update (properties: PropertyValues): void {
-    if (properties.has('compose')) {
+    if (properties.has('observe')) {
       // discard first update
     } else if (
       properties.has('back') ||

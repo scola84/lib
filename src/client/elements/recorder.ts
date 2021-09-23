@@ -158,6 +158,8 @@ export class RecorderElement extends MediaElement {
     }
   }
 
+  protected handleData (): void {}
+
   protected handleError (error: unknown): void {
     this.dispatchError(error, 'err_recorder')
   }

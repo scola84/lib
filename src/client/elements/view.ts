@@ -1,10 +1,10 @@
+import { addHook, isValidAttribute, sanitize } from 'dompurify'
 import { cast, isArray, isNil, isPrimitive, isStruct } from '../../common'
 import { customElement, property, state } from 'lit/decorators.js'
 import { ClipElement } from './clip'
 import type { Config } from 'dompurify'
 import type { PropertyValues } from 'lit'
 import type { Struct } from '../../common'
-import dompurify from 'dompurify'
 
 declare global {
   interface HTMLElementEventMap {
@@ -35,8 +35,8 @@ interface View extends Struct {
   parameters?: Struct
 }
 
-dompurify.addHook('uponSanitizeAttribute', (node, data) => {
-  data.forceKeepAttr = dompurify.isValidAttribute(node.nodeName.toLowerCase(), 'href', data.attrValue)
+addHook('uponSanitizeAttribute', (node, data) => {
+  data.forceKeepAttr = isValidAttribute(node.nodeName.toLowerCase(), 'href', data.attrValue)
 })
 
 const viewElements = new Set<ViewElement>()
@@ -284,7 +284,7 @@ export class ViewElement extends ClipElement {
       const response = await window.fetch(url.toString())
 
       if (response.status === 200) {
-        const html = dompurify.sanitize(await response.text(), ViewElement.dompurifyOptions)
+        const html = sanitize(await response.text(), ViewElement.dompurifyOptions)
 
         if (typeof html === 'string') {
           element.innerHTML = html

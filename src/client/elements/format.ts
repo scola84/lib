@@ -1,9 +1,11 @@
 import type { Query, Strings, Struct } from '../../common'
 import { customElement, property } from 'lit/decorators.js'
 import { format, isStruct, lookup, parse } from '../../common'
+import type { Config } from 'dompurify'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
 import marked from 'marked'
+import { sanitize } from 'dompurify'
 import updaters from '../updaters/format'
 
 declare global {
@@ -14,6 +16,8 @@ declare global {
 
 @customElement('scola-format')
 export class FormatElement extends NodeElement {
+  public static dompurifyOptions: Config = {}
+
   public static lang = 'en'
 
   public static markedOptions: marked.MarkedOptions = {
@@ -103,7 +107,11 @@ export class FormatElement extends NodeElement {
     }
 
     if (this.marked === true) {
-      this.innerHTML = marked(string, FormatElement.markedOptions)
+      const html = sanitize(marked(string, FormatElement.markedOptions), FormatElement.dompurifyOptions)
+
+      if (typeof html === 'string') {
+        this.innerHTML = html
+      }
     } else if (this.childElementCount === 0) {
       this.textContent = string
     }

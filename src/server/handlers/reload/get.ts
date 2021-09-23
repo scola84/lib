@@ -28,7 +28,7 @@ export class ReloadGetHandler extends RouteHandler {
     super(options)
     this.debounce = options.debounce ?? 1000
     this.event = options.event ?? 'reload'
-    this.file = options.file ?? '/usr/src/app/client.js'
+    this.file = options.file ?? '/usr/src/app/dist/client/index.js'
   }
 
   public async handle (request: FastifyRequest, reply: FastifyReply): Promise<void> {

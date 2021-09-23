@@ -27,8 +27,6 @@ declare global {
 
 @customElement('scola-request')
 export class RequestElement extends NodeElement {
-  public static base = ''
-
   public static origin = window.location.origin
 
   public static styles = [
@@ -41,30 +39,13 @@ export class RequestElement extends NodeElement {
     ...updaters
   }
 
-  @property()
-  public base = RequestElement.base
-
   @property({
     type: Boolean
   })
   public busy?: boolean
 
   @property()
-  public cache?: Request['cache']
-
-  @property()
   public code?: string
-
-  @property()
-  public credentials?: Request['credentials']
-
-  @property()
-  public integrity?: Request['integrity']
-
-  @property({
-    type: Boolean
-  })
-  public keepalive?: Request['keepalive']
 
   @property({
     type: Number
@@ -72,32 +53,18 @@ export class RequestElement extends NodeElement {
   public loaded: number
 
   @property()
-  public method: Request['method'] = 'GET'
-
-  @property()
-  public mode?: Request['mode']
+  public method = 'GET'
 
   @property()
   public origin = RequestElement.origin
 
   @property()
-  public redirect?: Request['redirect']
-
-  @property()
-  public referrer?: Request['referrer']
-
-  @property({
-    attribute: 'referrer-policy'
-  })
-  public referrerPolicy?: Request['referrerPolicy']
+  public path?: string
 
   @property({
     type: Number
   })
   public total: number
-
-  @property()
-  public url?: Request['url']
 
   @property({
     type: Boolean
@@ -173,15 +140,7 @@ export class RequestElement extends NodeElement {
 
   protected createRequest (options?: Struct): Request {
     return new Request(this.createURL(options).toString(), {
-      cache: this.cache,
-      credentials: this.credentials,
-      integrity: this.integrity,
-      keepalive: this.keepalive,
       method: this.method,
-      mode: this.mode,
-      redirect: this.redirect,
-      referrer: this.referrer,
-      referrerPolicy: this.referrerPolicy,
       signal: this.controller.signal,
       ...options
     })
@@ -189,14 +148,13 @@ export class RequestElement extends NodeElement {
 
   protected createURL (options?: Struct): URL {
     const urlParts = [
-      this.origin,
-      this.base
+      this.origin
     ]
 
-    if (typeof options?.url === 'string') {
-      urlParts.push(options.url)
+    if (typeof options?.path === 'string') {
+      urlParts.push(options.path)
     } else {
-      urlParts.push(this.url ?? '')
+      urlParts.push(this.path ?? '')
     }
 
     const parameters = {

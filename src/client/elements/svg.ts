@@ -26,8 +26,6 @@ export interface Drawers {
 
 @customElement('scola-svg')
 export class SvgElement extends NodeElement {
-  public static base = ''
-
   public static d3?: Partial<typeof d3>
 
   public static drawers: Drawers = {}
@@ -35,21 +33,18 @@ export class SvgElement extends NodeElement {
   public static origin = window.location.origin
 
   @property()
-  public base = SvgElement.base
-
-  @property()
   public drawer?: string
 
   @property()
   public origin = SvgElement.origin
 
+  @property()
+  public path?: string
+
   @property({
     type: Number
   })
   public scale?: number
-
-  @property()
-  public url?: Request['url']
 
   public d3 = SvgElement.d3
 
@@ -114,8 +109,7 @@ export class SvgElement extends NodeElement {
     return new Promise((resolve) => {
       const urlParts = [
         this.origin,
-        this.base,
-        this.url
+        this.path
       ]
 
       const parameters = {
@@ -147,7 +141,7 @@ export class SvgElement extends NodeElement {
   protected async getDrawer (drawer: string): Promise<Drawer | undefined> {
     if (this.drawers[drawer] !== undefined) {
       return this.drawers[drawer]
-    } else if (this.url !== undefined) {
+    } else if (this.path !== undefined) {
       return this.fetchDrawer(drawer)
     }
 

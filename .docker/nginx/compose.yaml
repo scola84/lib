@@ -3,14 +3,12 @@ services:
   nginx:
     depends_on:
       - node
-    image: "nginx:1-alpine"
+    image: "nginx:1"
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - $PWD/dist/client.js:/usr/share/nginx/html/client.js
-      - $PWD/media:/usr/share/nginx/html/media
+      - $PWD/dist/client:/usr/share/nginx/html
+      - ./nginx/docker-entrypoint.d/https.sh:/docker-entrypoint.d/https.sh
       - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/html/index.html:/usr/share/nginx/html/index.html
       - ./nginx/snippets:/etc/nginx/snippets
-      - ./nginx/ssl:/etc/nginx/ssl

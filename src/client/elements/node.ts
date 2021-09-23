@@ -393,6 +393,13 @@ export class NodeElement extends LitElement {
 
   protected updaters = NodeElement.updaters
 
+  public static determineOrigin (): string {
+    return document
+      .querySelector('meta[http-equiv="Content-Security-Policy"]')
+      ?.getAttribute('content')
+      ?.match(/default-src (?<origin>https?:\/\/[^\s]+)/u)?.groups?.origin ?? window.location.origin
+  }
+
   public addObserver (element: NodeElement): void {
     this.observers.add(element)
   }

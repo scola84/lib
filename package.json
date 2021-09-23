@@ -13,10 +13,11 @@
       "path": "cz-conventional-changelog"
     }
   },
-  "browser": "./dist/client.js",
+  "browser": "./dist/client/index.js",
   "dependencies": {
     "@rmp135/sql-ts": "^1.9.0",
     "@rollup/plugin-commonjs": "^20.0.0",
+    "@rollup/plugin-html": "^0.2.3",
     "@rollup/plugin-node-resolve": "^13.0.4",
     "@rollup/plugin-typescript": "^8.2.5",
     "@zxing/browser": "^0.0.9",
@@ -152,7 +153,7 @@
     "types"
   ],
   "license": "MIT",
-  "main": "./dist/server.js",
+  "main": "./dist/server/index.js",
   "name": "@scola/lib",
   "prettier": {
     "htmlWhitespaceSensitivity": "ignore",
@@ -181,7 +182,7 @@
   },
   "repository": "github:scola84/lib",
   "scripts": {
-    "exec": "onchange --initial --kill ./server.js -- node ./server.js",
+    "exec": "onchange --initial --kill ./dist/server/index.js -- node ./dist/server/index.js",
     "lint": "tsc --project ./src/client && tsc --project ./src/server && tsc --project ./test/server && lit-analyzer ./src/client --strict && eslint ./bin ./src ./test",
     "make": "rollup --config ./bin/rollup.config.js",
     "test": "jest --preset ts-jest --runInBand"

@@ -43,8 +43,6 @@ const viewElements = new Set<ViewElement>()
 
 @customElement('scola-view')
 export class ViewElement extends ClipElement {
-  public static base = ''
-
   public static dompurifyOptions: Config = {
     ADD_TAGS: [
       'scola-app',
@@ -86,10 +84,10 @@ export class ViewElement extends ClipElement {
   public static storage: Storage = window.sessionStorage
 
   @property()
-  public base = ViewElement.base
+  public origin = ViewElement.origin
 
   @property()
-  public origin = ViewElement.origin
+  public path?: string
 
   @property({
     type: Boolean
@@ -100,9 +98,6 @@ export class ViewElement extends ClipElement {
     attribute: false
   })
   public storage = ViewElement.storage
-
-  @property()
-  public url?: Request['url']
 
   @property({
     attribute: false
@@ -224,7 +219,7 @@ export class ViewElement extends ClipElement {
 
     if (window.customElements.get(view.name) !== undefined) {
       element = document.createElement(view.name)
-    } else if (this.url === undefined) {
+    } else if (this.path === undefined) {
       element = undefined
     } else {
       element = await this.fetchElement(view.name)
@@ -278,8 +273,7 @@ export class ViewElement extends ClipElement {
     try {
       const urlParts = [
         this.origin,
-        this.base,
-        this.url
+        this.path
       ]
 
       const parameters = {

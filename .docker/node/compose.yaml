@@ -13,8 +13,7 @@ services:
     ports:
       - "9229:9229"
     volumes:
-      - $PWD/dist/client.js:/usr/src/app/client.js
-      - $PWD/dist/server.js:/usr/src/app/server.js
+      - $PWD/dist:/usr/src/app/dist
       - $PWD/package.json:/usr/src/app/package.json
       - $PWD/yarn.lock:/usr/src/app/yarn.lock
     working_dir: /usr/src/app

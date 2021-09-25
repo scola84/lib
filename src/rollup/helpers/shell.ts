@@ -1,10 +1,25 @@
+import type { Plugin } from 'rollup'
+import type { Result } from 'pwa-asset-generator/dist/models/result'
 import child from 'child_process'
 import cordova from 'cordova-res'
 import fs from 'fs'
 import path from 'path'
 import pwa from 'pwa-asset-generator'
 
-async function createCordovaIdentity () {
+interface Base {
+  output: string
+  input: string
+}
+
+interface Options {
+  dest: string
+  origin?: string
+  src: string
+  title: string
+  watch?: boolean
+}
+
+async function createCordovaIdentity (options: Options): Promise<void> {
   const iconFile = `${options.src}/cordova/icon.png`
   const splashFile = `${options.src}/cordova/splash.png`
 
@@ -45,8 +60,8 @@ async function createCordovaIdentity () {
   }
 }
 
-function createIndex (identity = null) {
-  const file = `${inputBase}/index.html`
+function createIndex (options: Options, base: Base, identity: Result | null = null): string {
+  const file = `${base.input}/index.html`
   const origin = determineOrigin(options.origin)
 
   const meta = [
@@ -78,10 +93,12 @@ function createIndex (identity = null) {
     index = fs.readFileSync(file).toString()
   }
 
-  return index.replace('</head>', `${meta.replace(/\n/gu, '')}</head>`)
+  return index
+    .replace('</head>', `${meta}</head>`)
+    .replace(/\r?\n/gu, '')
 }
 
-async function createPwaIdentity () {
+async function createPwaIdentity (options: Options, base: Base): Promise<Result | null> {
   const file = `${options.src}/pwa/index.html`
 
   let identity = null
@@ -92,7 +109,7 @@ async function createPwaIdentity () {
       log: false,
       maskable: false,
       mstile: true,
-      pathOverride: `${options.dest.replace(outputBase, '')}/pwa`,
+      pathOverride: `${options.dest.replace(base.output, '')}/pwa`,
       type: 'png',
       xhtml: true
     })
@@ -101,18 +118,18 @@ async function createPwaIdentity () {
   return identity
 }
 
-function createPwaManifest (identity = {}) {
-  const file = `${inputBase}/index.webmanifest`
+function createPwaManifest (options: Options, base: Base, identity?: Result): string {
+  const file = `${base.input}/index.webmanifest`
 
   let manifest = {}
 
   if (fs.existsSync(file)) {
-    manifest = JSON.parse(fs.readFileSync(file).toString())
+    manifest = JSON.parse(fs.readFileSync(file).toString()) as Record<string, unknown>
   }
 
   return JSON.stringify({
     display: 'standalone',
-    icons: identity.manifestJsonContent,
+    icons: identity?.manifestJsonContent,
     name: options.title,
     short_name: options.title,
     start_url: '/',
@@ -120,13 +137,12 @@ function createPwaManifest (identity = {}) {
   })
 }
 
-function determineOrigin (origin) {
+function determineOrigin (origin?: string): string {
   switch (origin) {
     case 'true':
-      return child
+      return ((/src (?<ip>[^\s]+)/u).exec(child
         .execSync('ip route get 255.255.255.255')
-        .toString()
-        .match(/src (?<ip>[^\s]+)/u).groups.ip
+        .toString()))?.groups?.ip ?? 'localhost'
     case undefined:
       return 'localhost'
     default:
@@ -134,42 +150,45 @@ function determineOrigin (origin) {
   }
 }
 
-let inputBase = ''
-let options = {}
-let outputBase = ''
+export function shell (options: Options): Plugin {
+  const base: Base = {
+    input: '',
+    output: ''
+  }
 
-const plugin = {
-  generateBundle: async function generateBundle () {
-    let pwaIdentity = null
+  return {
+    generateBundle: async function generateBundle () {
+      let pwaIdentity = null
 
-    if (options.watch !== true) {
-      pwaIdentity = await createPwaIdentity()
+      if (options.watch !== true) {
+        pwaIdentity = await createPwaIdentity(options, base)
 
-      if (pwaIdentity !== null) {
-        this.emitFile({
-          fileName: `${outputBase}/index.webmanifest`,
-          source: createPwaManifest(pwaIdentity),
-          type: 'asset'
-        })
+        if (pwaIdentity !== null) {
+          this.emitFile({
+            fileName: `${base.output}/index.webmanifest`,
+            source: createPwaManifest(options, base, pwaIdentity),
+            type: 'asset'
+          })
+        }
+
+        await createCordovaIdentity(options)
       }
 
-      await createCordovaIdentity()
+      this.emitFile({
+        fileName: `${base.output}/index.html`,
+        source: createIndex(options, base, pwaIdentity),
+        type: 'asset'
+      })
+    },
+    name: 'shell',
+    renderStart: (output, input) => {
+      if (typeof output.entryFileNames === 'string') {
+        base.output = path.dirname(output.entryFileNames)
+      }
+
+      if (Array.isArray(input.input)) {
+        base.input = path.dirname(input.input.shift() ?? '')
+      }
     }
-
-    this.emitFile({
-      fileName: `${outputBase}/index.html`,
-      source: createIndex(pwaIdentity),
-      type: 'asset'
-    })
-  },
-  name: 'shell',
-  renderStart: (output, input) => {
-    outputBase = path.dirname(output.entryFileNames)
-    inputBase = path.dirname(input.input.shift())
   }
-}
-
-export default (pluginOptions = {}) => {
-  options = pluginOptions
-  return plugin
 }

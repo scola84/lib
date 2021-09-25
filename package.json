@@ -24,6 +24,7 @@
     "@zxing/library": "^0.18.6",
     "ajv": "^8.6.2",
     "async-wait-until": "^2.0.7",
+    "builtin-modules": "^3.2.0",
     "commander": "^8.1.0",
     "cordova-res": "^0.15.3",
     "cron-parser": "^3.5.0",
@@ -40,7 +41,6 @@
     "image-capture": "^0.4.0",
     "interactjs": "^1.10.11",
     "intl-messageformat": "^9.9.1",
-    "is-builtin-module": "^3.1.0",
     "lit": "2.0.0-rc.2",
     "lodash": "^4.17.21",
     "luxon": "^2.0.2",
@@ -153,7 +153,6 @@
     ".docker",
     ".eslint",
     "dist",
-    "rollup",
     "types"
   ],
   "license": "MIT",
@@ -188,7 +187,7 @@
   "scripts": {
     "exec": "onchange --initial --kill ./dist/server/index.js -- node ./dist/server/index.js",
     "lint": "tsc --project ./src/client && tsc --project ./src/server && tsc --project ./test/server && lit-analyzer ./src/client --strict && eslint ./bin ./src ./test",
-    "make": "rollup --config ./rollup/config.js",
+    "make": "rollup --config ./src/rollup/index.ts --configPlugin typescript",
     "test": "jest --preset ts-jest --runInBand"
   },
   "types": "./types/index.d.ts",

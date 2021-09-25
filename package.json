@@ -1,7 +1,7 @@
 {
   "author": "M.C. van den Boogaart <scola@kvdb.name>",
   "bin": {
-    "scola": "./bin/scola.js"
+    "scola": "./dist/cli/scola-cli.js"
   },
   "commitlint": {
     "extends": [
@@ -40,6 +40,7 @@
     "image-capture": "^0.4.0",
     "interactjs": "^1.10.11",
     "intl-messageformat": "^9.9.1",
+    "is-builtin-module": "^3.1.0",
     "lit": "2.0.0-rc.2",
     "lodash": "^4.17.21",
     "luxon": "^2.0.2",
@@ -151,7 +152,6 @@
   "files": [
     ".docker",
     ".eslint",
-    "bin",
     "dist",
     "rollup",
     "types"

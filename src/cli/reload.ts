@@ -1,5 +1,6 @@
-const child = require('child_process')
-const { Command } = require('commander')
+import { Command } from 'commander'
+import child from 'child_process'
+
 const logger = console
 const program = new Command()
 
@@ -22,7 +23,7 @@ program
 try {
   const [service] = program.args
 
-  if (service === undefined) {
+  if (typeof service !== 'string') {
     throw new Error('error: missing required argument "service"')
   }
 
@@ -42,6 +43,6 @@ try {
   ].join(' '), {
     stdio: 'inherit'
   })
-} catch (error) {
+} catch (error: unknown) {
   logger.error(String(error))
 }

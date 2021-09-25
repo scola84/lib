@@ -1,8 +1,9 @@
-const { Command } = require('commander')
-const { URL } = require('url')
-const child = require('child_process')
-const fs = require('fs')
-const path = require('path')
+import { Command } from 'commander'
+import { URL } from 'url'
+import child from 'child_process'
+import fs from 'fs'
+import path from 'path'
+
 const logger = console
 const program = new Command()
 
@@ -39,11 +40,11 @@ try {
     target
   ] = program.args
 
-  if (container === undefined) {
+  if (typeof container !== 'string') {
     throw new Error('error: missing required argument "container"')
   }
 
-  if (source === undefined) {
+  if (typeof source !== 'string') {
     throw new Error('error: missing required argument "source"')
   }
 
@@ -53,8 +54,24 @@ try {
 
   let targetFile = target
 
-  if (targetFile === undefined) {
+  if (typeof targetFile !== 'string') {
     targetFile = '/tmp/scola-sql-diff-out.sql'
+  }
+
+  if (typeof url.hostname !== 'string') {
+    url.hostname = '127.0.0.1'
+  }
+
+  if (typeof url.password !== 'string') {
+    url.password = 'root'
+  }
+
+  if (typeof url.port !== 'string') {
+    url.port = '3306'
+  }
+
+  if (typeof url.username !== 'string') {
+    url.username = 'root'
   }
 
   fs.mkdirSync(path.dirname(targetFile), {
@@ -69,15 +86,15 @@ try {
 
   child.execSync([
     'mysql-schema-diff',
-    `--host ${url.hostname || '127.0.0.1'}`,
+    `--host ${url.hostname}`,
     '--no-old-defs',
-    `--password=${decodeURIComponent(url.password || 'root')}`,
-    `--port ${url.port || 3306}`,
-    `--user ${decodeURIComponent(url.username || 'root')}`,
+    `--password=${decodeURIComponent(url.password)}`,
+    `--port ${url.port}`,
+    `--user ${decodeURIComponent(url.username)}`,
     `db:${database}`,
     '/tmp/scola-diff-sql-in.sql',
     `> ${targetFile}`
   ].join(' '))
-} catch (error) {
+} catch (error: unknown) {
   logger.error(String(error))
 }

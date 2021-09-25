@@ -5,45 +5,48 @@ import path from 'path'
 import pwa from 'pwa-asset-generator'
 
 async function createCordovaIdentity () {
-  try {
-    fs.closeSync(fs.openSync(`${options.src}/cordova/icon.png`))
+  const iconFile = `${options.src}/cordova/icon.png`
+  const splashFile = `${options.src}/cordova/splash.png`
 
+  if (
+    fs.existsSync(iconFile) ||
+    fs.existsSync(splashFile)
+  ) {
     await cordova.run({
       logstream: null,
       platforms: {
         android: {
           icon: {
-            sources: [`${options.src}/cordova/icon.png`]
+            sources: [iconFile]
           },
           splash: {
-            sources: [`${options.src}/cordova/splash.png`]
+            sources: [splashFile]
           }
         },
         ios: {
           icon: {
-            sources: [`${options.src}/cordova/icon.png`]
+            sources: [iconFile]
           },
           splash: {
-            sources: [`${options.src}/cordova/splash.png`]
+            sources: [splashFile]
           }
         },
         windows: {
           icon: {
-            sources: [`${options.src}/cordova/icon.png`]
+            sources: [iconFile]
           },
           splash: {
-            sources: [`${options.src}/cordova/splash.png`]
+            sources: [splashFile]
           }
         }
       },
       resourcesDirectory: `${options.dest}/cordova`
     })
-  } catch (error) {
-    // file does not exist, skip creation
   }
 }
 
 function createIndex (identity = null) {
+  const file = `${inputBase}/index.html`
   const origin = determineOrigin(options.origin)
 
   const meta = [
@@ -71,24 +74,20 @@ function createIndex (identity = null) {
     '</html>'
   ].join('')
 
-  try {
-    index = fs.readFileSync(`${inputBase}/index.html`).toString()
-  } catch (error) {
-    // file does not exist, use default content
+  if (fs.existsSync(file)) {
+    index = fs.readFileSync(file).toString()
   }
 
   return index.replace('</head>', `${meta.replace(/\n/gu, '')}</head>`)
 }
 
 async function createPwaIdentity () {
+  const file = `${options.src}/pwa/index.html`
+
   let identity = null
 
-  try {
-    const src = `${options.src}/pwa/index.html`
-
-    fs.closeSync(fs.openSync(src))
-
-    identity = await pwa.generateImages(src, `${options.dest}/pwa`, {
+  if (fs.existsSync(file)) {
+    identity = await pwa.generateImages(file, `${options.dest}/pwa`, {
       favicon: true,
       log: false,
       maskable: false,
@@ -97,20 +96,18 @@ async function createPwaIdentity () {
       type: 'png',
       xhtml: true
     })
-  } catch (error) {
-    // file does not exist, skip creation
   }
 
   return identity
 }
 
 function createPwaManifest (identity = {}) {
+  const file = `${inputBase}/index.webmanifest`
+
   let manifest = {}
 
-  try {
-    manifest = JSON.parse(fs.readFileSync(`${inputBase}/index.webmanifest`).toString())
-  } catch (error) {
-    // file does not exist, use default content
+  if (fs.existsSync(file)) {
+    manifest = JSON.parse(fs.readFileSync(file).toString())
   }
 
   return JSON.stringify({

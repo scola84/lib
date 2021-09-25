@@ -1,8 +1,14 @@
-const { Command } = require('commander')
-const { URL } = require('url')
-const child = require('child_process')
-const fs = require('fs')
-const path = require('path')
+import { Command } from 'commander'
+import { URL } from 'url'
+import child from 'child_process'
+import fs from 'fs'
+import path from 'path'
+
+interface Options {
+  exclude?: string[]
+  include?: string[]
+}
+
 const logger = console
 const program = new Command()
 
@@ -35,18 +41,18 @@ try {
     target
   ] = program.args
 
-  if (container === undefined) {
+  if (typeof container !== 'string') {
     throw new Error('error: missing required argument "container"')
   }
 
-  if (source === undefined) {
+  if (typeof source !== 'string') {
     throw new Error('error: missing required argument "source"')
   }
 
   const {
     exclude,
     include
-  } = program.opts()
+  } = program.opts<Options>()
 
   const [context] = container.split('_')
   const url = new URL(source)
@@ -55,8 +61,24 @@ try {
 
   let targetFile = target
 
-  if (targetFile === undefined) {
+  if (typeof targetFile !== 'string') {
     targetFile = `.docker/${dialect}/initdb.d/${context}/${database}.sql`
+  }
+
+  if (typeof url.hostname !== 'string') {
+    url.hostname = '127.0.0.1'
+  }
+
+  if (typeof url.password !== 'string') {
+    url.password = 'root'
+  }
+
+  if (typeof url.port !== 'string') {
+    url.port = '5432'
+  }
+
+  if (typeof url.username !== 'string') {
+    url.username = 'root'
   }
 
   fs.mkdirSync(path.dirname(targetFile), {
@@ -73,12 +95,12 @@ try {
     child.execSync([
     `docker exec ${container} mysqldump`,
     excludeFlags,
-    `--host ${url.hostname || '127.0.0.1'}`,
+    `--host ${url.hostname}`,
     '--no-data',
-    `--password=${decodeURIComponent(url.password || 'root')}`,
-    `--port ${url.port || 3306}`,
+    `--password=${decodeURIComponent(url.password)}`,
+    `--port ${url.port}`,
     '--skip-add-drop-table',
-    `--user ${decodeURIComponent(url.username || 'root')}`,
+    `--user ${decodeURIComponent(url.username)}`,
     `--databases ${database}`,
     `> ${targetFile}`
     ].join(' '), {
@@ -101,23 +123,23 @@ try {
 
     child.execSync([
       'docker exec',
-      `--env PGPASSWORD=${decodeURIComponent(url.password || 'root')}`,
+      `--env PGPASSWORD=${decodeURIComponent(url.password)}`,
       `${container} pg_dump`,
       '--create',
       excludeFlags,
       '--format p',
-      `--host ${url.hostname || '127.0.0.1'}`,
+      `--host ${url.hostname}`,
       includeFlags,
       '--no-owner',
-      `--port ${url.port || 5432}`,
+      `--port ${url.port}`,
       '--schema-only',
-      `--user ${decodeURIComponent(url.username || 'root')}`,
+      `--user ${decodeURIComponent(url.username)}`,
       database,
       `> ${targetFile}`
     ].join(' '), {
       stdio: 'inherit'
     })
   }
-} catch (error) {
+} catch (error: unknown) {
   logger.error(String(error))
 }

@@ -1,13 +1,13 @@
-#!/usr/bin/env node
+import commander from 'commander'
 
 try {
-  require('commander')
+  commander.program
     .command('reload', 'reloads a Docker Compose service')
     .command('sql-diff', 'dumps the diff of a SQL database and a DDL file')
     .command('sql-schema', 'dumps the schema of a SQL database')
     .command('sql-ts', 'creates TypeScript interfaces from a SQL database')
     .exitOverride()
     .parse()
-} catch (error) {
+} catch (error: unknown) {
   // discard error
 }

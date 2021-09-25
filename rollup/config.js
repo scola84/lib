@@ -1,60 +1,18 @@
 import commonjs from '@rollup/plugin-commonjs'
 import copy from 'rollup-plugin-copy'
+import fs from 'fs'
 import gzip from 'rollup-plugin-gzip'
-import html from '@rollup/plugin-html'
 import minify from 'rollup-plugin-minify-html-literals'
 import minimist from 'minimist'
-import os from 'os'
 import resolve from '@rollup/plugin-node-resolve'
+import shell from './shell'
 import svg from 'rollup-plugin-svgo'
 import terser from 'rollup-plugin-terser'
 import typescript from '@rollup/plugin-typescript'
+import workbox from 'rollup-plugin-workbox'
 
 const arg = minimist(process.argv.slice(2))
 const pkg = require(`${process.cwd()}/package.json`)
-
-function createTemplate () {
-  let origin = 'https://localhost'
-
-  if (process.env.ORIGIN === 'true') {
-    origin = `https://${Object
-    .entries(os.networkInterfaces())
-    .filter(([name]) => {
-      return name.match(/^en|wl/u) !== null
-    })
-    .map(([, interfaces]) => {
-      return interfaces
-        .filter((info) => {
-          return (
-            info.family === 'IPv4' &&
-            info.internal === false
-          )
-        })
-        .pop()
-    })
-    .shift()
-    .address}`
-  } else if (typeof process.env.ORIGIN === 'string') {
-    origin = `https://${process.env.ORIGIN}`
-  }
-
-  return [
-    '<!DOCTYPE html>',
-    '<html>',
-    '<head>',
-    '<meta charset="utf-8" />',
-    `<meta http-equiv="Content-Security-Policy" content="default-src ${origin} 'self'; img-src ${origin} blob: 'self'; media-src ${origin} blob: 'self'; object-src 'none'; style-src 'unsafe-inline'; worker-src blob:;" />`,
-    '<meta name="mobile-web-app-capable" content="yes" />',
-    '<meta name="referrer" content="no-referrer">',
-    '<meta name="viewport" content="width=device-width" />',
-    `<title>${pkg.description}</title>`,
-    '</head>',
-    '<body>',
-    '<script src="/index.js"></script>',
-    '</body>',
-    '</html>'
-  ].join('')
-}
 
 module.exports = [{
   input: 'src/client/index.ts',
@@ -69,15 +27,20 @@ module.exports = [{
     copy({
       copyOnce: true,
       targets: [{
-        dest: 'dist/client',
-        src: 'src/client/media'
+        dest: 'dist/client/media',
+        rename: (name, extension, path) => {
+          return path.replace('src/client/media', '')
+        },
+        src: 'src/client/media/!({cordova,pwa})/*'
       }]
     }),
-    html({
-      fileName: 'dist/client/index.html',
-      template: createTemplate
+    shell({
+      dest: 'dist/client/media',
+      origin: process.env.ORIGIN,
+      src: 'src/client/media',
+      title: pkg.description,
+      watch: Boolean(arg.w || arg.watch)
     }),
-    minify(),
     resolve({
       mainFields: ['browser', 'main', 'module']
     }),
@@ -93,6 +56,7 @@ module.exports = [{
       tsconfig: 'src/client/tsconfig.json'
     }),
     (!arg.w && !arg.watch) && gzip(),
+    (!arg.w && !arg.watch) && minify(),
     (!arg.w && !arg.watch) && terser.terser()
   ]
 }, {
@@ -128,4 +92,44 @@ module.exports = [{
       tsconfig: 'src/server/tsconfig.json'
     })
   ]
-}]
+}, {
+  input: 'src/worker/index.ts',
+  output: {
+    dir: '.',
+    entryFileNames: 'dist/client/worker.js',
+    format: 'cjs'
+  },
+  plugins: [
+    commonjs(),
+    minify(),
+    resolve({
+      mainFields: ['main', 'module']
+    }),
+    typescript({
+      declaration: true,
+      declarationDir: 'types',
+      tsconfig: 'src/worker/tsconfig.json'
+    }),
+    workbox.injectManifest({
+      globDirectory: 'dist/client',
+      globIgnores: [
+        'media/cordova/**/*'
+      ],
+      globPatterns: [
+        '*.{css,js,html}',
+        'media/**/*.{gif,png,jpg,svg,webp}'
+      ],
+      swDest: './dist/client/worker.js',
+      swSrc: './dist/client/worker.js'
+    }, () => {}),
+    (!arg.w && !arg.watch) && gzip(),
+    (!arg.w && !arg.watch) && terser.terser()
+  ]
+}].filter(({ input }) => {
+  try {
+    fs.closeSync(fs.openSync(input))
+    return true
+  } catch (error) {
+    return false
+  }
+})

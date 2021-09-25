@@ -25,6 +25,7 @@
     "ajv": "^8.6.2",
     "async-wait-until": "^2.0.7",
     "commander": "^8.1.0",
+    "cordova-res": "^0.15.3",
     "cron-parser": "^3.5.0",
     "dompurify": "^2.3.2",
     "fastify": "^3.20.2",
@@ -52,6 +53,7 @@
     "pg": "^8.7.1",
     "pg-format": "^1.0.4",
     "pg-query-stream": "^4.2.1",
+    "pwa-asset-generator": "^4.3.9",
     "query-string": "^7.0.1",
     "recordrtc": "^5.6.2",
     "redis": "^3.1.2",
@@ -61,6 +63,7 @@
     "rollup-plugin-minify-html-literals": "^1.2.6",
     "rollup-plugin-svgo": "^1.1.0",
     "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-workbox": "^6.2.0",
     "sqlstring": "^2.3.2",
     "throttle-debounce": "^3.0.1"
   },
@@ -150,6 +153,7 @@
     ".eslint",
     "bin",
     "dist",
+    "rollup",
     "types"
   ],
   "license": "MIT",
@@ -184,7 +188,7 @@
   "scripts": {
     "exec": "onchange --initial --kill ./dist/server/index.js -- node ./dist/server/index.js",
     "lint": "tsc --project ./src/client && tsc --project ./src/server && tsc --project ./test/server && lit-analyzer ./src/client --strict && eslint ./bin ./src ./test",
-    "make": "rollup --config ./bin/rollup.config.js",
+    "make": "rollup --config ./rollup/config.js",
     "test": "jest --preset ts-jest --runInBand"
   },
   "types": "./types/index.d.ts",

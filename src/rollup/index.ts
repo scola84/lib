@@ -1,26 +1,26 @@
 import { cli, client, rollup, server, worker } from './configs'
 import fs from 'fs'
 
-const exports = []
+const configs = []
 
 if (fs.existsSync('src/cli/index.ts')) {
-  exports.push(cli())
+  configs.push(cli())
 }
 
 if (fs.existsSync('src/client/index.ts')) {
-  exports.push(client())
+  configs.push(client())
 }
 
 if (fs.existsSync('src/rollup/index.ts')) {
-  exports.push(rollup())
+  configs.push(rollup())
 }
 
 if (fs.existsSync('src/server/index.ts')) {
-  exports.push(server())
+  configs.push(server())
 }
 
 if (fs.existsSync('src/worker/index.ts')) {
-  exports.push(worker())
+  configs.push(worker())
 }
 
-export default exports
+export default configs

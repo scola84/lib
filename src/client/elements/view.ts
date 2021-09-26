@@ -1,5 +1,5 @@
 import { addHook, isValidAttribute, sanitize } from 'dompurify'
-import { cast, isArray, isNil, isPrimitive, isStruct } from '../../common'
+import { cast, elements, isArray, isNil, isPrimitive, isStruct } from '../../common'
 import { customElement, property, state } from 'lit/decorators.js'
 import { ClipElement } from './clip'
 import type { Config } from 'dompurify'
@@ -44,37 +44,7 @@ const viewElements = new Set<ViewElement>()
 @customElement('scola-view')
 export class ViewElement extends ClipElement {
   public static dompurifyOptions: Config = {
-    ADD_TAGS: [
-      'scola-app',
-      'scola-auth',
-      'scola-button',
-      'scola-clip',
-      'scola-dialog',
-      'scola-event',
-      'scola-field',
-      'scola-form',
-      'scola-format',
-      'scola-icon',
-      'scola-influx',
-      'scola-input',
-      'scola-list',
-      'scola-log',
-      'scola-media',
-      'scola-node',
-      'scola-picker',
-      'scola-progress',
-      'scola-recorder',
-      'scola-reloader',
-      'scola-request',
-      'scola-select',
-      'scola-slider',
-      'scola-source',
-      'scola-struct',
-      'scola-svg',
-      'scola-textarea',
-      'scola-view',
-      'scola-worker'
-    ]
+    ADD_TAGS: elements
   }
 
   public static mode: 'push' | 'replace'

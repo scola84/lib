@@ -1,6 +1,6 @@
 import type { Query, Strings, Struct } from '../../common'
 import { customElement, property } from 'lit/decorators.js'
-import { format, isStruct, lookup, parse } from '../../common'
+import { elements, format, isStruct, lookup, parse } from '../../common'
 import type { Config } from 'dompurify'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
@@ -16,7 +16,9 @@ declare global {
 
 @customElement('scola-format')
 export class FormatElement extends NodeElement {
-  public static dompurifyOptions: Config = {}
+  public static dompurifyOptions: Config = {
+    ADD_TAGS: elements
+  }
 
   public static lang = 'en'
 

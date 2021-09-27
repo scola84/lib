@@ -1,12 +1,12 @@
 import type { Plugin, RollupOptions } from 'rollup'
 import commonjs from '@rollup/plugin-commonjs'
 import gzip from 'rollup-plugin-gzip'
+import { injectManifest } from 'rollup-plugin-workbox'
 import minify from 'rollup-plugin-minify-html-literals'
 import minimist from 'minimist'
 import resolve from '@rollup/plugin-node-resolve'
-import terser from 'rollup-plugin-terser'
+import { terser } from 'rollup-plugin-terser'
 import typescript from '@rollup/plugin-typescript'
-import workbox from 'rollup-plugin-workbox'
 
 const arg = minimist(process.argv.slice(2))
 
@@ -29,7 +29,7 @@ export function worker (): RollupOptions {
         declarationDir: 'types',
         tsconfig: 'src/worker/tsconfig.json'
       }),
-      workbox.injectManifest({
+      injectManifest({
         globDirectory: 'dist/client',
         globIgnores: [
           'media/cordova/**/*'
@@ -42,7 +42,7 @@ export function worker (): RollupOptions {
         swSrc: './dist/client/worker.js'
       }, () => {}) as Plugin,
       !(arg.w === true || arg.watch === true) && gzip(),
-      !(arg.w === true || arg.watch === true) && terser.terser()
+      !(arg.w === true || arg.watch === true) && terser()
     ]
   }
 }

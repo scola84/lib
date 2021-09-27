@@ -6,7 +6,7 @@ import gzip from 'rollup-plugin-gzip'
 import minify from 'rollup-plugin-minify-html-literals'
 import minimist from 'minimist'
 import resolve from '@rollup/plugin-node-resolve'
-import terser from 'rollup-plugin-terser'
+import { terser } from 'rollup-plugin-terser'
 import typescript from '@rollup/plugin-typescript'
 
 const arg = minimist(process.argv.slice(2))
@@ -52,7 +52,7 @@ export function client (): RollupOptions {
       }),
       !(arg.w === true || arg.watch === true) && gzip(),
       !(arg.w === true || arg.watch === true) && minify(),
-      !(arg.w === true || arg.watch === true) && terser.terser()
+      !(arg.w === true || arg.watch === true) && terser()
     ]
   }
 }

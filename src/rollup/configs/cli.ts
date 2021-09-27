@@ -1,6 +1,6 @@
+import { executable, isExternal } from '../helpers'
 import type { RollupOptions } from 'rollup'
 import commonjs from '@rollup/plugin-commonjs'
-import { isExternal } from '../helpers'
 import minify from 'rollup-plugin-minify-html-literals'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
@@ -9,7 +9,7 @@ export function cli (): RollupOptions {
   return {
     external: isExternal,
     input: {
-      'cli': 'src/cli/index.ts',
+      'index': 'src/cli/index.ts',
       'reload': 'src/cli/commands/reload.ts',
       'sql-diff': 'src/cli/commands/sql-diff.ts',
       'sql-schema': 'src/cli/commands/sql-schema.ts',
@@ -18,11 +18,14 @@ export function cli (): RollupOptions {
     output: {
       banner: '#!/usr/bin/env node',
       dir: '.',
-      entryFileNames: 'dist/cli/scola-[name].js',
+      entryFileNames: 'dist/cli/[name].js',
       format: 'cjs'
     },
     plugins: [
       commonjs(),
+      executable({
+        include: 'dist/cli/index.js'
+      }),
       minify(),
       resolve({
         mainFields: ['main', 'module']

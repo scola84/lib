@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ip=$(grep -oE "https://[^;]+" /usr/share/nginx/html/index.html | sed -E 's/https:\/\///g') || '127.0.0.1'
+ip=$(grep --only-match --extended-regexp "https://[^;]+" /usr/share/nginx/html/index.html | head --lines 1 | sed --regexp-extended 's/https:\/\///g') || '127.0.0.1'
 
 echo "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:${ip:-localhost}\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth" > config
 

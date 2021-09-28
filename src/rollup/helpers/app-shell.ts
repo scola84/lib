@@ -62,7 +62,7 @@ async function createCordovaIdentity (options: Options): Promise<void> {
 
 function createIndex (options: Options, base: Base, identity: Result | null = null): string {
   const file = `${base.input}/index.html`
-  const origin = determineOrigin(options.origin)
+  const origin = `https://${determineOrigin(options.origin)}`
 
   const meta = [
     `<meta http-equiv="Content-Security-Policy" content="default-src ${origin} 'self'; img-src ${origin} blob: 'self'; media-src ${origin} blob: 'self'; object-src 'none'; style-src 'unsafe-inline'; worker-src blob: 'self';" />`,

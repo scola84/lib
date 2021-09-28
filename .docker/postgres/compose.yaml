@@ -11,6 +11,6 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
     volumes:
-      - ./postgres/initdb.d/lib:/docker-entrypoint-initdb.d/lib
-      - ./postgres/initdb.d/load.sh:/docker-entrypoint-initdb.d/load.sh
-      - $PWD/.docker/postgres/initdb.d/app:/docker-entrypoint-initdb.d/app
+      - ./postgres/docker-entrypoint-initdb.d/lib:/docker-entrypoint-initdb.d/lib
+      - ./postgres/docker-entrypoint-initdb.d/load.sh:/docker-entrypoint-initdb.d/load.sh
+      - $PWD/.docker/postgres/docker-entrypoint-initdb.d/app:/docker-entrypoint-initdb.d/app

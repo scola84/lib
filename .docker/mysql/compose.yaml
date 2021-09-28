@@ -11,6 +11,6 @@ services:
     tmpfs:
       - /var/lib/mysql
     volumes:
-      - ./mysql/initdb.d/lib:/docker-entrypoint-initdb.d/lib
-      - ./mysql/initdb.d/load.sh:/docker-entrypoint-initdb.d/load.sh
-      - $PWD/.docker/mysql/initdb.d/app:/docker-entrypoint-initdb.d/app
+      - ./mysql/docker-entrypoint-initdb.d/lib:/docker-entrypoint-initdb.d/lib
+      - ./mysql/docker-entrypoint-initdb.d/load.sh:/docker-entrypoint-initdb.d/load.sh
+      - $PWD/.docker/mysql/docker-entrypoint-initdb.d/app:/docker-entrypoint-initdb.d/app

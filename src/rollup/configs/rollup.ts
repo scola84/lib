@@ -18,9 +18,7 @@ export function rollup (): RollupOptions {
     plugins: [
       commonjs(),
       minify(),
-      resolve({
-        mainFields: ['main', 'module']
-      }),
+      resolve(),
       typescript({
         declaration: true,
         declarationDir: 'types',

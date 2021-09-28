@@ -1,4 +1,4 @@
-import { executable, isExternal } from '../helpers'
+import { chmodExec, isExternal } from '../helpers'
 import type { RollupOptions } from 'rollup'
 import commonjs from '@rollup/plugin-commonjs'
 import minify from 'rollup-plugin-minify-html-literals'
@@ -23,13 +23,11 @@ export function cli (): RollupOptions {
     },
     plugins: [
       commonjs(),
-      executable({
+      chmodExec({
         include: 'dist/cli/index.js'
       }),
       minify(),
-      resolve({
-        mainFields: ['main', 'module']
-      }),
+      resolve(),
       typescript({
         declaration: true,
         declarationDir: 'types',

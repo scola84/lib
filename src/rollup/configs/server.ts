@@ -25,9 +25,7 @@ export function server (): RollupOptions {
         }]
       }),
       minify(),
-      resolve({
-        mainFields: ['main', 'module']
-      }),
+      resolve(),
       typescript({
         declaration: true,
         declarationDir: 'types',

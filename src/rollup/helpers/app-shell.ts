@@ -76,7 +76,7 @@ function createIndex (options: Options, base: Base, identity: Result | null = nu
     '<!DOCTYPE html>',
     '<html>',
     '<head>',
-    '<link href="/index.webmanifest" rel="manifest" />',
+    '<link href="/app.webmanifest" rel="manifest" />',
     '<meta charset="utf-8" />',
     '<meta name="mobile-web-app-capable" content="yes" />',
     '<meta name="referrer" content="no-referrer">',
@@ -119,7 +119,7 @@ async function createPwaIdentity (options: Options, base: Base): Promise<Result 
 }
 
 function createPwaManifest (options: Options, base: Base, identity?: Result): string {
-  const file = `${base.input}/index.webmanifest`
+  const file = `${base.input}/app.webmanifest`
 
   let manifest = {}
 
@@ -150,7 +150,7 @@ function determineOrigin (origin?: string): string {
   }
 }
 
-export function shell (options: Options): Plugin {
+export function appShell (options: Options): Plugin {
   const base: Base = {
     input: '',
     output: ''
@@ -165,7 +165,7 @@ export function shell (options: Options): Plugin {
 
         if (pwaIdentity !== null) {
           this.emitFile({
-            fileName: `${base.output}/index.webmanifest`,
+            fileName: `${base.output}/app.webmanifest`,
             source: createPwaManifest(options, base, pwaIdentity),
             type: 'asset'
           })

@@ -7,7 +7,7 @@ interface Options {
   include?: string[] | string
 }
 
-export function executable (options: Options = {}): Plugin {
+export function chmodExec (options: Options = {}): Plugin {
   const directory = process.cwd()
   const filter = createFilter(options.include, options.exclude)
 

@@ -1,7 +1,7 @@
 import type { Plugin } from 'rollup'
 import { readFileSync } from 'fs'
 
-export function svg (): Plugin {
+export function loadSvg (): Plugin {
   return {
     load: function load (id: string) {
       if (!id.endsWith('.svg')) {

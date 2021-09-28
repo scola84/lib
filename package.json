@@ -65,7 +65,10 @@
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-workbox": "^6.2.0",
     "sqlstring": "^2.3.2",
-    "throttle-debounce": "^3.0.1"
+    "throttle-debounce": "^3.0.1",
+    "workbox-cacheable-response": "^6.3.0",
+    "workbox-expiration": "^6.3.0",
+    "workbox-range-requests": "^6.3.0"
   },
   "description": "The Scola Library",
   "devDependencies": {

@@ -1,14 +1,52 @@
 import type { Plugin, RollupOptions } from 'rollup'
+// import { CacheableResponsePlugin } from 'workbox-cacheable-response'
+// import { ExpirationPlugin } from 'workbox-expiration'
+// import { RangeRequestsPlugin } from 'workbox-range-requests'
 import commonjs from '@rollup/plugin-commonjs'
+import { generateSW } from 'rollup-plugin-workbox'
 import gzip from 'rollup-plugin-gzip'
-import { injectManifest } from 'rollup-plugin-workbox'
 import minify from 'rollup-plugin-minify-html-literals'
-import minimist from 'minimist'
+import { parseArgs } from '../helpers'
 import resolve from '@rollup/plugin-node-resolve'
 import { terser } from 'rollup-plugin-terser'
 import typescript from '@rollup/plugin-typescript'
 
-const arg = minimist(process.argv.slice(2))
+const args = parseArgs()
+
+function workbox (): Plugin {
+  return generateSW({
+    globDirectory: 'dist/client',
+    globIgnores: [
+      'media/cordova/**/*'
+    ],
+    globPatterns: [
+      '*.{css,js,html}',
+      'media/**/*.{gif,png,jpg,ogg,svg,weba,webm,webp}'
+    ],
+    importScripts: [
+      'worker.js'
+    ],
+    inlineWorkboxRuntime: true,
+    runtimeCaching: [{
+      handler: 'StaleWhileRevalidate',
+      options: {
+        plugins: [
+          // Waiting for https://github.com/GoogleChrome/workbox/issues/2897
+          // new CacheableResponsePlugin({
+          //   statuses: [0, 200]
+          // }),
+          // new ExpirationPlugin({
+          //   maxAgeSeconds: 30 * 24 * 60 * 60
+          // }),
+          // new RangeRequestsPlugin()
+        ]
+      },
+      urlPattern: /\.(?:gif|png|jpg|ogg|svg|weba|webm|webp)$/u
+    }],
+    sourcemap: false,
+    swDest: './dist/client/service-worker.js'
+  }, () => {})
+}
 
 export function worker (): RollupOptions {
   return {
@@ -21,28 +59,15 @@ export function worker (): RollupOptions {
     plugins: [
       commonjs(),
       minify(),
-      resolve({
-        mainFields: ['main', 'module']
-      }),
+      resolve(),
       typescript({
         declaration: true,
         declarationDir: 'types',
         tsconfig: 'src/worker/tsconfig.json'
       }),
-      injectManifest({
-        globDirectory: 'dist/client',
-        globIgnores: [
-          'media/cordova/**/*'
-        ],
-        globPatterns: [
-          '*.{css,js,html}',
-          'media/**/*.{gif,png,jpg,svg,webp}'
-        ],
-        swDest: './dist/client/worker.js',
-        swSrc: './dist/client/worker.js'
-      }, () => {}) as Plugin,
-      !(arg.w === true || arg.watch === true) && gzip(),
-      !(arg.w === true || arg.watch === true) && terser()
+      workbox(),
+      args.watch !== true && gzip(),
+      args.watch !== true && terser()
     ]
   }
 }

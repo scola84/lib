@@ -6,6 +6,4 @@ LABEL org.opencontainers.image.source $SOURCE
 EXPOSE 80
 
 COPY ./dist/client /usr/share/nginx/html
-COPY ./node_modules/@scola/lib/.docker/nginx/etc/nginx/conf.d/http.conf /etc/nginx/conf.d/http.conf
-COPY ./node_modules/@scola/lib/.docker/nginx/etc/nginx/snippets/gui.conf /etc/nginx/snippets/gui.conf
 COPY ./node_modules/@scola/lib/.docker/nginx/etc/nginx/nginx.conf /etc/nginx/nginx.conf

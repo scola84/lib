@@ -1,0 +1,16 @@
+version: "3"
+services:
+  ingress:
+    depends_on:
+      - nginx
+      - node
+    image: "nginx:1"
+    ports:
+      - "80:80"
+      - "443:443"
+    ulimits:
+      nofile: 1048576
+    volumes:
+      - ./ingress/docker-entrypoint.d/https.sh:/docker-entrypoint.d/https.sh
+      - ./ingress/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./ingress/etc/nginx/server.conf:/etc/nginx/server.conf

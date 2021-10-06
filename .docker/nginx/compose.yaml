@@ -1,15 +1,9 @@
 version: "3"
 services:
   nginx:
-    depends_on:
-      - node
-    image: "nginx:1"
-    ports:
-      - "80:80"
-      - "443:443"
+    image: "nginx:1-alpine"
+    ulimits:
+      nofile: 1048576
     volumes:
       - $PWD/dist/client:/usr/share/nginx/html
-      - ./nginx/docker-entrypoint.d/https.sh:/docker-entrypoint.d/https.sh
-      - ./nginx/etc/nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/etc/nginx/snippets:/etc/nginx/snippets
       - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf

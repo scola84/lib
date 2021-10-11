@@ -16,7 +16,18 @@ export default css`
     -webkit-appearance: none;
     --range: calc(var(--max) - var(--min));
     --ratio: calc((var(--val) - var(--min)) / var(--range));
+  }
+
+  :host([size="large"]) input {
     --sx: calc(0.5 * 1.5em + var(--ratio) * (100% - 1.5em));
+  }
+
+  :host([size="medium"]) input {
+    --sx: calc(0.5 * 1em + var(--ratio) * (100% - 1em));
+  }
+
+  :host([size="small"]) input {
+    --sx: calc(0.5 * 0.5em + var(--ratio) * (100% - 0.5em));
   }
 
   input::-moz-range-progress {
@@ -42,10 +53,23 @@ export default css`
     border-radius: 50%;
     box-shadow: 0 0 0.25rem rgba(0, 0, 0, 0.25);
     cursor: move;
-    height: 1.5rem;
-    width: 1.5rem;
     -moz-appearance: none;
     -webkit-appearance: none;
+  }
+
+  :host([size="large"]) input::-moz-range-thumb {
+    height: 1.5rem;
+    width: 1.5rem;
+  }
+
+  :host([size="medium"]) input::-moz-range-thumb {
+    height: 1rem;
+    width: 1rem;
+  }
+
+  :host([size="small"]) input::-moz-range-thumb {
+    height: 0.5rem;
+    width: 0.5rem;
   }
 
   input::-moz-range-track {
@@ -56,15 +80,15 @@ export default css`
     -webkit-appearance: none;
   }
 
-  :host([fill="aux-1"]) input::-moz-range-track {
+  :host([fill-track="aux-1"]) input::-moz-range-track {
     background: var(--scola-slider-fill-track-aux-1, #ddd);
   }
 
-  :host([fill="aux-2"]) input::-moz-range-track {
+  :host([fill-track="aux-2"]) input::-moz-range-track {
     background: var(--scola-slider-fill-track-aux-2, #ccc);
   }
 
-  :host([fill="aux-3"]) input::-moz-range-track {
+  :host([fill-track="aux-3"]) input::-moz-range-track {
     background: var(--scola-slider-fill-track-aux-3, #bbb);
   }
 
@@ -76,7 +100,7 @@ export default css`
     -webkit-appearance: none;
   }
 
-  :host([fill="aux-1"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-1"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--scola-slider-fill-progress-sig-1, #000),
@@ -86,7 +110,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to left,
       var(--scola-slider-fill-progress-sig-1, #000),
@@ -96,7 +120,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-1"][fill-progress="sig-1"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-1"][fill-progress="sig-1"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--scola-slider-fill-progress-sig-1, #b22222),
@@ -106,7 +130,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-1"][fill-progress="sig-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-1"][fill-progress="sig-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to left,
       var(--scola-slider-fill-progress-sig-1, #b22222),
@@ -116,7 +140,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-1"][fill-progress="sig-2"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-1"][fill-progress="sig-2"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--scola-slider-fill-progress-sig-1, #008000),
@@ -126,7 +150,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-1"][fill-progress="sig-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-1"][fill-progress="sig-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to left,
       var(--scola-slider-fill-progress-sig-1, #008000),
@@ -136,7 +160,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-2"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-2"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--scola-slider-fill-progress-sig-1, #000),
@@ -146,7 +170,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to left,
       var(--scola-slider-fill-progress-sig-1, #000),
@@ -156,7 +180,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-2"][fill-progress="sig-1"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-2"][fill-progress="sig-1"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--scola-slider-fill-progress-sig-1, #b22222),
@@ -166,7 +190,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-2"][fill-progress="sig-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-2"][fill-progress="sig-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to left,
       var(--scola-slider-fill-progress-sig-1, #b22222),
@@ -176,7 +200,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-2"][fill-progress="sig-2"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-2"][fill-progress="sig-2"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--scola-slider-fill-progress-sig-1, #008000),
@@ -186,7 +210,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-2"][fill-progress="sig-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-2"][fill-progress="sig-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to left,
       var(--scola-slider-fill-progress-sig-1, #008000),
@@ -196,7 +220,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-3"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-3"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--scola-slider-fill-progress-sig-1, #000),
@@ -206,7 +230,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-3"][dir="rtl"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-3"][dir="rtl"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to left,
       var(--scola-slider-fill-progress-sig-1, #000),
@@ -216,7 +240,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-3"][fill-progress="sig-1"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-3"][fill-progress="sig-1"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--scola-slider-fill-progress-sig-1, #b22222),
@@ -226,7 +250,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-3"][fill-progress="sig-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-3"][fill-progress="sig-1"][dir="rtl"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to left,
       var(--scola-slider-fill-progress-sig-1, #b22222),
@@ -236,7 +260,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-3"][fill-progress="sig-2"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-3"][fill-progress="sig-2"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--scola-slider-fill-progress-sig-1, #008000),
@@ -246,7 +270,7 @@ export default css`
     );
   }
 
-  :host([fill="aux-3"][fill-progress="sig-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
+  :host([fill-track="aux-3"][fill-progress="sig-2"][dir="rtl"]) input::-webkit-slider-runnable-track {
     background: linear-gradient(
       to left,
       var(--scola-slider-fill-progress-sig-1, #008000),
@@ -261,10 +285,25 @@ export default css`
     border: none;
     border-radius: 50%;
     box-shadow: 0 0 0.25rem rgba(0, 0, 0, 0.25);
-    height: 1.5rem;
-    margin-top: -0.625rem;
-    width: 1.5rem;
     -moz-appearance: none;
     -webkit-appearance: none;
+  }
+
+  :host([size="large"]) input::-webkit-slider-thumb {
+    height: 1.5rem;
+    margin-top: -0.625rem;
+    width: 1.5rem;    
+  }
+
+  :host([size="medium"]) input::-webkit-slider-thumb {
+    height: 1rem;
+    margin-top: -0.375rem;
+    width: 1rem;
+  }
+
+  :host([size="small"]) input::-webkit-slider-thumb {
+    height: 0.5rem;
+    margin-top: -0.125rem;
+    width: 0.5rem;
   }
 `

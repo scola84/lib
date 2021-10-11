@@ -64,37 +64,42 @@ function createIndex (options: Options, base: Base, identity: Result | null = nu
   const file = `${base.input}/index.html`
   const origin = `https://${determineOrigin(options.origin)}`
 
+  let index = ''
+
+  if (fs.existsSync(file)) {
+    index = fs.readFileSync(file).toString()
+  } else {
+    index = [
+      '<!DOCTYPE html>',
+      '<html>',
+      '<head>',
+      '<link href="/app.webmanifest" rel="manifest" />',
+      '<meta charset="utf-8" />',
+      '<meta name="mobile-web-app-capable" content="yes" />',
+      '<meta name="referrer" content="no-referrer">',
+      '<meta name="viewport" content="width=device-width" />',
+      `<title>${options.title}</title>`,
+      '</head>',
+      '<body>',
+      '<script src="/index.js"></script>',
+      '</body>',
+      '</html>'
+    ].join('')
+  }
+
   const meta = [
-    `<meta http-equiv="Content-Security-Policy" content="default-src ${origin} 'self'; img-src ${origin} blob: 'self'; media-src ${origin} blob: 'self'; object-src 'none'; style-src 'unsafe-inline'; worker-src blob: 'self';" />`,
     identity?.htmlMeta.appleTouchIcon ?? '',
     identity?.htmlMeta.appleLaunchImage ?? '',
     identity?.htmlMeta.favicon ?? '',
     identity?.htmlMeta.msTileImage ?? ''
-  ].join('')
+  ]
 
-  let index = [
-    '<!DOCTYPE html>',
-    '<html>',
-    '<head>',
-    '<link href="/app.webmanifest" rel="manifest" />',
-    '<meta charset="utf-8" />',
-    '<meta name="mobile-web-app-capable" content="yes" />',
-    '<meta name="referrer" content="no-referrer">',
-    '<meta name="viewport" content="width=device-width" />',
-    `<title>${options.title}</title>`,
-    '</head>',
-    '<body>',
-    '<script src="/index.js"></script>',
-    '</body>',
-    '</html>'
-  ].join('')
-
-  if (fs.existsSync(file)) {
-    index = fs.readFileSync(file).toString()
+  if (!index.includes('Content-Security-Policy')) {
+    meta.push(`<meta http-equiv="Content-Security-Policy" content="default-src ${origin} 'self'; img-src ${origin} blob: 'self'; media-src ${origin} blob: 'self'; object-src 'none'; style-src 'unsafe-inline'; worker-src blob: 'self';" />`)
   }
 
   return index
-    .replace('</head>', `${meta}</head>`)
+    .replace('</head>', `${meta.join('')}</head>`)
     .replace(/\r?\n/gu, '')
 }
 
@@ -107,7 +112,6 @@ async function createPwaIdentity (options: Options, base: Base): Promise<Result 
     identity = await pwa.generateImages(file, `${options.dest}/pwa`, {
       favicon: true,
       log: false,
-      maskable: false,
       mstile: true,
       pathOverride: `${options.dest.replace(base.output, '')}/pwa`,
       type: 'png',
@@ -180,7 +184,7 @@ export function appShell (options: Options): Plugin {
         type: 'asset'
       })
     },
-    name: 'shell',
+    name: 'app-shell',
     renderStart: (output, input) => {
       if (typeof output.entryFileNames === 'string') {
         base.output = path.dirname(output.entryFileNames)

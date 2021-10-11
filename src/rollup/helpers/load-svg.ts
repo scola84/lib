@@ -14,6 +14,6 @@ export function loadSvg (): Plugin {
 
       return `export default '${content}'`
     },
-    name: 'image'
+    name: 'load-svg'
   }
 }

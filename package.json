@@ -41,7 +41,7 @@
     "image-capture": "^0.4.0",
     "interactjs": "^1.10.11",
     "intl-messageformat": "^9.9.1",
-    "lit": "2.0.0-rc.2",
+    "lit": "2.0.2",
     "lodash": "^4.17.21",
     "luxon": "^2.0.2",
     "marked": "^3.0.2",

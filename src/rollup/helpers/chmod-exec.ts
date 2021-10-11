@@ -12,7 +12,7 @@ export function chmodExec (options: Options = {}): Plugin {
   const filter = createFilter(options.include, options.exclude)
 
   const plugin: Plugin = {
-    name: 'executable',
+    name: 'chmod-exec',
     writeBundle: (output, bundle) => {
       Object
         .keys(bundle)

@@ -3,6 +3,7 @@ import { FormatElement } from './format'
 import { InputElement } from './input'
 import type { PropertyValues } from 'lit'
 import styles from '../styles/slider'
+import updaters from '../updaters/slider'
 
 declare global {
   interface HTMLElementEventMap {
@@ -27,11 +28,22 @@ export class SliderElement extends InputElement {
     styles
   ]
 
+  public static updaters = {
+    ...InputElement.updaters,
+    ...updaters
+  }
+
   @property({
     attribute: 'fill-progress',
     reflect: true
   })
   public fillProgress?: 'sig-1' | 'sig-2'
+
+  @property({
+    attribute: 'fill-track',
+    reflect: true
+  })
+  public fillTrack?: 'aux-1' | 'aux-2' | 'aux-3'
 
   protected handleMaxBound = this.handleMax.bind(this)
 
@@ -52,39 +64,21 @@ export class SliderElement extends InputElement {
     super.firstUpdated(properties)
   }
 
-  public async setMax (): Promise<void> {
-    const {
-      max = '',
-      value = ''
-    } = this.fieldElement ?? {}
-
-    const from = parseFloat(value)
-    const to = parseFloat(max)
-
-    if (
-      !Number.isNaN(from) &&
-      !Number.isNaN(to)
-    ) {
-      await this.ease(from, to, (newValue) => {
-        this.data = newValue
-      })
-    }
+  public setMax (max: number): void {
+    this.fieldElement?.setAttribute('max', max.toString())
+    this.setStyle()
   }
 
-  public async setMin (): Promise<void> {
-    const {
-      min = '',
-      value = ''
-    } = this.fieldElement ?? {}
+  public setMin (min: number): void {
+    this.fieldElement?.setAttribute('min', min.toString())
+    this.setStyle()
+  }
 
-    const from = parseFloat(value)
-    const to = parseFloat(min)
+  public async setValue (value: number): Promise<void> {
+    const from = parseFloat(this.fieldElement?.value ?? '')
 
-    if (
-      !Number.isNaN(from) &&
-      !Number.isNaN(to)
-    ) {
-      await this.ease(from, to, (newValue) => {
+    if (!Number.isNaN(from)) {
+      await this.ease(from, value, (newValue) => {
         this.data = newValue
       })
     }
@@ -104,13 +98,17 @@ export class SliderElement extends InputElement {
 
   protected handleMax (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      this.setMax().catch(() => {})
+      this
+        .setValue(parseFloat(this.fieldElement?.max ?? ''))
+        .catch(() => {})
     }
   }
 
   protected handleMin (event: CustomEvent): void {
     if (this.isTarget(event)) {
-      this.setMin().catch(() => {})
+      this
+        .setValue(parseFloat(this.fieldElement?.min ?? ''))
+        .catch(() => {})
     }
   }
 

@@ -78,6 +78,22 @@ export class SelectElement extends InputElement {
     super.firstUpdated(properties)
   }
 
+  public setValueFromPrimitive (primitive: Primitive): void {
+    if (primitive === cast(this.value)) {
+      this.toggleChecked(true, 0).catch(() => {})
+    } else {
+      super.setValueFromPrimitive(primitive)
+    }
+  }
+
+  public setValueFromStruct (struct: Struct): void {
+    if (this.fieldElement?.getAttribute('value') === null) {
+      super.setValueFromStruct(struct)
+    } else if (struct.value === cast(this.value)) {
+      this.toggleChecked(true, 0).catch(() => {})
+    }
+  }
+
   public async toggleChecked (force?: boolean, duration = this.duration): Promise<void> {
     if (
       force !== undefined &&
@@ -136,10 +152,9 @@ export class SelectElement extends InputElement {
   protected handleClickCheckbox (): void {
     this
       .toggleChecked()
-      .then(() => {
+      .finally(() => {
         super.handleInput()
       })
-      .catch(() => {})
   }
 
   protected handleClickRadio (): void {
@@ -149,10 +164,9 @@ export class SelectElement extends InputElement {
         .map(async (selectElement: SelectElement) => {
           return selectElement.toggleChecked(selectElement === this)
         }))
-      .then(() => {
+      .finally(() => {
         super.handleInput()
       })
-      .catch(() => {})
   }
 
   protected setUpSwitch (): void {
@@ -166,21 +180,5 @@ export class SelectElement extends InputElement {
     }
 
     this.shadowBody.insertBefore(this.switchElement, this.afterSlotElement)
-  }
-
-  protected setValueFromPrimitive (primitive: Primitive): void {
-    if (primitive === cast(this.value)) {
-      this.toggleChecked(true, 0).catch(() => {})
-    } else {
-      super.setValueFromPrimitive(primitive)
-    }
-  }
-
-  protected setValueFromStruct (struct: Struct): void {
-    if (this.fieldElement?.getAttribute('value') === null) {
-      super.setValueFromStruct(struct)
-    } else if (struct.value === cast(this.value)) {
-      this.toggleChecked(true, 0).catch(() => {})
-    }
   }
 }

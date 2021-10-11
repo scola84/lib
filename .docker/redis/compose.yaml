@@ -1,4 +1,4 @@
-version: "3"
+version: "3.7"
 services:
   redis:
     command: redis-server /etc/redis/conf.d/redis.conf

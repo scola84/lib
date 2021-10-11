@@ -1,13 +1,27 @@
 import type { ButtonElement } from '../elements/button'
 import { ClipElement } from '../elements/clip'
 import type { NodeElement } from '../elements/node'
-import type { ProgressElement } from '../elements/progress'
 import type { PropertyValues } from 'lit'
-import type { RequestElement } from '../elements/request'
-import type { ViewElement } from '../elements/view'
-import { cast } from '../../common'
 
 export default {
+  'scola-button-params': (observer: ButtonElement, observable: NodeElement, properties: PropertyValues): void => {
+    if (properties.has('observe')) {
+      if (observer.isStateful) {
+        observable.setParameters(observer.dataset)
+      }
+    } else {
+      observer.toggleStateFromParameters(observable)
+    }
+  },
+  'scola-button-props': (observer: ButtonElement, observable: NodeElement, properties: PropertyValues): void => {
+    if (properties.has('observe')) {
+      if (observer.isStateful) {
+        observable.setProperties(observer.dataset)
+      }
+    } else {
+      observer.toggleStateFromProperties(observable)
+    }
+  },
   'scola-clip-content': (observer: ButtonElement, observable: NodeElement, properties: PropertyValues): void => {
     if (properties.has('observe')) {
       if (observable.parentElement instanceof ClipElement) {
@@ -68,59 +82,6 @@ export default {
       }
     } else if (properties.has('hidden')) {
       observer.activated = !observable.hidden
-    }
-  },
-  'scola-node-params': (observer: ButtonElement, observable: NodeElement, properties: PropertyValues): void => {
-    if (
-      properties.has('observe') &&
-      observer.activated === true
-    ) {
-      observable.setParameters(observer.dataset)
-    } else {
-      observer.activated = Object
-        .entries(observer.dataset)
-        .every(([name, value]) => {
-          return observable.parameters[name] === cast(value)
-        })
-    }
-  },
-  'scola-node-props': (observer: ButtonElement, observable: NodeElement, properties: PropertyValues): void => {
-    if (
-      properties.has('observe') &&
-      observer.activated === true
-    ) {
-      observable.setProperties(observer.dataset)
-    } else {
-      observer.activated = Object
-        .entries(observer.dataset)
-        .every(([name, value]) => {
-          return observable[name as keyof NodeElement] === cast(value)
-        })
-    }
-  },
-  'scola-progress': (observer: ButtonElement, observable: ProgressElement, properties: PropertyValues): void => {
-    if (properties.has('busy')) {
-      observer.busy = observable.busy
-    }
-  },
-  'scola-request': (observer: ButtonElement, observable: RequestElement, properties: PropertyValues): void => {
-    if (properties.has('busy')) {
-      observer.busy = observable.busy
-    }
-  },
-  'scola-view-back': (observer: ButtonElement, observable: ViewElement, properties: PropertyValues): void => {
-    if (properties.has('pointer')) {
-      observer.disabled = !observable.hasPast
-    }
-  },
-  'scola-view-forward': (observer: ButtonElement, observable: ViewElement, properties: PropertyValues): void => {
-    if (properties.has('pointer')) {
-      observer.disabled = !observable.hasFuture
-    }
-  },
-  'scola-view-home': (observer: ButtonElement, observable: ViewElement, properties: PropertyValues): void => {
-    if (properties.has('pointer')) {
-      observer.disabled = !observable.hasPast
     }
   }
 }

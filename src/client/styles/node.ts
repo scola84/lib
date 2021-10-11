@@ -28,7 +28,6 @@ export default css`
     flex-direction: column;
     overflow: hidden;
     position: relative;
-    transition: opacity 250ms cubic-bezier(0.83, 0, 0.17, 1);
   }
 
   :host([disabled]) {
@@ -40,8 +39,18 @@ export default css`
     display: none;
   }
 
-  :host([hidden]) {
+  :host([fade]) {
+    opacity: 1;
+    transition: opacity 250ms cubic-bezier(0.83, 0, 0.17, 1);
+  }
+
+  :host([hidden][fade]) {
     opacity: 0;
+    pointer-events: none;
+  }
+
+  :host([hidden]:not([fade])) {
+    display: none;
   }
 
   :host([hposition]) {
@@ -656,6 +665,14 @@ export default css`
 
             :host([height~="${size}${unsafe.name}"]) {
               height: ${unsafeCSS(`${size}rem`)};
+            }
+
+            :host([max-height~="${size}${unsafe.name}"]) {
+              max-height: ${unsafeCSS(`${size}rem`)};
+            }
+
+            :host([max-width~="${size}${unsafe.name}"]) {
+              max-width: ${unsafeCSS(`${size}rem`)};
             }
 
             :host([width~="${size}${unsafe.name}"]) {

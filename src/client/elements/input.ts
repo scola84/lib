@@ -46,6 +46,14 @@ export class InputElement extends FieldElement {
     }
   }
 
+  public setValueFromStruct (struct: Struct): void {
+    if (struct.file instanceof File) {
+      this.setFile(struct.file)
+    } else {
+      super.setValueFromStruct(struct)
+    }
+  }
+
   protected createDispatchItems (): unknown[] {
     if (this.fieldElement?.files instanceof FileList) {
       return Array
@@ -70,14 +78,6 @@ export class InputElement extends FieldElement {
 
       transfer.items.add(file)
       this.fieldElement.files = transfer.files
-    }
-  }
-
-  protected setValueFromStruct (struct: Struct): void {
-    if (struct.file instanceof File) {
-      this.setFile(struct.file)
-    } else {
-      super.setValueFromStruct(struct)
     }
   }
 }

@@ -137,8 +137,6 @@ export class DialogElement extends NodeElement {
 
   public contentElement: HTMLElement
 
-  protected busy = false
-
   protected contentStyle?: ContentStyle | null
 
   protected dragInteractable?: Interactable
@@ -203,10 +201,6 @@ export class DialogElement extends NodeElement {
   }
 
   public async extend (duration = this.duration): Promise<void> {
-    if (this.busy) {
-      return
-    }
-
     const { to } = this.calculateShowStyles(false)
 
     this.contentElement.style.setProperty('transition', `transform ${duration}ms ${this.easing}`)
@@ -223,64 +217,55 @@ export class DialogElement extends NodeElement {
         fill: 'forwards'
       })
       .finished
-      .then(() => {
+      .finally(() => {
         this.finishExtend()
       })
   }
 
   public async hide (duration = this.duration): Promise<void> {
-    if (
-      this.hidden ||
-      this.busy
-    ) {
-      return
+    if (!this.hidden) {
+      this.prepareHide()
+
+      const {
+        from,
+        to
+      } = this.calculateHideStyles()
+
+      await Promise.all([
+        this.scrimElement
+          ?.animate([{
+            opacity: 1
+          }, {
+            opacity: 0
+          }], {
+            duration,
+            easing: this.easing,
+            fill: 'forwards'
+          })
+          .finished,
+        this.contentElement
+          .animate([{
+            left: `${from.left}px`,
+            opacity: from.opacity ?? 1,
+            top: `${from.top}px`
+          }, {
+            left: `${to.left}px`,
+            opacity: to.opacity ?? 1,
+            top: `${to.top}px`
+          }], {
+            duration,
+            easing: this.easing,
+            fill: 'forwards'
+          })
+          .finished
+          .finally(() => {
+            this.finishHide()
+          })
+      ])
     }
-
-    this.prepareHide()
-
-    const {
-      from,
-      to
-    } = this.calculateHideStyles()
-
-    await Promise.all([
-      this.scrimElement
-        ?.animate([{
-          opacity: 1
-        }, {
-          opacity: 0
-        }], {
-          duration,
-          easing: this.easing,
-          fill: 'forwards'
-        })
-        .finished,
-      this.contentElement
-        .animate([{
-          left: `${from.left}px`,
-          opacity: from.opacity ?? 1,
-          top: `${from.top}px`
-        }, {
-          left: `${to.left}px`,
-          opacity: to.opacity ?? 1,
-          top: `${to.top}px`
-        }], {
-          duration,
-          easing: this.easing,
-          fill: 'forwards'
-        })
-        .finished
-        .then(() => {
-          this.finishHide()
-        })
-    ])
   }
 
   public async resize (duration = this.duration): Promise<void> {
-    if (this.busy) {
-      return
-    }
-
     const { to } = this.calculateShowStyles()
 
     this.contentElement.style.setProperty('transition', `transform ${duration}ms ${this.easing}`)
@@ -297,57 +282,52 @@ export class DialogElement extends NodeElement {
         fill: 'forwards'
       })
       .finished
-      .then(() => {
+      .finally(() => {
         this.finishResize()
       })
   }
 
   public async show (duration = this.duration): Promise<void> {
-    if (
-      !this.hidden ||
-      this.busy
-    ) {
-      return
+    if (this.hidden) {
+      await this.prepareShow()
+
+      const {
+        from,
+        to
+      } = this.calculateShowStyles()
+
+      await Promise.all([
+        this.scrimElement
+          ?.animate([{
+            opacity: 0
+          }, {
+            opacity: 1
+          }], {
+            duration,
+            easing: this.easing,
+            fill: 'forwards'
+          })
+          .finished,
+        this.contentElement
+          .animate([{
+            left: `${from.left}px`,
+            opacity: from.opacity ?? 1,
+            top: `${from.top}px`
+          }, {
+            left: `${to.left}px`,
+            opacity: to.opacity ?? 1,
+            top: `${to.top}px`
+          }], {
+            duration,
+            easing: this.easing,
+            fill: 'forwards'
+          })
+          .finished
+          .finally(() => {
+            this.finishShow()
+          })
+      ])
     }
-
-    await this.prepareShow()
-
-    const {
-      from,
-      to
-    } = this.calculateShowStyles()
-
-    await Promise.all([
-      this.scrimElement
-        ?.animate([{
-          opacity: 0
-        }, {
-          opacity: 1
-        }], {
-          duration,
-          easing: this.easing,
-          fill: 'forwards'
-        })
-        .finished,
-      this.contentElement
-        .animate([{
-          left: `${from.left}px`,
-          opacity: from.opacity ?? 1,
-          top: `${from.top}px`
-        }, {
-          left: `${to.left}px`,
-          opacity: to.opacity ?? 1,
-          top: `${to.top}px`
-        }], {
-          duration,
-          easing: this.easing,
-          fill: 'forwards'
-        })
-        .finished
-        .then(() => {
-          this.finishShow()
-        })
-    ])
   }
 
   protected calculateExtendStyle (style: ContentStyle, from: ContentPosition, extension: ContentPosition): ContentStyle {
@@ -493,7 +473,7 @@ export class DialogElement extends NodeElement {
       toStyle = this.calculateFromStyle(from)
     }
 
-    if (this.isSame(toStyle, fromStyle)) {
+    if (this.isSameStyle(toStyle, fromStyle)) {
       fromStyle.opacity = 1
       toStyle.opacity = 0
     }
@@ -541,7 +521,7 @@ export class DialogElement extends NodeElement {
       fromStyle = this.calculateFromStyle(from)
     }
 
-    if (this.isSame(toStyle, fromStyle)) {
+    if (this.isSameStyle(toStyle, fromStyle)) {
       fromStyle.opacity = 0
       toStyle.opacity = 1
     }
@@ -800,7 +780,6 @@ export class DialogElement extends NodeElement {
       })
 
     this.anchorElement = null
-    this.busy = false
     this.contentStyle = null
     this.hidden = true
   }
@@ -817,7 +796,6 @@ export class DialogElement extends NodeElement {
     this.resizeObserver?.observe(document.body)
     window.addEventListener('click', this.handleClickBound)
     window.addEventListener('keydown', this.handleKeydownBound)
-    this.busy = false
   }
 
   protected handleClick (event: Event): void {
@@ -917,7 +895,7 @@ export class DialogElement extends NodeElement {
     this.show().catch(() => {})
   }
 
-  protected isSame (from: ContentStyle, to: ContentStyle): boolean {
+  protected isSameStyle (from: ContentStyle, to: ContentStyle): boolean {
     return (
       from.left === to.left &&
       from.top === to.top
@@ -925,8 +903,6 @@ export class DialogElement extends NodeElement {
   }
 
   protected prepareHide (): void {
-    this.busy = true
-
     if (this.anchorElement instanceof HTMLElement) {
       this.resizeObserver?.unobserve(this.anchorElement)
     }
@@ -937,7 +913,6 @@ export class DialogElement extends NodeElement {
   }
 
   protected async prepareShow (): Promise<void> {
-    this.busy = true
     this.hidden = false
 
     this

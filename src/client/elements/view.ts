@@ -1,6 +1,6 @@
 import { addHook, isValidAttribute, sanitize } from 'dompurify'
 import { cast, elements, isArray, isNil, isPrimitive, isStruct } from '../../common'
-import { customElement, property, state } from 'lit/decorators.js'
+import { customElement, property } from 'lit/decorators.js'
 import { ClipElement } from './clip'
 import type { Config } from 'dompurify'
 import type { PropertyValues } from 'lit'
@@ -53,6 +53,16 @@ export class ViewElement extends ClipElement {
 
   public static storage: Storage = window.sessionStorage
 
+  @property({
+    type: Boolean
+  })
+  public hasFuture = false
+
+  @property({
+    type: Boolean
+  })
+  public hasPast = false
+
   @property()
   public origin = ViewElement.origin
 
@@ -74,9 +84,6 @@ export class ViewElement extends ClipElement {
   })
   public view?: View | null
 
-  @state()
-  protected pointer = -1
-
   public mode: ClipElement['mode'] = 'content'
 
   protected handleAppendBound = this.handleAppend.bind(this)
@@ -89,17 +96,11 @@ export class ViewElement extends ClipElement {
 
   protected handlePopstateBound = this.handlePopstate.bind(this)
 
+  protected pointer = -1
+
   protected updaters = ViewElement.updaters
 
   protected views: View[] = []
-
-  public get hasFuture (): boolean {
-    return this.pointer < this.views.length - 1
-  }
-
-  public get hasPast (): boolean {
-    return this.pointer > 0
-  }
 
   public connectedCallback (): void {
     viewElements.add(this)
@@ -162,7 +163,7 @@ export class ViewElement extends ClipElement {
   protected appendView (options?: unknown): void {
     const view = this.createView(options)
 
-    if (this.isSame(this.view, view)) {
+    if (this.isSameView(this.view, view)) {
       this.go(0, false, true).catch(() => {})
       return
     }
@@ -273,7 +274,7 @@ export class ViewElement extends ClipElement {
       this.pointer + delta >= 0 &&
       this.pointer + delta <= this.views.length - 1
     ) {
-      this.pointer += delta
+      this.setPointer(this.pointer + delta)
     }
 
     const newView = this.views[this.pointer] as View | undefined
@@ -366,7 +367,7 @@ export class ViewElement extends ClipElement {
     this.go(0).catch(() => {})
   }
 
-  protected isSame (left?: View | null, right?: View | null): boolean {
+  protected isSameView (left?: View | null, right?: View | null): boolean {
     return (
       left?.name === right?.name &&
       JSON.stringify(left?.parameters) === JSON.stringify(right?.parameters)
@@ -380,10 +381,10 @@ export class ViewElement extends ClipElement {
       const pointer = pointers[this.id]
 
       if (typeof pointer === 'number') {
-        this.pointer = pointer
+        this.setPointer(pointer)
       }
     } else {
-      this.pointer = 0
+      this.setPointer(0)
     }
   }
 
@@ -416,7 +417,7 @@ export class ViewElement extends ClipElement {
           parameters
         }))
 
-        this.pointer = this.views.length - 1
+        this.setPointer(this.views.length - 1)
       }
     }
   }
@@ -429,7 +430,7 @@ export class ViewElement extends ClipElement {
     }
 
     if (typeof struct.pointer === 'number') {
-      this.pointer = struct.pointer
+      this.setPointer(struct.pointer)
     }
   }
 
@@ -440,7 +441,7 @@ export class ViewElement extends ClipElement {
         parameters: viewElement.parameters
       }]
 
-      this.pointer = 0
+      this.setPointer(0)
     }
   }
 
@@ -466,6 +467,12 @@ export class ViewElement extends ClipElement {
         window.history.replaceState(pointers, '', path)
       }
     }
+  }
+
+  protected setPointer (pointer: number): void {
+    this.pointer = pointer
+    this.hasFuture = this.pointer < this.views.length - 1
+    this.hasPast = this.pointer > 0
   }
 
   protected setScroll (element: HTMLElement): void {

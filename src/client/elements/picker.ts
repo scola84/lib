@@ -85,6 +85,18 @@ export class PickerElement extends InputElement {
     super.firstUpdated(properties)
   }
 
+  public setValueFromPrimitive (primitive: Primitive): void {
+    super.setValueFromPrimitive(primitive)
+    this.setLabel({})
+    this.setPreview()
+  }
+
+  public setValueFromStruct (struct: Struct): void {
+    super.setValueFromStruct(struct)
+    this.setLabel(struct)
+    this.setPreview()
+  }
+
   protected clearValueCheckbox (): void {
     Array
       .from(this.dialogElement?.querySelectorAll<SelectElement>('scola-select') ?? [])
@@ -224,17 +236,16 @@ export class PickerElement extends InputElement {
       this.setValueFromStruct(data)
     }
 
-    if (this.save === true) {
-      this.saveState()
-    }
-
     this.toggleClear(this.isEmpty)
-    this.dispatchEvents(this.dispatch, this.createDispatchItems())
   }
 
   protected hideDialog (): void {
     if (this.dialogElement instanceof DialogElement) {
-      this.dialogElement.hide().catch(() => {})
+      this.dialogElement
+        .hide()
+        .finally(() => {
+          this.dispatchEvents(this.dispatch, this.createDispatchItems())
+        })
     }
   }
 
@@ -414,18 +425,6 @@ export class PickerElement extends InputElement {
 
   protected setUpValue (): void {
     this.setLabel()
-    this.setPreview()
-  }
-
-  protected setValueFromPrimitive (primitive: Primitive): void {
-    super.setValueFromPrimitive(primitive)
-    this.setLabel({})
-    this.setPreview()
-  }
-
-  protected setValueFromStruct (struct: Struct): void {
-    super.setValueFromStruct(struct)
-    this.setLabel(struct)
     this.setPreview()
   }
 

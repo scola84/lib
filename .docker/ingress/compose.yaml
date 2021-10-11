@@ -1,4 +1,4 @@
-version: "3"
+version: "3.7"
 services:
   ingress:
     depends_on:
@@ -11,6 +11,6 @@ services:
     ulimits:
       nofile: 1048576
     volumes:
-      - ./ingress/docker-entrypoint.d/https.sh:/docker-entrypoint.d/https.sh
+      - ./ingress/docker-entrypoint.d/certs.sh:/docker-entrypoint.d/certs.sh
       - ./ingress/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./ingress/etc/nginx/server.conf:/etc/nginx/server.conf

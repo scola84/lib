@@ -141,7 +141,7 @@ export class ClipElement extends NodeElement {
         fill: 'forwards'
       })
       .finished
-      .then(() => {
+      .finally(() => {
         this.innerHidden = true
       })
   }
@@ -167,7 +167,7 @@ export class ClipElement extends NodeElement {
         fill: 'forwards'
       })
       .finished
-      .then(() => {
+      .finally(() => {
         if (window.getComputedStyle(element).position === 'absolute') {
           element.style.removeProperty('z-index')
         }

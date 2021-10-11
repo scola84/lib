@@ -130,11 +130,6 @@ export class ListElement extends NodeElement {
     this.items.splice(0)
   }
 
-  public connectedCallback (): void {
-    this.setUpParentListeners()
-    super.connectedCallback()
-  }
-
   public deleteItem (item: Struct): boolean {
     const index = this.items.findIndex((findItem) => {
       return this.getKey(item) === this.getKey(findItem)

@@ -62,66 +62,58 @@ export class LogElement extends NodeElement {
   }
 
   public async hide (duration = this.duration): Promise<void> {
-    if (this.hidden) {
-      return
+    if (!this.hidden) {
+      if (this.logs.length > 0) {
+        this.showNext(duration)
+        return
+      }
+
+      await this.defaultSlotElement
+        .animate([{
+          marginTop: '0px'
+        }, {
+          marginTop: `-${this.defaultSlotElement.scrollHeight}px`
+        }], {
+          duration,
+          easing: this.easing,
+          fill: 'forwards'
+        })
+        .finished
+        .finally(() => {
+          this.hidden = true
+        })
     }
-
-    if (this.logs.length > 0) {
-      this.showNext(duration)
-      return
-    }
-
-    const { scrollHeight } = this.defaultSlotElement
-
-    await this.defaultSlotElement
-      .animate([{
-        marginTop: '0px'
-      }, {
-        marginTop: `-${scrollHeight}px`
-      }], {
-        duration,
-        easing: this.easing,
-        fill: 'forwards'
-      })
-      .finished
-      .then(() => {
-        this.hidden = true
-      })
   }
 
   public async show (duration = this.duration): Promise<void> {
-    if (!this.hidden) {
-      return
+    if (this.hidden) {
+      this.style.setProperty('display', 'flex')
+      this.style.setProperty('opacity', '0')
+      this.style.setProperty('position', 'absolute')
+
+      await new Promise((resolve) => {
+        window.setTimeout(resolve)
+      })
+
+      this.hidden = false
+      this.style.removeProperty('opacity')
+      this.style.removeProperty('position')
+
+      await this.defaultSlotElement
+        .animate([{
+          marginTop: `-${this.defaultSlotElement.scrollHeight}px`
+        }, {
+          marginTop: '0px'
+        }], {
+          duration,
+          easing: this.easing,
+          fill: 'forwards'
+        })
+        .finished
+        .finally(() => {
+          this.style.removeProperty('display')
+        })
     }
-
-    this.defaultSlotElement.style.setProperty('opacity', '0')
-    this.defaultSlotElement.style.setProperty('position', 'absolute')
-
-    await new Promise((resolve) => {
-      window.setTimeout(resolve)
-    })
-
-    this.hidden = false
-
-    await this.defaultSlotElement
-      .animate([{
-        marginTop: `-${this.defaultSlotElement.scrollHeight}px`,
-        opacity: 1,
-        position: 'relative'
-      }, {
-        marginTop: '0px',
-        opacity: 1,
-        position: 'relative'
-      }], {
-        duration,
-        easing: this.easing,
-        fill: 'forwards'
-      })
-      .finished
-      .then(() => {
-        this.defaultSlotElement.style.removeProperty('opacity')
-        this.defaultSlotElement.style.removeProperty('position')
-      })
   }
 
   public showNext (duration = this.duration): void {

@@ -1,10 +1,6 @@
 import { css } from 'lit'
 
 export default css`
-  :host([busy]:not([toggle])) {
-    pointer-events: none;
-  }
-
   :host([color-activated="aux-1"][activated]) slot[name="body"] {
     color: var(--scola-button-color-activated-aux-1, #000);
   }
@@ -43,17 +39,5 @@ export default css`
 
   :host([fill-activated="sig-2"][activated]) slot[name="body"] {
     background: var(--scola-button-fill-activated-sig-2, #008000);
-  }
-
-  slot:not([name])::slotted([as="abort"]),
-  slot:not([name])::slotted([as="progress"]),
-  slot:not([name])::slotted([as="start"]) {
-    opacity: 0;
-  }
-
-  :host(:not([busy])) slot:not([name])::slotted([as="start"]),
-  :host([busy]) slot:not([name])::slotted([as="abort"]),
-  :host([busy]) slot:not([name])::slotted([as="progress"]) {
-    opacity: 1;
   }
 `

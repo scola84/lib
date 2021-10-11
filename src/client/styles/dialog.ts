@@ -6,11 +6,6 @@ export default css`
     position: inherit;
   }
 
-  :host([hidden]) {
-    display: none;
-    opacity: 1;
-  }
-
   slot:not([name])::slotted(*) {
     position: absolute;
     touch-action: none;

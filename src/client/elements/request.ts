@@ -9,8 +9,8 @@ import updaters from '../updaters/request'
 
 declare global {
   interface HTMLElementEventMap {
-    'scola-request-abort': CustomEvent
     'scola-request-start': CustomEvent
+    'scola-request-stop': CustomEvent
     'scola-request-toggle': CustomEvent
   }
 
@@ -19,8 +19,8 @@ declare global {
   }
 
   interface WindowEventMap {
-    'scola-request-abort': CustomEvent
     'scola-request-start': CustomEvent
+    'scola-request-stop': CustomEvent
     'scola-request-toggle': CustomEvent
   }
 }
@@ -38,11 +38,6 @@ export class RequestElement extends NodeElement {
     ...NodeElement.updaters,
     ...updaters
   }
-
-  @property({
-    type: Boolean
-  })
-  public busy?: boolean
 
   @property()
   public code?: string
@@ -62,6 +57,11 @@ export class RequestElement extends NodeElement {
   public path?: string
 
   @property({
+    type: Boolean
+  })
+  public started = false
+
+  @property({
     type: Number
   })
   public total: number
@@ -77,20 +77,13 @@ export class RequestElement extends NodeElement {
 
   protected controller = new AbortController()
 
-  protected handleAbortBound = this.handleAbort.bind(this)
-
   protected handleStartBound = this.handleStart.bind(this)
+
+  protected handleStopBound = this.handleStop.bind(this)
 
   protected handleToggleBound = this.handleToggle.bind(this)
 
   protected updaters = RequestElement.updaters
-
-  public abort (): void {
-    this.busy = false
-    this.loaded = this.total
-    this.controller.abort()
-    this.controller = new AbortController()
-  }
 
   public firstUpdated (properties: PropertyValues): void {
     super.firstUpdated(properties)
@@ -101,17 +94,24 @@ export class RequestElement extends NodeElement {
   }
 
   public start (options?: Struct): void {
-    if (this.busy === true) {
-      return
+    if (!this.started) {
+      this.fetch(this.createRequest(options))
+      this.started = true
     }
+  }
 
-    this.busy = true
-    this.fetch(this.createRequest(options))
+  public stop (): void {
+    if (this.started) {
+      this.controller.abort()
+      this.controller = new AbortController()
+      this.loaded = this.total
+      this.started = false
+    }
   }
 
   public toggle (options?: Struct): void {
-    if (this.busy === true) {
-      this.abort()
+    if (this.started) {
+      this.stop()
     } else {
       this.start(options)
     }
@@ -214,12 +214,6 @@ export class RequestElement extends NodeElement {
       })
   }
 
-  protected handleAbort (event: CustomEvent): void {
-    if (this.isTarget(event)) {
-      this.abort()
-    }
-  }
-
   protected handleData (): void {
     const status = this.response?.status ?? 200
 
@@ -235,8 +229,8 @@ export class RequestElement extends NodeElement {
   }
 
   protected handleError (error: unknown): void {
-    this.busy = false
     this.loaded = this.total
+    this.started = false
 
     if (
       error instanceof Error &&
@@ -268,8 +262,8 @@ export class RequestElement extends NodeElement {
       this.data = await this.response?.text()
     }
 
-    this.busy = false
     this.loaded = this.total
+    this.started = false
     this.dispatchEvents(this.dispatch, this.createDispatchItems())
   }
 
@@ -280,6 +274,12 @@ export class RequestElement extends NodeElement {
       } else {
         this.start()
       }
+    }
+  }
+
+  protected handleStop (event: CustomEvent): void {
+    if (this.isTarget(event)) {
+      this.stop()
     }
   }
 
@@ -294,22 +294,22 @@ export class RequestElement extends NodeElement {
   }
 
   protected setUpElementListeners (): void {
-    this.addEventListener('scola-request-abort', this.handleAbortBound)
     this.addEventListener('scola-request-start', this.handleStartBound)
+    this.addEventListener('scola-request-stop', this.handleStopBound)
     this.addEventListener('scola-request-toggle', this.handleToggleBound)
     super.setUpElementListeners()
   }
 
   protected setUpWindowListeners (): void {
-    window.addEventListener('scola-request-abort', this.handleAbortBound)
     window.addEventListener('scola-request-start', this.handleStartBound)
+    window.addEventListener('scola-request-stop', this.handleStopBound)
     window.addEventListener('scola-request-toggle', this.handleToggleBound)
     super.setUpWindowListeners()
   }
 
   protected tearDownWindowListeners (): void {
-    window.removeEventListener('scola-request-abort', this.handleAbortBound)
     window.removeEventListener('scola-request-start', this.handleStartBound)
+    window.removeEventListener('scola-request-stop', this.handleStopBound)
     window.removeEventListener('scola-request-toggle', this.handleToggleBound)
     super.tearDownWindowListeners()
   }

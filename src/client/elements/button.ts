@@ -32,12 +32,6 @@ export class ButtonElement extends NodeElement {
   public activated?: boolean
 
   @property({
-    reflect: true,
-    type: Boolean
-  })
-  public busy?: boolean
-
-  @property({
     type: Boolean
   })
   public cancel?: boolean
@@ -115,13 +109,19 @@ export class ButtonElement extends NodeElement {
     if (isStruct(state)) {
       if (typeof state.activated === 'boolean') {
         this.activated = state.activated
+      } else if (typeof state.disabled === 'boolean') {
+        this.disabled = state.disabled
+      } else if (typeof state.hidden === 'boolean') {
+        this.hidden = state.hidden
       }
     }
   }
 
   protected saveState (): void {
     const state = {
-      activated: this.activated
+      activated: this.activated,
+      disabled: this.disabled,
+      hidden: this.hidden
     }
 
     this.storage.setItem(`button-${this.id}`, JSON.stringify(state))

@@ -5,8 +5,8 @@ import type { RequestElement } from '../elements/request'
 export default {
   'scola-request': (observer: ProgressElement, observable: RequestElement, properties: PropertyValues): void => {
     if ((
-      properties.has('busy') ||
-      properties.has('loaded')
+      properties.has('loaded') ||
+      properties.has('started')
     ) && (
       observer.method === undefined ||
       observer.method === observable.request?.method

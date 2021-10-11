@@ -1,7 +1,7 @@
 import { css } from 'lit'
 
 export default css`
-  :host(:not([busy])) {
+  :host(:not([started])) {
     display: none;
   }
 
@@ -79,7 +79,7 @@ export default css`
     stroke: var(--scola-node-fill-sig-2, #008000);
   }
 
-  :host([type="circle"][mode="indeterminate"][busy]) circle {
+  :host([type="circle"][mode="indeterminate"][started]) circle {
     animation: spin 1s infinite ease-in-out;
     stroke-dashoffset: 1rem !important;
   }
@@ -124,7 +124,7 @@ export default css`
     fill: var(--scola-node-fill-sig-2, #008000);
   }
 
-  :host([type="rect"][mode="indeterminate"][busy]) rect {
+  :host([type="rect"][mode="indeterminate"][started]) rect {
     animation: flow 1s infinite ease-in-out;
     width: 33% !important;
   }

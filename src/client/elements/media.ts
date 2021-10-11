@@ -7,8 +7,24 @@ import type { Struct } from '../../common'
 import styles from '../styles/media'
 
 declare global {
+  interface HTMLElementEventMap {
+    'scola-media-set-time': CustomEvent
+    'scola-media-set-volume': CustomEvent
+    'scola-media-start': CustomEvent
+    'scola-media-stop': CustomEvent
+    'scola-media-toggle': CustomEvent
+  }
+
   interface HTMLElementTagNameMap {
     'scola-media': MediaElement
+  }
+
+  interface WindowEventMap {
+    'scola-media-set-time': CustomEvent
+    'scola-media-set-volume': CustomEvent
+    'scola-media-start': CustomEvent
+    'scola-media-stop': CustomEvent
+    'scola-media-toggle': CustomEvent
   }
 }
 
@@ -24,7 +40,48 @@ export class MediaElement extends NodeElement {
   })
   public center?: boolean
 
+  @property()
+  public format = 'mm:ss'
+
+  @property({
+    type: Number
+  })
+  public length?: number
+
+  @property({
+    type: Boolean
+  })
+  public started = false
+
+  @property({
+    type: Number
+  })
+  public time?: number
+
+  @property({
+    type: Number
+  })
+  public volume?: number
+
   protected audioElement?: HTMLAudioElement
+
+  protected handleCanPlayBound = this.handleCanPlay.bind(this)
+
+  protected handleEndedBound = this.handleEnded.bind(this)
+
+  protected handleSetTimeBound = this.handleSetTime.bind(this)
+
+  protected handleSetVolumeBound = this.handleSetVolume.bind(this)
+
+  protected handleStartBound = this.handleStart.bind(this)
+
+  protected handleStopBound = this.handleStop.bind(this)
+
+  protected handleTimeUpdateBound = this.handleTimeUpdate.bind(this)
+
+  protected handleToggleBound = this.handleToggle.bind(this)
+
+  protected handleVolumeChangeBound = this.handleVolumeChange.bind(this)
 
   protected iconElement: IconElement | null
 
@@ -52,6 +109,11 @@ export class MediaElement extends NodeElement {
     this.iconElement = this.querySelector<IconElement>(':scope > scola-icon')
   }
 
+  public connectedCallback (): void {
+    this.setUpMedia()
+    super.connectedCallback()
+  }
+
   public disconnectedCallback (): void {
     if (
       !this.isConnected && (
@@ -63,7 +125,69 @@ export class MediaElement extends NodeElement {
       this.removeChildren()
     }
 
+    this.tearDownMedia()
     super.disconnectedCallback()
+  }
+
+  public firstUpdated (properties: PropertyValues): void {
+    this.updateVolume()
+    super.firstUpdated(properties)
+  }
+
+  public setTime (time: number): void {
+    if (this.audioElement instanceof HTMLAudioElement) {
+      this.audioElement.currentTime = time
+    }
+
+    if (this.videoElement instanceof HTMLVideoElement) {
+      this.videoElement.currentTime = time
+    }
+  }
+
+  public setVolume (volume: number): void {
+    if (this.audioElement instanceof HTMLAudioElement) {
+      this.audioElement.volume = volume
+    }
+
+    if (this.videoElement instanceof HTMLVideoElement) {
+      this.videoElement.volume = volume
+    }
+  }
+
+  public start (): void {
+    if (!this.started) {
+      if (this.audioElement instanceof HTMLAudioElement) {
+        this.audioElement.play().catch(() => {})
+      }
+
+      if (this.videoElement instanceof HTMLVideoElement) {
+        this.videoElement.play().catch(() => {})
+      }
+
+      this.started = true
+    }
+  }
+
+  public stop (): void {
+    if (this.started) {
+      if (this.audioElement instanceof HTMLAudioElement) {
+        this.audioElement.pause()
+      }
+
+      if (this.videoElement instanceof HTMLVideoElement) {
+        this.videoElement.pause()
+      }
+
+      this.started = false
+    }
+  }
+
+  public toggle (): void {
+    if (this.started) {
+      this.stop()
+    } else {
+      this.start()
+    }
   }
 
   public update (properties: PropertyValues): void {
@@ -233,6 +357,10 @@ export class MediaElement extends NodeElement {
     return sourceElement
   }
 
+  protected handleCanPlay (): void {
+    this.updateLength()
+  }
+
   protected handleData (): void {
     this.removeChildren()
 
@@ -249,6 +377,58 @@ export class MediaElement extends NodeElement {
         src: this.data
       })
     }
+  }
+
+  protected handleEnded (): void {
+    this.started = false
+  }
+
+  protected handleSetTime (event: CustomEvent<Struct | null>): void {
+    if (this.isTarget(event)) {
+      if (
+        isStruct(event.detail?.data) &&
+        typeof event.detail?.data.value === 'number'
+      ) {
+        this.setTime(event.detail.data.value)
+      }
+    }
+  }
+
+  protected handleSetVolume (event: CustomEvent<Struct | null>): void {
+    if (this.isTarget(event)) {
+      if (
+        isStruct(event.detail?.data) &&
+        typeof event.detail?.data.value === 'number'
+      ) {
+        this.setVolume(event.detail.data.value)
+      }
+    }
+  }
+
+  protected handleStart (event: CustomEvent): void {
+    if (this.isTarget(event)) {
+      this.start()
+    }
+  }
+
+  protected handleStop (event: CustomEvent): void {
+    if (this.isTarget(event)) {
+      this.stop()
+    }
+  }
+
+  protected handleTimeUpdate (): void {
+    this.updateTime()
+  }
+
+  protected handleToggle (event: CustomEvent): void {
+    if (this.isTarget(event)) {
+      this.toggle()
+    }
+  }
+
+  protected handleVolumeChange (): void {
+    this.updateVolume()
   }
 
   protected removeChildren (): void {
@@ -274,6 +454,95 @@ export class MediaElement extends NodeElement {
       } else {
         this.iconElement?.removeAttribute('name')
       }
+    }
+  }
+
+  protected setUpElementListeners (): void {
+    this.addEventListener('scola-media-set-time', this.handleSetTimeBound)
+    this.addEventListener('scola-media-set-volume', this.handleSetVolumeBound)
+    this.addEventListener('scola-media-start', this.handleStartBound)
+    this.addEventListener('scola-media-stop', this.handleStopBound)
+    this.addEventListener('scola-media-toggle', this.handleToggleBound)
+    super.setUpElementListeners()
+  }
+
+  protected setUpMedia (): void {
+    if (this.audioElement instanceof HTMLAudioElement) {
+      this.audioElement.addEventListener('canplay', this.handleCanPlayBound)
+      this.audioElement.addEventListener('ended', this.handleEndedBound)
+      this.audioElement.addEventListener('timeupdate', this.handleTimeUpdateBound)
+      this.audioElement.addEventListener('volumechange', this.handleVolumeChangeBound)
+    }
+
+    if (this.videoElement instanceof HTMLVideoElement) {
+      this.videoElement.addEventListener('canplay', this.handleCanPlayBound)
+      this.videoElement.addEventListener('ended', this.handleEndedBound)
+      this.videoElement.addEventListener('timeupdate', this.handleTimeUpdateBound)
+      this.videoElement.addEventListener('volumechange', this.handleVolumeChangeBound)
+    }
+  }
+
+  protected setUpWindowListeners (): void {
+    window.addEventListener('scola-media-set-time', this.handleSetTimeBound)
+    window.addEventListener('scola-media-set-volume', this.handleSetVolumeBound)
+    window.addEventListener('scola-media-start', this.handleStartBound)
+    window.addEventListener('scola-media-stop', this.handleStopBound)
+    window.addEventListener('scola-media-toggle', this.handleToggleBound)
+    super.setUpWindowListeners()
+  }
+
+  protected tearDownMedia (): void {
+    if (this.audioElement instanceof HTMLAudioElement) {
+      this.audioElement.removeEventListener('canplay', this.handleCanPlayBound)
+      this.audioElement.removeEventListener('ended', this.handleEndedBound)
+      this.audioElement.removeEventListener('timeupdate', this.handleTimeUpdateBound)
+      this.audioElement.removeEventListener('volumechange', this.handleVolumeChangeBound)
+    }
+
+    if (this.videoElement instanceof HTMLVideoElement) {
+      this.videoElement.removeEventListener('canplay', this.handleCanPlayBound)
+      this.videoElement.removeEventListener('ended', this.handleEndedBound)
+      this.videoElement.removeEventListener('timeupdate', this.handleTimeUpdateBound)
+      this.videoElement.removeEventListener('volumechange', this.handleVolumeChangeBound)
+    }
+  }
+
+  protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-media-set-time', this.handleSetTimeBound)
+    window.removeEventListener('scola-media-set-volume', this.handleSetVolumeBound)
+    window.removeEventListener('scola-media-start', this.handleStartBound)
+    window.removeEventListener('scola-media-stop', this.handleStopBound)
+    window.removeEventListener('scola-media-toggle', this.handleToggleBound)
+    super.tearDownWindowListeners()
+  }
+
+  protected updateLength (): void {
+    if (this.audioElement instanceof HTMLAudioElement) {
+      this.length = this.audioElement.duration
+    }
+
+    if (this.videoElement instanceof HTMLVideoElement) {
+      this.length = this.videoElement.duration
+    }
+  }
+
+  protected updateTime (): void {
+    if (this.audioElement instanceof HTMLAudioElement) {
+      this.time = this.audioElement.currentTime
+    }
+
+    if (this.videoElement instanceof HTMLVideoElement) {
+      this.time = this.videoElement.currentTime
+    }
+  }
+
+  protected updateVolume (): void {
+    if (this.audioElement instanceof HTMLAudioElement) {
+      this.volume = this.audioElement.volume
+    }
+
+    if (this.videoElement instanceof HTMLVideoElement) {
+      this.volume = this.videoElement.volume
     }
   }
 }

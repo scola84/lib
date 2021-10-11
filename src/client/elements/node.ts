@@ -104,6 +104,12 @@ export class NodeElement extends LitElement {
   public easing = NodeElement.easing
 
   @property({
+    reflect: true,
+    type: Boolean
+  })
+  public fade: boolean
+
+  @property({
     reflect: true
   })
   public fill?: 'aux-1' | 'aux-2' | 'aux-3' | 'error' | 'sig-1' | 'sig-2' | 'translucent'
@@ -219,6 +225,18 @@ export class NodeElement extends LitElement {
   })
   public margin?: string
 
+  @property({
+    attribute: 'max-height',
+    reflect: true
+  })
+  public maxHeight?: string
+
+  @property({
+    attribute: 'max-width',
+    reflect: true
+  })
+  public maxWidth?: string
+
   @property()
   public name = ''
 
@@ -242,6 +260,11 @@ export class NodeElement extends LitElement {
     attribute: 'observe-scope'
   })
   public observeScope: 'body' | 'view' = 'view'
+
+  @property({
+    attribute: 'observe-state'
+  })
+  public observeState?: string
 
   @property({
     attribute: 'outer-backdrop',
@@ -345,6 +368,14 @@ export class NodeElement extends LitElement {
 
   public get hasScopedNodeElements (): boolean {
     return this.querySelector<NodeElement>(':scope > scola-form, :scope > scola-list, :scope > scola-reloader, :scope > scola-struct') !== null
+  }
+
+  public get isStateful (): boolean {
+    if (this.observeState !== undefined) {
+      return this[this.observeState as keyof NodeElement] === true
+    }
+
+    return false
   }
 
   public get scopedDataNodeElements (): NodeListOf<NodeElement> {
@@ -529,6 +560,30 @@ export class NodeElement extends LitElement {
           })
         }
       })
+  }
+
+  public toggleStateFromParameters (element: NodeElement): void {
+    if (this.observeState !== undefined) {
+      Object.assign(this, {
+        [this.observeState]: Object
+          .entries(this.dataset)
+          .every(([name, value]) => {
+            return this.isSameValue(element.parameters[name], cast(value))
+          })
+      })
+    }
+  }
+
+  public toggleStateFromProperties (element: NodeElement): void {
+    if (this.observeState !== undefined) {
+      Object.assign(this, {
+        [this.observeState]: Object
+          .entries(this.dataset)
+          .every(([name, value]) => {
+            return this.isSameValue(element[name as keyof NodeElement], cast(value))
+          })
+      })
+    }
   }
 
   public update (properties: PropertyValues): void {
@@ -773,6 +828,14 @@ export class NodeElement extends LitElement {
         }
       }
     }
+  }
+
+  protected isSameValue (left: unknown, right: unknown): boolean {
+    if (typeof right === 'string') {
+      return new RegExp(right, 'u').test(String(left))
+    }
+
+    return left === right
   }
 
   protected isTarget (event: CustomEvent, cancel = true): boolean {

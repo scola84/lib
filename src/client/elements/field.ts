@@ -145,6 +145,20 @@ export class FieldElement extends NodeElement {
     super.firstUpdated(properties)
   }
 
+  public setValueFromPrimitive (primitive: Primitive): void {
+    this.value = primitive.toString()
+
+    if (this.save === true) {
+      this.saveState()
+    }
+  }
+
+  public setValueFromStruct (struct: Struct): void {
+    if (isPrimitive(struct.value)) {
+      this.setValueFromPrimitive(struct.value)
+    }
+  }
+
   public toggleClear (force?: boolean): void {
     if (this.clearElement instanceof NodeElement) {
       if (force === undefined) {
@@ -241,16 +255,16 @@ export class FieldElement extends NodeElement {
         let stringName = query.name
         let stringValue = query.value
 
-        if (stringName?.includes(' ') === true) {
-          stringName = `"${stringName}"`
-        }
-
         if (stringValue.includes(' ')) {
           stringValue = `"${stringValue}"`
         }
 
         if (stringName === undefined) {
           return stringValue
+        }
+
+        if (stringName.includes(' ')) {
+          stringName = `"${stringName}"`
         }
 
         return `${stringName}:${stringValue}`
@@ -276,7 +290,11 @@ export class FieldElement extends NodeElement {
     this.addEventListener('scola-input-clear', this.handleClearBound)
 
     if (this.listen.includes('input')) {
-      this.fieldElement?.addEventListener('input', debounce(this.debounce, this.handleInputBound))
+      if (this.debounce === 0) {
+        this.fieldElement?.addEventListener('input', this.handleInputBound)
+      } else {
+        this.fieldElement?.addEventListener('input', debounce(this.debounce, this.handleInputBound))
+      }
     }
 
     if (this.listen.includes('keydown')) {
@@ -284,15 +302,5 @@ export class FieldElement extends NodeElement {
     }
 
     super.setUpElementListeners()
-  }
-
-  protected setValueFromPrimitive (primitive: Primitive): void {
-    this.value = primitive.toString()
-  }
-
-  protected setValueFromStruct (struct: Struct): void {
-    if (isPrimitive(struct.value)) {
-      this.setValueFromPrimitive(struct.value)
-    }
   }
 }

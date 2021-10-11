@@ -25,12 +25,6 @@ export class ProgressElement extends NodeElement {
   }
 
   @property({
-    reflect: true,
-    type: Boolean
-  })
-  public busy?: boolean
-
-  @property({
     type: Number
   })
   public fraction = 1 / 50
@@ -52,6 +46,12 @@ export class ProgressElement extends NodeElement {
     reflect: true
   })
   public size?: 'large' | 'medium' | 'small'
+
+  @property({
+    reflect: true,
+    type: Boolean
+  })
+  public started = false
 
   @property({
     reflect: true
@@ -124,14 +124,14 @@ export class ProgressElement extends NodeElement {
       .ease(from, to, (value) => {
         this.progressElement.setAttribute('stroke-dashoffset', `${value}px`)
       })
-      .then(() => {
+      .finally(() => {
         if (
           to === 0 ||
           to === cf
         ) {
-          this.busy = false
-          this.from = cf
           this.progressElement.setAttribute('stroke-dashoffset', `${cf}px`)
+          this.from = cf
+          this.started = false
         }
       })
   }
@@ -157,26 +157,26 @@ export class ProgressElement extends NodeElement {
       .ease(from, to, (value) => {
         this.progressElement.setAttribute('width', `${value}%`)
       })
-      .then(() => {
+      .finally(() => {
         if (
           to === 0 ||
           to === 100
         ) {
-          this.busy = false
-          this.from = 0
           this.progressElement.setAttribute('width', '0%')
+          this.from = 0
+          this.started = false
         }
       })
   }
 
   protected handleLoaded (): void {
     if (this.mode === 'indeterminate') {
-      this.busy = (
+      this.started = (
         this.total === 0 ||
         this.loaded !== this.total
       )
     } else {
-      this.busy = true
+      this.started = true
       this.extend().catch(() => {})
     }
   }

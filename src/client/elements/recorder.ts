@@ -1,6 +1,5 @@
 import type { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser'
 import { customElement, property } from 'lit/decorators.js'
-import { DateTime } from 'luxon'
 import { ImageCapture } from 'image-capture'
 import { MediaElement } from './media'
 import type { Options } from 'recordrtc'
@@ -11,6 +10,8 @@ import updaters from '../updaters/recorder'
 
 declare global {
   interface HTMLElementEventMap {
+    'scola-recorder-start': CustomEvent
+    'scola-recorder-stop': CustomEvent
     'scola-recorder-toggle': CustomEvent
   }
 
@@ -19,13 +20,10 @@ declare global {
   }
 
   interface WindowEventMap {
+    'scola-recorder-start': CustomEvent
+    'scola-recorder-stop': CustomEvent
     'scola-recorder-toggle': CustomEvent
   }
-}
-
-export interface RecorderElementState {
-  dateStarted: Date | null
-  duration: string
 }
 
 @customElement('scola-recorder')
@@ -62,30 +60,21 @@ export class RecorderElement extends MediaElement {
   public mode: 'audio' | 'code' | 'picture' | 'video'
 
   @property({
-    reflect: true,
-    type: Boolean
-  })
-  public recording?: boolean
-
-  @property({
     type: Boolean
   })
   public wait?: boolean
-
-  public state: RecorderElementState = {
-    dateStarted: null,
-    duration: ''
-  }
 
   public videoElement: HTMLVideoElement
 
   protected codeScanner?: IScannerControls
 
-  protected handleToggleBound = this.handleToggle.bind(this)
+  protected enabled = false
 
   protected intervalId?: number
 
   protected rtcRecorder?: RtcRecorder
+
+  protected startTime = 0
 
   protected stream?: MediaStream
 
@@ -94,6 +83,7 @@ export class RecorderElement extends MediaElement {
   public disable (): void {
     this.tearDownHelpers()
     this.tearDownStream()
+    this.enabled = false
   }
 
   public disconnectedCallback (): void {
@@ -103,6 +93,7 @@ export class RecorderElement extends MediaElement {
 
   public enable (): void {
     this.setUpStream()
+    this.enabled = true
   }
 
   public firstUpdated (properties: PropertyValues): void {
@@ -113,12 +104,54 @@ export class RecorderElement extends MediaElement {
     }
   }
 
+  public start (): void {
+    if (!this.started) {
+      switch (this.mode) {
+        case 'audio':
+        case 'video':
+          this.startRtcRecording(this.mode)
+          break
+        case 'code':
+          this.startCodeRecording()
+          break
+        case 'picture':
+          this.startPictureRecording()
+          break
+        default:
+          break
+      }
+
+      this.started = true
+    }
+  }
+
+  public stop (): void {
+    if (this.started) {
+      switch (this.mode) {
+        case 'audio':
+        case 'video':
+          this.stopRtcRecording()
+          break
+        case 'code':
+          this.stopCodeRecording()
+          break
+        case 'picture':
+          this.stopPictureRecording()
+          break
+        default:
+          break
+      }
+
+      this.started = false
+    }
+  }
+
   public update (properties: PropertyValues): void {
-    if (properties.has('observe')) {
-      // discard first update
-    } else if (
-      properties.has('back') ||
-      properties.has('mode')
+    if (
+      this.enabled && (
+        properties.has('back') ||
+        properties.has('mode')
+      )
     ) {
       this.disable()
       this.enable()
@@ -164,16 +197,14 @@ export class RecorderElement extends MediaElement {
     this.dispatchError(error, 'err_recorder')
   }
 
-  protected handleToggle (event: CustomEvent): void {
-    if (this.isTarget(event)) {
-      this.toggleRecording()
-    }
-  }
-
   protected setUpElementListeners (): void {
+    this.addEventListener('scola-recorder-start', this.handleStartBound)
+    this.addEventListener('scola-recorder-stop', this.handleStopBound)
     this.addEventListener('scola-recorder-toggle', this.handleToggleBound)
     super.setUpElementListeners()
   }
+
+  protected setUpMedia (): void {}
 
   protected setUpStream (): void {
     const constraints: MediaStreamConstraints = {}
@@ -206,8 +237,110 @@ export class RecorderElement extends MediaElement {
   }
 
   protected setUpWindowListeners (): void {
+    window.addEventListener('scola-recorder-start', this.handleStartBound)
+    window.addEventListener('scola-recorder-stop', this.handleStopBound)
     window.addEventListener('scola-recorder-toggle', this.handleToggleBound)
     super.setUpWindowListeners()
+  }
+
+  protected startCodeRecording (): void {
+    this.codeScanner = RecorderElement.codeReader?.scan(this.videoElement, (code) => {
+      if (
+        code !== undefined &&
+        this.codeScanner !== undefined
+      ) {
+        this.data = {
+          code,
+          value: code.getText()
+        }
+
+        this.dispatchEvents(this.dispatch, [this.data])
+        this.tearDownHelpers()
+      }
+    })
+  }
+
+  protected startPictureRecording (): void {
+    this.stream
+      ?.getVideoTracks()
+      .slice(0, 1)
+      .forEach((videoTrack) => {
+        const imageCapture = new ImageCapture(videoTrack)
+
+        const options = {
+          fillLightMode: 'off'
+        }
+
+        if (this.flash === true) {
+          options.fillLightMode = 'flash'
+        }
+
+        imageCapture
+          .takePhoto(options)
+          .then((blob) => {
+            const name = blob.type.replace('/', '.')
+
+            this.data = {
+              file: new File([blob], name, {
+                type: blob.type
+              }),
+              filename: name,
+              filesize: blob.size,
+              filetype: blob.type
+            }
+
+            this.dispatchEvents(this.dispatch, [this.data])
+          })
+          .catch((error: unknown) => {
+            this.handleError(error)
+          })
+          .finally(() => {
+            this.started = false
+          })
+      })
+  }
+
+  protected startRtcRecording (type: 'audio' | 'video'): void {
+    if (this.stream !== undefined) {
+      this.intervalId = window.setInterval(() => {
+        this.updateLength(Date.now() / 1000)
+      }, 1000)
+
+      this.rtcRecorder = new RtcRecorder(this.stream, {
+        ...RecorderElement.recordrtcOptions,
+        type
+      })
+
+      this.startTime = Date.now() / 1000
+      this.rtcRecorder.startRecording()
+    }
+  }
+
+  protected stopCodeRecording (): void {
+    this.tearDownHelpers()
+  }
+
+  protected stopPictureRecording (): void {}
+
+  protected stopRtcRecording (): void {
+    this.rtcRecorder?.stopRecording(() => {
+      if (this.rtcRecorder !== undefined) {
+        const blob = this.rtcRecorder.getBlob()
+        const name = blob.type.replace('/', '.')
+
+        this.data = {
+          file: new File([blob], name, {
+            type: blob.type
+          }),
+          filename: name,
+          filesize: blob.size,
+          filetype: blob.type
+        }
+
+        this.dispatchEvents(this.dispatch, [this.data])
+        this.tearDownHelpers()
+      }
+    })
   }
 
   protected tearDownHelpers (): void {
@@ -222,13 +355,15 @@ export class RecorderElement extends MediaElement {
     }
 
     if (this.rtcRecorder !== undefined) {
-      this.updateDuration()
+      this.updateLength()
       this.rtcRecorder.destroy()
       this.rtcRecorder = undefined
     }
 
-    this.recording = false
+    this.started = false
   }
+
+  protected tearDownMedia (): void {}
 
   protected tearDownStream (): void {
     this.stream
@@ -242,144 +377,17 @@ export class RecorderElement extends MediaElement {
   }
 
   protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-recorder-start', this.handleStartBound)
+    window.removeEventListener('scola-recorder-stop', this.handleStopBound)
     window.removeEventListener('scola-recorder-toggle', this.handleToggleBound)
     super.tearDownWindowListeners()
   }
 
-  protected toggleCodeRecording (): void {
-    if (this.recording === true) {
-      this.codeScanner = RecorderElement.codeReader?.scan(this.videoElement, (code) => {
-        if (
-          code !== undefined &&
-          this.codeScanner !== undefined
-        ) {
-          this.data = {
-            code,
-            value: code.getText()
-          }
-
-          this.dispatchEvents(this.dispatch, [this.data])
-          this.tearDownHelpers()
-        }
-      })
-    } else if (this.codeScanner !== undefined) {
-      this.tearDownHelpers()
-    }
-  }
-
-  protected toggleMediaRecording (type: 'audio' | 'video'): void {
-    if (this.recording === true) {
-      if (this.stream !== undefined) {
-        this.rtcRecorder = new RtcRecorder(this.stream, {
-          ...RecorderElement.recordrtcOptions,
-          type
-        })
-
-        this.intervalId = window.setInterval(() => {
-          this.updateDuration(new Date())
-        }, 1000)
-
-        this.updateDuration(new Date())
-        this.rtcRecorder.startRecording()
-      }
-    } else if (this.rtcRecorder !== undefined) {
-      this.rtcRecorder.stopRecording(() => {
-        if (this.rtcRecorder !== undefined) {
-          const blob = this.rtcRecorder.getBlob()
-          const name = blob.type.replace('/', '.')
-
-          this.data = {
-            file: new File([blob], name, {
-              type: blob.type
-            }),
-            filename: name,
-            filesize: blob.size,
-            filetype: blob.type
-          }
-
-          this.dispatchEvents(this.dispatch, [this.data])
-          this.tearDownHelpers()
-        }
-      })
-    }
-  }
-
-  protected togglePictureRecording (): void {
-    if (this.recording === true) {
-      this.stream
-        ?.getVideoTracks()
-        .slice(0, 1)
-        .forEach((videoTrack) => {
-          const imageCapture = new ImageCapture(videoTrack)
-
-          const options = {
-            fillLightMode: 'off'
-          }
-
-          if (this.flash === true) {
-            options.fillLightMode = 'flash'
-          }
-
-          imageCapture
-            .takePhoto(options)
-            .then((blob) => {
-              const name = blob.type.replace('/', '.')
-
-              this.data = {
-                file: new File([blob], name, {
-                  type: blob.type
-                }),
-                filename: name,
-                filesize: blob.size,
-                filetype: blob.type
-              }
-
-              this.dispatchEvents(this.dispatch, [this.data])
-            })
-            .catch((error: unknown) => {
-              this.handleError(error)
-            })
-            .finally(() => {
-              this.recording = false
-            })
-        })
-    }
-  }
-
-  protected toggleRecording (): void {
-    this.recording = this.recording === false
-
-    switch (this.mode) {
-      case 'audio':
-      case 'video':
-        this.toggleMediaRecording(this.mode)
-        break
-      case 'code':
-        this.toggleCodeRecording()
-        break
-      case 'picture':
-        this.togglePictureRecording()
-        break
-      default:
-        break
-    }
-  }
-
-  protected updateDuration (date?: Date): void {
-    if (date === undefined) {
-      this.state.dateStarted = null
-      this.state.duration = ''
+  protected updateLength (now?: number): void {
+    if (now === undefined) {
+      this.length = undefined
     } else {
-      if (this.state.dateStarted === null) {
-        this.state.dateStarted = date
-      }
-
-      this.state.duration = DateTime
-        .fromJSDate(date)
-        .diff(DateTime.fromJSDate(this.state.dateStarted))
-        .toFormat('hh:mm:ss')
+      this.length = now - this.startTime
     }
-
-    this.requestUpdate('state')
   }
 }

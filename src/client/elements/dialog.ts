@@ -1,4 +1,5 @@
 import { customElement, property } from 'lit/decorators.js'
+import { isSame, isStruct } from '../../common'
 import type { AppElement } from './app'
 import type { InteractEvent } from '@interactjs/core/InteractEvent'
 import type { Interactable } from '@interactjs/core/Interactable'
@@ -6,7 +7,6 @@ import { NodeElement } from './node'
 import type { Options } from '@interactjs/types'
 import type { Struct } from '../../common'
 import interact from 'interactjs'
-import { isStruct } from '../../common'
 import styles from '../styles/dialog'
 
 declare global {
@@ -896,10 +896,13 @@ export class DialogElement extends NodeElement {
   }
 
   protected isSameStyle (from: ContentStyle, to: ContentStyle): boolean {
-    return (
-      from.left === to.left &&
-      from.top === to.top
-    )
+    return isSame({
+      left: from.left,
+      top: from.top
+    }, {
+      left: to.left,
+      top: to.top
+    })
   }
 
   protected prepareHide (): void {

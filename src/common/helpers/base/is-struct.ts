@@ -1,4 +1,4 @@
-export type Struct<Value = unknown> = Record<string, Value>
+import type { Struct } from './struct'
 
 /**
  * Checks whether a value is a plain object.

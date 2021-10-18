@@ -3,6 +3,9 @@ import type { PropertyValues } from 'lit'
 import type { SourceElement } from '../elements/source'
 
 export default {
+  'scola-node-data': (observer: NodeElement, observable: NodeElement): void => {
+    observer.toggleStateFromData(observable)
+  },
   'scola-node-params': (observer: NodeElement, observable: NodeElement): void => {
     observer.toggleStateFromParameters(observable)
   },

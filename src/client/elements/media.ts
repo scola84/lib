@@ -8,6 +8,9 @@ import styles from '../styles/media'
 
 declare global {
   interface HTMLElementEventMap {
+    'scola-media-ended': CustomEvent
+    'scola-media-fullscreen': CustomEvent
+    'scola-media-jump': CustomEvent
     'scola-media-set-time': CustomEvent
     'scola-media-set-volume': CustomEvent
     'scola-media-start': CustomEvent
@@ -20,6 +23,8 @@ declare global {
   }
 
   interface WindowEventMap {
+    'scola-media-fullscreen': CustomEvent
+    'scola-media-jump': CustomEvent
     'scola-media-set-time': CustomEvent
     'scola-media-set-volume': CustomEvent
     'scola-media-start': CustomEvent
@@ -46,7 +51,17 @@ export class MediaElement extends NodeElement {
   @property({
     type: Number
   })
-  public length?: number
+  public length = 0
+
+  @property({
+    reflect: true
+  })
+  public orientation: 'landscape' | 'portrait'
+
+  @property({
+    type: Boolean
+  })
+  public seeking = false
 
   @property({
     type: Boolean
@@ -56,18 +71,26 @@ export class MediaElement extends NodeElement {
   @property({
     type: Number
   })
-  public time?: number
+  public time = 0
 
   @property({
     type: Number
   })
-  public volume?: number
-
-  protected audioElement?: HTMLAudioElement
+  public volume = 0.5
 
   protected handleCanPlayBound = this.handleCanPlay.bind(this)
 
+  protected handleDurationChangeBound = this.handleDurationchange.bind(this)
+
   protected handleEndedBound = this.handleEnded.bind(this)
+
+  protected handleFullscreenBound = this.handleFullscreen.bind(this)
+
+  protected handleJumpBound = this.handleJump.bind(this)
+
+  protected handleSeekedBound = this.handleSeeked.bind(this)
+
+  protected handleSeekingBound = this.handleSeeking.bind(this)
 
   protected handleSetTimeBound = this.handleSetTime.bind(this)
 
@@ -85,28 +108,16 @@ export class MediaElement extends NodeElement {
 
   protected iconElement: IconElement | null
 
+  protected mediaElement: HTMLImageElement | HTMLMediaElement | null
+
   protected pictureElement?: HTMLPictureElement
 
   protected updaters = MediaElement.updaters
 
-  protected videoElement?: HTMLVideoElement
-
   public constructor () {
     super()
-
-    this
-      .querySelectorAll<HTMLAudioElement | HTMLPictureElement | HTMLVideoElement>(':scope > audio, :scope > picture, :scope > video')
-      .forEach((mediaElement) => {
-        if (mediaElement instanceof HTMLAudioElement) {
-          this.audioElement = mediaElement
-        } else if (mediaElement instanceof HTMLPictureElement) {
-          this.pictureElement = mediaElement
-        } else if (mediaElement instanceof HTMLVideoElement) {
-          this.videoElement = mediaElement
-        }
-      })
-
     this.iconElement = this.querySelector<IconElement>(':scope > scola-icon')
+    this.mediaElement = this.querySelector<HTMLImageElement | HTMLMediaElement>(':scope > audio, :scope > img, :scope > video')
   }
 
   public connectedCallback (): void {
@@ -115,16 +126,6 @@ export class MediaElement extends NodeElement {
   }
 
   public disconnectedCallback (): void {
-    if (
-      !this.isConnected && (
-        isArray(this.data) ||
-        isStruct(this.data) ||
-        typeof this.data === 'string'
-      )
-    ) {
-      this.removeChildren()
-    }
-
     this.tearDownMedia()
     super.disconnectedCallback()
   }
@@ -134,34 +135,36 @@ export class MediaElement extends NodeElement {
     super.firstUpdated(properties)
   }
 
-  public setTime (time: number): void {
-    if (this.audioElement instanceof HTMLAudioElement) {
-      this.audioElement.currentTime = time
-    }
+  public jump (delta: number): void {
+    const time = this.time + delta
 
-    if (this.videoElement instanceof HTMLVideoElement) {
-      this.videoElement.currentTime = time
+    if (time < 0) {
+      this.setTime(0)
+    } else if (time > this.length) {
+      this.setTime(this.length)
+    } else {
+      this.setTime(time)
+    }
+  }
+
+  public setTime (time: number): void {
+    if (this.mediaElement instanceof HTMLMediaElement) {
+      this.mediaElement.currentTime = time
+      this.time = time
     }
   }
 
   public setVolume (volume: number): void {
-    if (this.audioElement instanceof HTMLAudioElement) {
-      this.audioElement.volume = volume
-    }
-
-    if (this.videoElement instanceof HTMLVideoElement) {
-      this.videoElement.volume = volume
+    if (this.mediaElement instanceof HTMLMediaElement) {
+      this.mediaElement.volume = volume
+      this.volume = volume
     }
   }
 
   public start (): void {
     if (!this.started) {
-      if (this.audioElement instanceof HTMLAudioElement) {
-        this.audioElement.play().catch(() => {})
-      }
-
-      if (this.videoElement instanceof HTMLVideoElement) {
-        this.videoElement.play().catch(() => {})
+      if (this.mediaElement instanceof HTMLMediaElement) {
+        this.mediaElement.play().catch(() => {})
       }
 
       this.started = true
@@ -170,12 +173,8 @@ export class MediaElement extends NodeElement {
 
   public stop (): void {
     if (this.started) {
-      if (this.audioElement instanceof HTMLAudioElement) {
-        this.audioElement.pause()
-      }
-
-      if (this.videoElement instanceof HTMLVideoElement) {
-        this.videoElement.pause()
+      if (this.mediaElement instanceof HTMLMediaElement) {
+        this.mediaElement.pause()
       }
 
       this.started = false
@@ -198,189 +197,60 @@ export class MediaElement extends NodeElement {
     super.update(properties)
   }
 
-  protected addAudioSource (source: Struct): void {
-    if (this.audioElement instanceof HTMLAudioElement) {
-      if (typeof source.poster === 'string') {
-        this.audioElement.setAttribute('poster', source.poster)
-      }
-
-      this.audioElement.appendChild(this.createSourceElement(source))
-    }
-  }
-
-  protected addImageSource (source: Struct): void {
-    if (this.pictureElement instanceof HTMLPictureElement) {
-      if (typeof source.srcset === 'string') {
-        this.pictureElement.appendChild(this.createSourceElement(source))
-      }
-
-      const imageElement = this.pictureElement.appendChild(this.createImageElement(source))
-
-      if (this.center === true) {
-        this.centerElement(this.pictureElement, imageElement).catch(() => {})
-      }
-    }
-  }
-
-  protected addSourceFromFile (file: File): void {
-    this.addSourceFromStruct({
-      src: URL.createObjectURL(file),
-      type: file.type
-    })
-  }
-
-  protected addSourceFromStruct (struct: Struct): void {
-    this.removeChildren()
-
-    if (typeof struct.type === 'string') {
-      if (struct.type.startsWith('audio')) {
-        this.addAudioSource(struct)
-        this.setIcon('audio', struct)
-      } else if (struct.type.startsWith('image')) {
-        this.addImageSource(struct)
-        this.setIcon('image', struct)
-      } else if (struct.type.startsWith('video')) {
-        this.addVideoSource(struct)
-        this.setIcon('video', struct)
-      } else {
-        this.setIcon('other', struct)
-      }
-    }
-  }
-
-  protected addSources (sources: unknown[]): void {
-    sources.forEach((source) => {
-      if (isStruct(source)) {
-        this.addSourceFromStruct(source)
-      }
-    })
-  }
-
-  protected addVideoSource (source: Struct): void {
-    if (this.videoElement instanceof HTMLVideoElement) {
-      if (typeof source.poster === 'string') {
-        this.videoElement.setAttribute('poster', source.poster)
-      }
-
-      this.videoElement.appendChild(this.createSourceElement(source))
-
-      if (this.center === true) {
-        this.centerElement(this.videoElement).catch(() => {})
-      }
-    }
-  }
-
-  protected async calculateAspectRatio (element: HTMLElement): Promise<number> {
-    return new Promise((resolve) => {
-      const clonedElement = document.body.appendChild(element.cloneNode(true))
-
-      if (clonedElement instanceof HTMLElement) {
-        clonedElement.style.setProperty('opacity', '0')
-        clonedElement.style.setProperty('position', 'absolute')
-        clonedElement.style.setProperty('width', '16px')
-
-        clonedElement.onload = () => {
-          const {
-            height = 0,
-            width = 0
-          } = clonedElement.getBoundingClientRect()
-
-          if (height > 0) {
-            resolve(width / height)
-          } else {
-            resolve(1)
-          }
-
-          clonedElement.onload = null
-          clonedElement.onloadeddata = null
-          clonedElement.remove()
-        }
-
-        clonedElement.onloadeddata = clonedElement.onload
-      }
-    })
-  }
-
-  protected async centerElement (element: HTMLElement, referenceElement?: HTMLElement): Promise<void> {
-    const aspectRatio = await this.calculateAspectRatio(referenceElement ?? element)
-
-    Array
-      .from(element.children)
-      .forEach((child) => {
-        if (child instanceof HTMLElement) {
-          if (aspectRatio < 1) {
-            child.style.setProperty('max-width', '100%')
-          } else {
-            child.style.setProperty('max-height', '100%')
-          }
-        }
-      })
-
-    if (aspectRatio < 1) {
-      this.halign = undefined
-      this.valign = 'center'
-      element.style.setProperty('max-width', '100%')
-    } else {
-      this.halign = 'center'
-      this.valign = undefined
-      element.style.setProperty('max-height', '100%')
-    }
-  }
-
-  protected createImageElement (source: Struct): HTMLImageElement {
-    const imageElement = document.createElement('img')
-
-    if (typeof source.src === 'string') {
-      imageElement.src = source.src
-    }
-
-    return imageElement
-  }
-
-  protected createSourceElement (source: Struct): HTMLSourceElement {
-    const sourceElement = document.createElement('source')
-
-    if (typeof source.media === 'string') {
-      sourceElement.media = source.media
-    }
-
-    if (typeof source.type === 'string') {
-      sourceElement.type = source.type
-    }
-
-    if (typeof source.src === 'string') {
-      sourceElement.src = source.src
-    } else if (typeof source.srcset === 'string') {
-      sourceElement.srcset = source.srcset
-    }
-
-    return sourceElement
-  }
-
   protected handleCanPlay (): void {
     this.updateLength()
   }
 
   protected handleData (): void {
-    this.removeChildren()
-
     if (isArray(this.data)) {
-      this.addSources(this.data)
+      this.setSourceFromArray(this.data)
     } else if (isStruct(this.data)) {
       if (this.data.file instanceof File) {
-        this.addSourceFromFile(this.data.file)
+        this.setSourceFromFile(this.data.file)
       } else {
-        this.addSourceFromStruct(this.data)
+        this.setSourceFromStruct(this.data)
       }
     } else if (typeof this.data === 'string') {
-      this.addSourceFromStruct({
+      this.setSourceFromStruct({
         src: this.data
       })
     }
   }
 
+  protected handleDurationchange (): void {
+    this.updateLength()
+  }
+
   protected handleEnded (): void {
     this.started = false
+    this.dispatchEvents('scola-media-ended')
+  }
+
+  protected handleFullscreen (): void {
+    if (document.fullscreenElement === null) {
+      this.mediaElement?.requestFullscreen().catch(() => {})
+    } else {
+      document.exitFullscreen().catch(() => {})
+    }
+  }
+
+  protected handleJump (event: CustomEvent<Struct | null>): void {
+    if (this.isTarget(event)) {
+      if (
+        isStruct(event.detail?.data) &&
+        event.detail?.data.delta !== undefined
+      ) {
+        this.jump(Number(event.detail.data.delta))
+      }
+    }
+  }
+
+  protected handleSeeked (): void {
+    this.seeking = false
+  }
+
+  protected handleSeeking (): void {
+    this.seeking = true
   }
 
   protected handleSetTime (event: CustomEvent<Struct | null>): void {
@@ -431,23 +301,31 @@ export class MediaElement extends NodeElement {
     this.updateVolume()
   }
 
-  protected removeChildren (): void {
-    this
-      .querySelectorAll<HTMLImageElement | HTMLSourceElement>('img, source')
-      .forEach((element) => {
-        element.remove()
+  protected setAVSource (source: Struct, type: 'audio' | 'video'): void {
+    if (this.mediaElement === null) {
+      this.mediaElement = this.appendChild(document.createElement(type))
+    }
 
-        if (element.src.startsWith('blob:')) {
-          URL.revokeObjectURL(element.src)
-        }
+    if (this.mediaElement instanceof HTMLMediaElement) {
+      if (typeof source.src === 'string') {
+        this.mediaElement.src = source.src
+      }
 
-        if (element.srcset.startsWith('blob:')) {
-          URL.revokeObjectURL(element.srcset)
-        }
-      })
+      if (typeof source.poster === 'string') {
+        this.mediaElement.setAttribute('poster', source.poster)
+      }
+
+      this.length = 0
+      this.started = false
+      this.setTime(0)
+    }
+
+    if (this.center === true) {
+      this.updateOrientation(this.mediaElement)
+    }
   }
 
-  protected setIcon (type: string, struct: Struct): void {
+  protected setIcon (struct: Struct, type: string): void {
     if (typeof struct.type === 'string') {
       if (this.iconElement?.as?.includes(type) === true) {
         this.iconElement.setAttribute('name', struct.type.split('/').pop() ?? '')
@@ -457,7 +335,77 @@ export class MediaElement extends NodeElement {
     }
   }
 
+  protected setImageSource (source: Struct): void {
+    if (this.mediaElement === null) {
+      this.mediaElement = this.appendChild(document.createElement('img'))
+    }
+
+    if (this.mediaElement instanceof HTMLImageElement) {
+      if (typeof source.srcset === 'string') {
+        this.mediaElement.srcset = source.srcset
+      } else if (typeof source.src === 'string') {
+        this.mediaElement.src = source.src
+      }
+
+      if (typeof source.sizes === 'string') {
+        this.mediaElement.sizes = source.sizes
+      }
+    }
+
+    if (this.center === true) {
+      this.updateOrientation(this.mediaElement)
+    }
+  }
+
+  protected setSourceFromArray (sources: unknown[]): void {
+    sources.find((source) => {
+      if (
+        isStruct(source) &&
+        typeof source.type === 'string' &&
+        this.mediaElement instanceof HTMLMediaElement &&
+        this.mediaElement.canPlayType(source.type) !== ''
+      ) {
+        this.setSourceFromStruct(source)
+        return true
+      }
+
+      return false
+    })
+  }
+
+  protected setSourceFromFile (file: File): void {
+    this.setSourceFromStruct({
+      src: URL.createObjectURL(file),
+      type: file.type
+    })
+  }
+
+  protected setSourceFromStruct (struct: Struct): void {
+    if (typeof struct.type === 'string') {
+      const type = struct.type
+        .split('/')
+        .shift()
+
+      switch (type) {
+        case 'audio':
+        case 'video':
+          this.setAVSource(struct, type)
+          this.setIcon(struct, type)
+          break
+        case 'image':
+          this.setImageSource(struct)
+          this.setIcon(struct, type)
+          break
+        default:
+          this.setIcon(struct, 'other')
+          break
+      }
+    }
+  }
+
   protected setUpElementListeners (): void {
+    this.addEventListener('scola-media-fullscreen', this.handleFullscreenBound)
+    this.addEventListener('scola-media-jump', this.handleJumpBound)
     this.addEventListener('scola-media-set-time', this.handleSetTimeBound)
     this.addEventListener('scola-media-set-volume', this.handleSetVolumeBound)
     this.addEventListener('scola-media-start', this.handleStartBound)
@@ -467,22 +415,20 @@ export class MediaElement extends NodeElement {
   }
 
   protected setUpMedia (): void {
-    if (this.audioElement instanceof HTMLAudioElement) {
-      this.audioElement.addEventListener('canplay', this.handleCanPlayBound)
-      this.audioElement.addEventListener('ended', this.handleEndedBound)
-      this.audioElement.addEventListener('timeupdate', this.handleTimeUpdateBound)
-      this.audioElement.addEventListener('volumechange', this.handleVolumeChangeBound)
-    }
-
-    if (this.videoElement instanceof HTMLVideoElement) {
-      this.videoElement.addEventListener('canplay', this.handleCanPlayBound)
-      this.videoElement.addEventListener('ended', this.handleEndedBound)
-      this.videoElement.addEventListener('timeupdate', this.handleTimeUpdateBound)
-      this.videoElement.addEventListener('volumechange', this.handleVolumeChangeBound)
+    if (this.mediaElement instanceof HTMLMediaElement) {
+      this.mediaElement.addEventListener('canplay', this.handleCanPlayBound)
+      this.mediaElement.addEventListener('durationchange', this.handleDurationChangeBound)
+      this.mediaElement.addEventListener('ended', this.handleEndedBound)
+      this.mediaElement.addEventListener('seeked', this.handleSeekedBound)
+      this.mediaElement.addEventListener('seeking', this.handleSeekingBound)
+      this.mediaElement.addEventListener('timeupdate', this.handleTimeUpdateBound)
+      this.mediaElement.addEventListener('volumechange', this.handleVolumeChangeBound)
     }
   }
 
   protected setUpWindowListeners (): void {
+    window.addEventListener('scola-media-fullscreen', this.handleFullscreenBound)
+    window.addEventListener('scola-media-jump', this.handleJumpBound)
     window.addEventListener('scola-media-set-time', this.handleSetTimeBound)
     window.addEventListener('scola-media-set-volume', this.handleSetVolumeBound)
     window.addEventListener('scola-media-start', this.handleStartBound)
@@ -492,22 +438,27 @@ export class MediaElement extends NodeElement {
   }
 
   protected tearDownMedia (): void {
-    if (this.audioElement instanceof HTMLAudioElement) {
-      this.audioElement.removeEventListener('canplay', this.handleCanPlayBound)
-      this.audioElement.removeEventListener('ended', this.handleEndedBound)
-      this.audioElement.removeEventListener('timeupdate', this.handleTimeUpdateBound)
-      this.audioElement.removeEventListener('volumechange', this.handleVolumeChangeBound)
+    if (
+      !this.isConnected &&
+      this.mediaElement?.src.startsWith('blob:') === true
+    ) {
+      URL.revokeObjectURL(this.mediaElement.src)
     }
 
-    if (this.videoElement instanceof HTMLVideoElement) {
-      this.videoElement.removeEventListener('canplay', this.handleCanPlayBound)
-      this.videoElement.removeEventListener('ended', this.handleEndedBound)
-      this.videoElement.removeEventListener('timeupdate', this.handleTimeUpdateBound)
-      this.videoElement.removeEventListener('volumechange', this.handleVolumeChangeBound)
+    if (this.mediaElement instanceof HTMLMediaElement) {
+      this.mediaElement.removeEventListener('canplay', this.handleCanPlayBound)
+      this.mediaElement.removeEventListener('durationchange', this.handleDurationChangeBound)
+      this.mediaElement.removeEventListener('ended', this.handleEndedBound)
+      this.mediaElement.removeEventListener('seeked', this.handleSeekedBound)
+      this.mediaElement.removeEventListener('seeking', this.handleSeekingBound)
+      this.mediaElement.removeEventListener('timeupdate', this.handleTimeUpdateBound)
+      this.mediaElement.removeEventListener('volumechange', this.handleVolumeChangeBound)
     }
   }
 
   protected tearDownWindowListeners (): void {
+    window.removeEventListener('scola-media-fullscreen', this.handleFullscreenBound)
+    window.removeEventListener('scola-media-jump', this.handleJumpBound)
     window.removeEventListener('scola-media-set-time', this.handleSetTimeBound)
     window.removeEventListener('scola-media-set-volume', this.handleSetVolumeBound)
     window.removeEventListener('scola-media-start', this.handleStartBound)
@@ -517,32 +468,53 @@ export class MediaElement extends NodeElement {
   }
 
   protected updateLength (): void {
-    if (this.audioElement instanceof HTMLAudioElement) {
-      this.length = this.audioElement.duration
+    if (this.mediaElement instanceof HTMLMediaElement) {
+      this.length = this.mediaElement.duration
     }
+  }
 
-    if (this.videoElement instanceof HTMLVideoElement) {
-      this.length = this.videoElement.duration
+  protected updateOrientation (element: HTMLElement): void {
+    const clonedElement = document.body.appendChild(element.cloneNode(true))
+
+    if (clonedElement instanceof HTMLElement) {
+      clonedElement.style.setProperty('opacity', '0')
+      clonedElement.style.setProperty('position', 'absolute')
+      clonedElement.style.setProperty('width', '16px')
+
+      clonedElement.onload = () => {
+        const {
+          height = 0,
+          width = 0
+        } = clonedElement.getBoundingClientRect()
+
+        if (height > 0) {
+          if ((width / height) > 1) {
+            this.orientation = 'landscape'
+          } else {
+            this.orientation = 'portrait'
+          }
+        } else {
+          this.orientation = 'portrait'
+        }
+
+        clonedElement.onload = null
+        clonedElement.onloadeddata = null
+        clonedElement.remove()
+      }
+
+      clonedElement.onloadeddata = clonedElement.onload
     }
   }
 
   protected updateTime (): void {
-    if (this.audioElement instanceof HTMLAudioElement) {
-      this.time = this.audioElement.currentTime
-    }
-
-    if (this.videoElement instanceof HTMLVideoElement) {
-      this.time = this.videoElement.currentTime
+    if (this.mediaElement instanceof HTMLMediaElement) {
+      this.time = this.mediaElement.currentTime
     }
   }
 
   protected updateVolume (): void {
-    if (this.audioElement instanceof HTMLAudioElement) {
-      this.volume = this.audioElement.volume
-    }
-
-    if (this.videoElement instanceof HTMLVideoElement) {
-      this.volume = this.videoElement.volume
+    if (this.mediaElement instanceof HTMLMediaElement) {
+      this.volume = this.mediaElement.volume
     }
   }
 }

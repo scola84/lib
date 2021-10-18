@@ -21,10 +21,10 @@ export default {
     ) {
       observer.data = {
         length: Duration
-          .fromMillis((observable.length ?? 0) * 1000)
+          .fromMillis(observable.length * 1000)
           .toFormat(observable.format),
         time: Duration
-          .fromMillis((observable.time ?? 0) * 1000)
+          .fromMillis(observable.time * 1000)
           .toFormat(observable.format)
       }
     }
@@ -34,7 +34,7 @@ export default {
       properties.has('length') ||
       properties.has('time')
     ) {
-      if (observable.length === undefined) {
+      if (observable.length === 0) {
         observer.data = {}
       } else {
         observer.data = {

@@ -1,10 +1,9 @@
+import { Struct, elements, isArray, isNil, isPrimitive, isSame, isStruct } from '../../common'
 import { addHook, isValidAttribute, sanitize } from 'dompurify'
-import { cast, elements, isArray, isNil, isPrimitive, isStruct } from '../../common'
 import { customElement, property } from 'lit/decorators.js'
 import { ClipElement } from './clip'
 import type { Config } from 'dompurify'
 import type { PropertyValues } from 'lit'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -12,7 +11,7 @@ declare global {
     'scola-view-move': CustomEvent
     'scola-view-back': CustomEvent
     'scola-view-forward': CustomEvent
-    'scola-view-home': CustomEvent
+    'scola-view-rewind': CustomEvent
   }
 
   interface HTMLElementTagNameMap {
@@ -23,7 +22,7 @@ declare global {
     'scola-view-append': CustomEvent
     'scola-view-back': CustomEvent
     'scola-view-forward': CustomEvent
-    'scola-view-home': CustomEvent
+    'scola-view-rewind': CustomEvent
   }
 }
 
@@ -56,12 +55,12 @@ export class ViewElement extends ClipElement {
   @property({
     type: Boolean
   })
-  public hasFuture = false
+  public hasNext = false
 
   @property({
     type: Boolean
   })
-  public hasPast = false
+  public hasPrevious = false
 
   @property()
   public origin = ViewElement.origin
@@ -92,15 +91,19 @@ export class ViewElement extends ClipElement {
 
   protected handleForwardBound = this.handleForward.bind(this)
 
-  protected handleHomeBound = this.handleHome.bind(this)
-
   protected handlePopstateBound = this.handlePopstate.bind(this)
+
+  protected handleRewindBound = this.handleRewind.bind(this)
 
   protected pointer = -1
 
   protected updaters = ViewElement.updaters
 
   protected views: View[] = []
+
+  public back (): void {
+    this.go(-1).catch(() => {})
+  }
 
   public connectedCallback (): void {
     viewElements.add(this)
@@ -123,6 +126,14 @@ export class ViewElement extends ClipElement {
       .finally(() => {
         super.firstUpdated(properties)
       })
+  }
+
+  public forward (): void {
+    this.go(1).catch(() => {})
+  }
+
+  public rewind (): void {
+    this.go(-this.pointer).catch(() => {})
   }
 
   public toObject (): Struct {
@@ -220,16 +231,7 @@ export class ViewElement extends ClipElement {
       }
 
       if (typeof options.parameters === 'string') {
-        view.parameters = this
-          .replaceParameters(options.parameters, options)
-          .split('&')
-          .reduce((object, parameter) => {
-            const [name, value] = parameter.split('=')
-            return {
-              [name]: cast(value),
-              ...object
-            }
-          }, {})
+        view.parameters = Struct.parse(options.parameters, options)
       } else if (isStruct(options.parameters)) {
         view.parameters = options.parameters
       }
@@ -251,7 +253,7 @@ export class ViewElement extends ClipElement {
         name
       }
 
-      const url = new URL(this.replaceParameters(urlParts.join(''), parameters))
+      const url = new URL(Struct.replace(urlParts.join(''), parameters))
       const response = await window.fetch(url.toString())
 
       if (response.status === 200) {
@@ -325,9 +327,9 @@ export class ViewElement extends ClipElement {
         ViewElement.mode === 'push' &&
         this.save === true
       ) {
-        window.history.go(-1)
+        window.history.back()
       } else {
-        this.go(-1).catch(() => {})
+        this.back()
       }
     }
   }
@@ -342,22 +344,9 @@ export class ViewElement extends ClipElement {
         ViewElement.mode === 'push' &&
         this.save === true
       ) {
-        window.history.go(1)
+        window.history.forward()
       } else {
-        this.go(1).catch(() => {})
-      }
-    }
-  }
-
-  protected handleHome (event: CustomEvent): void {
-    if (this.isTarget(event)) {
-      if (
-        ViewElement.mode === 'push' &&
-        this.save === true
-      ) {
-        window.history.go(-this.pointer)
-      } else {
-        this.go(-this.pointer).catch(() => {})
+        this.forward()
       }
     }
   }
@@ -367,11 +356,27 @@ export class ViewElement extends ClipElement {
     this.go(0).catch(() => {})
   }
 
+  protected handleRewind (event: CustomEvent): void {
+    if (this.isTarget(event)) {
+      if (
+        ViewElement.mode === 'push' &&
+        this.save === true
+      ) {
+        window.history.go(-this.pointer)
+      } else {
+        this.rewind()
+      }
+    }
+  }
+
   protected isSameView (left?: View | null, right?: View | null): boolean {
-    return (
-      left?.name === right?.name &&
-      JSON.stringify(left?.parameters) === JSON.stringify(right?.parameters)
-    )
+    return isSame({
+      name: left?.name,
+      parameters: left?.parameters
+    }, {
+      name: right?.name,
+      parameters: right?.parameters
+    })
   }
 
   protected loadPointer (): void {
@@ -471,8 +476,8 @@ export class ViewElement extends ClipElement {
 
   protected setPointer (pointer: number): void {
     this.pointer = pointer
-    this.hasFuture = this.pointer < this.views.length - 1
-    this.hasPast = this.pointer > 0
+    this.hasNext = this.pointer < this.views.length - 1
+    this.hasPrevious = this.pointer > 0
   }
 
   protected setScroll (element: HTMLElement): void {
@@ -502,7 +507,7 @@ export class ViewElement extends ClipElement {
     this.addEventListener('scola-view-append', this.handleAppendBound)
     this.addEventListener('scola-view-back', this.handleBackBound)
     this.addEventListener('scola-view-forward', this.handleForwardBound)
-    this.addEventListener('scola-view-home', this.handleHomeBound)
+    this.addEventListener('scola-view-rewind', this.handleRewindBound)
     super.setUpElementListeners()
   }
 
@@ -511,7 +516,7 @@ export class ViewElement extends ClipElement {
     window.addEventListener('scola-view-append', this.handleAppendBound)
     window.addEventListener('scola-view-back', this.handleBackBound)
     window.addEventListener('scola-view-forward', this.handleForwardBound)
-    window.addEventListener('scola-view-home', this.handleHomeBound)
+    window.addEventListener('scola-view-rewind', this.handleRewindBound)
     super.setUpWindowListeners()
   }
 
@@ -520,7 +525,7 @@ export class ViewElement extends ClipElement {
     window.removeEventListener('scola-view-append', this.handleAppendBound)
     window.removeEventListener('scola-view-back', this.handleBackBound)
     window.removeEventListener('scola-view-forward', this.handleForwardBound)
-    window.removeEventListener('scola-view-home', this.handleHomeBound)
+    window.removeEventListener('scola-view-rewind', this.handleRewindBound)
     super.tearDownWindowListeners()
   }
 }

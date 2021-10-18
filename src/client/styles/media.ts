@@ -1,16 +1,23 @@
 import { css } from 'lit'
 
 export default css`
-  slot:not([name])::slotted(audio:not([autoplay]):empty),
-  slot:not([name])::slotted(picture:empty),
-  slot:not([name])::slotted(scola-icon:not([name])),
-  slot:not([name])::slotted(video:not([autoplay]):empty) {
-    display: none;
+  :host([center]) slot:not([name])::slotted(img),
+  :host([center]) slot:not([name])::slotted(video) {
+    bottom: -100%;
+    left: -100%;
+    margin: auto;
+    position: absolute;
+    right: -100%;
+    top: -100%;
   }
 
-  slot:not([name])::slotted(picture:not(:empty)) {
-    align-items: center;
-    display: flex;
-    justify-content: center;
+  :host([center][orientation="landscape"]) slot:not([name])::slotted(img),
+  :host([center][orientation="landscape"]) slot:not([name])::slotted(video) {
+    height: 100%;
+  }
+
+  :host([center][orientation="portrait"]) slot:not([name])::slotted(img),
+  :host([center][orientation="portrait"]) slot:not([name])::slotted(video) {
+    width: 100%;
   }
 `

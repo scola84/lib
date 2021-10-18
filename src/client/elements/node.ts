@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit'
 import type { PropertyValues, TemplateResult } from 'lit'
-import { Struct, cast, isPrimitive, isStruct } from '../../common'
+import { Struct, cast, isPrimitive, isSame, isStruct } from '../../common'
 import { customElement, property, query } from 'lit/decorators.js'
 import styles from '../styles/node'
 import updaters from '../updaters/node'
@@ -562,6 +562,14 @@ export class NodeElement extends LitElement {
       })
   }
 
+  public toggleStateFromData (element: NodeElement): void {
+    if (this.observeState !== undefined) {
+      Object.assign(this, {
+        [this.observeState]: this.data === element.data
+      })
+    }
+  }
+
   public toggleStateFromParameters (element: NodeElement): void {
     if (this.observeState !== undefined) {
       Object.assign(this, {
@@ -691,7 +699,7 @@ export class NodeElement extends LitElement {
 
         if (
           rootNode instanceof ShadowRoot &&
-             rootNode.host instanceof HTMLElement
+          rootNode.host instanceof HTMLElement
         ) {
           element = rootNode.host
         } else {
@@ -835,7 +843,7 @@ export class NodeElement extends LitElement {
       return new RegExp(right, 'u').test(String(left))
     }
 
-    return left === right
+    return isSame(left, right)
   }
 
   protected isTarget (event: CustomEvent, cancel = true): boolean {
@@ -852,21 +860,6 @@ export class NodeElement extends LitElement {
 
     event.cancelBubble = cancel
     return true
-  }
-
-  protected replaceParameters (string: string, parameters?: Struct): string {
-    return string
-      .match(/:[a-z]\w+/gu)
-      ?.reduce((result, match) => {
-        const regExp = new RegExp(match, 'gu')
-        const value = parameters?.[match.slice(1)]
-
-        if (isPrimitive(value)) {
-          return result.replace(regExp, value.toString())
-        }
-
-        return result.replace(regExp, '')
-      }, string) ?? string
   }
 
   protected setUpElementListeners (): void {

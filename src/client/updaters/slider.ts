@@ -6,7 +6,7 @@ export default {
     if (properties.has('observe')) {
       observable.setTime(Number(observer.value))
     } else if (properties.has('length')) {
-      observer.setMax(observable.length ?? 0)
+      observer.setMax(observable.length)
     } else if (properties.has('time')) {
       observer.data = {
         value: observable.time

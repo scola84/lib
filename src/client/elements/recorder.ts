@@ -72,6 +72,8 @@ export class RecorderElement extends MediaElement {
 
   protected intervalId?: number
 
+  protected mediaElement: HTMLVideoElement
+
   protected rtcRecorder?: RtcRecorder
 
   protected startTime = 0
@@ -228,8 +230,8 @@ export class RecorderElement extends MediaElement {
       .getUserMedia(constraints)
       .then((stream) => {
         this.stream = stream
-        this.videoElement.srcObject = stream
-        this.videoElement.muted = true
+        this.mediaElement.srcObject = stream
+        this.mediaElement.muted = true
       })
       .catch((error: unknown) => {
         this.handleError(error)
@@ -244,7 +246,7 @@ export class RecorderElement extends MediaElement {
   }
 
   protected startCodeRecording (): void {
-    this.codeScanner = RecorderElement.codeReader?.scan(this.videoElement, (code) => {
+    this.codeScanner = RecorderElement.codeReader?.scan(this.mediaElement, (code) => {
       if (
         code !== undefined &&
         this.codeScanner !== undefined
@@ -372,7 +374,7 @@ export class RecorderElement extends MediaElement {
         track.stop()
       })
 
-    this.videoElement.srcObject = null
+    this.mediaElement.srcObject = null
     this.stream = undefined
   }
 
@@ -385,7 +387,7 @@ export class RecorderElement extends MediaElement {
 
   protected updateLength (now?: number): void {
     if (now === undefined) {
-      this.length = undefined
+      this.length = 0
     } else {
       this.length = now - this.startTime
     }

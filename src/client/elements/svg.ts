@@ -1,7 +1,7 @@
 import { customElement, property } from 'lit/decorators.js'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
-import type { Struct } from '../../common'
+import { Struct } from '../../common'
 import type d3 from 'd3'
 
 declare global {
@@ -116,7 +116,7 @@ export class SvgElement extends NodeElement {
         name: drawer
       }
 
-      const src = new URL(this.replaceParameters(urlParts.join(''), parameters)).toString()
+      const src = new URL(Struct.replace(urlParts.join(''), parameters)).toString()
 
       if (this.scriptElement?.src === src) {
         resolve((window as unknown as Struct)[drawer] as Drawer)

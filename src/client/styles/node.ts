@@ -195,8 +195,12 @@ export default css`
     background: var(--scola-node-fill-sig-2, #008000);
   }
 
-  :host([fill="translucent"]) slot[name="body"] {
-    background: var(--scola-node-fill-translucent, rgba(255, 255, 255, 0.25));
+  :host([fill="tsp-1"]) slot[name="body"] {
+    background: var(--scola-node-fill-tsp-1, rgba(255, 255, 255, 0.25));
+  }
+
+  :host([fill="tsp-2"]) slot[name="body"] {
+    background: var(--scola-node-fill-tsp-2, rgba(0, 0, 0, 0.25));
   }
 
   @media (hover) {
@@ -218,10 +222,6 @@ export default css`
 
     :host([fill-hover="sig-2"]) slot[name="body"]:hover {
       background: var(--scola-node-fill-hover-sig-2, #009000);
-    }
-
-    :host([fill="translucent"]) slot[name="body"]:hover {
-      background: var(--scola-node-fill-translucent, rgba(255, 255, 255, 0.30));
     }
 
     :host([fill="aux-1"][scrollbar]) slot[name="body"]:hover {
@@ -267,10 +267,6 @@ export default css`
 
   :host([fill-active="sig-2"]) slot[name="body"]:active {
     background: var(--scola-node-fill-active-sig-2, #00bf00);
-  }
-
-  :host([fill-active="translucent"]) slot[name="body"]:active {
-    background: var(--scola-node-fill-translucent, rgba(255, 255, 255, 0.35));
   }
 
   :host([flow="column"]) slot[name="body"] {

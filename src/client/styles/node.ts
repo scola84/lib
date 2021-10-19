@@ -195,12 +195,16 @@ export default css`
     background: var(--scola-node-fill-sig-2, #008000);
   }
 
-  :host([fill="tsp-1"]) slot[name="body"] {
-    background: var(--scola-node-fill-tsp-1, rgba(255, 255, 255, 0.25));
+  :host([fill="tsp"]) slot[name="body"] {
+    background: var(--scola-node-fill-tsp, rgba(255, 255, 255, 0.25));
   }
 
-  :host([fill="tsp-2"]) slot[name="body"] {
-    background: var(--scola-node-fill-tsp-2, rgba(0, 0, 0, 0.25));
+  :host([fill="tsp-black"]) slot[name="body"] {
+    background: var(--scola-node-fill-tsp-black, rgba(0, 0, 0, 0.25));
+  }
+
+  :host([fill="tsp-white"]) slot[name="body"] {
+    background: var(--scola-node-fill-tsp-white, rgba(255, 255, 255, 0.25));
   }
 
   @media (hover) {

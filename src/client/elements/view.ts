@@ -55,12 +55,12 @@ export class ViewElement extends ClipElement {
   @property({
     type: Boolean
   })
-  public hasNext = false
+  public hasNext?: boolean
 
   @property({
     type: Boolean
   })
-  public hasPrevious = false
+  public hasPrevious?: boolean
 
   @property()
   public origin = ViewElement.origin

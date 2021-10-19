@@ -45,14 +45,15 @@ export class PlayerElement extends NodeElement {
   @property({
     type: Boolean
   })
-  public hasNext = false
+  public hasNext?: boolean
 
   @property({
     type: Boolean
   })
-  public hasPrevious = false
+  public hasPrevious?: boolean
 
   @property({
+    reflect: true,
     type: Boolean
   })
   public started = false
@@ -200,7 +201,7 @@ export class PlayerElement extends NodeElement {
 
   protected handleMediaEnded (): void {
     if (this.started) {
-      if (this.hasNext) {
+      if (this.hasNext === true) {
         this.go(1)
       }
     } else {

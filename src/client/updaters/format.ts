@@ -21,10 +21,10 @@ export default {
     ) {
       observer.data = {
         length: Duration
-          .fromMillis(observable.length * 1000)
+          .fromMillis(observable.length ?? 0)
           .toFormat(observable.format),
         time: Duration
-          .fromMillis(observable.time * 1000)
+          .fromMillis(observable.time ?? 0)
           .toFormat(observable.format)
       }
     }
@@ -39,7 +39,7 @@ export default {
       } else {
         observer.data = {
           length: Duration
-            .fromMillis(observable.length * 1000)
+            .fromMillis(observable.length ?? 0)
             .toFormat(observable.format)
         }
       }

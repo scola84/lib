@@ -26,6 +26,7 @@ export class IconElement extends NodeElement {
   public name: keyof Icons
 
   @property({
+    reflect: true,
     type: Boolean
   })
   public rtl?: boolean

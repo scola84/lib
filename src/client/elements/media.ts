@@ -51,7 +51,7 @@ export class MediaElement extends NodeElement {
   @property({
     type: Number
   })
-  public length = 0
+  public length?: number
 
   @property({
     reflect: true
@@ -59,11 +59,13 @@ export class MediaElement extends NodeElement {
   public orientation: 'landscape' | 'portrait'
 
   @property({
+    reflect: true,
     type: Boolean
   })
   public seeking = false
 
   @property({
+    reflect: true,
     type: Boolean
   })
   public started = false
@@ -71,12 +73,12 @@ export class MediaElement extends NodeElement {
   @property({
     type: Number
   })
-  public time = 0
+  public time?: number
 
   @property({
     type: Number
   })
-  public volume = 0.5
+  public volume?: number
 
   protected handleCanPlayBound = this.handleCanPlay.bind(this)
 
@@ -136,11 +138,14 @@ export class MediaElement extends NodeElement {
   }
 
   public jump (delta: number): void {
-    const time = this.time + delta
+    const time = (this.time ?? 0) + delta
 
     if (time < 0) {
       this.setTime(0)
-    } else if (time > this.length) {
+    } else if (
+      this.length !== undefined &&
+      time > this.length
+    ) {
       this.setTime(this.length)
     } else {
       this.setTime(time)
@@ -149,15 +154,15 @@ export class MediaElement extends NodeElement {
 
   public setTime (time: number): void {
     if (this.mediaElement instanceof HTMLMediaElement) {
-      this.mediaElement.currentTime = time
-      this.time = time
+      this.mediaElement.currentTime = time / 1000
+      this.updateTime()
     }
   }
 
   public setVolume (volume: number): void {
     if (this.mediaElement instanceof HTMLMediaElement) {
       this.mediaElement.volume = volume
-      this.volume = volume
+      this.updateVolume()
     }
   }
 
@@ -469,12 +474,12 @@ export class MediaElement extends NodeElement {
 
   protected updateLength (): void {
     if (this.mediaElement instanceof HTMLMediaElement) {
-      this.length = this.mediaElement.duration
+      this.length = this.mediaElement.duration * 1000
     }
   }
 
   protected updateOrientation (element: HTMLElement): void {
-    const clonedElement = document.body.appendChild(element.cloneNode(true))
+    const clonedElement = document.body.appendChild(element.cloneNode())
 
     if (clonedElement instanceof HTMLElement) {
       clonedElement.style.setProperty('opacity', '0')
@@ -508,7 +513,7 @@ export class MediaElement extends NodeElement {
 
   protected updateTime (): void {
     if (this.mediaElement instanceof HTMLMediaElement) {
-      this.time = this.mediaElement.currentTime
+      this.time = this.mediaElement.currentTime * 1000
     }
   }
 

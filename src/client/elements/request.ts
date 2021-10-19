@@ -56,6 +56,7 @@ export class RequestElement extends NodeElement {
   public path?: string
 
   @property({
+    reflect: true,
     type: Boolean
   })
   public started = false

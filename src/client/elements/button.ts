@@ -58,12 +58,6 @@ export class ButtonElement extends NodeElement {
   })
   public storage = ButtonElement.storage
 
-  @property({
-    reflect: true,
-    type: Boolean
-  })
-  public toggle?: boolean
-
   public cursor: NodeElement['cursor'] = 'pointer'
 
   protected handleClickBound = this.handleClick.bind(this)

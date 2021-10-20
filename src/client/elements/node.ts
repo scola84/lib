@@ -112,7 +112,7 @@ export class NodeElement extends LitElement {
   @property({
     reflect: true
   })
-  public fill?: 'aux-1' | 'aux-2' | 'aux-3' | 'error' | 'sig-1' | 'sig-2' | 'tsp-1' | 'tsp-2'
+  public fill?: 'aux-1' | 'aux-2' | 'aux-3' | 'error' | 'sig-1' | 'sig-2' | 'tsp-black' | 'tsp-white' | 'tsp'
 
   @property({
     attribute: 'fill-active',

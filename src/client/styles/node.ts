@@ -207,6 +207,26 @@ export default css`
     background: var(--scola-node-fill-tsp-white, rgba(255, 255, 255, 0.25));
   }
 
+  :host([fill-active="aux-1"]) slot[name="body"]:active {
+    background: var(--scola-node-fill-active-aux-1, #ccc);
+  }
+
+  :host([fill-active="aux-2"]) slot[name="body"]:active {
+    background: var(--scola-node-fill-active-aux-2, #bbb);
+  }
+
+  :host([fill-active="aux-3"]) slot[name="body"]:active {
+    background: var(--scola-node-fill-active-aux-3, #aaa);
+  }
+
+  :host([fill-active="sig-1"]) slot[name="body"]:active {
+    background: var(--scola-node-fill-active-sig-1, #8a0000);
+  }
+
+  :host([fill-active="sig-2"]) slot[name="body"]:active {
+    background: var(--scola-node-fill-active-sig-2, #00bf00);
+  }
+
   @media (hover) {
     :host([fill-hover="aux-1"]) slot[name="body"]:hover {
       background: var(--scola-node-fill-hover-aux-1, #ddd);
@@ -251,26 +271,6 @@ export default css`
     :host([fill="aux-3"][scrollbar]) slot[name="body"]:hover::-webkit-scrollbar-thumb {
       background: var(--scola-scrollbar-color-aux-3, #bbb);
     }
-  }
-
-  :host([fill-active="aux-1"]) slot[name="body"]:active {
-    background: var(--scola-node-fill-active-aux-1, #ccc);
-  }
-
-  :host([fill-active="aux-2"]) slot[name="body"]:active {
-    background: var(--scola-node-fill-active-aux-2, #bbb);
-  }
-
-  :host([fill-active="aux-3"]) slot[name="body"]:active {
-    background: var(--scola-node-fill-active-aux-3, #aaa);
-  }
-
-  :host([fill-active="sig-1"]) slot[name="body"]:active {
-    background: var(--scola-node-fill-active-sig-1, #8a0000);
-  }
-
-  :host([fill-active="sig-2"]) slot[name="body"]:active {
-    background: var(--scola-node-fill-active-sig-2, #00bf00);
   }
 
   :host([flow="column"]) slot[name="body"] {

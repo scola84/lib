@@ -133,12 +133,8 @@ export class QueueRunner {
       objectMode: true,
       write: async (payload: unknown, encoding, finish) => {
         try {
-          await this.store.rpush(
-            queueRun.name,
-            `${(await this.insertTaskRun(queueRun, payload)).id}`
-          )
-
           queueRun.aggr_total += 1
+          await this.store.rpush(queueRun.name, (await this.insertTaskRun(queueRun, payload)).id.toString())
           finish()
         } catch (error: unknown) {
           finish(new Error(String(error)))
@@ -178,7 +174,7 @@ export class QueueRunner {
         this.createTaskRunWriter(queueRun)
       )
 
-      await this.updateQueueRunOk(queueRun)
+      await this.updateQueueRunTotal(queueRun)
 
       const queues = await this.selectQueues(queueRun)
 
@@ -298,17 +294,16 @@ export class QueueRunner {
   /**
    *  Updates a queue run.
    *
-   * Sets `status` to 'ok' and `aggr_total` to the total of task runs which have been triggered.
+   * Sets `aggr_total` to the total of task runs which have been triggered.
    *
    * @param queueRun - The queue run
    * @returns The update result
    */
-  protected async updateQueueRunOk (queueRun: QueueRun): Promise<UpdateResult> {
+  protected async updateQueueRunTotal (queueRun: QueueRun): Promise<UpdateResult> {
     return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
         aggr_total = $(aggr_total),
-        status = 'ok',
         date_updated = NOW()
       WHERE id = $(id)
     `, {

@@ -457,11 +457,11 @@ export abstract class TaskRunner {
   protected async pushTaskRun (): Promise<void> {
     const [,id] = await this.storeDuplicate?.blpop([this.name], this.timeout / 1000) ?? []
 
-    if (typeof id === 'number') {
-      const taskRun = {
-        id
-      }
+    const taskRun = {
+      id: Number(id)
+    }
 
+    if (Number.isFinite(taskRun.id)) {
       await this.updateTaskRunOnPush(taskRun)
       this.queue?.push(taskRun.id)
     }
@@ -560,6 +560,8 @@ export abstract class TaskRunner {
    *
    * Sets `fkey_task_run_id` to the ID of the task run.
    *
+   * When the queue run has finished, sets `status` to either 'ok' or 'err', depending on the result of the task run.
+   *
    * @param taskRun - The task run
    * @returns The update result
    */
@@ -569,7 +571,17 @@ export abstract class TaskRunner {
       SET
         aggr_${taskRun.status} = aggr_${taskRun.status} + 1,
         date_updated = NOW(),
-        fkey_task_run_id = $(fkey_task_run_id)
+        fkey_task_run_id = $(fkey_task_run_id),
+        status = (
+          CASE
+            WHEN aggr_err + aggr_ok + 1 = aggr_total THEN
+              CASE
+                WHEN '${taskRun.status}' = 'err' OR aggr_err > 0 THEN 'err'
+                ELSE 'ok'
+              END
+            ELSE 'pending'
+          END
+        )
       WHERE id = $(id)
     `, {
       fkey_task_run_id: taskRun.id,

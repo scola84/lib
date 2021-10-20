@@ -288,11 +288,11 @@ export class ViewElement extends ClipElement {
       return
     }
 
-    this.view = newView
-
-    if (this.view.element === undefined) {
-      this.view.element = await this.createElement(this.view, delta)
+    if (newView.element === undefined) {
+      newView.element = await this.createElement(newView, delta)
     }
+
+    this.view = newView
 
     if (
       save &&

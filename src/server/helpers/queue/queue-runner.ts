@@ -259,8 +259,8 @@ export class QueueRunner {
    * @param queueRun - The queue run
    * @returns The queues
    */
-  protected async selectQueues (queueRun: QueueRun): Promise<Queue[]> {
-    return this.database.selectAll<QueueRun, Queue>(sql`
+  protected async selectQueues (queueRun: QueueRun): Promise<Array<Pick<Queue, 'id'>>> {
+    return this.database.selectAll<QueueRun, Pick<Queue, 'id'>>(sql`
       SELECT queue.id
       FROM queue
       JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id

@@ -281,9 +281,9 @@ export class ServiceManager {
   protected startServices (): void {
     Object.entries(this.services).forEach(([sn, service]) => {
       Object.entries(service).forEach(([tn, type]) => {
-        Object.entries(type).forEach(([fn, factory]) => {
+        Object.entries(type).forEach(([fn, start]) => {
           if (isMatch(`${sn}.${tn}.${fn}`, this.names)) {
-            factory()
+            start()
           }
         })
       })

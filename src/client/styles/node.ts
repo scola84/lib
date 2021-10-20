@@ -342,15 +342,15 @@ export default css`
   }
 
   :host([line="large"]) slot[name="body"] {
-    line-height: 1.5rem;
+    line-height: 1.75rem;
   }
 
   :host([line="medium"]) slot[name="body"] {
-    line-height: 1.25rem;
+    line-height: 1.5rem;
   }
 
   :host([line="small"]) slot[name="body"] {
-    line-height: 0.75rem;
+    line-height: 1.25rem;
   }
 
   :host([scrollbar]) slot[name="body"] {

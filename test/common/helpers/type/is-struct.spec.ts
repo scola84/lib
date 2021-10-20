@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { isStruct } from '../../../../src/common/helpers/base/is-struct'
+import { isStruct } from '../../../../src'
 
 describe('isStruct', () => {
   it('should return false for non-objects', returnFalseForNonStructs)

@@ -55,7 +55,6 @@
     "pg-format": "^1.0.4",
     "pg-query-stream": "^4.2.1",
     "pwa-asset-generator": "^4.3.9",
-    "query-string": "^7.0.1",
     "recordrtc": "^5.6.2",
     "redis": "^3.1.2",
     "rollup": "^2.56.3",

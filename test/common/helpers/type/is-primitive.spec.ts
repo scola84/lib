@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { isPrimitive } from '../../../../src/common/helpers/base/is-primitive'
+import { isPrimitive } from '../../../../src'
 
 describe('isPrimitive', () => {
   it('should return false for non-primitives', returnFalseForNonPrimitives)

@@ -1,5 +1,6 @@
-import type { Query, Struct } from '../../../common'
-import { format, lookup, parse } from '../../../common'
+import { format, lookup, parse } from '../../../common/helpers/intl'
+import type { Query } from '../../../common/helpers/intl'
+import type { Struct } from '../../../common'
 
 /**
  * Defines language-specific collections of strings once and manages them throughout the application.

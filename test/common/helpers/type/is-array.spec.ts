@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { isArray } from '../../../../src/common/helpers/base/is-array'
+import { isArray } from '../../../../src'
 
 describe('isArray', () => {
   it('should return false for non-arrays', returnFalseForNonArrays)

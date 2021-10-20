@@ -1,4 +1,4 @@
-import { isArray, isPrimitive, isStruct } from '../../../../common'
+import { isArray, isDate, isNil, isObject, isPrimitive } from '../../../../common'
 import { literal } from 'pg-format'
 
 function identifier (value: string): string {
@@ -7,13 +7,14 @@ function identifier (value: string): string {
 
 function parameter (value: unknown): string {
   if ((
-    isPrimitive(value) &&
+    isArray(value) ||
+    isDate(value) ||
+    isNil(value) ||
+    isObject(value) ||
+    isPrimitive(value)
+  ) && (
     typeof value !== 'symbol'
-  ) ||
-  isArray(value) ||
-  isStruct(value) ||
-  value instanceof Date
-  ) {
+  )) {
     return literal(value)
   }
 

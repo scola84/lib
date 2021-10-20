@@ -2,10 +2,10 @@ import { ConnectionPool } from 'mssql'
 import { Database } from '../database'
 import { MssqlConnection } from './connection'
 import { URL } from 'url'
+import { cast } from '../../../../common'
 import type { config } from 'mssql'
 import { format } from '../format'
 import { formatters } from './formatters'
-import { parse } from 'query-string'
 import { set } from 'lodash'
 
 /**
@@ -48,13 +48,10 @@ export class MssqlDatabase extends Database {
       user: url.username
     }
 
-    Object
-      .entries(parse(url.search, {
-        parseBooleans: true,
-        parseNumbers: true
-      }))
+    Array
+      .from(url.searchParams.entries())
       .forEach(([name, value]) => {
-        set(options, name, value)
+        set(options, name, cast(value))
       })
 
     return new ConnectionPool(options)

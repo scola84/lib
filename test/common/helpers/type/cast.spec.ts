@@ -1,4 +1,4 @@
-import { cast } from '../../../../src/common/helpers/base/cast'
+import { cast } from '../../../../src'
 import { expect } from 'chai'
 
 describe('cast', () => {

@@ -1,2 +1,1 @@
-export * from './base'
-export * from './intl'
+export * from './type'

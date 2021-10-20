@@ -1,9 +1,10 @@
-import { Struct, isSame } from '../../common'
+import { format, parse } from '../../common/helpers/string'
 import type { ButtonElement } from '../elements/button'
 import { ClipElement } from '../elements/clip'
 import type { NodeElement } from '../elements/node'
 import type { PropertyValues } from 'lit'
 import type { ViewElement } from '../elements'
+import { isSame } from '../../common'
 
 export default {
   'scola-button-params': (observer: ButtonElement, observable: NodeElement, properties: PropertyValues): void => {
@@ -89,7 +90,7 @@ export default {
   'scola-view': (observer: ButtonElement, observable: ViewElement): void => {
     observer.activated = isSame({
       name: observer.dataset.name,
-      parameters: Struct.parse(observer.dataset.parameters ?? '', observer.dataset)
+      parameters: parse(format(observer.dataset.parameters ?? '', observer.dataset))
     }, {
       name: observable.view?.name,
       parameters: observable.view?.parameters

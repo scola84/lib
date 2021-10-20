@@ -1,8 +1,10 @@
-import { Struct, isPrimitive, isStruct } from '../../common'
 import { customElement, property } from 'lit/decorators.js'
+import { isPrimitive, isStruct } from '../../common'
 import type { AuthEvent } from './auth'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
+import type { Struct } from '../../common'
+import { format } from '../../common/helpers/string'
 import styles from '../styles/request'
 import updaters from '../updaters/request'
 
@@ -163,7 +165,7 @@ export class RequestElement extends NodeElement {
       ...options
     }
 
-    const url = new URL(Struct.replace(urlParts.join(''), parameters))
+    const url = new URL(format(urlParts.join(''), parameters))
 
     Object
       .entries(this.parameters)

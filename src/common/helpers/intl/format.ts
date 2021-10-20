@@ -1,6 +1,6 @@
 import Format from 'intl-messageformat'
 import type { Strings } from './strings'
-import type { Struct } from '../base'
+import type { Struct } from '../type'
 
 /**
  * Formats a string according to Intl MessageFormat.

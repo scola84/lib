@@ -1,9 +1,11 @@
-import { Struct, elements, isArray, isNil, isPrimitive, isSame, isStruct } from '../../common'
 import { addHook, isValidAttribute, sanitize } from 'dompurify'
 import { customElement, property } from 'lit/decorators.js'
+import { elements, isArray, isNil, isPrimitive, isSame, isStruct } from '../../common'
+import { format, parse } from '../../common/helpers/string'
 import { ClipElement } from './clip'
 import type { Config } from 'dompurify'
 import type { PropertyValues } from 'lit'
+import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -231,7 +233,7 @@ export class ViewElement extends ClipElement {
       }
 
       if (typeof options.parameters === 'string') {
-        view.parameters = Struct.parse(options.parameters, options)
+        view.parameters = parse(format(options.parameters, options))
       } else if (isStruct(options.parameters)) {
         view.parameters = options.parameters
       }
@@ -253,7 +255,7 @@ export class ViewElement extends ClipElement {
         name
       }
 
-      const url = new URL(Struct.replace(urlParts.join(''), parameters))
+      const url = new URL(format(urlParts.join(''), parameters))
       const response = await window.fetch(url.toString())
 
       if (response.status === 200) {

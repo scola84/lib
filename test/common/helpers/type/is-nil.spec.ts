@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { isNil } from '../../../../src/common/helpers/base/is-nil'
+import { isNil } from '../../../../src'
 
 describe('isNil', () => {
   it('should return false for non-nils', returnFalseForNonNils)

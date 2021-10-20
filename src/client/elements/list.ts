@@ -1,9 +1,10 @@
-import type { Query, Struct } from '../../common'
 import { customElement, property, state } from 'lit/decorators.js'
 import { isArray, isStruct } from '../../common'
 import { FormatElement } from './format'
 import { NodeElement } from './node'
 import type { PropertyValues } from 'lit'
+import type { Query } from '../../common/helpers/intl'
+import type { Struct } from '../../common'
 import updaters from '../updaters/list'
 
 declare global {

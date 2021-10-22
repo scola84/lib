@@ -1,2 +1,2 @@
 #!/bin/bash
-yarn commitlint --edit
+yarn run commitlint --edit

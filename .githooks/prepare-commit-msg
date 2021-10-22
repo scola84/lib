@@ -1,2 +1,2 @@
 #!/bin/bash
-exec </dev/tty && yarn cz --hook || true
+exec </dev/tty && yarn run cz --hook || true

@@ -3,16 +3,6 @@
   "bin": {
     "scola": "./dist/cli/index.js"
   },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
-  },
-  "config": {
-    "commitizen": {
-      "path": "cz-conventional-changelog"
-    }
-  },
   "browser": "./dist/client/index.js",
   "dependencies": {
     "@rmp135/sql-ts": "^1.9.0",
@@ -123,67 +113,13 @@
   "engines": {
     "node": ">=14"
   },
-  "eslintConfig": {
-    "overrides": [
-      {
-        "extends": [
-          "eslint:all",
-          "standard",
-          "./.eslint/js.json"
-        ],
-        "files": [
-          "**/*.js"
-        ]
-      },
-      {
-        "extends": [
-          "eslint:all",
-          "standard",
-          "plugin:@typescript-eslint/all",
-          "standard-with-typescript",
-          "./.eslint/js.json",
-          "./.eslint/ts.json"
-        ],
-        "files": [
-          "**/*.ts"
-        ]
-      }
-    ]
-  },
   "files": [
-    ".docker",
-    ".eslint",
     "dist",
     "types"
   ],
   "license": "MIT",
   "main": "./dist/server/index.js",
   "name": "@scola/lib",
-  "prettier": {
-    "htmlWhitespaceSensitivity": "ignore",
-    "jsxBracketSameLine": false,
-    "printWidth": 100,
-    "semi": false,
-    "trailingComma": "none"
-  },
-  "private": false,
-  "publishConfig": {
-    "access": "public"
-  },
-  "release": {
-    "branches": [
-      "main"
-    ],
-    "plugins": [
-      "@semantic-release/commit-analyzer",
-      "@semantic-release/release-notes-generator",
-      "@semantic-release/changelog",
-      "@semantic-release/github",
-      "@semantic-release/npm",
-      "@semantic-release/git"
-    ],
-    "preset": "angular"
-  },
   "repository": "github:scola84/lib",
   "scripts": {
     "exec": "onchange --initial --kill ./dist/server/index.js -- node ./dist/server/index.js",

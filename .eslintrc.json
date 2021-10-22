@@ -1,0 +1,27 @@
+{
+  "overrides": [
+    {
+      "extends": [
+        "eslint:all",
+        "standard",
+        "./.eslint/js.json"
+      ],
+      "files": [
+        "**/*.js"
+      ]
+    },
+    {
+      "extends": [
+        "eslint:all",
+        "standard",
+        "plugin:@typescript-eslint/all",
+        "standard-with-typescript",
+        "./.eslint/js.json",
+        "./.eslint/ts.json"
+      ],
+      "files": [
+        "**/*.ts"
+      ]
+    }
+  ]
+}

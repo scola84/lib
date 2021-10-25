@@ -108,8 +108,9 @@
     "ts-node": "^10.2.1",
     "typescript": "^4.3.5"
   },
-  "engines": {
-    "node": ">=14"
+  "exports": {
+    "browser": "./dist/client/index.js",
+    "node": "./dist/server/index.js"
   },
   "files": [
     "dist",
@@ -120,9 +121,9 @@
   "name": "@scola/lib",
   "repository": "github:scola84/lib",
   "scripts": {
-    "exec": "onchange --initial --kill ./dist/server/index.js -- node ./dist/server/index.js",
-    "lint": "tsc --project ./src/client && tsc --project ./src/server && tsc --project ./test/server && lit-analyzer ./src/client --strict && eslint ./bin ./src ./test",
+    "lint": "tsc --project ./src/cli && tsc --project ./src/client && tsc --project ./src/rollup && tsc --project ./src/server && tsc --project ./test/server && lit-analyzer ./src/client --strict && eslint ./src ./test",
     "make": "rollup --config ./src/rollup/index.ts --configPlugin typescript",
+    "node": "onchange --initial --kill ./dist/server/index.js -- node ./dist/server/index.js",
     "test": "jest --preset ts-jest --runInBand"
   },
   "types": "./types/index.d.ts",

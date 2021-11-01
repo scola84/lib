@@ -92,7 +92,7 @@ try {
     `--port ${url.port}`,
     `--user ${decodeURIComponent(url.username)}`,
     `db:${database}`,
-    '/tmp/scola-diff-sql-in.sql',
+    '/tmp/scola-sql-diff-in.sql',
     `> ${targetFile}`
   ].join(' '))
 } catch (error: unknown) {

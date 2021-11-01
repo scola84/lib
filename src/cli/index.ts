@@ -2,9 +2,6 @@ import commander from 'commander'
 
 try {
   commander.program
-    .command('reload', 'reloads a Docker Compose service', {
-      executableFile: 'reload'
-    })
     .command('sql-diff', 'dumps the diff of a SQL database and a DDL file', {
       executableFile: 'sql-diff'
     })

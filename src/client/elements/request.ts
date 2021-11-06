@@ -1,83 +1,54 @@
-import { customElement, property } from 'lit/decorators.js'
-import { isPrimitive, isStruct } from '../../common'
-import type { AuthEvent } from './auth'
-import { NodeElement } from './node'
-import type { PropertyValues } from 'lit'
+import { absorb, isArray, isNil, isStruct } from '../../common'
+import type { ScolaElement } from './element'
+import { ScolaMutator } from '../helpers/mutator'
+import { ScolaObserver } from '../helpers/observer'
+import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
-import { format } from '../../common/helpers/string'
-import styles from '../styles/request'
-import updaters from '../updaters/request'
 
 declare global {
   interface HTMLElementEventMap {
-    'scola-request-start': CustomEvent
-    'scola-request-stop': CustomEvent
-    'scola-request-toggle': CustomEvent
-  }
-
-  interface HTMLElementTagNameMap {
-    'scola-request': RequestElement
-  }
-
-  interface WindowEventMap {
-    'scola-request-start': CustomEvent
-    'scola-request-stop': CustomEvent
-    'scola-request-toggle': CustomEvent
+    'sc-request-start': CustomEvent
+    'sc-request-stop': CustomEvent
+    'sc-request-toggle': CustomEvent
   }
 }
 
-@customElement('scola-request')
-export class RequestElement extends NodeElement {
+interface Request {
+  body: FormData | URLSearchParams | null
+  method: string
+  url: string
+}
+
+export class ScolaRequestElement extends HTMLObjectElement implements ScolaElement {
   public static origin = window.location.origin
 
-  public static styles = [
-    ...NodeElement.styles,
-    styles
-  ]
+  public datamap: Struct = {}
 
-  public static updaters = {
-    ...NodeElement.updaters,
-    ...updaters
-  }
+  public enctype: string
 
-  @property()
-  public code?: string
+  public method: string
 
-  @property({
-    type: Number
-  })
-  public loaded: number
+  public mutator: ScolaMutator
 
-  @property()
-  public method = 'GET'
+  public observer: ScolaObserver
 
-  @property()
-  public origin = RequestElement.origin
+  public origin = ScolaRequestElement.origin
 
-  @property()
-  public path?: string
+  public propagator: ScolaPropagator
 
-  @property({
-    reflect: true,
-    type: Boolean
-  })
-  public started = false
+  public url: URL
 
-  @property({
-    type: Number
-  })
-  public total: number
+  public view?: HTMLElement
 
-  @property({
-    type: Boolean
-  })
-  public wait?: boolean
+  public wait: boolean
 
-  public request?: Request | null
+  public xhr?: XMLHttpRequest
 
-  public response?: Response | null
+  protected handleErrorBound = this.handleError.bind(this)
 
-  protected controller = new AbortController()
+  protected handleLoadendBound = this.handleLoadend.bind(this)
+
+  protected handleProgressBound = this.handleProgress.bind(this)
 
   protected handleStartBound = this.handleStart.bind(this)
 
@@ -85,234 +56,262 @@ export class RequestElement extends NodeElement {
 
   protected handleToggleBound = this.handleToggle.bind(this)
 
-  protected updaters = RequestElement.updaters
+  public constructor () {
+    super()
+    this.view = this.closest<HTMLElement>('[is="sc-view"]') ?? undefined
+    this.mutator = new ScolaMutator(this)
+    this.observer = new ScolaObserver(this)
+    this.propagator = new ScolaPropagator(this)
+    this.reset()
+  }
 
-  public firstUpdated (properties: PropertyValues): void {
-    super.firstUpdated(properties)
+  public static define (): void {
+    customElements.define('sc-request', ScolaRequestElement, {
+      extends: 'object'
+    })
+  }
 
-    if (this.wait !== true) {
+  public connectedCallback (): void {
+    this.mutator.connect()
+    this.observer.connect()
+    this.propagator.connect()
+    this.addEventListeners()
+
+    if (!this.wait) {
+      this.wait = true
       this.start()
     }
   }
 
+  public disconnectedCallback (): void {
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+    this.removeEventListeners()
+    this.stop()
+  }
+
+  public getData (): Struct {
+    return absorb(this.dataset, this.datamap, true)
+  }
+
+  public reset (): void {
+    this.enctype = this.getAttribute('sc-enctype') ?? 'application/x-www-form-urlencoded'
+    this.method = this.getAttribute('sc-method') ?? 'GET'
+    this.url = new URL(`${this.origin}${this.getAttribute('sc-path') ?? ''}`)
+    this.wait = this.hasAttribute('sc-wait')
+  }
+
+  public setData (data: unknown): void {
+    if (isStruct(data)) {
+      Object.assign(this.datamap, data)
+      this.update()
+    }
+  }
+
   public start (options?: Struct): void {
-    if (!this.started) {
-      this.fetch(this.createRequest(options))
-      this.started = true
+    if (this.xhr === undefined) {
+      this.send(this.createRequest(options))
     }
   }
 
   public stop (): void {
-    if (this.started) {
-      this.controller.abort()
-      this.controller = new AbortController()
-      this.loaded = this.total
-      this.started = false
-    }
+    this.xhr?.abort()
+    this.xhr = undefined
   }
 
   public toggle (options?: Struct): void {
-    if (this.started) {
-      this.stop()
-    } else {
+    if (this.xhr === undefined) {
       this.start(options)
+    } else {
+      this.stop()
     }
   }
 
-  public update (properties: PropertyValues): void {
-    if (properties.has('data')) {
-      this.handleData()
-    }
-
-    super.update(properties)
+  public update (): void {
+    this.start()
   }
 
-  protected createDispatchItems (): unknown[] {
-    const item: Struct = {
-      code: this.code,
-      data: this.data
-    }
-
-    if (this.code?.startsWith('ok_') === false) {
-      item.level = 'err'
-    }
-
-    return [item]
+  protected addEventListeners (): void {
+    this.addEventListener('sc-request-start', this.handleStartBound)
+    this.addEventListener('sc-request-stop', this.handleStopBound)
+    this.addEventListener('sc-request-toggle', this.handleToggleBound)
   }
 
   protected createRequest (options?: Struct): Request {
-    return new Request(this.createURL(options).toString(), {
-      method: this.method,
-      signal: this.controller.signal,
-      ...options
-    })
+    const method = String(options?.method ?? this.method)
+
+    let { url } = this
+    let body: FormData | URLSearchParams | null = null
+
+    if (method === 'GET') {
+      url = this.createRequestUrl({
+        ...this.view?.dataset,
+        ...options
+      })
+    } else if (
+      options?.body instanceof FormData ||
+      options?.body instanceof URLSearchParams
+    ) {
+      ({ body } = options)
+    } else {
+      body = this.createRequestBody({
+        ...this.view?.dataset,
+        ...options
+      })
+    }
+
+    return {
+      body,
+      method,
+      url: url.toString()
+    }
   }
 
-  protected createURL (options?: Struct): URL {
-    const urlParts = [
-      this.origin
-    ]
+  protected createRequestBody (data?: Struct): FormData | URLSearchParams | null {
+    let body: FormData | URLSearchParams | null = null
 
-    if (typeof options?.path === 'string') {
-      urlParts.push(options.path)
-    } else {
-      urlParts.push(this.path ?? '')
+    if (this.enctype === 'application/x-www-form-urlencoded') {
+      body = new URLSearchParams()
+    } else if (this.enctype === 'multipart/form-data') {
+      body = new FormData()
     }
-
-    const parameters = {
-      ...this.dataset,
-      ...this.closest('scola-view')?.view?.parameters,
-      ...options
-    }
-
-    const url = new URL(format(urlParts.join(''), parameters))
 
     Object
-      .entries(this.parameters)
-      .forEach(([name, value]) => {
-        if (isPrimitive(value)) {
-          url.searchParams.append(name, value.toString())
+      .entries(absorb(this.getData(), data))
+      .map((key, value) => {
+        if (isArray(value)) {
+          return [key, value]
         }
+
+        return [key, [value]]
       })
-
-    return url
-  }
-
-  protected dispatchAuth (request: Request): void {
-    this.dispatchEvent(new CustomEvent<AuthEvent['detail']>('scola-auth', {
-      bubbles: true,
-      composed: true,
-      detail: {
-        callback: (authError?: unknown): void => {
-          if (authError instanceof Error) {
-            this.code = 'err_403'
-            this.handleError(authError)
+      .forEach(([key, values]) => {
+        values.forEach((value) => {
+          if (
+            value instanceof File &&
+            body instanceof FormData
+          ) {
+            body.append(String(key), value, value.name)
           } else {
-            this.fetch(request)
+            body?.append(String(key), String(value))
           }
-        }
-      }
-    }))
+        })
+      })
+
+    return body
   }
 
-  protected fetch (request: Request): void {
-    this.loaded = 0
-    this.request = request
-    this.total = 0
-
-    window
-      .fetch(request)
-      .then(async (response) => {
-        if (response.status === 401) {
-          this.dispatchAuth(request)
+  protected createRequestUrl (data?: Struct): URL {
+    Object
+      .entries(absorb(this.getData(), data, true))
+      .forEach(([key, value]) => {
+        if (
+          isNil(value) ||
+          value === ''
+        ) {
+          this.url.searchParams.delete(key)
         } else {
-          this.response = response
-          await this.handleFetch()
+          this.url.searchParams.set(key, String(value))
         }
       })
-      .catch((error: unknown) => {
-        this.code = 'err_fetch'
-        this.handleError(error)
-      })
-  }
 
-  protected handleData (): void {
-    const status = this.response?.status ?? 200
-
-    if ((
-      this.request?.method === 'GET' &&
-      status === 200
-    ) || (
-      this.request?.method !== 'GET' &&
-      status >= 400
-    )) {
-      this.setDataOn(this.scopedDataNodeElements)
-    }
+    return this.url
   }
 
   protected handleError (error: unknown): void {
-    this.loaded = this.total
-    this.started = false
-
-    if (
-      error instanceof Error &&
-      error.name !== 'AbortError'
-    ) {
-      this.dispatchError(error, this.code ?? 'err_request')
-    }
+    this.propagator.dispatch('error', [{
+      code: 'err_request',
+      message: String(error)
+    }])
   }
 
-  protected async handleFetch (): Promise<void> {
-    const status = this.response?.status ?? 200
+  protected handleLoadend (event: Event): void {
+    if (this.xhr !== undefined) {
+      let data: Struct | string | null = null
 
-    if (status < 400) {
-      this.code = `ok_${status}`
+      const contentType = this.xhr.getResponseHeader('content-type')
+
+      if (contentType?.startsWith('application/json') === true) {
+        data = JSON.parse(this.xhr.responseText) as Struct
+      } else if (contentType?.startsWith('text/') === true) {
+        data = this.xhr.responseText
+      }
+
+      if (this.xhr.status < 400) {
+        this.propagator.dispatch('ok', [data], event)
+      } else {
+        const error = {
+          body: this.xhr.responseText,
+          code: `err_${this.xhr.status}`,
+          message: this.xhr.statusText
+        }
+
+        if (isStruct(data)) {
+          this.propagator.dispatch('error', [{
+            ...error,
+            ...data
+          }], event)
+        } else {
+          this.propagator.dispatch('error', [error], event)
+        }
+      }
+
+      this.setAttribute('sc-state', this.xhr.readyState.toString())
+      this.propagator.set(data)
+    }
+
+    this.xhr = undefined
+  }
+
+  protected handleProgress (event: ProgressEvent): void {
+    this.setAttribute('sc-loaded', event.loaded.toString())
+    this.setAttribute('sc-total', event.total.toString())
+  }
+
+  protected handleStart (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      this.start(event.detail)
     } else {
-      this.code = `err_${status}`
-    }
-
-    const contentLength = this.response?.headers.get('Content-Length')
-    const contentType = this.response?.headers.get('Content-Type')
-
-    if (typeof contentLength === 'string') {
-      this.total = parseFloat(contentLength)
-    }
-
-    if (contentType?.startsWith('application/json') === true) {
-      this.data = await this.response?.json()
-    } else if (contentType?.startsWith('text/') === true) {
-      this.data = await this.response?.text()
-    }
-
-    this.loaded = this.total
-    this.started = false
-    this.dispatchEvents(this.dispatch, this.createDispatchItems())
-  }
-
-  protected handleStart (event: CustomEvent<Struct | null>): void {
-    if (this.isTarget(event)) {
-      if (isStruct(event.detail?.data)) {
-        this.start(event.detail?.data)
-      } else {
-        this.start()
-      }
+      this.start()
     }
   }
 
-  protected handleStop (event: CustomEvent): void {
-    if (this.isTarget(event)) {
-      this.stop()
+  protected handleStop (): void {
+    this.stop()
+  }
+
+  protected handleToggle (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      this.toggle(event.detail)
+    } else {
+      this.toggle()
     }
   }
 
-  protected handleToggle (event: CustomEvent<Struct | null>): void {
-    if (this.isTarget(event)) {
-      if (isStruct(event.detail?.data)) {
-        this.toggle(event.detail?.data)
-      } else {
-        this.toggle()
-      }
+  protected removeEventListeners (): void {
+    this.removeEventListener('sc-request-start', this.handleStartBound)
+    this.removeEventListener('sc-request-stop', this.handleStopBound)
+    this.removeEventListener('sc-request-toggle', this.handleToggleBound)
+  }
+
+  protected send (request: Request): void {
+    this.xhr = new window.XMLHttpRequest()
+
+    if (request.method !== 'GET') {
+      this.xhr.upload.addEventListener('progress', this.handleProgressBound)
     }
-  }
 
-  protected setUpElementListeners (): void {
-    this.addEventListener('scola-request-start', this.handleStartBound)
-    this.addEventListener('scola-request-stop', this.handleStopBound)
-    this.addEventListener('scola-request-toggle', this.handleToggleBound)
-    super.setUpElementListeners()
-  }
+    this.xhr.addEventListener('error', this.handleErrorBound)
+    this.xhr.addEventListener('loadend', this.handleLoadendBound)
+    this.xhr.addEventListener('progress', this.handleProgressBound)
 
-  protected setUpWindowListeners (): void {
-    window.addEventListener('scola-request-start', this.handleStartBound)
-    window.addEventListener('scola-request-stop', this.handleStopBound)
-    window.addEventListener('scola-request-toggle', this.handleToggleBound)
-    super.setUpWindowListeners()
-  }
-
-  protected tearDownWindowListeners (): void {
-    window.removeEventListener('scola-request-start', this.handleStartBound)
-    window.removeEventListener('scola-request-stop', this.handleStopBound)
-    window.removeEventListener('scola-request-toggle', this.handleToggleBound)
-    super.tearDownWindowListeners()
+    try {
+      this.xhr.open(request.method, request.url)
+      this.xhr.send(request.body)
+      this.setAttribute('sc-state', this.xhr.readyState.toString())
+    } catch (error: unknown) {
+      this.handleError(error)
+    }
   }
 }

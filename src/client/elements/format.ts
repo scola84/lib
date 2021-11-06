@@ -1,125 +1,105 @@
-import type { Query, Strings } from '../../common/helpers/intl'
-import { customElement, property } from 'lit/decorators.js'
-import { elements, isStruct } from '../../common'
-import { format, lookup, parse } from '../../common/helpers/intl'
-import type { Config } from 'dompurify'
-import { NodeElement } from './node'
-import type { PropertyValues } from 'lit'
+import { ScolaIntl, isStruct } from '../../common'
+import type { ScolaElement } from './element'
+import { ScolaMutator } from '../helpers/mutator'
+import { ScolaObserver } from '../helpers/observer'
+import { ScolaPropagator } from '../helpers/propagator'
+import { ScolaSanitizer } from '../helpers/sanitizer'
 import type { Struct } from '../../common'
-import marked from 'marked'
-import { sanitize } from 'dompurify'
-import updaters from '../updaters/format'
+import { marked } from 'marked'
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'scola-format': FormatElement
-  }
-}
+export class ScolaFormatElement extends HTMLSpanElement implements ScolaElement {
+  public code: string
 
-@customElement('scola-format')
-export class FormatElement extends NodeElement {
-  public static dompurifyOptions: Config = {
-    ADD_TAGS: elements
-  }
+  public datamap: Struct = {}
 
-  public static lang = 'en'
+  public intl: ScolaIntl
 
-  public static markedOptions: marked.MarkedOptions = {
-    breaks: true,
-    smartLists: true,
-    smartypants: true,
-    xhtml: true
-  }
+  public marked: boolean
 
-  public static strings: Strings = {}
+  public mutator: ScolaMutator
 
-  public static updaters = {
-    ...NodeElement.updaters,
-    ...updaters
-  }
+  public observer: ScolaObserver
 
-  @property()
-  public code?: string
+  public propagator: ScolaPropagator
 
-  @property({
-    attribute: 'hide-empty',
-    type: Boolean
-  })
-  public hideEmpty?: boolean
+  public sanitizer: ScolaSanitizer
 
-  @property({
-    type: Boolean
-  })
-  public marked?: boolean
+  protected handleMutationsBound = this.handleMutations.bind(this)
 
-  @property({
-    attribute: 'show-title',
-    type: Boolean
-  })
-  public showTitle?: boolean
-
-  protected updaters = FormatElement.updaters
-
-  public static lookup (string: string, language = FormatElement.lang): string | undefined {
-    return lookup(FormatElement.strings, string, language)
+  public constructor () {
+    super()
+    this.intl = new ScolaIntl()
+    this.mutator = new ScolaMutator(this)
+    this.observer = new ScolaObserver(this)
+    this.propagator = new ScolaPropagator(this)
+    this.sanitizer = new ScolaSanitizer()
+    this.reset()
   }
 
-  public static parse (string: string, language = FormatElement.lang): Query[] {
-    return parse(FormatElement.strings, string, language)
+  public static define (): void {
+    customElements.define('sc-format', ScolaFormatElement, {
+      extends: 'span'
+    })
   }
 
-  public update (properties: PropertyValues): void {
-    if (
-      properties.has('code') ||
-      properties.has('data') ||
-      properties.has('observe')
-    ) {
-      this.setString()
+  public connectedCallback (): void {
+    this.observer.observe(this.handleMutationsBound, [
+      'sc-code'
+    ])
+
+    this.mutator.connect()
+    this.observer.connect()
+    this.propagator.connect()
+    this.update()
+  }
+
+  public disconnectedCallback (): void {
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+  }
+
+  public getData (): Struct {
+    return {
+      ...this.dataset,
+      ...this.datamap
     }
-
-    super.update(properties)
   }
 
-  protected setString (): void {
-    let data: Struct = this.dataset
+  public reset (): void {
+    this.code = this.getAttribute('sc-code') ?? ''
+    this.marked = this.hasAttribute('sc-marked')
+  }
 
-    if (isStruct(this.data)) {
-      data = {
-        ...data,
-        ...this.data
+  public setData (data: unknown): void {
+    if (isStruct(data)) {
+      Object.assign(this.datamap, data)
+
+      if (typeof data.code === 'string') {
+        this.setAttribute('sc-code', data.code)
+      } else {
+        this.update()
       }
     }
+  }
 
-    let language: string | undefined = this.lang
+  public update (): void {
+    const string = this.intl.format(this.code, this.getData())
 
-    if (language === '') {
-      language = FormatElement.lang
-    }
-
-    const string = format(FormatElement.strings, this.code ?? '', language, data)
-
-    if (string === '') {
-      if (this.hideEmpty === true) {
-        this.hidden = true
-      }
-
-      return
-    }
-
-    if (this.showTitle === true) {
-      this.title = string
-    }
-
-    if (this.marked === true) {
-      const html = sanitize(marked(string, FormatElement.markedOptions), FormatElement.dompurifyOptions)
-
-      if (typeof html === 'string') {
-        this.innerHTML = html
-      }
-    } else if (this.childElementCount === 0) {
+    if (this.marked) {
+      this.innerHTML = this.sanitizer.sanitizeHtml(marked(string, {
+        breaks: true,
+        smartLists: true,
+        smartypants: true,
+        xhtml: true
+      }))
+    } else {
       this.textContent = string
     }
+  }
 
-    this.hidden = false
+  protected handleMutations (): void {
+    this.reset()
+    this.update()
   }
 }

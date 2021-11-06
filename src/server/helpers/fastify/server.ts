@@ -1,11 +1,11 @@
 import type { FastifyInstance, FastifyPluginCallback, FastifyServerOptions } from 'fastify'
-import type { Logger } from 'pino'
 import type { Struct } from '../../../common'
 import { fastify } from 'fastify'
 import fastifyCookie from 'fastify-cookie'
 import fastifyFormbody from 'fastify-formbody'
 import fastifyMulter from 'fastify-multer'
 import fastifySse from 'fastify-sse-v2'
+import type pino from 'pino'
 
 export interface ServerOptions extends FastifyServerOptions {
   /**
@@ -20,7 +20,7 @@ export interface ServerOptions extends FastifyServerOptions {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  logger?: Logger
+  logger?: pino.Logger
 
   /**
    * The `fastify` plugins.
@@ -58,7 +58,7 @@ export class Server {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  public logger?: Logger
+  public logger?: pino.Logger
 
   /**
    * The `fastify` options.

@@ -22,10 +22,10 @@ jobs:
           node-version: 14
 
       - name: Install
-        run: yarn install --frozen-lockfile
+        run: npm ci
 
       - name: Lint
-        run: yarn run lint
+        run: npm run lint
 
       - name: Start containers
         run: docker-compose --file .docker/compose.yaml --file .docker/mssql/compose.yaml --file .docker/mysql/compose.yaml --file .docker/postgres/compose.yaml --file .docker/redis/compose.yaml up --detach
@@ -33,13 +33,13 @@ jobs:
       - name: Test
         run: |
           sleep 30 
-          yarn run test
+          npm run test
 
       - name: Stop containers
         run: docker-compose --file .docker/compose.yaml --file .docker/mssql/compose.yaml --file .docker/mysql/compose.yaml --file .docker/postgres/compose.yaml --file .docker/redis/compose.yaml down
 
       - name: Make
-        run: yarn run make
+        run: npm run make
 
       - name: Release
-        run: yarn semantic-release
+        run: npm run semantic-release

@@ -1,17 +1,13 @@
 {
   "compilerOptions": {
     "lib": [
-      "DOM"
+      "DOM",
+      "DOM.Iterable"
     ],
     "rootDir": "../"
   },
   "extends": "../../tsconfig.json",
   "include": [
     "**/*.ts"
-  ],
-  "plugins": [
-    {
-      "name": "ts-lit-plugin"
-    }
   ]
 }

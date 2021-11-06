@@ -1,0 +1,257 @@
+@mixin breakpoint($name) {
+  [is*="sc-"] {
+    --breakpoint: #{$name};
+  }
+
+  [sc-border~="@#{$name}"],
+  [sc-border-bottom~="@#{$name}"],
+  [sc-border-y~="@#{$name}"] {
+    border-bottom-style: solid;
+  }
+
+  [sc-border~="@#{$name}"],
+  [sc-border-end~="@#{$name}"],
+  [dir="rtl"] [sc-border-start~="@#{$name}"],
+  [sc-border-x~="@#{$name}"] {
+    border-right-style: solid;
+  }
+
+  [dir="rtl"] [sc-border-start~="@#{$name}"] {
+    border-left-style: none;
+  }
+
+  [sc-border~="@#{$name}"],
+  [sc-border-start~="@#{$name}"],
+  [dir="rtl"] [sc-border-end~="@#{$name}"],
+  [sc-border-x~="@#{$name}"] {
+    border-left-style: solid;
+  }
+
+  [dir="rtl"] [sc-border-end~="@#{$name}"] {
+    border-right-style: none;
+  }
+
+  [sc-border~="@#{$name}"],
+  [sc-border-top~="@#{$name}"],
+  [sc-border-y~="@#{$name}"] {
+    border-top-style: solid;
+  }
+
+  [sc-display~="@#{$name}"] {
+    display: flex !important;
+  }
+
+  [sc-height~="flex@#{$name}"] {
+    flex: 1;
+    min-height: 0;
+  }
+
+  [sc-height~="max@#{$name}"] {
+    height: 100%;
+  }
+
+  [sc-height~="mid@#{$name}"] {
+    height: 50%;
+  }
+
+  [sc-hide-mode~="height@#{$name}"]:not(.sc-scroll) {
+    overflow: hidden;
+  }
+
+  [sc-hide-mode~="bottom@#{$name}"] {
+    bottom: 0;
+  }
+
+  [sc-hide-mode~="center@#{$name}"] {
+    bottom: 0;
+    left: 0;
+  }
+
+  [sc-hide-mode~="end@#{$name}"],
+  [dir="rtl"] [sc-hide-mode~="start@#{$name}"] {
+    left: auto;
+    right: 0;
+  }
+
+  [sc-hide-mode~="start@#{$name}"],
+  [dir="rtl"] [sc-hide-mode~="end@#{$name}"] {
+    left: 0;
+    right: auto;
+  }
+
+  [sc-hide-mode~="top@#{$name}"] {
+    top: 0;
+  }
+
+  [sc-max-height~="max@#{$name}"] {
+    max-height: 100%;
+  }
+
+  [sc-max-height~="mid@#{$name}"] {
+    max-height: 50%;
+  }
+
+  [sc-max-width~="max@#{$name}"] {
+    max-width: 100%;
+  }
+
+  [sc-max-width~="mid@#{$name}"] {
+    max-width: 50%;
+  }
+
+  [sc-modal~="@#{$name}"],
+  [sc-modal~="bottom@#{$name}"],
+  [sc-modal~="center@#{$name}"],
+  [sc-modal~="top@#{$name}"] {
+    position: fixed;
+    z-index: 1;
+  }
+
+  [sc-modal~="bottom@#{$name}"],
+  [sc-modal~="top@#{$name}"] {
+    left: 0;
+  }
+
+  [dir="rtl"] [sc-modal~="bottom@#{$name}"],
+  [dir="rtl"] [sc-modal~="top@#{$name}"] {
+    left: auto;
+    right: 0;
+  }
+
+  [sc-modal~="bottom@#{$name}"] {
+    bottom: 0;
+  }
+
+  [sc-modal~="center@#{$name}"] {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  [sc-modal~="top@#{$name}"] {
+    top: 0;
+  }
+
+  [sc-transition~="@#{$name}"] {
+    transition-duration: 250ms;
+    transition-property: none;
+    transition-timing-function: cubic-bezier(0.83, 0, 0.17, 1);
+  }
+
+  [sc-width~="flex@#{$name}"] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  [sc-width~="flex-max@#{$name}"] {
+    flex: 0 0 100%;
+  }
+
+  [sc-width~="max@#{$name}"] {
+    width: 100%;
+  }
+
+  [sc-width~="mid@#{$name}"] {
+    width: 50%;
+  }
+
+  @for $i from 0 through 10 {
+    [sc-font-size="#{0.5 + ($i * 0.1)}@#{$name}"] {
+      font-size: #{0.5 + ($i * 0.1)}rem;
+    }
+  }
+
+  @for $i from 0 through 12 {
+    [sc-gap~="#{$i * 0.25}@#{$name}"] {
+      gap: #{$i * 0.25}rem;
+    }
+
+    [sc-height~="#{$i * 0.25}@#{$name}"] {
+      height: #{$i * 0.25}rem;
+    }
+
+    [sc-max-height~="#{$i * 0.25}@#{$name}"] {
+      max-height: #{$i * 0.25}rem;
+    }
+
+    [sc-max-width~="#{$i * 0.25}@#{$name}"] {
+      max-width: #{$i * 0.25}rem;
+    }
+
+    [sc-min-height~="#{$i * 0.25}@#{$name}"] {
+      min-height: #{$i * 0.25}rem;
+    }
+
+    [sc-min-width~="#{$i * 0.25}@#{$name}"] {
+      min-width: #{$i * 0.25}rem;
+    }
+
+    [sc-padding="#{$i * 0.25}@#{$name}"],
+    [sc-padding-bottom="#{$i * 0.25}@#{$name}"],
+    [sc-padding-y="#{$i * 0.25}@#{$name}"] {
+      padding-bottom: #{$i * 0.25}rem;
+    }
+
+    [sc-padding="#{$i * 0.25}@#{$name}"],
+    [sc-padding-end="#{$i * 0.25}@#{$name}"],
+    [dir="rtl"] [sc-padding-start="#{$i * 0.25}@#{$name}"],
+    [sc-padding-x="#{$i * 0.25}@#{$name}"] {
+      padding-right: #{$i * 0.25}rem;
+    }
+
+    [dir="rtl"] [sc-padding-start="#{$i * 0.25}@#{$name}"] {
+      padding-left: 0;
+    }
+
+    [sc-padding="#{$i * 0.25}@#{$name}"],
+    [sc-padding-start="#{$i * 0.25}@#{$name}"],
+    [dir="rtl"] [sc-padding-end="#{$i * 0.25}@#{$name}"],
+    [sc-padding-x="#{$i * 0.25}@#{$name}"] {
+      padding-left: #{$i * 0.25}rem;
+    }
+
+    [dir="rtl"] [sc-padding-end="#{$i * 0.25}@#{$name}"] {
+      padding-right: 0;
+    }
+
+    [sc-padding="#{$i * 0.25}@#{$name}"],
+    [sc-padding-top="#{$i * 0.25}@#{$name}"],
+    [sc-padding-y="#{$i * 0.25}@#{$name}"] {
+      padding-top: #{$i * 0.25}rem;
+    }
+
+    [sc-width~="#{$i * 0.25}@#{$name}"] {
+      width: #{$i * 0.25}rem;
+    }
+
+    [sc-rounded~="#{$i * 0.25}@#{$name}"] {
+      border-radius: #{$i * 0.25}rem;
+    }
+  }
+
+  @for $i from 4 through 64 {
+    [sc-height~="#{$i}@#{$name}"] {
+      height: #{$i}rem;
+    }
+
+    [sc-max-height~="#{$i}@#{$name}"] {
+      max-height: #{$i}rem;
+    }
+
+    [sc-max-width~="#{$i}@#{$name}"] {
+      max-width: #{$i}rem;
+    }
+
+    [sc-min-height~="#{$i}@#{$name}"] {
+      min-height: #{$i}rem;
+    }
+
+    [sc-min-width~="#{$i}@#{$name}"] {
+      min-width: #{$i}rem;
+    }
+
+    [sc-width~="#{$i}@#{$name}"] {
+      width: #{$i}rem;
+    }
+  }
+}

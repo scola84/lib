@@ -1,0 +1,503 @@
+* {
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  margin: 0;
+  padding: 0;
+  text-align: start;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  overflow: hidden;
+}
+
+:disabled {
+  color: inherit;
+  fill: inherit;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--t1);
+  outline-offset: -2px;
+}
+
+::selection {
+  background-color: var(--t1);
+  color: #fff;
+  fill: #fff;
+}
+
+[is="sc-event-source"],
+[is="sc-event"],
+[is="sc-reloader"],
+[is="sc-request"]:empty,
+[is="sc-worker"] {
+  display: block;
+  height: 0;
+  width: 0;
+}
+
+[sc-display] {
+  display: none !important;
+}
+
+[sc-drop-over] {
+  outline: 2px solid var(--t1);
+  outline-offset: -2px;
+}
+
+.sc-absolute {
+  position: absolute;
+}
+
+.sc-align-bottom.sc-row,
+.sc-align-end.sc-column {
+  align-items: flex-end;
+}
+
+.sc-align-bottom.sc-column,
+.sc-align-end.sc-row {
+  justify-content: flex-end;
+}
+
+.sc-align-center.sc-row,
+.sc-align-middle.sc-column {
+  justify-content: center;
+}
+
+.sc-align-center.sc-column,
+.sc-align-middle.sc-row {
+  align-items: center;
+}
+
+.sc-align-start.sc-column,
+.sc-align-top.sc-row {
+  align-items: flex-start;
+}
+
+.sc-align-start.sc-row,
+.sc-align-top.sc-column {
+  justify-content: flex-start;
+}
+
+.sc-app {
+  bottom: 0;
+  font-family: var(--font);
+  font-size: 16px;
+  left: 0;
+  line-height: 1.5em;
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+[dir="rtl"] .sc-arrow {
+  rotate: 180deg;
+}
+
+:focus .sc-arrow-active {
+  transition-property: rotate;
+}
+
+[sc-active] .sc-arrow-active {
+  rotate: -90deg;
+}
+
+[dir="rtl"] [sc-active] .sc-arrow-active {
+  rotate: 90deg;
+}
+
+.sc-backdrop {
+  background-color: var(--a2);
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  transition-property: opacity;
+}
+
+.sc-bg {
+  background-color: var(--g1);
+  color: var(--f1);
+  fill: var(--f1);
+}
+
+.sc-bg-blur {
+  backdrop-filter: blur(0.5rem);
+}
+
+.sc-bg-contrast {
+  background-color: var(--g2);
+  color: var(--f1);
+  fill: var(--f1);
+}
+
+.sc-bg-theme {
+  background-color: var(--t1);
+  color: #fff;
+  fill: #fff;
+}
+
+.sc-bg-interact:hover {
+  background-color: var(--g2);
+  color: var(--f1);
+  fill: var(--f1);
+  cursor: pointer;
+}
+
+.sc-bg-interact:active {
+  background-color: var(--g3);
+  color: var(--f1);
+  fill: var(--f1);
+  cursor: pointer;
+}
+
+.sc-bg-interact-blur:hover {
+  background-color: var(--a1);
+  backdrop-filter: blur(0.5rem);
+  cursor: pointer;
+}
+
+.sc-bg-interact-blur:active {
+  background-color: var(--a2);
+  backdrop-filter: blur(0.5rem);
+  cursor: pointer;
+}
+
+.sc-bg-interact-contrast:hover {
+  background-color: var(--g3);
+  color: var(--f1);
+  fill: var(--f1);
+  cursor: pointer;
+}
+
+.sc-bg-interact-contrast:active {
+  background-color: var(--g4);
+  color: var(--f1);
+  fill: var(--f1);
+  cursor: pointer;
+}
+
+.sc-bg-active[sc-active] {
+  background-color: var(--g2);
+  color: var(--f1);
+  fill: var(--f1);
+}
+
+.sc-bg-active-contrast[sc-active] {
+  background-color: var(--g3);
+  color: var(--f1);
+  fill: var(--f1);
+}
+
+.sc-bg-active-light[sc-active] {
+  background-color: var(--g1);
+  color: var(--f1);
+  fill: var(--f1);
+}
+
+.sc-bg-active-theme[sc-active] {
+  background-color: var(--t1);
+  color: #fff;
+  fill: #fff;
+}
+
+[sc-border],
+[sc-border-bottom],
+[sc-border-end],
+[sc-border-start],
+[sc-border-top],
+[sc-border-x],
+[sc-border-y] {
+  border-color: var(--g2);
+  border-style: none;
+  border-width: 1px;
+}
+
+@media only screen and (min-resolution: 2dppx) {
+  [sc-border],
+  [sc-border-bottom],
+  [sc-border-end],
+  [sc-border-start],
+  [sc-border-top],
+  [sc-border-x],
+  [sc-border-y] {
+    border-width: 0.5px;
+  }
+}
+
+.sc-clip {
+  overflow: hidden;
+}
+
+.sc-clip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-column {
+  display: flex;
+  flex-direction: column;
+}
+
+body.sc-d3 {
+  margin: 0;
+  overflow: hidden;
+}
+
+.sc-d3 line,
+.sc-d3 path {
+  stroke: var(--f2);
+}
+
+.sc-d3 text {
+  color: var(--f2);
+  font-family: var(--font);
+  font-size: 14px;
+}
+
+/* Thanks to https://moderncss.dev/pure-css-custom-checkbox-style/ */
+
+.sc-input-checkbox,
+.sc-input-radio {
+  align-items: center;
+  appearance: none;
+  background-color: transparent;
+  border: 2px solid var(--f2);
+  display: flex;
+  justify-content: center;
+}
+
+.sc-input-checkbox::before,
+.sc-input-radio::before {
+  content: "";
+}
+
+.sc-input-checkbox::before {
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  height: 70%;
+  width: 70%;
+}
+
+.sc-input-radio::before {
+  height: 50%;
+  width: 50%;
+}
+
+.sc-input-radio,
+.sc-input-radio::before {
+  border-radius: 50%;
+}
+
+.sc-input-checkbox:checked::before,
+.sc-input-radio:checked::before {
+  background-color: var(--f1);
+}
+
+.sc-interact {
+  cursor: pointer;
+}
+
+.sc-justify {
+  justify-content: space-between;
+}
+
+.sc-line-small {
+  line-height: 1em;
+}
+
+.sc-popup[sc-left-calc="end-at-start"],
+[dir="rtl"] .sc-popup[sc-left-calc="start-at-end"] {
+  padding-left: 0;
+  padding-right: 0.5rem;
+}
+
+.sc-popup[sc-left-calc="screen-center"] {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.sc-popup[sc-left-calc="start-at-end"],
+[dir="rtl"] .sc-popup[sc-left-calc="end-at-start"] {
+  padding-left: 0.5rem;
+  padding-right: 0;
+}
+
+.sc-popup[sc-top-calc="screen-center"] {
+  padding-bottom: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.sc-popup[sc-top-calc="top-at-bottom"] {
+  padding-top: 0.5rem;
+}
+
+.sc-relative {
+  position: relative;
+}
+
+.sc-round {
+  border-radius: 50%;
+}
+
+.sc-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.sc-scroll,
+.sc-scroll-none,
+.sc-scroll-small {
+  overflow: auto;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable;
+}
+
+.sc-scroll {
+  scrollbar-width: auto;
+}
+
+.sc-scroll-none {
+  scrollbar-width: none;
+}
+
+.sc-scroll-small {
+  scrollbar-width: thin;
+}
+
+.sc-scroll:hover,
+.sc-scroll-small:hover {
+  scrollbar-color: var(--g2) transparent;
+}
+
+.sc-scroll::-webkit-scrollbar {
+  height: 0.5rem;
+  width: 0.5rem;
+}
+
+.sc-scroll-none::-webkit-scrollbar {
+  display: none;
+}
+
+.sc-scroll-small::-webkit-scrollbar {
+  height: 0.25rem;
+  width: 0.25rem;
+}
+
+.sc-scroll:hover::-webkit-scrollbar-thumb,
+.sc-scroll-small:hover::-webkit-scrollbar-thumb {
+  background-color: var(--g2);
+}
+
+.sc-shadow {
+  box-shadow: 0 2px 0.5rem -2px var(--g3);
+}
+
+/* Thanks to https://codepen.io/pdg/pen/MayBJK */
+
+.sc-table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+.sc-table[sc-select] {
+  user-select: none;
+}
+
+.sc-table[sc-elements="0"] tbody[tabindex],
+.sc-table:not([sc-elements="0"]) tbody:not([tabindex]) {
+  display: none;
+}
+
+.sc-table [sc-handle] {
+  display: flex;
+  flex: 0 0 0;
+  overflow: hidden;
+  transition-property: flex-basis;
+}
+
+.sc-table [sc-handle="drag"] {
+  cursor: grabbing;
+}
+
+.sc-table[sc-drag-handle] [sc-handle="drag"],
+.sc-table[sc-select-handle] [sc-handle="select"] {
+  flex-basis: 2.25rem;
+}
+
+.sc-table[sc-select-handle] [sc-active] td[sc-handle="select"] ::before,
+.sc-table[sc-select-handle][sc-select-all] th[sc-handle="select"] ::before {
+  background-color: var(--f1);
+}
+
+.sc-table [sc-handle="select"] :disabled {
+  opacity: 1;
+}
+
+.sc-table thead > :last-child > :last-child {
+  overflow-y: scroll;
+}
+
+.sc-text {
+  color: var(--f1);
+  fill: var(--f1);
+}
+
+.sc-text-bold {
+  font-weight: bold;
+}
+
+.sc-text-light {
+  color: var(--f2);
+  fill: var(--f2);
+}
+
+.sc-text-theme {
+  color: var(--t1);
+  fill: var(--t1);
+}
+
+.sc-text-upper {
+  text-transform: uppercase;
+}
+
+.sc-text-interact-theme:hover {
+  color: var(--t1);
+  cursor: pointer;
+  fill: var(--t1);
+}
+
+.sc-text-interact-theme:active {
+  color: var(--t1);
+  cursor: pointer;
+  fill: var(--t1);
+}
+
+.sc-text-active-theme[sc-active] {
+  color: var(--t1);
+  fill: var(--t1);
+}
+
+.sc-wrap {
+  display: inline-flex;
+  flex-flow: row wrap;
+  justify-content: flex-end;
+}

@@ -1,10 +1,7 @@
 {
   "compilerOptions": {
-    "emitDecoratorMetadata": true,
     "esModuleInterop": true,
-    "experimentalDecorators": true,
     "moduleResolution": "node",
-    "skipLibCheck": true,
     "noEmit": true,
     "strict": true,
     "strictPropertyInitialization": false,

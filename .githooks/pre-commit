@@ -1,2 +1,2 @@
 #!/bin/bash
-yarn run lint --fix && git update-index --again && yarn run test
+npm run lint && git update-index --again && npm run test

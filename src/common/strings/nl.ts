@@ -1,0 +1,22 @@
+export const nl = {
+  button_cancel: 'Annuleren',
+  button_ok: 'OK',
+  err_400: 'De invoer is ongeldig.',
+  err_401: 'U hebt geen toegang tot deze gegevens.',
+  err_403: 'U hebt geen toegang tot deze gegevens.',
+  err_404: 'De gegevens konden niet worden gevonden.',
+  err_405: 'De aanvraag is ongeldig.',
+  err_415: 'De aanvraag is ongeldig.',
+  err_500: 'Er is een serverfout opgetreden.',
+  err_502: 'Er is een serverfout opgetreden.',
+  err_input_maximum: 'Voer een getal in (max. :limit)',
+  err_input_maxlength: 'Voer een tekst in (max. :limit)',
+  err_input_minimum: 'Voer een getal in (min. :limit)',
+  err_input_minlength: 'Voer een tekst in (min. :limit)',
+  err_input_number: 'Voer een getal in',
+  err_input_required: 'Dit veld is verplicht',
+  err_input_undefined: 'Er is een onbekende fout opgetreden.',
+  err_request: 'De aanvraag kon niet worden uitgevoerd.',
+  err_svg: 'Procesfout (:message)',
+  err_worker: 'Procesfout (:message)'
+}

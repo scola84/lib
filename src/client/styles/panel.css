@@ -1,0 +1,46 @@
+.sc-panel {
+  background-color: var(--g1);
+  color: var(--f1);
+  display: flex;
+  fill: var(--f1);
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sc-panel > .sc-panel-body {
+  flex: 1;
+}
+
+.sc-panel.sc-blur-footer > .sc-panel-body {
+  padding-bottom: 3rem;
+}
+
+.sc-panel.sc-blur-header > .sc-panel-body {
+  padding-top: 3rem;
+}
+
+.sc-panel > .sc-panel-footer,
+.sc-panel > .sc-panel-header {
+  align-items: center;
+  display: flex;
+  height: 3rem;
+  padding: 0 1rem;
+  width: 100%;
+}
+
+.sc-panel.sc-blur-footer > .sc-panel-footer {
+  margin-top: -3rem;
+}
+
+.sc-panel.sc-blur-header > .sc-panel-header {
+  margin-bottom: -3rem;
+}
+
+.sc-panel > .sc-panel-footer .sc-panel-title,
+.sc-panel > .sc-panel-header .sc-panel-title {
+  flex: 1;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

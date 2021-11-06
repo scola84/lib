@@ -1,0 +1,36 @@
+.sc-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sc-controls.sc-controls-justify {
+  flex: 1;
+  justify-content: space-evenly;
+}
+
+.sc-controls > .sc-buttons {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sc-controls > .sc-input-wrap {
+  height: 3rem;
+  justify-content: center;
+}
+
+.sc-controls > .sc-input-wrap > .sc-icon {
+  height: 2rem;
+  padding: 0.35rem;
+  width: 2rem;
+}
+
+.sc-controls > .sc-input-wrap > .sc-icon + .sc-input {
+  height: 2rem;
+  padding-left: 2rem;
+}
+
+[dir="rtl"] .sc-controls > .sc-input-wrap > .sc-icon + .sc-input {
+  padding-left: 0;
+  padding-right: 2rem;
+}

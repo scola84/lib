@@ -1,0 +1,22 @@
+.sc-carousel {
+  overflow: hidden;
+}
+
+.sc-carousel > .sc-carousel-body {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.sc-carousel[sc-axis="x"] > .sc-carousel-body {
+  flex-direction: row;
+}
+
+.sc-carousel[sc-axis="y"] > .sc-carousel-body {
+  flex-direction: column;
+}
+
+.sc-carousel > .sc-carousel-body .sc-carousel-item {
+  display: flex;
+  flex: 0 0 100%;
+}

@@ -1,0 +1,25 @@
+.sc-icon {
+  align-items: center;
+  color: inherit;
+  display: flex;
+  fill: inherit;
+  height: 1.5rem;
+  justify-content: center;
+  width: 1.5rem;
+}
+
+.sc-icon.sc-icon-small {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.sc-icon > svg {
+  height: inherit;
+  pointer-events: none;
+  width: inherit;
+}
+
+[dir="rtl"] .sc-icon[sc-code="arrowBack"],
+[dir="rtl"] .sc-icon[sc-code="arrowForward"] {
+  rotate: 180deg;
+}

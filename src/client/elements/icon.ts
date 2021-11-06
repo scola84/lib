@@ -1,54 +1,80 @@
-import { customElement, property } from 'lit/decorators.js'
-import { NodeElement } from './node'
-import type { PropertyValues } from 'lit'
-import styles from '../styles/icon'
+import type { ScolaElement } from './element'
+import { ScolaMutator } from '../helpers/mutator'
+import { ScolaObserver } from '../helpers/observer'
+import { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'scola-icon': IconElement
-  }
-}
+export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
+  public static icons: Struct<string | null> = {}
 
-export interface Icons {
-  ''?: string
-}
+  public code: string
 
-@customElement('scola-icon')
-export class IconElement extends NodeElement {
-  public static icons: Icons = {}
+  public mutator: ScolaMutator
 
-  public static styles = [
-    ...NodeElement.styles,
-    styles
-  ]
+  public observer: ScolaObserver
 
-  @property()
-  public name: keyof Icons
+  public propagator: ScolaPropagator
 
-  @property({
-    reflect: true,
-    type: Boolean
-  })
-  public rtl?: boolean
-
-  @property({
-    reflect: true
-  })
-  public size?: 'large' | 'medium' | 'small'
-
-  protected updaters = IconElement.updaters
+  protected handleMutationsBound = this.handleMutations.bind(this)
 
   public constructor () {
     super()
-    this.dir = document.dir
+    this.mutator = new ScolaMutator(this)
+    this.observer = new ScolaObserver(this)
+    this.propagator = new ScolaPropagator(this)
+    this.reset()
   }
 
-  public update (properties: PropertyValues): void {
-    this.setIcon()
-    super.update(properties)
+  public static define (): void {
+    customElements.define('sc-icon', ScolaIconElement, {
+      extends: 'span'
+    })
   }
 
-  protected setIcon (): void {
-    this.innerHTML = IconElement.icons[this.name] ?? ''
+  public static defineIcons (icons: Struct<string>): void {
+    Object
+      .entries(icons)
+      .forEach(([code, svg]) => {
+        ScolaIconElement.icons[code] = svg
+      })
+  }
+
+  public connectedCallback (): void {
+    this.observer.connect(this.handleMutationsBound, [
+      'sc-code'
+    ])
+
+    this.mutator.connect()
+    this.propagator.connect()
+    this.update()
+  }
+
+  public disconnectedCallback (): void {
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+  }
+
+  public getData (): string | null {
+    return this.getAttribute('sc-code')
+  }
+
+  public reset (): void {
+    this.code = this.getAttribute('sc-code') ?? ''
+  }
+
+  public setData (data: unknown): void {
+    if (typeof data === 'string') {
+      this.setAttribute('sc-code', data)
+    }
+  }
+
+  public update (): void {
+    this.innerHTML = ScolaIconElement.icons[this.code] ?? ''
+  }
+
+  protected handleMutations (): void {
+    this.reset()
+    this.update()
   }
 }

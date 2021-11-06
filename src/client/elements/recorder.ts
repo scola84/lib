@@ -1,123 +1,135 @@
-import type { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser'
-import { customElement, property } from 'lit/decorators.js'
+import type { BrowserMultiFormatReader, IBrowserCodeReaderOptions, IScannerControls } from '@zxing/browser'
 import { ImageCapture } from 'image-capture'
-import { MediaElement } from './media'
 import type { Options } from 'recordrtc'
-import type { PropertyValues } from 'lit'
-import RtcRecorder from 'recordrtc'
-import styles from '../styles/recorder'
-import updaters from '../updaters/recorder'
+import type RtcRecorder from 'recordrtc'
+import type { ScolaElement } from './element'
+import { ScolaMutator } from '../helpers/mutator'
+import { ScolaObserver } from '../helpers/observer'
+import { ScolaPropagator } from '../helpers/propagator'
 
 declare global {
   interface HTMLElementEventMap {
-    'scola-recorder-start': CustomEvent
-    'scola-recorder-stop': CustomEvent
-    'scola-recorder-toggle': CustomEvent
-  }
-
-  interface HTMLElementTagNameMap {
-    'scola-recorder': RecorderElement
-  }
-
-  interface WindowEventMap {
-    'scola-recorder-start': CustomEvent
-    'scola-recorder-stop': CustomEvent
-    'scola-recorder-toggle': CustomEvent
+    'sc-recorder-start': CustomEvent
+    'sc-recorder-stop': CustomEvent
+    'sc-recorder-toggle': CustomEvent
   }
 }
 
-@customElement('scola-recorder')
-export class RecorderElement extends MediaElement {
-  public static codeReader?: BrowserMultiFormatReader
+export class ScolaRecorderElement extends HTMLVideoElement implements ScolaElement {
+  public static FormatReader: typeof BrowserMultiFormatReader
+
+  public static RtcRecorder: typeof RtcRecorder
+
+  public static formatReaderOptions: IBrowserCodeReaderOptions
 
   public static recordrtcOptions: Options = {
     disableLogs: true
   }
 
-  public static styles = [
-    ...MediaElement.styles,
-    styles
-  ]
+  public back: boolean
 
-  public static updaters = {
-    ...MediaElement.updaters,
-    ...updaters
+  public codeScanner?: IScannerControls
+
+  public flash: boolean
+
+  public intervalId?: number
+
+  public mode: string
+
+  public mutator: ScolaMutator
+
+  public observer: ScolaObserver
+
+  public propagator: ScolaPropagator
+
+  public rtcRecorder?: RtcRecorder
+
+  public startTime = 0
+
+  public started = false
+
+  public stream?: MediaStream
+
+  public wait: boolean
+
+  protected handleMutationsBound = this.handleMutations.bind(this)
+
+  protected handleStartBound = this.handleStart.bind(this)
+
+  protected handleStopBound = this.handleStop.bind(this)
+
+  protected handleToggleBound = this.handleToggle.bind(this)
+
+  public constructor () {
+    super()
+    this.mutator = new ScolaMutator(this)
+    this.observer = new ScolaObserver(this)
+    this.propagator = new ScolaPropagator(this)
+    this.reset()
   }
 
-  @property({
-    reflect: true,
-    type: Boolean
-  })
-  public back?: boolean
+  public static define (): void {
+    customElements.define('sc-recorder', ScolaRecorderElement, {
+      extends: 'video'
+    })
+  }
 
-  @property({
-    reflect: true,
-    type: Boolean
-  })
-  public flash?: boolean
+  public connectedCallback (): void {
+    this.observer.connect(this.handleMutationsBound, [
+      'sc-back',
+      'sc-flash',
+      'sc-mode'
+    ])
 
-  @property()
-  public mode: 'audio' | 'code' | 'picture' | 'video'
+    this.mutator.connect()
+    this.propagator.connect()
+    this.addEventListeners()
 
-  @property({
-    type: Boolean
-  })
-  public wait?: boolean
-
-  public videoElement: HTMLVideoElement
-
-  protected codeScanner?: IScannerControls
-
-  protected enabled = false
-
-  protected intervalId?: number
-
-  protected mediaElement: HTMLVideoElement
-
-  protected rtcRecorder?: RtcRecorder
-
-  protected startTime = 0
-
-  protected stream?: MediaStream
-
-  protected updaters = RecorderElement.updaters
+    if (!this.wait) {
+      this.enable()
+    }
+  }
 
   public disable (): void {
     this.tearDownHelpers()
     this.tearDownStream()
-    this.enabled = false
   }
 
   public disconnectedCallback (): void {
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+    this.removeEventListeners()
     this.disable()
-    super.disconnectedCallback()
   }
 
   public enable (): void {
     this.setUpStream()
-    this.enabled = true
   }
 
-  public firstUpdated (properties: PropertyValues): void {
-    super.firstUpdated(properties)
+  public getData (): void {}
 
-    if (this.wait !== true) {
-      this.enable()
-    }
+  public reset (): void {
+    this.back = this.hasAttribute('sc-back')
+    this.flash = this.hasAttribute('sc-flash')
+    this.mode = this.getAttribute('sc-mode') ?? 'image'
+    this.wait = this.hasAttribute('sc-wait')
   }
+
+  public setData (): void {}
 
   public start (): void {
     if (!this.started) {
       switch (this.mode) {
         case 'audio':
         case 'video':
-          this.startRtcRecording(this.mode)
+          this.startRtcRecording()
           break
         case 'code':
           this.startCodeRecording()
           break
-        case 'picture':
-          this.startPictureRecording()
+        case 'image':
+          this.startImageRecording()
           break
         default:
           break
@@ -137,8 +149,8 @@ export class RecorderElement extends MediaElement {
         case 'code':
           this.stopCodeRecording()
           break
-        case 'picture':
-          this.stopPictureRecording()
+        case 'image':
+          this.stopImageRecording()
           break
         default:
           break
@@ -148,25 +160,28 @@ export class RecorderElement extends MediaElement {
     }
   }
 
-  public update (properties: PropertyValues): void {
-    if (
-      this.enabled && (
-        properties.has('back') ||
-        properties.has('mode')
-      )
-    ) {
-      this.disable()
-      this.enable()
+  public toggle (): void {
+    if (this.started) {
+      this.stop()
+    } else {
+      this.start()
     }
+  }
 
-    super.update(properties)
+  public update (): void {
+    this.disable()
+    this.enable()
+  }
+
+  protected addEventListeners (): void {
+    this.addEventListener('sc-recorder-start', this.handleStartBound)
+    this.addEventListener('sc-recorder-stop', this.handleStopBound)
+    this.addEventListener('sc-recorder-toggle', this.handleToggleBound)
   }
 
   protected createAudioConstraints (): MediaStreamConstraints['audio'] {
     return {
-      autoGainControl: true,
-      echoCancellation: true,
-      noiseSuppression: true
+      echoCancellation: true
     }
   }
 
@@ -175,7 +190,7 @@ export class RecorderElement extends MediaElement {
       ideal: 'user'
     }
 
-    if (this.back === true) {
+    if (this.back) {
       facingMode.ideal = 'environment'
     }
 
@@ -193,20 +208,35 @@ export class RecorderElement extends MediaElement {
     }
   }
 
-  protected handleData (): void {}
-
   protected handleError (error: unknown): void {
-    this.dispatchError(error, 'err_recorder')
+    this.propagator.dispatch('error', [{
+      code: 'err_recorder',
+      message: String(error)
+    }])
   }
 
-  protected setUpElementListeners (): void {
-    this.addEventListener('scola-recorder-start', this.handleStartBound)
-    this.addEventListener('scola-recorder-stop', this.handleStopBound)
-    this.addEventListener('scola-recorder-toggle', this.handleToggleBound)
-    super.setUpElementListeners()
+  protected handleMutations (): void {
+    this.reset()
+    this.update()
   }
 
-  protected setUpMedia (): void {}
+  protected handleStart (): void {
+    this.start()
+  }
+
+  protected handleStop (): void {
+    this.stop()
+  }
+
+  protected handleToggle (): void {
+    this.toggle()
+  }
+
+  protected removeEventListeners (): void {
+    this.removeEventListener('sc-recorder-start', this.handleStartBound)
+    this.removeEventListener('sc-recorder-stop', this.handleStopBound)
+    this.removeEventListener('sc-recorder-toggle', this.handleToggleBound)
+  }
 
   protected setUpStream (): void {
     const constraints: MediaStreamConstraints = {}
@@ -220,7 +250,7 @@ export class RecorderElement extends MediaElement {
 
     if (
       this.mode === 'code' ||
-      this.mode === 'picture' ||
+      this.mode === 'image' ||
       this.mode === 'video'
     ) {
       constraints.video = this.createVideoConstraints()
@@ -230,39 +260,33 @@ export class RecorderElement extends MediaElement {
       .getUserMedia(constraints)
       .then((stream) => {
         this.stream = stream
-        this.mediaElement.srcObject = stream
-        this.mediaElement.muted = true
+        this.srcObject = stream
+        this.muted = true
       })
       .catch((error: unknown) => {
         this.handleError(error)
       })
   }
 
-  protected setUpWindowListeners (): void {
-    window.addEventListener('scola-recorder-start', this.handleStartBound)
-    window.addEventListener('scola-recorder-stop', this.handleStopBound)
-    window.addEventListener('scola-recorder-toggle', this.handleToggleBound)
-    super.setUpWindowListeners()
-  }
-
   protected startCodeRecording (): void {
-    this.codeScanner = RecorderElement.codeReader?.scan(this.mediaElement, (code) => {
+    const codeReader = new ScolaRecorderElement.FormatReader(undefined, ScolaRecorderElement.formatReaderOptions)
+
+    this.codeScanner = codeReader.scan(this, (code) => {
       if (
         code !== undefined &&
         this.codeScanner !== undefined
       ) {
-        this.data = {
+        this.propagator.dispatch('code', [{
           code,
           value: code.getText()
-        }
+        }])
 
-        this.dispatchEvents(this.dispatch, [this.data])
         this.tearDownHelpers()
       }
     })
   }
 
-  protected startPictureRecording (): void {
+  protected startImageRecording (): void {
     this.stream
       ?.getVideoTracks()
       .slice(0, 1)
@@ -273,7 +297,7 @@ export class RecorderElement extends MediaElement {
           fillLightMode: 'off'
         }
 
-        if (this.flash === true) {
+        if (this.flash) {
           options.fillLightMode = 'flash'
         }
 
@@ -282,16 +306,16 @@ export class RecorderElement extends MediaElement {
           .then((blob) => {
             const name = blob.type.replace('/', '.')
 
-            this.data = {
-              file: new File([blob], name, {
-                type: blob.type
-              }),
-              filename: name,
-              filesize: blob.size,
-              filetype: blob.type
-            }
+            const file = new File([blob], name, {
+              type: blob.type
+            })
 
-            this.dispatchEvents(this.dispatch, [this.data])
+            this.propagator.dispatch('image', [{
+              file,
+              filename: file.name,
+              filesize: file.size,
+              filetype: file.type
+            }])
           })
           .catch((error: unknown) => {
             this.handleError(error)
@@ -302,18 +326,18 @@ export class RecorderElement extends MediaElement {
       })
   }
 
-  protected startRtcRecording (type: 'audio' | 'video'): void {
+  protected startRtcRecording (): void {
     if (this.stream !== undefined) {
       this.intervalId = window.setInterval(() => {
-        this.updateLength(Date.now() / 1000)
+        this.setAttribute('sc-duration', `${Date.now() - this.startTime}`)
       }, 1000)
 
-      this.rtcRecorder = new RtcRecorder(this.stream, {
-        ...RecorderElement.recordrtcOptions,
-        type
+      this.rtcRecorder = new ScolaRecorderElement.RtcRecorder(this.stream, {
+        ...ScolaRecorderElement.recordrtcOptions,
+        type: this.mode as 'audio' | 'video'
       })
 
-      this.startTime = Date.now() / 1000
+      this.startTime = Date.now()
       this.rtcRecorder.startRecording()
     }
   }
@@ -322,7 +346,7 @@ export class RecorderElement extends MediaElement {
     this.tearDownHelpers()
   }
 
-  protected stopPictureRecording (): void {}
+  protected stopImageRecording (): void {}
 
   protected stopRtcRecording (): void {
     this.rtcRecorder?.stopRecording(() => {
@@ -330,16 +354,17 @@ export class RecorderElement extends MediaElement {
         const blob = this.rtcRecorder.getBlob()
         const name = blob.type.replace('/', '.')
 
-        this.data = {
-          file: new File([blob], name, {
-            type: blob.type
-          }),
-          filename: name,
-          filesize: blob.size,
-          filetype: blob.type
-        }
+        const file = new File([blob], name, {
+          type: blob.type
+        })
 
-        this.dispatchEvents(this.dispatch, [this.data])
+        this.propagator.dispatch(this.mode, [{
+          file,
+          filename: file.name,
+          filesize: file.size,
+          filetype: file.type
+        }])
+
         this.tearDownHelpers()
       }
     })
@@ -357,15 +382,14 @@ export class RecorderElement extends MediaElement {
     }
 
     if (this.rtcRecorder !== undefined) {
-      this.updateLength()
       this.rtcRecorder.destroy()
       this.rtcRecorder = undefined
+      this.startTime = 0
+      this.removeAttribute('sc-duration')
     }
 
     this.started = false
   }
-
-  protected tearDownMedia (): void {}
 
   protected tearDownStream (): void {
     this.stream
@@ -374,22 +398,7 @@ export class RecorderElement extends MediaElement {
         track.stop()
       })
 
-    this.mediaElement.srcObject = null
+    this.srcObject = null
     this.stream = undefined
-  }
-
-  protected tearDownWindowListeners (): void {
-    window.removeEventListener('scola-recorder-start', this.handleStartBound)
-    window.removeEventListener('scola-recorder-stop', this.handleStopBound)
-    window.removeEventListener('scola-recorder-toggle', this.handleToggleBound)
-    super.tearDownWindowListeners()
-  }
-
-  protected updateLength (now?: number): void {
-    if (now === undefined) {
-      this.length = 0
-    } else {
-      this.length = now - this.startTime
-    }
   }
 }

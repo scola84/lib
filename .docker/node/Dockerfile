@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 
 COPY ./dist /usr/src/app/dist
 COPY ./package.json /usr/src/app/package.json
-COPY ./yarn.lock /usr/src/app/yarn.lock
+COPY ./package-lock.json /usr/src/app/package-lock.json
 
-RUN yarn install --frozen-lockfile --ignore-optional --production
+RUN npm ci
 CMD ["node", "./dist/server/index.js"]

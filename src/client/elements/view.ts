@@ -1,141 +1,271 @@
-import { addHook, isValidAttribute, sanitize } from 'dompurify'
-import { customElement, property } from 'lit/decorators.js'
-import { elements, isArray, isNil, isPrimitive, isSame, isStruct } from '../../common'
-import { format, parse } from '../../common/helpers/string'
-import { ClipElement } from './clip'
-import type { Config } from 'dompurify'
-import type { PropertyValues } from 'lit'
+import { absorb, isArray, isPrimitive, isSame, isStruct } from '../../common'
+import type { ScolaElement } from './element'
+import { ScolaHider } from '../helpers/hider'
+import { ScolaMutator } from '../helpers/mutator'
+import { ScolaObserver } from '../helpers/observer'
+import { ScolaPropagator } from '../helpers/propagator'
+import { ScolaSanitizer } from '../helpers/sanitizer'
 import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
-    'scola-view-append': CustomEvent
-    'scola-view-move': CustomEvent
-    'scola-view-back': CustomEvent
-    'scola-view-forward': CustomEvent
-    'scola-view-rewind': CustomEvent
-  }
-
-  interface HTMLElementTagNameMap {
-    'scola-view': ViewElement
-  }
-
-  interface WindowEventMap {
-    'scola-view-append': CustomEvent
-    'scola-view-back': CustomEvent
-    'scola-view-forward': CustomEvent
-    'scola-view-rewind': CustomEvent
+    'sc-view-add': CustomEvent
+    'sc-view-back': CustomEvent
+    'sc-view-forward': CustomEvent
+    'sc-view-rewind': CustomEvent
   }
 }
 
-interface View extends Struct {
-  element?: HTMLElement & {
-    viewTitle?: string
-  }
+export interface View extends Struct {
+  html?: string
   name: string
-  parameters?: Struct
+  params?: Struct
+  source?: string
 }
 
-addHook('uponSanitizeAttribute', (node, data) => {
-  data.forceKeepAttr = isValidAttribute(node.nodeName.toLowerCase(), 'href', data.attrValue)
-})
+const viewElements = new Set<ScolaViewElement>()
 
-const viewElements = new Set<ViewElement>()
-
-@customElement('scola-view')
-export class ViewElement extends ClipElement {
-  public static dompurifyOptions: Config = {
-    ADD_TAGS: elements
+export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
+  public static storage: Struct<Storage | undefined> = {
+    local: window.localStorage,
+    session: window.sessionStorage
   }
 
-  public static mode: 'push' | 'replace'
+  public static views: Struct<string | undefined> = {}
 
-  public static origin = window.location.origin
+  public hider?: ScolaHider
 
-  public static storage: Storage = window.sessionStorage
+  public mutator: ScolaMutator
 
-  @property({
-    type: Boolean
-  })
-  public hasNext?: boolean
+  public name: string | null
 
-  @property({
-    type: Boolean
-  })
-  public hasPrevious?: boolean
+  public observer: ScolaObserver
 
-  @property()
-  public origin = ViewElement.origin
+  public params: Struct
 
-  @property()
-  public path?: string
+  public pointer = -1
 
-  @property({
-    type: Boolean
-  })
-  public save?: boolean
+  public propagator: ScolaPropagator
 
-  @property({
-    attribute: false
-  })
-  public storage = ViewElement.storage
+  public sanitizer: ScolaSanitizer
 
-  @property({
-    attribute: false
-  })
-  public view?: View | null
+  public save: string
 
-  public mode: ClipElement['mode'] = 'content'
+  public storage: Storage
 
-  protected handleAppendBound = this.handleAppend.bind(this)
+  public views: View[] = []
+
+  public get view (): View | undefined {
+    return this.views[this.pointer]
+  }
+
+  protected handleAddBound = this.handleAdd.bind(this)
 
   protected handleBackBound = this.handleBack.bind(this)
 
   protected handleForwardBound = this.handleForward.bind(this)
 
-  protected handlePopstateBound = this.handlePopstate.bind(this)
+  protected handleMutationsBound = this.handleMutations.bind(this)
 
   protected handleRewindBound = this.handleRewind.bind(this)
 
-  protected pointer = -1
+  public constructor () {
+    super()
+    this.mutator = new ScolaMutator(this)
+    this.observer = new ScolaObserver(this)
+    this.propagator = new ScolaPropagator(this)
+    this.sanitizer = new ScolaSanitizer()
 
-  protected updaters = ViewElement.updaters
+    if (this.hasAttribute('sc-hide')) {
+      this.hider = new ScolaHider(this)
+    }
 
-  protected views: View[] = []
+    this.reset()
+  }
+
+  public static define (): void {
+    customElements.define('sc-view', ScolaViewElement, {
+      extends: 'div'
+    })
+  }
+
+  public static defineViews (views: Struct<string>): void {
+    Object
+      .entries(views)
+      .forEach(([name, html]) => {
+        ScolaViewElement.views[name] = html
+      })
+  }
+
+  public add (options: Struct): void {
+    const view = this.createView(options)
+
+    if (this.isSame(view, this.view)) {
+      this.go(this.pointer)
+      return
+    }
+
+    this.views.splice(this.pointer + 1, this.views.length - this.pointer - 1, view)
+    this.pointer = this.views.length - 1
+    this.go(this.pointer)
+  }
 
   public back (): void {
-    this.go(-1).catch(() => {})
+    this.go(this.pointer - 1)
   }
 
   public connectedCallback (): void {
     viewElements.add(this)
 
-    if (this.save === true) {
+    this.observer.connect(this.handleMutationsBound, [
+      'hidden'
+    ])
+
+    this.mutator.connect()
+    this.propagator.connect()
+    this.hider?.connect()
+    this.addEventListeners()
+
+    if (this.save !== '') {
       this.loadState()
     }
 
-    super.connectedCallback()
+    if (
+      !this.hasAttribute('hidden') ||
+      this.view?.source === 'location'
+    ) {
+      window.setTimeout(() => {
+        if (this.hider !== undefined) {
+          this.hider.immediate = true
+        }
+
+        this.go(this.pointer)
+      })
+    }
   }
 
   public disconnectedCallback (): void {
     viewElements.delete(this)
-    super.disconnectedCallback()
-  }
-
-  public firstUpdated (properties: PropertyValues): void {
-    this
-      .go(0, false, false)
-      .finally(() => {
-        super.firstUpdated(properties)
-      })
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+    this.hider?.disconnect()
+    this.removeEventListeners()
+    this.saveState()
   }
 
   public forward (): void {
-    this.go(1).catch(() => {})
+    this.go(this.pointer + 1)
+  }
+
+  public getData (): string | undefined {
+    return this.view?.html
+  }
+
+  public go (pointer = 0): void {
+    if (
+      pointer >= 0 &&
+      pointer <= this.views.length - 1
+    ) {
+      this.pointer = pointer
+    }
+
+    if (this.view === undefined) {
+      return
+    }
+
+    const html = ScolaViewElement.views[this.view.name]
+
+    if (html === undefined) {
+      this.propagator.dispatch('load', [this.view])
+    } else {
+      this.setData(html)
+    }
+  }
+
+  public isSame (left?: View | null, right?: View | null): boolean {
+    return isSame({
+      name: left?.name,
+      params: left?.params
+    }, {
+      name: right?.name,
+      params: right?.params
+    })
+  }
+
+  public loadPointer (): void {
+    const pointers: unknown = window.history.state
+
+    if (isStruct(pointers)) {
+      const pointer = pointers[this.id]
+
+      if (typeof pointer === 'number') {
+        this.pointer = pointer
+      }
+    } else {
+      this.pointer = 0
+    }
+  }
+
+  public loadState (): void {
+    this.loadStateFromElement(this)
+
+    const stateStruct: unknown = JSON.parse(this.storage.getItem(`sc-view-${this.id}`) ?? 'null')
+
+    if (isStruct(stateStruct)) {
+      this.loadStateFromStorage(stateStruct)
+      this.loadPointer()
+    } else {
+      this.loadStateFromLocation(window.location.pathname)
+    }
+
+    if (this.pointer === -1) {
+      this.update()
+    }
+  }
+
+  public reset (): void {
+    this.name = this.getAttribute('sc-name')
+    this.params = Object.fromEntries(new URLSearchParams(this.getAttribute('sc-params') ?? '').entries())
+    this.save = this.getAttribute('sc-save') ?? ''
+    this.storage = ScolaViewElement.storage[this.getAttribute('sc-storage') ?? 'session'] ?? window.sessionStorage
   }
 
   public rewind (): void {
-    this.go(-this.pointer).catch(() => {})
+    this.go(0)
+  }
+
+  public saveState (): void {
+    const pointers: Struct<number> = {}
+
+    const path = Array
+      .from(viewElements)
+      .reduce((result, viewElement) => {
+        if (!viewElement.hasAttribute('hidden')) {
+          if (viewElement.save.includes('storage')) {
+            this.storage.setItem(`sc-view-${viewElement.id}`, JSON.stringify(viewElement.toObject()))
+          }
+
+          if (viewElement.save.includes('location')) {
+            pointers[viewElement.id] = viewElement.pointer
+            return `${result}${viewElement.toString()}`
+          }
+        }
+
+        return result
+      }, '')
+
+    window.history.replaceState(pointers, '', path)
+  }
+
+  public setData (data: unknown): void {
+    if (
+      this.view !== undefined &&
+      typeof data === 'string'
+    ) {
+      this.view.html = data
+      this.update()
+    }
   }
 
   public toObject (): Struct {
@@ -144,19 +274,19 @@ export class ViewElement extends ClipElement {
       views: this.views.map((view) => {
         return {
           name: view.name,
-          parameters: view.parameters
+          params: view.params
         }
       })
     }
   }
 
   public toString (): string {
-    if (isNil(this.view)) {
+    if (this.view === undefined) {
       return ''
     }
 
-    let parameters = Object
-      .entries(this.view.parameters ?? {})
+    let params = Object
+      .entries(this.view.params ?? {})
       .map(([name, value]) => {
         if (isPrimitive(value)) {
           return `${name}=${value.toString()}`
@@ -166,368 +296,153 @@ export class ViewElement extends ClipElement {
       })
       .join('&')
 
-    if (parameters.length > 0) {
-      parameters = `:${parameters}`
+    if (params.length > 0) {
+      params = `:${params}`
     }
 
-    return `/${this.view.name}${parameters}@${this.id}`
+    return `/${this.view.name}${params}@${this.id}`
   }
 
-  protected appendView (options?: unknown): void {
-    const view = this.createView(options)
+  public update (): void {
+    const { view } = this
 
-    if (this.isSameView(this.view, view)) {
-      this.go(0, false, true).catch(() => {})
-      return
+    if (view?.html !== undefined) {
+      this.innerHTML = this.sanitizer.sanitizeHtml(view.html)
+      this.updateAttributes()
     }
 
-    viewElements.forEach((viewElement) => {
-      if (viewElement === this) {
-        viewElement.views.splice(viewElement.pointer + 1, viewElement.views.length - viewElement.pointer - 1, view)
-        viewElement.pointer = viewElement.views.length - 1
-      } else if (
-        ViewElement.mode === 'push' &&
-          this.save === true &&
-          viewElement.save === true
-      ) {
-        viewElement.views.splice(viewElement.pointer + 1, viewElement.views.length - viewElement.pointer - 1, viewElement.views[viewElement.pointer])
-        viewElement.pointer = viewElement.views.length - 1
-      }
-    })
-
-    this.go(0).catch(() => {})
+    if (this.save !== '') {
+      this.saveState()
+    }
   }
 
-  protected async createElement (view: View, delta: number): Promise<HTMLElement | undefined> {
-    let element = null
+  public updateAttributes (): void {
+    this.toggleAttribute('hidden', false)
+    this.toggleAttribute('sc-has-next', this.pointer < this.views.length - 1)
+    this.toggleAttribute('sc-has-previous', this.pointer > 0)
+    this.setAttribute('sc-pointer', this.pointer.toString())
+  }
 
-    if (window.customElements.get(view.name) !== undefined) {
-      element = document.createElement(view.name)
-    } else if (this.path === undefined) {
-      element = undefined
-    } else {
-      element = await this.fetchElement(view.name)
-    }
-
-    if (element instanceof HTMLElement) {
-      if (delta < 0) {
-        this.insertBefore(element, this.querySelector<HTMLElement>(':scope > :not([slot])'))
-        this.setScroll(element)
-      } else {
-        this.appendChild(element)
-      }
-    }
-
-    return element
+  protected addEventListeners (): void {
+    this.addEventListener('sc-view-add', this.handleAddBound)
+    this.addEventListener('sc-view-back', this.handleBackBound)
+    this.addEventListener('sc-view-forward', this.handleForwardBound)
+    this.addEventListener('sc-view-rewind', this.handleRewindBound)
   }
 
   protected createView (options?: unknown): View {
     const view: View = {
       name: '',
-      parameters: {}
+      params: {}
     }
 
     if (isStruct(options)) {
       if (typeof options.name === 'string') {
         view.name = options.name
+      } else if (this.name !== null) {
+        view.name = this.name
       }
 
-      if (typeof options.parameters === 'string') {
-        view.parameters = parse(format(options.parameters, options))
-      } else if (isStruct(options.parameters)) {
-        view.parameters = options.parameters
+      if (typeof options.params === 'string') {
+        view.params = Object.fromEntries(new URLSearchParams(options.params).entries())
+      } else if (isStruct(options.params)) {
+        view.params = options.params
+      } else {
+        view.params = absorb(this.dataset, options)
+      }
+
+      if (typeof options.source === 'string') {
+        view.source = options.source
       }
     }
 
     return view
   }
 
-  protected async fetchElement (name: string): Promise<HTMLElement | undefined> {
-    const element = document.createElement('scola-node')
-
-    try {
-      const urlParts = [
-        this.origin,
-        this.path
-      ]
-
-      const parameters = {
-        name
-      }
-
-      const url = new URL(format(urlParts.join(''), parameters))
-      const response = await window.fetch(url.toString())
-
-      if (response.status === 200) {
-        const html = sanitize(await response.text(), ViewElement.dompurifyOptions)
-
-        if (typeof html === 'string') {
-          element.innerHTML = html
-          element.viewTitle = element.firstElementChild?.getAttribute('view-title') ?? ''
-        }
-      }
-    } catch (error: unknown) {
-      this.handleError(error)
+  protected handleAdd (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      this.add(event.detail)
     }
-
-    return element
   }
 
-  protected async go (delta: number, save = true, dispatch = true): Promise<void> {
-    if (
-      this.pointer + delta >= 0 &&
-      this.pointer + delta <= this.views.length - 1
-    ) {
-      this.setPointer(this.pointer + delta)
-    }
+  protected handleBack (): void {
+    this.back()
+  }
 
-    const newView = this.views[this.pointer] as View | undefined
+  protected handleForward (): void {
+    this.forward()
+  }
 
-    if (newView === undefined) {
-      this.view = null
-      return
-    }
+  protected handleMutations (mutations: MutationRecord[]): void {
+    const attributes = mutations.map((mutation) => {
+      return mutation.attributeName
+    })
 
-    if (newView.element === undefined) {
-      newView.element = await this.createElement(newView, delta)
-    }
-
-    this.view = newView
-
-    if (
-      save &&
-      this.save === true
-    ) {
+    if (attributes.includes('sc-pointer')) {
+      this.update()
+    } else if (attributes.includes('hidden')) {
+      this.hider?.toggle()
       this.saveState()
     }
-
-    if (dispatch) {
-      this.dispatchEvents('scola-view-move', [this.view])
-    }
-
-    if (this.view.element instanceof HTMLElement) {
-      await this.showContent(this.view.element)
-
-      this.views.forEach((view) => {
-        if (view !== this.view) {
-          view.element?.remove()
-          delete view.element
-        }
-      })
-    }
   }
 
-  protected handleAppend (event: CustomEvent<Struct | null>): void {
-    if (this.isTarget(event)) {
-      this.appendView(event.detail?.data)
+  protected handleRewind (): void {
+    this.rewind()
+  }
+
+  protected loadStateFromElement (element: ScolaViewElement): void {
+    if (element.name !== null) {
+      this.views = [{
+        name: element.name,
+        params: element.params,
+        source: 'element'
+      }]
+
+      this.pointer = 0
     }
   }
 
-  protected handleBack (event: CustomEvent): void {
-    if (this.isTarget(event)) {
-      if (
-        ViewElement.mode === 'push' &&
-        this.save === true
-      ) {
-        window.history.back()
-      } else {
-        this.back()
-      }
-    }
-  }
-
-  protected handleError (error: unknown): void {
-    this.dispatchError(error, 'err_view')
-  }
-
-  protected handleForward (event: CustomEvent): void {
-    if (this.isTarget(event)) {
-      if (
-        ViewElement.mode === 'push' &&
-        this.save === true
-      ) {
-        window.history.forward()
-      } else {
-        this.forward()
-      }
-    }
-  }
-
-  protected handlePopstate (): void {
-    this.loadPointer()
-    this.go(0).catch(() => {})
-  }
-
-  protected handleRewind (event: CustomEvent): void {
-    if (this.isTarget(event)) {
-      if (
-        ViewElement.mode === 'push' &&
-        this.save === true
-      ) {
-        window.history.go(-this.pointer)
-      } else {
-        this.rewind()
-      }
-    }
-  }
-
-  protected isSameView (left?: View | null, right?: View | null): boolean {
-    return isSame({
-      name: left?.name,
-      parameters: left?.parameters
-    }, {
-      name: right?.name,
-      parameters: right?.parameters
-    })
-  }
-
-  protected loadPointer (): void {
-    const pointers: unknown = window.history.state
-
-    if (isStruct(pointers)) {
-      const pointer = pointers[this.id]
-
-      if (typeof pointer === 'number') {
-        this.setPointer(pointer)
-      }
-    } else {
-      this.setPointer(0)
-    }
-  }
-
-  protected loadState (): void {
-    this.loadStateFromViewElement(this)
-
-    const stateStruct: unknown = JSON.parse(this.storage.getItem(`view-${this.id}`) ?? 'null')
-    const stateString = window.location.pathname
-
-    if (isStruct(stateStruct)) {
-      this.loadStateFromStruct(stateStruct)
-      this.loadPointer()
-    } else {
-      this.loadStateFromString(stateString)
-    }
-  }
-
-  protected loadStateFromString (string: string): void {
-    const result = new RegExp(`/(?<name>[^:/]+):?(?<parameters>[^:/]+)?@${this.id}`, 'u').exec(string)
+  protected loadStateFromLocation (string: string): void {
+    const result = new RegExp(`/(?<name>[^:/]+):?(?<params>[^:/]+)?@${this.id}`, 'u').exec(string)
 
     if (result !== null) {
       const {
         name,
-        parameters
+        params
       } = result.groups ?? {}
 
-      if (name !== this.views[this.pointer]?.name) {
-        this.views.push(this.createView({
-          name,
-          parameters
-        }))
+      const view = this.createView({
+        name,
+        params,
+        source: 'location'
+      })
 
-        this.setPointer(this.views.length - 1)
+      if (!this.isSame(view, this.views[this.pointer])) {
+        this.views.push(view)
+        this.pointer = this.views.length - 1
       }
     }
   }
 
-  protected loadStateFromStruct (struct: Struct): void {
+  protected loadStateFromStorage (struct: Struct): void {
     if (isArray(struct.views)) {
       this.views = struct.views.map((view) => {
         return this.createView(view)
       })
     }
 
-    if (typeof struct.pointer === 'number') {
-      this.setPointer(struct.pointer)
+    if (
+      typeof struct.pointer === 'number' &&
+      struct.pointer > -1
+    ) {
+      this.pointer = struct.pointer
     }
   }
 
-  protected loadStateFromViewElement (viewElement: ViewElement): void {
-    if (viewElement.name !== '') {
-      this.views = [{
-        name: viewElement.name,
-        parameters: viewElement.parameters
-      }]
-
-      this.setPointer(0)
-    }
-  }
-
-  protected saveState (location = true): void {
-    const pointers: Struct<number> = {}
-
-    const path = Array
-      .from(viewElements)
-      .reduce((result, viewElement) => {
-        if (viewElement.save === true) {
-          viewElement.storage.setItem(`view-${viewElement.id}`, JSON.stringify(viewElement.toObject()))
-          pointers[viewElement.id] = viewElement.pointer
-          return `${result}${viewElement.toString()}`
-        }
-
-        return result
-      }, '')
-
-    if (location) {
-      if (ViewElement.mode === 'push') {
-        window.history.pushState(pointers, '', path)
-      } else {
-        window.history.replaceState(pointers, '', path)
-      }
-    }
-  }
-
-  protected setPointer (pointer: number): void {
-    this.pointer = pointer
-    this.hasNext = this.pointer < this.views.length - 1
-    this.hasPrevious = this.pointer > 0
-  }
-
-  protected setScroll (element: HTMLElement): void {
-    const style = window.getComputedStyle(element)
-
-    let dimensionName: 'height' | 'width' = 'height'
-    let scrollFactor = 1
-    let scrollName: 'scrollLeft' | 'scrollTop' = 'scrollTop'
-
-    if (this.flow === 'row') {
-      dimensionName = 'width'
-      scrollName = 'scrollLeft'
-    }
-
-    if (this.dir === 'rtl') {
-      scrollFactor = -1
-    }
-
-    const size = parseFloat(style[dimensionName])
-
-    if (!Number.isNaN(size)) {
-      this.defaultSlotElement[scrollName] += scrollFactor * size
-    }
-  }
-
-  protected setUpElementListeners (): void {
-    this.addEventListener('scola-view-append', this.handleAppendBound)
-    this.addEventListener('scola-view-back', this.handleBackBound)
-    this.addEventListener('scola-view-forward', this.handleForwardBound)
-    this.addEventListener('scola-view-rewind', this.handleRewindBound)
-    super.setUpElementListeners()
-  }
-
-  protected setUpWindowListeners (): void {
-    window.addEventListener('popstate', this.handlePopstateBound)
-    window.addEventListener('scola-view-append', this.handleAppendBound)
-    window.addEventListener('scola-view-back', this.handleBackBound)
-    window.addEventListener('scola-view-forward', this.handleForwardBound)
-    window.addEventListener('scola-view-rewind', this.handleRewindBound)
-    super.setUpWindowListeners()
-  }
-
-  protected tearDownWindowListeners (): void {
-    window.removeEventListener('popstate', this.handlePopstateBound)
-    window.removeEventListener('scola-view-append', this.handleAppendBound)
-    window.removeEventListener('scola-view-back', this.handleBackBound)
-    window.removeEventListener('scola-view-forward', this.handleForwardBound)
-    window.removeEventListener('scola-view-rewind', this.handleRewindBound)
-    super.tearDownWindowListeners()
+  protected removeEventListeners (): void {
+    this.removeEventListener('sc-view-add', this.handleAddBound)
+    this.removeEventListener('sc-view-back', this.handleBackBound)
+    this.removeEventListener('sc-view-forward', this.handleForwardBound)
+    this.removeEventListener('sc-view-rewind', this.handleRewindBound)
   }
 }

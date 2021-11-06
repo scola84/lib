@@ -1,11 +1,11 @@
 import type { Database, InsertResult, UpdateResult } from '../sql'
 import { PassThrough, Writable } from 'stream'
-import type { Queue, QueueRun, TaskRun } from '../../../common/entities'
-import type { Logger } from 'pino'
+import type { Queue, QueueRun, TaskRun } from '../../entities'
 import type { Readable } from 'stream'
 import type { Struct } from '../../../common'
 import type { WrappedNodeRedisClient } from 'handy-redis'
-import { createQueueRun } from '../../../common/entities'
+import { createQueueRun } from '../../entities'
+import type pino from 'pino'
 import { pipeline } from '../stream'
 import { sql } from '../sql'
 
@@ -29,7 +29,7 @@ export interface QueueRunnerOptions {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  logger?: Logger
+  logger?: pino.Logger
 
   /**
    * The store to trigger task runs.
@@ -62,7 +62,7 @@ export class QueueRunner {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  public logger?: Logger
+  public logger?: pino.Logger
 
   /**
    * The store to trigger task runs.

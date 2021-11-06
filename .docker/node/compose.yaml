@@ -3,8 +3,8 @@ services:
   node:
     command: >
       sh -c "
-        yarn install --frozen-lockfile --ignore-optional --production &&
-        yarn run node
+        npm ci &&
+        npm run node
       "
     env_file: $PWD/.env
     extra_hosts:
@@ -15,5 +15,5 @@ services:
     volumes:
       - $PWD/dist:/usr/src/app/dist
       - $PWD/package.json:/usr/src/app/package.json
-      - $PWD/yarn.lock:/usr/src/app/yarn.lock
+      - $PWD/package-lock.json:/usr/src/app/package-lock.json
     working_dir: /usr/src/app

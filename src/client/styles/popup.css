@@ -1,0 +1,43 @@
+.sc-popup {
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-popup.sc-popup-padding[sc-left-calc="end-at-start"],
+[dir="rtl"] .sc-popup.sc-popup-padding[sc-left-calc="start-at-end"] {
+  padding-left: 0;
+  padding-right: 0.5rem;
+}
+
+.sc-popup.sc-popup-padding[sc-left-calc="screen-center"] {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.sc-popup.sc-popup-padding[sc-left-calc="start-at-end"],
+[dir="rtl"] .sc-popup[sc-left-calc="end-at-start"] {
+  padding-left: 0.5rem;
+  padding-right: 0;
+}
+
+.sc-popup.sc-popup-padding[sc-top-calc="screen-center"] {
+  padding-bottom: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.sc-popup.sc-popup-padding[sc-top-calc="top-at-bottom"] {
+  padding-top: 0.5rem;
+}
+
+.sc-popup > .sc-popup-body {
+  background-color: var(--g1);
+  color: var(--f1);
+  display: flex;
+  fill: var(--f1);
+  flex: 1;
+  flex-direction: column;
+}
+
+.sc-section.sc-section-popup > .sc-section-body {
+  gap: 0.5rem;
+}

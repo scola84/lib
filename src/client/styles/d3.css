@@ -1,0 +1,23 @@
+.sc-d3 {
+  display: flex;
+}
+
+body.sc-d3 {
+  margin: 0;
+  overflow: hidden;
+}
+
+.sc-d3 iframe {
+  border: 0;
+}
+
+.sc-d3 line,
+.sc-d3 path {
+  stroke: var(--f2);
+}
+
+.sc-d3 text {
+  color: var(--f2);
+  font-family: var(--font);
+  font-size: 14px;
+}

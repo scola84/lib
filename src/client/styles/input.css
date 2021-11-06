@@ -1,0 +1,130 @@
+/* Thanks to https://moderncss.dev/pure-css-custom-checkbox-style/ */
+
+.sc-input,
+.sc-select,
+.sc-textarea {
+  background-color: var(--g2);
+  border: 0;
+  color: var(--f1);
+  fill: var(--f1);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  padding: 0.5rem 0.75rem;
+}
+
+.sc-input,
+.sc-select {
+  height: 2.5rem;
+}
+
+.sc-input-wrap,
+.sc-select-wrap,
+.sc-textarea-wrap {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  position: relative;
+}
+
+.sc-input-wrap > .sc-icon,
+.sc-select-wrap > .sc-icon,
+.sc-textarea-wrap > .sc-icon {
+  height: 2.5rem;
+  padding: 0.5rem;
+  position: absolute;
+  width: 2.75rem;
+}
+
+.sc-input-wrap > .sc-icon + .sc-input,
+.sc-select-wrap > .sc-icon + .sc-select,
+.sc-textarea-wrap > .sc-icon + .sc-textarea {
+  padding-left: 2.75rem;
+}
+
+[dir="rtl"] .sc-input-wrap > .sc-icon + .sc-input,
+[dir="rtl"] .sc-select-wrap > .sc-icon + .sc-select,
+[dir="rtl"] .sc-textarea-wrap > .sc-icon + .sc-textarea {
+  padding-left: 0;
+  padding-right: 2.75rem;
+}
+
+.sc-input-checkbox,
+.sc-input-radio {
+  background-color: transparent;
+  align-items: center;
+  appearance: none;
+  border-color: var(--f2);
+  border-style: solid;
+  border-width: 2px;
+  color: inherit;
+  cursor: inherit;
+  display: flex;
+  fill: #fff;
+  height: 1.5em;
+  justify-content: center;
+  margin: 0.1rem 0 0;
+  padding: 0;
+  width: 1.5em;
+}
+
+.sc-input-checkbox::before,
+.sc-input-radio::before {
+  content: "";
+  height: 0.75em;
+  width: 0.75em;
+}
+
+.sc-input-checkbox:checked::before,
+.sc-input-radio:checked::before {
+  background-color: var(--f1);
+}
+
+.sc-input-checkbox::before {
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.sc-input-radio {
+  border-radius: 50%;
+}
+
+.sc-input-radio::before {
+  border-radius: 50%;
+}
+
+.sc-input-checkbox-group,
+.sc-input-checkbox-wrap,
+.sc-input-radio-group,
+.sc-input-radio-wrap {
+  background-color: var(--g2);
+}
+
+.sc-input-checkbox-group,
+.sc-input-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.sc-input-checkbox-wrap,
+.sc-input-radio-wrap {
+  display: flex;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.sc-input-checkbox-wrap > .sc-input-checkbox-value,
+.sc-input-radio-wrap > .sc-input-radio-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sc-input-wrap > .sc-icon,
+.sc-select-wrap > .sc-icon,
+.sc-textarea-wrap > .sc-icon {
+  color: var(--f2);
+  fill: var(--f2);
+}

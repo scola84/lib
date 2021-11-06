@@ -1,83 +1,65 @@
-import { FieldElement } from './field'
+import type { ScolaElement } from './element'
+import { ScolaField } from '../helpers/field'
+import { ScolaMutator } from '../helpers/mutator'
+import { ScolaObserver } from '../helpers/observer'
+import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
-import { customElement } from 'lit/decorators.js'
-import styles from '../styles/input'
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'scola-input': InputElement
-  }
-}
+export class ScolaInputElement extends HTMLInputElement implements ScolaElement {
+  public error?: Struct
 
-@customElement('scola-input')
-export class InputElement extends FieldElement {
-  public static styles = [
-    ...FieldElement.styles,
-    styles
-  ]
+  public field: ScolaField
 
-  public get hasFiles (): boolean {
-    return this.fieldElement?.files instanceof FileList
-  }
+  public mutator: ScolaMutator
 
-  public fieldElement: HTMLInputElement | null
+  public observer: ScolaObserver
 
-  protected updaters = InputElement.updaters
+  public propagator: ScolaPropagator
 
-  public appendValueTo (data: FormData | URLSearchParams): void {
-    this.clearError()
-
-    if (
-      this.fieldElement instanceof HTMLInputElement &&
-      this.isSuccessful
-    ) {
-      if (
-        this.fieldElement.files instanceof FileList &&
-        data instanceof FormData
-      ) {
-        Array
-          .from(this.fieldElement.files)
-          .forEach((file) => {
-            data.append(this.name, file, file.name)
-          })
-      } else {
-        data.append(this.name, this.fieldElement.value)
-      }
-    }
+  public constructor () {
+    super()
+    this.field = new ScolaField(this)
+    this.mutator = new ScolaMutator(this)
+    this.observer = new ScolaObserver(this)
+    this.propagator = new ScolaPropagator(this)
+    this.reset()
   }
 
-  public setValueFromStruct (struct: Struct): void {
-    if (struct.file instanceof File) {
-      this.setFile(struct.file)
-    } else {
-      super.setValueFromStruct(struct)
-    }
+  public static define (): void {
+    customElements.define('sc-input', ScolaInputElement, {
+      extends: 'input'
+    })
   }
 
-  protected createDispatchItems (): unknown[] {
-    if (this.fieldElement?.files instanceof FileList) {
-      return Array
-        .from(this.fieldElement.files)
-        .map((file) => {
-          return {
-            file,
-            filename: file.name,
-            filesize: file.size,
-            filetype: file.type,
-            name: this.name
-          }
-        })
-    }
-
-    return super.createDispatchItems()
+  public connectedCallback (): void {
+    this.field.connect()
+    this.mutator.connect()
+    this.observer.connect()
+    this.propagator.connect()
   }
 
-  protected setFile (file: File): void {
-    if (this.fieldElement instanceof HTMLInputElement) {
-      const transfer = new DataTransfer()
+  public disconnectedCallback (): void {
+    this.field.disconnect()
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+  }
 
-      transfer.items.add(file)
-      this.fieldElement.files = transfer.files
-    }
+  public getData (): Struct {
+    return this.field.getData()
+  }
+
+  public reset (): void {
+    this.field.debounce = Number(this.getAttribute('sc-input-debounce') ?? 250)
+  }
+
+  public setData (data: unknown): void {
+    this.field.setData(data)
+  }
+
+  public update (): void {}
+
+  public updateAttributes (): void {
+    this.setAttribute('value', this.value)
   }
 }

@@ -1,0 +1,99 @@
+.sc-section,
+.sc-subsection {
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-section > .sc-section-body,
+.sc-subsection > .sc-subsection-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-section > .sc-section-body {
+  gap: 1.25rem;
+}
+
+.sc-section > .sc-section-footer,
+.sc-section > .sc-section-header,
+.sc-subsection > .sc-subsection-footer,
+.sc-subsection > .sc-subsection-header {
+  align-items: start;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sc-section > .sc-section-footer,
+.sc-section > .sc-section-header {
+  font-size: 1.5rem;
+  min-height: 2rem;
+}
+
+.sc-section > .sc-section-footer {
+  margin: 0.5rem 0 0;
+}
+
+.sc-section > .sc-section-header {
+  margin: 0 0 0.5rem 0;
+}
+
+.sc-subsection > .sc-subsection-footer,
+.sc-subsection > .sc-subsection-header {
+  color: var(--f2);
+  fill: var(--f2);
+  font-size: 0.95rem;
+  min-height: 1.25rem;
+}
+
+.sc-subsection > .sc-subsection-footer {
+  margin: 0.35rem 0 0 0;
+}
+
+.sc-subsection > .sc-subsection-header {
+  margin: 0 0 0.35rem 0;
+  text-transform: uppercase;
+}
+
+.sc-section > .sc-section-header .sc-section-arrow,
+.sc-subsection > .sc-subsection-header .sc-subsection-arrow {
+  transition-property: none;
+}
+
+.sc-section > .sc-section-header .sc-section-arrow {
+  height: 2rem;
+  width: 2rem;
+}
+
+.sc-subsection > .sc-subsection-header .sc-subsection-arrow {
+  height: 1.2rem;
+  width: 1.2rem;
+}
+
+.sc-section > .sc-section-header .sc-button:focus ~ .sc-section-arrow,
+.sc-subsection > .sc-subsection-header .sc-button:focus ~ .sc-subsection-arrow {
+  transition-property: rotate;
+}
+
+.sc-section > .sc-section-header .sc-button[sc-active] ~ .sc-section-arrow,
+.sc-subsection > .sc-subsection-header .sc-button[sc-active] ~ .sc-subsection-arrow {
+  rotate: -90deg;
+}
+
+[dir="rtl"] .sc-section > .sc-section-header .sc-button[sc-active] ~ .sc-section-arrow,
+[dir="rtl"] .sc-subsection > .sc-subsection-header .sc-button[sc-active] ~ .sc-subsection-arrow {
+  rotate: 90deg;
+}
+
+.sc-section > .sc-section-header .sc-button,
+.sc-subsection > .sc-subsection-header .sc-button {
+  flex: 1;
+  padding: 0;
+}
+
+.sc-section > .sc-section-header .sc-section-title,
+.sc-subsection > .sc-subsection-header .sc-subsection-title {
+  font-size: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

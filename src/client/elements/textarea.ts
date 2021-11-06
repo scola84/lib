@@ -1,56 +1,91 @@
-import { customElement, property } from 'lit/decorators.js'
-import { FieldElement } from './field'
-import type { PropertyValues } from 'lit'
-import styles from '../styles/textarea'
+import type { ScolaElement } from './element'
+import { ScolaField } from '../helpers/field'
+import { ScolaMutator } from '../helpers/mutator'
+import { ScolaObserver } from '../helpers/observer'
+import { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'scola-textarea': TextAreaElement
+export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaElement {
+  public error?: Struct
+
+  public field: ScolaField
+
+  public mutator: ScolaMutator
+
+  public observer: ScolaObserver
+
+  public propagator: ScolaPropagator
+
+  public resize: boolean
+
+  protected handleMutationsBound = this.handleMutations.bind(this)
+
+  public constructor () {
+    super()
+    this.field = new ScolaField(this)
+    this.mutator = new ScolaMutator(this)
+    this.observer = new ScolaObserver(this)
+    this.propagator = new ScolaPropagator(this)
+    this.reset()
   }
-}
 
-@customElement('scola-textarea')
-export class TextAreaElement extends FieldElement {
-  public static styles = [
-    ...FieldElement.styles,
-    styles
-  ]
+  public static define (): void {
+    customElements.define('sc-textarea', ScolaTextAreaElement, {
+      extends: 'textarea'
+    })
+  }
 
-  @property({
-    reflect: true
-  })
-  public resize?: 'auto' | 'both' | 'horizontal' | 'vertical'
+  public connectedCallback (): void {
+    this.observer.connect(this.handleMutationsBound, [
+      'value'
+    ])
 
-  @property({
-    attribute: 'resize-max',
-    type: Number
-  })
-  public resizeMax = Infinity
+    this.field.connect()
+    this.mutator.connect()
+    this.propagator.connect()
 
-  public fieldElement: HTMLTextAreaElement | null
+    window.setTimeout(() => {
+      this.update()
+    })
+  }
 
-  protected updaters = TextAreaElement.updaters
+  public disconnectedCallback (): void {
+    this.field.disconnect()
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+  }
 
-  public firstUpdated (properties: PropertyValues): void {
-    super.firstUpdated(properties)
+  public getData (): Struct {
+    return this.field.getData()
+  }
 
-    if (this.resize === 'auto') {
-      this.setStyle()
+  public reset (): void {
+    this.resize = this.hasAttribute('sc-resize')
+  }
+
+  public setData (data: unknown): void {
+    this.field.setData(data)
+  }
+
+  public update (): void {
+    if (this.resize) {
+      this.setHeight()
     }
   }
 
-  protected handleInput (): void {
-    if (this.resize === 'auto') {
-      this.setStyle()
-    }
-
-    super.handleInput()
+  public updateAttributes (): void {
+    this.setAttribute('value', this.value)
   }
 
-  protected setStyle (): void {
-    if (this.fieldElement instanceof HTMLTextAreaElement) {
-      this.fieldElement.style.setProperty('height', '0px')
-      this.fieldElement.style.setProperty('height', `${Math.min(this.resizeMax, this.fieldElement.scrollHeight)}px`)
+  protected handleMutations (): void {
+    this.update()
+  }
+
+  protected setHeight (): void {
+    if (this.scrollHeight > 0) {
+      this.style.setProperty('height', '0px')
+      this.style.setProperty('height', `${this.scrollHeight}px`)
     }
   }
 }

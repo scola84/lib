@@ -1,119 +1,81 @@
-import { customElement, property } from 'lit/decorators.js'
-import type { FieldElement } from './field'
-import { InputElement } from './input'
-import { NodeElement } from './node'
-import type { PropertyValues } from 'lit'
+import type { ScolaElement } from './element'
+import { ScolaMutator } from '../helpers/mutator'
+import { ScolaObserver } from '../helpers/observer'
+import { ScolaPropagator } from '../helpers/propagator'
 
-declare global {
-  interface HTMLElementEventMap {
-    'scola-form-submit': CustomEvent
-  }
+export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
+  [key: string]: unknown
 
-  interface HTMLElementTagNameMap {
-    'scola-form': FormElement
-  }
+  public mutator: ScolaMutator
 
-  interface WindowEventMap {
-    'scola-form-submit': CustomEvent
-  }
-}
+  public observer: ScolaObserver
 
-@customElement('scola-form')
-export class FormElement extends NodeElement {
-  @property()
-  public method = 'POST'
-
-  public get fieldElements (): NodeListOf<FieldElement> {
-    return this.querySelectorAll<FieldElement>('scola-input, scola-picker, scola-select, scola-slider, scola-textarea')
-  }
-
-  public get hasFiles (): boolean {
-    return Array
-      .from(this.fieldElements)
-      .some((fieldElement) => {
-        return (
-          fieldElement instanceof InputElement &&
-          fieldElement.hasFiles
-        )
-      })
-  }
-
-  protected handleKeydownBound = this.handleKeydown.bind(this)
-
-  protected handleLogBound = this.handleLog.bind(this)
+  public propagator: ScolaPropagator
 
   protected handleSubmitBound = this.handleSubmit.bind(this)
 
-  protected updaters = FormElement.updaters
+  public constructor () {
+    super()
+    this.mutator = new ScolaMutator(this)
+    this.observer = new ScolaObserver(this)
+    this.propagator = new ScolaPropagator(this)
+  }
 
-  public submit (): void {
-    let body: FormData | URLSearchParams = new URLSearchParams()
-
-    if (this.hasFiles) {
-      body = new FormData()
-    }
-
-    this.fieldElements.forEach((fieldElement) => {
-      fieldElement.appendValueTo(body)
+  public static define (): void {
+    customElements.define('sc-form', ScolaFormElement, {
+      extends: 'form'
     })
-
-    this.dispatchEvents('scola-request-start', [{
-      body,
-      method: this.method
-    }])
   }
 
-  public update (properties: PropertyValues): void {
-    if (properties.has('data')) {
-      this.handleData()
-    }
-
-    super.update(properties)
+  public connectedCallback (): void {
+    this.mutator.connect()
+    this.observer.connect()
+    this.propagator.connect()
+    this.addEventListeners()
   }
 
-  protected handleData (): void {
-    this.setDataOn(this.dataLeafElements)
+  public disconnectedCallback (): void {
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+    this.removeEventListeners()
+  }
+
+  public getData (): FormData {
+    return new FormData(this)
+  }
+
+  public reset (): void {}
+
+  public setData (data: unknown): void {
+    this.propagator.set(data)
     this.scrollToError()
   }
 
-  protected handleKeydown (event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      event.cancelBubble = true
-      this.submit()
-    }
+  public update (): void {}
+
+  protected addEventListeners (): void {
+    this.addEventListener('submit', this.handleSubmitBound)
   }
 
-  protected handleSubmit (event: CustomEvent): void {
-    if (this.isTarget(event)) {
-      this.submit()
-    }
+  protected handleSubmit (event: Event): void {
+    event.preventDefault()
+
+    this.propagator.dispatch('submit', [{
+      body: this.getData(),
+      method: this.method
+    }], event)
+  }
+
+  protected removeEventListeners (): void {
+    this.removeEventListener('submit', this.handleSubmitBound)
   }
 
   protected scrollToError (): void {
-    window.requestAnimationFrame(() => {
-      this
-        .querySelector('[as="error"]:not([hidden])')
-        ?.closest('scola-input')
-        ?.scrollIntoView({
-          behavior: 'smooth'
-        })
-    })
-  }
-
-  protected setUpElementListeners (): void {
-    this.addEventListener('keydown', this.handleKeydownBound)
-    this.addEventListener('scola-log', this.handleLogBound)
-    this.addEventListener('scola-form-submit', this.handleSubmitBound)
-    super.setUpElementListeners()
-  }
-
-  protected setUpWindowListeners (): void {
-    window.addEventListener('scola-form-submit', this.handleSubmitBound)
-    super.setUpWindowListeners()
-  }
-
-  protected tearDownWindowListeners (): void {
-    window.removeEventListener('scola-form-submit', this.handleSubmitBound)
-    super.tearDownWindowListeners()
+    this
+      .querySelector('[sc-error]')
+      ?.scrollIntoView({
+        behavior: 'smooth'
+      })
   }
 }

@@ -1,0 +1,35 @@
+.sc-subsection.sc-subsection-form > .sc-subsection-body {
+  gap: 0.75rem;
+}
+
+.sc-subsection.sc-subsection-form > .sc-subsection-body .sc-form-error {
+  background-color: firebrick;
+  color: #fff;
+  fill: #fff;
+}
+
+.sc-subsection.sc-subsection-form > .sc-subsection-body .sc-form-error:not(:empty) {
+  bottom: 0;
+  padding: 0.25rem;
+  position: absolute;
+}
+
+.sc-subsection.sc-subsection-form > .sc-subsection-body .sc-form-group {
+  display: flex;
+  flex-direction: row;
+  gap: inherit;
+}
+
+.sc-subsection.sc-subsection-form > .sc-subsection-body .sc-form-label {
+  color: var(--f2);
+  fill: var(--f2);
+  font-size: 0.9rem;
+  overflow: hidden;
+  padding: 0 0 0.15rem 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-subsection.sc-subsection-form > .sc-subsection-body .sc-form-label + .sc-icon {
+  top: 1.65rem;
+}

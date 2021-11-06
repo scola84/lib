@@ -1,128 +1,114 @@
-import { customElement, property } from 'lit/decorators.js'
-import { NodeElement } from './node'
-import type { PropertyValues } from 'lit'
-import { isStruct } from '../../common'
-import styles from '../styles/button'
-import updaters from '../updaters/button'
+import { absorb, isStruct } from '../../common'
+import { ScolaDrop } from '../helpers/drop'
+import type { ScolaElement } from './element'
+import { ScolaMutator } from '../helpers/mutator'
+import { ScolaObserver } from '../helpers/observer'
+import { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'scola-button': ButtonElement
-  }
-}
+export class ScolaButtonElement extends HTMLButtonElement implements ScolaElement {
+  public cancel: boolean
 
-@customElement('scola-button')
-export class ButtonElement extends NodeElement {
-  public static storage: Storage = window.sessionStorage
+  public datamap: Struct = {}
 
-  public static styles = [
-    ...NodeElement.styles,
-    styles
-  ]
+  public drop?: ScolaDrop
 
-  public static updaters = {
-    ...NodeElement.updaters,
-    ...updaters
-  }
+  public mutator: ScolaMutator
 
-  @property({
-    reflect: true,
-    type: Boolean
-  })
-  public activated?: boolean
+  public observer: ScolaObserver
 
-  @property({
-    type: Boolean
-  })
-  public cancel?: boolean
+  public propagator: ScolaPropagator
 
-  @property({
-    attribute: 'color-activated',
-    reflect: true
-  })
-  public colorActivated?: 'aux-1' | 'aux-2' | 'aux-3' | 'sig-1' | 'sig-2'
-
-  @property({
-    attribute: 'fill-activated',
-    reflect: true
-  })
-  public fillActivated?: 'aux-1' | 'aux-2' | 'aux-3' | 'sig-1' | 'sig-2'
-
-  @property({
-    type: Boolean
-  })
-  public save?: boolean
-
-  @property({
-    attribute: false
-  })
-  public storage = ButtonElement.storage
-
-  public cursor: NodeElement['cursor'] = 'pointer'
+  protected handleCancelBound = this.handleCancel.bind(this)
 
   protected handleClickBound = this.handleClick.bind(this)
 
-  protected updaters = ButtonElement.updaters
+  public constructor () {
+    super()
+    this.mutator = new ScolaMutator(this)
+    this.observer = new ScolaObserver(this)
+    this.propagator = new ScolaPropagator(this)
+
+    if (this.hasAttribute('sc-drop')) {
+      this.drop = new ScolaDrop(this)
+    }
+
+    this.reset()
+  }
+
+  public static define (): void {
+    customElements.define('sc-button', ScolaButtonElement, {
+      extends: 'button'
+    })
+  }
 
   public connectedCallback (): void {
-    if (this.save === true) {
-      this.loadState()
-    }
-
-    super.connectedCallback()
+    this.mutator.connect()
+    this.observer.connect()
+    this.propagator.connect()
+    this.drop?.connect()
+    this.addEventListeners()
   }
 
-  public update (properties: PropertyValues): void {
-    if (this.save === true) {
-      this.saveState()
-    }
-
-    super.update(properties)
+  public disconnectedCallback (): void {
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+    this.drop?.disconnect()
+    this.removeEventListeners()
   }
 
-  protected createDispatchItems (): unknown[] {
-    const item = {
-      ...this.dataset
-    }
-
-    if (isStruct(this.data)) {
-      Object.assign(item, this.data)
-    }
-
-    return [item]
+  public getData (): Struct {
+    return absorb(this.dataset, this.datamap, true)
   }
 
-  protected handleClick (event: Event): void {
-    event.cancelBubble = this.cancel === true
-    this.dispatchEvents(this.dispatch, this.createDispatchItems())
+  public reset (): void {
+    this.cancel = this.hasAttribute('sc-cancel')
   }
 
-  protected loadState (): void {
-    const state: unknown = JSON.parse(this.storage.getItem(`button-${this.id}`) ?? 'null')
-
-    if (isStruct(state)) {
-      if (typeof state.activated === 'boolean') {
-        this.activated = state.activated
-      } else if (typeof state.disabled === 'boolean') {
-        this.disabled = state.disabled
-      } else if (typeof state.hidden === 'boolean') {
-        this.hidden = state.hidden
-      }
+  public setData (data: unknown): void {
+    if (isStruct(data)) {
+      Object.assign(this.datamap, data)
     }
   }
 
-  protected saveState (): void {
-    const state = {
-      activated: this.activated,
-      disabled: this.disabled,
-      hidden: this.hidden
+  public update (): void {}
+
+  protected addEventListeners (): void {
+    if (this.hasAttribute('sc-cancel')) {
+      this.addEventListener('mousedown', this.handleCancelBound)
+      this.addEventListener('mouseup', this.handleCancelBound)
+      this.addEventListener('touchend', this.handleCancelBound)
+
+      this.addEventListener('touchstart', this.handleCancelBound, {
+        passive: true
+      })
     }
 
-    this.storage.setItem(`button-${this.id}`, JSON.stringify(state))
+    if (this.hasAttribute('sc-onclick')) {
+      this.addEventListener('click', this.handleClickBound)
+    }
   }
 
-  protected setUpElementListeners (): void {
-    this.addEventListener('click', this.handleClickBound)
-    super.setUpElementListeners()
+  protected handleCancel (event: MouseEvent | TouchEvent): void {
+    event.cancelBubble = this.cancel
+  }
+
+  protected handleClick (event: MouseEvent): void {
+    event.cancelBubble = this.cancel
+    this.propagator.dispatch('click', [this.getData()], event)
+  }
+
+  protected removeEventListeners (): void {
+    if (this.hasAttribute('sc-cancel')) {
+      this.removeEventListener('mousedown', this.handleCancelBound)
+      this.removeEventListener('mouseup', this.handleCancelBound)
+      this.removeEventListener('touchend', this.handleCancelBound)
+      this.removeEventListener('touchstart', this.handleCancelBound)
+    }
+
+    if (this.hasAttribute('sc-onclick')) {
+      this.removeEventListener('click', this.handleClickBound)
+    }
   }
 }

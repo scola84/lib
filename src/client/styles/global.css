@@ -1,0 +1,114 @@
+* {
+  box-sizing: border-box;
+}
+
+:focus-visible {
+  outline: 2px solid var(--i1);
+  outline-offset: -2px;
+}
+
+::selection {
+  background-color: var(--i1);
+  color: #fff;
+  fill: #fff;
+}
+
+.sc-app {
+  background-color: var(--g1);
+  bottom: 0;
+  color: var(--f1);
+  display: flex;
+  fill: var(--f1);
+  font-family: var(--font);
+  font-size: 16px;
+  left: 0;
+  line-height: 1.5em;
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.sc-backdrop {
+  background-color: var(--g4);
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  transition-property: opacity;
+}
+
+.sc-blur {
+  background-color: transparent !important;
+  backdrop-filter: blur(0.5rem);
+}
+
+.sc-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.sc-scroll {
+  overflow: auto;
+  scrollbar-color: transparent transparent;
+  scrollbar-width: auto;
+}
+
+.sc-scroll:hover {
+  scrollbar-color: var(--g2) transparent;
+}
+
+.sc-scroll::-webkit-scrollbar {
+  height: 0.5rem;
+  width: 0.5rem;
+}
+
+.sc-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: var(--g2);
+}
+
+.sc-shadow {
+  box-shadow: 0 2px 0.5rem -2px var(--g3);
+}
+
+.sc-wrap {
+  display: inline-flex;
+  flex-flow: row wrap;
+  justify-content: end;
+}
+
+[is="sc-event-source"],
+[is="sc-event"],
+[is="sc-reloader"],
+[is="sc-request"]:empty,
+[is="sc-worker"] {
+  display: block;
+  height: 0;
+  width: 0;
+}
+
+[sc-border],
+[sc-border-bottom],
+[sc-border-end],
+[sc-border-start],
+[sc-border-top],
+[sc-border-x],
+[sc-border-y] {
+  border-color: var(--g2);
+}
+
+[sc-display] {
+  display: none !important;
+}
+
+[sc-drop-over] {
+  outline: 2px solid var(--i1);
+  outline-offset: -2px;
+}

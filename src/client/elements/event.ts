@@ -1,111 +1,90 @@
-import { customElement, property } from 'lit/decorators.js'
-import { NodeElement } from './node'
-import type { PropertyValues } from 'lit'
+import { absorb, isStruct } from '../../common'
+import type { ScolaElement } from './element'
+import { ScolaMutator } from '../helpers/mutator'
+import { ScolaObserver } from '../helpers/observer'
+import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
-import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
-    'scola-event': CustomEvent
-  }
-
-  interface HTMLElementTagNameMap {
-    'scola-event': EventElement
-  }
-
-  interface WindowEventMap {
-    'scola-event': CustomEvent
+    'sc-event-dispatch': CustomEvent
   }
 }
 
-@customElement('scola-event')
-export class EventElement extends NodeElement {
-  @property({
-    type: Number
-  })
-  public interval?: number
+export class ScolaEventElement extends HTMLObjectElement implements ScolaElement {
+  public mutator: ScolaMutator
 
-  @property({
-    type: Boolean
-  })
-  public wait?: boolean
+  public observer: ScolaObserver
 
-  protected handleEventBound = this.handleEvent.bind(this)
+  public propagator: ScolaPropagator
 
-  protected intervalId?: number
+  public wait: boolean
 
-  protected updaters = EventElement.updaters
+  protected handleDispatchBound = this.handleDispatch.bind(this)
+
+  public constructor () {
+    super()
+    this.mutator = new ScolaMutator(this)
+    this.observer = new ScolaObserver(this)
+    this.propagator = new ScolaPropagator(this)
+    this.reset()
+  }
+
+  public static define (): void {
+    customElements.define('sc-event', ScolaEventElement, {
+      extends: 'object'
+    })
+  }
 
   public connectedCallback (): void {
-    if (this.interval !== undefined) {
-      this.setUpInterval()
-    }
+    this.mutator.connect()
+    this.observer.connect()
+    this.propagator.connect()
+    this.addEventListeners()
 
-    super.connectedCallback()
+    if (!this.wait) {
+      this.dispatch()
+    }
   }
 
   public disconnectedCallback (): void {
-    if (this.interval !== undefined) {
-      this.tearDownInterval()
-    }
-
-    super.disconnectedCallback()
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+    this.removeEventListeners()
   }
 
-  public firstUpdated (properties: PropertyValues): void {
-    if (this.wait !== true) {
-      this.dispatchEvents(this.dispatch, this.createDispatchItems())
-    }
-
-    super.firstUpdated(properties)
+  public dispatch (data?: Struct, event?: Event): void {
+    this
+      .querySelectorAll('param')
+      .forEach((param) => {
+        this.propagator.dispatchEvent(param.value, [absorb(param.dataset, data)], event)
+      })
   }
 
-  protected createDispatchItems (event?: CustomEvent<Struct | null>): unknown[] {
-    const item = {
-      ...this.dataset
-    }
+  public getData (): void {}
 
-    if (isStruct(this.data)) {
-      Object.assign(item, this.data)
-    }
-
-    if (isStruct(event?.detail?.data)) {
-      Object.assign(item, event?.detail?.data)
-    }
-
-    return [item]
+  public reset (): void {
+    this.wait = this.hasAttribute('sc-wait')
   }
 
-  protected handleEvent (event: CustomEvent): void {
-    if (this.isTarget(event)) {
-      this.dispatchEvents(this.dispatch, this.createDispatchItems(event))
-    }
+  public setData (): void {}
+
+  public update (): void {}
+
+  protected addEventListeners (): void {
+    this.addEventListener('sc-event-dispatch', this.handleDispatchBound)
   }
 
-  protected setUpElementListeners (): void {
-    this.addEventListener('scola-event', this.handleEventBound)
-    super.setUpElementListeners()
-  }
-
-  protected setUpInterval (): void {
-    this.intervalId = window.setInterval(() => {
-      this.dispatchEvents(this.dispatch, this.createDispatchItems())
-    }, this.interval)
-  }
-
-  protected setUpWindowListeners (): void {
-    window.addEventListener('scola-event', this.handleEventBound)
-    super.setUpWindowListeners()
-  }
-
-  protected tearDownInterval (): void {
-    if (this.intervalId !== undefined) {
-      window.clearInterval(this.intervalId)
+  protected handleDispatch (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      this.dispatch(event.detail, event)
+    } else {
+      this.dispatch(undefined, event)
     }
   }
 
-  protected tearDownWindowListeners (): void {
-    window.removeEventListener('scola-event', this.handleEventBound)
-    super.tearDownWindowListeners()
+  protected removeEventListeners (): void {
+    this.removeEventListener('sc-event-dispatch', this.handleDispatchBound)
   }
 }

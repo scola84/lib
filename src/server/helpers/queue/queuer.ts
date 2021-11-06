@@ -1,15 +1,15 @@
 import type { Database, UpdateResult } from '../sql'
 import type { Job } from 'node-schedule'
-import type { Logger } from 'pino'
-import type { Queue } from '../../../common/entities'
+import type { Queue } from '../../entities'
 import { QueueRunner } from '../../helpers/queue/queue-runner'
 import type { Struct } from '../../../common'
-import type { TaskRun } from '../../../common/entities/base'
+import type { TaskRun } from '../../entities/base'
 import type { TaskRunner } from './task-runner'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createNodeRedisClient } from 'handy-redis'
 import { isStruct } from '../../../common'
 import { parseExpression } from 'cron-parser'
+import type pino from 'pino'
 import { scheduleJob } from 'node-schedule'
 import { sql } from '../sql'
 import waitUntil from 'async-wait-until'
@@ -38,7 +38,7 @@ export interface QueuerOptions {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  logger: Logger
+  logger: pino.Logger
 
   /**
    * The names of the queues to run as a SQL pattern.
@@ -120,7 +120,7 @@ export class Queuer {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  public logger: Logger
+  public logger: pino.Logger
 
   /**
    * The names of the queues to run as a SQL pattern.

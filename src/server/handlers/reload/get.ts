@@ -1,11 +1,11 @@
 import 'fastify-sse-v2'
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import { readFileSync, watch } from 'fs-extra'
 import type { FSWatcher } from 'fs-extra'
 import { PassThrough } from 'stream'
 import { RouteHandler } from '../../helpers'
 import type { RouteHandlerOptions } from '../../helpers'
 import { debounce } from 'throttle-debounce'
-import { watch } from 'fs-extra'
 
 export interface ReloadGetHandlerOptions extends Partial<RouteHandlerOptions> {
   debounce?: number
@@ -54,15 +54,17 @@ export class ReloadGetHandler extends RouteHandler {
   protected setUpWatcher (): void {
     this.watcher = watch(this.file)
 
-    this.watcher.on('change', debounce(this.debounce, true, () => {
-      this.streams.forEach((stream) => {
-        stream.write({
-          data: JSON.stringify({
-            reload: true
-          }),
-          event: this.event
+    this.watcher.on('change', debounce(this.debounce, false, () => {
+      if (readFileSync(this.file).length > 0) {
+        this.streams.forEach((stream) => {
+          stream.write({
+            data: JSON.stringify({
+              reload: true
+            }),
+            event: this.event
+          })
         })
-      })
+      }
     }))
   }
 }

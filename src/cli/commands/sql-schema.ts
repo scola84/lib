@@ -93,16 +93,16 @@ try {
       .join(' ')
 
     child.execSync([
-    `docker exec ${container} mysqldump`,
-    excludeFlags,
-    `--host ${url.hostname}`,
-    '--no-data',
-    `--password=${decodeURIComponent(url.password)}`,
-    `--port ${url.port}`,
-    '--skip-add-drop-table',
-    `--user ${decodeURIComponent(url.username)}`,
-    `--databases ${database}`,
-    `> ${targetFile}`
+      `docker exec ${container} mysqldump`,
+      excludeFlags,
+      `--host ${url.hostname}`,
+      '--no-data',
+      `--password=${decodeURIComponent(url.password)}`,
+      `--port ${url.port}`,
+      '--skip-add-drop-table',
+      `--user ${decodeURIComponent(url.username)}`,
+      `--databases ${database}`,
+      `> ${targetFile}`
     ].join(' '), {
       stdio: 'inherit'
     })

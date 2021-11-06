@@ -1,0 +1,161 @@
+/* Thanks to https://codepen.io/pdg/pen/MayBJK */
+
+.sc-table {
+  border-collapse: collapse;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+.sc-table .sc-controls {
+  flex: 1;
+}
+
+.sc-table .sc-table-body,
+.sc-table .sc-table-body-empty {
+  display: none;
+  flex: 1;
+}
+
+.sc-table:not([sc-elements="0"]) .sc-table-body,
+.sc-table[sc-elements="0"] .sc-table-body-empty {
+  display: table-row-group;
+}
+
+.sc-table .sc-table-cell,
+.sc-table .sc-table-data {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  padding: 0 0 0 1rem;
+}
+
+[dir="rtl"] .sc-table .sc-table-cell,
+[dir="rtl"] .sc-table .sc-table-data {
+  padding-left: 0;
+  padding-right: 1rem;
+}
+
+.sc-table .sc-table-data {
+  padding-bottom: 0.875rem;
+  padding-top: 0.875rem;
+}
+
+.sc-table .sc-table-row-compact .sc-table-data {
+  padding-bottom: 0.375rem;
+  padding-top: 0.375rem;
+}
+
+.sc-table .sc-table-row-span .sc-table-data {
+  padding: 0 1rem;
+}
+
+.sc-table .sc-table-data.sc-button {
+  gap: 0.25rem;
+  margin-left: -1rem;
+  padding-left: 1rem;
+}
+
+[dir="rtl"] .sc-table .sc-table-data.sc-button {
+  margin-left: 0;
+  margin-right: -1rem;
+  padding-left: 0;
+  padding-right: 1rem;
+}
+
+.sc-table .sc-table-data.sc-button .sc-icon {
+  height: 1rem;
+  margin: 0;
+  width: 1rem;
+}
+
+.sc-table [sc-handle] {
+  flex: 0 0 0;
+  padding-left: 0;
+  padding-right: 0;
+  transition-property: flex-basis;
+}
+
+[dir="rtl"] .sc-table [sc-handle] {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sc-table [sc-handle="drag"] {
+  justify-content: center;
+}
+
+.sc-table [sc-handle="select"] {
+  justify-content: end;
+}
+
+.sc-table[sc-drag-handle] [sc-handle="drag"],
+.sc-table[sc-select-handle] [sc-handle="select"] {
+  flex-basis: 2.5rem;
+}
+
+.sc-table .sc-table-data[sc-handle="drag"] {
+  cursor: grabbing;
+}
+
+.sc-table[sc-select-handle] .sc-table-body [sc-selected] .sc-table-data[sc-handle="select"] .sc-input-checkbox::before,
+.sc-table[sc-select-handle][sc-select-all] .sc-table-header .sc-table-data[sc-handle="select"] .sc-input-checkbox::before {
+  background-color: var(--f1);
+}
+
+.sc-table .sc-table-data[sc-observe-state="sc-active"][sc-active],
+.sc-table .sc-table-data[sc-observe-state="sc-active"]:not([sc-active]) + [sc-observe-state="sc-active"]:not([sc-active]) {
+  display: none;
+}
+
+.sc-table .sc-table-data[sc-observe-state="sc-active"] [is="sc-icon"]:not([sc-active]) {
+  display: none;
+}
+
+.sc-table .sc-table-header .sc-scroll {
+  overflow-y: scroll;
+}
+
+.sc-table .sc-table-header .sc-table-cell-interact:hover ~ * {
+  background-color: var(--g2);
+}
+
+.sc-table .sc-table-header .sc-table-cell-interact:active ~ * {
+  background-color: var(--g3);
+}
+
+.sc-table .sc-table-row,
+.sc-table .sc-table-row-compact,
+.sc-table .sc-table-row-span {
+  display: flex;
+  width: 100%;
+}
+
+.sc-table .sc-table-body .sc-table-row:hover,
+.sc-table .sc-table-body .sc-table-row-compact:hover {
+  background-color: var(--g2);
+  color: var(--f1);
+  fill: var(--f1);
+}
+
+.sc-table:not([sc-select-handle]) .sc-table-row[sc-selected],
+.sc-table:not([sc-select-handle]) .sc-table-row-compact[sc-selected] {
+  background-color: var(--i1);
+  color: #fff;
+  fill: #fff;
+}
+
+.sc-table .sc-table-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sc-table-drag {
+  background-color: var(--i1);
+  color: #fff;
+  fill: #fff;
+  padding: 0.25rem;
+  position: absolute;
+}

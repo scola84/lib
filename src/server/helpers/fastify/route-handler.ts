@@ -1,10 +1,10 @@
 import type { FastifyReply, FastifyRequest, FastifySchema, RouteOptions, ValidationResult } from 'fastify'
 import type { Database } from '../sql'
-import type { Logger } from 'pino'
 import type { Server } from './server'
 import type { Struct } from '../../../common'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { isArray } from '../../../common'
+import type pino from 'pino'
 
 export interface RouteHandlerOptions extends RouteOptions {
   /**
@@ -19,7 +19,7 @@ export interface RouteHandlerOptions extends RouteOptions {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  logger: Logger
+  logger: pino.Logger
 
   /**
    * The server.
@@ -59,7 +59,7 @@ export abstract class RouteHandler {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  public logger?: Logger
+  public logger?: pino.Logger
 
   /**
    * The method.

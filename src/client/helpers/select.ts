@@ -1,4 +1,5 @@
-import type { ScolaInteract } from './interact'
+import { ScolaInteract } from './interact'
+import type { ScolaInteractEvent } from './interact'
 import type { ScolaTableElement } from '../elements/table'
 import { ScolaTableRowElement } from '../elements/table-row'
 import type { Struct } from '../../common'
@@ -26,16 +27,13 @@ export class ScolaSelect {
     return this.rows[this.rows.length - 1]
   }
 
-  protected handleClickBound = this.handleClick.bind(this)
-
   protected handleDblclickBound = this.handleDblclick.bind(this)
 
-  protected handleKeydownBound = this.handleKeydown.bind(this)
-
-  protected handleMousedownBound = this.handleMousedown.bind(this)
+  protected handleInteractBound = this.handleInteract.bind(this)
 
   public constructor (element: ScolaTableElement) {
     this.element = element
+    this.interact = new ScolaInteract(element.body)
     this.reset()
   }
 
@@ -67,6 +65,8 @@ export class ScolaSelect {
   }
 
   public connect (): void {
+    this.interact.observe(this.handleInteractBound)
+    this.interact.connect()
     this.addEventListeners()
     this.scrollTo()
   }
@@ -104,16 +104,17 @@ export class ScolaSelect {
   }
 
   public disconnect (): void {
+    this.interact.disconnect()
     this.removeEventListeners()
   }
 
-  public getItems (): Struct[] {
+  public getItemsByRow (): Struct[] {
     return this.rows.map((row) => {
       return row.datamap
     })
   }
 
-  public getKeys (): unknown[] {
+  public getKeysByRow (): unknown[] {
     return this.rows.map((row) => {
       return row.datamap[this.element.list.key]
     })
@@ -122,25 +123,28 @@ export class ScolaSelect {
   public reset (): void {
     this.all = this.element.hasAttribute('sc-select-all')
     this.handle = this.element.hasAttribute('sc-select-handle')
+    this.interact.keyboard = this.interact.hasKeyboard
+    this.interact.mouse = this.interact.hasMouse
+    this.interact.touch = this.interact.hasTouch
   }
 
   public scrollTo (): void {
     if (this.lastSelectedRow !== undefined) {
       const {
-        clientHeight: rowHeight,
-        clientWidth: rowWidth,
-        offsetLeft: rowLeft,
-        offsetTop: rowTop
-      } = this.lastSelectedRow
-
-      const {
-        clientHeight: bodyHeight,
-        clientWidth: bodyWidth,
+        offsetHeight: bodyHeight,
         offsetLeft: bodyLeft,
         offsetTop: bodyTop,
+        offsetWidth: bodyWidth,
         scrollLeft: bodyScrollLeft,
         scrollTop: bodyScrollTop
       } = this.element.body
+
+      const {
+        offsetHeight: rowHeight,
+        offsetLeft: rowLeft,
+        offsetTop: rowTop,
+        offsetWidth: rowWidth
+      } = this.lastSelectedRow
 
       let left = bodyScrollLeft
       let top = bodyScrollTop
@@ -213,25 +217,21 @@ export class ScolaSelect {
   }
 
   protected addEventListeners (): void {
-    this.element.addEventListener('keydown', this.handleKeydownBound)
-    this.element.body.addEventListener('click', this.handleClickBound)
     this.element.body.addEventListener('dblclick', this.handleDblclickBound)
-    this.element.body.addEventListener('mousedown', this.handleMousedownBound)
   }
 
   protected dispatch (on: string, event?: Event): void {
-    const items = this.getItems()
-    const keys = this.getKeys()
+    const items = this.getItemsByRow()
+    const keys = this.getKeysByRow()
 
     if (items.length === 1) {
       this.element.propagator.dispatch(on, items, event)
     }
 
     this.element.propagator.dispatch(`${on}item`, items, event)
-
-    this.element.propagator.dispatch(`${on}items`, [{
-      items: keys
-    }], event)
+    this.element.propagator.dispatch(`${on}items`, [{ items }], event)
+    this.element.propagator.dispatch(`${on}key`, keys, event)
+    this.element.propagator.dispatch(`${on}keys`, [{ keys }], event)
   }
 
   protected findNext (row?: ScolaTableRowElement, count = 1): ScolaTableRowElement | null {
@@ -286,7 +286,33 @@ export class ScolaSelect {
     return null
   }
 
-  protected handleClick (event: MouseEvent): void {
+  protected handleDblclick (event: MouseEvent): void {
+    this.dispatch('selectdblclick', event)
+  }
+
+  protected handleInteract (event: ScolaInteractEvent): boolean {
+    event.originalEvent.cancelBubble = true
+
+    if (event.type === 'click') {
+      if (this.interact.isMouse(event.originalEvent, 'up')) {
+        return this.handleInteractEndMouse(event.originalEvent)
+      } else if (this.interact.isTouch(event.originalEvent, 'end')) {
+        return this.handleInteractEndTouch(event.originalEvent)
+      }
+    } else if (event.type === 'start') {
+      if (this.interact.isMouse(event.originalEvent, 'down')) {
+        return this.handleInteractStart(event.originalEvent)
+      } else if (this.interact.isKeyboard(event.originalEvent, 'down')) {
+        return this.handleKeydown(event.originalEvent)
+      }
+
+      return true
+    }
+
+    return false
+  }
+
+  protected handleInteractEndMouse (event: MouseEvent | TouchEvent): boolean {
     if (event.target instanceof HTMLElement) {
       const row = event.target.closest<ScolaTableRowElement>('tr')
 
@@ -301,18 +327,74 @@ export class ScolaSelect {
           ) {
             this.select(row)
             this.dispatch('select', event)
-            this.dispatch('selectclick', event)
+            return true
           }
         }
       }
     }
+
+    return false
   }
 
-  protected handleDblclick (event: MouseEvent): void {
-    this.dispatch('selectdblclick', event)
+  protected handleInteractEndTouch (event: MouseEvent | TouchEvent): boolean {
+    if (event.target instanceof HTMLElement) {
+      const row = event.target.closest<ScolaTableRowElement>('tr')
+
+      if (row !== null) {
+        if (row.hasAttribute('sc-selectable')) {
+          this.select(row)
+          this.dispatch('select', event)
+          return true
+        } else if (
+          this.handle &&
+          event.target.closest('[sc-handle="select"]') !== null
+        ) {
+          this.toggle(row)
+          this.dispatch('select', event)
+          return true
+        }
+      }
+    }
+
+    return false
   }
 
-  protected handleKeydown (event: KeyboardEvent): void {
+  protected handleInteractStart (event: MouseEvent | TouchEvent): boolean {
+    if (event.target instanceof HTMLElement) {
+      const row = event.target.closest<ScolaTableRowElement>('tr')
+
+      if (row !== null) {
+        if (row.hasAttribute('sc-selectable')) {
+          if (event.ctrlKey) {
+            this.toggle(row)
+          } else if (event.shiftKey) {
+            this.select(row, this.firstSelectedRow)
+          } else if (!this.rows.includes(row)) {
+            this.select(row)
+          }
+
+          this.dispatch('select', event)
+          return true
+        } else if (
+          this.handle &&
+          event.target.closest('[sc-handle="select"]') !== null
+        ) {
+          if (event.shiftKey) {
+            this.select(row, this.firstSelectedRow)
+          } else {
+            this.toggle(row)
+          }
+
+          this.dispatch('select', event)
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
+  protected handleKeydown (event: KeyboardEvent): boolean {
     let handled = false
 
     if (
@@ -341,6 +423,8 @@ export class ScolaSelect {
     if (handled) {
       event.preventDefault()
     }
+
+    return handled
   }
 
   protected handleKeydownDefault (event: KeyboardEvent): boolean {
@@ -431,45 +515,8 @@ export class ScolaSelect {
     return false
   }
 
-  protected handleMousedown (event: MouseEvent): void {
-    event.cancelBubble = true
-
-    if (event.target instanceof HTMLElement) {
-      const row = event.target.closest<ScolaTableRowElement>('tr')
-
-      if (row !== null) {
-        if (row.hasAttribute('sc-selectable')) {
-          if (event.ctrlKey) {
-            this.toggle(row)
-            this.dispatch('select', event)
-          } else if (event.shiftKey) {
-            this.select(row, this.firstSelectedRow)
-            this.dispatch('select', event)
-          } else if (!this.rows.includes(row)) {
-            this.select(row)
-            this.dispatch('select', event)
-          }
-        } else if (
-          this.handle &&
-          event.target.closest('[sc-handle="select"]') !== null
-        ) {
-          if (event.shiftKey) {
-            this.select(row, this.firstSelectedRow)
-            this.dispatch('select', event)
-          } else {
-            this.toggle(row)
-            this.dispatch('select', event)
-          }
-        }
-      }
-    }
-  }
-
   protected removeEventListeners (): void {
-    this.element.removeEventListener('keydown', this.handleKeydownBound)
-    this.element.body.removeEventListener('click', this.handleClickBound)
     this.element.body.removeEventListener('dblclick', this.handleDblclickBound)
-    this.element.body.removeEventListener('mousedown', this.handleMousedownBound)
   }
 
   protected select (lastRow: ScolaTableRowElement, firstRow = lastRow): void {

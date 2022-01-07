@@ -6,6 +6,8 @@ import type { Struct } from '../../common'
 export class ScolaList {
   public added = new Set()
 
+  public axis: string | null
+
   public deleted = new Set()
 
   public element: ScolaTableElement
@@ -23,8 +25,6 @@ export class ScolaList {
   public limit: number
 
   public mode?: string
-
-  public scroll: boolean
 
   public sortKey: string
 
@@ -122,7 +122,15 @@ export class ScolaList {
     return items
   }
 
-  public getKeys (): unknown[] {
+  public getItemsByRow (): Struct[] {
+    return Array.from(this.element.body
+      .querySelectorAll<ScolaTableRowElement>('tr'))
+      .map((row) => {
+        return row.datamap
+      })
+  }
+
+  public getKeysByRow (): unknown[] {
     return Array.from(this.element.body
       .querySelectorAll<ScolaTableRowElement>('tr'))
       .map((row) => {
@@ -163,18 +171,18 @@ export class ScolaList {
   }
 
   public reset (): void {
+    this.axis = this.element.getAttribute('sc-list-axis')
     this.factor = Number(this.element.getAttribute('sc-list-factor') ?? 2)
     this.filter = this.element.getAttribute('sc-list-filter') ?? ''
     this.key = this.element.getAttribute('sc-list-key') ?? 'id'
     this.mode = this.element.getAttribute('sc-list-mode') ?? undefined
-    this.scroll = this.element.hasAttribute('sc-list-scroll')
     this.sortKey = this.element.getAttribute('sc-list-sort-key') ?? ''
     this.sortOrder = this.element.getAttribute('sc-list-sort-order') ?? ''
     this.threshold = Number(this.element.getAttribute('sc-list-threshold') ?? 0.75)
   }
 
   protected addEventListeners (): void {
-    if (this.scroll) {
+    if (this.axis !== null) {
       this.element.body.addEventListener('scroll', this.handleScrollBound)
     }
   }
@@ -200,22 +208,49 @@ export class ScolaList {
   }
 
   protected handleScroll (): void {
-    const { body } = this.element
+    const {
+      clientHeight: bodyHeight,
+      clientWidth: bodyWidth,
+      scrollHeight: bodyScrollHeight,
+      scrollWidth: bodyScrollWidth,
+      scrollLeft: bodyScrollLeft,
+      scrollTop: bodyScrollTop
+    } = this.element.body
 
-    if ((body.scrollHeight - body.clientHeight - body.scrollTop) < (body.clientHeight * this.threshold)) {
+    if ((
+      bodyScrollHeight > bodyHeight &&
+      (bodyScrollHeight - bodyHeight - bodyScrollTop) < (bodyHeight * this.threshold)
+    ) || (
+      bodyScrollWidth > bodyWidth &&
+      (bodyScrollWidth - bodyWidth - bodyScrollLeft) < (bodyWidth * this.threshold)
+    )) {
       this.loadItems()
     }
   }
 
   protected removeEventListeners (): void {
-    if (this.scroll) {
+    if (this.axis !== null) {
       this.element.body.removeEventListener('scroll', this.handleScrollBound)
     }
   }
 
   protected setLimit (): void {
-    if (this.element.body.clientHeight > 0) {
-      this.limit = Math.floor((this.element.body.clientHeight / 32) * this.factor)
+    let size: number | null = null
+
+    if (
+      this.axis === 'x' &&
+      this.element.body.clientWidth > 0
+    ) {
+      size = this.element.body.clientWidth
+    } else if (
+      this.axis === 'y' &&
+      this.element.body.clientHeight > 0
+    ) {
+      size = this.element.body.clientHeight
+    }
+
+    if (size !== null) {
+      this.limit = Math.floor((size / (16 * this.factor)))
     }
   }
 

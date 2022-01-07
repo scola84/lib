@@ -3,6 +3,39 @@
     --breakpoint: #{$name};
   }
 
+  [sc-backdrop~="@#{$name}"] {
+    background-color: var(--gc5);
+    bottom: 0;
+    left: 0;
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition-property: opacity;
+  }
+
+  [sc-border],
+  [sc-border-bottom],
+  [sc-border-end],
+  [sc-border-start],
+  [sc-border-top],
+  [sc-border-x],
+  [sc-border-y] {
+    border-width: 1px;
+  }
+
+  @media only screen and (min-resolution: 2dppx) {
+    [sc-border],
+    [sc-border-bottom],
+    [sc-border-end],
+    [sc-border-start],
+    [sc-border-top],
+    [sc-border-x],
+    [sc-border-y] {
+      border-width: 0.5px;
+    }
+  }
+
   [sc-border~="@#{$name}"],
   [sc-border-bottom~="@#{$name}"],
   [sc-border-y~="@#{$name}"] {
@@ -54,32 +87,28 @@
     height: 50%;
   }
 
-  [sc-hide-mode~="height@#{$name}"]:not(.sc-scroll) {
-    overflow: hidden;
-  }
-
-  [sc-hide-mode~="bottom@#{$name}"] {
-    bottom: 0;
-  }
-
   [sc-hide-mode~="center@#{$name}"] {
     bottom: 0;
     left: 0;
   }
 
-  [sc-hide-mode~="end@#{$name}"],
-  [dir="rtl"] [sc-hide-mode~="start@#{$name}"] {
+  [sc-hide-mode~="move-bottom@#{$name}"] {
+    bottom: 0;
+  }
+
+  [sc-hide-mode~="move-end@#{$name}"],
+  [dir="rtl"] [sc-hide-mode~="move-start@#{$name}"] {
     left: auto;
     right: 0;
   }
 
-  [sc-hide-mode~="start@#{$name}"],
-  [dir="rtl"] [sc-hide-mode~="end@#{$name}"] {
+  [sc-hide-mode~="move-start@#{$name}"],
+  [dir="rtl"] [sc-hide-mode~="move-end@#{$name}"] {
     left: 0;
     right: auto;
   }
 
-  [sc-hide-mode~="top@#{$name}"] {
+  [sc-hide-mode~="move-top@#{$name}"] {
     top: 0;
   }
 
@@ -99,43 +128,73 @@
     max-width: 50%;
   }
 
-  [sc-modal~="@#{$name}"],
-  [sc-modal~="bottom@#{$name}"],
-  [sc-modal~="center@#{$name}"],
-  [sc-modal~="top@#{$name}"] {
-    position: fixed;
+  [sc-position~="absolute@#{$name}"] {
+    position: absolute;
     z-index: 1;
   }
 
-  [sc-modal~="bottom@#{$name}"],
-  [sc-modal~="top@#{$name}"] {
-    left: 0;
+  [sc-position~="relative@#{$name}"] {
+    position: relative;
   }
 
-  [dir="rtl"] [sc-modal~="bottom@#{$name}"],
-  [dir="rtl"] [sc-modal~="top@#{$name}"] {
-    left: auto;
+  [sc-position-x~="center@#{$name}"],
+  [sc-position-x~="end@#{$name}"],
+  [sc-position-x~="start@#{$name}"] {
+    position: absolute;
+    z-index: 1;
+  }
+
+  [sc-position-x~="center@#{$name}"] {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  [sc-position-x~="end@#{$name}"],
+  [dir="rtl"] [sc-position-x~="start@#{$name}"] {
     right: 0;
   }
 
-  [sc-modal~="bottom@#{$name}"] {
+  [sc-position-x~="start@#{$name}"],
+  [dir="rtl"] [sc-position-x~="end@#{$name}"] {
+    left: 0;
+  }
+
+  [sc-position-y~="bottom@#{$name}"],
+  [sc-position-y~="center@#{$name}"],
+  [sc-position-y~="top@#{$name}"] {
+    position: absolute;
+    z-index: 1;
+  }
+
+  [sc-position-y~="bottom@#{$name}"] {
     bottom: 0;
   }
 
-  [sc-modal~="center@#{$name}"] {
-    left: 50%;
+  [sc-position-y~="center@#{$name}"] {
     top: 50%;
+    transform: translateY(-50%);
+  }
+
+  [sc-position-y~="top@#{$name}"] {
+    top: 0;
+  }
+
+  [sc-position-x~="center@#{$name}"][sc-position-y~="center@#{$name}"] {
     transform: translate(-50%, -50%);
   }
 
-  [sc-modal~="top@#{$name}"] {
-    top: 0;
+  [sc-round~="max@#{$name}"] {
+    border-radius: 50%;
   }
 
   [sc-transition~="@#{$name}"] {
     transition-duration: 250ms;
     transition-property: none;
     transition-timing-function: cubic-bezier(0.83, 0, 0.17, 1);
+  }
+
+  [sc-width~="aside@#{$name}"] {
+    width: 90%;
   }
 
   [sc-width~="flex@#{$name}"] {
@@ -153,12 +212,6 @@
 
   [sc-width~="mid@#{$name}"] {
     width: 50%;
-  }
-
-  @for $i from 0 through 10 {
-    [sc-font-size="#{0.5 + ($i * 0.1)}@#{$name}"] {
-      font-size: #{0.5 + ($i * 0.1)}rem;
-    }
   }
 
   @for $i from 0 through 12 {
@@ -220,12 +273,12 @@
       padding-top: #{$i * 0.25}rem;
     }
 
-    [sc-width~="#{$i * 0.25}@#{$name}"] {
-      width: #{$i * 0.25}rem;
+    [sc-round~="#{$i * 0.25}@#{$name}"] {
+      border-radius: #{$i * 0.25}rem;
     }
 
-    [sc-rounded~="#{$i * 0.25}@#{$name}"] {
-      border-radius: #{$i * 0.25}rem;
+    [sc-width~="#{$i * 0.25}@#{$name}"] {
+      width: #{$i * 0.25}rem;
     }
   }
 
@@ -252,6 +305,12 @@
 
     [sc-width~="#{$i}@#{$name}"] {
       width: #{$i}rem;
+    }
+  }
+
+  @for $i from 0 through 10 {
+    [sc-text-size="#{0.5 + ($i * 0.1)}@#{$name}"] {
+      font-size: #{0.5 + ($i * 0.1)}rem;
     }
   }
 }

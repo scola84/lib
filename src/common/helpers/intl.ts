@@ -20,7 +20,7 @@ export class ScolaIntl {
     date: (name: string, locale: string, options: Struct<string>) => {
       const formatter = new Intl.DateTimeFormat(locale, options)
       return (data: Struct): string => {
-        return formatter.format(new Date(String(data[name])))
+        return formatter.format(new Date(String(data[name] ?? new Date(0))))
       }
     },
     enum: (name: string, locale: string) => {
@@ -60,24 +60,23 @@ export class ScolaIntl {
         const [, name, uri = 'string'] = match.split(/:+/u)
         const [host, query = ''] = uri.split('?')
 
-        compiled.push(
-          ((literal: string): string => {
-            return literal
-          }).bind(null, nextString.slice(0, index)),
-          ScolaIntl.factory[host](
-            name,
-            locale,
-            query
-              .split('&')
-              .reduce((params, kvp) => {
-                const [key, value] = kvp.split('=')
-                return {
-                  ...params,
-                  [key]: value
-                }
-              }, {})
-          )
-        )
+        compiled.push(((literal: string): string => {
+          return literal
+        }).bind(null, nextString.slice(0, index)))
+
+        compiled.push(ScolaIntl.factory[host](
+          name,
+          locale,
+          query
+            .split('&')
+            .reduce((params, kvp) => {
+              const [key, value] = kvp.split('=')
+              return {
+                ...params,
+                [key]: value
+              }
+            }, {})
+        ))
 
         return nextString.slice(index + match.length)
       }, string) ?? string

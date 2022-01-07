@@ -10,7 +10,10 @@ export function tableView (observer: ScolaTableElement, observable: ScolaViewEle
     view.selected = view === observable.view
   })
 
-  observer.updateElements()
+  observer.updateBody()
   observer.updateAttributes()
-  observer.select?.scrollTo()
+
+  window.requestAnimationFrame(() => {
+    observer.select?.scrollTo()
+  })
 }

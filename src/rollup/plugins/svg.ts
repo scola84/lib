@@ -1,4 +1,4 @@
-import type { OptimizeOptions } from 'svgo'
+import type { OptimizeOptions, OptimizedSvg } from 'svgo'
 import type { Plugin } from 'rollup'
 import { optimize } from 'svgo'
 import { readFileSync } from 'fs'
@@ -10,7 +10,7 @@ interface Options {
 
 function createExport (id: string, options?: Options): string {
   const content = readFileSync(id).toString()
-  const { data } = optimize(content, options?.options)
+  const { data } = optimize(content, options?.options) as OptimizedSvg
   return `export default \`${data}\``
 }
 

@@ -2,6 +2,7 @@ import '@ungap/custom-elements'
 import { ScolaAudioElement } from './elements/audio'
 import { ScolaBreakpoint } from './helpers/breakpoint'
 import { ScolaButtonElement } from './elements/button'
+import { ScolaButtonGroupElement } from './elements/button-group'
 import { ScolaCarouselElement } from './elements/carousel'
 import { ScolaD3Element } from './elements/d3'
 import { ScolaDivElement } from './elements/div'
@@ -24,7 +25,6 @@ import { ScolaMutator } from './helpers/mutator'
 import { ScolaObserver } from './helpers/observer'
 import { ScolaPaste } from './helpers/paste'
 import { ScolaPopupElement } from './elements/popup'
-import { ScolaProgressElement } from './elements/progress'
 import { ScolaPropagator } from './helpers/propagator'
 import { ScolaRecorderElement } from './elements/recorder'
 import { ScolaReloaderElement } from './elements/reloader'
@@ -45,13 +45,18 @@ import { buttonAttrs } from './observers/button-attrs'
 import { buttonAttrsInv } from './observers/button-attrs-inv'
 import { buttonCarousel } from './observers/button-carousel'
 import { buttonView } from './observers/button-view'
+import { elementAttrs } from './observers/element-attrs'
+import { elementAttrsInv } from './observers/element-attrs-inv'
 import { formatCarousel } from './observers/format-carousel'
 import { formatInputError } from './observers/format-input-error'
 import { formatInputValue } from './observers/format-input-value'
+import { formatMedia } from './observers/format-media'
+import { formatRecorder } from './observers/format-recorder'
 import { formatView } from './observers/format-view'
 import { inputAttrs } from './observers/input-attrs'
 import { inputInput } from './observers/input-input'
-import { progressRequest } from './observers/progress-request'
+import { inputRangeMedia } from './observers/input-range-media'
+import { inputRangeRequest } from './observers/input-range-request'
 import { tableView } from './observers/table-view'
 
 export * from '../common'
@@ -65,6 +70,7 @@ export {
   ScolaAudioElement,
   ScolaBreakpoint,
   ScolaButtonElement,
+  ScolaButtonGroupElement,
   ScolaCarouselElement,
   ScolaD3Element,
   ScolaDivElement,
@@ -86,7 +92,6 @@ export {
   ScolaObserver,
   ScolaPaste,
   ScolaPopupElement,
-  ScolaProgressElement,
   ScolaPropagator,
   ScolaRecorderElement,
   ScolaReloaderElement,
@@ -108,6 +113,7 @@ export {
 export function defineElements (): void {
   ScolaAudioElement.define()
   ScolaButtonElement.define()
+  ScolaButtonGroupElement.define()
   ScolaCarouselElement.define()
   ScolaD3Element.define()
   ScolaDivElement.define()
@@ -120,7 +126,6 @@ export function defineElements (): void {
   ScolaInputElement.define()
   ScolaMessageElement.define()
   ScolaPopupElement.define()
-  ScolaProgressElement.define()
   ScolaRecorderElement.define()
   ScolaReloaderElement.define()
   ScolaRequestElement.define()
@@ -139,12 +144,17 @@ export const observers = {
   'sc-button-attrs-inv': buttonAttrsInv,
   'sc-button-carousel': buttonCarousel,
   'sc-button-view': buttonView,
+  'sc-element-attrs': elementAttrs,
+  'sc-element-attrs-inv': elementAttrsInv,
   'sc-format-carousel': formatCarousel,
   'sc-format-input-error': formatInputError,
   'sc-format-input-value': formatInputValue,
+  'sc-format-media': formatMedia,
+  'sc-format-recorder': formatRecorder,
   'sc-format-view': formatView,
   'sc-input-attrs': inputAttrs,
   'sc-input-input': inputInput,
-  'sc-progress-request': progressRequest,
+  'sc-input-range-media': inputRangeMedia,
+  'sc-input-range-request': inputRangeRequest,
   'sc-table-view': tableView
 }

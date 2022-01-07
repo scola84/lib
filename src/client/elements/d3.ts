@@ -47,10 +47,10 @@ export class ScolaD3Element extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
-    this.resizer = new ResizeObserver(this.handleResizeBound)
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
+    this.resizer = new ResizeObserver(this.handleResizeBound)
     this.reset()
   }
 

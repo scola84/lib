@@ -1,5 +1,6 @@
 import { cast, isArray, isPrimitive, isStruct } from '../../common'
 import { ScolaDrag } from '../helpers/drag'
+import { ScolaDrop } from '../helpers/drop'
 import type { ScolaElement } from './element'
 import { ScolaList } from '../helpers/list'
 import { ScolaMutator } from '../helpers/mutator'
@@ -7,6 +8,7 @@ import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import { ScolaSelect } from '../helpers/select'
 import { ScolaSort } from '../helpers/sort'
+import { ScolaTableCellElement } from './table-cell'
 import { ScolaTableRowElement } from './table-row'
 import type { Struct } from '../../common'
 
@@ -23,9 +25,19 @@ declare global {
 export class ScolaTableElement extends HTMLTableElement implements ScolaElement {
   public body: HTMLTableSectionElement
 
+  public bodyCellTemplate: HTMLTemplateElement | null
+
+  public bodyRowTemplate: HTMLTemplateElement | null
+
   public drag?: ScolaDrag
 
-  public elements = new Map<unknown, Element>()
+  public drop?: ScolaDrop
+
+  public elements = new Map<unknown, HTMLTableRowElement>()
+
+  public head: HTMLTableSectionElement
+
+  public headCellTemplate: HTMLTemplateElement | null
 
   public list: ScolaList
 
@@ -38,8 +50,6 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   public select?: ScolaSelect
 
   public sort?: ScolaSort
-
-  public template: HTMLTemplateElement | null
 
   public wait: boolean
 
@@ -59,15 +69,22 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
   public constructor () {
     super()
-    this.body = this.selectTBody()
-    this.template = this.selectTemplate()
     this.list = new ScolaList(this)
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
+    this.head = this.selectHead()
+    this.body = this.selectBody()
+    this.bodyCellTemplate = this.mutator.selectTemplate('body-cell')
+    this.bodyRowTemplate = this.mutator.selectTemplate('body-row')
+    this.headCellTemplate = this.mutator.selectTemplate('head-cell')
 
     if (this.hasAttribute('sc-drag')) {
       this.drag = new ScolaDrag(this)
+    }
+
+    if (this.hasAttribute('sc-drop')) {
+      this.drop = new ScolaDrop(this)
     }
 
     if (this.hasAttribute('sc-select')) {
@@ -80,7 +97,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
     this.reset()
 
-    if (this.template === null) {
+    if (this.bodyRowTemplate === null) {
       this.updateAttributes()
     }
   }
@@ -116,11 +133,12 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       'sc-select-handle'
     ])
 
+    this.drag?.connect()
+    this.drop?.connect()
     this.list.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
-    this.drag?.connect()
     this.select?.connect()
     this.sort?.connect()
     this.addEventListeners()
@@ -128,7 +146,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     if (!this.wait) {
       this.wait = true
 
-      window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
         this.list.load()
       })
     }
@@ -140,17 +158,21 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   }
 
   public disconnectedCallback (): void {
+    this.drag?.disconnect()
+    this.drop?.disconnect()
     this.list.disconnect()
     this.mutator.disconnect()
     this.propagator.disconnect()
-    this.drag?.disconnect()
     this.select?.disconnect()
     this.sort?.disconnect()
     this.removeEventListeners()
   }
 
-  public getData (): Struct[] {
-    return this.list.items
+  public getData (): unknown {
+    return {
+      selected: this.select?.rows.length,
+      ...this.select?.firstRow?.datamap
+    }
   }
 
   public reset (): void {
@@ -159,9 +181,17 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
   public setData (data: unknown): void {
     if (isArray(data)) {
-      data.forEach((datum) => {
-        if (isStruct(datum)) {
-          this.list.items.push(datum)
+      data.forEach((item) => {
+        if (isStruct(item)) {
+          if (item[this.list.key] === undefined) {
+            Object.defineProperty(item, this.list.key, {
+              enumerable: true,
+              value: `${Date.now()}-${this.list.items.length}`,
+              writable: false
+            })
+          }
+
+          this.list.items.push(item)
         }
       })
 
@@ -177,7 +207,8 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       this.clear()
       this.list.load()
     } else {
-      this.updateElements()
+      this.updateHead()
+      this.updateBody()
       this.updateAttributes()
     }
   }
@@ -186,11 +217,11 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.setAttribute('sc-elements', this.elements.size.toString())
   }
 
-  public updateElements (): void {
+  public updateBody (): void {
     const keys = this.list
       .getItems()
-      .map((item) => {
-        return this.appendElement(item)
+      .map((item, index) => {
+        return this.appendBodyRow(item, index)
       })
 
     Array
@@ -203,6 +234,15 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       })
   }
 
+  public updateHead (): void {
+    if (
+      this.head.lastElementChild instanceof HTMLTableRowElement &&
+      this.headCellTemplate !== null
+    ) {
+      this.appendHeadCells(this.head.lastElementChild)
+    }
+  }
+
   protected addEventListeners (): void {
     this.addEventListener('sc-table-add', this.handleAddBound)
     this.addEventListener('sc-table-clear', this.handleClearBound)
@@ -212,42 +252,124 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.addEventListener('sc-table-report', this.handleReportBound)
   }
 
-  protected appendElement (item: Struct): unknown {
+  protected appendBodyCells (row: HTMLTableRowElement, item: Struct): void {
+    Object
+      .entries(item)
+      .forEach(([key, value]) => {
+        const property = Object.getOwnPropertyDescriptor(item, key)
+        const template = this.bodyCellTemplate?.content.cloneNode(true)
+
+        let element: HTMLTableCellElement | null = null
+
+        if (
+          property?.writable === true &&
+          template instanceof DocumentFragment &&
+          template.firstElementChild instanceof HTMLTableCellElement
+        ) {
+          element = template.firstElementChild
+          row.appendChild(template)
+
+          if (element instanceof ScolaTableCellElement) {
+            element.setData({
+              value
+            })
+          } else {
+            window.requestAnimationFrame(() => {
+              if (element instanceof ScolaTableCellElement) {
+                element.setData({
+                  value
+                })
+              }
+            })
+          }
+        }
+      })
+  }
+
+  protected appendBodyRow (item: Struct, index: number): unknown {
     const key = item[this.list.key]
 
     let element = this.elements.get(key)
 
     if (element === undefined) {
-      const template = this.template?.content.cloneNode(true)
+      const template = this.bodyRowTemplate?.content.cloneNode(true)
 
       if (
         template instanceof DocumentFragment &&
-        template.firstElementChild !== null
+        template.firstElementChild instanceof HTMLTableRowElement
       ) {
         element = template.firstElementChild
         this.body.appendChild(template)
         this.elements.set(key, element)
 
-        window.requestAnimationFrame(() => {
-          if (element instanceof ScolaTableRowElement) {
-            element.setData(item)
-          }
-        })
+        if (element instanceof ScolaTableRowElement) {
+          element.setData(item)
+          this.appendBodyCells(element, item)
+        } else {
+          window.requestAnimationFrame(() => {
+            if (element instanceof ScolaTableRowElement) {
+              element.setData(item)
+              this.appendBodyCells(element, item)
+            }
+          })
+        }
       }
-    } else {
-      this.body.appendChild(element)
+    } else if (Array.prototype.indexOf.call(this.body.children, element) !== index) {
+      if (index === 0) {
+        this.body.prepend(element)
+      } else {
+        this.body.children.item(index - 1)?.after(element)
+      }
     }
 
-    if (element?.getAttribute('is') === 'sc-table-row') {
-      if (
-        this.select?.all === true ||
-        item.selected === true
-      ) {
-        this.select?.add(element as ScolaTableRowElement)
-      }
+    if (
+      this.select?.all === true ||
+      item.selected === true
+    ) {
+      this.select?.add(element as ScolaTableRowElement)
     }
 
     return key
+  }
+
+  protected appendHeadCells (row: HTMLTableRowElement): void {
+    row.innerHTML = ''
+
+    const [item] = this.list.items
+
+    Object
+      .keys(item)
+      .forEach((key) => {
+        const property = Object.getOwnPropertyDescriptor(item, key)
+        const template = this.headCellTemplate?.content.cloneNode(true)
+
+        let element: HTMLTableCellElement | null = null
+
+        if (
+          property?.writable === true &&
+          template instanceof DocumentFragment &&
+          template.firstElementChild instanceof HTMLTableCellElement
+        ) {
+          element = template.firstElementChild
+          row.appendChild(template)
+
+          element
+            .querySelectorAll('[data-sc-list-sort-order]')
+            .forEach((child) => {
+              child.setAttribute('data-sc-list-sort-key', String(key))
+            })
+
+          if (element instanceof ScolaTableCellElement) {
+            element.setData({ key })
+          } else {
+            window.requestAnimationFrame(() => {
+              if (element instanceof ScolaTableCellElement) {
+                element.setData({ key })
+              }
+            })
+          }
+        }
+      })
   }
 
   protected handleAdd (event: CustomEvent): void {
@@ -299,9 +421,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   }
 
   protected handleMutations (mutations: MutationRecord[]): void {
-    const attributes = mutations.map((mutation) => {
-      return mutation.attributeName
-    })
+    const attributes = this.observer.normalize(mutations)
 
     if (attributes.includes('sc-drag-handle')) {
       this.handleMutationsDragHandle()
@@ -348,8 +468,9 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.propagator.dispatch('report', [{
       added: Array.from(this.list.added),
       deleted: Array.from(this.list.deleted),
-      items: this.list.getKeys(),
-      selected: this.select?.getKeys()
+      items: this.list.getItemsByRow(),
+      keys: this.list.getKeysByRow(),
+      selected: this.select?.getKeysByRow()
     }], event)
   }
 
@@ -362,11 +483,11 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.removeEventListener('sc-table-report', this.handleReportBound)
   }
 
-  protected selectTBody (): HTMLTableSectionElement {
+  protected selectBody (): HTMLTableSectionElement {
     return this.querySelector('tbody') ?? this.createTBody()
   }
 
-  protected selectTemplate (): HTMLTemplateElement | null {
-    return this.querySelector('template[sc-name="item"]')
+  protected selectHead (): HTMLTableSectionElement {
+    return this.querySelector('thead') ?? this.createTHead()
   }
 }

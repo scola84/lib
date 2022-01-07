@@ -27,32 +27,39 @@ interface Scroll {
   top: boolean
 }
 
+type Callback = (event: ScolaInteractEvent) => boolean
+
 type DirectionX = 'left' | 'none' | 'right'
 
 type DirectionY = 'down' | 'none' | 'up'
 
-type Type = 'end' | 'move' | 'none' | 'start' | 'wheel'
+type Type = 'click' | 'end' | 'move' | 'none' | 'start' | 'wheel' | 'zoom'
 
-export interface ScolaInteractEvent {
+type InteractEvent = KeyboardEvent | MouseEvent | TouchEvent | WheelEvent
+
+export interface ScolaInteractEvent<Event = InteractEvent> {
   axis: 'none' | 'x' | 'y'
+  count: number
+  deltaT: number
   deltaX: number
   deltaY: number
   directionX: DirectionX
   directionY: DirectionY
   distanceX: number
   distanceY: number
+  endT: number
   endX: number
   endY: number
-  originalEvent: MouseEvent | TouchEvent
+  originalEvent: Event
   startEdges: Edges
   startScroll: Scroll
+  startT: number
   startX: number
   startY: number
   type: Type
-  zoom: number
+  velocityX: number
+  velocityY: number
 }
-
-type Callback = (event: ScolaInteractEvent) => boolean
 
 export class ScolaInteract {
   public static element?: HTMLElement
@@ -63,9 +70,11 @@ export class ScolaInteract {
 
   public event: ScolaInteractEvent
 
+  public keyboard = false
+
   public mouse = false
 
-  public target = 'window'
+  public target = 'element'
 
   public threshold = 0.1
 
@@ -81,6 +90,26 @@ export class ScolaInteract {
     return document.dir
   }
 
+  public get hasKeyboard (): boolean {
+    return typeof window.onkeydown !== 'undefined'
+  }
+
+  public get hasMouse (): boolean {
+    return matchMedia('(pointer: fine)').matches
+  }
+
+  public get hasTouch (): boolean {
+    return window.matchMedia('(pointer: coarse)').matches
+  }
+
+  public get hasWheel (): boolean {
+    return typeof window.onwheel !== 'undefined'
+  }
+
+  protected handleKeydownBound = this.handleKeydown.bind(this)
+
+  protected handleKeyupBound = this.handleKeyup.bind(this)
+
   protected handleMousedownBound = this.handleMousedown.bind(this)
 
   protected handleMousemoveBound = this.handleMousemove.bind(this)
@@ -95,41 +124,39 @@ export class ScolaInteract {
 
   protected handleWheelBound = throttle(250, true, this.handleWheel.bind(this))
 
+  protected handleWheelPreventBound = this.handleWheelPrevent.bind(this)
+
   public constructor (element: HTMLElement) {
     this.element = element
   }
 
   public connect (): void {
-    this.addTargetEventListeners()
+    this.addEventListenersStart()
   }
 
   public disconnect (): void {
-    this.removeTargetEventListeners()
+    this.removeEventListenersStart()
   }
 
-  public isArrowEnd (event: KeyboardEvent): boolean {
-    return (
-      this.dir === 'ltr' &&
-      event.code === 'ArrowRight'
-    ) || (
-      this.dir === 'rtl' &&
-      event.code === 'ArrowLeft'
+  public getTimingFunction (velocity: number): string {
+    return `cubic-bezier(0, 1, ${Math.max(0, 1 - (Math.abs(velocity) / 4))}, 1)`
+  }
+
+  public isArrowEnd (event: InteractEvent): boolean {
+    return event instanceof KeyboardEvent && (
+      (
+        this.dir === 'ltr' &&
+        event.code === 'ArrowRight'
+      ) || (
+        this.dir === 'rtl' &&
+        event.code === 'ArrowLeft'
+      )
     )
   }
 
-  public isArrowStart (event: KeyboardEvent): boolean {
-    return (
-      this.dir === 'ltr' &&
-      event.code === 'ArrowLeft'
-    ) || (
-      this.dir === 'rtl' &&
-      event.code === 'ArrowRight'
-    )
-  }
-
-  public isKeyBack (event: KeyboardEvent): boolean {
-    return (
-      event.code === 'ArrowUp' || (
+  public isArrowStart (event: InteractEvent): boolean {
+    return event instanceof KeyboardEvent && (
+      (
         this.dir === 'ltr' &&
         event.code === 'ArrowLeft'
       ) || (
@@ -139,66 +166,117 @@ export class ScolaInteract {
     )
   }
 
-  public isKeyForward (event: KeyboardEvent): boolean {
+  public isKey (event: InteractEvent, code: string): boolean {
     return (
-      event.code === 'ArrowDown' || (
-        this.dir === 'ltr' &&
-        event.code === 'ArrowRight'
-      ) || (
-        this.dir === 'rtl' &&
-        event.code === 'ArrowLeft'
+      event instanceof KeyboardEvent &&
+      event.code === code
+    )
+  }
+
+  public isKeyBack (event: InteractEvent): boolean {
+    return event instanceof KeyboardEvent && (
+      (
+        event.code === 'ArrowUp' || (
+          this.dir === 'ltr' &&
+          event.code === 'ArrowLeft'
+        ) || (
+          this.dir === 'rtl' &&
+          event.code === 'ArrowRight'
+        )
       )
     )
+  }
+
+  public isKeyForward (event: InteractEvent): boolean {
+    return (
+      event instanceof KeyboardEvent && (
+        event.code === 'ArrowDown' || (
+          this.dir === 'ltr' &&
+          event.code === 'ArrowRight'
+        ) || (
+          this.dir === 'rtl' &&
+          event.code === 'ArrowLeft'
+        )
+      )
+    )
+  }
+
+  public isKeyboard (event: InteractEvent, subtype: string): event is KeyboardEvent {
+    return event.type === `key${subtype}`
+  }
+
+  public isMouse (event: InteractEvent, subtype: string): event is MouseEvent {
+    return event.type === `mouse${subtype}`
+  }
+
+  public isTouch (event: InteractEvent, subtype: string): event is TouchEvent {
+    return event.type === `touch${subtype}`
   }
 
   public observe (callback: Callback): void {
     this.callback = callback
   }
 
-  protected addTargetEventListeners (): void {
+  protected addEventListenersMoveEnd (): void {
     const target = this.determineTarget()
+
+    target.addEventListener('keyup', this.handleKeyupBound)
+    target.addEventListener('mousemove', this.handleMousemoveBound)
+    target.addEventListener('mouseup', this.handleMouseupBound)
+    target.addEventListener('touchmove', this.handleTouchmoveBound)
+    target.addEventListener('touchcancel', this.handleTouchendBound)
+    target.addEventListener('touchend', this.handleTouchendBound)
+  }
+
+  protected addEventListenersStart (): void {
+    const target = this.determineTarget()
+
+    if (this.keyboard) {
+      target.addEventListener('keydown', this.handleKeydownBound)
+    }
 
     if (this.mouse) {
       target.addEventListener('mousedown', this.handleMousedownBound)
     }
 
     if (this.touch) {
-      target.addEventListener('touchstart', this.handleTouchstartBound, {
-        passive: true
-      })
+      target.addEventListener('touchstart', this.handleTouchstartBound)
     }
 
     if (this.wheel) {
       target.addEventListener('wheel', this.handleWheelBound)
+      target.addEventListener('wheel', this.handleWheelPreventBound)
     }
   }
 
-  protected addWindowEventListeners (): void {
-    window.addEventListener('mousemove', this.handleMousemoveBound)
-    window.addEventListener('mouseup', this.handleMouseupBound)
-    window.addEventListener('touchmove', this.handleTouchmoveBound)
-    window.addEventListener('touchcancel', this.handleTouchendBound)
-    window.addEventListener('touchend', this.handleTouchendBound)
-  }
-
-  protected createEvent (event: MouseEvent | TouchEvent, position: Position): ScolaInteractEvent {
+  protected createEvent (event: InteractEvent): ScolaInteractEvent {
     return {
       axis: 'none',
+      count: 1,
+      deltaT: 0,
       deltaX: 0,
       deltaY: 0,
       directionX: 'none',
       directionY: 'none',
       distanceX: 0,
       distanceY: 0,
-      endX: position.clientX,
-      endY: position.clientY,
+      endT: event.timeStamp,
+      endX: 0,
+      endY: 0,
       originalEvent: event,
-      startEdges: this.determineStartEdges(position),
+      startEdges: {
+        bottom: false,
+        left: false,
+        right: false,
+        top: false
+      },
       startScroll: this.determineStartScroll(event),
-      startX: position.clientX,
-      startY: position.clientY,
+      startT: event.timeStamp,
+      startX: 0,
+      startY: 0,
       type: 'none',
-      zoom: 0
+      velocityX: 0,
+      velocityY: 0
     }
   }
 
@@ -228,9 +306,9 @@ export class ScolaInteract {
   }
 
   protected determineDirectionX (deltaX: number): DirectionX {
-    if (deltaX < 0) {
+    if (deltaX > 0) {
       return 'right'
-    } else if (deltaX > 0) {
+    } else if (deltaX < 0) {
       return 'left'
     }
 
@@ -238,9 +316,9 @@ export class ScolaInteract {
   }
 
   protected determineDirectionY (deltaY: number): DirectionY {
-    if (deltaY > 0) {
+    if (deltaY < 0) {
       return 'up'
-    } else if (deltaY < 0) {
+    } else if (deltaY > 0) {
       return 'down'
     }
 
@@ -261,7 +339,7 @@ export class ScolaInteract {
     return edges
   }
 
-  protected determineStartScroll (event: MouseEvent | TouchEvent): Scroll {
+  protected determineStartScroll (event: InteractEvent): Scroll {
     const scroll: Scroll = {
       bottom: false,
       element: null,
@@ -271,7 +349,7 @@ export class ScolaInteract {
     }
 
     if (event.target instanceof HTMLElement) {
-      scroll.element = event.target.closest<HTMLElement>('.sc-scroll')
+      scroll.element = event.target.closest<HTMLElement>('[sc-scrollbar]')
     }
 
     if (scroll.element !== null) {
@@ -307,49 +385,55 @@ export class ScolaInteract {
     }
   }
 
-  protected handleEnd (event: MouseEvent | TouchEvent): void {
+  protected handleEnd (event: InteractEvent): void {
     ScolaInteract.element = undefined
-    this.removeWindowEventListeners()
+    this.removeEventListenersMoveEnd()
     this.event.originalEvent = event
     this.event.type = 'end'
     this.callback?.(this.event)
+
+    if (
+      this.event.distanceX === 0 &&
+      this.event.distanceY === 0
+    ) {
+      this.event.type = 'click'
+      this.callback?.(this.event)
+    }
   }
 
-  protected handleMousedown (event: MouseEvent): void {
-    this.handleStart(event, event)
+  protected handleKeydown (event: KeyboardEvent): void {
+    this.handleStartNone(event)
   }
 
-  protected handleMousemove (event: MouseEvent): void {
-    this.handleMove(event, event)
-  }
-
-  protected handleMouseup (event: MouseEvent): void {
+  protected handleKeyup (event: KeyboardEvent): void {
     this.handleEnd(event)
   }
 
-  protected handleMove (event: MouseEvent | TouchEvent, position: Position): void {
+  protected handleMousedown (event: MouseEvent): void {
+    if (!this.touch) {
+      this.handleStartOne(event, event)
+    }
+  }
+
+  protected handleMousemove (event: MouseEvent): void {
+    if (!this.touch) {
+      this.handleMoveOne(event, event)
+    }
+  }
+
+  protected handleMouseup (event: MouseEvent): void {
+    if (!this.touch) {
+      this.handleEnd(event)
+    }
+  }
+
+  protected handleMoveOne (event: InteractEvent, position: Position): void {
     if (
       ScolaInteract.element === undefined ||
       ScolaInteract.element === this.element
     ) {
-      this.event.deltaX = this.event.endX - position.clientX
-      this.event.deltaY = this.event.endY - position.clientY
-      this.event.directionX = this.determineDirectionX(this.event.deltaX)
-      this.event.directionY = this.determineDirectionY(this.event.deltaY)
-      this.event.distanceX = this.event.startX - this.event.endX
-      this.event.distanceY = this.event.startY - this.event.endY
-      this.event.endX = position.clientX
-      this.event.endY = position.clientY
-      this.event.originalEvent = event
+      this.updateEvent(event, position)
       this.event.type = 'move'
-
-      if (this.event.axis === 'none') {
-        if (Math.abs(this.event.distanceX) > Math.abs(this.event.distanceY)) {
-          this.event.axis = 'x'
-        } else if (Math.abs(this.event.distanceY) > Math.abs(this.event.distanceX)) {
-          this.event.axis = 'y'
-        }
-      }
 
       const handled = this.callback?.(this.event)
 
@@ -359,41 +443,174 @@ export class ScolaInteract {
     }
   }
 
-  protected handleStart (event: MouseEvent | TouchEvent, position: Position): void {
-    this.addWindowEventListeners()
-    this.event = this.createEvent(event, position)
+  protected handleMoveTwo (event: TouchEvent): void {
+    if (
+      ScolaInteract.element === undefined ||
+      ScolaInteract.element === this.element
+    ) {
+      event.preventDefault()
+
+      const position = {
+        clientX: Math.abs(event.touches[1].pageX - event.touches[0].pageX),
+        clientY: Math.abs(event.touches[1].pageY - event.touches[0].pageY)
+      }
+
+      this.updateEvent(event, position)
+      this.event.type = 'zoom'
+
+      const handled = this.callback?.(this.event)
+
+      if (handled === true) {
+        ScolaInteract.element = this.element
+      }
+    }
+  }
+
+  protected handleStartNone (event: InteractEvent): void {
+    this.event = this.createEvent(event)
+    this.event.endX = 0
+    this.event.endY = 0
+    this.event.startX = this.event.endX
+    this.event.startY = this.event.endY
     this.event.type = 'start'
-    this.callback?.(this.event)
+
+    const handled = this.callback?.(this.event)
+
+    if (handled === true) {
+      this.addEventListenersMoveEnd()
+    }
+  }
+
+  protected handleStartOne (event: InteractEvent, position: Position): void {
+    this.event = this.createEvent(event)
+    this.event.endX = position.clientX
+    this.event.endY = position.clientY
+    this.event.startEdges = this.determineStartEdges(position)
+    this.event.startX = this.event.endX
+    this.event.startY = this.event.endY
+    this.event.type = 'start'
+
+    const handled = this.callback?.(this.event)
+
+    if (handled === true) {
+      this.addEventListenersMoveEnd()
+    }
+  }
+
+  protected handleStartTwo (event: TouchEvent): void {
+    this.event = this.createEvent(event)
+    this.event.endX = Math.abs(event.touches[1].pageX - event.touches[0].pageX)
+    this.event.endY = Math.abs(event.touches[1].pageY - event.touches[0].pageY)
+    this.event.startX = this.event.endX
+    this.event.startY = this.event.endY
+    this.event.type = 'zoom'
+
+    const handled = this.callback?.(this.event)
+
+    if (handled === true) {
+      this.addEventListenersMoveEnd()
+    }
   }
 
   protected handleTouchend (event: TouchEvent): void {
-    this.handleEnd(event)
+    if (event.touches.length === 0) {
+      this.handleEnd(event)
+    }
   }
 
   protected handleTouchmove (event: TouchEvent): void {
-    if (event.changedTouches.length === 1) {
-      this.handleMove(event, event.changedTouches[0])
+    if (event.touches.length === 1) {
+      this.handleMoveOne(event, event.touches[0])
+    } else if (event.touches.length === 2) {
+      this.handleMoveTwo(event)
     }
   }
 
   protected handleTouchstart (event: TouchEvent): void {
-    this.handleStart(event, event.changedTouches[0])
+    if (event.touches.length === 1) {
+      this.handleStartOne(event, event.touches[0])
+    } else if (event.touches.length === 2) {
+      this.handleStartTwo(event)
+    }
   }
 
   protected handleWheel (event: WheelEvent): void {
-    this.event = this.createEvent(event, event)
-    this.event.deltaX = event.deltaX
-    this.event.deltaY = event.deltaY
-    this.event.directionX = this.determineDirectionX(-this.event.deltaX)
-    this.event.directionY = this.determineDirectionY(-this.event.deltaY)
-    this.event.originalEvent = event
-    this.event.type = 'wheel'
-    this.event.zoom = 0
+    if (event.ctrlKey) {
+      this.handleWheelZoom(event)
+    } else {
+      this.handleWheelDefault(event)
+    }
+  }
+
+  protected handleWheelDefault (event: WheelEvent): void {
+    if (
+      typeof this.event === 'undefined' ||
+      this.event.type !== 'wheel'
+    ) {
+      this.event = this.createEvent(event)
+      this.event.type = 'wheel'
+    }
+
+    this.event.axis = 'none'
+    this.event.endX = 0
+    this.event.endY = 0
+    this.event.distanceX = 0
+    this.event.distanceY = 0
+
+    this.updateEvent(event, {
+      clientX: event.deltaX,
+      clientY: event.deltaY
+    })
+
     this.callback?.(this.event)
   }
 
-  protected removeTargetEventListeners (): void {
+  protected handleWheelPrevent (event: WheelEvent): void {
+    if (event.ctrlKey) {
+      event.preventDefault()
+    }
+  }
+
+  protected handleWheelZoom (event: WheelEvent): void {
+    if (
+      typeof this.event === 'undefined' ||
+      this.event.type !== 'zoom'
+    ) {
+      this.event = this.createEvent(event)
+      this.event.type = 'zoom'
+    }
+
+    this.event.axis = 'none'
+    this.event.distanceX = 0
+    this.event.distanceY = 0
+    this.event.endX = 0
+    this.event.endY = 0
+
+    this.updateEvent(event, {
+      clientX: event.deltaX,
+      clientY: event.deltaY
+    })
+
+    this.callback?.(this.event)
+  }
+
+  protected removeEventListenersMoveEnd (): void {
     const target = this.determineTarget()
+
+    target.removeEventListener('keyup', this.handleKeyupBound)
+    target.removeEventListener('mousemove', this.handleMousemoveBound)
+    target.removeEventListener('mouseup', this.handleMouseupBound)
+    target.removeEventListener('touchmove', this.handleTouchmoveBound)
+    target.removeEventListener('touchcancel', this.handleTouchendBound)
+    target.removeEventListener('touchend', this.handleTouchendBound)
+  }
+
+  protected removeEventListenersStart (): void {
+    const target = this.determineTarget()
+
+    if (this.keyboard) {
+      target.removeEventListener('keydown', this.handleKeydownBound)
+    }
 
     if (this.mouse) {
       target.removeEventListener('mousedown', this.handleMousedownBound)
@@ -405,14 +622,32 @@ export class ScolaInteract {
 
     if (this.wheel) {
       target.removeEventListener('wheel', this.handleWheelBound)
+      target.removeEventListener('wheel', this.handleWheelPreventBound)
     }
   }
 
-  protected removeWindowEventListeners (): void {
-    window.removeEventListener('mousemove', this.handleMousemoveBound)
-    window.removeEventListener('mouseup', this.handleMouseupBound)
-    window.removeEventListener('touchmove', this.handleTouchmoveBound)
-    window.removeEventListener('touchcancel', this.handleTouchendBound)
-    window.removeEventListener('touchend', this.handleTouchendBound)
+  protected updateEvent (event: InteractEvent, position: Position): void {
+    this.event.count += 1
+    this.event.deltaT = event.timeStamp - this.event.endT
+    this.event.deltaX = position.clientX - this.event.endX
+    this.event.deltaY = position.clientY - this.event.endY
+    this.event.directionX = this.determineDirectionX(this.event.deltaX)
+    this.event.directionY = this.determineDirectionY(this.event.deltaY)
+    this.event.distanceX += this.event.deltaX
+    this.event.distanceY += this.event.deltaY
+    this.event.endT = event.timeStamp
+    this.event.endX = position.clientX
+    this.event.endY = position.clientY
+    this.event.originalEvent = event
+    this.event.velocityX = this.event.deltaX / this.event.deltaT
+    this.event.velocityY = this.event.deltaY / this.event.deltaT
+
+    if (this.event.axis === 'none') {
+      if (Math.abs(this.event.distanceX) > Math.abs(this.event.distanceY)) {
+        this.event.axis = 'x'
+      } else if (Math.abs(this.event.distanceY) > Math.abs(this.event.distanceX)) {
+        this.event.axis = 'y'
+      }
+    }
   }
 }

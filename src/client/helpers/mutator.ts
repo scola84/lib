@@ -43,11 +43,12 @@ export class ScolaMutator {
   }
 
   public preset (): void {
-    const name = this.element.getAttribute('sc-preset')
-
-    if (name !== null) {
-      this.setAttributes(ScolaMutator.presets[name])
-    }
+    this.element
+      .getAttribute('sc-preset')
+      ?.split(' ')
+      .forEach((name) => {
+        this.setAttributes(ScolaMutator.presets[name])
+      })
   }
 
   public rotateAttributes (data: unknown): void {
@@ -71,6 +72,10 @@ export class ScolaMutator {
           this.element.setAttribute(attrName, attrValues[index + 1] ?? attrValues[0])
         })
     }
+  }
+
+  public selectTemplate (name: string): HTMLTemplateElement | null {
+    return this.element.querySelector(`template[sc-name="${name}"]`)
   }
 
   public setAttributes (data: unknown): void {

@@ -1,6 +1,8 @@
 import type { Primitive, Struct } from '../../common'
 import { isPrimitive, isStruct } from '../../common'
 import type { ScolaInputElement } from '../elements/input'
+import { ScolaInteract } from './interact'
+import type { ScolaInteractEvent } from './interact'
 import type { ScolaSelectElement } from '../elements/select'
 import type { ScolaTextAreaElement } from '../elements/textarea'
 import { debounce } from 'throttle-debounce'
@@ -10,21 +12,28 @@ export class ScolaField {
 
   public element: ScolaInputElement | ScolaSelectElement | ScolaTextAreaElement
 
+  public interact: ScolaInteract
+
   protected handleFocusBound = this.handleFocus.bind(this)
 
   protected handleInputBound = this.handleInput.bind(this)
 
-  protected handleKeydownBound = this.handleKeydown.bind(this)
+  protected handleInteractBound = this.handleInteract.bind(this)
 
   public constructor (element: ScolaInputElement | ScolaSelectElement | ScolaTextAreaElement) {
     this.element = element
+    this.interact = new ScolaInteract(element)
+    this.reset()
   }
 
   public connect (): void {
+    this.interact.observe(this.handleInteractBound)
+    this.interact.connect()
     this.addEventListeners()
   }
 
   public disconnect (): void {
+    this.interact.disconnect()
     this.removeEventListeners()
   }
 
@@ -32,6 +41,10 @@ export class ScolaField {
     return {
       value: this.element.value
     }
+  }
+
+  public reset (): void {
+    this.interact.keyboard = this.interact.hasKeyboard
   }
 
   public setData (data: unknown): void {
@@ -55,7 +68,6 @@ export class ScolaField {
 
     this.element.addEventListener('focus', this.handleFocusBound)
     this.element.addEventListener('input', this.handleInputBound)
-    this.element.addEventListener('keydown', this.handleKeydownBound)
   }
 
   protected clearError (): void {
@@ -117,20 +129,28 @@ export class ScolaField {
   }
 
   protected handleInputValue (event: Event): void {
-    this.element.updateAttributes()
+    this.element.update()
 
     this.element.propagator.dispatch('value', [{
       [this.element.name]: this.element.value
     }], event)
   }
 
-  protected handleKeydown (event: Event): void {
-    if (
-      event instanceof KeyboardEvent &&
-      event.code === 'Enter'
-    ) {
-      this.handleKeydownEnter(event)
+  protected handleInteract (event: ScolaInteractEvent): boolean {
+    if (this.interact.isKeyboard(event.originalEvent, 'down')) {
+      return this.handleKeydown(event.originalEvent)
     }
+
+    return false
+  }
+
+  protected handleKeydown (event: KeyboardEvent): boolean {
+    if (this.interact.isKey(event, 'Enter')) {
+      this.handleKeydownEnter(event)
+      return true
+    }
+
+    return false
   }
 
   protected handleKeydownEnter (event: KeyboardEvent): void {
@@ -148,7 +168,6 @@ export class ScolaField {
   protected removeEventListeners (): void {
     this.element.removeEventListener('input', this.handleInputBound)
     this.element.removeEventListener('focus', this.handleFocusBound)
-    this.element.removeEventListener('keydown', this.handleKeydownBound)
   }
 
   protected setError (error: Struct): void {
@@ -168,5 +187,6 @@ export class ScolaField {
   protected setValue (value: Primitive): void {
     this.clearError()
     this.element.value = value.toString()
+    this.element.update()
   }
 }

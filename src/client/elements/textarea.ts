@@ -18,8 +18,6 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaEl
 
   public resize: boolean
 
-  protected handleMutationsBound = this.handleMutations.bind(this)
-
   public constructor () {
     super()
     this.field = new ScolaField(this)
@@ -36,16 +34,12 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaEl
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this.handleMutationsBound, [
-      'value'
-    ])
-
     this.field.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
 
-    window.setTimeout(() => {
+    window.requestAnimationFrame(() => {
       this.update()
     })
   }
@@ -71,19 +65,11 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaEl
 
   public update (): void {
     if (this.resize) {
-      this.setHeight()
+      this.updateStyle()
     }
   }
 
-  public updateAttributes (): void {
-    this.setAttribute('value', this.value)
-  }
-
-  protected handleMutations (): void {
-    this.update()
-  }
-
-  protected setHeight (): void {
+  public updateStyle (): void {
     if (this.scrollHeight > 0) {
       this.style.setProperty('height', '0px')
       this.style.setProperty('height', `${this.scrollHeight}px`)

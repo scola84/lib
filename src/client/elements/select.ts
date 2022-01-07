@@ -22,6 +22,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaElemen
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
+    this.update()
   }
 
   public static define (): void {
@@ -54,7 +55,9 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaElemen
     this.field.setData(data)
   }
 
-  public update (): void {}
+  public update (): void {
+    this.updateAttributes()
+  }
 
   public updateAttributes (): void {
     this.setAttribute('value', this.value)

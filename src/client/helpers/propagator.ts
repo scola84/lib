@@ -1,6 +1,7 @@
 import type { ScolaElement } from '../elements/element'
 import { ScolaEvent } from './event'
 import { ScolaInteract } from './interact'
+import type { ScolaInteractEvent } from './interact'
 import { isStruct } from '../../common'
 
 declare global {
@@ -20,25 +21,24 @@ export class ScolaPropagator {
 
   public target: string[]
 
-  protected handleKeydownBound = this.handleKeydown.bind(this)
+  protected handleInteractBound = this.handleInteract.bind(this)
 
   protected handleSetBound = this.handleSet.bind(this)
 
   public constructor (element: ScolaElement) {
     this.element = element
     this.interact = new ScolaInteract(element)
-    this.keydown = this.parseKeydown()
-
-    this.target = (this.element.getAttribute('sc-data-target') ?? '')
-      .trim()
-      .split(/\s+/u)
+    this.reset()
   }
 
   public connect (): void {
+    this.interact.observe(this.handleInteractBound)
+    this.interact.connect()
     this.addEventListeners()
   }
 
   public disconnect (): void {
+    this.interact.disconnect()
     this.removeEventListeners()
   }
 
@@ -80,6 +80,15 @@ export class ScolaPropagator {
     }
   }
 
+  public reset (): void {
+    this.interact.keyboard = this.interact.hasKeyboard
+    this.keydown = this.parseKeydown()
+
+    this.target = (this.element.getAttribute('sc-data-target') ?? '')
+      .trim()
+      .split(/\s+/u)
+  }
+
   public set (data: unknown): void {
     this.target.forEach((target) => {
       this.setData(data, target)
@@ -116,18 +125,25 @@ export class ScolaPropagator {
 
   protected addEventListeners (): void {
     this.element.addEventListener('sc-data-set', this.handleSetBound)
-
-    if (this.keydown.length > 0) {
-      this.element.addEventListener('keydown', this.handleKeydownBound)
-    }
   }
 
-  protected handleKeydown (event: KeyboardEvent): void {
+  protected handleInteract (event: ScolaInteractEvent): boolean {
+    if (this.interact.isKeyboard(event.originalEvent, 'down')) {
+      return this.handleKeydown(event.originalEvent)
+    }
+
+    return false
+  }
+
+  protected handleKeydown (event: KeyboardEvent): boolean {
     this.keydown.forEach(([binding, boundEvent]) => {
       if (this.isBound(binding, event)) {
+        event.cancelBubble = this.element.hasAttribute('sc-cancel')
         this.dispatchEvent(boundEvent, [this.element.getData()], event)
       }
     })
+
+    return true
   }
 
   protected handleSet (event: CustomEvent): void {
@@ -186,9 +202,5 @@ export class ScolaPropagator {
 
   protected removeEventListeners (): void {
     this.element.removeEventListener('sc-data-set', this.handleSetBound)
-
-    if (this.keydown.length > 0) {
-      this.element.removeEventListener('keydown', this.handleKeydownBound)
-    }
   }
 }

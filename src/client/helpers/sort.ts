@@ -1,6 +1,8 @@
 import { ScolaInteract } from './interact'
+import type { ScolaInteractEvent } from './interact'
 import type { ScolaTableElement } from '../elements/table'
 import { ScolaTableRowElement } from '../elements/table-row'
+import type { Struct } from '../../common'
 
 export class ScolaSort {
   public element: ScolaTableElement
@@ -11,36 +13,84 @@ export class ScolaSort {
 
   protected handleDragoverBound = this.handleDragover.bind(this)
 
-  protected handleKeydownBound = this.handleKeydown.bind(this)
+  protected handleInteractBound = this.handleInteract.bind(this)
 
   public constructor (element: ScolaTableElement) {
     this.element = element
-    this.interact = new ScolaInteract(element)
+    this.interact = new ScolaInteract(element.body)
     this.reset()
   }
 
   public connect (): void {
+    this.interact.observe(this.handleInteractBound)
+    this.interact.connect()
     this.addEventListeners()
   }
 
   public disconnect (): void {
+    this.interact.disconnect()
     this.removeEventListeners()
   }
 
   public reset (): void {
+    this.interact.keyboard = this.interact.hasKeyboard
     this.type = this.element.getAttribute('sc-sort-type') ?? ''
   }
 
+  public scrollTo (): void {
+    const {
+      offsetHeight: bodyHeight,
+      offsetLeft: bodyLeft,
+      offsetTop: bodyTop,
+      offsetWidth: bodyWidth,
+      scrollLeft: bodyScrollLeft,
+      scrollTop: bodyScrollTop
+    } = this.element.body
+
+    const {
+      offsetLeft: firstRowLeft = 0,
+      offsetTop: firstRowTop = 0
+    } = this.element.select?.firstRow ?? {}
+
+    const {
+      offsetHeight: lastRowHeight = 0,
+      offsetLeft: lastRowLeft = 0,
+      offsetTop: lastRowTop = 0,
+      offsetWidth: lastRowWidth = 0
+    } = this.element.select?.lastRow ?? {}
+
+    let left = bodyScrollLeft
+    let top = bodyScrollTop
+
+    if ((lastRowTop - bodyTop + lastRowHeight) > (bodyScrollTop + bodyHeight)) {
+      top = lastRowTop - bodyTop + lastRowHeight - bodyHeight
+    } else if ((firstRowTop - bodyTop) < bodyScrollTop) {
+      top = firstRowTop - bodyTop
+    }
+
+    if ((lastRowLeft - bodyLeft + lastRowWidth) > (bodyScrollLeft + bodyWidth)) {
+      left = lastRowLeft - bodyLeft + lastRowWidth - bodyWidth
+    } else if ((firstRowLeft - bodyLeft) < bodyScrollLeft) {
+      left = firstRowLeft - bodyLeft
+    }
+
+    this.element.body.scrollTo({
+      left,
+      top
+    })
+  }
+
   protected addEventListeners (): void {
-    this.element.addEventListener('keydown', this.handleKeydownBound)
     this.element.body.addEventListener('dragover', this.handleDragoverBound)
   }
 
   protected handleDragover (event: DragEvent): void {
     event.preventDefault()
 
-    if (event.dataTransfer?.getData('sc-type') === this.type) {
-      const origin = document.getElementById(event.dataTransfer.getData('sc-origin'))
+    const drag = JSON.parse(window.sessionStorage.getItem('sc-drag') ?? '{}') as Struct
+
+    if (drag.type === this.type) {
+      const origin = document.getElementById(String(drag.origin))
 
       if (
         origin === this.element &&
@@ -53,8 +103,8 @@ export class ScolaSort {
 
           if (
             this.element.select?.handle === false &&
-              this.element.select.rows.length === 1 &&
-              this.element.select.firstRow instanceof ScolaTableRowElement
+            this.element.select.rows.length === 1 &&
+            this.element.select.firstRow instanceof ScolaTableRowElement
           ) {
             row = this.element.select.firstRow
           } else if (
@@ -64,7 +114,10 @@ export class ScolaSort {
             row = this.element.drag.activeElement
           }
 
-          if (row instanceof ScolaTableRowElement) {
+          if (
+            row instanceof ScolaTableRowElement &&
+            row !== target
+          ) {
             if (row.rowIndex < target.rowIndex) {
               target.parentElement?.insertBefore(row, target.nextElementSibling)
             } else {
@@ -78,7 +131,15 @@ export class ScolaSort {
     }
   }
 
-  protected handleKeydown (event: KeyboardEvent): void {
+  protected handleInteract (event: ScolaInteractEvent): boolean {
+    if (this.interact.isKeyboard(event.originalEvent, 'down')) {
+      return this.handleKeydown(event.originalEvent)
+    }
+
+    return false
+  }
+
+  protected handleKeydown (event: KeyboardEvent): boolean {
     let handled = false
 
     if (
@@ -113,38 +174,11 @@ export class ScolaSort {
       this.scrollTo()
       event.preventDefault()
     }
+
+    return handled
   }
 
   protected removeEventListeners (): void {
-    this.element.removeEventListener('keydown', this.handleKeydownBound)
     this.element.body.removeEventListener('dragover', this.handleDragoverBound)
-  }
-
-  protected scrollTo (): void {
-    const {
-      clientHeight: bodyHeight,
-      scrollTop: bodyScrollTop
-    } = this.element.body
-
-    const {
-      offsetTop: firstRowTop = 0
-    } = this.element.select?.firstRow ?? {}
-
-    const {
-      clientHeight: lastRowHeight = 0,
-      offsetTop: lastRowTop = 0
-    } = this.element.select?.lastRow ?? {}
-
-    let top = this.element.body.scrollTop
-
-    if ((lastRowTop + lastRowHeight) > (bodyScrollTop + bodyHeight)) {
-      top = lastRowTop + lastRowHeight - bodyHeight
-    } else if (firstRowTop < bodyScrollTop) {
-      top = firstRowTop
-    }
-
-    this.element.body.scrollTo({
-      top
-    })
   }
 }

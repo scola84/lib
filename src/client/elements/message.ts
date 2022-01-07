@@ -44,10 +44,10 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
 
   public constructor () {
     super()
-    this.template = this.selectTemplate()
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
+    this.template = this.mutator.selectTemplate('item')
 
     if (this.hasAttribute('sc-hide')) {
       this.hider = new ScolaHider(this)
@@ -133,11 +133,15 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
       this.firstElementChild?.remove()
       this.appendChild(template)
 
-      window.requestAnimationFrame(() => {
-        if (element instanceof ScolaDivElement) {
-          element.setData(item)
-        }
-      })
+      if (element instanceof ScolaDivElement) {
+        element.setData(item)
+      } else {
+        window.requestAnimationFrame(() => {
+          if (element instanceof ScolaDivElement) {
+            element.setData(item)
+          }
+        })
+      }
 
       this.toggleAttribute('hidden', false)
     }
@@ -180,9 +184,5 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
     this.removeEventListener('sc-message-add', this.handleAddBound)
     this.removeEventListener('sc-message-clear', this.handleClearBound)
     this.removeEventListener('sc-message-next', this.handleNextBound)
-  }
-
-  protected selectTemplate (): HTMLTemplateElement | null {
-    return this.querySelector('template[sc-name="item"]')
   }
 }

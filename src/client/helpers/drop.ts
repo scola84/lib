@@ -1,7 +1,10 @@
 import type { ScolaElement } from '../elements/element'
-import { isArray } from '../../common'
+import type { ScolaTableElement } from '../elements/table'
+import type { Struct } from '../../common'
 
 export class ScolaDrop {
+  public copy: boolean
+
   public element: ScolaElement
 
   public type: string[]
@@ -44,15 +47,25 @@ export class ScolaDrop {
     }], event)
   }
 
-  public dropItems (keys: unknown[], on = 'drop', event?: Event): void {
-    this.element.propagator.dispatch(`${on}item`, keys, event)
+  public dropItems (items: unknown[], on = 'drop', event?: Event): void {
+    this.element.propagator.dispatch(`${on}item`, items, event)
 
     this.element.propagator.dispatch(`${on}items`, [{
-      items: keys
+      items
+    }], event)
+  }
+
+  public dropKeys (keys: unknown[], on = 'drop', event?: Event): void {
+    this.element.propagator.dispatch(`${on}key`, keys, event)
+
+    this.element.propagator.dispatch(`${on}keys`, [{
+      keys
     }], event)
   }
 
   public reset (): void {
+    this.copy = this.element.hasAttribute('sc-drop-copy')
+
     this.type = this.element.getAttribute('sc-drop-type')
       ?.trim()
       .split(/\s+/u) ?? []
@@ -63,6 +76,10 @@ export class ScolaDrop {
     this.element.addEventListener('dragleave', this.handleDragleaveBound)
     this.element.addEventListener('dragover', this.handleDragoverBound)
     this.element.addEventListener('drop', this.handleDropBound)
+  }
+
+  protected getDrag (): Struct {
+    return JSON.parse(window.sessionStorage.getItem('sc-drag') ?? '{}') as Struct
   }
 
   protected handleDragenter (event: DragEvent): void {
@@ -87,34 +104,59 @@ export class ScolaDrop {
     if (this.isDroppable(event)) {
       this.element.toggleAttribute('sc-drop-over', true)
     }
+
+    if (event.dataTransfer !== null) {
+      if (
+        this.copy ||
+        event.ctrlKey
+      ) {
+        event.dataTransfer.dropEffect = 'copy'
+      } else {
+        event.dataTransfer.dropEffect = 'move'
+      }
+    }
   }
 
   protected handleDrop (event: DragEvent): void {
     event.preventDefault()
     this.element.toggleAttribute('sc-drop-over', false)
 
+    const drag = this.getDrag()
+
     if (
-      this.isDroppable(event) &&
+      this.isDroppable(event, drag) &&
       event.dataTransfer !== null
     ) {
       if (event.dataTransfer.files.length > 0) {
         this.dropFiles(event.dataTransfer.files, event)
       } else {
-        const keys = JSON.parse(event.dataTransfer.getData('sc-keys')) as unknown[]
+        let on = 'drop'
 
-        if (isArray(keys)) {
-          if (event.ctrlKey) {
-            this.dropItems(keys, 'dropcopy', event)
-          } else {
-            this.dropItems(keys, 'drop', event)
-          }
+        if (
+          this.copy ||
+          event.ctrlKey
+        ) {
+          on += 'copy'
         }
+
+        document
+          .querySelectorAll<ScolaTableElement>(`#${String(drag.origin)}[is="sc-table"]`)
+          .forEach((element) => {
+            this.dropKeys(element.select?.getKeysByRow() ?? [], on, event)
+            this.dropItems(element.select?.getItemsByRow() ?? [], on, event)
+          })
+
+        document
+          .querySelectorAll<ScolaElement>(`#${String(drag.origin)}:not([is="sc-table"])`)
+          .forEach((element) => {
+            this.dropItems([element.getData()], on, event)
+          })
       }
     }
   }
 
-  protected isDroppable (event: DragEvent): boolean {
-    if (event.dataTransfer?.getData('sc-origin') === this.element.id) {
+  protected isDroppable (event: DragEvent, drag: Struct = this.getDrag()): boolean {
+    if (drag.origin === this.element.id) {
       return false
     }
 
@@ -136,8 +178,8 @@ export class ScolaDrop {
           }))
       }
 
-      if (event.dataTransfer.types.includes('sc-type')) {
-        types.push(event.dataTransfer.getData('sc-type'))
+      if (typeof drag.type === 'string') {
+        types.push(drag.type)
       }
     }
 

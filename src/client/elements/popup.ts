@@ -1,12 +1,13 @@
+import { absorb, isStruct } from '../../common'
 import { ScolaBreakpoint } from '../helpers/breakpoint'
 import type { ScolaElement } from './element'
 import type { ScolaEvent } from '../helpers/event'
 import { ScolaInteract } from '../helpers/interact'
+import type { ScolaInteractEvent } from '../helpers/interact'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
-import { absorb } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -48,6 +49,8 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public breakpoint: ScolaBreakpoint
 
+  public datamap: Struct = {}
+
   public immediate = true
 
   public interact: ScolaInteract
@@ -68,15 +71,11 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   protected handleHideBound = this.handleHide.bind(this)
 
-  protected handleKeydownBound = this.handleKeydown.bind(this)
-
-  protected handleMousedownBound = this.handleMousedown.bind(this)
+  protected handleInteractBound = this.handleInteract.bind(this)
 
   protected handleMutationsBound = this.handleMutations.bind(this)
 
   protected handleShowBound = this.handleShow.bind(this)
-
-  protected handleTouchstartBound = this.handleTouchstart.bind(this)
 
   protected handleTransitionendBound = this.handleTransitionend.bind(this)
 
@@ -99,12 +98,14 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public connectedCallback (): void {
     this.breakpoint.observe(this.handleBreakpointBound)
+    this.interact.observe(this.handleInteractBound)
 
     this.observer.observe(this.handleMutationsBound, [
       'hidden'
     ])
 
     this.breakpoint.connect()
+    this.interact.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
@@ -117,40 +118,52 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     }
 
     this.breakpoint.disconnect()
+    this.interact.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
     this.removeEventListeners()
   }
 
-  public getData (): void {}
+  public getData (): Struct {
+    return absorb(this.dataset, this.datamap, true)
+  }
 
   public hide (): void {
+    this.propagator.dispatch('beforehide', [this.getData()])
+
     if (this.immediate) {
-      this.style.setProperty('transition-property', 'none')
-    } else {
-      this.style.setProperty('transition-property', 'opacity')
-    }
-
-    window.requestAnimationFrame(() => {
       this.style.setProperty('opacity', '0')
+      this.style.setProperty('transition-property', 'none')
+      this.finalize()
+    } else {
+      this.style.setProperty('opacity', '1')
+      this.style.setProperty('transition-property', 'opacity')
 
-      if (this.immediate) {
-        this.finalize()
-      }
-    })
+      window.requestAnimationFrame(() => {
+        this.style.setProperty('opacity', '0')
+      })
+    }
   }
 
   public reset (): void {
+    this.interact.keyboard = this.interact.hasKeyboard
+    this.interact.mouse = this.interact.hasMouse
+    this.interact.target = 'window'
+    this.interact.touch = this.interact.hasTouch
     this.left = this.breakpoint.parse('sc-left') ?? 'center'
     this.top = this.breakpoint.parse('sc-top') ?? 'center'
   }
 
   public setData (data: unknown): void {
-    this.propagator.set(data)
+    if (isStruct(data)) {
+      Object.assign(this.datamap, data)
+      this.propagator.set(data)
+    }
   }
 
   public show (): void {
+    this.propagator.dispatch('beforeshow', [this.getData()])
     this.style.removeProperty('display')
     this.style.setProperty('opacity', '0')
 
@@ -205,9 +218,6 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.addEventListener('sc-popup-hide', this.handleHideBound)
     this.addEventListener('sc-popup-show', this.handleShowBound)
     this.addEventListener('transitionend', this.handleTransitionendBound)
-    window.addEventListener('keydown', this.handleKeydownBound)
-    window.addEventListener('mousedown', this.handleMousedownBound)
-    window.addEventListener('touchstart', this.handleTouchstartBound)
   }
 
   protected calculateAlternativeStyle (position: Position): Style {
@@ -322,9 +332,9 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
     if (this.hasAttribute('hidden')) {
       this.style.setProperty('display', 'none', 'important')
-      this.propagator.dispatch('hide', [absorb(this.dataset)])
+      this.propagator.dispatch('hide', [this.getData()])
     } else {
-      this.propagator.dispatch('show', [absorb(this.dataset)])
+      this.propagator.dispatch('show', [this.getData()])
     }
   }
 
@@ -340,17 +350,19 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.toggleAttribute('hidden', true)
   }
 
-  protected handleKeydown (event: KeyboardEvent): void {
-    if (event.code === 'Escape') {
-      event.cancelBubble = true
-      this.toggleAttribute('hidden', true)
+  protected handleInteract (event: ScolaInteractEvent): boolean {
+    if (event.type === 'start') {
+      if (
+        !this.hasAttribute('hidden') && (
+          this.interact.isKey(event.originalEvent, 'Escape') ||
+          !event.originalEvent.composedPath().includes(this)
+        )
+      ) {
+        this.toggleAttribute('hidden', true)
+      }
     }
-  }
 
-  protected handleMousedown (event: MouseEvent): void {
-    if (!event.composedPath().includes(this)) {
-      this.toggleAttribute('hidden', true)
-    }
+    return false
   }
 
   protected handleMutations (): void {
@@ -388,8 +400,5 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.removeEventListener('sc-popup-hide', this.handleHideBound)
     this.removeEventListener('sc-popup-show', this.handleShowBound)
     this.removeEventListener('transitionend', this.handleTransitionendBound)
-    window.removeEventListener('keydown', this.handleKeydownBound)
-    window.removeEventListener('mousedown', this.handleMousedownBound)
-    window.removeEventListener('touchstart', this.handleTouchstartBound)
   }
 }

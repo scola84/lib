@@ -68,6 +68,12 @@ export class ScolaObserver {
     this.observers = []
   }
 
+  public normalize (mutations: MutationRecord[]): Array<string | null> {
+    return mutations.map((mutation) => {
+      return mutation.attributeName
+    })
+  }
+
   public observe (callback: (mutations: MutationRecord[]) => void, filter?: string[]): void {
     this.observer = [callback, filter]
   }

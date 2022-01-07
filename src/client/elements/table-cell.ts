@@ -14,8 +14,6 @@ export class ScolaTableCellElement extends HTMLTableCellElement implements Scola
 
   public propagator: ScolaPropagator
 
-  protected handleClickBound = this.handleClick.bind(this)
-
   public constructor () {
     super()
     this.mutator = new ScolaMutator(this)
@@ -33,14 +31,12 @@ export class ScolaTableCellElement extends HTMLTableCellElement implements Scola
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
-    this.addEventListeners()
   }
 
   public disconnectedCallback (): void {
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
-    this.removeEventListeners()
   }
 
   public getData (): Struct {
@@ -57,20 +53,4 @@ export class ScolaTableCellElement extends HTMLTableCellElement implements Scola
   }
 
   public update (): void {}
-
-  protected addEventListeners (): void {
-    if (this.hasAttribute('sc-onclick')) {
-      this.addEventListener('click', this.handleClickBound)
-    }
-  }
-
-  protected handleClick (event: MouseEvent): void {
-    this.propagator.dispatch('click', [this.getData()], event)
-  }
-
-  protected removeEventListeners (): void {
-    if (this.hasAttribute('sc-onclick')) {
-      this.removeEventListener('click', this.handleClickBound)
-    }
-  }
 }

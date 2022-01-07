@@ -12,9 +12,9 @@ export interface ScolaElement extends HTMLElement {
 
   propagator: ScolaPropagator
 
-  reset: () => void
-
   getData: () => unknown
+
+  reset: () => void
 
   setData: (data: unknown) => void
 

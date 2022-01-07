@@ -16,6 +16,8 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaElement 
 
   public propagator: ScolaPropagator
 
+  protected handleMutationsBound = this.handleMutations.bind(this)
+
   public constructor () {
     super()
     this.field = new ScolaField(this)
@@ -23,6 +25,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaElement 
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
     this.reset()
+    this.update()
   }
 
   public static define (): void {
@@ -32,6 +35,10 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaElement 
   }
 
   public connectedCallback (): void {
+    this.observer.observe(this.handleMutationsBound, [
+      'value'
+    ])
+
     this.field.connect()
     this.mutator.connect()
     this.observer.connect()
@@ -50,16 +57,31 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaElement 
   }
 
   public reset (): void {
-    this.field.debounce = Number(this.getAttribute('sc-input-debounce') ?? 250)
+    this.field.debounce = Number(this.getAttribute('sc-debounce') ?? 250)
   }
 
   public setData (data: unknown): void {
     this.field.setData(data)
   }
 
-  public update (): void {}
+  public update (): void {
+    this.updateAttributes()
+    this.updateStyle()
+  }
 
   public updateAttributes (): void {
     this.setAttribute('value', this.value)
+  }
+
+  public updateStyle (): void {
+    if (this.type === 'range') {
+      this.style.setProperty('--max', this.max)
+      this.style.setProperty('--min', this.min)
+      this.style.setProperty('--value', this.value)
+    }
+  }
+
+  protected handleMutations (): void {
+    this.updateStyle()
   }
 }

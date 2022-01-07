@@ -31,6 +31,8 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   protected handleMessageBound = this.handleMessage.bind(this)
 
+  protected handleVisibilityChangeBound = this.handleVisibilityChange.bind(this)
+
   public constructor () {
     super()
     this.mutator = new ScolaMutator(this)
@@ -49,6 +51,7 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
+    this.addEventListeners()
     this.start()
   }
 
@@ -56,6 +59,7 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
+    this.removeEventListeners()
     this.stop()
   }
 
@@ -67,13 +71,11 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
   }
 
   public restart (): void {
-    if (this.source?.readyState === this.source?.CLOSED) {
-      this.tries += 1
+    this.tries += 1
 
-      window.setTimeout(() => {
-        this.start()
-      }, this.tries * 1000)
-    }
+    window.setTimeout(() => {
+      this.start()
+    }, this.tries * 1000)
   }
 
   public setData (): void {}
@@ -108,9 +110,13 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   public update (): void {}
 
+  protected addEventListeners (): void {
+    document.addEventListener('visibilitychange', this.handleVisibilityChangeBound)
+  }
+
   protected handleError (): void {
-    this.restart()
     this.stop()
+    this.restart()
   }
 
   protected handleMessage (event: MessageEvent<string>): void {
@@ -126,5 +132,16 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   protected handleOpen (): void {
     this.tries = 0
+  }
+
+  protected handleVisibilityChange (): void {
+    if (document.visibilityState === 'visible') {
+      this.stop()
+      this.start()
+    }
+  }
+
+  protected removeEventListeners (): void {
+    document.removeEventListener('visibilitychange', this.handleVisibilityChangeBound)
   }
 }

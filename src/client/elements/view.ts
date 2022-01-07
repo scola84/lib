@@ -1,6 +1,4 @@
 import { absorb, isArray, isPrimitive, isSame, isStruct } from '../../common'
-import { ScolaBreakpoint } from '../helpers/breakpoint'
-import type { ScolaBreakpointEvent } from '../helpers/breakpoint'
 import type { ScolaElement } from './element'
 import { ScolaHider } from '../helpers/hider'
 import { ScolaMutator } from '../helpers/mutator'
@@ -16,6 +14,7 @@ declare global {
     'sc-view-delete': CustomEvent
     'sc-view-forward': CustomEvent
     'sc-view-rewind': CustomEvent
+    'sc-view-sort': CustomEvent
   }
 }
 
@@ -36,8 +35,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public static views: Struct<string | undefined> = {}
-
-  public breakpoint: ScolaBreakpoint
 
   public hider?: ScolaHider
 
@@ -69,6 +66,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public views: View[] = []
 
+  public wait: boolean
+
   public get view (): View | undefined {
     return this.views[this.pointer]
   }
@@ -76,8 +75,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   protected handleAddBound = this.handleAdd.bind(this)
 
   protected handleBackBound = this.handleBack.bind(this)
-
-  protected handleBreakpointBound = this.handleBreakpoint.bind(this)
 
   protected handleDeleteBound = this.handleDelete.bind(this)
 
@@ -87,9 +84,10 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   protected handleRewindBound = this.handleRewind.bind(this)
 
+  protected handleSortBound = this.handleSort.bind(this)
+
   public constructor () {
     super()
-    this.breakpoint = new ScolaBreakpoint(this)
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
@@ -155,35 +153,40 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public connectedCallback (): void {
-    this.breakpoint.observe(this.handleBreakpointBound)
-
     this.observer.observe(this.handleMutationsBound, [
       'hidden',
       'sc-views'
     ])
 
-    this.breakpoint.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
     this.hider?.connect()
     this.addEventListeners()
 
-    if (this.save !== '') {
-      this.loadState()
-    }
+    if (this.wait) {
+      if (this.save !== '') {
+        this.saveState()
+      }
+    } else {
+      this.wait = true
 
-    if (
-      !this.hasAttribute('hidden') ||
-      this.view?.source === 'location'
-    ) {
-      window.setTimeout(() => {
-        if (this.hider !== undefined) {
-          this.hider.immediate = true
-        }
+      if (this.save !== '') {
+        this.loadState()
+      }
 
-        this.go(this.pointer)
-      })
+      if (
+        !this.hasAttribute('hidden') ||
+        this.view?.source === 'location'
+      ) {
+        window.requestAnimationFrame(() => {
+          if (this.hider !== undefined) {
+            this.hider.immediate = true
+          }
+
+          this.go(this.pointer)
+        })
+      }
     }
   }
 
@@ -215,7 +218,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public disconnectedCallback (): void {
-    this.breakpoint.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
@@ -261,7 +263,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  public isSame (left?: Struct | null, right?: Struct | null): boolean {
+  public isSame (left?: unknown, right?: unknown): boolean {
     return isSame(this.createView(left), this.createView(right))
   }
 
@@ -288,7 +290,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.save = this.getAttribute('sc-save') ?? ''
     this.saveLimit = Number(this.getAttribute('sc-save-limit') ?? Infinity)
     this.storage = ScolaViewElement.storage[this.getAttribute('sc-storage') ?? 'session'] ?? window.sessionStorage
-    this.unique = this.breakpoint.parse('sc-unique') === ''
+    this.unique = this.hasAttribute('sc-unique')
+    this.wait = this.hasAttribute('sc-wait')
   }
 
   public rewind (): void {
@@ -399,6 +402,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.addEventListener('sc-view-delete', this.handleDeleteBound)
     this.addEventListener('sc-view-forward', this.handleForwardBound)
     this.addEventListener('sc-view-rewind', this.handleRewindBound)
+    this.addEventListener('sc-view-sort', this.handleSortBound)
   }
 
   protected createView (options?: unknown): View {
@@ -440,20 +444,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.back()
   }
 
-  protected handleBreakpoint (event: ScolaBreakpointEvent): void {
-    if (event.changed) {
-      this.reset()
-      this.clear()
-
-      if (this.save !== '') {
-        this.saveState()
-        this.loadState()
-      }
-
-      this.go(this.pointer)
-    }
-  }
-
   protected handleDelete (event: CustomEvent): void {
     if (isStruct(event.detail)) {
       this.delete(event.detail)
@@ -465,9 +455,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleMutations (mutations: MutationRecord[]): void {
-    const attributes = mutations.map((mutation) => {
-      return mutation.attributeName
-    })
+    const attributes = this.observer.normalize(mutations)
 
     if (attributes.includes('hidden')) {
       this.hider?.toggle()
@@ -480,6 +468,31 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   protected handleRewind (): void {
     this.rewind()
+  }
+
+  protected handleSort (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      const { items } = event.detail
+      const { view } = this
+
+      if (isArray(items)) {
+        this.views.sort((left, right) => {
+          return items.findIndex((findView) => {
+            return this.isSame(left, findView)
+          }) - items.findIndex((findView) => {
+            return this.isSame(right, findView)
+          })
+        })
+      }
+
+      if (view !== undefined) {
+        this.pointer = this.views.indexOf(view)
+      }
+
+      if (this.save !== '') {
+        this.saveState()
+      }
+    }
   }
 
   protected loadStateFromElement (element: ScolaViewElement): void {
@@ -540,5 +553,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.removeEventListener('sc-view-delete', this.handleDeleteBound)
     this.removeEventListener('sc-view-forward', this.handleForwardBound)
     this.removeEventListener('sc-view-rewind', this.handleRewindBound)
+    this.removeEventListener('sc-view-sort', this.handleSortBound)
   }
 }

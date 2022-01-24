@@ -1,6 +1,7 @@
 import { ScolaBreakpoint } from './breakpoint'
 import type { ScolaBreakpointEvent } from './breakpoint'
 import type { ScolaElement } from '../elements/element'
+import { ScolaIndexer } from './indexer'
 import { ScolaInteract } from './interact'
 import type { ScolaInteractEvent } from './interact'
 
@@ -35,15 +36,13 @@ export class ScolaHider {
 
   public index: number
 
+  public indexer: ScolaIndexer
+
   public interact: ScolaInteract
 
-  public mode: Mode
+  public mode: Mode | null
 
   public threshold: number
-
-  public get isModal (): boolean {
-    return window.getComputedStyle(this.element).position === 'absolute'
-  }
 
   protected handleBreakpointBound = this.handleBreakpoint.bind(this)
 
@@ -57,6 +56,7 @@ export class ScolaHider {
     this.element = element
     this.backdrop = this.selectBackdrop()
     this.breakpoint = new ScolaBreakpoint(element)
+    this.indexer = new ScolaIndexer()
     this.interact = new ScolaInteract(element)
 
     if (this.breakpoint.parse('sc-hide-initial') === '') {
@@ -82,7 +82,7 @@ export class ScolaHider {
   }
 
   public hideModal (): boolean {
-    if (this.isModal) {
+    if (window.getComputedStyle(this.element).position === 'fixed') {
       this.element.toggleAttribute('hidden', true)
       return true
     }
@@ -91,19 +91,18 @@ export class ScolaHider {
   }
 
   public reset (): void {
-    this.breakpoint.reset()
-
     this.direction = this.breakpoint.parse('sc-hide-direction')
       ?.trim()
       .split(/\s+/u)
 
-    this.index = Number(this.element.getAttribute('sc-hide-index') ?? -1)
+    this.indexer.index = this.element.getAttribute('sc-hide-index')
+    this.interact.cancel = true
     this.interact.keyboard = this.breakpoint.parse('sc-hide-interact-keyboard') === ''
     this.interact.mouse = this.breakpoint.parse('sc-hide-interact-mouse') === ''
     this.interact.target = 'window'
     this.interact.threshold = Number(this.breakpoint.parse('sc-hide-interact-threshold') ?? 0.1)
     this.interact.touch = this.breakpoint.parse('sc-hide-interact-touch') === ''
-    this.mode = this.breakpoint.parse('sc-hide-mode') as Mode | undefined ?? 'height'
+    this.mode = this.breakpoint.parse('sc-hide-mode') as Mode | null
     this.threshold = Number(this.breakpoint.parse('sc-hide-threshold') ?? 0.1)
   }
 
@@ -131,6 +130,7 @@ export class ScolaHider {
         this.toggleOpacity()
         break
       default:
+        this.element.removeAttribute('hidden')
         break
     }
   }
@@ -160,12 +160,11 @@ export class ScolaHider {
   }
 
   protected determineIndex (): number {
-    if (this.index > -1) {
+    if (this.index > -Infinity) {
       return this.index
     }
 
-    ScolaHider.index += 1
-    return ScolaHider.index
+    return this.indexer.get()
   }
 
   protected finalize (): void {
@@ -173,10 +172,9 @@ export class ScolaHider {
     this.element.style.removeProperty('transition-timing-function')
 
     if (this.element.hasAttribute('hidden')) {
-      this.element.style.removeProperty('z-index')
       this.element.style.setProperty('display', 'none', 'important')
-      this.backdrop?.style.removeProperty('z-index')
       this.backdrop?.style.setProperty('display', 'none', 'important')
+      this.indexer.remove(this.element, this.backdrop)
       this.element.propagator.dispatch('hide', [this.element.getData()])
     } else {
       this.element.propagator.dispatch('show', [this.element.getData()])
@@ -218,7 +216,7 @@ export class ScolaHider {
   protected handleInteractEnd (event: ScolaInteractEvent): boolean {
     let handled = false
 
-    if (this.mode.startsWith('move-')) {
+    if (this.mode?.startsWith('move-') === true) {
       if (this.shouldInteractMoveBottom(event)) {
         handled = this.handleInteractEndMoveBottom(event)
       } else if (this.shouldInteractMoveLeft(event)) {
@@ -454,11 +452,11 @@ export class ScolaHider {
   protected handleInteractStart (event: ScolaInteractEvent): boolean {
     let handled = false
 
-    if (this.interact.isKeyboard(event.originalEvent, 'down')) {
+    if (this.interact.isKeyboard(event.originalEvent)) {
       if (this.interact.isKey(event.originalEvent, 'Escape')) {
         this.hideModal()
       }
-    } else if (this.mode.startsWith('move-')) {
+    } else if (this.mode?.startsWith('move-') === true) {
       if (this.shouldInteractMove(event)) {
         if (this.shouldInteractMoveBottom(event)) {
           handled = this.handleInteractStartMoveBottom()
@@ -472,14 +470,11 @@ export class ScolaHider {
       }
 
       if (handled) {
-        const index = this.determineIndex()
-
         this.element.style.removeProperty('display')
         this.element.style.setProperty('transition-property', 'none')
-        this.element.style.setProperty('z-index', `${index + 1}`)
         this.backdrop?.style.removeProperty('display')
         this.backdrop?.style.setProperty('transition-property', 'none')
-        this.backdrop?.style.setProperty('z-index', `${index}`)
+        this.indexer.set(this.element, this.backdrop)
       }
     } else {
       handled = true
@@ -765,15 +760,11 @@ export class ScolaHider {
 
   protected toggleCenterVisible (): void {
     this.element.propagator.dispatch('beforeshow', [this.element.getData()])
-
-    const index = this.determineIndex()
-
     this.element.style.removeProperty('display')
     this.element.style.setProperty('margin-bottom', `-${this.element.offsetHeight}px`)
-    this.element.style.setProperty('z-index', `${index + 1}`)
     this.backdrop?.style.removeProperty('display')
     this.backdrop?.style.setProperty('opacity', '0')
-    this.backdrop?.style.setProperty('z-index', `${index}`)
+    this.indexer.set(this.element, this.backdrop)
 
     window.requestAnimationFrame(() => {
       if (this.immediate) {
@@ -868,7 +859,7 @@ export class ScolaHider {
     if (this.element.hasAttribute('hidden')) {
       this.toggleMarginHidden(margin, size)
     } else {
-      this.toggleMarginVisible(margin)
+      this.toggleMarginVisible(margin, size)
     }
   }
 
@@ -890,15 +881,19 @@ export class ScolaHider {
     }
   }
 
-  protected toggleMarginVisible (margin: MarginProperty): void {
+  protected toggleMarginVisible (margin: MarginProperty, size?: SizeProperty): void {
     this.element.propagator.dispatch('beforeshow', [this.element.getData()])
-
-    const index = this.determineIndex()
-
     this.element.style.removeProperty('display')
-    this.element.style.setProperty('z-index', `${index + 1}`)
     this.backdrop?.style.removeProperty('display')
-    this.backdrop?.style.setProperty('z-index', `${index}`)
+    this.indexer.set(this.element, this.backdrop)
+
+    if (
+      !this.immediate &&
+      size !== undefined
+    ) {
+      this.element.style.setProperty(margin, `-${this.element[size]}px`)
+      this.backdrop?.style.setProperty('opacity', '0')
+    }
 
     if (margin === 'margin-left') {
       this.element.style.removeProperty('margin-right')
@@ -954,15 +949,11 @@ export class ScolaHider {
 
   protected toggleOpacityVisible (): void {
     this.element.propagator.dispatch('beforeshow', [this.element.getData()])
-
-    const index = this.determineIndex()
-
     this.element.style.removeProperty('display')
     this.element.style.setProperty('opacity', '0')
-    this.element.style.setProperty('z-index', `${index + 1}`)
     this.backdrop?.style.removeProperty('display')
     this.backdrop?.style.setProperty('opacity', '0')
-    this.backdrop?.style.setProperty('z-index', `${index}`)
+    this.indexer.set(this.element, this.backdrop)
 
     window.requestAnimationFrame(() => {
       if (this.immediate) {

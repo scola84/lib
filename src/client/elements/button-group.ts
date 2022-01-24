@@ -1,9 +1,20 @@
-import { ScolaDivElement } from './div'
 import type { ScolaElement } from './element'
+import { ScolaInteract } from '../helpers/interact'
 import type { ScolaInteractEvent } from '../helpers/interact'
+import { ScolaMutator } from '../helpers/mutator'
+import { ScolaObserver } from '../helpers/observer'
+import { ScolaPropagator } from '../helpers/propagator'
 
-export class ScolaButtonGroupElement extends ScolaDivElement implements ScolaElement {
+export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElement {
   public buttons: HTMLElement[]
+
+  public interact: ScolaInteract
+
+  public mutator: ScolaMutator
+
+  public observer: ScolaObserver
+
+  public propagator: ScolaPropagator
 
   public get firstButton (): HTMLElement | undefined {
     return this.buttons[0]
@@ -13,24 +24,62 @@ export class ScolaButtonGroupElement extends ScolaDivElement implements ScolaEle
     return this.buttons[this.buttons.length - 1]
   }
 
+  protected handleInteractBound = this.handleInteract.bind(this)
+
+  public constructor () {
+    super()
+    this.interact = new ScolaInteract(this)
+    this.mutator = new ScolaMutator(this)
+    this.observer = new ScolaObserver(this)
+    this.propagator = new ScolaPropagator(this)
+    this.reset()
+  }
+
   public static define (): void {
     customElements.define('sc-button-group', ScolaButtonGroupElement, {
       extends: 'div'
     })
   }
 
-  public reset (): void {
-    super.reset()
-    this.buttons = Array.from(this.querySelectorAll<HTMLElement>('button[sc-button-group]'))
+  public connectedCallback (): void {
+    this.interact.observe(this.handleInteractBound)
+    this.interact.connect()
+    this.mutator.connect()
+    this.observer.connect()
+    this.propagator.connect()
   }
 
-  protected handleInteract (event: ScolaInteractEvent): boolean {
-    let handled = false
+  public disconnectedCallback (): void {
+    this.interact.disconnect()
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+  }
 
-    if (
-      event.type === 'start' &&
-      document.activeElement instanceof HTMLElement
-    ) {
+  public getData (): void {}
+
+  public reset (): void {
+    this.buttons = Array.from(this.querySelectorAll<HTMLElement>('button[sc-button-group]'))
+    this.interact.keyboard = this.interact.hasKeyboard
+  }
+
+  public setData (data: unknown): void {
+    this.propagator.set(data)
+  }
+
+  public update (): void {}
+
+  protected handleInteract (event: ScolaInteractEvent): boolean {
+    switch (event.type) {
+      case 'start':
+        return this.handleInteractStart(event)
+      default:
+        return false
+    }
+  }
+
+  protected handleInteractStart (event: ScolaInteractEvent): boolean {
+    if (document.activeElement instanceof HTMLElement) {
       const index = this.buttons.indexOf(document.activeElement)
 
       if (this.interact.isKeyForward(event.originalEvent)) {
@@ -42,7 +91,7 @@ export class ScolaButtonGroupElement extends ScolaDivElement implements ScolaEle
           this.buttons[index + 1]?.focus()
         }
 
-        handled = true
+        return true
       } else if (this.interact.isKeyBack(event.originalEvent)) {
         if (index === 0) {
           this.lastButton?.focus()
@@ -50,14 +99,10 @@ export class ScolaButtonGroupElement extends ScolaDivElement implements ScolaEle
           this.buttons[index - 1]?.focus()
         }
 
-        handled = true
+        return true
       }
     }
 
-    if (handled) {
-      return handled
-    }
-
-    return super.handleInteract(event)
+    return false
   }
 }

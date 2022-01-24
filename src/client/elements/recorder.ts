@@ -37,8 +37,6 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   public codeScanner?: Html5Qrcode
 
-  public contentType: string
-
   public facingMode: string
 
   public fillLightMode: string
@@ -58,6 +56,8 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   public startTime = 0
 
   public stream?: MediaStream
+
+  public type: string
 
   public video?: HTMLVideoElement
 
@@ -94,9 +94,9 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   public connectedCallback (): void {
     this.observer.observe(this.handleMutationsBound, [
-      'sc-content-type',
       'sc-facing-mode',
-      'sc-fill-light-mode'
+      'sc-fill-light-mode',
+      'sc-type'
     ])
 
     this.resizer.observe(this)
@@ -137,7 +137,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   public enable (): void {
     if (!this.hasAttribute('sc-enabled')) {
-      switch (this.contentType) {
+      switch (this.type) {
         case 'audio':
           this.enableAudio()
           break
@@ -163,9 +163,9 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   public reset (): void {
     this.codeFps = Number(this.getAttribute('sc-code-fps') ?? 1)
     this.codeOverlay = Number(this.getAttribute('sc-code-overlay') ?? 250)
-    this.contentType = this.getAttribute('sc-content-type') ?? 'image'
     this.facingMode = this.getAttribute('sc-facing-mode') ?? 'user'
     this.fillLightMode = this.getAttribute('sc-fill-light-mode') ?? 'off'
+    this.type = this.getAttribute('sc-type') ?? 'image'
     this.wait = this.hasAttribute('sc-wait')
   }
 
@@ -175,7 +175,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     if (!this.hasAttribute('sc-started')) {
       this.toggleAttribute('sc-started', true)
 
-      switch (this.contentType) {
+      switch (this.type) {
         case 'audio':
           this.startAudio()
           break
@@ -193,7 +193,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   public stop (): void {
     if (this.hasAttribute('sc-started')) {
-      switch (this.contentType) {
+      switch (this.type) {
         case 'audio':
           this.stopAudio()
           break
@@ -217,8 +217,13 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   }
 
   public update (): void {
+    this.propagator.dispatch('beforeupdate', [{}])
     this.disable()
     this.enable()
+
+    window.requestAnimationFrame(() => {
+      this.propagator.dispatch('update', [{}])
+    })
   }
 
   public updateStyle (): void {
@@ -533,7 +538,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
         type: blob.type
       })
 
-      this.propagator.dispatch(this.contentType, [{
+      this.propagator.dispatch(this.type, [{
         file,
         filename: file.name,
         filesize: file.size,

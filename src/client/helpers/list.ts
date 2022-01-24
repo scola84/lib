@@ -2,6 +2,7 @@ import { ScolaIntl, isStruct } from '../../common'
 import type { ScolaTableElement } from '../elements/table'
 import type { ScolaTableRowElement } from '../elements/table-row'
 import type { Struct } from '../../common'
+import { isArray } from 'lodash'
 
 export class ScolaList {
   public added = new Set()
@@ -26,6 +27,8 @@ export class ScolaList {
 
   public mode?: string
 
+  public requestData?: Struct
+
   public sortKey: string
 
   public sortOrder: string
@@ -48,12 +51,17 @@ export class ScolaList {
     this.reset()
   }
 
-  public add (item: Struct): void {
+  public addItem (item: Struct): void {
     let key = item[this.key]
 
     if (key === undefined) {
       key = `${Date.now()}-${this.items.length + 1}`
-      item[this.key] = key
+
+      Object.defineProperty(item, this.key, {
+        enumerable: true,
+        value: key,
+        writable: false
+      })
     }
 
     const index = this.items.findIndex((findItem) => {
@@ -71,7 +79,7 @@ export class ScolaList {
     }
   }
 
-  public clear (): void {
+  public clearItems (): void {
     this.items = []
   }
 
@@ -79,7 +87,7 @@ export class ScolaList {
     this.addEventListeners()
   }
 
-  public delete (item: Struct): void {
+  public deleteItem (item: Struct): void {
     const key = item[this.key]
 
     const index = this.items.findIndex((findItem) => {
@@ -138,36 +146,37 @@ export class ScolaList {
       })
   }
 
-  public load (): void {
+  public request (): void {
     this.setLimit()
-    this.clear()
-    this.loadItems()
+    this.clearItems()
+    this.requestItems()
   }
 
-  public loadItems (): void {
+  public requestItems (): void {
     if (
+      this.requestData !== undefined ||
       this.limit === 0 ||
       (this.items.length % this.limit) > 0
     ) {
       return
     }
 
-    const data: Struct = {
+    this.requestData = {
       limit: this.limit
     }
 
     switch (this.mode) {
       case 'cursor':
-        data.cursor = this.cursor
+        this.requestData.cursor = this.cursor
         break
       case 'offset':
-        data.offset = this.offset
+        this.requestData.offset = this.offset
         break
       default:
         break
     }
 
-    this.element.propagator.dispatch('load', [data])
+    this.element.propagator.dispatch('request', [this.requestData])
   }
 
   public reset (): void {
@@ -181,10 +190,32 @@ export class ScolaList {
     this.threshold = Number(this.element.getAttribute('sc-list-threshold') ?? 0.75)
   }
 
+  public setData (data: unknown): void {
+    if (isArray(data)) {
+      this.addItems(data)
+    } else if (
+      isStruct(data) &&
+      isArray(data.items)
+    ) {
+      this.addItems(data.items)
+    }
+  }
+
   protected addEventListeners (): void {
     if (this.axis !== null) {
       this.element.body.addEventListener('scroll', this.handleScrollBound)
     }
+  }
+
+  protected addItems (items: unknown[]): void {
+    items.forEach((item) => {
+      if (isStruct(item)) {
+        this.addItem(item)
+      }
+    })
+
+    this.requestData = undefined
+    this.element.update()
   }
 
   protected filterItems (items: Struct[], queries: Struct[]): Struct[] {
@@ -224,7 +255,7 @@ export class ScolaList {
       bodyScrollWidth > bodyWidth &&
       (bodyScrollWidth - bodyWidth - bodyScrollLeft) < (bodyWidth * this.threshold)
     )) {
-      this.loadItems()
+      this.requestItems()
     }
   }
 

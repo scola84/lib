@@ -19,6 +19,7 @@ import { ScolaIconElement } from './elements/icon'
 import { ScolaImageElement } from './elements/img'
 import { ScolaInputElement } from './elements/input'
 import { ScolaInteract } from './helpers/interact'
+import { ScolaLabelElement } from './elements/label'
 import { ScolaMedia } from './helpers/media'
 import { ScolaMessageElement } from './elements/message'
 import { ScolaMutator } from './helpers/mutator'
@@ -44,6 +45,7 @@ import { ScolaWorkerElement } from './elements/worker'
 import { buttonAttrs } from './observers/button-attrs'
 import { buttonAttrsInv } from './observers/button-attrs-inv'
 import { buttonCarousel } from './observers/button-carousel'
+import { buttonCarouselHider } from './observers/button-carousel-hider'
 import { buttonView } from './observers/button-view'
 import { elementAttrs } from './observers/element-attrs'
 import { elementAttrsInv } from './observers/element-attrs-inv'
@@ -57,6 +59,7 @@ import { inputAttrs } from './observers/input-attrs'
 import { inputInput } from './observers/input-input'
 import { inputRangeMedia } from './observers/input-range-media'
 import { inputRangeRequest } from './observers/input-range-request'
+import { tableRowTable } from './observers/table-row-table'
 import { tableView } from './observers/table-view'
 
 export * from '../common'
@@ -86,6 +89,7 @@ export {
   ScolaImageElement,
   ScolaInputElement,
   ScolaInteract,
+  ScolaLabelElement,
   ScolaMedia,
   ScolaMessageElement,
   ScolaMutator,
@@ -124,6 +128,7 @@ export function defineElements (): void {
   ScolaIconElement.define()
   ScolaImageElement.define()
   ScolaInputElement.define()
+  ScolaLabelElement.define()
   ScolaMessageElement.define()
   ScolaPopupElement.define()
   ScolaRecorderElement.define()
@@ -143,6 +148,7 @@ export const observers = {
   'sc-button-attrs': buttonAttrs,
   'sc-button-attrs-inv': buttonAttrsInv,
   'sc-button-carousel': buttonCarousel,
+  'sc-button-carousel-hider': buttonCarouselHider,
   'sc-button-view': buttonView,
   'sc-element-attrs': elementAttrs,
   'sc-element-attrs-inv': elementAttrsInv,
@@ -156,5 +162,6 @@ export const observers = {
   'sc-input-input': inputInput,
   'sc-input-range-media': inputRangeMedia,
   'sc-input-range-request': inputRangeRequest,
+  'sc-table-row-table': tableRowTable,
   'sc-table-view': tableView
 }

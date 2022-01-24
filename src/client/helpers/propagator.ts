@@ -11,15 +11,15 @@ declare global {
 }
 
 export class ScolaPropagator {
-  public static selector = '[is^="sc-"]:not([sc-nodata])'
+  public static selector = ':scope > [is^="sc-"]:not([sc-nodata])'
+
+  public cancel: boolean
 
   public element: ScolaElement
 
   public interact: ScolaInteract
 
   public keydown: string[][]
-
-  public target: string[]
 
   protected handleInteractBound = this.handleInteract.bind(this)
 
@@ -69,56 +69,42 @@ export class ScolaPropagator {
 
       data.forEach((datum) => {
         targets.forEach((target) => {
-          target.dispatchEvent(new ScolaEvent(name, {
-            bubbles: target === this.element,
-            detail: datum,
-            element: this.element,
-            trigger
-          }))
+          window.requestAnimationFrame(() => {
+            target.dispatchEvent(new ScolaEvent(name, {
+              bubbles: target === this.element,
+              detail: datum,
+              element: this.element,
+              trigger
+            }))
+          })
         })
       })
     }
   }
 
   public reset (): void {
+    this.interact.cancel = this.element.hasAttribute('sc-cancel')
     this.interact.keyboard = this.interact.hasKeyboard
     this.keydown = this.parseKeydown()
-
-    this.target = (this.element.getAttribute('sc-data-target') ?? '')
-      .trim()
-      .split(/\s+/u)
   }
 
   public set (data: unknown): void {
-    this.target.forEach((target) => {
-      this.setData(data, target)
-    })
-  }
-
-  public setData (data: unknown, target: string): void {
-    let selector = ''
-    let source: Document | Element | null = null
-
-    if (target === '') {
-      ({ selector } = ScolaPropagator)
-      source = this.element
-    } else {
-      selector = target
-      source = document
-    }
-
-    source
-      .querySelectorAll<ScolaElement>(selector)
-      .forEach((element) => {
-        const name = element.getAttribute('sc-data-name') ?? ''
+    this.element
+      .querySelectorAll<ScolaElement>(ScolaPropagator.selector)
+      .forEach((target) => {
+        const name = (
+          target.getAttribute('sc-data-name') ??
+          target.getAttribute('name') ??
+          ''
+        )
 
         if (
           isStruct(data) &&
           data[name] !== undefined
         ) {
-          element.setData(data[name])
+          target.setData(data[name])
         } else {
-          element.setData(data)
+          target.setData(data)
         }
       })
   }
@@ -128,22 +114,33 @@ export class ScolaPropagator {
   }
 
   protected handleInteract (event: ScolaInteractEvent): boolean {
+    switch (event.type) {
+      case 'start':
+        return this.handleInteractStart(event)
+      default:
+        return false
+    }
+  }
+
+  protected handleInteractStart (event: ScolaInteractEvent): boolean {
     if (this.interact.isKeyboard(event.originalEvent, 'down')) {
-      return this.handleKeydown(event.originalEvent)
+      return this.handleInteractStartKeyboard(event.originalEvent)
     }
 
     return false
   }
 
-  protected handleKeydown (event: KeyboardEvent): boolean {
+  protected handleInteractStartKeyboard (event: KeyboardEvent): boolean {
+    let handled = false
+
     this.keydown.forEach(([binding, boundEvent]) => {
       if (this.isBound(binding, event)) {
-        event.cancelBubble = this.element.hasAttribute('sc-cancel')
+        handled = true
         this.dispatchEvent(boundEvent, [this.element.getData()], event)
       }
     })
 
-    return true
+    return handled
   }
 
   protected handleSet (event: CustomEvent): void {

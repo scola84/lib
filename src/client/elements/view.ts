@@ -158,10 +158,10 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       'sc-views'
     ])
 
+    this.hider?.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
-    this.hider?.connect()
     this.addEventListeners()
 
     if (this.wait) {
@@ -170,10 +170,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       }
     } else {
       this.wait = true
-
-      if (this.save !== '') {
-        this.loadState()
-      }
+      this.loadState()
 
       if (
         !this.hasAttribute('hidden') ||
@@ -218,10 +215,10 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public disconnectedCallback (): void {
+    this.hider?.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
-    this.hider?.disconnect()
     this.removeEventListeners()
 
     if (this.save !== '') {
@@ -233,8 +230,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.go(this.pointer + 1)
   }
 
-  public getData (): string | undefined {
-    return this.view?.html
+  public getData (): View | undefined {
+    return this.view
   }
 
   public go (pointer: number): void {
@@ -257,7 +254,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     const html = ScolaViewElement.views[this.view.name]
 
     if (html === undefined) {
-      this.propagator.dispatch('load', [this.view])
+      this.propagator.dispatch('request', [this.view])
     } else {
       this.setData(html)
     }
@@ -278,7 +275,10 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       this.loadStateFromLocation(window.location.pathname)
     }
 
-    if (this.pointer === -1) {
+    if (
+      this.pointer === -1 &&
+      !this.hasAttribute('hidden')
+    ) {
       this.update()
     }
   }
@@ -372,6 +372,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public update (): void {
+    this.propagator.dispatch('beforeupdate', [this.getData()])
+
     const { view } = this
 
     if (view?.html === undefined) {
@@ -386,6 +388,10 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     }
 
     this.updateAttributes()
+
+    window.requestAnimationFrame(() => {
+      this.propagator.dispatch('update', [this.getData()])
+    })
   }
 
   public updateAttributes (): void {

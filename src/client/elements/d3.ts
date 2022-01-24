@@ -105,6 +105,8 @@ export class ScolaD3Element extends HTMLDivElement implements ScolaElement {
 
   public update (): void {
     if (this.data !== undefined) {
+      this.propagator.dispatch('beforeupdate', [this.getData()])
+
       const dimensions = this.calculateDimensions()
 
       if (this.drawer === undefined) {
@@ -112,6 +114,10 @@ export class ScolaD3Element extends HTMLDivElement implements ScolaElement {
       } else {
         this.updateSvg(dimensions)
       }
+
+      window.requestAnimationFrame(() => {
+        this.propagator.dispatch('update', [this.getData()])
+      })
     }
   }
 

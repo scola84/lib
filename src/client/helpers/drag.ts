@@ -1,4 +1,5 @@
 import type { ScolaElement } from '../elements/element'
+import { ScolaIndexer } from './indexer'
 import { ScolaInteract } from './interact'
 import type { ScolaInteractEvent } from './interact'
 
@@ -8,6 +9,8 @@ export class ScolaDrag {
   public element: ScolaElement
 
   public handle: boolean
+
+  public indexer: ScolaIndexer
 
   public interact: ScolaInteract
 
@@ -23,6 +26,7 @@ export class ScolaDrag {
 
   public constructor (element: ScolaElement) {
     this.element = element
+    this.indexer = new ScolaIndexer()
     this.interact = new ScolaInteract(element)
     this.template = this.element.mutator.selectTemplate('drag')
     this.reset()
@@ -77,22 +81,33 @@ export class ScolaDrag {
         document.body.appendChild(template)
 
         if (typeof element?.setData === 'function') {
+          this.indexer.set(element)
           element.setData(this.element.getData())
-          element.style.setProperty('z-index', '1000')
           event.dataTransfer.setDragImage(element, 0, 0)
         }
 
         window.requestAnimationFrame(() => {
-          element?.remove()
+          if (element !== null) {
+            this.indexer.remove(element)
+            element.remove()
+          }
         })
       }
     }
   }
 
   protected handleInteract (event: ScolaInteractEvent): boolean {
+    switch (event.type) {
+      case 'start':
+        return this.handleInteractStart(event)
+      default:
+        return false
+    }
+  }
+
+  protected handleInteractStart (event: ScolaInteractEvent): boolean {
     if (
       this.handle &&
-      event.type === 'start' &&
       event.originalEvent.target instanceof HTMLElement &&
       event.originalEvent.target.closest('[sc-handle="drag"]') !== null
     ) {

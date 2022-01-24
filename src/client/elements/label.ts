@@ -1,13 +1,9 @@
-import { absorb, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
-import type { Struct } from '../../common'
 
-export class ScolaTableRowElement extends HTMLTableRowElement implements ScolaElement {
-  public datamap: Struct = {}
-
+export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement {
   public mutator: ScolaMutator
 
   public observer: ScolaObserver
@@ -22,8 +18,8 @@ export class ScolaTableRowElement extends HTMLTableRowElement implements ScolaEl
   }
 
   public static define (): void {
-    customElements.define('sc-table-row', ScolaTableRowElement, {
-      extends: 'tr'
+    customElements.define('sc-label', ScolaLabelElement, {
+      extends: 'label'
     })
   }
 
@@ -39,17 +35,11 @@ export class ScolaTableRowElement extends HTMLTableRowElement implements ScolaEl
     this.propagator.disconnect()
   }
 
-  public getData (): Struct {
-    return absorb(this.dataset, this.datamap, true)
-  }
+  public getData (): void { }
 
   public reset (): void {}
 
   public setData (data: unknown): void {
-    if (isStruct(data)) {
-      Object.assign(this.datamap, data)
-    }
-
     this.propagator.set(data)
   }
 

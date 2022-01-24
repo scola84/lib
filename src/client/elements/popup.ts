@@ -2,6 +2,7 @@ import { absorb, isStruct } from '../../common'
 import { ScolaBreakpoint } from '../helpers/breakpoint'
 import type { ScolaElement } from './element'
 import type { ScolaEvent } from '../helpers/event'
+import { ScolaIndexer } from '../helpers/indexer'
 import { ScolaInteract } from '../helpers/interact'
 import type { ScolaInteractEvent } from '../helpers/interact'
 import { ScolaMutator } from '../helpers/mutator'
@@ -53,6 +54,8 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public immediate = true
 
+  public indexer: ScolaIndexer
+
   public interact: ScolaInteract
 
   public left: string
@@ -82,6 +85,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   public constructor () {
     super()
     this.breakpoint = new ScolaBreakpoint(this)
+    this.indexer = new ScolaIndexer()
     this.interact = new ScolaInteract(this)
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
@@ -158,14 +162,16 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   public setData (data: unknown): void {
     if (isStruct(data)) {
       Object.assign(this.datamap, data)
-      this.propagator.set(data)
     }
+
+    this.propagator.set(data)
   }
 
   public show (): void {
     this.propagator.dispatch('beforeshow', [this.getData()])
     this.style.removeProperty('display')
     this.style.setProperty('opacity', '0')
+    this.indexer.set(this)
 
     const position = {
       left: this.left,
@@ -332,6 +338,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
     if (this.hasAttribute('hidden')) {
       this.style.setProperty('display', 'none', 'important')
+      this.indexer.remove(this)
       this.propagator.dispatch('hide', [this.getData()])
     } else {
       this.propagator.dispatch('show', [this.getData()])
@@ -351,15 +358,22 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleInteract (event: ScolaInteractEvent): boolean {
-    if (event.type === 'start') {
-      if (
-        !this.hasAttribute('hidden') && (
-          this.interact.isKey(event.originalEvent, 'Escape') ||
-          !event.originalEvent.composedPath().includes(this)
-        )
-      ) {
-        this.toggleAttribute('hidden', true)
-      }
+    switch (event.type) {
+      case 'start':
+        return this.handleInteractStart(event)
+      default:
+        return false
+    }
+  }
+
+  protected handleInteractStart (event: ScolaInteractEvent): boolean {
+    if (
+      !this.hasAttribute('hidden') && (
+        this.interact.isKey(event.originalEvent, 'Escape') ||
+        !event.originalEvent.composedPath().includes(this)
+      )
+    ) {
+      this.toggleAttribute('hidden', true)
     }
 
     return false

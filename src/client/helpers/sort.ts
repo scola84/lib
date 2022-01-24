@@ -102,14 +102,12 @@ export class ScolaSort {
           let row: HTMLElement | null = null
 
           if (
-            this.element.select?.handle === false &&
-            this.element.select.rows.length === 1 &&
+            this.element.select?.rows.length === 1 &&
             this.element.select.firstRow instanceof ScolaTableRowElement
           ) {
             row = this.element.select.firstRow
           } else if (
-            this.element.drag?.handle === true &&
-            this.element.drag.activeElement instanceof ScolaTableRowElement
+            this.element.drag?.activeElement instanceof ScolaTableRowElement
           ) {
             row = this.element.drag.activeElement
           }
@@ -132,14 +130,23 @@ export class ScolaSort {
   }
 
   protected handleInteract (event: ScolaInteractEvent): boolean {
+    switch (event.type) {
+      case 'start':
+        return this.handleInteractStart(event)
+      default:
+        return false
+    }
+  }
+
+  protected handleInteractStart (event: ScolaInteractEvent): boolean {
     if (this.interact.isKeyboard(event.originalEvent, 'down')) {
-      return this.handleKeydown(event.originalEvent)
+      return this.handleInteractStartKeyboard(event.originalEvent)
     }
 
     return false
   }
 
-  protected handleKeydown (event: KeyboardEvent): boolean {
+  protected handleInteractStartKeyboard (event: KeyboardEvent): boolean {
     let handled = false
 
     if (

@@ -99,9 +99,7 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
     this.name = this.getAttribute('sc-name') ?? ''
   }
 
-  public setData (data: unknown): void {
-    this.propagator.set(data)
-  }
+  public setData (): void {}
 
   public update (): void {}
 
@@ -120,7 +118,6 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
 
   protected handleMessage (event: MessageEvent): void {
     this.propagator.dispatch('message', [event.data], event)
-    this.propagator.set(event.data)
   }
 
   protected handlePost (event: CustomEvent): void {

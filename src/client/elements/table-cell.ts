@@ -48,8 +48,9 @@ export class ScolaTableCellElement extends HTMLTableCellElement implements Scola
   public setData (data: unknown): void {
     if (isStruct(data)) {
       Object.assign(this.datamap, data)
-      this.propagator.set(data)
     }
+
+    this.propagator.set(data)
   }
 
   public update (): void {}

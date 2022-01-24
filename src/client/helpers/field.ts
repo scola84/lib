@@ -14,8 +14,6 @@ export class ScolaField {
 
   public interact: ScolaInteract
 
-  protected handleFocusBound = this.handleFocus.bind(this)
-
   protected handleInputBound = this.handleInput.bind(this)
 
   protected handleInteractBound = this.handleInteract.bind(this)
@@ -66,7 +64,6 @@ export class ScolaField {
       this.handleInputBound = debounce(this.debounce, this.handleInputBound)
     }
 
-    this.element.addEventListener('focus', this.handleFocusBound)
     this.element.addEventListener('input', this.handleInputBound)
   }
 
@@ -75,10 +72,6 @@ export class ScolaField {
       this.element.error = undefined
       this.element.toggleAttribute('sc-error', false)
     }
-  }
-
-  protected handleFocus (): void {
-    this.clearError()
   }
 
   protected handleInput (event: Event): void {
@@ -137,23 +130,32 @@ export class ScolaField {
   }
 
   protected handleInteract (event: ScolaInteractEvent): boolean {
-    if (this.interact.isKeyboard(event.originalEvent, 'down')) {
-      return this.handleKeydown(event.originalEvent)
+    switch (event.type) {
+      case 'start':
+        return this.handleInteractStart(event)
+      default:
+        return false
+    }
+  }
+
+  protected handleInteractStart (event: ScolaInteractEvent): boolean {
+    if (this.interact.isKeyboard(event.originalEvent)) {
+      return this.handleInteractStartKeyboard(event.originalEvent)
     }
 
     return false
   }
 
-  protected handleKeydown (event: KeyboardEvent): boolean {
+  protected handleInteractStartKeyboard (event: KeyboardEvent): boolean {
     if (this.interact.isKey(event, 'Enter')) {
-      this.handleKeydownEnter(event)
+      this.handleInteractStartKeyboardEnter(event)
       return true
     }
 
     return false
   }
 
-  protected handleKeydownEnter (event: KeyboardEvent): void {
+  protected handleInteractStartKeyboardEnter (event: KeyboardEvent): void {
     let on = 'enter'
 
     if (event.ctrlKey) {
@@ -167,7 +169,6 @@ export class ScolaField {
 
   protected removeEventListeners (): void {
     this.element.removeEventListener('input', this.handleInputBound)
-    this.element.removeEventListener('focus', this.handleFocusBound)
   }
 
   protected setError (error: Struct): void {
@@ -186,7 +187,16 @@ export class ScolaField {
 
   protected setValue (value: Primitive): void {
     this.clearError()
-    this.element.value = value.toString()
+
+    if (
+      this.element.type === 'checkbox' ||
+      this.element.type === 'radio'
+    ) {
+      this.element.toggleAttribute('checked', value.toString() === this.element.value)
+    } else {
+      this.element.value = value.toString()
+    }
+
     this.element.update()
   }
 }

@@ -8,7 +8,7 @@
     bottom: 0;
     left: 0;
     opacity: 0;
-    position: absolute;
+    position: fixed;
     right: 0;
     top: 0;
     transition-property: opacity;
@@ -130,18 +130,14 @@
 
   [sc-position~="absolute@#{$name}"] {
     position: absolute;
-    z-index: 1;
+  }
+
+  [sc-position~="fixed@#{$name}"] {
+    position: fixed;
   }
 
   [sc-position~="relative@#{$name}"] {
     position: relative;
-  }
-
-  [sc-position-x~="center@#{$name}"],
-  [sc-position-x~="end@#{$name}"],
-  [sc-position-x~="start@#{$name}"] {
-    position: absolute;
-    z-index: 1;
   }
 
   [sc-position-x~="center@#{$name}"] {
@@ -157,13 +153,6 @@
   [sc-position-x~="start@#{$name}"],
   [dir="rtl"] [sc-position-x~="end@#{$name}"] {
     left: 0;
-  }
-
-  [sc-position-y~="bottom@#{$name}"],
-  [sc-position-y~="center@#{$name}"],
-  [sc-position-y~="top@#{$name}"] {
-    position: absolute;
-    z-index: 1;
   }
 
   [sc-position-y~="bottom@#{$name}"] {

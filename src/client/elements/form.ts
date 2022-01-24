@@ -12,6 +12,10 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
 
   public propagator: ScolaPropagator
 
+  public get hasFiles (): boolean {
+    return this.querySelector('[type="file"]') !== null
+  }
+
   protected handleSubmitBound = this.handleSubmit.bind(this)
 
   public constructor () {
@@ -41,21 +45,46 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     this.removeEventListeners()
   }
 
-  public getData (): FormData {
-    return new FormData(this)
+  public getData (): FormData | URLSearchParams {
+    const formData = new FormData(this)
+
+    if (this.hasFiles) {
+      return formData
+    }
+
+    return Array
+      .from(formData.entries())
+      .reduce((params, [name, value]) => {
+        params.append(name, String(value))
+        return params
+      }, new URLSearchParams())
   }
 
   public reset (): void {}
 
   public setData (data: unknown): void {
     this.propagator.set(data)
-    this.scrollToError()
+    this.focusErrorElement()
   }
 
   public update (): void {}
 
   protected addEventListeners (): void {
     this.addEventListener('submit', this.handleSubmitBound)
+  }
+
+  protected focusErrorElement (): void {
+    const errorElement = this.querySelector('[sc-error]')
+
+    if (errorElement instanceof HTMLElement) {
+      if (errorElement.parentElement?.hasAttribute('tabindex') === false) {
+        errorElement.parentElement.setAttribute('tabindex', '0')
+        errorElement.parentElement.focus()
+        errorElement.parentElement.removeAttribute('tabindex')
+      }
+
+      errorElement.focus()
+    }
   }
 
   protected handleSubmit (event: Event): void {
@@ -69,13 +98,5 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
 
   protected removeEventListeners (): void {
     this.removeEventListener('submit', this.handleSubmitBound)
-  }
-
-  protected scrollToError (): void {
-    this
-      .querySelector('[sc-error]')
-      ?.scrollIntoView({
-        behavior: 'smooth'
-      })
   }
 }

@@ -66,6 +66,8 @@ export class ScolaInteract {
 
   public callback?: Callback
 
+  public cancel = false
+
   public element: HTMLElement
 
   public event: ScolaInteractEvent
@@ -201,16 +203,16 @@ export class ScolaInteract {
     )
   }
 
-  public isKeyboard (event: InteractEvent, subtype: string): event is KeyboardEvent {
-    return event.type === `key${subtype}`
+  public isKeyboard (event: InteractEvent, subtype = ''): event is KeyboardEvent {
+    return event.type.startsWith(`key${subtype}`)
   }
 
-  public isMouse (event: InteractEvent, subtype: string): event is MouseEvent {
-    return event.type === `mouse${subtype}`
+  public isMouse (event: InteractEvent, subtype = ''): event is MouseEvent {
+    return event.type.startsWith(`mouse${subtype}`)
   }
 
-  public isTouch (event: InteractEvent, subtype: string): event is TouchEvent {
-    return event.type === `touch${subtype}`
+  public isTouch (event: InteractEvent, subtype = ''): event is TouchEvent {
+    return event.type.startsWith(`touch${subtype}`)
   }
 
   public observe (callback: Callback): void {
@@ -233,19 +235,35 @@ export class ScolaInteract {
 
     if (this.keyboard) {
       target.addEventListener('keydown', this.handleKeydownBound)
+
+      if (target !== this.element) {
+        this.element.addEventListener('keydown', this.handleKeydownBound)
+      }
     }
 
     if (this.mouse) {
       target.addEventListener('mousedown', this.handleMousedownBound)
+
+      if (target !== this.element) {
+        this.element.addEventListener('mousedown', this.handleMousedownBound)
+      }
     }
 
     if (this.touch) {
       target.addEventListener('touchstart', this.handleTouchstartBound)
+
+      if (target !== this.element) {
+        this.element.addEventListener('touchstart', this.handleTouchstartBound)
+      }
     }
 
     if (this.wheel) {
       target.addEventListener('wheel', this.handleWheelBound)
       target.addEventListener('wheel', this.handleWheelPreventBound)
+
+      if (target !== this.element) {
+        this.element.addEventListener('wheel', this.handleWheelBound)
+      }
     }
   }
 
@@ -397,7 +415,14 @@ export class ScolaInteract {
       this.event.distanceY === 0
     ) {
       this.event.type = 'click'
-      this.callback?.(this.event)
+
+      const handled = this.callback?.(this.event)
+
+      if (handled === true) {
+        if (this.cancel) {
+          event.stopPropagation()
+        }
+      }
     }
   }
 
@@ -477,6 +502,10 @@ export class ScolaInteract {
     const handled = this.callback?.(this.event)
 
     if (handled === true) {
+      if (this.cancel) {
+        event.stopPropagation()
+      }
+
       this.addEventListenersMoveEnd()
     }
   }
@@ -493,6 +522,10 @@ export class ScolaInteract {
     const handled = this.callback?.(this.event)
 
     if (handled === true) {
+      if (this.cancel) {
+        event.stopPropagation()
+      }
+
       this.addEventListenersMoveEnd()
     }
   }
@@ -508,6 +541,10 @@ export class ScolaInteract {
     const handled = this.callback?.(this.event)
 
     if (handled === true) {
+      if (this.cancel) {
+        event.stopPropagation()
+      }
+
       this.addEventListenersMoveEnd()
     }
   }
@@ -610,19 +647,35 @@ export class ScolaInteract {
 
     if (this.keyboard) {
       target.removeEventListener('keydown', this.handleKeydownBound)
+
+      if (target !== this.element) {
+        this.element.removeEventListener('keydown', this.handleKeydownBound)
+      }
     }
 
     if (this.mouse) {
       target.removeEventListener('mousedown', this.handleMousedownBound)
+
+      if (target !== this.element) {
+        this.element.removeEventListener('mousedown', this.handleMousedownBound)
+      }
     }
 
     if (this.touch) {
       target.removeEventListener('touchstart', this.handleTouchstartBound)
+
+      if (target !== this.element) {
+        this.element.removeEventListener('touchstart', this.handleTouchstartBound)
+      }
     }
 
     if (this.wheel) {
       target.removeEventListener('wheel', this.handleWheelBound)
       target.removeEventListener('wheel', this.handleWheelPreventBound)
+
+      if (target !== this.element) {
+        this.element.removeEventListener('wheel', this.handleWheelBound)
+      }
     }
   }
 

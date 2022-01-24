@@ -1,8 +1,9 @@
-import { absorb, isArray, isNil, isStruct } from '../../common'
+import { absorb, isArray, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
+import type { ScolaViewElement } from './view'
 import type { Struct } from '../../common'
 
 declare global {
@@ -16,15 +17,15 @@ declare global {
 interface Request {
   body: FormData | URLSearchParams | null
   method: string
-  url: string
+  url: string | null
 }
 
 export class ScolaRequestElement extends HTMLObjectElement implements ScolaElement {
   public static origin = window.location.origin
 
-  public datamap: Struct = {}
-
   public enctype: string
+
+  public exact: boolean
 
   public method: string
 
@@ -36,9 +37,9 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
 
   public propagator: ScolaPropagator
 
-  public url: URL
+  public url: string
 
-  public view?: HTMLElement
+  public view?: ScolaViewElement
 
   public wait: boolean
 
@@ -58,7 +59,7 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
 
   public constructor () {
     super()
-    this.view = this.closest<HTMLElement>('[is="sc-view"]') ?? undefined
+    this.view = this.closest<ScolaViewElement>('[is="sc-view"]') ?? undefined
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
@@ -91,23 +92,17 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
     this.stop()
   }
 
-  public getData (): Struct {
-    return absorb(this.dataset, this.datamap, true)
-  }
+  public getData (): void {}
 
   public reset (): void {
     this.enctype = this.getAttribute('sc-enctype') ?? 'application/x-www-form-urlencoded'
+    this.exact = this.hasAttribute('sc-exact')
     this.method = this.getAttribute('sc-method') ?? 'GET'
-    this.url = new URL(`${this.origin}${this.getAttribute('sc-path') ?? ''}`)
+    this.url = `${this.origin}${this.getAttribute('sc-path') ?? ''}`
     this.wait = this.hasAttribute('sc-wait')
   }
 
-  public setData (data: unknown): void {
-    if (isStruct(data)) {
-      Object.assign(this.datamap, data)
-      this.update()
-    }
-  }
+  public setData (): void {}
 
   public start (options?: Struct): void {
     if (this.xhr === undefined) {
@@ -128,9 +123,7 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
     }
   }
 
-  public update (): void {
-    this.start()
-  }
+  public update (): void {}
 
   protected addEventListeners (): void {
     this.addEventListener('sc-request-start', this.handleStartBound)
@@ -141,12 +134,12 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
   protected createRequest (options?: Struct): Request {
     const method = String(options?.method ?? this.method)
 
-    let { url } = this
+    let { url } = this as { url: string | null }
     let body: FormData | URLSearchParams | null = null
 
     if (method === 'GET') {
       url = this.createRequestUrl({
-        ...this.view?.dataset,
+        ...this.view?.view?.params,
         ...options
       })
     } else if (
@@ -156,7 +149,7 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
       ({ body } = options)
     } else {
       body = this.createRequestBody({
-        ...this.view?.dataset,
+        ...this.view?.view?.params,
         ...options
       })
     }
@@ -164,7 +157,7 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
     return {
       body,
       method,
-      url: url.toString()
+      url
     }
   }
 
@@ -178,14 +171,16 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
     }
 
     Object
-      .entries(absorb(this.getData(), data))
-      .map((key, value) => {
+      .entries(absorb(this.dataset, data))
+      .map<[string, unknown[]]>(([key, value]) => {
+      /* eslint-disable @typescript-eslint/indent */
         if (isArray(value)) {
           return [key, value]
         }
 
         return [key, [value]]
       })
+      /* eslint-enable @typescript-eslint/indent */
       .forEach(([key, values]) => {
         values.forEach((value) => {
           if (
@@ -202,21 +197,28 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
     return body
   }
 
-  protected createRequestUrl (data?: Struct): URL {
+  protected createRequestUrl (data?: Struct): string | null {
+    const url = new URL(this.url)
+
     Object
-      .entries(absorb(this.getData(), data, true))
+      .entries(absorb(this.dataset, data))
       .forEach(([key, value]) => {
-        if (
-          isNil(value) ||
-          value === ''
-        ) {
-          this.url.searchParams.delete(key)
-        } else {
-          this.url.searchParams.set(key, String(value))
-        }
+        url.searchParams.set(key, String(value))
       })
 
-    return this.url
+    if (this.exact) {
+      const exact = Object
+        .keys(this.dataset)
+        .every((key) => {
+          return url.searchParams.has(key)
+        })
+
+      if (!exact) {
+        return null
+      }
+    }
+
+    return url.toString()
   }
 
   protected handleError (error: unknown): void {
@@ -228,6 +230,8 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
 
   protected handleLoadend (event: Event): void {
     if (this.xhr !== undefined) {
+      this.setAttribute('sc-state', this.xhr.readyState.toString())
+
       let data: Struct | string | null = null
 
       const contentType = this.xhr.getResponseHeader('content-type')
@@ -239,26 +243,18 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
       }
 
       if (this.xhr.status < 400) {
-        this.propagator.dispatch('ok', [data], event)
+        this.propagator.dispatch('message', [data], event)
       } else {
-        const error = {
+        this.propagator.dispatch('error', [{
           body: this.xhr.responseText,
           code: `err_${this.xhr.status}`,
           message: this.xhr.statusText
-        }
+        }], event)
 
         if (isStruct(data)) {
-          this.propagator.dispatch('error', [{
-            ...error,
-            ...data
-          }], event)
-        } else {
-          this.propagator.dispatch('error', [error], event)
+          this.propagator.dispatch('errordata', [data], event)
         }
       }
-
-      this.setAttribute('sc-state', this.xhr.readyState.toString())
-      this.propagator.set(data)
     }
 
     this.xhr = undefined
@@ -296,22 +292,24 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
   }
 
   protected send (request: Request): void {
-    this.xhr = new window.XMLHttpRequest()
+    if (request.url !== null) {
+      this.xhr = new window.XMLHttpRequest()
 
-    if (request.method !== 'GET') {
-      this.xhr.upload.addEventListener('progress', this.handleProgressBound)
-    }
+      if (request.method !== 'GET') {
+        this.xhr.upload.addEventListener('progress', this.handleProgressBound)
+      }
 
-    this.xhr.addEventListener('error', this.handleErrorBound)
-    this.xhr.addEventListener('loadend', this.handleLoadendBound)
-    this.xhr.addEventListener('progress', this.handleProgressBound)
+      this.xhr.addEventListener('error', this.handleErrorBound)
+      this.xhr.addEventListener('loadend', this.handleLoadendBound)
+      this.xhr.addEventListener('progress', this.handleProgressBound)
 
-    try {
-      this.xhr.open(request.method, request.url)
-      this.xhr.send(request.body)
-      this.setAttribute('sc-state', this.xhr.readyState.toString())
-    } catch (error: unknown) {
-      this.handleError(error)
+      try {
+        this.xhr.open(request.method, request.url)
+        this.xhr.send(request.body)
+        this.setAttribute('sc-state', this.xhr.readyState.toString())
+      } catch (error: unknown) {
+        this.handleError(error)
+      }
     }
   }
 }

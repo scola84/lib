@@ -10,8 +10,6 @@ import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 
 export class ScolaButtonElement extends HTMLButtonElement implements ScolaElement {
-  public cancel: boolean
-
   public datamap: Struct = {}
 
   public drag?: ScolaDrag
@@ -76,41 +74,52 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   }
 
   public reset (): void {
-    this.cancel = this.hasAttribute('sc-cancel')
-    this.interact.keyboard = this.interact.hasKeyboard
-    this.interact.mouse = this.interact.hasMouse
-    this.interact.touch = this.interact.hasTouch
+    if (this.hasAttribute('sc-onclick')) {
+      this.interact.cancel = this.hasAttribute('sc-cancel')
+      this.interact.keyboard = this.interact.hasKeyboard
+      this.interact.mouse = this.interact.hasMouse
+      this.interact.touch = this.interact.hasTouch
+    }
   }
 
   public setData (data: unknown): void {
     if (isStruct(data)) {
       Object.assign(this.datamap, data)
-      this.propagator.set(data)
     }
+
+    this.propagator.set(data)
   }
 
   public update (): void {}
 
   protected handleInteract (event: ScolaInteractEvent): boolean {
+    switch (event.type) {
+      case 'click':
+        return this.handleInteractClick(event)
+      case 'start':
+        return this.handleInteractStart(event)
+      default:
+        return false
+    }
+  }
+
+  protected handleInteractClick (event: ScolaInteractEvent): boolean {
+    this.propagator.dispatch('click', [this.getData()], event.originalEvent)
+    return true
+  }
+
+  protected handleInteractStart (event: ScolaInteractEvent): boolean {
     let handled = false
 
-    if (event.type === 'click') {
-      event.originalEvent.cancelBubble = this.cancel
-      this.propagator.dispatch('click', [this.getData()], event.originalEvent)
-      handled = true
-    } else if (event.type === 'start') {
-      if (this.interact.isKeyboard(event.originalEvent, 'down')) {
-        if (
-          this.interact.isKey(event.originalEvent, 'Enter') ||
-          this.interact.isKey(event.originalEvent, 'Space')
-        ) {
-          event.originalEvent.cancelBubble = this.cancel
-          handled = true
-        }
-      } else {
-        event.originalEvent.cancelBubble = this.cancel
+    if (this.interact.isKeyboard(event.originalEvent)) {
+      if (
+        this.interact.isKey(event.originalEvent, 'Enter') ||
+        this.interact.isKey(event.originalEvent, 'Space')
+      ) {
         handled = true
       }
+    } else {
+      handled = true
     }
 
     return handled

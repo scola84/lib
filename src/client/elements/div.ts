@@ -19,8 +19,6 @@ declare global {
 }
 
 export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
-  public cancel: boolean
-
   public datamap: Struct = {}
 
   public drag?: ScolaDrag
@@ -115,17 +113,20 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   public reset (): void {
-    this.cancel = this.hasAttribute('sc-cancel')
-    this.interact.keyboard = this.interact.hasKeyboard
-    this.interact.mouse = this.interact.hasMouse
-    this.interact.touch = this.interact.hasTouch
+    if (this.hasAttribute('sc-onclick')) {
+      this.interact.cancel = this.hasAttribute('sc-cancel')
+      this.interact.keyboard = this.interact.hasKeyboard
+      this.interact.mouse = this.interact.hasMouse
+      this.interact.touch = this.interact.hasTouch
+    }
   }
 
   public setData (data: unknown): void {
     if (isStruct(data)) {
       Object.assign(this.datamap, data)
-      this.propagator.set(data)
     }
+
+    this.propagator.set(data)
   }
 
   public update (): void {}
@@ -146,18 +147,33 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleInteract (event: ScolaInteractEvent): boolean {
+    switch (event.type) {
+      case 'click':
+        return this.handleInteractClick(event)
+      case 'start':
+        return this.handleInteractStart(event)
+      default:
+        return false
+    }
+  }
+
+  protected handleInteractClick (event: ScolaInteractEvent): boolean {
+    this.propagator.dispatch('click', [this.getData()], event.originalEvent)
+    return true
+  }
+
+  protected handleInteractStart (event: ScolaInteractEvent): boolean {
     let handled = false
 
-    if (event.type === 'click') {
+    if (this.interact.isKeyboard(event.originalEvent)) {
       if (
-        !this.interact.isKeyboard(event.originalEvent, 'up') ||
         this.interact.isKey(event.originalEvent, 'Enter') ||
         this.interact.isKey(event.originalEvent, 'Space')
       ) {
-        this.propagator.dispatch('click', [this.getData()], event.originalEvent)
-        event.originalEvent.cancelBubble = this.cancel
         handled = true
       }
+    } else {
+      handled = true
     }
 
     return handled

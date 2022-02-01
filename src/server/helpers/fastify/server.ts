@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyPluginCallback, FastifyServerOptions } from 'fastify'
+import type { Server as HttpServer, IncomingMessage, ServerResponse } from 'http'
 import type { Struct } from '../../../common'
 import { fastify } from 'fastify'
 import fastifyCookie from 'fastify-cookie'
@@ -38,7 +39,7 @@ export interface ServerOptions extends FastifyServerOptions {
 /**
  * Manages routes.
  */
-export class Server {
+export class FastifyServer {
   /**
    * The `fastify` address.
    *
@@ -52,6 +53,13 @@ export class Server {
    * @see https://www.npmjs.com/package/fastify
    */
   public fastify?: FastifyInstance
+
+  /**
+   * The Fastify handler.
+   *
+   * @see https://www.npmjs.com/package/fastify
+   */
+  public handle?: (req: IncomingMessage, res: ServerResponse) => void
 
   /**
    * The logger.
@@ -80,6 +88,13 @@ export class Server {
    * @defaultValue 80
    */
   public port: number
+
+  /**
+   * The `http` server.
+   *
+   * @see https://nodejs.org/api/http.html#class-httpserver
+   */
+  public server: HttpServer
 
   /**
    * Creates a server.
@@ -114,6 +129,10 @@ export class Server {
         customOptions: {
           allErrors: true
         }
+      },
+      serverFactory: (handle) => {
+        this.handle = handle
+        return this.server
       },
       ...this.options
     })

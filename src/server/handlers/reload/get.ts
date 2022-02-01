@@ -2,18 +2,18 @@ import 'fastify-sse-v2'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { readFileSync, watch } from 'fs-extra'
 import type { FSWatcher } from 'fs-extra'
+import { FastifyHandler } from '../../helpers'
+import type { FastifyHandlerOptions } from '../../helpers'
 import { PassThrough } from 'stream'
-import { RouteHandler } from '../../helpers'
-import type { RouteHandlerOptions } from '../../helpers'
 import { debounce } from 'throttle-debounce'
 
-export interface ReloadGetHandlerOptions extends Partial<RouteHandlerOptions> {
+export interface ReloadGetHandlerOptions extends Partial<FastifyHandlerOptions> {
   debounce?: number
   event?: string
   file?: string
 }
 
-export class ReloadGetHandler extends RouteHandler {
+export class ReloadGetHandler extends FastifyHandler {
   public debounce: number
 
   public event: string

@@ -1,12 +1,12 @@
 import type { FastifyReply, FastifyRequest, FastifySchema, RouteOptions, ValidationResult } from 'fastify'
 import type { Database } from '../sql'
-import type { Server } from './server'
+import type { FastifyServer } from './server'
 import type { Struct } from '../../../common'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { isArray } from '../../../common'
 import type pino from 'pino'
 
-export interface RouteHandlerOptions extends RouteOptions {
+export interface FastifyHandlerOptions extends RouteOptions {
   /**
    * The database.
    *
@@ -26,7 +26,7 @@ export interface RouteHandlerOptions extends RouteOptions {
    *
    * @see {@link Server}
    */
-  server: Server
+  server: FastifyServer
 
   /**
    * The store.
@@ -39,13 +39,13 @@ export interface RouteHandlerOptions extends RouteOptions {
 /**
  * Handles a route.
  */
-export abstract class RouteHandler {
+export abstract class FastifyHandler {
   /**
    * The route options.
    *
    * @see https://github.com/fastify/fastify/blob/main/docs/Routes.md
    */
-  public static options?: Partial<RouteHandlerOptions>
+  public static options?: Partial<FastifyHandlerOptions>
 
   /**
    * The database.
@@ -92,7 +92,7 @@ export abstract class RouteHandler {
    *
    * @see {@link Server}
    */
-  public server: Server
+  public server: FastifyServer
 
   /**
    * The store.
@@ -114,9 +114,9 @@ export abstract class RouteHandler {
    * @param options - The route handler options
    * @throws server is undefined
    */
-  public constructor (options: Partial<RouteHandlerOptions>) {
+  public constructor (options: Partial<FastifyHandlerOptions>) {
     const handlerOptions = {
-      ...RouteHandler.options,
+      ...FastifyHandler.options,
       ...options
     }
 

@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { ScolaInteract } from './interact'
 import type { ScolaInteractEvent } from './interact'
 import type { ScolaTableElement } from '../elements/table'

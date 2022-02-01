@@ -14,7 +14,7 @@ import { promise } from 'fastq'
 import { sql } from '../sql'
 import waitUntil from 'async-wait-until'
 
-export interface TaskRunnerOptions {
+export interface QueueHandlerOptions {
   /**
    * The concurrency.
    *
@@ -58,7 +58,7 @@ export interface TaskRunnerOptions {
   /**
    * The schema.
    *
-   * If it contains an `options` and/or `payload` schema the task runner will validate the options and/or payload of the task run respectively.
+   * If it contains an `options` and/or `payload` schema the queue handler will validate the options and/or payload of the task run respectively.
    *
    * @see https://www.npmjs.com/package/fluent-json-schema
    */
@@ -82,13 +82,13 @@ export interface TaskRunnerOptions {
 /**
  * Runs a task.
  */
-export abstract class TaskRunner {
+export abstract class QueueHandler {
   /**
-   * The task runner options.
+   * The queue handler options.
    *
    * @see https://github.com/fastify/fastify/blob/main/docs/Routes.md
    */
-  public static options?: Partial<TaskRunnerOptions>
+  public static options?: Partial<QueueHandlerOptions>
 
   /**
    * The concurrency.
@@ -140,7 +140,7 @@ export abstract class TaskRunner {
   /**
    * The schema.
    *
-   * If it contains an `options` and/or `payload` schema the task runner will validate the options and/or payload of the task run respectively.
+   * If it contains an `options` and/or `payload` schema the queue handler will validate the options and/or payload of the task run respectively.
    *
    * @see https://www.npmjs.com/package/fluent-json-schema
    */
@@ -175,50 +175,50 @@ export abstract class TaskRunner {
   public validator?: Ajv
 
   /**
-   * Creates a task runner.
+   * Creates a queue handler.
    *
    * Merges the static class `options` and the constructor `options`.
    *
-   * Adds the task runner to the queuer.
+   * Adds the queue handler to the queuer.
    *
-   * @param options - The task runner options
+   * @param options - The queue handler options
    * @throws database is undefined
    * @throws name is undefined
    * @throws store is undefined
    */
-  public constructor (options: Partial<TaskRunnerOptions>) {
-    const runnerOptions = {
-      ...TaskRunner.options,
+  public constructor (options: Partial<QueueHandlerOptions>) {
+    const handlerOptions = {
+      ...QueueHandler.options,
       ...options
     }
 
-    if (runnerOptions.database === undefined) {
+    if (handlerOptions.database === undefined) {
       throw new Error('Option "database" is undefined')
     }
 
-    if (runnerOptions.name === undefined) {
+    if (handlerOptions.name === undefined) {
       throw new Error('Option "name is undefined')
     }
 
-    if (runnerOptions.store === undefined) {
+    if (handlerOptions.store === undefined) {
       throw new Error('Option "store" is undefined')
     }
 
-    if (runnerOptions.queuer === undefined) {
+    if (handlerOptions.queuer === undefined) {
       throw new Error('Option "queuer" is undefined')
     }
 
-    this.concurrency = Number(runnerOptions.concurrency ?? process.env.QUEUE_CONCURRENCY ?? 1)
-    this.database = runnerOptions.database
-    this.host = runnerOptions.host ?? process.env.HOSTNAME ?? ''
-    this.name = runnerOptions.name
-    this.queuer = runnerOptions.queuer
-    this.schema = runnerOptions.schema ?? {}
-    this.store = runnerOptions.store
-    this.timeout = runnerOptions.timeout ?? 5 * 60 * 1000
+    this.concurrency = Number(handlerOptions.concurrency ?? process.env.QUEUE_CONCURRENCY ?? 1)
+    this.database = handlerOptions.database
+    this.host = handlerOptions.host ?? process.env.HOSTNAME ?? ''
+    this.name = handlerOptions.name
+    this.queuer = handlerOptions.queuer
+    this.schema = handlerOptions.schema ?? {}
+    this.store = handlerOptions.store
+    this.timeout = handlerOptions.timeout ?? 5 * 60 * 1000
 
-    this.logger = runnerOptions.logger?.child({
-      name: runnerOptions.name
+    this.logger = handlerOptions.logger?.child({
+      name: handlerOptions.name
     })
 
     this.queuer.add(this)
@@ -286,7 +286,7 @@ export abstract class TaskRunner {
   }
 
   /**
-   * Sets up the task runner.
+   * Sets up the queue handler.
    *
    * Sets `queue`, `storeDuplicate` and `validator`.
    *
@@ -305,7 +305,7 @@ export abstract class TaskRunner {
   }
 
   /**
-   * Starts the task runner.
+   * Starts the queue handler.
    *
    * Calls `setup` and `push`.
    *
@@ -316,7 +316,7 @@ export abstract class TaskRunner {
       concurrency: this.concurrency,
       host: this.host,
       timeout: this.timeout
-    }, 'Starting task runner')
+    }, 'Starting queue handler')
 
     if (setup) {
       this.setup()
@@ -326,7 +326,7 @@ export abstract class TaskRunner {
   }
 
   /**
-   * Stops the task runner.
+   * Stops the queue handler.
    *
    * Ends `storeDuplicate` and returns when all the task runs have finished.
    */
@@ -338,7 +338,7 @@ export abstract class TaskRunner {
       ],
       idle: this.queue?.idle(),
       queue: this.queue?.length()
-    }, 'Stopping task runner')
+    }, 'Stopping queue handler')
 
     this.storeDuplicate?.end()
 

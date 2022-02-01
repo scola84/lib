@@ -1,6 +1,7 @@
 import type { Database } from '../sql'
+import type { FastifyServer } from '../fastify'
 import type { Queuer } from '../queue'
-import type { Server } from '../fastify'
+import type { Router } from '../route'
 import type { Struct } from '../../../common'
 import { isMatch } from 'micromatch'
 import type pino from 'pino'
@@ -47,11 +48,18 @@ export interface ServiceManagerOptions {
   queuer?: Queuer
 
   /**
+   * The router.
+   *
+   * @see {@link Router}
+   */
+  router?: Router
+
+  /**
    * The server.
    *
    * @see {@link Server}
    */
-  server?: Server
+  server?: FastifyServer
 
   /**
    * The services.
@@ -128,9 +136,16 @@ export class ServiceManager {
   /**
    * The delegate to manage routes.
    *
+   * @see {@link Router}
+   */
+  public router?: Router
+
+  /**
+   * The delegate to manage routes.
+   *
    * @see {@link Server}
    */
-  public server?: Server
+  public server?: FastifyServer
 
   /**
    * The services.
@@ -168,6 +183,7 @@ export class ServiceManager {
     this.databases = options.databases
     this.names = options.names ?? process.env.SERVICE_NAMES?.split(':') ?? '*'
     this.queuer = options.queuer
+    this.router = options.router
     this.server = options.server
     this.services = options.services
     this.signal = options.signal ?? 'SIGTERM'
@@ -199,7 +215,16 @@ export class ServiceManager {
         }, 'Starting service manager')
 
         if (isMatch('server', this.types)) {
-          this.server?.setup()
+          this.router?.setup()
+
+          if (
+            this.router?.server !== undefined &&
+            this.server !== undefined
+          ) {
+            this.server.server = this.router.server
+            this.server.setup()
+            this.router.fastify = this.server.handle
+          }
         }
 
         if (isMatch('queuer', this.types)) {

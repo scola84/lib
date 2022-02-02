@@ -1,10 +1,10 @@
 import type { Database, UpdateResult } from '../sql'
 import type { Job } from 'node-schedule'
 import type { Queue } from '../../entities'
-import { QueueRunner } from '../../helpers/queue/queue-runner'
+import type { QueueHandler } from './handler'
+import { QueueRunner } from '../../helpers/queue/runner'
+import type { QueueTask } from '../../entities/base'
 import type { Struct } from '../../../common'
-import type { TaskRun } from '../../entities/base'
-import type { TaskRunner } from './task-runner'
 import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createNodeRedisClient } from 'handy-redis'
 import { isStruct } from '../../../common'
@@ -130,6 +130,13 @@ export class Queuer {
   public names: string
 
   /**
+   * The active queue handlers.
+   *
+   * @see {@link QueueHandler}
+   */
+  public queueHandlers: Set<QueueHandler> = new Set()
+
+  /**
    * The active queue runners.
    *
    * @see {@link QueueRunner}
@@ -164,13 +171,6 @@ export class Queuer {
   public suspended: boolean
 
   /**
-   * The active task runners.
-   *
-   * @see {@link TaskRunner}
-   */
-  public taskRunners: Set<TaskRunner> = new Set()
-
-  /**
    * The commands which can be executed through the 'queue' channel.
    */
   protected commands = Queuer.commands
@@ -194,12 +194,12 @@ export class Queuer {
   }
 
   /**
-   * Adds a task runner to the set of active task runners.
+   * Adds a queue handler to the set of active queue handlers.
    *
-   * @param taskRunner - The task runner
+   * @param queueHandler - The queue handler
    */
-  public add (taskRunner: TaskRunner): void {
-    this.taskRunners.add(taskRunner)
+  public add (queueHandler: QueueHandler): void {
+    this.queueHandlers.add(queueHandler)
   }
 
   /**
@@ -287,12 +287,12 @@ export class Queuer {
   /**
    * Skips the remainder of a queue run.
    *
-   * Updates all task runs by setting their `status` to 'err' and `reason` to 'skipped'.
+   * Updates all tasks by setting their `status` to 'err' and `reason` to 'skipped'.
    *
    * @param id - The ID of the queue run
    */
   public async skip (id: number): Promise<void> {
-    await this.updateTaskRuns({
+    await this.updateQueueTasks({
       fkey_queue_run_id: id,
       reason: 'skipped',
       status: 'err'
@@ -325,7 +325,7 @@ export class Queuer {
   /**
    * Stops the queuer.
    *
-   * Stops the job, listener and all task runners.
+   * Stops the job, listener and all queue handlers.
    *
    * Closes the store when all the queue runners have finished.
    */
@@ -335,17 +335,17 @@ export class Queuer {
         this.store.nodeRedis.connected,
         this.storeDuplicate?.nodeRedis.connected
       ],
-      queueRunners: this.queueRunners.size,
-      taskRunners: this.taskRunners.size
+      queueHandlers: this.queueHandlers.size,
+      queueRunners: this.queueRunners.size
     }, 'Stopping queuer')
 
     this.stopJob()
     await this.stopListener()
 
-    const runners = Array.from(this.taskRunners)
+    const runners = Array.from(this.queueHandlers)
 
-    await Promise.all(runners.map(async (taskRunner) => {
-      await taskRunner.stop()
+    await Promise.all(runners.map(async (queueHandler) => {
+      await queueHandler.stop()
     }))
 
     await waitUntil(() => {
@@ -562,20 +562,20 @@ export class Queuer {
   }
 
   /**
-   * Updates task runs.
+   * Updates tasks.
    *
-   * Sets `reason` and `status` of all task runs which:
+   * Sets `reason` and `status` of all tasks which:
    *
    * * are still pending
    * * are not yet started
    * * belong to the given queue run
    *
-   * @param taskRun - The generic task run
+   * @param task - The task
    * @returns The update result
    */
-  protected async updateTaskRuns (taskRun: Pick<TaskRun, 'fkey_queue_run_id' | 'reason' | 'status'>): Promise<UpdateResult> {
-    return this.database.update<TaskRun>(sql`
-      UPDATE task_run
+  protected async updateQueueTasks (task: Pick<QueueTask, 'fkey_queue_run_id' | 'reason' | 'status'>): Promise<UpdateResult> {
+    return this.database.update<QueueTask>(sql`
+      UPDATE queue_task
       SET
         date_updated = NOW(),
         reason = $(reason),
@@ -585,9 +585,9 @@ export class Queuer {
         fkey_queue_run_id = $(fkey_queue_run_id) AND
         status = 'pending'
     `, {
-      fkey_queue_run_id: taskRun.fkey_queue_run_id,
-      reason: taskRun.reason,
-      status: taskRun.status
+      fkey_queue_run_id: task.fkey_queue_run_id,
+      reason: task.reason,
+      status: task.status
     })
   }
 }

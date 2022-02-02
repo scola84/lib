@@ -156,7 +156,7 @@ try {
               tables: [table]
             }, {})
             .replace(/\/\*[\s\S]*\*\/\n*/gu, '')
-            .replace(/"/gu, '')
+            .replace(/["';]/gu, '')
             .replace(/&lt;/gu, '<')
             .replace(/&gt;/gu, '>')
             .replace(/\s\n/gu, '\n')

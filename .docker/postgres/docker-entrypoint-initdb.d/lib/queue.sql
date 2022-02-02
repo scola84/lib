@@ -91,7 +91,7 @@ CREATE TABLE public.queue_run (
     date_created timestamp with time zone DEFAULT now() NOT NULL,
     date_updated timestamp with time zone DEFAULT now() NOT NULL,
     fkey_queue_id bigint NOT NULL,
-    fkey_task_run_id bigint,
+    fkey_queue_task_id bigint,
     id bigint NOT NULL,
     name character varying NOT NULL,
     options json DEFAULT '{}'::json NOT NULL,
@@ -120,10 +120,10 @@ ALTER SEQUENCE public.queue_run_id_seq OWNED BY public.queue_run.id;
 
 
 --
--- Name: task_run; Type: TABLE; Schema: public; Owner: -
+-- Name: queue_task; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.task_run (
+CREATE TABLE public.queue_task (
     date_created timestamp with time zone DEFAULT now() NOT NULL,
     date_queued timestamp with time zone,
     date_started timestamp with time zone,
@@ -139,10 +139,10 @@ CREATE TABLE public.task_run (
 
 
 --
--- Name: task_run_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: queue_task_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE public.task_run_id_seq
+CREATE SEQUENCE public.queue_task_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -151,10 +151,10 @@ CREATE SEQUENCE public.task_run_id_seq
 
 
 --
--- Name: task_run_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+-- Name: queue_task_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE public.task_run_id_seq OWNED BY public.task_run.id;
+ALTER SEQUENCE public.queue_task_id_seq OWNED BY public.queue_task.id;
 
 
 --
@@ -172,10 +172,10 @@ ALTER TABLE ONLY public.queue_run ALTER COLUMN id SET DEFAULT nextval('public.qu
 
 
 --
--- Name: task_run id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: queue_task id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.task_run ALTER COLUMN id SET DEFAULT nextval('public.task_run_id_seq'::regclass);
+ALTER TABLE ONLY public.queue_task ALTER COLUMN id SET DEFAULT nextval('public.queue_task_id_seq'::regclass);
 
 
 --
@@ -195,11 +195,11 @@ ALTER TABLE ONLY public.queue_run
 
 
 --
--- Name: task_run task_run_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: queue_task queue_task_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.task_run
-    ADD CONSTRAINT task_run_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.queue_task
+    ADD CONSTRAINT queue_task_pkey PRIMARY KEY (id);
 
 
 --
@@ -210,10 +210,10 @@ CREATE INDEX queue_fkey_queue_id_idx ON public.queue USING btree (fkey_queue_id)
 
 
 --
--- Name: queue_run_fkey_task_run_id_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: queue_run_fkey_queue_task_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX queue_run_fkey_task_run_id_idx ON public.queue_run USING btree (fkey_task_run_id);
+CREATE INDEX queue_run_fkey_queue_task_id_idx ON public.queue_run USING btree (fkey_queue_task_id);
 
 
 --
@@ -224,18 +224,18 @@ CREATE INDEX queue_run_fkey_queue_id_idx ON public.queue_run USING btree (fkey_q
 
 
 --
--- Name: task_run_fkey_queue_run_id_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: queue_task_fkey_queue_run_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX task_run_fkey_queue_run_id_idx ON public.task_run USING btree (fkey_queue_run_id);
+CREATE INDEX queue_task_fkey_queue_run_id_idx ON public.queue_task USING btree (fkey_queue_run_id);
 
 
 --
--- Name: queue_run task_run_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: queue_run queue_task_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.queue_run
-    ADD CONSTRAINT task_run_fkey FOREIGN KEY (fkey_task_run_id) REFERENCES public.task_run(id) ON DELETE SET NULL;
+    ADD CONSTRAINT queue_task_fkey FOREIGN KEY (fkey_queue_task_id) REFERENCES public.queue_task(id) ON DELETE SET NULL;
 
 
 --
@@ -255,10 +255,10 @@ ALTER TABLE ONLY public.queue
 
 
 --
--- Name: task_run queue_run_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: queue_task queue_run_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.task_run
+ALTER TABLE ONLY public.queue_task
     ADD CONSTRAINT queue_run_fkey FOREIGN KEY (fkey_queue_run_id) REFERENCES public.queue_run(id) ON DELETE CASCADE;
 
 

@@ -1,25 +1,25 @@
 import type { QueueRun } from './queue-run'
-import type { TaskRun as TaskRunBase } from './base'
+import type { QueueTask as QueueTaskBase } from './base'
 import { createQueueRun } from './queue-run'
 
-export interface TaskRun<Payload = unknown, Options = unknown, Result = unknown> extends Required<TaskRunBase> {
+export interface QueueTask<Payload = unknown, Options = unknown, Result = unknown> extends Required<QueueTaskBase> {
   /**
-   * The date the task run was created.
+   * The date the task was created.
    */
   date_created: Date
 
   /**
-   * The date the task run was queued.
+   * The date the task was queued.
    */
   date_queued: Date | null
 
   /**
-   * The date the task run was started.
+   * The date the task was started.
    */
   date_started: Date | null
 
   /**
-   * The date the task run was updated.
+   * The date the task was updated.
    */
   date_updated: Date
 
@@ -48,10 +48,10 @@ export interface TaskRun<Payload = unknown, Options = unknown, Result = unknown>
    *
    * @see {@link QueueRun}
    */
-  queueRun: QueueRun<Options>
+  run: QueueRun<Options>
 
   /**
-   * The reason the task run failed.
+   * The reason the task failed.
    */
   reason: string | null
 
@@ -66,7 +66,7 @@ export interface TaskRun<Payload = unknown, Options = unknown, Result = unknown>
   status: 'err' | 'ok' | 'pending'
 }
 
-export function createTaskRun<Payload = Record<string, unknown>, Options = Record<string, unknown>, Result = Record<string, unknown>> (taskRun?: Partial<TaskRun<Payload, Options, Result>>): TaskRun<Payload, Options, Result> {
+export function createQueueTask<Payload = Record<string, unknown>, Options = Record<string, unknown>, Result = Record<string, unknown>> (task?: Partial<QueueTask<Payload, Options, Result>>): QueueTask<Payload, Options, Result> {
   return {
     date_created: new Date(),
     date_queued: null,
@@ -76,10 +76,10 @@ export function createTaskRun<Payload = Record<string, unknown>, Options = Recor
     host: null,
     id: 0,
     payload: Object.create(null) as Payload,
-    queueRun: taskRun?.queueRun ?? createQueueRun<Options>(),
     reason: null,
     result: Object.create(null) as Result,
+    run: task?.run ?? createQueueRun<Options>(),
     status: 'pending',
-    ...taskRun
+    ...task
   }
 }

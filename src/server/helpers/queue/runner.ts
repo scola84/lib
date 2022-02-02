@@ -1,6 +1,6 @@
 import type { Database, InsertResult, UpdateResult } from '../sql'
 import { PassThrough, Writable } from 'stream'
-import type { Queue, QueueRun, TaskRun } from '../../entities'
+import type { Queue, QueueRun, QueueTask } from '../../entities'
 import type { Readable } from 'stream'
 import type { Struct } from '../../../common'
 import type { WrappedNodeRedisClient } from 'handy-redis'
@@ -32,7 +32,7 @@ export interface QueueRunnerOptions {
   logger?: pino.Logger
 
   /**
-   * The store to trigger task runs.
+   * The store to trigger tasks.
    *
    * @see https://www.npmjs.com/package/handy-redis
    */
@@ -65,7 +65,7 @@ export class QueueRunner {
   public logger?: pino.Logger
 
   /**
-   * The store to trigger task runs.
+   * The store to trigger tasks.
    *
    * @see https://www.npmjs.com/package/handy-redis
    */
@@ -87,7 +87,7 @@ export class QueueRunner {
   }
 
   /**
-   * Creates a task run reader.
+   * Creates a task reader.
    *
    * Returns a PassThrough if the parameters contain a `payload`. The PassThrough emits the payload exactly once.
    *
@@ -97,7 +97,7 @@ export class QueueRunner {
    * @param parameters - The parameters
    * @returns The reader
    */
-  public async createTaskRunReader (queue: Queue, parameters?: Struct): Promise<Readable> {
+  public async createQueueTaskReader (queue: Queue, parameters?: Struct): Promise<Readable> {
     if (parameters?.payload !== undefined) {
       const reader = new PassThrough({
         objectMode: true
@@ -117,24 +117,24 @@ export class QueueRunner {
   }
 
   /**
-   * Creates a task run writer.
+   * Creates a task writer.
    *
-   * The writer receives a payload and inserts a task run based on the queue run and the payload into the database.
+   * The writer receives a payload and inserts a task based on the queue run and the payload into the database.
    *
-   * The writer pushes the ID of the task run at the tail of the store list at `name` of the queue run.
+   * The writer pushes the ID of the task at the tail of the store list at `name` of the queue run.
    *
    * The writer increments `aggr_total` of the queue run with `1`.
    *
-   * @param queueRun - The queue run
+   * @param run - The queue run
    * @returns The writer
    */
-  public createTaskRunWriter (queueRun: QueueRun): Writable {
+  public createQueueTaskWriter (run: QueueRun): Writable {
     return new Writable({
       objectMode: true,
       write: async (payload: unknown, encoding, finish) => {
         try {
-          queueRun.aggr_total += 1
-          await this.store.rpush(queueRun.name, (await this.insertTaskRun(queueRun, payload)).id.toString())
+          run.aggr_total += 1
+          await this.store.rpush(run.name, (await this.insertQueueTask(run, payload)).id.toString())
           finish()
         } catch (error: unknown) {
           finish(new Error(String(error)))
@@ -148,48 +148,48 @@ export class QueueRunner {
    *
    * Creates a queue run and inserts it into the database.
    *
-   * Creates a task run reader and passes the results to the task run writer.
+   * Creates a task reader and passes the results to the task writer.
    *
-   * Updates the queue run and triggers dependant queues if all task runs have been triggered and have finished successfully.
+   * Updates the queue run and triggers dependant queues if all tasks have been triggered and have finished successfully.
    *
-   * Normally, dependant queues will be triggered by the task runner when the last task has finished. But occasionally, e.g. when the generator query returns an empty result set, the queue runner has to trigger the dependant queues.
+   * Normally, dependant queues will be triggered by the task handler when the last task has finished. But occasionally, e.g. when the generator query returns an empty result set, the queue runner has to trigger the dependant queues.
    *
-   * Updates the queue run if an error occurred while triggering the task runs.
+   * Updates the queue run if an error occurred while triggering the tasks.
    *
    * @param queue - The queue
    * @param parameters - The parameters
    */
   public async run (queue: Queue, parameters?: Struct): Promise<void> {
-    const queueRun = createQueueRun({
+    const run = createQueueRun({
       queue
     })
 
-    const { id: queueRunId } = await this.insertQueueRun(queueRun)
+    const { id: runId } = await this.insertQueueRun(run)
 
-    queueRun.id = queueRunId
+    run.id = runId
 
     try {
       await pipeline(
-        await this.createTaskRunReader(queue, parameters),
-        this.createTaskRunWriter(queueRun)
+        await this.createQueueTaskReader(queue, parameters),
+        this.createQueueTaskWriter(run)
       )
 
-      await this.updateQueueRunTotal(queueRun)
+      await this.updateQueueRunTotal(run)
 
-      const queues = await this.selectQueues(queueRun)
+      const queues = await this.selectQueues(run)
 
       await Promise.all(queues.map(async ({ id }): Promise<number> => {
         return this.store.publish('queue', JSON.stringify({
           command: 'run',
           id,
           parameters: {
-            id: queueRun.id
+            id: run.id
           }
         }))
       }))
     } catch (error: unknown) {
       try {
-        await this.updateQueueRunErr(queueRun, error)
+        await this.updateQueueRunErr(run, error)
       } catch (updateError: unknown) {
         this.logger?.error({
           context: 'run'
@@ -201,10 +201,10 @@ export class QueueRunner {
   /**
    * Inserts a queue run.
    *
-   * @param queueRun - The queue run
+   * @param run - The queue run
    * @returns The insert result
    */
-  protected async insertQueueRun (queueRun: QueueRun): Promise<InsertResult> {
+  protected async insertQueueRun (run: QueueRun): Promise<InsertResult> {
     return this.database.insertOne<QueueRun>(sql`
       INSERT INTO queue_run (
         fkey_queue_id,
@@ -216,22 +216,22 @@ export class QueueRunner {
         $(options)
       )
     `, {
-      fkey_queue_id: queueRun.queue.id,
-      name: queueRun.name,
-      options: queueRun.options
+      fkey_queue_id: run.queue.id,
+      name: run.name,
+      options: run.options
     })
   }
 
   /**
-   * Inserts a task run.
+   * Inserts a task.
    *
-   * @param queueRun - The queue run
-   * @param payload - The payload of the task run
+   * @param run - The queue run
+   * @param payload - The payload of the task
    * @returns The insert result
    */
-  protected async insertTaskRun (queueRun: QueueRun, payload: unknown): Promise<InsertResult> {
-    return this.database.insertOne<TaskRun>(sql`
-      INSERT INTO task_run (
+  protected async insertQueueTask (run: QueueRun, payload: unknown): Promise<InsertResult> {
+    return this.database.insertOne<QueueTask>(sql`
+      INSERT INTO queue_task (
         fkey_queue_run_id,
         payload
       ) VALUES (
@@ -239,7 +239,7 @@ export class QueueRunner {
         $(payload)
       )
     `, {
-      fkey_queue_run_id: queueRun.id,
+      fkey_queue_run_id: run.id,
       payload
     })
   }
@@ -252,10 +252,10 @@ export class QueueRunner {
    * * `queue.fkey_queue_id = queue_run.fkey_queue_id`
    * * `queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total`
    *
-   * @param queueRun - The queue run
+   * @param run - The queue run
    * @returns The queues
    */
-  protected async selectQueues (queueRun: QueueRun): Promise<Array<Pick<Queue, 'id'>>> {
+  protected async selectQueues (run: QueueRun): Promise<Array<Pick<Queue, 'id'>>> {
     return this.database.selectAll<QueueRun, Pick<Queue, 'id'>>(sql`
       SELECT queue.id
       FROM queue
@@ -264,7 +264,7 @@ export class QueueRunner {
         queue_run.id = $(id) AND
         queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
     `, {
-      id: queueRun.id
+      id: run.id
     })
   }
 
@@ -273,11 +273,11 @@ export class QueueRunner {
    *
    * Sets `status` to 'err' and `reason` to the error message.
    *
-   * @param queueRun - The queue run
+   * @param run - The queue run
    * @param error - The error
    * @returns The update result
    */
-  protected async updateQueueRunErr (queueRun: QueueRun, error: unknown): Promise<UpdateResult> {
+  protected async updateQueueRunErr (run: QueueRun, error: unknown): Promise<UpdateResult> {
     return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
@@ -286,7 +286,7 @@ export class QueueRunner {
         reason = $(reason)
       WHERE id = $(id)
     `, {
-      id: queueRun.id,
+      id: run.id,
       reason: String(error)
     })
   }
@@ -294,12 +294,12 @@ export class QueueRunner {
   /**
    *  Updates a queue run.
    *
-   * Sets `aggr_total` to the total of task runs which have been triggered.
+   * Sets `aggr_total` to the total of tasks which have been triggered.
    *
-   * @param queueRun - The queue run
+   * @param run - The queue run
    * @returns The update result
    */
-  protected async updateQueueRunTotal (queueRun: QueueRun): Promise<UpdateResult> {
+  protected async updateQueueRunTotal (run: QueueRun): Promise<UpdateResult> {
     return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
@@ -307,8 +307,8 @@ export class QueueRunner {
         date_updated = NOW()
       WHERE id = $(id)
     `, {
-      aggr_total: queueRun.aggr_total,
-      id: queueRun.id
+      aggr_total: run.aggr_total,
+      id: run.id
     })
   }
 }

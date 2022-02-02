@@ -40,7 +40,7 @@ export abstract class RouteHandler {
 
   public database: Database
 
-  public dir = '/tmp'
+  public dir: string
 
   public logger?: pino.Logger
 
@@ -52,7 +52,7 @@ export abstract class RouteHandler {
 
   public router: Router
 
-  public schema: Struct<ObjectSchema | undefined> = {}
+  public schema: Struct<ObjectSchema | undefined>
 
   public store: RedisClientType
 
@@ -79,15 +79,15 @@ export abstract class RouteHandler {
     }
 
     this.database = handlerOptions.database
-    this.dir = handlerOptions.dir ?? this.dir
+    this.dir = handlerOptions.dir ?? '/tmp'
     this.logger = handlerOptions.logger
-    this.method = handlerOptions.method ?? this.method
-    this.requestType = handlerOptions.requestType ?? this.requestType
-    this.responseType = handlerOptions.responseType ?? this.responseType
+    this.method = handlerOptions.method ?? 'GET'
+    this.requestType = handlerOptions.requestType
+    this.responseType = handlerOptions.responseType
     this.router = handlerOptions.router
-    this.schema = handlerOptions.schema ?? this.schema
+    this.schema = handlerOptions.schema ?? {}
     this.store = handlerOptions.store
-    this.url = options?.url ?? this.url
+    this.url = handlerOptions.url ?? '/'
   }
 
   public createValidator (): Ajv {

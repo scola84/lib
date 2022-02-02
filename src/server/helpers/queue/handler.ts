@@ -150,7 +150,7 @@ export abstract class QueueHandler {
    *
    * @see https://www.npmjs.com/package/fluent-json-schema
    */
-  public schema: Struct<ObjectSchema | undefined> = {}
+  public schema: Struct<ObjectSchema | undefined>
 
   /**
    * The store to trigger queue runs.
@@ -213,7 +213,7 @@ export abstract class QueueHandler {
     this.logger = handlerOptions.logger
     this.name = handlerOptions.name
     this.queuer = handlerOptions.queuer
-    this.schema = handlerOptions.schema ?? this.schema
+    this.schema = handlerOptions.schema ?? {}
     this.store = handlerOptions.store
     this.timeout = handlerOptions.timeout ?? 5 * 60 * 1000
     this.queuer.registerHandler(this)

@@ -152,8 +152,8 @@ export class FastifyServer {
 
     this.fastify = this.createFastify()
 
-    await Promise.all(Object.values(this.plugins).map((plugin) => {
-      return this.fastify?.register(plugin)
+    await Promise.all(Object.values(this.plugins).map(async (plugin) => {
+      await this.fastify?.register(plugin)
     }))
 
     await this.fastify.listen(this.port, this.address)

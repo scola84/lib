@@ -290,8 +290,7 @@ export class ServiceManager {
     const databases = Object.values(this.databases ?? {})
 
     await Promise.all(databases.map(async (database) => {
-      database.logger = this.logger
-      return database.start()
+      await database.start()
     }))
   }
 
@@ -317,7 +316,7 @@ export class ServiceManager {
     const databases = Object.values(this.databases ?? {})
 
     await Promise.all(databases.map(async (database) => {
-      return database.stop()
+      await database.stop()
     }))
   }
 }

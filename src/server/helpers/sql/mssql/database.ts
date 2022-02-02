@@ -55,9 +55,13 @@ export class MssqlDatabase extends Database {
 
     const options: config = {
       database: url.pathname.slice(1),
-      port: Number(url.port),
+      port: 1433,
       server: url.hostname,
       user: url.username
+    }
+
+    if (url.port !== '') {
+      options.port = Number(url.port)
     }
 
     Array

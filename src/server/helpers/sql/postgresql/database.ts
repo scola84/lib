@@ -58,8 +58,12 @@ export class PostgresqlDatabase extends Database {
       connectionTimeoutMillis: 10000,
       database: url.pathname.slice(1),
       host: url.hostname,
-      port: Number(url.port),
+      port: 5432,
       user: url.username
+    }
+
+    if (url.port !== '') {
+      options.port = Number(url.port)
     }
 
     Array

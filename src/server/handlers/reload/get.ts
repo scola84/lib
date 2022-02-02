@@ -1,28 +1,28 @@
-import 'fastify-sse-v2'
-import type { FastifyReply, FastifyRequest } from 'fastify'
+import type { RouteData, RouteHandlerOptions } from '../../helpers'
 import { readFileSync, watch } from 'fs-extra'
 import type { FSWatcher } from 'fs-extra'
-import { FastifyHandler } from '../../helpers'
-import type { FastifyHandlerOptions } from '../../helpers'
-import { PassThrough } from 'stream'
+import { RouteHandler } from '../../helpers'
+import type { ServerResponse } from 'http'
 import { debounce } from 'throttle-debounce'
 
-export interface ReloadGetHandlerOptions extends Partial<FastifyHandlerOptions> {
+export interface ReloadGetHandlerOptions extends Partial<RouteHandlerOptions> {
   debounce?: number
   event?: string
   file?: string
 }
 
-export class ReloadGetHandler extends FastifyHandler {
+export class ReloadGetHandler extends RouteHandler {
   public debounce: number
 
   public event: string
 
   public file: string
 
-  protected streams = new Set<PassThrough>()
+  public responseType = 'text/event-stream'
 
-  protected watcher?: FSWatcher
+  public responses = new Set<ServerResponse>()
+
+  public watcher?: FSWatcher
 
   public constructor (options: ReloadGetHandlerOptions) {
     super(options)
@@ -31,38 +31,35 @@ export class ReloadGetHandler extends FastifyHandler {
     this.file = options.file ?? '/usr/src/app/dist/client/index.js'
   }
 
-  public async handle (request: FastifyRequest, reply: FastifyReply): Promise<void> {
-    const stream = new PassThrough({
-      objectMode: true
-    })
-
-    this.streams.add(stream)
-    reply.sse(stream)
-
-    reply.raw.once('close', () => {
-      this.streams.delete(stream)
-    })
-
-    return Promise.resolve()
-  }
-
   public start (): void {
-    this.setUpWatcher()
+    this.startWatcher()
     super.start()
   }
 
-  protected setUpWatcher (): void {
+  protected handle (data: RouteData, response: ServerResponse): void {
+    this.responses.add(response)
+
+    response.once('close', () => {
+      this.responses.delete(response)
+    })
+
+    response.writeHead(200, {
+      'content-type': this.responseType
+    })
+  }
+
+  protected startWatcher (): void {
     this.watcher = watch(this.file)
 
     this.watcher.on('change', debounce(this.debounce, false, () => {
       if (readFileSync(this.file).length > 0) {
-        this.streams.forEach((stream) => {
-          stream.write({
+        this.responses.forEach((response) => {
+          response.write(this.stringify({
             data: JSON.stringify({
               reload: true
             }),
             event: this.event
-          })
+          }))
         })
       }
     }))

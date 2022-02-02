@@ -240,7 +240,7 @@ export class Queuer {
   }
 
   /**
-   * Runs a queue run.
+   * Runs a queue.
    *
    * @param id - The ID of the queue
    * @param parameters - The parameters
@@ -304,8 +304,11 @@ export class Queuer {
       }, String(error))
     })
 
-    await this.store.connect()
-    await this.blstore.connect()
+    await Promise.all([
+      this.store.connect(),
+      this.blstore.connect()
+    ])
+
     this.startJob()
     await this.startListener()
   }
@@ -342,8 +345,10 @@ export class Queuer {
       timeout: Number.POSITIVE_INFINITY
     })
 
-    await this.blstore?.quit()
-    await this.store.quit()
+    await Promise.all([
+      this.blstore?.quit(),
+      this.store.quit()
+    ])
   }
 
   /**
@@ -481,7 +486,7 @@ export class Queuer {
   /**
    * Starts the job.
    *
-   * Runs the job according to `schedule`.
+   * Handles the job according to `schedule`.
    */
   protected startJob (): void {
     this.job = this.createJob(this.schedule, (date) => {
@@ -498,7 +503,7 @@ export class Queuer {
   /**
    * Start the listener.
    *
-   * Subscribes to the 'queue' channel of the store.
+   * Handles messages from the 'queue' channel of the blstore.
    */
   protected async startListener (): Promise<void> {
     await this.blstore?.subscribe('queue', (message) => {

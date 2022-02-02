@@ -1,5 +1,4 @@
 export * from './fastify'
-export * from './intl'
 export * from './sql'
 export * from './queue'
 export * from './route'

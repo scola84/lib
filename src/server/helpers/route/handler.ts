@@ -383,7 +383,7 @@ export abstract class RouteHandler {
       return ''
     }
 
-    return `${body}\n\n`
+    return `${body}\n`
   }
 
   protected stringifyJson (data: unknown): string {

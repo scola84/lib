@@ -40,7 +40,7 @@ export class PostgresqlConnection extends Connection {
     await Promise.all(Object
       .entries(population as Struct<Array<Partial<unknown>>>)
       .map(async ([table, rows]) => {
-        return Promise.all(rows.map(async (object) => {
+        await Promise.all(rows.map(async (object) => {
           await this.delete(sql`
             DELETE
             FROM "${table}"
@@ -89,7 +89,7 @@ export class PostgresqlConnection extends Connection {
     await Promise.all(Object
       .entries(population as Struct<Array<Partial<unknown>>>)
       .map(async ([table, rows]) => {
-        return Promise.all(rows.map(async (object) => {
+        await Promise.all(rows.map(async (object) => {
           await this.insert(sql`
             INSERT INTO "${table}" (${
               Object

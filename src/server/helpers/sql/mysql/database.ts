@@ -56,9 +56,13 @@ export class MysqlDatabase extends Database {
       database: url.pathname.slice(1),
       decimalNumbers: true,
       host: url.hostname,
-      port: Number(url.port),
+      port: 3306,
       supportBigNumbers: true,
       user: url.username
+    }
+
+    if (url.port !== '') {
+      options.port = Number(url.port)
     }
 
     Array

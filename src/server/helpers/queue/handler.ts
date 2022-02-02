@@ -79,7 +79,7 @@ export interface QueueHandlerOptions {
 }
 
 /**
- * Runs a task.
+ * Handles a queue task.
  */
 export abstract class QueueHandler {
   /**
@@ -354,8 +354,10 @@ export abstract class QueueHandler {
       task.status = 'ok'
     }
 
-    await this.updateQueueTaskOnFinish(task)
-    await this.updateQueueRun(task)
+    await Promise.all([
+      this.updateQueueTaskOnFinish(task),
+      this.updateQueueRun(task)
+    ])
 
     const queues = await this.selectQueues(task)
 
@@ -664,7 +666,7 @@ export abstract class QueueHandler {
   }
 
   /**
-   * Runs a task.
+   * Handles a task.
    *
    * @param task - The task
    */

@@ -157,8 +157,8 @@ export class QueueRunner {
 
       const queues = await this.selectQueues(run)
 
-      await Promise.all(queues.map(async ({ id }): Promise<number> => {
-        return this.store.publish('queue', JSON.stringify({
+      await Promise.all(queues.map(async ({ id }): Promise<void> => {
+        await this.store.publish('queue', JSON.stringify({
           command: 'run',
           id,
           parameters: {

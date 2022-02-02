@@ -15,7 +15,7 @@ export class Router {
 
   public fastify?: (req: IncomingMessage, res: ServerResponse) => void
 
-  public handlers: Map<string, RouteHandler> = new Map()
+  public handlers: Map<string, Map<string, RouteHandler>> = new Map()
 
   public logger?: pino.Logger
 
@@ -29,14 +29,26 @@ export class Router {
     this.port = options.port ?? 80
   }
 
-  public register (method: string, url: string, handler: RouteHandler): void {
-    this.handlers.set(`${method} ${url}`, handler)
+  public registerHandler (method: string, url: string, handler: RouteHandler): void {
+    let handlers = this.handlers.get(url)
+
+    if (handlers === undefined) {
+      handlers = new Map()
+      this.handlers.set(url, handlers)
+    }
+
+    handlers.set(method, handler)
   }
 
-  public setup (): void {
+  public start (listen = true): void {
     this.logger = this.logger?.child({
       name: 'router'
     })
+
+    this.logger?.info({
+      address: this.address,
+      port: this.port
+    }, 'Starting router')
 
     this.server = createServer((request, response) => {
       this
@@ -47,19 +59,10 @@ export class Router {
           }, String(error))
         })
     })
-  }
 
-  public start (setup = true): void {
-    if (setup) {
-      this.setup()
+    if (listen) {
+      this.server.listen(this.port, this.address)
     }
-
-    this.logger?.info({
-      address: this.address,
-      port: this.port
-    }, 'Starting router')
-
-    this.server?.listen(this.port, this.address)
   }
 
   public stop (): void {
@@ -69,24 +72,32 @@ export class Router {
 
   protected async handleRoute (request: IncomingMessage, response: ServerResponse): Promise<void> {
     const url = new URL(request.url ?? '', `http://${request.headers.host ?? 'localhost'}`)
-    const route = `${request.method ?? ''} ${url.pathname}`
-    const handler = this.handlers.get(route)
+    const handlers = this.handlers.get(url.pathname)
 
-    if (handler === undefined) {
+    if (handlers === undefined) {
       if (this.fastify === undefined) {
         response.statusCode = 404
         response.end()
-        throw new Error(`Route "${route}" not found`)
+        throw new Error(`Path "${url.pathname}" not found`)
       } else {
         this.fastify(request, response)
       }
     } else {
-      await handler.handleRoute({
-        body: null,
-        headers: request.headers,
-        query: Object.fromEntries(url.searchParams),
-        url
-      }, response, request)
+      const handler = handlers.get(request.method ?? '')
+
+      if (handler === undefined) {
+        response.statusCode = 405
+        response.setHeader('allow', Array.from(handlers.keys()).join(','))
+        response.end()
+        throw new Error(`Method "${request.method ?? ''} ${url.pathname}" not allowed`)
+      } else {
+        await handler.handleRoute({
+          body: null,
+          headers: request.headers,
+          query: Object.fromEntries(url.searchParams),
+          url
+        }, response, request)
+      }
     }
   }
 }

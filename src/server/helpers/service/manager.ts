@@ -181,6 +181,7 @@ export class ServiceManager {
    */
   public constructor (options: ServiceManagerOptions) {
     this.databases = options.databases
+    this.logger = options.logger
     this.names = options.names ?? process.env.SERVICE_NAMES?.split(':') ?? '*'
     this.queuer = options.queuer
     this.router = options.router
@@ -188,10 +189,6 @@ export class ServiceManager {
     this.services = options.services
     this.signal = options.signal ?? 'SIGTERM'
     this.types = options.types ?? process.env.SERVICE_TYPES?.split(':') ?? '*'
-
-    this.logger = options.logger?.child({
-      name: 'service-manager'
-    })
   }
 
   /**
@@ -208,39 +205,36 @@ export class ServiceManager {
     Promise
       .resolve()
       .then(async () => {
+        this.logger = this.logger?.child({
+          name: 'service-manager'
+        })
+
         this.logger?.info({
           names: this.names,
           signal: this.signal,
           types: this.types
         }, 'Starting service manager')
 
+        await this.startDatabases()
+
+        if (isMatch('queuer', this.types)) {
+          await this.queuer?.start()
+        }
+
         if (isMatch('server', this.types)) {
-          this.router?.setup()
+          this.router?.start(false)
 
           if (
             this.router?.server !== undefined &&
             this.server !== undefined
           ) {
             this.server.server = this.router.server
-            this.server.setup()
+            await this.server.start()
             this.router.fastify = this.server.handle
           }
         }
 
-        if (isMatch('queuer', this.types)) {
-          this.queuer?.setup()
-        }
-
         this.startServices()
-        await this.startDatabases()
-
-        if (isMatch('server', this.types)) {
-          await this.server?.start(false)
-        }
-
-        if (isMatch('queuer', this.types)) {
-          await this.queuer?.start(false)
-        }
 
         if (this.signal !== null) {
           this.process.once(this.signal, this.stop.bind(this))
@@ -296,6 +290,7 @@ export class ServiceManager {
     const databases = Object.values(this.databases ?? {})
 
     await Promise.all(databases.map(async (database) => {
+      database.logger = this.logger
       return database.start()
     }))
   }

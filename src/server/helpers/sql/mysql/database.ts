@@ -23,7 +23,18 @@ export class MysqlDatabase extends Database {
 
   public async start (): Promise<void> {
     if (this.dsn !== undefined) {
-      this.pool = this.createPool(this.dsn, this.password)
+      this.logger = this.logger?.child({
+        name: this.name
+      })
+
+      const options = this.parseDsn(this.dsn)
+
+      this.logger?.info(options, 'Starting queuer')
+
+      this.pool = createPool({
+        ...options,
+        password: this.password
+      })
 
       if (this.population !== undefined) {
         await this.populate(this.population)
@@ -33,18 +44,18 @@ export class MysqlDatabase extends Database {
 
   public async stop (): Promise<void> {
     if (this.dsn !== undefined) {
+      this.logger?.info('Stopping database')
       await this.pool.end()
     }
   }
 
-  protected createPool (dsn: string, password?: string): Pool {
+  protected parseDsn (dsn: string): PoolOptions {
     const url = new URL(dsn)
 
     const options: PoolOptions = {
       database: url.pathname.slice(1),
       decimalNumbers: true,
       host: url.hostname,
-      password,
       port: Number(url.port),
       supportBigNumbers: true,
       user: url.username
@@ -68,6 +79,6 @@ export class MysqlDatabase extends Database {
       }
     })
 
-    return createPool(options)
+    return options
   }
 }

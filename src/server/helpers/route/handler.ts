@@ -4,10 +4,10 @@ import Ajv from 'ajv'
 import type { Database } from '../sql'
 import type { ErrorObject } from 'ajv'
 import type { ObjectSchema } from 'fluent-json-schema'
+import type { RedisClientType } from 'redis'
 import type { Router } from './router'
 import type { Struct } from '../../../common'
 import type { URL } from 'url'
-import type { WrappedNodeRedisClient } from 'handy-redis'
 import busboy from 'busboy'
 import { createWriteStream } from 'fs'
 import { parse } from 'querystring'
@@ -31,7 +31,7 @@ export interface RouteHandlerOptions {
   responseType: string
   router: Router
   schema: Struct<ObjectSchema | undefined>
-  store: WrappedNodeRedisClient
+  store: RedisClientType
   url: string
 }
 
@@ -54,7 +54,7 @@ export abstract class RouteHandler {
 
   public schema: Struct<ObjectSchema | undefined> = {}
 
-  public store: WrappedNodeRedisClient
+  public store: RedisClientType
 
   public url: string
 
@@ -90,6 +90,24 @@ export abstract class RouteHandler {
     this.url = options?.url ?? this.url
   }
 
+  public createValidator (): Ajv {
+    const validator = new Ajv({
+      allErrors: true,
+      coerceTypes: true,
+      useDefaults: true
+    })
+
+    Object
+      .entries(this.schema)
+      .forEach(([name, schema]) => {
+        if (schema !== undefined) {
+          validator.addSchema(schema.valueOf(), name)
+        }
+      })
+
+    return validator
+  }
+
   public async handleRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
     await this.prepareRoute(data, response, request)
 
@@ -98,14 +116,14 @@ export abstract class RouteHandler {
         response.statusCode = 201
       }
 
-      const responseData = await this.handle(data, response, request)
+      const result = await this.handle(data, response, request)
 
-      if (isNil(responseData)) {
-        if (responseData === null) {
+      if (isNil(result)) {
+        if (result === null) {
           response.end()
         }
       } else {
-        response.end(this.stringify(responseData, response))
+        response.end(this.stringify(result, response))
       }
     } catch (error: unknown) {
       response.statusCode = 500
@@ -125,12 +143,12 @@ export abstract class RouteHandler {
     }, 'Starting route handler')
 
     this.validator = this.createValidator()
-    this.router.register(this.method, this.url, this)
+    this.router.registerHandler(this.method, this.url, this)
   }
 
-  protected authenticate (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<Struct | undefined>
+  protected authenticate (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<unknown>
 
-  protected async authenticate (): Promise<Struct | undefined> {
+  protected async authenticate (): Promise<unknown> {
     return Promise.resolve(undefined)
   }
 
@@ -138,24 +156,6 @@ export abstract class RouteHandler {
 
   protected async authorize (): Promise<void> {
     return Promise.resolve(undefined)
-  }
-
-  protected createValidator (): Ajv {
-    const validator = new Ajv({
-      allErrors: true,
-      coerceTypes: true,
-      useDefaults: true
-    })
-
-    Object
-      .entries(this.schema)
-      .forEach(([name, schema]) => {
-        if (schema !== undefined) {
-          validator.addSchema(schema.valueOf(), name)
-        }
-      })
-
-    return validator
   }
 
   protected normalizeErrors (errors: ErrorObject[] = []): Struct {

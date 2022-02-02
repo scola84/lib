@@ -4,9 +4,8 @@ import type { Readable, Transform, Writable } from 'stream'
 import Ajv from 'ajv'
 import type { ObjectSchema } from 'fluent-json-schema'
 import type { Queuer } from './queuer'
+import type { RedisClientType } from 'redis'
 import type { Struct } from '../../../common'
-import type { WrappedNodeRedisClient } from 'handy-redis'
-import { createNodeRedisClient } from 'handy-redis'
 import type { queue as fastq } from 'fastq'
 import type pino from 'pino'
 import { pipeline } from '../stream'
@@ -69,7 +68,7 @@ export interface QueueHandlerOptions {
    *
    * @see https://preview.npmjs.com/package/handy-redis
    */
-  store: WrappedNodeRedisClient
+  store: RedisClientType
 
   /**
    * The amount of time to block the store list pop as milliseconds.
@@ -89,6 +88,13 @@ export abstract class QueueHandler {
    * @see https://github.com/fastify/fastify/blob/main/docs/Routes.md
    */
   public static options?: Partial<QueueHandlerOptions>
+
+  /**
+   * The store to trigger tasks.
+   *
+   * @see https://www.npmjs.com/package/handy-redis
+   */
+  public blstore?: RedisClientType
 
   /**
    * The concurrency.
@@ -151,14 +157,7 @@ export abstract class QueueHandler {
    *
    * @see https://www.npmjs.com/package/handy-redis
    */
-  public store: WrappedNodeRedisClient
-
-  /**
-   * The store to trigger tasks.
-   *
-   * @see https://www.npmjs.com/package/handy-redis
-   */
-  public storeDuplicate?: WrappedNodeRedisClient
+  public store: RedisClientType
 
   /**
    * The amount of time to block the store list pop as milliseconds.
@@ -217,7 +216,7 @@ export abstract class QueueHandler {
     this.schema = handlerOptions.schema ?? this.schema
     this.store = handlerOptions.store
     this.timeout = handlerOptions.timeout ?? 5 * 60 * 1000
-    this.queuer.add(this)
+    this.queuer.registerHandler(this)
   }
 
   /**
@@ -242,12 +241,12 @@ export abstract class QueueHandler {
   }
 
   /**
-   * Creates a duplicate of `store`.
+   * Creates a store.
    *
-   * @returns The store duplicate
+   * @returns The store
    */
-  public createStoreDuplicate (): WrappedNodeRedisClient {
-    return createNodeRedisClient(this.store.nodeRedis.duplicate())
+  public createStore (): RedisClientType {
+    return this.store.duplicate()
   }
 
   /**
@@ -290,7 +289,7 @@ export abstract class QueueHandler {
    *
    * Calls `push`.
    */
-  public start (): void {
+  public async start (): Promise<void> {
     this.logger = this.logger?.child({
       name: this.name
     })
@@ -302,34 +301,35 @@ export abstract class QueueHandler {
     }, 'Starting queue handler')
 
     this.queue = this.createQueue()
-    this.storeDuplicate = this.createStoreDuplicate()
+    this.blstore = this.createStore()
     this.validator = this.createValidator()
 
-    this.storeDuplicate.nodeRedis.on('error', (error) => {
+    this.blstore.on('error', (error) => {
       this.logger?.error({
         context: 'setup'
       }, String(error))
     })
 
+    await this.blstore.connect()
     this.push()
   }
 
   /**
    * Stops the queue handler.
    *
-   * Ends `storeDuplicate` and returns when all the tasks have finished.
+   * Ends `blstore` and returns when all the tasks have finished.
    */
   public async stop (): Promise<void> {
     this.logger?.info({
       connected: [
-        this.store.nodeRedis.connected,
-        this.storeDuplicate?.nodeRedis.connected
+        this.store.isOpen,
+        this.blstore?.isOpen
       ],
       idle: this.queue?.idle(),
       queue: this.queue?.length()
     }, 'Stopping queue handler')
 
-    this.storeDuplicate?.end()
+    await this.blstore?.disconnect()
 
     await waitUntil(() => {
       return this.queue?.idle() === true
@@ -439,7 +439,7 @@ export abstract class QueueHandler {
       .catch(async (error: unknown) => {
         if ((/connection lost/ui).test(String(error))) {
           await waitUntil(() => {
-            return this.store.nodeRedis.connected
+            return this.store.isOpen
           }, {
             timeout: Number.POSITIVE_INFINITY
           })
@@ -462,10 +462,10 @@ export abstract class QueueHandler {
    * Updates the task and pushes the ID onto the queue.
    */
   protected async pushQueueTask (): Promise<void> {
-    const [,id] = await this.storeDuplicate?.blpop([this.name], this.timeout / 1000) ?? []
+    const { element } = await this.blstore?.blPop([this.name], this.timeout / 1000) ?? {}
 
     const task = {
-      id: Number(id)
+      id: Number(element)
     }
 
     if (Number.isFinite(task.id)) {

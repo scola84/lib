@@ -4,9 +4,8 @@ import type { Queue } from '../../entities'
 import type { QueueHandler } from './handler'
 import { QueueRunner } from '../../helpers/queue/runner'
 import type { QueueTask } from '../../entities/base'
+import type { RedisClientType } from 'redis'
 import type { Struct } from '../../../common'
-import type { WrappedNodeRedisClient } from 'handy-redis'
-import { createNodeRedisClient } from 'handy-redis'
 import { isStruct } from '../../../common'
 import { parseExpression } from 'cron-parser'
 import type pino from 'pino'
@@ -60,7 +59,7 @@ export interface QueuerOptions {
    *
    * @see https://www.npmjs.com/package/handy-redis
    */
-  store: WrappedNodeRedisClient
+  store: RedisClientType
 
   /**
    * Whether the queuer is suspended.
@@ -95,6 +94,13 @@ export class Queuer {
   }
 
   /**
+   * The store to execute commands.
+   *
+   * @see https://www.npmjs.com/package/handy-redis
+   */
+  public blstore?: RedisClientType
+
+  /**
    * The database containing the queues.
    *
    * @see {@link Database}
@@ -107,6 +113,13 @@ export class Queuer {
    * @see {@link Database}
    */
   public databases: Partial<Struct<Database>>
+
+  /**
+   * The active queue handlers.
+   *
+   * @see {@link QueueHandler}
+   */
+  public handlers: Set<QueueHandler> = new Set()
 
   /**
    * The job to trigger queue runs.
@@ -130,18 +143,11 @@ export class Queuer {
   public names: string
 
   /**
-   * The active queue handlers.
-   *
-   * @see {@link QueueHandler}
-   */
-  public queueHandlers: Set<QueueHandler> = new Set()
-
-  /**
    * The active queue runners.
    *
    * @see {@link QueueRunner}
    */
-  public queueRunners: Set<QueueRunner> = new Set()
+  public runners: Set<QueueRunner> = new Set()
 
   /**
    * The schedule to trigger queue runs as a cron schedule expression.
@@ -156,14 +162,7 @@ export class Queuer {
    *
    * @see https://www.npmjs.com/package/handy-redis
    */
-  public store: WrappedNodeRedisClient
-
-  /**
-   * The store duplicate to execute commands.
-   *
-   * @see https://www.npmjs.com/package/handy-redis
-   */
-  public storeDuplicate?: WrappedNodeRedisClient
+  public store: RedisClientType
 
   /**
    * Whether the queuer is suspended.
@@ -183,23 +182,11 @@ export class Queuer {
   public constructor (options: QueuerOptions) {
     this.database = options.database
     this.databases = options.databases
+    this.logger = options.logger
     this.names = options.names ?? process.env.QUEUE_NAMES ?? '%'
     this.schedule = options.schedule ?? process.env.QUEUE_SCHEDULE ?? '* * * * *'
     this.store = options.store
     this.suspended = options.suspended ?? false
-
-    this.logger = options.logger.child({
-      name: 'queuer'
-    })
-  }
-
-  /**
-   * Adds a queue handler to the set of active queue handlers.
-   *
-   * @param queueHandler - The queue handler
-   */
-  public add (queueHandler: QueueHandler): void {
-    this.queueHandlers.add(queueHandler)
   }
 
   /**
@@ -222,18 +209,26 @@ export class Queuer {
     return new QueueRunner({
       database: this.database,
       databases: this.databases,
-      logger: this.logger,
       store: this.store
     })
   }
 
   /**
-   * Creates a duplicate of the store.
+   * Creates a store.
    *
-   * @returns The store duplicate
+   * @returns The store
    */
-  public createStoreDuplicate (): WrappedNodeRedisClient {
-    return createNodeRedisClient(this.store.nodeRedis.duplicate())
+  public createStore (): RedisClientType {
+    return this.store.duplicate()
+  }
+
+  /**
+   * Registers a queue handler.
+   *
+   * @param handler - The queue handler
+   */
+  public registerHandler (handler: QueueHandler): void {
+    this.handlers.add(handler)
   }
 
   /**
@@ -264,27 +259,6 @@ export class Queuer {
   }
 
   /**
-   * Sets up the queuer.
-   *
-   * Sets `storeDuplicate` and registers an `error` event listener on `store` and `storeDuplicate`.
-   */
-  public setup (): void {
-    this.storeDuplicate = this.createStoreDuplicate()
-
-    this.store.nodeRedis.on('error', (error) => {
-      this.logger.error({
-        context: 'setup'
-      }, String(error))
-    })
-
-    this.storeDuplicate.nodeRedis.on('error', (error) => {
-      this.logger.error({
-        context: 'setup'
-      }, String(error))
-    })
-  }
-
-  /**
    * Skips the remainder of a queue run.
    *
    * Updates all tasks by setting their `status` to 'err' and `reason` to 'skipped'.
@@ -302,22 +276,36 @@ export class Queuer {
   /**
    * Starts the queuer.
    *
-   * Calls `setup`.
+   * Sets `blstore` and registers an `error` event listener on `store` and `blstore`.
    *
    * Starts the job and listener to trigger queue runs.
-   *
-   * @param setup - Whether to call `setup`
    */
-  public async start (setup = true): Promise<void> {
+  public async start (): Promise<void> {
+    this.logger = this.logger.child({
+      name: 'queuer'
+    })
+
     this.logger.info({
       names: this.names,
       schedule: this.schedule
     }, 'Starting queuer')
 
-    if (setup) {
-      this.setup()
-    }
+    this.blstore = this.createStore()
 
+    this.store.on('error', (error) => {
+      this.logger.error({
+        context: 'setup'
+      }, String(error))
+    })
+
+    this.blstore.on('error', (error) => {
+      this.logger.error({
+        context: 'setup'
+      }, String(error))
+    })
+
+    await this.store.connect()
+    await this.blstore.connect()
     this.startJob()
     await this.startListener()
   }
@@ -332,28 +320,29 @@ export class Queuer {
   public async stop (): Promise<void> {
     this.logger.info({
       connected: [
-        this.store.nodeRedis.connected,
-        this.storeDuplicate?.nodeRedis.connected
+        this.store.isOpen,
+        this.blstore?.isOpen
       ],
-      queueHandlers: this.queueHandlers.size,
-      queueRunners: this.queueRunners.size
+      handlers: this.handlers.size,
+      runners: this.runners.size
     }, 'Stopping queuer')
 
     this.stopJob()
     await this.stopListener()
 
-    const runners = Array.from(this.queueHandlers)
+    const runners = Array.from(this.handlers)
 
-    await Promise.all(runners.map(async (queueHandler) => {
-      await queueHandler.stop()
+    await Promise.all(runners.map(async (handler) => {
+      await handler.stop()
     }))
 
     await waitUntil(() => {
-      return this.queueRunners.size === 0
+      return this.runners.size === 0
     }, {
       timeout: Number.POSITIVE_INFINITY
     })
 
+    await this.blstore?.quit()
     await this.store.quit()
   }
 
@@ -424,17 +413,17 @@ export class Queuer {
    */
   protected async runQueue (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
     if (!this.suspended) {
-      const queueRunner = this.createQueueRunner()
+      const runner = this.createQueueRunner()
 
       try {
-        this.queueRunners.add(queueRunner)
-        await queueRunner.run(queue, parameters)
+        this.runners.add(runner)
+        await runner.run(queue, parameters)
       } catch (error: unknown) {
         this.logger.error({
           context: 'run'
         }, String(error))
       } finally {
-        this.queueRunners.delete(queueRunner)
+        this.runners.delete(runner)
       }
     }
   }
@@ -512,7 +501,7 @@ export class Queuer {
    * Subscribes to the 'queue' channel of the store.
    */
   protected async startListener (): Promise<void> {
-    this.storeDuplicate?.nodeRedis.on('message', (channel, message) => {
+    await this.blstore?.subscribe('queue', (message) => {
       this
         .handleListener(message)
         .catch((error: unknown) => {
@@ -521,8 +510,6 @@ export class Queuer {
           }, String(error))
         })
     })
-
-    await this.storeDuplicate?.subscribe('queue')
   }
 
   /**
@@ -536,8 +523,7 @@ export class Queuer {
    * Stops the listener.
    */
   protected async stopListener (): Promise<void> {
-    await this.storeDuplicate?.unsubscribe('queue')
-    await this.storeDuplicate?.quit()
+    await this.blstore?.unsubscribe('queue')
   }
 
   /**

@@ -1,8 +1,8 @@
 import type { FastifyReply, FastifyRequest, FastifySchema, RouteOptions, ValidationResult } from 'fastify'
 import type { Database } from '../sql'
 import type { FastifyServer } from './server'
+import type { RedisClientType } from 'redis'
 import type { Struct } from '../../../common'
-import type { WrappedNodeRedisClient } from 'handy-redis'
 import { isArray } from '../../../common'
 import type pino from 'pino'
 
@@ -33,7 +33,7 @@ export interface FastifyHandlerOptions extends RouteOptions {
    *
    * @see https://preview.npmjs.com/package/handy-redis
    */
-  store: WrappedNodeRedisClient
+  store: RedisClientType
 }
 
 /**
@@ -99,7 +99,7 @@ export abstract class FastifyHandler {
    *
    * @see https://www.npmjs.com/package/handy-redis
    */
-  public store?: WrappedNodeRedisClient
+  public store?: RedisClientType
 
   /**
    * The URL.

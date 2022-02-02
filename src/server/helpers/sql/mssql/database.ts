@@ -22,7 +22,19 @@ export class MssqlDatabase extends Database {
 
   public async start (): Promise<void> {
     if (this.dsn !== undefined) {
-      this.pool = this.createPool(this.dsn, this.password)
+      this.logger = this.logger?.child({
+        name: this.name
+      })
+
+      const options = this.parseDsn(this.dsn)
+
+      this.logger?.info(options, 'Starting database')
+
+      this.pool = new ConnectionPool({
+        ...options,
+        password: this.password
+      })
+
       await this.pool.connect()
 
       if (this.population !== undefined) {
@@ -33,16 +45,16 @@ export class MssqlDatabase extends Database {
 
   public async stop (): Promise<void> {
     if (this.dsn !== undefined) {
+      this.logger?.info('Stopping database')
       await this.pool.close()
     }
   }
 
-  protected createPool (dsn: string, password?: string): ConnectionPool {
+  protected parseDsn (dsn: string): config {
     const url = new URL(dsn)
 
     const options: config = {
       database: url.pathname.slice(1),
-      password,
       port: Number(url.port),
       server: url.hostname,
       user: url.username
@@ -54,6 +66,6 @@ export class MssqlDatabase extends Database {
         set(options, name, cast(value))
       })
 
-    return new ConnectionPool(options)
+    return options
   }
 }

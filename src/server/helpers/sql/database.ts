@@ -1,12 +1,25 @@
 import type { Connection, DeleteResult, InsertResult, UpdateResult } from './connection'
 import type { Readable } from 'stream'
 import type { Struct } from '../../../common'
+import type pino from 'pino'
 
 export interface DatabaseOptions {
   /**
    * The DSN (Data Source Name) of the database server.
    */
   dsn?: string
+
+  /**
+   * The logger.
+   *
+   * @see https://www.npmjs.com/package/pino
+   */
+  logger?: pino.Logger
+
+  /**
+   * The name of the database.
+   */
+  name?: string
 
   /**
    * The password of the database server.
@@ -27,6 +40,18 @@ export abstract class Database {
    * The DSN (Data Source Name) of the database server.
    */
   public dsn?: string
+
+  /**
+   * The logger.
+   *
+   * @see https://www.npmjs.com/package/pino
+   */
+  public logger?: pino.Logger
+
+  /**
+   * The name of the database.
+   */
+  public name?: string
 
   /**
    * The password of the database server.
@@ -93,6 +118,8 @@ export abstract class Database {
    */
   public constructor (options: DatabaseOptions = {}) {
     this.dsn = options.dsn
+    this.logger = options.logger
+    this.name = options.name
     this.password = options.password
     this.population = options.population
   }
@@ -501,22 +528,19 @@ export abstract class Database {
   /**
    * Stops the database client if `dsn` is defined.
    *
-   * Closes the connection pool.
+   * Closes the pool.
    */
   public abstract stop (): Promise<void>
 
   /**
-   * Creates a connection pool.
-   *
    * Parses `dsn` as the pool options.
    *
-   * Adds `password` and dialect-specific default values to the pool options.
+   * Adds dialect-specific default values to the pool options.
    *
    * Parses the query string of `dsn`, casts boolean and number values and adds the key/value pairs to the pool options.
    *
-   * @param dsn - The DSN of the connection pool
-   * @param password - The password of the connection pool
-   * @returns The connection pool
+   * @param dsn - The DSN of the pool
+   * @returns The pool options
    */
-  protected abstract createPool (dsn: string, password?: string): unknown
+  protected abstract parseDsn (dsn: string): unknown
 }

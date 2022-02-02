@@ -7,7 +7,7 @@
  * @param values - The values
  * @returns The query
  */
-export function sql (strings: TemplateStringsArray, ...values: Array<unknown | undefined>): string {
+export function sql (strings: TemplateStringsArray, ...values: unknown[]): string {
   return strings.reduce((result, string, index) => {
     return `${result}${string}${String(values[index] ?? '')}`
   }, '')

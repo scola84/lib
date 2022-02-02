@@ -2,10 +2,9 @@ import type { Database, InsertResult, UpdateResult } from '../sql'
 import { PassThrough, Writable } from 'stream'
 import type { Queue, QueueRun, QueueTask } from '../../entities'
 import type { Readable } from 'stream'
+import type { RedisClientType } from 'redis'
 import type { Struct } from '../../../common'
-import type { WrappedNodeRedisClient } from 'handy-redis'
 import { createQueueRun } from '../../entities'
-import type pino from 'pino'
 import { pipeline } from '../stream'
 import { sql } from '../sql'
 
@@ -25,18 +24,11 @@ export interface QueueRunnerOptions {
   databases: Partial<Struct<Database>>
 
   /**
-   * The logger.
-   *
-   * @see https://www.npmjs.com/package/pino
-   */
-  logger?: pino.Logger
-
-  /**
    * The store to trigger tasks.
    *
    * @see https://www.npmjs.com/package/handy-redis
    */
-  store: WrappedNodeRedisClient
+  store: RedisClientType
 }
 
 /**
@@ -58,18 +50,11 @@ export class QueueRunner {
   public databases: Partial<Struct<Database>>
 
   /**
-   * The logger.
-   *
-   * @see https://www.npmjs.com/package/pino
-   */
-  public logger?: pino.Logger
-
-  /**
    * The store to trigger tasks.
    *
    * @see https://www.npmjs.com/package/handy-redis
    */
-  public store: WrappedNodeRedisClient
+  public store: RedisClientType
 
   /**
    * Creates a queue runner.
@@ -80,10 +65,6 @@ export class QueueRunner {
     this.database = options.database
     this.databases = options.databases
     this.store = options.store
-
-    this.logger = options.logger?.child({
-      name: 'queue-runner'
-    })
   }
 
   /**
@@ -134,7 +115,7 @@ export class QueueRunner {
       write: async (payload: unknown, encoding, finish) => {
         try {
           run.aggr_total += 1
-          await this.store.rpush(run.name, (await this.insertQueueTask(run, payload)).id.toString())
+          await this.store.rPush(run.name, (await this.insertQueueTask(run, payload)).id.toString())
           finish()
         } catch (error: unknown) {
           finish(new Error(String(error)))
@@ -164,9 +145,7 @@ export class QueueRunner {
       queue
     })
 
-    const { id: runId } = await this.insertQueueRun(run)
-
-    run.id = runId
+    run.id = (await this.insertQueueRun(run)).id
 
     try {
       await pipeline(
@@ -188,13 +167,7 @@ export class QueueRunner {
         }))
       }))
     } catch (error: unknown) {
-      try {
-        await this.updateQueueRunErr(run, error)
-      } catch (updateError: unknown) {
-        this.logger?.error({
-          context: 'run'
-        }, String(updateError))
-      }
+      await this.updateQueueRunErr(run, error)
     }
   }
 

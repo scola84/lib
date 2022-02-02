@@ -25,7 +25,18 @@ export class PostgresqlDatabase extends Database {
 
   public async start (): Promise<void> {
     if (this.dsn !== undefined) {
-      this.pool = this.createPool(this.dsn, this.password)
+      this.logger = this.logger?.child({
+        name: this.name
+      })
+
+      const options = this.parseDsn(this.dsn)
+
+      this.logger?.info(options, 'Starting database')
+
+      this.pool = new Pool({
+        ...options,
+        password: this.password
+      })
 
       if (this.population !== undefined) {
         await this.populate(this.population)
@@ -35,18 +46,18 @@ export class PostgresqlDatabase extends Database {
 
   public async stop (): Promise<void> {
     if (this.dsn !== undefined) {
+      this.logger?.info('Stopping database')
       await this.pool.end()
     }
   }
 
-  protected createPool (dsn: string, password?: string): Pool {
+  protected parseDsn (dsn: string): PoolConfig {
     const url = new URL(dsn)
 
     const options: PoolConfig = {
       connectionTimeoutMillis: 10000,
       database: url.pathname.slice(1),
       host: url.hostname,
-      password,
       port: Number(url.port),
       user: url.username
     }
@@ -69,6 +80,6 @@ export class PostgresqlDatabase extends Database {
       }
     })
 
-    return new Pool(options)
+    return options
   }
 }

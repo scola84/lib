@@ -62,25 +62,25 @@ CREATE TABLE `queue_run` (
   `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `fkey_queue_id` bigint(20) unsigned NOT NULL,
-  `fkey_task_run_id` bigint(20) unsigned DEFAULT NULL,
+  `fkey_queue_task_id` bigint(20) unsigned DEFAULT NULL,
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `reason` text,
   PRIMARY KEY (`id`),
   KEY `queue_run_fkey_queue_id_IDX` (`fkey_queue_id`) USING BTREE,
-  KEY `queue_run_fkey_task_run_id_IDX` (`fkey_task_run_id`) USING BTREE,
-  CONSTRAINT `queue_run_task_run_fkey` FOREIGN KEY (`fkey_task_run_id`) REFERENCES `task_run` (`id`) ON DELETE SET NULL,
+  KEY `queue_run_fkey_queue_task_id_IDX` (`fkey_queue_task_id`) USING BTREE,
+  CONSTRAINT `queue_run_queue_task_fkey` FOREIGN KEY (`fkey_queue_task_id`) REFERENCES `queue_task` (`id`) ON DELETE SET NULL,
   CONSTRAINT `queue_run_queue_fkey` FOREIGN KEY (`fkey_queue_id`) REFERENCES `queue` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `task_run`
+-- Table structure for table `queue_task`
 --
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `task_run` (
+CREATE TABLE `queue_task` (
   `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_queued` datetime DEFAULT NULL,
   `date_started` datetime DEFAULT NULL,
@@ -93,8 +93,8 @@ CREATE TABLE `task_run` (
   `result` json NOT NULL DEFAULT (json_object()),
   `status` varchar(255) NOT NULL DEFAULT 'pending',
   PRIMARY KEY (`id`),
-  KEY `task_run_fkey_queue_run_id_IDX` (`fkey_queue_run_id`) USING BTREE,
-  CONSTRAINT `task_run_queue_run_fkey` FOREIGN KEY (`fkey_queue_run_id`) REFERENCES `queue_run` (`id`) ON DELETE CASCADE
+  KEY `queue_task_fkey_queue_run_id_IDX` (`fkey_queue_run_id`) USING BTREE,
+  CONSTRAINT `queue_task_queue_run_fkey` FOREIGN KEY (`fkey_queue_run_id`) REFERENCES `queue_run` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

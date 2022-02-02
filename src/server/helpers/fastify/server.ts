@@ -103,12 +103,9 @@ export class FastifyServer {
    */
   public constructor (options: ServerOptions = {}) {
     this.address = options.address ?? '0.0.0.0'
+    this.logger = options.logger
     this.options = options
     this.port = options.port ?? 80
-
-    this.logger = options.logger?.child({
-      name: 'server'
-    })
 
     this.plugins = options.plugins ?? {
       cookie: fastifyCookie,
@@ -139,36 +136,27 @@ export class FastifyServer {
   }
 
   /**
-   * Sets up the server.
-   *
-   * Sets `fastify`.
-   */
-  public setup (): void {
-    this.fastify = this.createFastify()
-  }
-
-  /**
    * Starts the server.
    *
    * Calls `setup`, registers `plugins` and binds `fastify` to `address` and `port`.
-   *
-   * @param setup - Whether to call `setup`
    */
-  public async start (setup = true): Promise<void> {
+  public async start (): Promise<void> {
+    this.logger = this.logger?.child({
+      name: 'server'
+    })
+
     this.logger?.info({
       address: this.address,
       port: this.port
     }, 'Starting server')
 
-    if (setup) {
-      this.setup()
-    }
+    this.fastify = this.createFastify()
 
     await Promise.all(Object.values(this.plugins).map((plugin) => {
       return this.fastify?.register(plugin)
     }))
 
-    await this.fastify?.listen(this.port, this.address)
+    await this.fastify.listen(this.port, this.address)
   }
 
   /**

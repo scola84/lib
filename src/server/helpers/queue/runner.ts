@@ -24,9 +24,9 @@ export interface QueueRunnerOptions {
   databases: Partial<Struct<Database>>
 
   /**
-   * The store to trigger tasks.
+   * The store.
    *
-   * @see https://www.npmjs.com/package/handy-redis
+   * @see https://www.npmjs.com/package/redis
    */
   store: RedisClientType
 }
@@ -50,9 +50,9 @@ export class QueueRunner {
   public databases: Partial<Struct<Database>>
 
   /**
-   * The store to trigger tasks.
+   * The store to write.
    *
-   * @see https://www.npmjs.com/package/handy-redis
+   * @see https://www.npmjs.com/package/redis
    */
   public store: RedisClientType
 

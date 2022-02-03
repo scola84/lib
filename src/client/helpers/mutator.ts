@@ -2,7 +2,6 @@ import { cast, hyphenize, isStruct } from '../../common'
 import type { ScolaElement } from '../elements/element'
 import { ScolaSanitizer } from './sanitizer'
 import type { Struct } from '../../common'
-import { isValidAttribute } from 'dompurify'
 
 declare global {
   interface HTMLElementEventMap {
@@ -69,7 +68,11 @@ export class ScolaMutator {
             return this.element.getAttribute(attrName)?.includes(attrValue)
           })
 
-          this.element.setAttribute(attrName, attrValues[index + 1] ?? attrValues[0])
+          const attrValue = attrValues[index + 1] ?? attrValues[0]
+
+          if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
+            this.element.setAttribute(attrName, attrValue)
+          }
         })
     }
   }
@@ -115,7 +118,7 @@ export class ScolaMutator {
             this.element.toggleAttribute(attrName)
           } else if (value === this.element.getAttribute(attrName)) {
             this.element.removeAttribute(attrName)
-          } else if (isValidAttribute(this.element.nodeName, attrName, attrValue)) {
+          } else if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
             this.element.setAttribute(attrName, attrValue)
           }
         })

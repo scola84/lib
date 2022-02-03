@@ -17,9 +17,13 @@ declare global {
   }
 }
 
+type Left = 'center' | 'end-at-start' | 'end' | 'screen-center' | 'start-at-end' | 'start'
+
+type Top = 'bottom-at-top' | 'bottom' | 'center' | 'screen-center' | 'top-at-bottom' | 'top'
+
 interface Position {
-  left: string
-  top: string
+  left: Left
+  top: Top
 }
 
 interface Style {
@@ -27,7 +31,7 @@ interface Style {
   top: number
 }
 
-const leftAlternatives: Struct<string[]> = {
+const leftAlternatives: Record<Left, Left[]> = {
   'center': ['center', 'start', 'end', 'screen-center'],
   'end': ['end', 'start', 'center', 'screen-center'],
   'end-at-start': ['end-at-start', 'start-at-end', 'screen-center'],
@@ -36,7 +40,7 @@ const leftAlternatives: Struct<string[]> = {
   'start-at-end': ['start-at-end', 'end-at-start', 'screen-center']
 }
 
-const topAlternatives: Struct<string[]> = {
+const topAlternatives: Record<Top, Top[]> = {
   'bottom': ['bottom', 'top', 'center', 'screen-center'],
   'bottom-at-top': ['bottom-at-top', 'top-at-bottom', 'screen-center'],
   'center': ['center', 'top', 'bottom', 'screen-center'],
@@ -58,7 +62,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public interact: ScolaInteract
 
-  public left: string
+  public left: Left
 
   public mutator: ScolaMutator
 
@@ -66,7 +70,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public propagator: ScolaPropagator
 
-  public top: string
+  public top: Top
 
   public trigger?: MouseEvent
 
@@ -155,8 +159,8 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.interact.mouse = this.interact.hasMouse
     this.interact.target = 'window'
     this.interact.touch = this.interact.hasTouch
-    this.left = this.breakpoint.parse('sc-left') ?? 'center'
-    this.top = this.breakpoint.parse('sc-top') ?? 'center'
+    this.left = (this.breakpoint.parse('sc-left') as Left | null) ?? 'center'
+    this.top = (this.breakpoint.parse('sc-top') as Top | null) ?? 'center'
   }
 
   public setData (data: unknown): void {
@@ -312,7 +316,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
       top: 0
     }
 
-    leftAlternatives[this.left].some((alternative: string): boolean => {
+    leftAlternatives[this.left].some((alternative: Left): boolean => {
       position.left = alternative
       style = this.calculateAlternativeStyle(position)
       return (
@@ -321,7 +325,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
       )
     })
 
-    topAlternatives[this.top].some((alternative: string): boolean => {
+    topAlternatives[this.top].some((alternative: Top): boolean => {
       position.top = alternative
       style = this.calculateAlternativeStyle(position)
       return (

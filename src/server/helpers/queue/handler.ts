@@ -13,6 +13,12 @@ import { promise } from 'fastq'
 import { sql } from '../sql'
 import waitUntil from 'async-wait-until'
 
+declare module 'fastq' {
+  interface queue {
+    running: () => number
+  }
+}
+
 export interface QueueHandlerOptions {
   /**
    * The concurrency.
@@ -59,14 +65,15 @@ export interface QueueHandlerOptions {
    *
    * If it contains an `options` and/or `payload` schema the queue handler will validate the options and/or payload of the task respectively.
    *
+   * @defaultValue `{}`
    * @see https://www.npmjs.com/package/fluent-json-schema
    */
   schema: Struct<ObjectSchema | undefined>
 
   /**
-   * The store to trigger queue runs.
+   * The store.
    *
-   * @see https://preview.npmjs.com/package/handy-redis
+   * @see https://preview.npmjs.com/package/redis
    */
   store: RedisClientType
 
@@ -84,17 +91,8 @@ export interface QueueHandlerOptions {
 export abstract class QueueHandler {
   /**
    * The queue handler options.
-   *
-   * @see https://github.com/fastify/fastify/blob/main/docs/Routes.md
    */
   public static options?: Partial<QueueHandlerOptions>
-
-  /**
-   * The store to trigger tasks.
-   *
-   * @see https://www.npmjs.com/package/handy-redis
-   */
-  public blstore?: RedisClientType
 
   /**
    * The concurrency.
@@ -144,20 +142,33 @@ export abstract class QueueHandler {
   public queuer: Queuer
 
   /**
+   * Whether the queue handler is reading a task.
+   */
+  public reading = false
+
+  /**
    * The schema.
    *
    * If it contains an `options` and/or `payload` schema the queue handler will validate the options and/or payload of the task respectively.
    *
+   * @defaultValue `{}`
    * @see https://www.npmjs.com/package/fluent-json-schema
    */
   public schema: Struct<ObjectSchema | undefined>
 
   /**
-   * The store to trigger queue runs.
+   * The store to write.
    *
-   * @see https://www.npmjs.com/package/handy-redis
+   * @see https://www.npmjs.com/package/redis
    */
   public store: RedisClientType
+
+  /**
+   * The store to read.
+   *
+   * @see https://www.npmjs.com/package/redis
+   */
+  public storeRead?: RedisClientType
 
   /**
    * The amount of time to block the store list pop as milliseconds.
@@ -183,6 +194,7 @@ export abstract class QueueHandler {
    * @param options - The queue handler options
    * @throws database is undefined
    * @throws name is undefined
+   * @throws queuer is undefined
    * @throws store is undefined
    */
   public constructor (options: Partial<QueueHandlerOptions>) {
@@ -216,7 +228,7 @@ export abstract class QueueHandler {
     this.schema = handlerOptions.schema ?? {}
     this.store = handlerOptions.store
     this.timeout = handlerOptions.timeout ?? 5 * 60 * 1000
-    this.queuer.registerHandler(this)
+    this.queuer.register(this)
   }
 
   /**
@@ -224,18 +236,12 @@ export abstract class QueueHandler {
    *
    * The queue handles tasks in parallel with a concurrency given by `concurrency`.
    *
-   * The queue calls `push` if it is drained.
-   *
    * @returns The queue
    */
   public createQueue (): fastq {
     const queue = promise<unknown, number>(async (id) => {
       return this.handleQueueTask(id)
     }, this.concurrency)
-
-    queue.drain = () => {
-      this.push()
-    }
 
     return queue
   }
@@ -252,7 +258,7 @@ export abstract class QueueHandler {
   /**
    * Creates a validator.
    *
-   * Creates a validator and adds `schema` to the validator.
+   * Adds `schema` to the validator.
    *
    * @returns The validator
    */
@@ -280,16 +286,14 @@ export abstract class QueueHandler {
    * @param streams - The streams
    * @see {@link pipeline}
    */
-  public async pipeline (...streams: Array<Readable | Transform | Writable>): Promise<unknown> {
+  public async pipeline (...streams: Array<Readable | Transform | Writable>): Promise<void> {
     return pipeline(...streams)
   }
 
   /**
    * Starts the queue handler.
-   *
-   * Calls `push`.
    */
-  public async start (): Promise<void> {
+  public start (): void {
     this.logger = this.logger?.child({
       name: this.name
     })
@@ -301,35 +305,29 @@ export abstract class QueueHandler {
     }, 'Starting queue handler')
 
     this.queue = this.createQueue()
-    this.blstore = this.createStore()
     this.validator = this.createValidator()
 
-    this.blstore.on('error', (error) => {
-      this.logger?.error({
-        context: 'setup'
-      }, String(error))
-    })
-
-    await this.blstore.connect()
-    this.push()
+    this
+      .startRead()
+      .catch((error) => {
+        this.logger?.error({
+          context: 'start-read'
+        }, String(error))
+      })
   }
 
   /**
    * Stops the queue handler.
    *
-   * Ends `blstore` and returns when all the tasks have finished.
+   * Returns when all the tasks have finished.
    */
   public async stop (): Promise<void> {
     this.logger?.info({
-      connected: [
-        this.store.isOpen,
-        this.blstore?.isOpen
-      ],
       idle: this.queue?.idle(),
       queue: this.queue?.length()
     }, 'Stopping queue handler')
 
-    await this.blstore?.disconnect()
+    await this.stopRead()
 
     await waitUntil(() => {
       return this.queue?.idle() === true
@@ -375,13 +373,13 @@ export abstract class QueueHandler {
   /**
    * Handles a task.
    *
-   * Selects the task and queue run. Updates the task, validates `options` and/or `payload` and calls `handle`.
+   * Selects the task and queue run. Prepares the task and calls `handle`.
    *
    * Sets `reason` and `status` of the task if an error is caught.
    *
-   * Finishes the task
+   * Finishes the task and calls `read`.
    *
-   * @param task - The ID of the task
+   * @param id - The ID of the task
    */
   protected async handleQueueTask (id: number): Promise<void> {
     try {
@@ -400,6 +398,7 @@ export abstract class QueueHandler {
           task.status = 'err'
         } finally {
           await this.finishQueueTask(task)
+          this.read()
         }
       }
     } catch (error: unknown) {
@@ -409,7 +408,14 @@ export abstract class QueueHandler {
     }
   }
 
-  protected async prepareTask (task: QueueTask): Promise<QueueTask> {
+  /**
+   * Prepares the task.
+   *
+   * Updates the task and validates `options` and/or `payload`.
+   *
+   * @param task - The task
+   */
+  protected async prepareTask (task: QueueTask): Promise<void> {
     await this.updateQueueTaskOnRun(task)
 
     if (this.validator?.getSchema('options') !== undefined) {
@@ -419,59 +425,64 @@ export abstract class QueueHandler {
     if (this.validator?.getSchema('payload') !== undefined) {
       this.validate('payload', task.payload)
     }
-
-    return task
   }
 
   /**
-   * Pushes a task.
+   * Reads a task.
    *
-   * Calls itself if the queue length is less than the `concurrency`.
+   * Calls itself if the queue length is less than `concurrency`.
    *
-   * Calls itself if the store connection was lost and reestablished.
+   * Calls itself if the store is reopened.
    */
-  protected push (): void {
-    this
-      .pushQueueTask()
-      .then(() => {
-        if ((this.queue?.length() ?? 0) < this.concurrency) {
-          this.push()
-        }
-      })
-      .catch(async (error: unknown) => {
-        if ((/connection lost/ui).test(String(error))) {
-          await waitUntil(() => {
-            return this.store.isOpen
-          }, {
-            timeout: Number.POSITIVE_INFINITY
-          })
+  protected read (): void {
+    if (!this.reading) {
+      this.reading = true
 
-          this.push()
-          return
-        }
+      this
+        .readQueueTask()
+        .then(() => {
+          this.reading = false
 
-        this.logger?.error({
-          context: 'push'
-        }, String(error))
-      })
+          if ((this.queue?.running() ?? 0) < this.concurrency) {
+            this.read()
+          }
+        })
+        .catch(async (error: unknown) => {
+          this.reading = false
+
+          if ((String(error).endsWith('Socket closed unexpectedly'))) {
+            await waitUntil(() => {
+              return this.store.isOpen
+            }, {
+              timeout: Number.POSITIVE_INFINITY
+            })
+
+            this.read()
+          } else if (!String(error).endsWith('Disconnects client')) {
+            this.logger?.error({
+              context: 'read-queue-task'
+            }, String(error))
+          }
+        })
+    }
   }
 
   /**
-   * Pushes a task.
+   * Reads a task.
    *
    * Pops the ID of the task from the head of the store list at `name`. Blocks for the amount of milliseconds given by `timeout`.
    *
    * Updates the task and pushes the ID onto the queue.
    */
-  protected async pushQueueTask (): Promise<void> {
-    const { element } = await this.blstore?.blPop([this.name], this.timeout / 1000) ?? {}
+  protected async readQueueTask (): Promise<void> {
+    const { element } = await this.storeRead?.blPop([this.name], this.timeout / 1000) ?? {}
 
     const task = {
       id: Number(element)
     }
 
     if (Number.isFinite(task.id)) {
-      await this.updateQueueTaskOnPush(task)
+      await this.updateQueueTaskOnRead(task)
       this.queue?.push(task.id)
     }
   }
@@ -535,6 +546,34 @@ export abstract class QueueHandler {
       fkey_queue_task_id: task.id,
       id: task.run.id
     })
+  }
+
+  /**
+   * Starts reading tasks from the store.
+   *
+   * Sets `storeRead`, connects it and calls `read`.
+   */
+  protected async startRead (): Promise<void> {
+    this.storeRead?.removeAllListeners()
+    this.storeRead = this.createStore()
+
+    this.storeRead.on('error', (error) => {
+      this.logger?.error({
+        context: 'store'
+      }, String(error))
+    })
+
+    await this.storeRead.connect()
+    this.read()
+  }
+
+  /**
+   * Stops reading tasks from the store.
+   *
+   * Disconnects `storeRead`.
+   */
+  protected async stopRead (): Promise<void> {
+    await this.storeRead?.disconnect()
   }
 
   /**
@@ -606,7 +645,7 @@ export abstract class QueueHandler {
    * @param task - The task
    * @returns The update result
    */
-  protected async updateQueueTaskOnPush (task: Pick<QueueTask, 'id'>): Promise<UpdateResult> {
+  protected async updateQueueTaskOnRead (task: Pick<QueueTask, 'id'>): Promise<UpdateResult> {
     return this.database.update<QueueTask>(sql`
       UPDATE queue_task
       SET
@@ -670,5 +709,5 @@ export abstract class QueueHandler {
    *
    * @param task - The task
    */
-  protected abstract handle (task: QueueTask): Promise<unknown>
+  protected abstract handle (task: QueueTask): Promise<unknown> | unknown
 }

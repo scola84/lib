@@ -31,7 +31,7 @@ export interface FastifyHandlerOptions extends RouteOptions {
   /**
    * The store.
    *
-   * @see https://preview.npmjs.com/package/handy-redis
+   * @see https://preview.npmjs.com/package/redis
    */
   store: RedisClientType
 }
@@ -97,7 +97,7 @@ export abstract class FastifyHandler {
   /**
    * The store.
    *
-   * @see https://www.npmjs.com/package/handy-redis
+   * @see https://www.npmjs.com/package/redis
    */
   public store?: RedisClientType
 
@@ -112,7 +112,7 @@ export abstract class FastifyHandler {
    * Merges the static class `options` and the constructor `options`.
    *
    * @param options - The route handler options
-   * @throws server is undefined
+   * @throws `server` is undefined
    */
   public constructor (options: Partial<FastifyHandlerOptions>) {
     const handlerOptions = {
@@ -230,15 +230,11 @@ export abstract class FastifyHandler {
    *[{
    *  keyword: 'type',
    *  dataPath: '.given_name',
-   *  schemaPath: '#/properties/given_name/type',
-   *  params: { type: 'number' },
-   *  message: 'should be number'
+   *  params: { type: 'number' }
    *}, {
    *  keyword: 'minLength',
    *  dataPath: '.family_name',
-   *  schemaPath: '#/properties/family_name/minLength',
-   *  params: { limit: 300 },
-   *  message: 'should NOT be shorter than 300 characters'
+   *  params: { limit: 300 }
    *}]
    *```
    * becomes

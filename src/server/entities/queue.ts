@@ -17,9 +17,9 @@ export interface Queue<Options = unknown> extends Required<QueueBase> {
   date_updated: Date
 
   /**
-   * The ID of the parent queue.
+   * The ID of the queue.
    *
-   * If a run of the parent queue has finished, a run of the child queue will be triggered.
+   * If a queue run has finished, dependant queues will be triggered.
    */
   fkey_queue_id: number | null
 

@@ -1,11 +1,14 @@
 {
   "recommendations": [
+    "abusaidm.html-snippets",
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "foxundermoon.shell-format",
     "frigus02.vscode-sql-tagged-template-literals-syntax-only",
     "redhat.vscode-yaml",
+    "raynigon.nginx-formatter",
     "ryanluker.vscode-coverage-gutters",
-    "streetsidesoftware.code-spell-checker"
+    "stevencl.adddoccomments",
+    "yzhang.markdown-all-in-one"
   ]
 }

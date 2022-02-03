@@ -149,8 +149,8 @@ export class MssqlConnection extends Connection {
 
     const transform = new Transform({
       objectMode: true,
-      transform (chunk, encoding, callback) {
-        callback(null, chunk)
+      transform (data, encoding, callback) {
+        callback(null, data)
       }
     })
 

@@ -1,4 +1,5 @@
 import type { ScolaElement } from '../elements/element'
+import { ScolaSanitizer } from './sanitizer'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 
@@ -19,6 +20,8 @@ export class ScolaObserver {
 
   public observers: MutationObserver[] = []
 
+  public sanitizer: ScolaSanitizer
+
   public save: string[]
 
   public storage: Storage
@@ -29,6 +32,7 @@ export class ScolaObserver {
 
   public constructor (element: ScolaElement) {
     this.element = element
+    this.sanitizer = new ScolaSanitizer()
     this.reset()
 
     if (this.save.length > 0) {
@@ -145,7 +149,7 @@ export class ScolaObserver {
           .forEach(([name, value]) => {
             if (value === null) {
               this.element.removeAttribute(name)
-            } else {
+            } else if (this.sanitizer.checkAttribute(this.element.nodeName, name, String(value))) {
               this.element.setAttribute(name, String(value))
             }
           })

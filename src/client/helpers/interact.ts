@@ -33,7 +33,9 @@ type DirectionX = 'left' | 'none' | 'right'
 
 type DirectionY = 'down' | 'none' | 'up'
 
-type Type = 'click' | 'end' | 'move' | 'none' | 'start' | 'wheel' | 'zoom'
+type Target = 'element' | 'window'
+
+type Type = 'click' | 'dblclick' | 'end' | 'move' | 'none' | 'start' | 'wheel' | 'zoom'
 
 type InteractEvent = KeyboardEvent | MouseEvent | TouchEvent | WheelEvent
 
@@ -76,7 +78,7 @@ export class ScolaInteract {
 
   public mouse = false
 
-  public target = 'element'
+  public target: Target = 'element'
 
   public threshold = 0.1
 
@@ -107,6 +109,8 @@ export class ScolaInteract {
   public get hasWheel (): boolean {
     return typeof window.onwheel !== 'undefined'
   }
+
+  protected handleDblclickBound = this.handleDblclick.bind(this)
 
   protected handleKeydownBound = this.handleKeydown.bind(this)
 
@@ -220,14 +224,12 @@ export class ScolaInteract {
   }
 
   protected addEventListenersMoveEnd (): void {
-    const target = this.determineTarget()
-
-    target.addEventListener('keyup', this.handleKeyupBound)
-    target.addEventListener('mousemove', this.handleMousemoveBound)
-    target.addEventListener('mouseup', this.handleMouseupBound)
-    target.addEventListener('touchmove', this.handleTouchmoveBound)
-    target.addEventListener('touchcancel', this.handleTouchendBound)
-    target.addEventListener('touchend', this.handleTouchendBound)
+    window.addEventListener('keyup', this.handleKeyupBound)
+    window.addEventListener('mousemove', this.handleMousemoveBound)
+    window.addEventListener('mouseup', this.handleMouseupBound)
+    window.addEventListener('touchmove', this.handleTouchmoveBound)
+    window.addEventListener('touchcancel', this.handleTouchendBound)
+    window.addEventListener('touchend', this.handleTouchendBound)
   }
 
   protected addEventListenersStart (): void {
@@ -242,9 +244,11 @@ export class ScolaInteract {
     }
 
     if (this.mouse) {
+      target.addEventListener('dblclick', this.handleDblclickBound)
       target.addEventListener('mousedown', this.handleMousedownBound)
 
       if (target !== this.element) {
+        this.element.addEventListener('dblclick', this.handleDblclickBound)
         this.element.addEventListener('mousedown', this.handleMousedownBound)
       }
     }
@@ -403,6 +407,14 @@ export class ScolaInteract {
     }
   }
 
+  protected handleDblclick (event: InteractEvent): void {
+    ScolaInteract.element = undefined
+    this.removeEventListenersMoveEnd()
+    this.event.originalEvent = event
+    this.event.type = 'dblclick'
+    this.callback?.(this.event)
+  }
+
   protected handleEnd (event: InteractEvent): void {
     ScolaInteract.element = undefined
     this.removeEventListenersMoveEnd()
@@ -422,6 +434,8 @@ export class ScolaInteract {
         if (this.cancel) {
           event.stopPropagation()
         }
+
+        event.preventDefault()
       }
     }
   }
@@ -463,6 +477,7 @@ export class ScolaInteract {
       const handled = this.callback?.(this.event)
 
       if (handled === true) {
+        event.preventDefault()
         ScolaInteract.element = this.element
       }
     }
@@ -473,8 +488,6 @@ export class ScolaInteract {
       ScolaInteract.element === undefined ||
       ScolaInteract.element === this.element
     ) {
-      event.preventDefault()
-
       const position = {
         clientX: Math.abs(event.touches[1].pageX - event.touches[0].pageX),
         clientY: Math.abs(event.touches[1].pageY - event.touches[0].pageY)
@@ -486,6 +499,7 @@ export class ScolaInteract {
       const handled = this.callback?.(this.event)
 
       if (handled === true) {
+        event.preventDefault()
         ScolaInteract.element = this.element
       }
     }
@@ -506,6 +520,7 @@ export class ScolaInteract {
         event.stopPropagation()
       }
 
+      event.preventDefault()
       this.addEventListenersMoveEnd()
     }
   }
@@ -526,6 +541,7 @@ export class ScolaInteract {
         event.stopPropagation()
       }
 
+      event.preventDefault()
       this.addEventListenersMoveEnd()
     }
   }
@@ -545,6 +561,7 @@ export class ScolaInteract {
         event.stopPropagation()
       }
 
+      event.preventDefault()
       this.addEventListenersMoveEnd()
     }
   }
@@ -632,14 +649,12 @@ export class ScolaInteract {
   }
 
   protected removeEventListenersMoveEnd (): void {
-    const target = this.determineTarget()
-
-    target.removeEventListener('keyup', this.handleKeyupBound)
-    target.removeEventListener('mousemove', this.handleMousemoveBound)
-    target.removeEventListener('mouseup', this.handleMouseupBound)
-    target.removeEventListener('touchmove', this.handleTouchmoveBound)
-    target.removeEventListener('touchcancel', this.handleTouchendBound)
-    target.removeEventListener('touchend', this.handleTouchendBound)
+    window.removeEventListener('keyup', this.handleKeyupBound)
+    window.removeEventListener('mousemove', this.handleMousemoveBound)
+    window.removeEventListener('mouseup', this.handleMouseupBound)
+    window.removeEventListener('touchmove', this.handleTouchmoveBound)
+    window.removeEventListener('touchcancel', this.handleTouchendBound)
+    window.removeEventListener('touchend', this.handleTouchendBound)
   }
 
   protected removeEventListenersStart (): void {
@@ -654,9 +669,11 @@ export class ScolaInteract {
     }
 
     if (this.mouse) {
+      target.removeEventListener('dblclick', this.handleDblclickBound)
       target.removeEventListener('mousedown', this.handleMousedownBound)
 
       if (target !== this.element) {
+        this.element.removeEventListener('dblclick', this.handleDblclickBound)
         this.element.removeEventListener('mousedown', this.handleMousedownBound)
       }
     }

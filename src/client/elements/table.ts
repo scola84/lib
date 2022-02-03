@@ -186,7 +186,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   public update (): void {
     if (
       this.list.limit === 0 &&
-      this.list.mode !== undefined
+      this.list.mode !== null
     ) {
       this.clearItems()
       this.list.request()

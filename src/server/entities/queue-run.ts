@@ -29,7 +29,7 @@ export interface QueueRun<Options = unknown> extends Required<QueueRunBase> {
   date_updated: Date
 
   /**
-   * The ID of the parent queue.
+   * The ID of the queue.
    */
   fkey_queue_id: number
 
@@ -54,7 +54,7 @@ export interface QueueRun<Options = unknown> extends Required<QueueRunBase> {
   options: Options
 
   /**
-   * The parent queue as Queue.
+   * The queue.
    *
    * @see {@link Queue}
    */

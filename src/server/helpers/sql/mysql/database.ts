@@ -29,7 +29,7 @@ export class MysqlDatabase extends Database {
 
       const options = this.parseDsn(this.dsn)
 
-      this.logger?.info(options, 'Starting queuer')
+      this.logger?.info(options, 'Starting database')
 
       this.pool = createPool({
         ...options,
@@ -44,7 +44,7 @@ export class MysqlDatabase extends Database {
 
   public async stop (): Promise<void> {
     if (this.dsn !== undefined) {
-      this.logger?.info('Stopping database')
+      this.logger?.info({}, 'Stopping database')
       await this.pool.end()
     }
   }

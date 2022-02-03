@@ -18,6 +18,8 @@ declare global {
   }
 }
 
+type Type = 'audio' | 'code' | 'image' | 'video'
+
 export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement {
   public static CodeScanner: typeof Html5Qrcode
 
@@ -28,8 +30,6 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   }
 
   public audio?: HTMLAudioElement
-
-  public code?: string
 
   public codeFps: number
 
@@ -57,7 +57,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   public stream?: MediaStream
 
-  public type: string
+  public type: Type
 
   public video?: HTMLVideoElement
 
@@ -165,7 +165,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     this.codeOverlay = Number(this.getAttribute('sc-code-overlay') ?? 250)
     this.facingMode = this.getAttribute('sc-facing-mode') ?? 'user'
     this.fillLightMode = this.getAttribute('sc-fill-light-mode') ?? 'off'
-    this.type = this.getAttribute('sc-type') ?? 'image'
+    this.type = (this.getAttribute('sc-type') as Type | null) ?? 'image'
     this.wait = this.hasAttribute('sc-wait')
   }
 
@@ -349,7 +349,6 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     this.codeScanner
       .start(videoConstraints, scannerOptions, (code) => {
         if (this.hasAttribute('sc-started')) {
-          this.code = code
           this.toggleAttribute('sc-has-code', true)
 
           this.propagator.dispatch('code', [{
@@ -361,7 +360,6 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
         this.toggleAttribute('sc-has-code', false)
       })
       .then(() => {
-        this.code = undefined
         this.querySelector('video')?.removeAttribute('style')
         this.updateStyle()
       })

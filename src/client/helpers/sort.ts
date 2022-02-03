@@ -3,6 +3,7 @@ import type { ScolaInteractEvent } from './interact'
 import type { ScolaTableElement } from '../elements/table'
 import { ScolaTableRowElement } from '../elements/table-row'
 import type { Struct } from '../../common'
+import { isStruct } from '../../common'
 
 export class ScolaSort {
   public element: ScolaTableElement
@@ -89,7 +90,10 @@ export class ScolaSort {
 
     const drag = JSON.parse(window.sessionStorage.getItem('sc-drag') ?? '{}') as Struct
 
-    if (drag.type === this.type) {
+    if (
+      isStruct(drag) &&
+      drag.type === this.type
+    ) {
       const origin = document.getElementById(String(drag.origin))
 
       if (

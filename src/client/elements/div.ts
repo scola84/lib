@@ -113,7 +113,10 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   public reset (): void {
-    if (this.hasAttribute('sc-onclick')) {
+    if (
+      this.hasAttribute('sc-onclick') ||
+      this.hasAttribute('sc-ondblclick')
+    ) {
       this.interact.cancel = this.hasAttribute('sc-cancel')
       this.interact.keyboard = this.interact.hasKeyboard
       this.interact.mouse = this.interact.hasMouse
@@ -150,6 +153,8 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     switch (event.type) {
       case 'click':
         return this.handleInteractClick(event)
+      case 'dblclick':
+        return this.handleInteractDblclick(event)
       case 'start':
         return this.handleInteractStart(event)
       default:
@@ -159,6 +164,11 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
   protected handleInteractClick (event: ScolaInteractEvent): boolean {
     this.propagator.dispatch('click', [this.getData()], event.originalEvent)
+    return true
+  }
+
+  protected handleInteractDblclick (event: ScolaInteractEvent): boolean {
+    this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
     return true
   }
 

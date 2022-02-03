@@ -4,6 +4,8 @@ import type { ScolaTableElement } from '../elements/table'
 import { ScolaTableRowElement } from '../elements/table-row'
 import type { Struct } from '../../common'
 
+type Mode = 'many' | 'one' | 'toggle'
+
 export class ScolaSelect {
   public all: boolean
 
@@ -15,7 +17,7 @@ export class ScolaSelect {
 
   public lastSelectedRow?: ScolaTableRowElement
 
-  public mode: string
+  public mode: Mode
 
   public rows: ScolaTableRowElement[] = []
 
@@ -126,7 +128,7 @@ export class ScolaSelect {
     this.interact.keyboard = this.interact.hasKeyboard
     this.interact.mouse = this.interact.hasMouse
     this.interact.touch = this.interact.hasTouch
-    this.mode = this.element.getAttribute('sc-select-mode') ?? 'one'
+    this.mode = (this.element.getAttribute('sc-select-mode') as Mode | null) ?? 'one'
   }
 
   public scrollTo (): void {
@@ -360,11 +362,11 @@ export class ScolaSelect {
         this.selectRows(row)
         this.dispatch('select', event)
         return true
-      } else if (this.mode === 'toggle') {
-        this.toggle(row)
-        this.dispatch('select', event)
-        return true
       }
+
+      this.toggle(row)
+      this.dispatch('select', event)
+      return true
     }
 
     return false
@@ -537,16 +539,16 @@ export class ScolaSelect {
 
         this.dispatch('select', event)
         return true
-      } else if (this.mode === 'toggle') {
-        if (event.shiftKey) {
-          this.selectRows(row, this.firstSelectedRow)
-        } else {
-          this.toggle(row)
-        }
-
-        this.dispatch('select', event)
-        return true
       }
+
+      if (event.shiftKey) {
+        this.selectRows(row, this.firstSelectedRow)
+      } else {
+        this.toggle(row)
+      }
+
+      this.dispatch('select', event)
+      return true
     }
 
     return false

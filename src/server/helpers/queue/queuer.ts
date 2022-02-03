@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import type { Database, UpdateResult } from '../sql'
 import type { Job } from 'node-schedule'
 import type { Queue } from '../../entities'
@@ -55,14 +56,16 @@ export interface QueuerOptions {
   schedule?: string
 
   /**
-   * The store to execute commands.
+   * The store.
    *
-   * @see https://www.npmjs.com/package/handy-redis
+   * @see https://www.npmjs.com/package/redis
    */
   store: RedisClientType
 
   /**
    * Whether the queuer is suspended.
+   *
+   * @defaultValue `process.env.QUEUE_SUSPENDED` === '1'
    */
   suspended?: boolean
 }
@@ -92,13 +95,6 @@ export class Queuer {
       queuer.suspend()
     }
   }
-
-  /**
-   * The store to execute commands.
-   *
-   * @see https://www.npmjs.com/package/handy-redis
-   */
-  public blstore?: RedisClientType
 
   /**
    * The database containing the queues.
@@ -158,14 +154,23 @@ export class Queuer {
   public schedule: string
 
   /**
-   * The store to execute commands.
+   * The store to write.
    *
-   * @see https://www.npmjs.com/package/handy-redis
+   * @see https://www.npmjs.com/package/redis
    */
   public store: RedisClientType
 
   /**
+    * The store to read.
+    *
+    * @see https://www.npmjs.com/package/redis
+    */
+  public storeRead?: RedisClientType
+
+  /**
    * Whether the queuer is suspended.
+   *
+   * @defaultValue `process.env.QUEUE_SUSPENDED` === '1'
    */
   public suspended: boolean
 
@@ -186,7 +191,7 @@ export class Queuer {
     this.names = options.names ?? process.env.QUEUE_NAMES ?? '%'
     this.schedule = options.schedule ?? process.env.QUEUE_SCHEDULE ?? '* * * * *'
     this.store = options.store
-    this.suspended = options.suspended ?? false
+    this.suspended = options.suspended ?? process.env.QUEUE_SUSPENDED === '1'
   }
 
   /**
@@ -227,7 +232,7 @@ export class Queuer {
    *
    * @param handler - The queue handler
    */
-  public registerHandler (handler: QueueHandler): void {
+  public register (handler: QueueHandler): void {
     this.handlers.add(handler)
   }
 
@@ -276,7 +281,7 @@ export class Queuer {
   /**
    * Starts the queuer.
    *
-   * Sets `blstore` and registers an `error` event listener on `store` and `blstore`.
+   * Registers a `ready` listener to the store to start the listener again if the store is reopened.
    *
    * Starts the job and listener to trigger queue runs.
    */
@@ -290,24 +295,15 @@ export class Queuer {
       schedule: this.schedule
     }, 'Starting queuer')
 
-    this.blstore = this.createStore()
-
-    this.store.on('error', (error) => {
-      this.logger.error({
-        context: 'setup'
-      }, String(error))
+    this.store.on('ready', () => {
+      this
+        .startListener()
+        .catch((error) => {
+          this.logger.error({
+            context: 'start-listener'
+          }, String(error))
+        })
     })
-
-    this.blstore.on('error', (error) => {
-      this.logger.error({
-        context: 'setup'
-      }, String(error))
-    })
-
-    await Promise.all([
-      this.store.connect(),
-      this.blstore.connect()
-    ])
 
     this.startJob()
     await this.startListener()
@@ -318,14 +314,10 @@ export class Queuer {
    *
    * Stops the job, listener and all queue handlers.
    *
-   * Closes the store when all the queue runners have finished.
+   * Returns when all the queue runners have finished.
    */
   public async stop (): Promise<void> {
     this.logger.info({
-      connected: [
-        this.store.isOpen,
-        this.blstore?.isOpen
-      ],
       handlers: this.handlers.size,
       runners: this.runners.size
     }, 'Stopping queuer')
@@ -344,11 +336,6 @@ export class Queuer {
     }, {
       timeout: Number.POSITIVE_INFINITY
     })
-
-    await Promise.all([
-      this.blstore?.quit(),
-      this.store.quit()
-    ])
   }
 
   /**
@@ -425,7 +412,7 @@ export class Queuer {
         await runner.run(queue, parameters)
       } catch (error: unknown) {
         this.logger.error({
-          context: 'run'
+          context: 'run-queue'
         }, String(error))
       } finally {
         this.runners.delete(runner)
@@ -486,7 +473,9 @@ export class Queuer {
   /**
    * Starts the job.
    *
-   * Handles the job according to `schedule`.
+   * Creates a job according to `schedule`.
+   *
+   * Calls `handleJob` if a job is triggered.
    */
   protected startJob (): void {
     this.job = this.createJob(this.schedule, (date) => {
@@ -494,7 +483,7 @@ export class Queuer {
         .handleJob(date)
         .catch((error: unknown) => {
           this.logger.error({
-            context: 'start-job'
+            context: 'handle-job'
           }, String(error))
         })
     })
@@ -503,15 +492,28 @@ export class Queuer {
   /**
    * Start the listener.
    *
-   * Handles messages from the 'queue' channel of the blstore.
+   * Sets `storeRead`, connects it and subscribes to the 'queue' channel.
+   *
+   * Calls `handleListener` if a message is received.
    */
   protected async startListener (): Promise<void> {
-    await this.blstore?.subscribe('queue', (message) => {
+    this.storeRead?.removeAllListeners()
+    this.storeRead = this.createStore()
+
+    this.storeRead.on('error', (error) => {
+      this.logger.error({
+        context: 'store'
+      }, String(error))
+    })
+
+    await this.storeRead.connect()
+
+    await this.storeRead.subscribe('queue', (message) => {
       this
         .handleListener(message)
         .catch((error: unknown) => {
           this.logger.error({
-            context: 'start-listener'
+            context: 'handle-listener'
           }, String(error))
         })
     })
@@ -526,9 +528,12 @@ export class Queuer {
 
   /**
    * Stops the listener.
+   *
+   * Unsubscribes and disconnects `storeRead`.
    */
   protected async stopListener (): Promise<void> {
-    await this.blstore?.unsubscribe('queue')
+    await this.storeRead?.unsubscribe('queue')
+    await this.storeRead?.disconnect()
   }
 
   /**
@@ -561,7 +566,7 @@ export class Queuer {
    * * are not yet started
    * * belong to the given queue run
    *
-   * @param task - The task
+   * @param task - The task properties
    * @returns The update result
    */
   protected async updateQueueTasks (task: Pick<QueueTask, 'fkey_queue_run_id' | 'reason' | 'status'>): Promise<UpdateResult> {

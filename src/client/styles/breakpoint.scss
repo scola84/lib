@@ -153,6 +153,7 @@
   [sc-position-x~="start@#{$name}"],
   [dir="rtl"] [sc-position-x~="end@#{$name}"] {
     left: 0;
+    right: auto;
   }
 
   [sc-position-y~="bottom@#{$name}"] {

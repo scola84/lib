@@ -14,20 +14,34 @@ declare global {
   }
 }
 
+type Method =
+  | 'CONNECT'
+  | 'DELETE'
+  | 'GET'
+  | 'HEAD'
+  | 'OPTIONS'
+  | 'POST'
+  | 'PUT'
+  | 'TRACE'
+
+type Enctype =
+  | 'application/x-www-form-urlencoded'
+  | 'multipart/form-data'
+
 interface Request {
   body: FormData | URLSearchParams | null
-  method: string
+  method: Method
   url: string | null
 }
 
 export class ScolaRequestElement extends HTMLObjectElement implements ScolaElement {
   public static origin = window.location.origin
 
-  public enctype: string
+  public enctype: Enctype
 
   public exact: boolean
 
-  public method: string
+  public method: Method
 
   public mutator: ScolaMutator
 
@@ -95,9 +109,9 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
   public getData (): void {}
 
   public reset (): void {
-    this.enctype = this.getAttribute('sc-enctype') ?? 'application/x-www-form-urlencoded'
+    this.enctype = (this.getAttribute('sc-enctype') as Enctype | null) ?? 'application/x-www-form-urlencoded'
     this.exact = this.hasAttribute('sc-exact')
-    this.method = this.getAttribute('sc-method') ?? 'GET'
+    this.method = (this.getAttribute('sc-method') as Method | null) ?? 'GET'
     this.url = `${this.origin}${this.getAttribute('sc-path') ?? ''}`
     this.wait = this.hasAttribute('sc-wait')
   }
@@ -132,7 +146,7 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
   }
 
   protected createRequest (options?: Struct): Request {
-    const method = String(options?.method ?? this.method)
+    const method = String(options?.method ?? this.method) as Method
 
     let { url } = this as { url: string | null }
     let body: FormData | URLSearchParams | null = null
@@ -166,7 +180,7 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
 
     if (this.enctype === 'application/x-www-form-urlencoded') {
       body = new URLSearchParams()
-    } else if (this.enctype === 'multipart/form-data') {
+    } else {
       body = new FormData()
     }
 

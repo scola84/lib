@@ -4,6 +4,10 @@ import type { ScolaTableRowElement } from '../elements/table-row'
 import type { Struct } from '../../common'
 import { isArray } from 'lodash'
 
+type Axis = 'x' | 'y'
+
+type Mode = 'cursor' | 'offset' | null
+
 export class ScolaList {
   public added = new Set()
 
@@ -25,7 +29,7 @@ export class ScolaList {
 
   public limit: number
 
-  public mode?: string
+  public mode: Mode
 
   public requestData?: Struct
 
@@ -180,11 +184,11 @@ export class ScolaList {
   }
 
   public reset (): void {
-    this.axis = this.element.getAttribute('sc-list-axis')
+    this.axis = (this.element.getAttribute('sc-list-axis') as Axis | null) ?? 'y'
     this.factor = Number(this.element.getAttribute('sc-list-factor') ?? 2)
     this.filter = this.element.getAttribute('sc-list-filter') ?? ''
     this.key = this.element.getAttribute('sc-list-key') ?? 'id'
-    this.mode = this.element.getAttribute('sc-list-mode') ?? undefined
+    this.mode = this.element.getAttribute('sc-list-mode') as Mode
     this.sortKey = this.element.getAttribute('sc-list-sort-key') ?? ''
     this.sortOrder = this.element.getAttribute('sc-list-sort-order') ?? ''
     this.threshold = Number(this.element.getAttribute('sc-list-threshold') ?? 0.75)

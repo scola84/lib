@@ -11,6 +11,8 @@ declare global {
   }
 }
 
+type Direction = 'down' | 'end' | 'start' | 'up'
+
 type MarginProperty = 'margin-bottom' | 'margin-left' | 'margin-right' | 'margin-top'
 
 type Mode = 'center' | 'height' | 'move-bottom' | 'move-end' | 'move-start' | 'move-top' | 'opacity'
@@ -28,7 +30,7 @@ export class ScolaHider {
 
   public breakpoint: ScolaBreakpoint
 
-  public direction?: string[]
+  public direction?: Direction[]
 
   public element: ScolaElement
 
@@ -40,7 +42,7 @@ export class ScolaHider {
 
   public interact: ScolaInteract
 
-  public mode: Mode | null
+  public mode: Mode
 
   public threshold: number
 
@@ -82,7 +84,7 @@ export class ScolaHider {
   }
 
   public hideModal (): boolean {
-    if (window.getComputedStyle(this.element).position === 'fixed') {
+    if (window.getComputedStyle(this.element).getPropertyValue('position') === 'fixed') {
       this.element.toggleAttribute('hidden', true)
       return true
     }
@@ -93,7 +95,7 @@ export class ScolaHider {
   public reset (): void {
     this.direction = this.breakpoint.parse('sc-hide-direction')
       ?.trim()
-      .split(/\s+/u)
+      .split(/\s+/u) as Direction[]
 
     this.indexer.index = this.element.getAttribute('sc-hide-index')
     this.interact.cancel = true
@@ -102,7 +104,7 @@ export class ScolaHider {
     this.interact.target = 'window'
     this.interact.threshold = Number(this.breakpoint.parse('sc-hide-interact-threshold') ?? 0.1)
     this.interact.touch = this.breakpoint.parse('sc-hide-interact-touch') === ''
-    this.mode = this.breakpoint.parse('sc-hide-mode') as Mode | null
+    this.mode = (this.breakpoint.parse('sc-hide-mode') as Mode | null) ?? 'center'
     this.threshold = Number(this.breakpoint.parse('sc-hide-threshold') ?? 0.1)
   }
 
@@ -216,7 +218,7 @@ export class ScolaHider {
   protected handleInteractEnd (event: ScolaInteractEvent): boolean {
     let handled = false
 
-    if (this.mode?.startsWith('move-') === true) {
+    if (this.mode.startsWith('move-')) {
       if (this.shouldInteractMoveBottom(event)) {
         handled = this.handleInteractEndMoveBottom(event)
       } else if (this.shouldInteractMoveLeft(event)) {
@@ -254,7 +256,7 @@ export class ScolaHider {
       ) {
         this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))
       } else {
-        this.immediate = this.isHiddenByMargin(window.getComputedStyle(this.element).marginBottom, this.element.offsetHeight)
+        this.immediate = this.isHiddenByMargin(window.getComputedStyle(this.element).getPropertyValue('margin-bottom'), this.element.offsetHeight)
         this.toggleMarginHidden('margin-bottom', 'offsetHeight')
       }
     } else if (
@@ -263,7 +265,7 @@ export class ScolaHider {
     ) {
       this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))
     } else {
-      this.immediate = this.isVisibleByMargin(window.getComputedStyle(this.element).marginBottom)
+      this.immediate = this.isVisibleByMargin(window.getComputedStyle(this.element).getPropertyValue('margin-bottom'))
       this.toggleMarginVisible('margin-bottom')
     }
 
@@ -281,7 +283,7 @@ export class ScolaHider {
       ) {
         this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))
       } else {
-        this.immediate = this.isHiddenByMargin(window.getComputedStyle(this.element).marginLeft, this.element.offsetWidth)
+        this.immediate = this.isHiddenByMargin(window.getComputedStyle(this.element).getPropertyValue('margin-left'), this.element.offsetWidth)
         this.toggleMarginHidden('margin-left', 'offsetWidth')
       }
     } else if (
@@ -290,7 +292,7 @@ export class ScolaHider {
     ) {
       this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))
     } else {
-      this.immediate = this.isVisibleByMargin(window.getComputedStyle(this.element).marginLeft)
+      this.immediate = this.isVisibleByMargin(window.getComputedStyle(this.element).getPropertyValue('margin-left'))
       this.toggleMarginVisible('margin-left')
     }
 
@@ -308,7 +310,7 @@ export class ScolaHider {
       ) {
         this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))
       } else {
-        this.immediate = this.isHiddenByMargin(window.getComputedStyle(this.element).marginRight, this.element.offsetWidth)
+        this.immediate = this.isHiddenByMargin(window.getComputedStyle(this.element).getPropertyValue('margin-right'), this.element.offsetWidth)
         this.toggleMarginHidden('margin-right', 'offsetWidth')
       }
     } else if (
@@ -317,7 +319,7 @@ export class ScolaHider {
     ) {
       this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))
     } else {
-      this.immediate = this.isVisibleByMargin(window.getComputedStyle(this.element).marginRight)
+      this.immediate = this.isVisibleByMargin(window.getComputedStyle(this.element).getPropertyValue('margin-right'))
       this.toggleMarginVisible('margin-right')
     }
 
@@ -335,7 +337,7 @@ export class ScolaHider {
       ) {
         this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))
       } else {
-        this.immediate = this.isHiddenByMargin(window.getComputedStyle(this.element).marginTop, this.element.offsetHeight)
+        this.immediate = this.isHiddenByMargin(window.getComputedStyle(this.element).getPropertyValue('margin-top'), this.element.offsetHeight)
         this.toggleMarginHidden('margin-top', 'offsetHeight')
       }
     } else if (
@@ -344,7 +346,7 @@ export class ScolaHider {
     ) {
       this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))
     } else {
-      this.immediate = this.isVisibleByMargin(window.getComputedStyle(this.element).marginTop)
+      this.immediate = this.isVisibleByMargin(window.getComputedStyle(this.element).getPropertyValue('margin-top'))
       this.toggleMarginVisible('margin-top')
     }
 
@@ -456,7 +458,7 @@ export class ScolaHider {
       if (this.interact.isKey(event.originalEvent, 'Escape')) {
         this.hideModal()
       }
-    } else if (this.mode?.startsWith('move-') === true) {
+    } else if (this.mode.startsWith('move-')) {
       if (this.shouldInteractMove(event)) {
         if (this.shouldInteractMoveBottom(event)) {
           handled = this.handleInteractStartMoveBottom()
@@ -551,7 +553,7 @@ export class ScolaHider {
     this.element.removeEventListener('transitionend', this.handleTransitionendBound)
   }
 
-  protected resolveDirection (direction: string): string {
+  protected resolveDirection (direction: Direction): Direction {
     if (
       direction === 'end' &&
       this.interact.dir === 'rtl'
@@ -840,7 +842,7 @@ export class ScolaHider {
         if (this.element.offsetHeight === 0) {
           if (
             this.element.scrollHeight > 0 &&
-            window.getComputedStyle(this.element).overflow === 'hidden'
+            window.getComputedStyle(this.element).getPropertyValue('overflow') === 'hidden'
           ) {
             this.element.style.setProperty('height', `${this.element.scrollHeight}px`)
           } else {

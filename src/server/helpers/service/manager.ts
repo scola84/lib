@@ -1,6 +1,7 @@
 import type { Database } from '../sql'
 import type { FastifyServer } from '../fastify'
 import type { Queuer } from '../queue'
+import type { RedisClientType } from 'redis'
 import type { Router } from '../route'
 import type { Struct } from '../../../common'
 import { isMatch } from 'micromatch'
@@ -75,6 +76,13 @@ export interface ServiceManagerOptions {
    * @see https://nodejs.org/api/process.html#process_signal_events
    */
   signal?: NodeJS.Signals | null
+
+  /**
+   * The store.
+   *
+   * @see https://preview.npmjs.com/package/redis
+   */
+  store: RedisClientType
 
   /**
    * The types of the delegates to manage as one or more micromatch patterns, separated by a colon.
@@ -163,6 +171,13 @@ export class ServiceManager {
   public signal: NodeJS.Signals | null
 
   /**
+   * The store.
+   *
+   * @see https://preview.npmjs.com/package/redis
+   */
+  public store: RedisClientType
+
+  /**
    * The types of the delegates to manage as one or more micromatch patterns, separated by a colon.
    *
    * To determine whether a delegate should be started, the delegate type is matched against the micromatch patterns.
@@ -187,6 +202,7 @@ export class ServiceManager {
     this.router = options.router
     this.server = options.server
     this.services = options.services
+    this.store = options.store
     this.signal = options.signal ?? 'SIGTERM'
     this.types = options.types ?? process.env.SERVICE_TYPES?.split(':') ?? '*'
   }
@@ -194,8 +210,7 @@ export class ServiceManager {
   /**
    * Starts the service manager.
    *
-   * Starts `services` depending on `names`. Starts `databases`. Starts
-   * `queuer` and `server` depending on `types`.
+   * Starts `databases` and `store`. Starts `queuer`, `router` and `server` depending on `types`. Starts `services` depending on `names`.
    *
    * Listens for the stop `signal` and calls `stop` if the signal is received.
    *
@@ -215,26 +230,25 @@ export class ServiceManager {
           types: this.types
         }, 'Starting service manager')
 
-        await this.startDatabases()
+        await Promise.all([
+          this.startDatabases(),
+          this.startStore()
+        ])
 
         if (isMatch('queuer', this.types)) {
           await this.queuer?.start()
         }
 
         if (isMatch('server', this.types)) {
-          this.router?.start(false)
-
-          if (
-            this.router?.server !== undefined &&
-            this.server !== undefined
-          ) {
-            this.server.server = this.router.server
-            await this.server.start()
-            this.router.fastify = this.server.handle
-          }
+          await this.router?.start(false)
+          await this.startServer()
         }
 
         this.startServices()
+
+        if (isMatch('server', this.types)) {
+          await this.server?.listen()
+        }
 
         if (this.signal !== null) {
           this.process.once(this.signal, this.stop.bind(this))
@@ -252,8 +266,7 @@ export class ServiceManager {
   /**
    * Stops the service manager.
    *
-   * Stops `queuer`, `server`, which are responsible for stopping the services
-   * they manage. Stops `databases`.
+   * Stops `queuer`, `router` and `server`, which are responsible for stopping the services they manage. Stops `databases` and `store`.
    *
    * Exits `process` after the delegates have been stopped.
    */
@@ -263,15 +276,19 @@ export class ServiceManager {
       .then(async () => {
         this.logger?.info('Stopping service manager')
 
-        if (isMatch('server', this.types)) {
-          await this.server?.stop()
-        }
-
         if (isMatch('queuer', this.types)) {
           await this.queuer?.stop()
         }
 
-        await this.stopDatabases()
+        if (isMatch('server', this.types)) {
+          await this.router?.stop()
+          await this.server?.stop()
+        }
+
+        await Promise.all([
+          this.stopDatabases(),
+          this.stopStore()
+        ])
       })
       .catch((error) => {
         this.logger?.error({
@@ -295,6 +312,20 @@ export class ServiceManager {
   }
 
   /**
+   * Starts `server`.
+   */
+  protected async startServer (): Promise<void> {
+    if (
+      this.router?.server !== undefined &&
+      this.server !== undefined
+    ) {
+      this.server.server = this.router.server
+      await this.server.start()
+      this.router.fastify = this.server.handle
+    }
+  }
+
+  /**
    * Starts `services` depending on `names`.
    */
   protected startServices (): void {
@@ -310,6 +341,19 @@ export class ServiceManager {
   }
 
   /**
+   * Starts `store`.
+   */
+  protected async startStore (): Promise<void> {
+    this.store.on('error', (error) => {
+      this.logger?.error({
+        context: 'store'
+      }, String(error))
+    })
+
+    await this.store.connect()
+  }
+
+  /**
    * Stops `databases`.
    */
   protected async stopDatabases (): Promise<void> {
@@ -318,5 +362,13 @@ export class ServiceManager {
     await Promise.all(databases.map(async (database) => {
       await database.stop()
     }))
+  }
+
+  /**
+   * Stops `store`.
+   */
+  protected async stopStore (): Promise<void> {
+    this.store.removeAllListeners()
+    await this.store.quit()
   }
 }

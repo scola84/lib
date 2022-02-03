@@ -15,17 +15,17 @@ import type pino from 'pino'
 import { randomUUID } from 'crypto'
 
 export interface RouteData {
-  body?: unknown
+  body: unknown
   headers: Struct
   query: Struct
   url: URL
-  user?: unknown
+  user: unknown
 }
 
 export interface RouteHandlerOptions {
   database: Database
   dir: string
-  logger?: pino.Logger
+  logger: pino.Logger
   method: string
   requestType: string
   responseType: string
@@ -143,7 +143,7 @@ export abstract class RouteHandler {
     }, 'Starting route handler')
 
     this.validator = this.createValidator()
-    this.router.registerHandler(this.method, this.url, this)
+    this.router.register(this.method, this.url, this)
   }
 
   protected authenticate (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<unknown>
@@ -231,22 +231,22 @@ export abstract class RouteHandler {
         body[name] = value
       })
 
-      parser.on('file', (name, file, info) => {
-        const data = {
+      parser.on('file', (name, stream, info) => {
+        const file = {
           name: info.filename,
           size: 0,
           tmpname: `${this.dir}/${randomUUID()}`,
           type: info.mimeType
         }
 
-        file.on('data', (chunk) => {
-          if (Buffer.isBuffer(chunk)) {
-            data.size += chunk.length
+        stream.on('data', (data) => {
+          if (Buffer.isBuffer(data)) {
+            file.size += data.length
           }
         })
 
-        body[name] = data
-        file.pipe(createWriteStream(data.tmpname))
+        body[name] = file
+        stream.pipe(createWriteStream(file.tmpname))
       })
 
       parser.on('close', () => {
@@ -260,7 +260,9 @@ export abstract class RouteHandler {
   }
 
   protected async parseFormUrlencoded (request: IncomingMessage): Promise<Struct> {
-    return { ...parse(await this.parsePlain(request)) }
+    return {
+      ...parse(await this.parsePlain(request))
+    }
   }
 
   protected async parseJson (request: IncomingMessage): Promise<unknown> {
@@ -270,9 +272,9 @@ export abstract class RouteHandler {
   protected async parseOctetStream (request: IncomingMessage): Promise<Buffer> {
     let body = Buffer.from([])
 
-    for await (const buffer of request) {
-      if (Buffer.isBuffer(buffer)) {
-        body = Buffer.concat([body, buffer])
+    for await (const data of request) {
+      if (Buffer.isBuffer(data)) {
+        body = Buffer.concat([body, data])
       }
     }
 

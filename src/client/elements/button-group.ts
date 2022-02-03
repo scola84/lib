@@ -28,6 +28,7 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
 
   public constructor () {
     super()
+    this.buttons = this.selectButtons()
     this.interact = new ScolaInteract(this)
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
@@ -59,7 +60,6 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
   public getData (): void {}
 
   public reset (): void {
-    this.buttons = Array.from(this.querySelectorAll<HTMLElement>('button[sc-button-group]'))
     this.interact.keyboard = this.interact.hasKeyboard
   }
 
@@ -104,5 +104,9 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
     }
 
     return false
+  }
+
+  protected selectButtons (): HTMLElement[] {
+    return Array.from(this.querySelectorAll<HTMLElement>('button[sc-button-group]'))
   }
 }

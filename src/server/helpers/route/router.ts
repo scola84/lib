@@ -29,7 +29,7 @@ export class Router {
     this.port = options.port ?? 80
   }
 
-  public registerHandler (method: string, url: string, handler: RouteHandler): void {
+  public register (method: string, url: string, handler: RouteHandler): void {
     let handlers = this.handlers.get(url)
 
     if (handlers === undefined) {
@@ -40,34 +40,47 @@ export class Router {
     handlers.set(method, handler)
   }
 
-  public start (listen = true): void {
-    this.logger = this.logger?.child({
-      name: 'router'
+  public async start (listen = true): Promise<void> {
+    return new Promise((resolve) => {
+      this.logger = this.logger?.child({
+        name: 'router'
+      })
+
+      this.logger?.info({
+        address: this.address,
+        port: this.port
+      }, 'Starting router')
+
+      this.server = createServer((request, response) => {
+        this
+          .handleRoute(request, response)
+          .catch((error: unknown) => {
+            this.logger?.error({
+              context: 'handle-route'
+            }, String(error))
+          })
+      })
+
+      if (listen) {
+        this.server.listen(this.port, this.address, resolve)
+      } else {
+        resolve()
+      }
     })
-
-    this.logger?.info({
-      address: this.address,
-      port: this.port
-    }, 'Starting router')
-
-    this.server = createServer((request, response) => {
-      this
-        .handleRoute(request, response)
-        .catch((error: unknown) => {
-          this.logger?.error({
-            context: 'setup'
-          }, String(error))
-        })
-    })
-
-    if (listen) {
-      this.server.listen(this.port, this.address)
-    }
   }
 
-  public stop (): void {
-    this.logger?.info('Stopping server')
-    this.server?.close()
+  public async stop (): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.logger?.info('Stopping server')
+
+      this.server?.close((error) => {
+        if (error === undefined) {
+          resolve()
+        } else {
+          reject(error)
+        }
+      })
+    })
   }
 
   protected async handleRoute (request: IncomingMessage, response: ServerResponse): Promise<void> {
@@ -95,7 +108,8 @@ export class Router {
           body: null,
           headers: request.headers,
           query: Object.fromEntries(url.searchParams),
-          url
+          url,
+          user: null
         }, response, request)
       }
     }

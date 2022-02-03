@@ -24,7 +24,7 @@ export interface QueueTask<Payload = unknown, Options = unknown, Result = unknow
   date_updated: Date
 
   /**
-   * The ID of the parent queue run.
+   * The ID of the queue run.
    */
   fkey_queue_run_id: number
 
@@ -44,7 +44,7 @@ export interface QueueTask<Payload = unknown, Options = unknown, Result = unknow
   payload: Payload
 
   /**
-   * The parent queue run as QueueRun.
+   * The queue run.
    *
    * @see {@link QueueRun}
    */

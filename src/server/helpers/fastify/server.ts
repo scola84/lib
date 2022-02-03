@@ -55,7 +55,7 @@ export class FastifyServer {
   public fastify?: FastifyInstance
 
   /**
-   * The Fastify handler.
+   * The `fastify` handler.
    *
    * @see https://www.npmjs.com/package/fastify
    */
@@ -136,9 +136,14 @@ export class FastifyServer {
   }
 
   /**
-   * Starts the server.
-   *
-   * Calls `setup`, registers `plugins` and binds `fastify` to `address` and `port`.
+   * Binds `fastify` to `address` and `port`
+   */
+  public async listen (): Promise<void> {
+    await this.fastify?.listen(this.port, this.address)
+  }
+
+  /**
+   * Sets `fastify` and registers `plugins`.
    */
   public async start (): Promise<void> {
     this.logger = this.logger?.child({
@@ -155,13 +160,9 @@ export class FastifyServer {
     await Promise.all(Object.values(this.plugins).map(async (plugin) => {
       await this.fastify?.register(plugin)
     }))
-
-    await this.fastify.listen(this.port, this.address)
   }
 
   /**
-   * Stops the server.
-   *
    * Closes `fastify`.
    */
   public async stop (): Promise<void> {

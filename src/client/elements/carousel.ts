@@ -19,8 +19,10 @@ declare global {
   }
 }
 
+type Axis = 'x' | 'y'
+
 export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement {
-  public axis: string
+  public axis: Axis
 
   public body: HTMLElement
 
@@ -126,7 +128,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   }
 
   public reset (): void {
-    this.axis = this.getAttribute('sc-axis') ?? 'x'
+    this.axis = (this.getAttribute('sc-axis') as Axis | null) ?? 'x'
     this.interact.keyboard = this.breakpoint.parse('sc-interact-keyboard') === ''
     this.interact.mouse = this.breakpoint.parse('sc-interact-mouse') === ''
     this.interact.touch = this.breakpoint.parse('sc-interact-touch') === ''
@@ -430,7 +432,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   protected handleInteractMoveXLtr (event: ScolaInteractEvent): boolean {
     const maxLeft = this.body.scrollWidth - this.clientWidth
-    const left = new DOMMatrix(this.body.style.transform).e
+    const left = new DOMMatrix(this.body.style.getPropertyValue('transform')).e
 
     this.body.style.setProperty('transform', `translate(${Math.min(Math.max(left + event.deltaX, -maxLeft), 0)}px)`)
     return true
@@ -438,7 +440,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   protected handleInteractMoveXRtl (event: ScolaInteractEvent): boolean {
     const maxRight = this.body.scrollWidth - this.clientWidth
-    const right = new DOMMatrix(this.body.style.transform).e
+    const right = new DOMMatrix(this.body.style.getPropertyValue('transform')).e
 
     this.body.style.setProperty('transform', `translate(${Math.max(Math.min(right + event.deltaX, maxRight), 0)}px)`)
     return true
@@ -446,7 +448,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   protected handleInteractMoveY (event: ScolaInteractEvent): boolean {
     const maxTop = this.body.scrollHeight - this.clientHeight
-    const top = new DOMMatrix(this.body.style.transform).f
+    const top = new DOMMatrix(this.body.style.getPropertyValue('transform')).f
 
     this.body.style.setProperty('transform', `translate(0,${Math.min(Math.max(top + event.deltaY, -maxTop), 0)}px)`)
     return true

@@ -43,9 +43,8 @@ export class ReloadGetHandler extends RouteHandler {
       this.responses.delete(response)
     })
 
-    response.writeHead(200, {
-      'content-type': this.responseType
-    })
+    response.setHeader('content-type', this.responseType)
+    response.write('\n')
   }
 
   protected startWatcher (): void {

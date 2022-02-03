@@ -11,6 +11,7 @@
   margin: 0;
   padding: 0;
   text-align: start;
+  user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -54,6 +55,54 @@ body {
   flex: 0 0 auto;
 }
 
+[is="sc-mover"] {
+  cursor: grab;
+}
+
+[is="sc-mover"][sc-active] {
+  cursor: grabbing;
+}
+
+[is="sc-resizer"][sc-direction="down"],
+[is="sc-resizer"][sc-direction="up"] {
+  cursor: ns-resize;
+}
+
+[is="sc-resizer"][sc-direction="end"],
+[is="sc-resizer"][sc-direction="start"] {
+  cursor: ew-resize;
+}
+
+[is="sc-resizer"][sc-direction~="down"][sc-direction~="end"],
+[dir="rtl"] [is="sc-resizer"][sc-direction~="down"][sc-direction~="start"] {
+  cursor: se-resize;
+}
+
+[is="sc-resizer"][sc-direction~="down"][sc-direction~="start"],
+[dir="rtl"] [is="sc-resizer"][sc-direction~="down"][sc-direction~="end"] {
+  cursor: sw-resize;
+}
+
+[is="sc-resizer"][sc-direction~="up"][sc-direction~="end"],
+[dir="rtl"] [is="sc-resizer"][sc-direction~="up"][sc-direction~="start"] {
+  cursor: ne-resize;
+}
+
+[is="sc-resizer"][sc-direction~="up"][sc-direction~="start"],
+[dir="rtl"] [is="sc-resizer"][sc-direction~="up"][sc-direction~="end"] {
+  cursor: nw-resize;
+}
+
+[sc-align-x="center"][sc-direction="column"],
+[sc-align-y="center"][sc-direction="row"] {
+  align-items: center;
+}
+
+[sc-align-x="center"][sc-direction="row"],
+[sc-align-y="center"][sc-direction="column"] {
+  justify-content: center;
+}
+
 [sc-align-x="end"][sc-direction="column"],
 [sc-align-y="bottom"][sc-direction="row"] {
   align-items: flex-end;
@@ -64,19 +113,9 @@ body {
   justify-content: flex-end;
 }
 
-[sc-align-x="center"][sc-direction="row"],
-[sc-align-y="center"][sc-direction="column"] {
-  justify-content: center;
-}
-
 [sc-align-x="justify"][sc-direction="row"],
 [sc-align-y="justify"][sc-direction="column"] {
   justify-content: space-between;
-}
-
-[sc-align-x="center"][sc-direction="column"],
-[sc-align-y="center"][sc-direction="row"] {
-  align-items: center;
 }
 
 [sc-align-x="start"][sc-direction="column"],
@@ -127,8 +166,7 @@ body {
   background-color: rgba(255, 255, 255, 0.5);
 }
 
-[sc-bg-color-interact],
-[sc-bg-color-active] {
+[sc-bg-color-interact] {
   cursor: pointer;
 }
 
@@ -506,8 +544,7 @@ body {
   fill: #fff;
 }
 
-[sc-text-color-interact],
-[sc-text-color-active] {
+[sc-text-color-interact] {
   cursor: pointer;
 }
 
@@ -642,10 +679,6 @@ body {
   border-collapse: collapse;
   border-spacing: 0;
   overflow: hidden;
-}
-
-.sc-table[sc-select] {
-  user-select: none;
 }
 
 .sc-table[sc-elements="0"] tbody:first-of-type:not(:last-of-type),

@@ -38,6 +38,12 @@ export class PostgresqlDatabase extends Database {
         password: this.password
       })
 
+      this.pool.on('error', (error) => {
+        this.logger?.error({
+          context: 'pool'
+        }, String(error))
+      })
+
       if (this.population !== undefined) {
         await this.populate(this.population)
       }
@@ -46,7 +52,8 @@ export class PostgresqlDatabase extends Database {
 
   public async stop (): Promise<void> {
     if (this.dsn !== undefined) {
-      this.logger?.info('Stopping database')
+      this.logger?.info({}, 'Stopping database')
+      this.pool.removeAllListeners()
       await this.pool.end()
     }
   }

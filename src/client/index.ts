@@ -22,6 +22,7 @@ import { ScolaInteract } from './helpers/interact'
 import { ScolaLabelElement } from './elements/label'
 import { ScolaMedia } from './helpers/media'
 import { ScolaMessageElement } from './elements/message'
+import { ScolaMoverElement } from './elements/mover'
 import { ScolaMutator } from './helpers/mutator'
 import { ScolaObserver } from './helpers/observer'
 import { ScolaPaste } from './helpers/paste'
@@ -30,6 +31,7 @@ import { ScolaPropagator } from './helpers/propagator'
 import { ScolaRecorderElement } from './elements/recorder'
 import { ScolaReloaderElement } from './elements/reloader'
 import { ScolaRequestElement } from './elements/request'
+import { ScolaResizerElement } from './elements/resizer'
 import { ScolaSanitizer } from './helpers/sanitizer'
 import { ScolaSelect } from './helpers/select'
 import { ScolaSelectElement } from './elements/select'
@@ -92,6 +94,7 @@ export {
   ScolaLabelElement,
   ScolaMedia,
   ScolaMessageElement,
+  ScolaMoverElement,
   ScolaMutator,
   ScolaObserver,
   ScolaPaste,
@@ -100,6 +103,7 @@ export {
   ScolaRecorderElement,
   ScolaReloaderElement,
   ScolaRequestElement,
+  ScolaResizerElement,
   ScolaSanitizer,
   ScolaSelect,
   ScolaSelectElement,
@@ -130,10 +134,12 @@ export function defineElements (): void {
   ScolaInputElement.define()
   ScolaLabelElement.define()
   ScolaMessageElement.define()
+  ScolaMoverElement.define()
   ScolaPopupElement.define()
   ScolaRecorderElement.define()
   ScolaReloaderElement.define()
   ScolaRequestElement.define()
+  ScolaResizerElement.define()
   ScolaSelectElement.define()
   ScolaTableCellElement.define()
   ScolaTableElement.define()

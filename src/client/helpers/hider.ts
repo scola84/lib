@@ -20,7 +20,7 @@ type Mode = 'center' | 'height' | 'move-bottom' | 'move-end' | 'move-start' | 'm
 type SizeProperty = 'offsetHeight' | 'offsetWidth'
 
 export class ScolaHider {
-  public static index = 0
+  public static distanceThreshold = 0.1
 
   public static selector = '[is^="sc-"]'
 
@@ -32,19 +32,17 @@ export class ScolaHider {
 
   public direction?: Direction[]
 
+  public distanceThreshold: number
+
   public element: ScolaElement
 
   public immediate = true
-
-  public index: number
 
   public indexer: ScolaIndexer
 
   public interact: ScolaInteract
 
   public mode: Mode
-
-  public threshold: number
 
   protected handleBreakpointBound = this.handleBreakpoint.bind(this)
 
@@ -99,13 +97,13 @@ export class ScolaHider {
 
     this.indexer.index = this.element.getAttribute('sc-hide-index')
     this.interact.cancel = true
+    this.interact.edgeThreshold = Number(this.breakpoint.parse('sc-hide-interact-edge-threshold') ?? ScolaInteract.edgeThreshold)
     this.interact.keyboard = this.breakpoint.parse('sc-hide-interact-keyboard') === ''
     this.interact.mouse = this.breakpoint.parse('sc-hide-interact-mouse') === ''
     this.interact.target = 'window'
-    this.interact.threshold = Number(this.breakpoint.parse('sc-hide-interact-threshold') ?? 0.1)
     this.interact.touch = this.breakpoint.parse('sc-hide-interact-touch') === ''
     this.mode = (this.breakpoint.parse('sc-hide-mode') as Mode | null) ?? 'center'
-    this.threshold = Number(this.breakpoint.parse('sc-hide-threshold') ?? 0.1)
+    this.distanceThreshold = Number(this.breakpoint.parse('sc-hide-distance-threshold') ?? ScolaHider.distanceThreshold)
   }
 
   public toggle (): void {
@@ -159,14 +157,6 @@ export class ScolaHider {
         })
       }
     }
-  }
-
-  protected determineIndex (): number {
-    if (this.index > -Infinity) {
-      return this.index
-    }
-
-    return this.indexer.get()
   }
 
   protected finalize (): void {
@@ -250,7 +240,7 @@ export class ScolaHider {
 
     if (this.element.hasAttribute('hidden')) {
       if (
-        event.distanceY < (-this.element.offsetHeight * this.threshold) &&
+        event.distanceY < (-this.element.offsetHeight * this.distanceThreshold) &&
         event.startEdges.bottom &&
         this.direction?.includes('up') !== false
       ) {
@@ -260,7 +250,7 @@ export class ScolaHider {
         this.toggleMarginHidden('margin-bottom', 'offsetHeight')
       }
     } else if (
-      event.distanceY > (this.element.offsetHeight * this.threshold) &&
+      event.distanceY > (this.element.offsetHeight * this.distanceThreshold) &&
       this.direction?.includes('down') !== false
     ) {
       this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))
@@ -277,7 +267,7 @@ export class ScolaHider {
 
     if (this.element.hasAttribute('hidden')) {
       if (
-        event.distanceX > (this.element.offsetWidth * this.threshold) &&
+        event.distanceX > (this.element.offsetWidth * this.distanceThreshold) &&
         event.startEdges.left &&
         this.direction?.includes(this.resolveDirection('end')) !== false
       ) {
@@ -287,7 +277,7 @@ export class ScolaHider {
         this.toggleMarginHidden('margin-left', 'offsetWidth')
       }
     } else if (
-      event.distanceX < (-this.element.offsetWidth * this.threshold) &&
+      event.distanceX < (-this.element.offsetWidth * this.distanceThreshold) &&
       this.direction?.includes(this.resolveDirection('start')) !== false
     ) {
       this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))
@@ -304,7 +294,7 @@ export class ScolaHider {
 
     if (this.element.hasAttribute('hidden')) {
       if (
-        event.distanceX < (-this.element.offsetWidth * this.threshold) &&
+        event.distanceX < (-this.element.offsetWidth * this.distanceThreshold) &&
         event.startEdges.right &&
         this.direction?.includes(this.resolveDirection('start')) !== false
       ) {
@@ -314,7 +304,7 @@ export class ScolaHider {
         this.toggleMarginHidden('margin-right', 'offsetWidth')
       }
     } else if (
-      event.distanceX > (this.element.offsetWidth * this.threshold) &&
+      event.distanceX > (this.element.offsetWidth * this.distanceThreshold) &&
       this.direction?.includes(this.resolveDirection('end')) !== false
     ) {
       this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))
@@ -331,7 +321,7 @@ export class ScolaHider {
 
     if (this.element.hasAttribute('hidden')) {
       if (
-        event.distanceY > (this.element.offsetHeight * this.threshold) &&
+        event.distanceY > (this.element.offsetHeight * this.distanceThreshold) &&
         event.startEdges.top &&
         this.direction?.includes('down') !== false
       ) {
@@ -341,7 +331,7 @@ export class ScolaHider {
         this.toggleMarginHidden('margin-top', 'offsetHeight')
       }
     } else if (
-      event.distanceY < (-this.element.offsetHeight * this.threshold) &&
+      event.distanceY < (-this.element.offsetHeight * this.distanceThreshold) &&
       this.direction?.includes('up') !== false
     ) {
       this.element.toggleAttribute('hidden', !this.element.hasAttribute('hidden'))

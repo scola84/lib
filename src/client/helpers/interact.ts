@@ -35,7 +35,7 @@ type DirectionY = 'down' | 'none' | 'up'
 
 type Target = 'element' | 'window'
 
-type Type = 'click' | 'dblclick' | 'end' | 'move' | 'none' | 'start' | 'wheel' | 'zoom'
+type Type = 'auxclick' | 'click' | 'dblclick' | 'end' | 'move' | 'none' | 'start' | 'wheel' | 'zoom'
 
 type InteractEvent = KeyboardEvent | MouseEvent | TouchEvent | WheelEvent
 
@@ -64,11 +64,19 @@ export interface ScolaInteractEvent<Event = InteractEvent> {
 }
 
 export class ScolaInteract {
+  public static dblclickTimeout = 500
+
+  public static edgeThreshold = 0.1
+
   public static element?: HTMLElement
 
   public callback?: Callback
 
   public cancel = false
+
+  public dblclickTimeout = ScolaInteract.dblclickTimeout
+
+  public edgeThreshold = ScolaInteract.edgeThreshold
 
   public element: HTMLElement
 
@@ -79,8 +87,6 @@ export class ScolaInteract {
   public mouse = false
 
   public target: Target = 'element'
-
-  public threshold = 0.1
 
   public touch = false
 
@@ -110,7 +116,13 @@ export class ScolaInteract {
     return typeof window.onwheel !== 'undefined'
   }
 
-  protected handleDblclickBound = this.handleDblclick.bind(this)
+  public get timestamp (): number {
+    if (typeof this.event === 'undefined') {
+      return 0
+    }
+
+    return this.event.endT
+  }
 
   protected handleKeydownBound = this.handleKeydown.bind(this)
 
@@ -169,6 +181,18 @@ export class ScolaInteract {
         this.dir === 'rtl' &&
         event.code === 'ArrowRight'
       )
+    )
+  }
+
+  public isDblclick (event: InteractEvent, position: Position): boolean {
+    if (typeof this.event === 'undefined') {
+      return false
+    }
+
+    return (
+      (event.timeStamp - this.event.endT) < this.dblclickTimeout &&
+      position.clientX - this.event.endX === 0 &&
+      position.clientY - this.event.endY === 0
     )
   }
 
@@ -244,11 +268,9 @@ export class ScolaInteract {
     }
 
     if (this.mouse) {
-      target.addEventListener('dblclick', this.handleDblclickBound)
       target.addEventListener('mousedown', this.handleMousedownBound)
 
       if (target !== this.element) {
-        this.element.addEventListener('dblclick', this.handleDblclickBound)
         this.element.addEventListener('mousedown', this.handleMousedownBound)
       }
     }
@@ -347,9 +369,18 @@ export class ScolaInteract {
     return this.event.directionY
   }
 
-  protected determineStartEdges (position: Position): Edges {
+  protected determineEdgeThreshold (rect: Rect): Rect {
+    return {
+      height: rect.height - (2 * rect.height * this.edgeThreshold),
+      left: rect.left + (rect.width * this.edgeThreshold),
+      top: rect.top + (rect.height * this.edgeThreshold),
+      width: rect.width - (2 * rect.width * this.edgeThreshold)
+    }
+  }
+
+  protected determineEdges (position: Position): Edges {
     const boundingRect = this.determineBoundingRect()
-    const thresholdRect = this.determineThresholdRect(boundingRect)
+    const thresholdRect = this.determineEdgeThreshold(boundingRect)
 
     const edges = {
       bottom: position.clientY > (thresholdRect.top + thresholdRect.height),
@@ -398,21 +429,40 @@ export class ScolaInteract {
     return this.element
   }
 
-  protected determineThresholdRect (rect: Rect): Rect {
-    return {
-      height: rect.height - (2 * rect.height * this.threshold),
-      left: rect.left + (rect.width * this.threshold),
-      top: rect.top + (rect.height * this.threshold),
-      width: rect.width - (2 * rect.width * this.threshold)
+  protected handleAuxclick (event: InteractEvent, position: Position): void {
+    this.event = this.createEvent(event)
+    this.event.endX = position.clientX
+    this.event.endY = position.clientY
+    this.event.startEdges = this.determineEdges(position)
+    this.event.startX = this.event.endX
+    this.event.startY = this.event.endY
+    this.event.type = 'auxclick'
+
+    const handled = this.callback?.(this.event)
+
+    if (handled === true) {
+      if (this.cancel) {
+        event.stopPropagation()
+      }
     }
   }
 
-  protected handleDblclick (event: InteractEvent): void {
-    ScolaInteract.element = undefined
-    this.removeEventListenersMoveEnd()
-    this.event.originalEvent = event
+  protected handleDblclick (event: InteractEvent, position: Position): void {
+    this.event = this.createEvent(event)
+    this.event.endX = position.clientX
+    this.event.endY = position.clientY
+    this.event.startEdges = this.determineEdges(position)
+    this.event.startX = this.event.endX
+    this.event.startY = this.event.endY
     this.event.type = 'dblclick'
-    this.callback?.(this.event)
+
+    const handled = this.callback?.(this.event)
+
+    if (handled === true) {
+      if (this.cancel) {
+        event.stopPropagation()
+      }
+    }
   }
 
   protected handleEnd (event: InteractEvent): void {
@@ -434,14 +484,12 @@ export class ScolaInteract {
         if (this.cancel) {
           event.stopPropagation()
         }
-
-        event.preventDefault()
       }
     }
   }
 
   protected handleKeydown (event: KeyboardEvent): void {
-    this.handleStartNone(event)
+    this.handleStartNoPointers(event)
   }
 
   protected handleKeyup (event: KeyboardEvent): void {
@@ -450,13 +498,21 @@ export class ScolaInteract {
 
   protected handleMousedown (event: MouseEvent): void {
     if (!this.touch) {
-      this.handleStartOne(event, event)
+      if (event.button === 0) {
+        if (this.isDblclick(event, event)) {
+          this.handleDblclick(event, event)
+        } else {
+          this.handleStartOnePointer(event, event)
+        }
+      } else if (event.button === 1) {
+        this.handleAuxclick(event, event)
+      }
     }
   }
 
   protected handleMousemove (event: MouseEvent): void {
     if (!this.touch) {
-      this.handleMoveOne(event, event)
+      this.handleMoveOnePointer(event, event)
     }
   }
 
@@ -466,7 +522,7 @@ export class ScolaInteract {
     }
   }
 
-  protected handleMoveOne (event: InteractEvent, position: Position): void {
+  protected handleMoveOnePointer (event: InteractEvent, position: Position): void {
     if (
       ScolaInteract.element === undefined ||
       ScolaInteract.element === this.element
@@ -483,7 +539,7 @@ export class ScolaInteract {
     }
   }
 
-  protected handleMoveTwo (event: TouchEvent): void {
+  protected handleMoveTwoPointers (event: TouchEvent): void {
     if (
       ScolaInteract.element === undefined ||
       ScolaInteract.element === this.element
@@ -505,7 +561,7 @@ export class ScolaInteract {
     }
   }
 
-  protected handleStartNone (event: InteractEvent): void {
+  protected handleStartNoPointers (event: InteractEvent): void {
     this.event = this.createEvent(event)
     this.event.endX = 0
     this.event.endY = 0
@@ -520,16 +576,15 @@ export class ScolaInteract {
         event.stopPropagation()
       }
 
-      event.preventDefault()
       this.addEventListenersMoveEnd()
     }
   }
 
-  protected handleStartOne (event: InteractEvent, position: Position): void {
+  protected handleStartOnePointer (event: InteractEvent, position: Position): void {
     this.event = this.createEvent(event)
     this.event.endX = position.clientX
     this.event.endY = position.clientY
-    this.event.startEdges = this.determineStartEdges(position)
+    this.event.startEdges = this.determineEdges(position)
     this.event.startX = this.event.endX
     this.event.startY = this.event.endY
     this.event.type = 'start'
@@ -541,12 +596,11 @@ export class ScolaInteract {
         event.stopPropagation()
       }
 
-      event.preventDefault()
       this.addEventListenersMoveEnd()
     }
   }
 
-  protected handleStartTwo (event: TouchEvent): void {
+  protected handleStartTwoPointers (event: TouchEvent): void {
     this.event = this.createEvent(event)
     this.event.endX = Math.abs(event.touches[1].pageX - event.touches[0].pageX)
     this.event.endY = Math.abs(event.touches[1].pageY - event.touches[0].pageY)
@@ -561,7 +615,6 @@ export class ScolaInteract {
         event.stopPropagation()
       }
 
-      event.preventDefault()
       this.addEventListenersMoveEnd()
     }
   }
@@ -574,17 +627,21 @@ export class ScolaInteract {
 
   protected handleTouchmove (event: TouchEvent): void {
     if (event.touches.length === 1) {
-      this.handleMoveOne(event, event.touches[0])
+      this.handleMoveOnePointer(event, event.touches[0])
     } else if (event.touches.length === 2) {
-      this.handleMoveTwo(event)
+      this.handleMoveTwoPointers(event)
     }
   }
 
   protected handleTouchstart (event: TouchEvent): void {
     if (event.touches.length === 1) {
-      this.handleStartOne(event, event.touches[0])
+      if (this.isDblclick(event, event.touches[0])) {
+        this.handleDblclick(event, event.touches[0])
+      } else {
+        this.handleStartOnePointer(event, event.touches[0])
+      }
     } else if (event.touches.length === 2) {
-      this.handleStartTwo(event)
+      this.handleStartTwoPointers(event)
     }
   }
 
@@ -669,11 +726,9 @@ export class ScolaInteract {
     }
 
     if (this.mouse) {
-      target.removeEventListener('dblclick', this.handleDblclickBound)
       target.removeEventListener('mousedown', this.handleMousedownBound)
 
       if (target !== this.element) {
-        this.element.removeEventListener('dblclick', this.handleDblclickBound)
         this.element.removeEventListener('mousedown', this.handleMousedownBound)
       }
     }

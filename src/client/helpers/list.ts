@@ -1,8 +1,7 @@
-import { ScolaIntl, isStruct } from '../../common'
+import { ScolaIntl, isArray, isStruct } from '../../common'
 import type { ScolaTableElement } from '../elements/table'
 import type { ScolaTableRowElement } from '../elements/table-row'
 import type { Struct } from '../../common'
-import { isArray } from 'lodash'
 
 type Axis = 'x' | 'y'
 

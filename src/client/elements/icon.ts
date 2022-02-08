@@ -1,3 +1,4 @@
+import { ScolaIntl, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
@@ -9,6 +10,10 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
 
   public code: string
 
+  public datamap: Struct = {}
+
+  public intl: ScolaIntl
+
   public mutator: ScolaMutator
 
   public observer: ScolaObserver
@@ -19,6 +24,7 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
 
   public constructor () {
     super()
+    this.intl = new ScolaIntl()
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
@@ -56,8 +62,11 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
     this.propagator.disconnect()
   }
 
-  public getData (): string | null {
-    return this.getAttribute('sc-code')
+  public getData (): Struct {
+    return {
+      ...this.dataset,
+      ...this.datamap
+    }
   }
 
   public reset (): void {
@@ -65,13 +74,21 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
   }
 
   public setData (data: unknown): void {
-    if (typeof data === 'string') {
-      this.setAttribute('sc-code', data)
+    if (isStruct(data)) {
+      this.datamap = data
+
+      if (typeof data.code === 'string') {
+        this.setAttribute('sc-code', data.code)
+      } else {
+        this.update()
+      }
     }
   }
 
   public update (): void {
-    this.innerHTML = ScolaIconElement.icons[this.code] ?? ''
+    const code = this.intl.format(this.code, this.getData())
+
+    this.innerHTML = ScolaIconElement.icons[code] ?? ''
   }
 
   protected handleMutations (): void {

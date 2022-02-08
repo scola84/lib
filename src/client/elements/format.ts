@@ -14,6 +14,8 @@ export class ScolaFormatElement extends HTMLSpanElement implements ScolaElement 
 
   public intl: ScolaIntl
 
+  public locale?: string
+
   public marked: boolean
 
   public mutator: ScolaMutator
@@ -68,12 +70,13 @@ export class ScolaFormatElement extends HTMLSpanElement implements ScolaElement 
 
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
+    this.locale = this.getAttribute('sc-locale') ?? ScolaIntl.locale
     this.marked = this.hasAttribute('sc-marked')
   }
 
   public setData (data: unknown): void {
     if (isStruct(data)) {
-      Object.assign(this.datamap, data)
+      this.datamap = data
 
       if (typeof data.code === 'string') {
         this.setAttribute('sc-code', data.code)
@@ -84,7 +87,7 @@ export class ScolaFormatElement extends HTMLSpanElement implements ScolaElement 
   }
 
   public update (): void {
-    const string = this.intl.format(this.code, this.getData())
+    const string = this.intl.format(this.code, this.getData(), this.locale)
 
     if (this.marked) {
       this.innerHTML = this.sanitizer.sanitizeHtml(marked(string, {

@@ -2,6 +2,7 @@ import { absorb, cast, isArray, isStruct } from '../../common'
 import { ScolaDrag } from '../helpers/drag'
 import { ScolaDrop } from '../helpers/drop'
 import type { ScolaElement } from './element'
+import { ScolaFocuser } from '../helpers/focuser'
 import { ScolaHider } from '../helpers/hider'
 import { ScolaInteract } from '../helpers/interact'
 import type { ScolaInteractEvent } from '../helpers/interact'
@@ -25,6 +26,8 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
   public drop?: ScolaDrop
 
+  public focuser?: ScolaFocuser
+
   public hider?: ScolaHider
 
   public interact: ScolaInteract
@@ -36,8 +39,6 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   public paste?: ScolaPaste
 
   public propagator: ScolaPropagator
-
-  protected handleContextmenuBound = this.handleContextmenu.bind(this)
 
   protected handleInteractBound = this.handleInteract.bind(this)
 
@@ -60,12 +61,16 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
       this.drop = new ScolaDrop(this)
     }
 
-    if (this.hasAttribute('sc-paste')) {
-      this.paste = new ScolaPaste(this)
+    if (this.hasAttribute('sc-focus')) {
+      this.focuser = new ScolaFocuser(this)
     }
 
     if (this.hasAttribute('sc-hide')) {
       this.hider = new ScolaHider(this)
+    }
+
+    if (this.hasAttribute('sc-paste')) {
+      this.paste = new ScolaPaste(this)
     }
 
     this.reset()
@@ -87,6 +92,7 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
     this.drag?.connect()
     this.drop?.connect()
+    this.focuser?.connect()
     this.hider?.connect()
     this.interact.connect()
     this.mutator.connect()
@@ -99,6 +105,7 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   public disconnectedCallback (): void {
     this.drag?.disconnect()
     this.drop?.disconnect()
+    this.focuser?.disconnect()
     this.hider?.disconnect()
     this.interact.disconnect()
     this.mutator.disconnect()
@@ -114,6 +121,7 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
   public reset (): void {
     if (
+      this.hasAttribute('sc-onauxclick') ||
       this.hasAttribute('sc-onclick') ||
       this.hasAttribute('sc-ondblclick')
     ) {
@@ -126,7 +134,7 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
   public setData (data: unknown): void {
     if (isStruct(data)) {
-      Object.assign(this.datamap, data)
+      this.datamap = data
     }
 
     this.propagator.set(data)
@@ -138,19 +146,12 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     if (this.hasAttribute('sc-drop')) {
       this.addEventListener('sc-drop-transfer', this.handleTransferBound)
     }
-
-    if (this.hasAttribute('sc-oncontextmenu')) {
-      this.addEventListener('contextmenu', this.handleContextmenuBound)
-    }
-  }
-
-  protected handleContextmenu (event: MouseEvent): void {
-    event.preventDefault()
-    this.propagator.dispatch('contextmenu', [this.getData()], event)
   }
 
   protected handleInteract (event: ScolaInteractEvent): boolean {
     switch (event.type) {
+      case 'auxclick':
+        return this.handleInteractAuxclick(event)
       case 'click':
         return this.handleInteractClick(event)
       case 'dblclick':
@@ -162,14 +163,16 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
+  protected handleInteractAuxclick (event: ScolaInteractEvent): boolean {
+    return this.propagator.dispatch('auxclick', [this.getData()], event.originalEvent)
+  }
+
   protected handleInteractClick (event: ScolaInteractEvent): boolean {
-    this.propagator.dispatch('click', [this.getData()], event.originalEvent)
-    return true
+    return this.propagator.dispatch('click', [this.getData()], event.originalEvent)
   }
 
   protected handleInteractDblclick (event: ScolaInteractEvent): boolean {
-    this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
-    return true
+    return this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
   }
 
   protected handleInteractStart (event: ScolaInteractEvent): boolean {
@@ -227,10 +230,6 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   protected removeEventListeners (): void {
     if (this.hasAttribute('sc-drop')) {
       this.removeEventListener('sc-drop-transfer', this.handleTransferBound)
-    }
-
-    if (this.hasAttribute('sc-oncontextmenu')) {
-      this.removeEventListener('contextmenu', this.handleContextmenuBound)
     }
   }
 }

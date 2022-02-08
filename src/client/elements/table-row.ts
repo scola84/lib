@@ -47,7 +47,7 @@ export class ScolaTableRowElement extends HTMLTableRowElement implements ScolaEl
 
   public setData (data: unknown): void {
     if (isStruct(data)) {
-      Object.assign(this.datamap, data)
+      this.datamap = data
     }
 
     this.propagator.set(data)

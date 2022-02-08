@@ -42,14 +42,19 @@ export class ScolaPropagator {
     this.removeEventListeners()
   }
 
-  public dispatch (on: string, data: unknown[], trigger?: Event): void {
+  public dispatch (on: string, data: unknown[], trigger?: Event): boolean {
+    let dispatched = false
+
     this.element
       .getAttribute(`sc-on${on}`)
       ?.trim()
       .split(/\s+/u)
       .forEach((event) => {
+        dispatched = true
         this.dispatchEvent(event, data, trigger)
       })
+
+    return dispatched
   }
 
   public dispatchEvent (event: string, data: unknown[], trigger?: Event): void {
@@ -63,6 +68,9 @@ export class ScolaPropagator {
 
       if (selector === '') {
         targets = [this.element]
+      } else if (selector === 'console') {
+        // eslint-disable-next-line no-console
+        console.log(data)
       } else {
         targets = document.querySelectorAll(selector)
       }

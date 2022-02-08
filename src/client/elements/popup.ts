@@ -165,7 +165,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public setData (data: unknown): void {
     if (isStruct(data)) {
-      Object.assign(this.datamap, data)
+      this.datamap = data
     }
 
     this.propagator.set(data)

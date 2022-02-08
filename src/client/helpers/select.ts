@@ -29,8 +29,6 @@ export class ScolaSelect {
     return this.rows[this.rows.length - 1]
   }
 
-  protected handleDblclickBound = this.handleDblclick.bind(this)
-
   protected handleInteractBound = this.handleInteract.bind(this)
 
   public constructor (element: ScolaTableElement) {
@@ -39,7 +37,7 @@ export class ScolaSelect {
     this.reset()
   }
 
-  public addRow (row: ScolaTableRowElement): void {
+  public addRow (row: ScolaTableRowElement, focus?: boolean): void {
     const index = this.rows.findIndex((findRow) => {
       return row === findRow
     })
@@ -51,7 +49,7 @@ export class ScolaSelect {
 
       this.lastSelectedRow = row
       this.rows.push(row)
-      this.updateRow(row, true)
+      this.updateRow(row, true, focus)
       this.sortRows()
     }
   }
@@ -69,7 +67,6 @@ export class ScolaSelect {
   public connect (): void {
     this.interact.observe(this.handleInteractBound)
     this.interact.connect()
-    this.addEventListeners()
     this.scrollTo()
   }
 
@@ -90,7 +87,6 @@ export class ScolaSelect {
       }
 
       this.rows.splice(index, 1)
-      this.sortRows()
 
       if (
         this.firstSelectedRow === undefined &&
@@ -107,7 +103,6 @@ export class ScolaSelect {
 
   public disconnect (): void {
     this.interact.disconnect()
-    this.removeEventListeners()
   }
 
   public getItemsByRow (): Struct[] {
@@ -124,7 +119,6 @@ export class ScolaSelect {
 
   public reset (): void {
     this.all = this.element.hasAttribute('sc-select-all')
-    this.interact.cancel = true
     this.interact.keyboard = this.interact.hasKeyboard
     this.interact.mouse = this.interact.hasMouse
     this.interact.touch = this.interact.hasTouch
@@ -177,10 +171,6 @@ export class ScolaSelect {
     })
 
     if (index > -1) {
-      this.rows.splice(index, 1)
-      this.updateRow(row, false)
-      this.sortRows()
-
       if (this.firstSelectedRow === row) {
         this.firstSelectedRow = undefined
       }
@@ -188,17 +178,19 @@ export class ScolaSelect {
       if (this.lastSelectedRow === row) {
         this.lastSelectedRow = undefined
       }
-    } else {
-      this.rows.push(row)
-      this.updateRow(row, true)
-      this.sortRows()
 
+      this.rows.splice(index, 1)
+      this.updateRow(row, false)
+    } else {
       if (this.firstSelectedRow === undefined) {
         this.firstSelectedRow = row
       }
-    }
 
-    this.sortRows()
+      this.lastSelectedRow = row
+      this.rows.push(row)
+      this.updateRow(row, true)
+      this.sortRows()
+    }
   }
 
   public toggleAll (force: boolean): void {
@@ -217,10 +209,6 @@ export class ScolaSelect {
         }
       })
     }
-  }
-
-  protected addEventListeners (): void {
-    this.element.body.addEventListener('dblclick', this.handleDblclickBound)
   }
 
   protected determineRow (event: Event): ScolaTableRowElement | null {
@@ -304,14 +292,12 @@ export class ScolaSelect {
     return null
   }
 
-  protected handleDblclick (event: MouseEvent): void {
-    this.dispatch('selectdblclick', event)
-  }
-
   protected handleInteract (event: ScolaInteractEvent): boolean {
     switch (event.type) {
       case 'click':
         return this.handleInteractClick(event)
+      case 'dblclick':
+        return this.handleInteractDblclick(event)
       case 'start':
         return this.handleInteractStart(event)
       default:
@@ -329,7 +315,7 @@ export class ScolaSelect {
     return false
   }
 
-  protected handleInteractClickMouse (event: MouseEvent | TouchEvent): boolean {
+  protected handleInteractClickMouse (event: MouseEvent): boolean {
     const row = this.determineRow(event)
 
     if (row !== null) {
@@ -351,7 +337,7 @@ export class ScolaSelect {
     return false
   }
 
-  protected handleInteractClickTouch (event: MouseEvent | TouchEvent): boolean {
+  protected handleInteractClickTouch (event: TouchEvent): boolean {
     const row = this.determineRow(event)
 
     if (row !== null) {
@@ -370,6 +356,11 @@ export class ScolaSelect {
     }
 
     return false
+  }
+
+  protected handleInteractDblclick (event: ScolaInteractEvent): boolean {
+    this.dispatch('selectdblclick', event.originalEvent)
+    return true
   }
 
   protected handleInteractStart (event: ScolaInteractEvent): boolean {
@@ -439,7 +430,7 @@ export class ScolaSelect {
         this.rows.length > 1
       )
 
-      this.selectRows(lastRow, undefined, true)
+      this.selectRows(lastRow, lastRow, true)
 
       if (dispatch) {
         this.dispatch('select', event)
@@ -479,7 +470,7 @@ export class ScolaSelect {
     }
 
     if (lastRow !== null) {
-      this.selectRows(lastRow, this.firstSelectedRow)
+      this.selectRows(lastRow, this.firstSelectedRow, true)
       this.dispatch('select', event)
       return true
     }
@@ -495,7 +486,7 @@ export class ScolaSelect {
   protected handleInteractStartKeyboardStart (event: KeyboardEvent): boolean {
     if (this.interact.isKeyForward(event)) {
       if (this.element.body.firstElementChild instanceof ScolaTableRowElement) {
-        this.selectRows(this.element.body.firstElementChild)
+        this.selectRows(this.element.body.firstElementChild, this.element.body.firstElementChild, true)
         this.dispatch('select', event)
         return true
       }
@@ -522,7 +513,9 @@ export class ScolaSelect {
 
     if (row !== null) {
       if (this.mode === 'one') {
-        if (!this.rows.includes(row)) {
+        if (event.ctrlKey) {
+          this.toggle(row)
+        } else if (!this.rows.includes(row)) {
           this.selectRows(row)
         }
 
@@ -554,10 +547,6 @@ export class ScolaSelect {
     return false
   }
 
-  protected removeEventListeners (): void {
-    this.element.body.removeEventListener('dblclick', this.handleDblclickBound)
-  }
-
   protected selectRows (lastRow: ScolaTableRowElement, firstRow = lastRow, focus = false): void {
     this.clearRows()
     this.firstSelectedRow = firstRow
@@ -574,8 +563,8 @@ export class ScolaSelect {
       row = this.element.body.querySelector(`tr:nth-child(${index + 1})`)
 
       if (row !== null) {
-        this.updateRow(row, true, focus)
         this.rows.push(row)
+        this.updateRow(row, true, focus)
       }
     }
 
@@ -590,25 +579,19 @@ export class ScolaSelect {
   }
 
   protected updateRow (row: ScolaTableRowElement, force: boolean, focus = false): void {
-    row.toggleAttribute('sc-active', force)
-
     if (force) {
-      if (this.mode === 'one') {
-        const { activeElement } = document
+      row.toggleAttribute('sc-active', true)
 
+      if (this.rows.length === 1) {
         row.setAttribute('tabindex', '0')
 
         if (focus) {
           row.focus()
-
-          if (
-            activeElement instanceof ScolaTableRowElement &&
-            activeElement !== row
-          ) {
-            activeElement.removeAttribute('tabindex')
-          }
         }
       }
+    } else {
+      row.toggleAttribute('sc-active', false)
+      row.setAttribute('tabindex', '-1')
     }
   }
 }

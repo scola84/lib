@@ -158,26 +158,9 @@ export class ScolaSort {
       !event.shiftKey
     ) {
       if (this.interact.isKeyForward(event)) {
-        if (this.element.select?.lastRow?.nextElementSibling !== null) {
-          handled = true
-
-          this.element.select?.rows
-            .slice()
-            .reverse()
-            .forEach((row) => {
-              row.parentElement?.insertBefore(row, row.nextElementSibling?.nextElementSibling ?? null)
-              this.element.propagator.dispatch('sort', [row.getData()], event)
-            })
-        }
+        handled = this.handleInteractStartKeyboardForward(event)
       } else if (this.interact.isKeyBack(event)) {
-        if (this.element.select?.firstRow?.previousElementSibling !== null) {
-          handled = true
-
-          this.element.select?.rows.forEach((row) => {
-            row.parentElement?.insertBefore(row, row.previousElementSibling)
-            this.element.propagator.dispatch('sort', [row.getData()], event)
-          })
-        }
+        handled = this.handleInteractStartKeyboardBack(event)
       }
     }
 
@@ -187,6 +170,35 @@ export class ScolaSort {
     }
 
     return handled
+  }
+
+  protected handleInteractStartKeyboardBack (event: KeyboardEvent): boolean {
+    if (this.element.select?.firstRow?.previousElementSibling !== null) {
+      this.element.select?.rows.forEach((row) => {
+        row.parentElement?.insertBefore(row, row.previousElementSibling)
+        this.element.propagator.dispatch('sort', [row.getData()], event)
+      })
+
+      return true
+    }
+
+    return false
+  }
+
+  protected handleInteractStartKeyboardForward (event: KeyboardEvent): boolean {
+    if (this.element.select?.lastRow?.nextElementSibling !== null) {
+      this.element.select?.rows
+        .slice()
+        .reverse()
+        .forEach((row) => {
+          row.parentElement?.insertBefore(row, row.nextElementSibling?.nextElementSibling ?? null)
+          this.element.propagator.dispatch('sort', [row.getData()], event)
+        })
+
+      return true
+    }
+
+    return false
   }
 
   protected removeEventListeners (): void {

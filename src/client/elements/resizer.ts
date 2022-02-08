@@ -55,11 +55,12 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
   }
 
   public connectedCallback (): void {
+    this.interact.observe(this.handleInteractBound)
+
     this.observer.observe(this.handleMutationsBound, [
       'sc-maximized'
     ])
 
-    this.interact.observe(this.handleInteractBound)
     this.interact.connect()
     this.mutator.connect()
     this.observer.connect()

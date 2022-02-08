@@ -195,6 +195,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       this.updateHead()
       this.updateBody()
       this.updateAttributes()
+      this.updateTabindex()
 
       window.requestAnimationFrame(() => {
         this.propagator.dispatch('update', [{}])
@@ -207,11 +208,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   }
 
   public updateBody (): void {
-    const keys = this.list
-      .getItems()
-      .map((item, index) => {
-        return this.appendBodyRow(item, index)
-      })
+    const keys = this.appendBodyRows(this.list.getItems(), [])
 
     Array
       .from(this.elements.entries())
@@ -229,6 +226,12 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       this.headCellTemplate !== null
     ) {
       this.appendHeadCells(this.head.lastElementChild)
+    }
+  }
+
+  public updateTabindex (): void {
+    if (this.select?.rows.length === 0) {
+      this.body.firstElementChild?.setAttribute('tabindex', '0')
     }
   }
 
@@ -275,7 +278,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       })
   }
 
-  protected appendBodyRow (item: Struct, index: number): unknown {
+  protected appendBodyRow (item: Struct): HTMLTableRowElement | undefined {
     const key = item[this.list.key]
 
     let element = this.elements.get(key)
@@ -288,8 +291,8 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
         template.firstElementChild instanceof HTMLTableRowElement
       ) {
         element = template.firstElementChild
-        this.body.appendChild(template)
         this.elements.set(key, element)
+        this.body.appendChild(template)
 
         if (element instanceof ScolaTableRowElement) {
           element.setData(item)
@@ -303,12 +306,10 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
           })
         }
       }
-    } else if (Array.prototype.indexOf.call(this.body.children, element) !== index) {
-      if (index === 0) {
-        this.body.prepend(element)
-      } else {
-        this.body.children.item(index - 1)?.after(element)
-      }
+    }
+
+    if (element instanceof ScolaTableRowElement) {
+      this.body.appendChild(element)
     }
 
     if (
@@ -318,7 +319,18 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       this.select?.addRow(element as ScolaTableRowElement)
     }
 
-    return key
+    return element
+  }
+
+  protected appendBodyRows (items: unknown[], keys: unknown[]): unknown[] {
+    items.forEach((item) => {
+      if (isStruct(item)) {
+        keys.push(item[this.list.key])
+        this.appendBodyRow(item)
+      }
+    })
+
+    return keys
   }
 
   protected appendHeadCells (row: HTMLTableRowElement): void {

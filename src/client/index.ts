@@ -12,11 +12,13 @@ import type { ScolaElement } from './elements/element'
 import { ScolaEventElement } from './elements/event'
 import { ScolaEventSourceElement } from './elements/event-source'
 import { ScolaField } from './helpers/field'
+import { ScolaFocuser } from './helpers/focuser'
 import { ScolaFormElement } from './elements/form'
 import { ScolaFormatElement } from './elements/format'
 import { ScolaHider } from './helpers/hider'
 import { ScolaIconElement } from './elements/icon'
 import { ScolaImageElement } from './elements/img'
+import { ScolaIndexer } from './helpers/indexer'
 import { ScolaInputElement } from './elements/input'
 import { ScolaInteract } from './helpers/interact'
 import { ScolaLabelElement } from './elements/label'
@@ -39,6 +41,7 @@ import { ScolaSort } from './helpers/sort'
 import { ScolaTableCellElement } from './elements/table-cell'
 import { ScolaTableElement } from './elements/table'
 import { ScolaTableRowElement } from './elements/table-row'
+import { ScolaTableTreeElement } from './elements/table-tree'
 import { ScolaTextAreaElement } from './elements/textarea'
 import { ScolaTheme } from './helpers/theme'
 import { ScolaVideoElement } from './elements/video'
@@ -84,11 +87,13 @@ export {
   ScolaEventElement,
   ScolaEventSourceElement,
   ScolaField,
+  ScolaFocuser,
   ScolaFormElement,
   ScolaFormatElement,
   ScolaHider,
   ScolaIconElement,
   ScolaImageElement,
+  ScolaIndexer,
   ScolaInputElement,
   ScolaInteract,
   ScolaLabelElement,
@@ -111,6 +116,7 @@ export {
   ScolaTableCellElement,
   ScolaTableElement,
   ScolaTableRowElement,
+  ScolaTableTreeElement,
   ScolaTextAreaElement,
   ScolaTheme,
   ScolaVideoElement,
@@ -144,6 +150,7 @@ export function defineElements (): void {
   ScolaTableCellElement.define()
   ScolaTableElement.define()
   ScolaTableRowElement.define()
+  ScolaTableTreeElement.define()
   ScolaTextAreaElement.define()
   ScolaVideoElement.define()
   ScolaViewElement.define()

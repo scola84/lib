@@ -55,6 +55,13 @@ body {
   flex: 0 0 auto;
 }
 
+[is="sc-icon"] svg {
+  pointer-events: none;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 [is="sc-mover"] {
   cursor: grab;
 }
@@ -207,6 +214,46 @@ body {
 }
 
 [sc-bg-color-active="theme"][sc-active] {
+  background-color: var(--tc1);
+  color: #fff;
+  fill: #fff;
+}
+
+[sc-bg-color-active-focus][sc-active]:focus-visible {
+  outline: none;
+}
+
+[sc-bg-color-active-focus=""][sc-active] {
+  background-color: var(--gc1);
+  color: var(--fc1);
+  fill: var(--fc1);
+}
+
+[sc-focused] [sc-bg-color-active-focus=""][sc-active] {
+  background-color: var(--gc2);
+  color: var(--fc1);
+  fill: var(--fc1);
+}
+
+[sc-bg-color-active-focus="contrast"][sc-active] {
+  background-color: var(--gc2);
+  color: var(--fc1);
+  fill: var(--fc1);
+}
+
+[sc-focused] [sc-bg-color-active-focus="contrast"][sc-active] {
+  background-color: var(--gc3);
+  color: var(--fc1);
+  fill: var(--fc1);
+}
+
+[sc-bg-color-active-focus="theme"][sc-active] {
+  background-color: var(--gc2);
+  color: var(--fc1);
+  fill: var(--fc1);
+}
+
+[sc-focused] [sc-bg-color-active-focus="theme"][sc-active] {
   background-color: var(--tc1);
   color: #fff;
   fill: #fff;
@@ -701,4 +748,10 @@ body {
 .sc-table[sc-select-handle] [sc-handle="select"] {
   flex-basis: 2.25rem;
   justify-content: flex-end;
+}
+
+.sc-table .sc-table-tree-cell {
+  padding-left: calc(
+    var(--sc-table-tree-inset, 1rem) * (var(--sc-table-tree-level))
+  );
 }

@@ -75,6 +75,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
 
   public reset (): void {
     if (
+      this.hasAttribute('sc-onauxclick') ||
       this.hasAttribute('sc-onclick') ||
       this.hasAttribute('sc-ondblclick')
     ) {
@@ -87,7 +88,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
 
   public setData (data: unknown): void {
     if (isStruct(data)) {
-      Object.assign(this.datamap, data)
+      this.datamap = data
     }
 
     this.propagator.set(data)
@@ -97,6 +98,8 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
 
   protected handleInteract (event: ScolaInteractEvent): boolean {
     switch (event.type) {
+      case 'auxclick':
+        return this.handleInteractAuxclick(event)
       case 'click':
         return this.handleInteractClick(event)
       case 'dblclick':
@@ -108,14 +111,16 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     }
   }
 
+  protected handleInteractAuxclick (event: ScolaInteractEvent): boolean {
+    return this.propagator.dispatch('auxclick', [this.getData()], event.originalEvent)
+  }
+
   protected handleInteractClick (event: ScolaInteractEvent): boolean {
-    this.propagator.dispatch('click', [this.getData()], event.originalEvent)
-    return true
+    return this.propagator.dispatch('click', [this.getData()], event.originalEvent)
   }
 
   protected handleInteractDblclick (event: ScolaInteractEvent): boolean {
-    this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
-    return true
+    return this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
   }
 
   protected handleInteractStart (event: ScolaInteractEvent): boolean {

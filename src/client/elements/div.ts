@@ -1,14 +1,14 @@
 import { absorb, cast, isArray, isStruct } from '../../common'
-import { ScolaDrag } from '../helpers/drag'
-import { ScolaDrop } from '../helpers/drop'
+import { ScolaDragger } from '../helpers/dragger'
+import { ScolaDropper } from '../helpers/dropper'
 import type { ScolaElement } from './element'
 import { ScolaFocuser } from '../helpers/focuser'
 import { ScolaHider } from '../helpers/hider'
-import { ScolaInteract } from '../helpers/interact'
-import type { ScolaInteractEvent } from '../helpers/interact'
+import { ScolaInteractor } from '../helpers/interactor'
+import type { ScolaInteractorEvent } from '../helpers/interactor'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
-import { ScolaPaste } from '../helpers/paste'
+import { ScolaPaster } from '../helpers/paster'
 import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 
@@ -22,43 +22,43 @@ declare global {
 export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   public datamap: Struct = {}
 
-  public drag?: ScolaDrag
+  public dragger?: ScolaDragger
 
-  public drop?: ScolaDrop
+  public dropper?: ScolaDropper
 
   public focuser?: ScolaFocuser
 
   public hider?: ScolaHider
 
-  public interact: ScolaInteract
+  public interactor: ScolaInteractor
 
   public mutator: ScolaMutator
 
   public observer: ScolaObserver
 
-  public paste?: ScolaPaste
+  public paster?: ScolaPaster
 
   public propagator: ScolaPropagator
 
-  protected handleInteractBound = this.handleInteract.bind(this)
+  protected handleInteractorBound = this.handleInteractor.bind(this)
 
-  protected handleMutationsBound = this.handleMutations.bind(this)
+  protected handleObserverBound = this.handleObserver.bind(this)
 
   protected handleTransferBound = this.handleTransfer.bind(this)
 
   public constructor () {
     super()
-    this.interact = new ScolaInteract(this)
+    this.interactor = new ScolaInteractor(this)
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
 
     if (this.hasAttribute('sc-drag')) {
-      this.drag = new ScolaDrag(this)
+      this.dragger = new ScolaDragger(this)
     }
 
     if (this.hasAttribute('sc-drop')) {
-      this.drop = new ScolaDrop(this)
+      this.dropper = new ScolaDropper(this)
     }
 
     if (this.hasAttribute('sc-focus')) {
@@ -70,7 +70,7 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     }
 
     if (this.hasAttribute('sc-paste')) {
-      this.paste = new ScolaPaste(this)
+      this.paster = new ScolaPaster(this)
     }
 
     this.reset()
@@ -83,34 +83,34 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   public connectedCallback (): void {
-    this.interact.observe(this.handleInteractBound)
+    this.interactor.observe(this.handleInteractorBound)
 
-    this.observer.observe(this.handleMutationsBound, [
+    this.observer.observe(this.handleObserverBound, [
       'hidden',
       'sc-fullscreen'
     ])
 
-    this.drag?.connect()
-    this.drop?.connect()
+    this.dragger?.connect()
+    this.dropper?.connect()
     this.focuser?.connect()
     this.hider?.connect()
-    this.interact.connect()
+    this.interactor.connect()
     this.mutator.connect()
     this.observer.connect()
-    this.paste?.connect()
+    this.paster?.connect()
     this.propagator.connect()
     this.addEventListeners()
   }
 
   public disconnectedCallback (): void {
-    this.drag?.disconnect()
-    this.drop?.disconnect()
+    this.dragger?.disconnect()
+    this.dropper?.disconnect()
     this.focuser?.disconnect()
     this.hider?.disconnect()
-    this.interact.disconnect()
+    this.interactor.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()
-    this.paste?.disconnect()
+    this.paster?.disconnect()
     this.propagator.disconnect()
     this.removeEventListeners()
   }
@@ -125,10 +125,10 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
       this.hasAttribute('sc-onclick') ||
       this.hasAttribute('sc-ondblclick')
     ) {
-      this.interact.cancel = this.hasAttribute('sc-cancel')
-      this.interact.keyboard = this.interact.hasKeyboard
-      this.interact.mouse = this.interact.hasMouse
-      this.interact.touch = this.interact.hasTouch
+      this.interactor.cancel = this.hasAttribute('sc-cancel')
+      this.interactor.keyboard = this.interactor.hasKeyboard
+      this.interactor.mouse = this.interactor.hasMouse
+      this.interactor.touch = this.interactor.hasTouch
     }
   }
 
@@ -148,40 +148,40 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  protected handleInteract (event: ScolaInteractEvent): boolean {
+  protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
       case 'auxclick':
-        return this.handleInteractAuxclick(event)
+        return this.handleInteractorAuxclick(event)
       case 'click':
-        return this.handleInteractClick(event)
+        return this.handleInteractorClick(event)
       case 'dblclick':
-        return this.handleInteractDblclick(event)
+        return this.handleInteractorDblclick(event)
       case 'start':
-        return this.handleInteractStart(event)
+        return this.handleInteractorStart(event)
       default:
         return false
     }
   }
 
-  protected handleInteractAuxclick (event: ScolaInteractEvent): boolean {
+  protected handleInteractorAuxclick (event: ScolaInteractorEvent): boolean {
     return this.propagator.dispatch('auxclick', [this.getData()], event.originalEvent)
   }
 
-  protected handleInteractClick (event: ScolaInteractEvent): boolean {
+  protected handleInteractorClick (event: ScolaInteractorEvent): boolean {
     return this.propagator.dispatch('click', [this.getData()], event.originalEvent)
   }
 
-  protected handleInteractDblclick (event: ScolaInteractEvent): boolean {
+  protected handleInteractorDblclick (event: ScolaInteractorEvent): boolean {
     return this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
   }
 
-  protected handleInteractStart (event: ScolaInteractEvent): boolean {
+  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
     let handled = false
 
-    if (this.interact.isKeyboard(event.originalEvent)) {
+    if (this.interactor.isKeyboard(event.originalEvent)) {
       if (
-        this.interact.isKey(event.originalEvent, 'Enter') ||
-        this.interact.isKey(event.originalEvent, 'Space')
+        this.interactor.isKey(event.originalEvent, 'Enter') ||
+        this.interactor.isKey(event.originalEvent, 'Space')
       ) {
         handled = true
       }
@@ -192,17 +192,17 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     return handled
   }
 
-  protected handleMutations (mutations: MutationRecord[]): void {
+  protected handleObserver (mutations: MutationRecord[]): void {
     const attributes = this.observer.normalize(mutations)
 
     if (attributes.includes('hidden')) {
       this.hider?.toggle()
     } else if (attributes.includes('sc-fullscreen')) {
-      this.handleMutationsFullscreen()
+      this.handleObserverFullscreen()
     }
   }
 
-  protected handleMutationsFullscreen (): void {
+  protected handleObserverFullscreen (): void {
     if (document.fullscreenEnabled) {
       if (this.hasAttribute('sc-fullscreen')) {
         this.requestFullscreen().catch(() => {})
@@ -220,9 +220,9 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
       isArray(event.detail.items)
     ) {
       if (cast(event.detail.copy) === true) {
-        this.drop?.dropItems(event.detail.items, 'dropcopy', event)
+        this.dropper?.dropItems(event.detail.items, 'dropcopy', event)
       } else {
-        this.drop?.dropItems(event.detail.items, 'drop', event)
+        this.dropper?.dropItems(event.detail.items, 'drop', event)
       }
     }
   }

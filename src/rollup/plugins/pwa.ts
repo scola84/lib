@@ -56,7 +56,7 @@ function createIndex (options: Options, base: Base, identity: Result | null = nu
   }
 
   if (options.reload === true) {
-    body.push(`<object is="sc-event-source" sc-event="reload" sc-onmessage="sc-reloader-reload@[is='sc-reloader']" sc-path="${options.reloadPath ?? '/api/reload'}"><object is="sc-reloader"></object></object>`)
+    body.push(`<object is="sc-event-source" sc-event="reload" sc-onmessage="sc-reload@[is='sc-reloader']" sc-path="${options.reloadPath ?? '/api/reload'}"><object is="sc-reloader"></object></object>`)
   }
 
   return index

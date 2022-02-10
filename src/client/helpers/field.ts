@@ -1,8 +1,8 @@
 import type { Primitive, Struct } from '../../common'
 import { isPrimitive, isStruct } from '../../common'
 import type { ScolaInputElement } from '../elements/input'
-import { ScolaInteract } from './interact'
-import type { ScolaInteractEvent } from './interact'
+import { ScolaInteractor } from './interactor'
+import type { ScolaInteractorEvent } from './interactor'
 import type { ScolaSelectElement } from '../elements/select'
 import type { ScolaTextAreaElement } from '../elements/textarea'
 import { debounce } from 'throttle-debounce'
@@ -12,26 +12,26 @@ export class ScolaField {
 
   public element: ScolaInputElement | ScolaSelectElement | ScolaTextAreaElement
 
-  public interact: ScolaInteract
+  public interactor: ScolaInteractor
 
   protected handleInputBound = this.handleInput.bind(this)
 
-  protected handleInteractBound = this.handleInteract.bind(this)
+  protected handleInteractorBound = this.handleInteractor.bind(this)
 
   public constructor (element: ScolaInputElement | ScolaSelectElement | ScolaTextAreaElement) {
     this.element = element
-    this.interact = new ScolaInteract(element)
+    this.interactor = new ScolaInteractor(element)
     this.reset()
   }
 
   public connect (): void {
-    this.interact.observe(this.handleInteractBound)
-    this.interact.connect()
+    this.interactor.observe(this.handleInteractorBound)
+    this.interactor.connect()
     this.addEventListeners()
   }
 
   public disconnect (): void {
-    this.interact.disconnect()
+    this.interactor.disconnect()
     this.removeEventListeners()
   }
 
@@ -42,7 +42,7 @@ export class ScolaField {
   }
 
   public reset (): void {
-    this.interact.keyboard = this.interact.hasKeyboard
+    this.interactor.keyboard = this.interactor.hasKeyboard
   }
 
   public setData (data: unknown): void {
@@ -129,33 +129,33 @@ export class ScolaField {
     }], event)
   }
 
-  protected handleInteract (event: ScolaInteractEvent): boolean {
+  protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
       case 'start':
-        return this.handleInteractStart(event)
+        return this.handleInteractorStart(event)
       default:
         return false
     }
   }
 
-  protected handleInteractStart (event: ScolaInteractEvent): boolean {
-    if (this.interact.isKeyboard(event.originalEvent)) {
-      return this.handleInteractStartKeyboard(event.originalEvent)
+  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+    if (this.interactor.isKeyboard(event.originalEvent)) {
+      return this.handleInteractorStartKeyboard(event.originalEvent)
     }
 
     return false
   }
 
-  protected handleInteractStartKeyboard (event: KeyboardEvent): boolean {
-    if (this.interact.isKey(event, 'Enter')) {
-      this.handleInteractStartKeyboardEnter(event)
+  protected handleInteractorStartKeyboard (event: KeyboardEvent): boolean {
+    if (this.interactor.isKey(event, 'Enter')) {
+      this.handleInteractorStartKeyboardEnter(event)
       return true
     }
 
     return false
   }
 
-  protected handleInteractStartKeyboardEnter (event: KeyboardEvent): void {
+  protected handleInteractorStartKeyboardEnter (event: KeyboardEvent): void {
     let on = 'enter'
 
     if (event.ctrlKey) {

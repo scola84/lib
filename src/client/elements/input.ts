@@ -16,7 +16,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaElement 
 
   public propagator: ScolaPropagator
 
-  protected handleMutationsBound = this.handleMutations.bind(this)
+  protected handleObserverBound = this.handleObserver.bind(this)
 
   public constructor () {
     super()
@@ -35,7 +35,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaElement 
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this.handleMutationsBound, [
+    this.observer.observe(this.handleObserverBound, [
       'value'
     ])
 
@@ -81,7 +81,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaElement 
     }
   }
 
-  protected handleMutations (): void {
+  protected handleObserver (): void {
     this.updateStyle()
   }
 }

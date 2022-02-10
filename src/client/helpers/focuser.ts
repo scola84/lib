@@ -1,49 +1,58 @@
 import type { ScolaElement } from '../elements/element'
-import { ScolaInteract } from './interact'
-import type { ScolaInteractEvent } from './interact'
+import { ScolaInteractor } from './interactor'
+import type { ScolaInteractorEvent } from './interactor'
 
 export class ScolaFocuser {
   public element: ScolaElement
 
-  public interact: ScolaInteract
+  public interactor: ScolaInteractor
 
-  protected handleInteractBound = this.handleInteract.bind(this)
+  protected handleInteractorBound = this.handleInteractor.bind(this)
 
   public constructor (element: ScolaElement) {
     this.element = element
-    this.interact = new ScolaInteract(element)
+    this.interactor = new ScolaInteractor(element)
     this.reset()
   }
 
   public connect (): void {
-    this.interact.observe(this.handleInteractBound)
-    this.interact.connect()
+    this.interactor.observe(this.handleInteractorBound)
+    this.interactor.connect()
   }
 
   public disconnect (): void {
-    this.interact.disconnect()
+    this.interactor.disconnect()
   }
 
   public reset (): void {
-    this.interact.keyboard = this.interact.hasKeyboard
-    this.interact.mouse = this.interact.hasMouse
-    this.interact.target = 'window'
-    this.interact.touch = this.interact.hasTouch
+    this.interactor.keyboard = this.interactor.hasKeyboard
+    this.interactor.mouse = this.interactor.hasMouse
+    this.interactor.target = 'window'
+    this.interactor.touch = this.interactor.hasTouch
   }
 
-  protected handleInteract (event: ScolaInteractEvent): boolean {
+  protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
       case 'click':
-        return this.handleInteractClick(event)
+        return this.handleInteractorClick(event)
       case 'start':
-        return true
+        return this.handleInteractorStart(event)
       default:
         return false
     }
   }
 
-  protected handleInteractClick (event: ScolaInteractEvent): boolean {
-    this.element.toggleAttribute('sc-focused', event.originalEvent.composedPath().includes(this.element))
+  protected handleInteractorClick (event: ScolaInteractorEvent): boolean {
+    this.toggleAttribute(event.originalEvent.composedPath().includes(this.element))
     return true
+  }
+
+  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+    this.toggleAttribute(event.originalEvent.composedPath().includes(this.element))
+    return true
+  }
+
+  protected toggleAttribute (force: boolean): void {
+    this.element.toggleAttribute('sc-focused', force)
   }
 }

@@ -1,40 +1,40 @@
-import { ScolaInteract } from './interact'
-import type { ScolaInteractEvent } from './interact'
+import { ScolaInteractor } from './interactor'
+import type { ScolaInteractorEvent } from './interactor'
 import type { ScolaTableElement } from '../elements/table'
 import { ScolaTableRowElement } from '../elements/table-row'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 
-export class ScolaSort {
+export class ScolaTableSorter {
   public element: ScolaTableElement
 
-  public interact: ScolaInteract
+  public interactor: ScolaInteractor
 
   public type: string
 
   protected handleDragoverBound = this.handleDragover.bind(this)
 
-  protected handleInteractBound = this.handleInteract.bind(this)
+  protected handleInteractorBound = this.handleInteractor.bind(this)
 
   public constructor (element: ScolaTableElement) {
     this.element = element
-    this.interact = new ScolaInteract(element.body)
+    this.interactor = new ScolaInteractor(element.body)
     this.reset()
   }
 
   public connect (): void {
-    this.interact.observe(this.handleInteractBound)
-    this.interact.connect()
+    this.interactor.observe(this.handleInteractorBound)
+    this.interactor.connect()
     this.addEventListeners()
   }
 
   public disconnect (): void {
-    this.interact.disconnect()
+    this.interactor.disconnect()
     this.removeEventListeners()
   }
 
   public reset (): void {
-    this.interact.keyboard = this.interact.hasKeyboard
+    this.interactor.keyboard = this.interactor.hasKeyboard
     this.type = this.element.getAttribute('sc-sort-type') ?? ''
   }
 
@@ -51,14 +51,14 @@ export class ScolaSort {
     const {
       offsetLeft: firstRowLeft = 0,
       offsetTop: firstRowTop = 0
-    } = this.element.select?.firstRow ?? {}
+    } = this.element.selector?.firstRow ?? {}
 
     const {
       offsetHeight: lastRowHeight = 0,
       offsetLeft: lastRowLeft = 0,
       offsetTop: lastRowTop = 0,
       offsetWidth: lastRowWidth = 0
-    } = this.element.select?.lastRow ?? {}
+    } = this.element.selector?.lastRow ?? {}
 
     let left = bodyScrollLeft
     let top = bodyScrollTop
@@ -106,14 +106,14 @@ export class ScolaSort {
           let row: HTMLElement | null = null
 
           if (
-            this.element.select?.rows.length === 1 &&
-            this.element.select.firstRow instanceof ScolaTableRowElement
+            this.element.selector?.rows.length === 1 &&
+            this.element.selector.firstRow instanceof ScolaTableRowElement
           ) {
-            row = this.element.select.firstRow
+            row = this.element.selector.firstRow
           } else if (
-            this.element.drag?.activeElement instanceof ScolaTableRowElement
+            this.element.dragger?.activeElement instanceof ScolaTableRowElement
           ) {
-            row = this.element.drag.activeElement
+            row = this.element.dragger.activeElement
           }
 
           if (
@@ -133,34 +133,34 @@ export class ScolaSort {
     }
   }
 
-  protected handleInteract (event: ScolaInteractEvent): boolean {
+  protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
       case 'start':
-        return this.handleInteractStart(event)
+        return this.handleInteractorStart(event)
       default:
         return false
     }
   }
 
-  protected handleInteractStart (event: ScolaInteractEvent): boolean {
-    if (this.interact.isKeyboard(event.originalEvent, 'down')) {
-      return this.handleInteractStartKeyboard(event.originalEvent)
+  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+    if (this.interactor.isKeyboard(event.originalEvent, 'down')) {
+      return this.handleInteractorStartKeyboard(event.originalEvent)
     }
 
     return false
   }
 
-  protected handleInteractStartKeyboard (event: KeyboardEvent): boolean {
+  protected handleInteractorStartKeyboard (event: KeyboardEvent): boolean {
     let handled = false
 
     if (
       event.ctrlKey &&
       !event.shiftKey
     ) {
-      if (this.interact.isKeyForward(event)) {
-        handled = this.handleInteractStartKeyboardForward(event)
-      } else if (this.interact.isKeyBack(event)) {
-        handled = this.handleInteractStartKeyboardBack(event)
+      if (this.interactor.isKeyForward(event)) {
+        handled = this.handleInteractorStartKeyboardForward(event)
+      } else if (this.interactor.isKeyBack(event)) {
+        handled = this.handleInteractorStartKeyboardBack(event)
       }
     }
 
@@ -172,9 +172,9 @@ export class ScolaSort {
     return handled
   }
 
-  protected handleInteractStartKeyboardBack (event: KeyboardEvent): boolean {
-    if (this.element.select?.firstRow?.previousElementSibling !== null) {
-      this.element.select?.rows.forEach((row) => {
+  protected handleInteractorStartKeyboardBack (event: KeyboardEvent): boolean {
+    if (this.element.selector?.firstRow?.previousElementSibling !== null) {
+      this.element.selector?.rows.forEach((row) => {
         row.parentElement?.insertBefore(row, row.previousElementSibling)
         this.element.propagator.dispatch('sort', [row.getData()], event)
       })
@@ -185,9 +185,9 @@ export class ScolaSort {
     return false
   }
 
-  protected handleInteractStartKeyboardForward (event: KeyboardEvent): boolean {
-    if (this.element.select?.lastRow?.nextElementSibling !== null) {
-      this.element.select?.rows
+  protected handleInteractorStartKeyboardForward (event: KeyboardEvent): boolean {
+    if (this.element.selector?.lastRow?.nextElementSibling !== null) {
+      this.element.selector?.rows
         .slice()
         .reverse()
         .forEach((row) => {

@@ -5,7 +5,7 @@ import { ScolaPropagator } from '../helpers/propagator'
 
 declare global {
   interface HTMLElementEventMap {
-    'sc-reloader-reload': CustomEvent
+    'sc-reload': CustomEvent
   }
 }
 
@@ -54,7 +54,7 @@ export class ScolaReloaderElement extends HTMLObjectElement implements ScolaElem
   public update (): void {}
 
   protected addEventListeners (): void {
-    this.addEventListener('sc-reloader-reload', this.handleReloadBound)
+    this.addEventListener('sc-reload', this.handleReloadBound)
   }
 
   protected handleReload (): void {
@@ -62,6 +62,6 @@ export class ScolaReloaderElement extends HTMLObjectElement implements ScolaElem
   }
 
   protected removeEventListeners (): void {
-    this.removeEventListener('sc-reloader-reload', this.handleReloadBound)
+    this.removeEventListener('sc-reload', this.handleReloadBound)
   }
 }

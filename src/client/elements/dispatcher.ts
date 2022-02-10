@@ -7,11 +7,11 @@ import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
-    'sc-event-dispatch': CustomEvent
+    'sc-dispatch': CustomEvent
   }
 }
 
-export class ScolaEventElement extends HTMLObjectElement implements ScolaElement {
+export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaElement {
   public mutator: ScolaMutator
 
   public observer: ScolaObserver
@@ -31,7 +31,7 @@ export class ScolaEventElement extends HTMLObjectElement implements ScolaElement
   }
 
   public static define (): void {
-    customElements.define('sc-event', ScolaEventElement, {
+    customElements.define('sc-dispatcher', ScolaDispatcherElement, {
       extends: 'object'
     })
   }
@@ -74,7 +74,7 @@ export class ScolaEventElement extends HTMLObjectElement implements ScolaElement
   public update (): void {}
 
   protected addEventListeners (): void {
-    this.addEventListener('sc-event-dispatch', this.handleDispatchBound)
+    this.addEventListener('sc-dispatch', this.handleDispatchBound)
   }
 
   protected handleDispatch (event: CustomEvent): void {
@@ -86,6 +86,6 @@ export class ScolaEventElement extends HTMLObjectElement implements ScolaElement
   }
 
   protected removeEventListeners (): void {
-    this.removeEventListener('sc-event-dispatch', this.handleDispatchBound)
+    this.removeEventListener('sc-dispatch', this.handleDispatchBound)
   }
 }

@@ -3,8 +3,8 @@ import { ScolaBreakpoint } from '../helpers/breakpoint'
 import type { ScolaElement } from './element'
 import type { ScolaEvent } from '../helpers/event'
 import { ScolaIndexer } from '../helpers/indexer'
-import { ScolaInteract } from '../helpers/interact'
-import type { ScolaInteractEvent } from '../helpers/interact'
+import { ScolaInteractor } from '../helpers/interactor'
+import type { ScolaInteractorEvent } from '../helpers/interactor'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
@@ -60,7 +60,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public indexer: ScolaIndexer
 
-  public interact: ScolaInteract
+  public interactor: ScolaInteractor
 
   public left: Left
 
@@ -78,9 +78,9 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   protected handleHideBound = this.handleHide.bind(this)
 
-  protected handleInteractBound = this.handleInteract.bind(this)
+  protected handleInteractorBound = this.handleInteractor.bind(this)
 
-  protected handleMutationsBound = this.handleMutations.bind(this)
+  protected handleObserverBound = this.handleObserver.bind(this)
 
   protected handleShowBound = this.handleShow.bind(this)
 
@@ -90,7 +90,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     super()
     this.breakpoint = new ScolaBreakpoint(this)
     this.indexer = new ScolaIndexer()
-    this.interact = new ScolaInteract(this)
+    this.interactor = new ScolaInteractor(this)
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
@@ -106,14 +106,14 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public connectedCallback (): void {
     this.breakpoint.observe(this.handleBreakpointBound)
-    this.interact.observe(this.handleInteractBound)
+    this.interactor.observe(this.handleInteractorBound)
 
-    this.observer.observe(this.handleMutationsBound, [
+    this.observer.observe(this.handleObserverBound, [
       'hidden'
     ])
 
     this.breakpoint.connect()
-    this.interact.connect()
+    this.interactor.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
@@ -126,7 +126,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     }
 
     this.breakpoint.disconnect()
-    this.interact.disconnect()
+    this.interactor.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
@@ -155,10 +155,10 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   }
 
   public reset (): void {
-    this.interact.keyboard = this.interact.hasKeyboard
-    this.interact.mouse = this.interact.hasMouse
-    this.interact.target = 'window'
-    this.interact.touch = this.interact.hasTouch
+    this.interactor.keyboard = this.interactor.hasKeyboard
+    this.interactor.mouse = this.interactor.hasMouse
+    this.interactor.target = 'window'
+    this.interactor.touch = this.interactor.hasTouch
     this.left = (this.breakpoint.parse('sc-left') as Left | null) ?? 'center'
     this.top = (this.breakpoint.parse('sc-top') as Top | null) ?? 'center'
   }
@@ -245,7 +245,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
     let left = offsetLeft
 
-    switch (`${position.left}-${this.interact.dir}`) {
+    switch (`${position.left}-${this.interactor.dir}`) {
       case 'center-ltr':
       case 'center-rtl':
         left += -(this.offsetWidth - offsetWidth) / 2
@@ -361,19 +361,19 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.toggleAttribute('hidden', true)
   }
 
-  protected handleInteract (event: ScolaInteractEvent): boolean {
+  protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
       case 'start':
-        return this.handleInteractStart(event)
+        return this.handleInteractorStart(event)
       default:
         return false
     }
   }
 
-  protected handleInteractStart (event: ScolaInteractEvent): boolean {
+  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
     if (
       !this.hasAttribute('hidden') && (
-        this.interact.isKey(event.originalEvent, 'Escape') ||
+        this.interactor.isKey(event.originalEvent, 'Escape') ||
         !event.originalEvent.composedPath().includes(this)
       )
     ) {
@@ -383,7 +383,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     return false
   }
 
-  protected handleMutations (): void {
+  protected handleObserver (): void {
     this.toggle()
   }
 

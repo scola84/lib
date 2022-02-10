@@ -77,8 +77,16 @@ export class ScolaMutator {
     }
   }
 
-  public selectTemplate (name: string): HTMLTemplateElement | null {
-    return this.element.querySelector(`template[sc-name="${name}"]`)
+  public selectTemplates (): Map<string, HTMLTemplateElement> {
+    const map = new Map<string, HTMLTemplateElement>()
+
+    this.element
+      .querySelectorAll('template')
+      .forEach((template) => {
+        map.set(template.getAttribute('sc-name') ?? '', template)
+      })
+
+    return map
   }
 
   public setAttributes (data: unknown): void {

@@ -4,8 +4,8 @@ import type { ScolaBreakpointEvent } from '../helpers/breakpoint'
 import { ScolaDivElement } from './div'
 import type { ScolaElement } from './element'
 import { ScolaEvent } from '../helpers/event'
-import { ScolaInteract } from '../helpers/interact'
-import type { ScolaInteractEvent } from '../helpers/interact'
+import { ScolaInteractor } from '../helpers/interactor'
+import type { ScolaInteractorEvent } from '../helpers/interactor'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
@@ -28,7 +28,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   public breakpoint: ScolaBreakpoint
 
-  public interact: ScolaInteract
+  public interactor: ScolaInteractor
 
   public items: Struct[] = []
 
@@ -40,7 +40,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   public propagator: ScolaPropagator
 
-  public template: HTMLTemplateElement | null
+  public templates: Map<string, HTMLTemplateElement>
 
   public threshold: number
 
@@ -52,18 +52,18 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   protected handleGoBound = this.handleGo.bind(this)
 
-  protected handleInteractBound = this.handleInteract.bind(this)
+  protected handleInteractorBound = this.handleInteractor.bind(this)
 
   protected handleTransitionendBound = this.handleTransitionend.bind(this)
 
   public constructor () {
     super()
     this.breakpoint = new ScolaBreakpoint(this)
-    this.interact = new ScolaInteract(this)
+    this.interactor = new ScolaInteractor(this)
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
-    this.template = this.mutator.selectTemplate('item')
+    this.templates = this.mutator.selectTemplates()
 
     if (this.firstElementChild instanceof HTMLElement) {
       this.body = this.firstElementChild
@@ -71,7 +71,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
     this.reset()
 
-    if (this.template === null) {
+    if (!this.templates.has('item')) {
       this.updateAttributes()
     }
   }
@@ -92,8 +92,8 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   }
 
   public connectedCallback (): void {
-    this.interact.observe(this.handleInteractBound)
-    this.interact.connect()
+    this.interactor.observe(this.handleInteractorBound)
+    this.interactor.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
@@ -101,7 +101,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   }
 
   public disconnectedCallback (): void {
-    this.interact.disconnect()
+    this.interactor.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
@@ -129,10 +129,10 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   public reset (): void {
     this.axis = (this.getAttribute('sc-axis') as Axis | null) ?? 'x'
-    this.interact.keyboard = this.breakpoint.parse('sc-interact-keyboard') === ''
-    this.interact.mouse = this.breakpoint.parse('sc-interact-mouse') === ''
-    this.interact.touch = this.breakpoint.parse('sc-interact-touch') === ''
-    this.interact.wheel = this.breakpoint.parse('sc-interact-wheel') === ''
+    this.interactor.keyboard = this.breakpoint.parse('sc-interact-keyboard') === ''
+    this.interactor.mouse = this.breakpoint.parse('sc-interact-mouse') === ''
+    this.interactor.touch = this.breakpoint.parse('sc-interact-touch') === ''
+    this.interactor.wheel = this.breakpoint.parse('sc-interact-wheel') === ''
     this.pointer = Number(this.getAttribute('sc-pointer') ?? -1)
     this.threshold = Number(this.getAttribute('sc-threshold') ?? 0.1)
   }
@@ -190,7 +190,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   }
 
   protected appendElement (item: Struct): void {
-    const template = this.template?.content.cloneNode(true)
+    const template = this.templates.get('item')?.content.cloneNode(true)
 
     if (
       template instanceof DocumentFragment &&
@@ -269,41 +269,41 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     }
   }
 
-  protected handleInteract (event: ScolaInteractEvent): boolean {
+  protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
       case 'end':
-        return this.handleInteractEnd(event)
+        return this.handleInteractorEnd(event)
       case 'move':
-        return this.handleInteractMove(event)
+        return this.handleInteractorMove(event)
       case 'start':
-        return this.handleInteractStart(event)
+        return this.handleInteractorStart(event)
       case 'wheel':
-        return this.handleInteractWheel(event)
+        return this.handleInteractorWheel(event)
       default:
         return false
     }
   }
 
-  protected handleInteractEnd (event: ScolaInteractEvent): boolean {
+  protected handleInteractorEnd (event: ScolaInteractorEvent): boolean {
     switch (this.axis) {
       case 'x':
-        return this.handleInteractEndX(event)
+        return this.handleInteractorEndX(event)
       case 'y':
-        return this.handleInteractEndY(event)
+        return this.handleInteractorEndY(event)
       default:
         return false
     }
   }
 
-  protected handleInteractEndX (event: ScolaInteractEvent): boolean {
-    if (this.interact.dir === 'rtl') {
-      return this.handleInteractEndXRtl(event)
+  protected handleInteractorEndX (event: ScolaInteractorEvent): boolean {
+    if (this.interactor.dir === 'rtl') {
+      return this.handleInteractorEndXRtl(event)
     }
 
-    return this.handleInteractEndXLtr(event)
+    return this.handleInteractorEndXLtr(event)
   }
 
-  protected handleInteractEndXLtr (event: ScolaInteractEvent): boolean {
+  protected handleInteractorEndXLtr (event: ScolaInteractorEvent): boolean {
     this.setTimingFunction(event.velocityX)
 
     window.requestAnimationFrame(() => {
@@ -339,7 +339,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     return true
   }
 
-  protected handleInteractEndXRtl (event: ScolaInteractEvent): boolean {
+  protected handleInteractorEndXRtl (event: ScolaInteractorEvent): boolean {
     this.setTimingFunction(event.velocityX)
 
     window.requestAnimationFrame(() => {
@@ -375,7 +375,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     return true
   }
 
-  protected handleInteractEndY (event: ScolaInteractEvent): boolean {
+  protected handleInteractorEndY (event: ScolaInteractorEvent): boolean {
     this.setTimingFunction(event.velocityY)
 
     window.requestAnimationFrame(() => {
@@ -411,26 +411,26 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     return true
   }
 
-  protected handleInteractMove (event: ScolaInteractEvent): boolean {
+  protected handleInteractorMove (event: ScolaInteractorEvent): boolean {
     switch (this.axis) {
       case 'x':
-        return this.handleInteractMoveX(event)
+        return this.handleInteractorMoveX(event)
       case 'y':
-        return this.handleInteractMoveY(event)
+        return this.handleInteractorMoveY(event)
       default:
         return false
     }
   }
 
-  protected handleInteractMoveX (event: ScolaInteractEvent): boolean {
-    if (this.interact.dir === 'rtl') {
-      return this.handleInteractMoveXRtl(event)
+  protected handleInteractorMoveX (event: ScolaInteractorEvent): boolean {
+    if (this.interactor.dir === 'rtl') {
+      return this.handleInteractorMoveXRtl(event)
     }
 
-    return this.handleInteractMoveXLtr(event)
+    return this.handleInteractorMoveXLtr(event)
   }
 
-  protected handleInteractMoveXLtr (event: ScolaInteractEvent): boolean {
+  protected handleInteractorMoveXLtr (event: ScolaInteractorEvent): boolean {
     const maxLeft = this.body.scrollWidth - this.clientWidth
     const left = new DOMMatrix(this.body.style.getPropertyValue('transform')).e
 
@@ -438,7 +438,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     return true
   }
 
-  protected handleInteractMoveXRtl (event: ScolaInteractEvent): boolean {
+  protected handleInteractorMoveXRtl (event: ScolaInteractorEvent): boolean {
     const maxRight = this.body.scrollWidth - this.clientWidth
     const right = new DOMMatrix(this.body.style.getPropertyValue('transform')).e
 
@@ -446,7 +446,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     return true
   }
 
-  protected handleInteractMoveY (event: ScolaInteractEvent): boolean {
+  protected handleInteractorMoveY (event: ScolaInteractorEvent): boolean {
     const maxTop = this.body.scrollHeight - this.clientHeight
     const top = new DOMMatrix(this.body.style.getPropertyValue('transform')).f
 
@@ -454,45 +454,45 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     return true
   }
 
-  protected handleInteractStart (event: ScolaInteractEvent): boolean {
-    if (this.interact.isKeyboard(event.originalEvent)) {
-      return this.handleInteractStartKeyboard(event.originalEvent)
+  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+    if (this.interactor.isKeyboard(event.originalEvent)) {
+      return this.handleInteractorStartKeyboard(event.originalEvent)
     }
 
     this.body.style.setProperty('transition-property', 'none')
     return true
   }
 
-  protected handleInteractStartKeyboard (event: KeyboardEvent): boolean {
-    if (this.interact.isKeyBack(event)) {
+  protected handleInteractorStartKeyboard (event: KeyboardEvent): boolean {
+    if (this.interactor.isKeyBack(event)) {
       this.back()
-    } else if (this.interact.isKeyForward(event)) {
+    } else if (this.interactor.isKeyForward(event)) {
       this.forward()
     }
 
     return true
   }
 
-  protected handleInteractWheel (event: ScolaInteractEvent): boolean {
+  protected handleInteractorWheel (event: ScolaInteractorEvent): boolean {
     switch (this.axis) {
       case 'x':
-        return this.handleInteractWheelX(event)
+        return this.handleInteractorWheelX(event)
       case 'y':
-        return this.handleInteractWheelY(event)
+        return this.handleInteractorWheelY(event)
       default:
         return false
     }
   }
 
-  protected handleInteractWheelX (event: ScolaInteractEvent): boolean {
-    if (this.interact.dir === 'rtl') {
-      return this.handleInteractWheelXRtl(event)
+  protected handleInteractorWheelX (event: ScolaInteractorEvent): boolean {
+    if (this.interactor.dir === 'rtl') {
+      return this.handleInteractorWheelXRtl(event)
     }
 
-    return this.handleInteractWheelXLtr(event)
+    return this.handleInteractorWheelXLtr(event)
   }
 
-  protected handleInteractWheelXLtr (event: ScolaInteractEvent): boolean {
+  protected handleInteractorWheelXLtr (event: ScolaInteractorEvent): boolean {
     if ((
       event.axis === 'x' &&
       event.directionX === 'right'
@@ -514,7 +514,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     return true
   }
 
-  protected handleInteractWheelXRtl (event: ScolaInteractEvent): boolean {
+  protected handleInteractorWheelXRtl (event: ScolaInteractorEvent): boolean {
     if ((
       event.axis === 'x' &&
       event.directionX === 'left'
@@ -536,7 +536,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     return true
   }
 
-  protected handleInteractWheelY (event: ScolaInteractEvent): boolean {
+  protected handleInteractorWheelY (event: ScolaInteractorEvent): boolean {
     if (event.directionY === 'up') {
       this.back()
     } else if (event.directionY === 'down') {
@@ -665,7 +665,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   }
 
   protected moveToPointerX (): void {
-    if (this.interact.dir === 'rtl') {
+    if (this.interactor.dir === 'rtl') {
       this.moveToPointerXRtl()
     } else {
       this.moveToPointerXLtr()
@@ -743,6 +743,6 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   }
 
   protected setTimingFunction (velocity: number): void {
-    this.body.style.setProperty('transition-timing-function', this.interact.getTimingFunction(velocity))
+    this.body.style.setProperty('transition-timing-function', this.interactor.getTimingFunction(velocity))
   }
 }

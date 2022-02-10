@@ -16,7 +16,7 @@ interface Drawers {
   [key: string]: Drawer | undefined
 }
 
-export class ScolaD3Element extends HTMLDivElement implements ScolaElement {
+export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   public static drawers: Drawers = {}
 
   public data: unknown
@@ -39,9 +39,9 @@ export class ScolaD3Element extends HTMLDivElement implements ScolaElement {
 
   public svg?: SVGElement
 
-  protected handleMutationsBound = this.handleMutations.bind(this)
+  protected handleObserverBound = this.handleObserver.bind(this)
 
-  protected handleResizeBound = this.handleResize.bind(this)
+  protected handleResizerBound = this.handleResizer.bind(this)
 
   protected handleThemeBound = this.handleTheme.bind(this)
 
@@ -50,12 +50,12 @@ export class ScolaD3Element extends HTMLDivElement implements ScolaElement {
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
-    this.resizer = new ResizeObserver(this.handleResizeBound)
+    this.resizer = new ResizeObserver(this.handleResizerBound)
     this.reset()
   }
 
   public static define (): void {
-    customElements.define('sc-d3', ScolaD3Element, {
+    customElements.define('sc-drawer', ScolaDrawerElement, {
       extends: 'div'
     })
   }
@@ -64,12 +64,12 @@ export class ScolaD3Element extends HTMLDivElement implements ScolaElement {
     Object
       .entries(drawers)
       .forEach(([name, handler]) => {
-        ScolaD3Element.drawers[name] = handler
+        ScolaDrawerElement.drawers[name] = handler
       })
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this.handleMutationsBound)
+    this.observer.observe(this.handleObserverBound)
     this.resizer.observe(this)
     this.mutator.connect()
     this.observer.connect()
@@ -94,7 +94,7 @@ export class ScolaD3Element extends HTMLDivElement implements ScolaElement {
     this.scale = Number(this.getAttribute('sc-scale') ?? -1)
 
     if (this.name !== '') {
-      this.drawer = ScolaD3Element.drawers[this.name]
+      this.drawer = ScolaDrawerElement.drawers[this.name]
     }
   }
 
@@ -154,11 +154,11 @@ export class ScolaD3Element extends HTMLDivElement implements ScolaElement {
     this.updateIframe(this.calculateDimensions())
   }
 
-  protected handleMutations (): void {
+  protected handleObserver (): void {
     this.update()
   }
 
-  protected handleResize (): void {
+  protected handleResizer (): void {
     this.reset()
     this.update()
   }

@@ -1,6 +1,6 @@
 import type { ScolaElement } from './element'
-import { ScolaInteract } from '../helpers/interact'
-import type { ScolaInteractEvent } from '../helpers/interact'
+import { ScolaInteractor } from '../helpers/interactor'
+import type { ScolaInteractorEvent } from '../helpers/interactor'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
@@ -8,7 +8,7 @@ import { ScolaPropagator } from '../helpers/propagator'
 export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElement {
   public buttons: HTMLElement[]
 
-  public interact: ScolaInteract
+  public interactor: ScolaInteractor
 
   public mutator: ScolaMutator
 
@@ -24,12 +24,12 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
     return this.buttons[this.buttons.length - 1]
   }
 
-  protected handleInteractBound = this.handleInteract.bind(this)
+  protected handleInteractorBound = this.handleInteractor.bind(this)
 
   public constructor () {
     super()
     this.buttons = this.selectButtons()
-    this.interact = new ScolaInteract(this)
+    this.interactor = new ScolaInteractor(this)
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
@@ -43,15 +43,15 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
   }
 
   public connectedCallback (): void {
-    this.interact.observe(this.handleInteractBound)
-    this.interact.connect()
+    this.interactor.observe(this.handleInteractorBound)
+    this.interactor.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
   }
 
   public disconnectedCallback (): void {
-    this.interact.disconnect()
+    this.interactor.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
@@ -60,7 +60,7 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
   public getData (): void {}
 
   public reset (): void {
-    this.interact.keyboard = this.interact.hasKeyboard
+    this.interactor.keyboard = this.interactor.hasKeyboard
   }
 
   public setData (data: unknown): void {
@@ -69,20 +69,20 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
 
   public update (): void {}
 
-  protected handleInteract (event: ScolaInteractEvent): boolean {
+  protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
       case 'start':
-        return this.handleInteractStart(event)
+        return this.handleInteractorStart(event)
       default:
         return false
     }
   }
 
-  protected handleInteractStart (event: ScolaInteractEvent): boolean {
+  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
     if (document.activeElement instanceof HTMLElement) {
       const index = this.buttons.indexOf(document.activeElement)
 
-      if (this.interact.isKeyForward(event.originalEvent)) {
+      if (this.interactor.isKeyForward(event.originalEvent)) {
         if (index === -1) {
           this.firstButton?.focus()
         } else if (index === this.buttons.length - 1) {
@@ -92,7 +92,7 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
         }
 
         return true
-      } else if (this.interact.isKeyBack(event.originalEvent)) {
+      } else if (this.interactor.isKeyBack(event.originalEvent)) {
         if (index === 0) {
           this.lastButton?.focus()
         } else {

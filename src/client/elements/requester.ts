@@ -8,9 +8,9 @@ import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
-    'sc-request-start': CustomEvent
-    'sc-request-stop': CustomEvent
-    'sc-request-toggle': CustomEvent
+    'sc-requester-start': CustomEvent
+    'sc-requester-stop': CustomEvent
+    'sc-requester-toggle': CustomEvent
   }
 }
 
@@ -34,7 +34,7 @@ interface Request {
   url: string | null
 }
 
-export class ScolaRequestElement extends HTMLObjectElement implements ScolaElement {
+export class ScolaRequesterElement extends HTMLObjectElement implements ScolaElement {
   public static origin = window.location.origin
 
   public enctype: Enctype
@@ -47,7 +47,7 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
 
   public observer: ScolaObserver
 
-  public origin = ScolaRequestElement.origin
+  public origin = ScolaRequesterElement.origin
 
   public propagator: ScolaPropagator
 
@@ -81,7 +81,7 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
   }
 
   public static define (): void {
-    customElements.define('sc-request', ScolaRequestElement, {
+    customElements.define('sc-requester', ScolaRequesterElement, {
       extends: 'object'
     })
   }
@@ -140,9 +140,9 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
   public update (): void {}
 
   protected addEventListeners (): void {
-    this.addEventListener('sc-request-start', this.handleStartBound)
-    this.addEventListener('sc-request-stop', this.handleStopBound)
-    this.addEventListener('sc-request-toggle', this.handleToggleBound)
+    this.addEventListener('sc-requester-start', this.handleStartBound)
+    this.addEventListener('sc-requester-stop', this.handleStopBound)
+    this.addEventListener('sc-requester-toggle', this.handleToggleBound)
   }
 
   protected createRequest (options?: Struct): Request {
@@ -237,8 +237,8 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
 
   protected handleError (error: unknown): void {
     this.propagator.dispatch('error', [{
-      code: 'err_request',
-      message: String(error)
+      code: 'err_requester',
+      message: this.propagator.extractMessage(error)
     }])
   }
 
@@ -300,9 +300,9 @@ export class ScolaRequestElement extends HTMLObjectElement implements ScolaEleme
   }
 
   protected removeEventListeners (): void {
-    this.removeEventListener('sc-request-start', this.handleStartBound)
-    this.removeEventListener('sc-request-stop', this.handleStopBound)
-    this.removeEventListener('sc-request-toggle', this.handleToggleBound)
+    this.removeEventListener('sc-requester-start', this.handleStartBound)
+    this.removeEventListener('sc-requester-stop', this.handleStopBound)
+    this.removeEventListener('sc-requester-toggle', this.handleToggleBound)
   }
 
   protected send (request: Request): void {

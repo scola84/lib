@@ -1,6 +1,6 @@
 import type { ScolaElement } from './element'
-import { ScolaInteract } from '../helpers/interact'
-import type { ScolaInteractEvent } from '../helpers/interact'
+import { ScolaInteractor } from '../helpers/interactor'
+import type { ScolaInteractorEvent } from '../helpers/interactor'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
@@ -19,7 +19,7 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
 
   public direction?: Direction[]
 
-  public interact: ScolaInteract
+  public interactor: ScolaInteractor
 
   public mutator: ScolaMutator
 
@@ -35,13 +35,13 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
 
   public targetStyles = new Map<HTMLElement, string>()
 
-  protected handleInteractBound = this.handleInteract.bind(this)
+  protected handleInteractorBound = this.handleInteractor.bind(this)
 
-  protected handleMutationsBound = this.handleMutations.bind(this)
+  protected handleObserverBound = this.handleObserver.bind(this)
 
   public constructor () {
     super()
-    this.interact = new ScolaInteract(this)
+    this.interactor = new ScolaInteractor(this)
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
@@ -55,20 +55,20 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
   }
 
   public connectedCallback (): void {
-    this.interact.observe(this.handleInteractBound)
+    this.interactor.observe(this.handleInteractorBound)
 
-    this.observer.observe(this.handleMutationsBound, [
+    this.observer.observe(this.handleObserverBound, [
       'sc-maximized'
     ])
 
-    this.interact.connect()
+    this.interactor.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
   }
 
   public disconnectedCallback (): void {
-    this.interact.disconnect()
+    this.interactor.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
@@ -110,8 +110,8 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
       ?.trim()
       .split(/\s+/u) as Direction[]
 
-    this.interact.mouse = this.interact.hasMouse
-    this.interact.touch = this.interact.hasTouch
+    this.interactor.mouse = this.interactor.hasMouse
+    this.interactor.touch = this.interactor.hasTouch
     this.snap = Number(this.getAttribute('sc-snap') ?? 1)
     this.target = this.getAttribute('sc-target') ?? ''
   }
@@ -124,44 +124,44 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     return Math.round((size + distance) / this.snap) * this.snap
   }
 
-  protected handleInteract (event: ScolaInteractEvent): boolean {
+  protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
       case 'end':
-        return this.handleInteractEnd()
+        return this.handleInteractorEnd()
       case 'move':
-        return this.handleInteractMove(event)
+        return this.handleInteractorMove(event)
       case 'start':
-        return this.handleInteractStart()
+        return this.handleInteractorStart()
       default:
         return false
     }
   }
 
-  protected handleInteractEnd (): boolean {
+  protected handleInteractorEnd (): boolean {
     this.toggleAttribute('sc-active', false)
     document.body.style.removeProperty('cursor')
     return true
   }
 
-  protected handleInteractMove (event: ScolaInteractEvent): boolean {
+  protected handleInteractorMove (event: ScolaInteractorEvent): boolean {
     let handled = false
 
-    if (this.shouldInteractMoveBottom()) {
-      handled = this.handleInteractMoveBottom(event)
-    } else if (this.shouldInteractMoveTop()) {
-      handled = this.handleInteractMoveTop(event)
+    if (this.shouldInteractorMoveBottom()) {
+      handled = this.handleInteractorMoveBottom(event)
+    } else if (this.shouldInteractorMoveTop()) {
+      handled = this.handleInteractorMoveTop(event)
     }
 
-    if (this.shouldInteractMoveLeft()) {
-      handled = this.handleInteractMoveLeft(event)
-    } else if (this.shouldInteractMoveRight()) {
-      handled = this.handleInteractMoveRight(event)
+    if (this.shouldInteractorMoveLeft()) {
+      handled = this.handleInteractorMoveLeft(event)
+    } else if (this.shouldInteractorMoveRight()) {
+      handled = this.handleInteractorMoveRight(event)
     }
 
     return handled
   }
 
-  protected handleInteractMoveBottom (event: ScolaInteractEvent): boolean {
+  protected handleInteractorMoveBottom (event: ScolaInteractorEvent): boolean {
     this.targetOffsets.forEach((offset, element) => {
       const {
         offsetTop: elementTop
@@ -189,7 +189,7 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     return true
   }
 
-  protected handleInteractMoveLeft (event: ScolaInteractEvent): boolean {
+  protected handleInteractorMoveLeft (event: ScolaInteractorEvent): boolean {
     this.targetOffsets.forEach((offset, element) => {
       const position = window.getComputedStyle(element).getPropertyValue('position')
 
@@ -227,7 +227,7 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     return true
   }
 
-  protected handleInteractMoveRight (event: ScolaInteractEvent): boolean {
+  protected handleInteractorMoveRight (event: ScolaInteractorEvent): boolean {
     this.targetOffsets.forEach((offset, element) => {
       const {
         offsetLeft: elementLeft
@@ -255,7 +255,7 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     return true
   }
 
-  protected handleInteractMoveTop (event: ScolaInteractEvent): boolean {
+  protected handleInteractorMoveTop (event: ScolaInteractorEvent): boolean {
     this.targetOffsets.forEach((offset, element) => {
       const position = window.getComputedStyle(element).getPropertyValue('position')
 
@@ -293,7 +293,7 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     return true
   }
 
-  protected handleInteractStart (): boolean {
+  protected handleInteractorStart (): boolean {
     this.propagator.dispatch('beforeresize', [this.getData()])
     this.targetOffsets.clear()
 
@@ -311,7 +311,7 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     return true
   }
 
-  protected handleMutations (mutations: MutationRecord[]): void {
+  protected handleObserver (mutations: MutationRecord[]): void {
     const attributes = this.observer.normalize(mutations)
 
     if (attributes.includes('sc-maximized')) {
@@ -323,31 +323,31 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     }
   }
 
-  protected shouldInteractMoveBottom (): boolean {
+  protected shouldInteractorMoveBottom (): boolean {
     return this.direction?.includes('down') === true
   }
 
-  protected shouldInteractMoveLeft (): boolean {
+  protected shouldInteractorMoveLeft (): boolean {
     return (
       this.direction?.includes('start') === true &&
-      this.interact.dir === 'ltr'
+      this.interactor.dir === 'ltr'
     ) || (
       this.direction?.includes('end') === true &&
-      this.interact.dir === 'rtl'
+      this.interactor.dir === 'rtl'
     )
   }
 
-  protected shouldInteractMoveRight (): boolean {
+  protected shouldInteractorMoveRight (): boolean {
     return (
       this.direction?.includes('end') === true &&
-      this.interact.dir === 'ltr'
+      this.interactor.dir === 'ltr'
     ) || (
       this.direction?.includes('start') === true &&
-      this.interact.dir === 'rtl'
+      this.interactor.dir === 'rtl'
     )
   }
 
-  protected shouldInteractMoveTop (): boolean {
+  protected shouldInteractorMoveTop (): boolean {
     return this.direction?.includes('up') === true
   }
 }

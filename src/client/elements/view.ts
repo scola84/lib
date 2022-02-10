@@ -54,6 +54,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public regexp: RegExp
 
+  public requestView?: View
+
   public sanitizer: ScolaSanitizer
 
   public save: string
@@ -80,7 +82,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   protected handleForwardBound = this.handleForward.bind(this)
 
-  protected handleMutationsBound = this.handleMutations.bind(this)
+  protected handleObserverBound = this.handleObserver.bind(this)
 
   protected handleRewindBound = this.handleRewind.bind(this)
 
@@ -123,15 +125,17 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       })
 
       if (index > -1) {
-        this.pointer = index
-        this.go(this.pointer)
+        if (index !== this.pointer) {
+          this.pointer = index
+          this.go(this.pointer)
+        }
+
         return
       }
 
       this.views.push(view)
     } else {
       if (this.isSame(view, this.view)) {
-        this.go(this.pointer)
         return
       }
 
@@ -153,7 +157,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this.handleMutationsBound, [
+    this.observer.observe(this.handleObserverBound, [
       'hidden',
       'sc-views'
     ])
@@ -254,9 +258,14 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     const html = ScolaViewElement.views[this.view.name]
 
     if (html === undefined) {
-      this.propagator.dispatch('request', [this.view])
+      if (this.requestView === undefined) {
+        this.requestView = this.view
+        this.propagator.dispatch('request', [this.view])
+        this.update()
+      }
     } else {
-      this.setData(html)
+      this.view.html = html
+      this.update()
     }
   }
 
@@ -327,13 +336,14 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public setData (data: unknown): void {
-    if (
-      this.view !== undefined &&
-      typeof data === 'string'
-    ) {
-      this.view.html = data
-      this.update()
+    if (typeof data === 'string') {
+      if (this.requestView !== undefined) {
+        this.requestView.html = data
+        this.update()
+      }
     }
+
+    this.requestView = undefined
   }
 
   public toObject (): Struct {
@@ -460,7 +470,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.forward()
   }
 
-  protected handleMutations (mutations: MutationRecord[]): void {
+  protected handleObserver (mutations: MutationRecord[]): void {
     const attributes = this.observer.normalize(mutations)
 
     if (attributes.includes('hidden')) {

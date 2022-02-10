@@ -16,7 +16,8 @@
 }
 
 body {
-  font-family: var(--ft1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   font-size: 16px;
   line-height: 1.5em;
   overflow: hidden;
@@ -41,10 +42,10 @@ body {
   pointer-events: none;
 }
 
+[is="sc-dispatcher"],
 [is="sc-event-source"],
-[is="sc-event"],
 [is="sc-reloader"],
-[is="sc-request"]:empty,
+[is="sc-requester"]:empty,
 [is="sc-worker"] {
   display: block;
   height: 0;
@@ -627,28 +628,31 @@ body {
   rotate: 180deg;
 }
 
-:active > .sc-arrow-active,
-:focus > .sc-arrow-active,
-:hover > .sc-arrow-active {
-  transition-property: rotate;
+@media (hover: hover) {
+  :active > .sc-arrow,
+  :focus > .sc-arrow {
+    transition-property: rotate;
+  }
 }
 
-[sc-active] .sc-arrow-active {
-  rotate: -90deg;
+@media (hover: none) {
+  :hover > .sc-arrow {
+    transition-property: rotate;
+  }
 }
 
-[dir="rtl"] [sc-active] .sc-arrow-active {
+[sc-open] .sc-arrow {
   rotate: 90deg;
 }
 
-.sc-d3 line,
-.sc-d3 path {
+.sc-drawer line,
+.sc-drawer path {
   stroke: var(--fc2);
 }
 
-.sc-d3 text {
+.sc-drawer text {
   color: var(--fc2);
-  font-family: var(--ft1);
+  font-family: inherit;
   font-size: 14px;
 }
 
@@ -750,8 +754,6 @@ body {
   justify-content: flex-end;
 }
 
-.sc-table .sc-table-tree-cell {
-  padding-left: calc(
-    var(--sc-table-tree-inset, 1rem) * (var(--sc-table-tree-level))
-  );
+.sc-table[sc-tree] [sc-tree-inset] {
+  width: calc(var(--sc-tree-inset, 1rem) * (var(--sc-tree-level)));
 }

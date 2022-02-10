@@ -1,5 +1,4 @@
 import type { ScolaTableElement } from '../elements/table'
-import { ScolaTableRowElement } from '../elements/table-row'
 import type { ScolaViewElement } from '../elements/view'
 
 export function tableView (observer: ScolaTableElement, observable: ScolaViewElement): void {
@@ -8,26 +7,33 @@ export function tableView (observer: ScolaTableElement, observable: ScolaViewEle
     document.activeElement !== null
   )
 
-  observer.list.clearItems()
-  observer.select?.clearRows()
+  observer.lister.clearItems()
+  observer.selector?.clearRows()
+
+  let key: unknown = null
 
   observable.views.forEach((view) => {
     observer.addItem(view)
+
+    if (view === observable.view) {
+      key = view[observer.lister.key]
+    }
   })
 
   observer.updateBody()
   observer.updateAttributes()
 
-  observer.elements.forEach((row) => {
-    if (
-      row instanceof ScolaTableRowElement &&
-      row.datamap === observable.view
-    ) {
-      observer.select?.addRow(row, focus)
+  const element = observer.elements.get(key)
+
+  if (element !== undefined) {
+    observer.selector?.addRow(element)
+
+    if (focus) {
+      element.focus()
     }
-  })
+  }
 
   window.requestAnimationFrame(() => {
-    observer.select?.scrollTo()
+    observer.selector?.scrollTo()
   })
 }

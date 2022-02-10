@@ -4,45 +4,45 @@ import { ScolaBreakpoint } from './helpers/breakpoint'
 import { ScolaButtonElement } from './elements/button'
 import { ScolaButtonGroupElement } from './elements/button-group'
 import { ScolaCarouselElement } from './elements/carousel'
-import { ScolaD3Element } from './elements/d3'
+import { ScolaDispatcherElement } from './elements/dispatcher'
 import { ScolaDivElement } from './elements/div'
-import { ScolaDrag } from './helpers/drag'
-import { ScolaDrop } from './helpers/drop'
+import { ScolaDragger } from './helpers/dragger'
+import { ScolaDrawerElement } from './elements/drawer'
+import { ScolaDropper } from './helpers/dropper'
 import type { ScolaElement } from './elements/element'
-import { ScolaEventElement } from './elements/event'
 import { ScolaEventSourceElement } from './elements/event-source'
 import { ScolaField } from './helpers/field'
 import { ScolaFocuser } from './helpers/focuser'
 import { ScolaFormElement } from './elements/form'
-import { ScolaFormatElement } from './elements/format'
 import { ScolaHider } from './helpers/hider'
 import { ScolaIconElement } from './elements/icon'
 import { ScolaImageElement } from './elements/img'
 import { ScolaIndexer } from './helpers/indexer'
 import { ScolaInputElement } from './elements/input'
-import { ScolaInteract } from './helpers/interact'
+import { ScolaInteractor } from './helpers/interactor'
 import { ScolaLabelElement } from './elements/label'
 import { ScolaMedia } from './helpers/media'
 import { ScolaMessageElement } from './elements/message'
 import { ScolaMoverElement } from './elements/mover'
 import { ScolaMutator } from './helpers/mutator'
 import { ScolaObserver } from './helpers/observer'
-import { ScolaPaste } from './helpers/paste'
+import { ScolaPaster } from './helpers/paster'
 import { ScolaPopupElement } from './elements/popup'
 import { ScolaPropagator } from './helpers/propagator'
 import { ScolaRecorderElement } from './elements/recorder'
 import { ScolaReloaderElement } from './elements/reloader'
-import { ScolaRequestElement } from './elements/request'
+import { ScolaRequesterElement } from './elements/requester'
 import { ScolaResizerElement } from './elements/resizer'
 import { ScolaSanitizer } from './helpers/sanitizer'
-import { ScolaSelect } from './helpers/select'
 import { ScolaSelectElement } from './elements/select'
-import { ScolaSort } from './helpers/sort'
 import { ScolaTableCellElement } from './elements/table-cell'
 import { ScolaTableElement } from './elements/table'
+import { ScolaTableLister } from './helpers/table-lister'
 import { ScolaTableRowElement } from './elements/table-row'
-import { ScolaTableTreeElement } from './elements/table-tree'
+import { ScolaTableSelector } from './helpers/table-selector'
+import { ScolaTableSorter } from './helpers/table-sorter'
 import { ScolaTextAreaElement } from './elements/textarea'
+import { ScolaTextElement } from './elements/text'
 import { ScolaTheme } from './helpers/theme'
 import { ScolaVideoElement } from './elements/video'
 import { ScolaViewElement } from './elements/view'
@@ -80,44 +80,44 @@ export {
   ScolaButtonElement,
   ScolaButtonGroupElement,
   ScolaCarouselElement,
-  ScolaD3Element,
+  ScolaDispatcherElement,
   ScolaDivElement,
-  ScolaDrag,
-  ScolaDrop,
-  ScolaEventElement,
+  ScolaDragger,
+  ScolaDrawerElement,
+  ScolaDropper,
   ScolaEventSourceElement,
   ScolaField,
   ScolaFocuser,
   ScolaFormElement,
-  ScolaFormatElement,
   ScolaHider,
   ScolaIconElement,
   ScolaImageElement,
   ScolaIndexer,
   ScolaInputElement,
-  ScolaInteract,
+  ScolaInteractor,
   ScolaLabelElement,
   ScolaMedia,
   ScolaMessageElement,
   ScolaMoverElement,
   ScolaMutator,
   ScolaObserver,
-  ScolaPaste,
+  ScolaPaster,
   ScolaPopupElement,
   ScolaPropagator,
   ScolaRecorderElement,
   ScolaReloaderElement,
-  ScolaRequestElement,
+  ScolaRequesterElement,
   ScolaResizerElement,
   ScolaSanitizer,
-  ScolaSelect,
   ScolaSelectElement,
-  ScolaSort,
   ScolaTableCellElement,
   ScolaTableElement,
+  ScolaTableLister,
   ScolaTableRowElement,
-  ScolaTableTreeElement,
+  ScolaTableSelector,
+  ScolaTableSorter,
   ScolaTextAreaElement,
+  ScolaTextElement,
   ScolaTheme,
   ScolaVideoElement,
   ScolaViewElement,
@@ -129,12 +129,11 @@ export function defineElements (): void {
   ScolaButtonElement.define()
   ScolaButtonGroupElement.define()
   ScolaCarouselElement.define()
-  ScolaD3Element.define()
+  ScolaDispatcherElement.define()
   ScolaDivElement.define()
-  ScolaEventElement.define()
+  ScolaDrawerElement.define()
   ScolaEventSourceElement.define()
   ScolaFormElement.define()
-  ScolaFormatElement.define()
   ScolaIconElement.define()
   ScolaImageElement.define()
   ScolaInputElement.define()
@@ -144,14 +143,14 @@ export function defineElements (): void {
   ScolaPopupElement.define()
   ScolaRecorderElement.define()
   ScolaReloaderElement.define()
-  ScolaRequestElement.define()
+  ScolaRequesterElement.define()
   ScolaResizerElement.define()
   ScolaSelectElement.define()
   ScolaTableCellElement.define()
   ScolaTableElement.define()
   ScolaTableRowElement.define()
-  ScolaTableTreeElement.define()
   ScolaTextAreaElement.define()
+  ScolaTextElement.define()
   ScolaVideoElement.define()
   ScolaViewElement.define()
   ScolaWorkerElement.define()

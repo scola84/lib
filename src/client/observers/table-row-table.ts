@@ -5,12 +5,12 @@ export function tableRowTable (observer: ScolaTableRowElement, observable: Scola
   const parent = observer.closest<ScolaTableElement>('[is="sc-table"]')
 
   if (parent !== null) {
-    const index = observable.list.items.findIndex((findItem) => {
-      return observer.datamap[parent.list.key] === findItem[observable.list.key]
+    const index = observable.lister.items.findIndex((findItem) => {
+      return observer.datamap[parent.lister.key] === findItem[observable.lister.key]
     })
 
     if (index > -1) {
-      parent.select?.addRow(observer)
+      parent.selector?.addRow(observer)
     }
   }
 }

@@ -7,7 +7,7 @@ import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
-    'sc-worker-post': CustomEvent
+    'sc-work': CustomEvent
   }
 }
 
@@ -36,7 +36,7 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
 
   protected handleMessageBound = this.handleMessage.bind(this)
 
-  protected handlePostBound = this.handlePost.bind(this)
+  protected handleWorkBound = this.handleWork.bind(this)
 
   public constructor () {
     super()
@@ -104,7 +104,7 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   public update (): void {}
 
   protected addEventListeners (): void {
-    this.addEventListener('sc-worker-post', this.handlePostBound)
+    this.addEventListener('sc-work', this.handleWorkBound)
     this.worker?.addEventListener('error', this.handleErrorBound)
     this.worker?.addEventListener('message', this.handleMessageBound)
   }
@@ -112,7 +112,7 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   protected handleError (error: unknown): void {
     this.propagator.dispatch('error', [{
       code: 'err_worker',
-      message: String(error)
+      message: this.propagator.extractMessage(error)
     }])
   }
 
@@ -120,14 +120,14 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
     this.propagator.dispatch('message', [event.data], event)
   }
 
-  protected handlePost (event: CustomEvent): void {
+  protected handleWork (event: CustomEvent): void {
     if (isStruct(event.detail)) {
       this.worker?.postMessage(event.detail)
     }
   }
 
   protected removeEventListeners (): void {
-    this.removeEventListener('sc-worker-post', this.handlePostBound)
+    this.removeEventListener('sc-work', this.handleWorkBound)
     this.worker?.removeEventListener('error', this.handleErrorBound)
     this.worker?.removeEventListener('message', this.handleMessageBound)
   }

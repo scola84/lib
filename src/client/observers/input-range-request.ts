@@ -1,7 +1,7 @@
 import type { ScolaInputElement } from '../elements/input'
-import type { ScolaRequestElement } from '../elements/request'
+import type { ScolaRequesterElement } from '../elements/requester'
 
-export function inputRangeRequest (observer: ScolaInputElement, observable: ScolaRequestElement, mutations: MutationRecord[]): void {
+export function inputRangeRequest (observer: ScolaInputElement, observable: ScolaRequesterElement, mutations: MutationRecord[]): void {
   if (mutations.length > 0) {
     const loaded = Number(observable.getAttribute('sc-loaded'))
     const state = Number(observable.getAttribute('sc-state'))

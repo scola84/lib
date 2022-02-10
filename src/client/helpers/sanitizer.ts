@@ -1,20 +1,18 @@
 import { addHook, isValidAttribute, sanitize } from 'dompurify'
 
 addHook('uponSanitizeAttribute', (element, event) => {
-  event.forceKeepAttr =
-    event.attrName.startsWith('sc-') || (
-      event.attrName === 'is' &&
-      event.attrValue.startsWith('sc-')
-    )
+  event.forceKeepAttr = ScolaSanitizer.checkAttribute(element.tagName, event.attrName, event.attrValue)
 })
 
 export class ScolaSanitizer {
+  public static prefix = /^sc-/u
+
   public static checkAttribute (tag: string, name: string, value: string): boolean {
     return (
-      name.startsWith('sc-') || (
+      isValidAttribute(tag, name, value) || (
         name === 'is' &&
-        value.startsWith('sc-')
-      ) || isValidAttribute(tag, name, value)
+        ScolaSanitizer.prefix.test(value)
+      ) || ScolaSanitizer.prefix.test(name)
     )
   }
 

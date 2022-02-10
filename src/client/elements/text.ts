@@ -7,7 +7,7 @@ import { ScolaSanitizer } from '../helpers/sanitizer'
 import type { Struct } from '../../common'
 import { marked } from 'marked'
 
-export class ScolaFormatElement extends HTMLSpanElement implements ScolaElement {
+export class ScolaTextElement extends HTMLDivElement implements ScolaElement {
   public code: string
 
   public datamap: Struct = {}
@@ -26,7 +26,7 @@ export class ScolaFormatElement extends HTMLSpanElement implements ScolaElement 
 
   public sanitizer: ScolaSanitizer
 
-  protected handleMutationsBound = this.handleMutations.bind(this)
+  protected handleObserverBound = this.handleObserver.bind(this)
 
   public constructor () {
     super()
@@ -39,13 +39,13 @@ export class ScolaFormatElement extends HTMLSpanElement implements ScolaElement 
   }
 
   public static define (): void {
-    customElements.define('sc-format', ScolaFormatElement, {
-      extends: 'span'
+    customElements.define('sc-text', ScolaTextElement, {
+      extends: 'div'
     })
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this.handleMutationsBound, [
+    this.observer.observe(this.handleObserverBound, [
       'sc-code'
     ])
 
@@ -101,7 +101,7 @@ export class ScolaFormatElement extends HTMLSpanElement implements ScolaElement 
     }
   }
 
-  protected handleMutations (): void {
+  protected handleObserver (): void {
     this.reset()
     this.update()
   }

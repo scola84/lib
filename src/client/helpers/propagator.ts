@@ -1,7 +1,7 @@
 import type { ScolaElement } from '../elements/element'
 import { ScolaEvent } from './event'
-import { ScolaInteract } from './interact'
-import type { ScolaInteractEvent } from './interact'
+import { ScolaInteractor } from './interactor'
+import type { ScolaInteractorEvent } from './interactor'
 import { isStruct } from '../../common'
 
 declare global {
@@ -17,28 +17,28 @@ export class ScolaPropagator {
 
   public element: ScolaElement
 
-  public interact: ScolaInteract
+  public interactor: ScolaInteractor
 
   public keydown: string[][]
 
-  protected handleInteractBound = this.handleInteract.bind(this)
+  protected handleInteractorBound = this.handleInteractor.bind(this)
 
   protected handleSetBound = this.handleSet.bind(this)
 
   public constructor (element: ScolaElement) {
     this.element = element
-    this.interact = new ScolaInteract(element)
+    this.interactor = new ScolaInteractor(element)
     this.reset()
   }
 
   public connect (): void {
-    this.interact.observe(this.handleInteractBound)
-    this.interact.connect()
+    this.interactor.observe(this.handleInteractorBound)
+    this.interactor.connect()
     this.addEventListeners()
   }
 
   public disconnect (): void {
-    this.interact.disconnect()
+    this.interactor.disconnect()
     this.removeEventListeners()
   }
 
@@ -90,9 +90,22 @@ export class ScolaPropagator {
     }
   }
 
+  public extractMessage (error: unknown): string {
+    if (
+      error instanceof Error ||
+      error instanceof ErrorEvent
+    ) {
+      return error.message
+        .replace('Error:', '')
+        .trim()
+    }
+
+    return String(error)
+  }
+
   public reset (): void {
-    this.interact.cancel = this.element.hasAttribute('sc-cancel')
-    this.interact.keyboard = this.interact.hasKeyboard
+    this.interactor.cancel = this.element.hasAttribute('sc-cancel')
+    this.interactor.keyboard = this.interactor.hasKeyboard
     this.keydown = this.parseKeydown()
   }
 
@@ -121,24 +134,24 @@ export class ScolaPropagator {
     this.element.addEventListener('sc-data-set', this.handleSetBound)
   }
 
-  protected handleInteract (event: ScolaInteractEvent): boolean {
+  protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
       case 'start':
-        return this.handleInteractStart(event)
+        return this.handleInteractorStart(event)
       default:
         return false
     }
   }
 
-  protected handleInteractStart (event: ScolaInteractEvent): boolean {
-    if (this.interact.isKeyboard(event.originalEvent, 'down')) {
-      return this.handleInteractStartKeyboard(event.originalEvent)
+  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+    if (this.interactor.isKeyboard(event.originalEvent, 'down')) {
+      return this.handleInteractorStartKeyboard(event.originalEvent)
     }
 
     return false
   }
 
-  protected handleInteractStartKeyboard (event: KeyboardEvent): boolean {
+  protected handleInteractorStartKeyboard (event: KeyboardEvent): boolean {
     let handled = false
 
     this.keydown.forEach(([binding, boundEvent]) => {
@@ -166,12 +179,12 @@ export class ScolaPropagator {
           return true
         } else if (
           key === 'arrowend' &&
-          this.interact.isArrowEnd(event)
+          this.interactor.isArrowEnd(event)
         ) {
           return true
         } else if (
           key === 'arrowstart' &&
-          this.interact.isArrowStart(event)
+          this.interactor.isArrowStart(event)
         ) {
           return true
         } else if (

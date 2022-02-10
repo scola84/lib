@@ -1,4 +1,5 @@
 import { ScolaIntl, isArray, isStruct } from '../../common'
+import { ScolaBreakpoint } from './breakpoint'
 import type { ScolaTableElement } from '../elements/table'
 import type { ScolaTableRowElement } from '../elements/table-row'
 import type { Struct } from '../../common'
@@ -7,10 +8,12 @@ type Axis = 'x' | 'y'
 
 type Mode = 'cursor' | 'offset' | null
 
-export class ScolaList {
+export class ScolaTableLister {
   public added = new Set()
 
   public axis: string | null
+
+  public breakpoint: ScolaBreakpoint
 
   public deleted = new Set()
 
@@ -50,6 +53,7 @@ export class ScolaList {
 
   public constructor (element: ScolaTableElement) {
     this.element = element
+    this.breakpoint = new ScolaBreakpoint(element)
     this.intl = new ScolaIntl()
     this.reset()
   }
@@ -145,7 +149,7 @@ export class ScolaList {
     return Array.from(this.element.body
       .querySelectorAll<ScolaTableRowElement>('tr'))
       .map((row) => {
-        return row.datamap[this.element.list.key]
+        return row.datamap[this.element.lister.key]
       })
   }
 
@@ -184,7 +188,7 @@ export class ScolaList {
 
   public reset (): void {
     this.axis = (this.element.getAttribute('sc-list-axis') as Axis | null) ?? 'y'
-    this.factor = Number(this.element.getAttribute('sc-list-factor') ?? 2)
+    this.factor = Number(this.element.getAttribute('sc-list-item-factor') ?? 2)
     this.filter = this.element.getAttribute('sc-list-filter') ?? ''
     this.key = this.element.getAttribute('sc-list-key') ?? 'id'
     this.mode = this.element.getAttribute('sc-list-mode') as Mode
@@ -196,12 +200,13 @@ export class ScolaList {
   public setData (data: unknown): void {
     if (isArray(data)) {
       this.addItems(data)
-    } else if (
-      isStruct(data) &&
-      isArray(data.items)
-    ) {
-      this.addItems(data.items)
+    } else if (isStruct(data)) {
+      if (isArray(data.items)) {
+        this.addItems(data.items)
+      }
     }
+
+    this.requestData = undefined
   }
 
   protected addEventListeners (): void {
@@ -217,7 +222,6 @@ export class ScolaList {
       }
     })
 
-    this.requestData = undefined
     this.element.update()
   }
 
@@ -269,22 +273,25 @@ export class ScolaList {
   }
 
   protected setLimit (): void {
-    let size: number | null = null
+    let bodySize: number | null = null
 
     if (
       this.axis === 'x' &&
       this.element.body.clientWidth > 0
     ) {
-      size = this.element.body.clientWidth
+      bodySize = this.element.body.clientWidth
     } else if (
       this.axis === 'y' &&
       this.element.body.clientHeight > 0
     ) {
-      size = this.element.body.clientHeight
+      bodySize = this.element.body.clientHeight
     }
 
-    if (size !== null) {
-      this.limit = Math.floor((size / (16 * this.factor)))
+    const fontSize = parseFloat(window.getComputedStyle(this.element).getPropertyValue('font-size'))
+    const itemSize = Number(this.breakpoint.parse('sc-list-item-size') ?? 2)
+
+    if (bodySize !== null) {
+      this.limit = Math.floor(bodySize / (itemSize * fontSize)) * this.factor
     }
   }
 

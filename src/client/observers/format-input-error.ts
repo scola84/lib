@@ -1,7 +1,7 @@
-import type { ScolaFormatElement } from '../elements/format'
 import type { ScolaInputElement } from '../elements/input'
+import type { ScolaTextElement } from '../elements/text'
 
-export function formatInputError (observer: ScolaFormatElement, observable: ScolaInputElement): void {
+export function formatInputError (observer: ScolaTextElement, observable: ScolaInputElement): void {
   if (observable.error === undefined) {
     observer.hidden = true
   } else {

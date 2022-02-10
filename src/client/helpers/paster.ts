@@ -1,6 +1,6 @@
 import type { ScolaElement } from '../elements/element'
 
-export class ScolaPaste {
+export class ScolaPaster {
   public element: ScolaElement
 
   protected handleBlurBound = this.handleBlur.bind(this)

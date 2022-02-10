@@ -2,7 +2,7 @@ import type { ScolaElement } from '../elements/element'
 import type { ScolaTableElement } from '../elements/table'
 import type { Struct } from '../../common'
 
-export class ScolaDrop {
+export class ScolaDropper {
   public copy: boolean
 
   public element: ScolaElement
@@ -142,8 +142,8 @@ export class ScolaDrop {
         document
           .querySelectorAll<ScolaTableElement>(`#${String(drag.origin)}[is="sc-table"]`)
           .forEach((element) => {
-            this.dropKeys(element.select?.getKeysByRow() ?? [], on, event)
-            this.dropItems(element.select?.getItemsByRow() ?? [], on, event)
+            this.dropKeys(element.selector?.getKeysByRow() ?? [], on, event)
+            this.dropItems(element.selector?.getItemsByRow() ?? [], on, event)
           })
 
         document

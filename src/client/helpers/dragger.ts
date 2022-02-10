@@ -1,9 +1,9 @@
 import type { ScolaElement } from '../elements/element'
 import { ScolaIndexer } from './indexer'
-import { ScolaInteract } from './interact'
-import type { ScolaInteractEvent } from './interact'
+import { ScolaInteractor } from './interactor'
+import type { ScolaInteractorEvent } from './interactor'
 
-export class ScolaDrag {
+export class ScolaDragger {
   public activeElement?: HTMLElement
 
   public element: ScolaElement
@@ -12,9 +12,9 @@ export class ScolaDrag {
 
   public indexer: ScolaIndexer
 
-  public interact: ScolaInteract
+  public interactor: ScolaInteractor
 
-  public template: HTMLTemplateElement | null
+  public templates: Map<string, HTMLTemplateElement>
 
   public type: string
 
@@ -22,31 +22,31 @@ export class ScolaDrag {
 
   protected handleDragstartBound = this.handleDragstart.bind(this)
 
-  protected handleInteractBound = this.handleInteract.bind(this)
+  protected handleInteractorBound = this.handleInteractor.bind(this)
 
   public constructor (element: ScolaElement) {
     this.element = element
     this.indexer = new ScolaIndexer()
-    this.interact = new ScolaInteract(element)
-    this.template = this.element.mutator.selectTemplate('drag')
+    this.interactor = new ScolaInteractor(element)
+    this.templates = this.element.mutator.selectTemplates()
     this.reset()
   }
 
   public connect (): void {
-    this.interact.observe(this.handleInteractBound)
-    this.interact.connect()
+    this.interactor.observe(this.handleInteractorBound)
+    this.interactor.connect()
     this.addEventListeners()
   }
 
   public disconnect (): void {
-    this.interact.disconnect()
+    this.interactor.disconnect()
     this.removeEventListeners()
   }
 
   public reset (): void {
     this.handle = this.element.hasAttribute('sc-drag-handle')
-    this.interact.mouse = this.interact.hasMouse
-    this.interact.touch = this.interact.hasTouch
+    this.interactor.mouse = this.interactor.hasMouse
+    this.interactor.touch = this.interactor.hasTouch
     this.type = this.element.getAttribute('sc-drag-type') ?? ''
   }
 
@@ -73,39 +73,37 @@ export class ScolaDrag {
         type: this.type
       }))
 
-      const template = this.template?.content.cloneNode(true)
+      const template = this.templates.get('drag')?.content.cloneNode(true)
 
       if (template instanceof DocumentFragment) {
-        const element = template.firstElementChild as ScolaElement | null
+        const element = template.firstElementChild as ScolaElement
 
         document.body.appendChild(template)
 
-        if (typeof element?.setData === 'function') {
+        if (typeof element.setData === 'function') {
           this.indexer.set(element)
           element.setData(this.element.getData())
           event.dataTransfer.setDragImage(element, 0, 0)
         }
 
         window.requestAnimationFrame(() => {
-          if (element !== null) {
-            this.indexer.remove(element)
-            element.remove()
-          }
+          this.indexer.remove(element)
+          element.remove()
         })
       }
     }
   }
 
-  protected handleInteract (event: ScolaInteractEvent): boolean {
+  protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
       case 'start':
-        return this.handleInteractStart(event)
+        return this.handleInteractorStart(event)
       default:
         return false
     }
   }
 
-  protected handleInteractStart (event: ScolaInteractEvent): boolean {
+  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
     if (
       this.handle &&
       event.originalEvent.target instanceof HTMLElement &&

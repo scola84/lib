@@ -28,7 +28,7 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
 
   public propagator: ScolaPropagator
 
-  public template: HTMLTemplateElement | null
+  public templates: Map<string, HTMLTemplateElement>
 
   public timeout: number
 
@@ -38,16 +38,16 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
 
   protected handleClearBound = this.handleClear.bind(this)
 
-  protected handleMutationsBound = this.handleMutations.bind(this)
-
   protected handleNextBound = this.handleNext.bind(this)
+
+  protected handleObserverBound = this.handleObserver.bind(this)
 
   public constructor () {
     super()
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
-    this.template = this.mutator.selectTemplate('item')
+    this.templates = this.mutator.selectTemplates()
 
     if (this.hasAttribute('sc-hide')) {
       this.hider = new ScolaHider(this)
@@ -63,7 +63,7 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this.handleMutationsBound, [
+    this.observer.observe(this.handleObserverBound, [
       'hidden'
     ])
 
@@ -122,7 +122,7 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
   }
 
   protected appendElement (item: Struct): void {
-    const template = this.template?.content.cloneNode(true)
+    const template = this.templates.get('item')?.content.cloneNode(true)
 
     if (
       template instanceof DocumentFragment &&
@@ -167,10 +167,6 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
     this.update()
   }
 
-  protected handleMutations (): void {
-    this.hider?.toggle()
-  }
-
   protected handleNext (): void {
     if (this.timeoutId !== undefined) {
       window.clearTimeout(this.timeoutId)
@@ -178,6 +174,10 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
     }
 
     this.update()
+  }
+
+  protected handleObserver (): void {
+    this.hider?.toggle()
   }
 
   protected removeEventListeners (): void {

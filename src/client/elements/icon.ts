@@ -20,7 +20,7 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
 
   public propagator: ScolaPropagator
 
-  protected handleMutationsBound = this.handleMutations.bind(this)
+  protected handleObserverBound = this.handleObserver.bind(this)
 
   public constructor () {
     super()
@@ -46,7 +46,7 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this.handleMutationsBound, [
+    this.observer.observe(this.handleObserverBound, [
       'sc-code'
     ])
 
@@ -91,7 +91,7 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
     this.innerHTML = ScolaIconElement.icons[code] ?? ''
   }
 
-  protected handleMutations (): void {
+  protected handleObserver (): void {
     this.reset()
     this.update()
   }

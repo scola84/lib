@@ -67,9 +67,9 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   protected handleEnableBound = this.handleEnable.bind(this)
 
-  protected handleMutationsBound = this.handleMutations.bind(this)
+  protected handleObserverBound = this.handleObserver.bind(this)
 
-  protected handleResizeBound = this.handleResize.bind(this)
+  protected handleResizerBound = this.handleResizer.bind(this)
 
   protected handleStartBound = this.handleStart.bind(this)
 
@@ -81,7 +81,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     super()
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
-    this.resizer = new ResizeObserver(this.handleResizeBound)
+    this.resizer = new ResizeObserver(this.handleResizerBound)
     this.propagator = new ScolaPropagator(this)
     this.reset()
   }
@@ -93,7 +93,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this.handleMutationsBound, [
+    this.observer.observe(this.handleObserverBound, [
       'sc-facing-mode',
       'sc-fill-light-mode',
       'sc-type'
@@ -410,16 +410,16 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   protected handleError (error: unknown): void {
     this.propagator.dispatch('error', [{
       code: 'err_recorder',
-      message: String(error)
+      message: this.propagator.extractMessage(error)
     }])
   }
 
-  protected handleMutations (): void {
+  protected handleObserver (): void {
     this.reset()
     this.update()
   }
 
-  protected handleResize (): void {
+  protected handleResizer (): void {
     this.updateStyle()
   }
 

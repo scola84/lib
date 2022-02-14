@@ -37,7 +37,13 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   public scale: number
 
+  public src: string
+
   public svg?: SVGElement
+
+  protected handleErrorBound = this.handleError.bind(this)
+
+  protected handleLoadBound = this.handleLoad.bind(this)
 
   protected handleObserverBound = this.handleObserver.bind(this)
 
@@ -91,7 +97,8 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   public reset (): void {
     this.name = this.getAttribute('sc-name') ?? ''
-    this.scale = Number(this.getAttribute('sc-scale') ?? -1)
+    this.scale = Number(this.getAttribute('sc-scale') ?? 0)
+    this.src = this.getAttribute('sc-src') ?? ''
 
     if (this.name !== '') {
       this.drawer = ScolaDrawerElement.drawers[this.name]
@@ -104,20 +111,22 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   }
 
   public update (): void {
-    if (this.data !== undefined) {
-      this.propagator.dispatch('beforeupdate', [this.getData()])
+    this.updateElements()
+    this.updateAttributes()
+    this.propagator.dispatch('update', [this.getData()])
+  }
 
-      const dimensions = this.calculateDimensions()
+  public updateAttributes (): void {
+    this.setAttribute('sc-updated', Date.now().toString())
+  }
 
-      if (this.drawer === undefined) {
-        this.updateIframe(dimensions)
-      } else {
-        this.updateSvg(dimensions)
-      }
+  public updateElements (): void {
+    const dimensions = this.calculateDimensions()
 
-      window.requestAnimationFrame(() => {
-        this.propagator.dispatch('update', [this.getData()])
-      })
+    if (this.drawer === undefined) {
+      this.updateIframe(dimensions)
+    } else {
+      this.updateSvg(dimensions)
     }
   }
 
@@ -127,10 +136,11 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   protected appendIframe (): void {
     this.iframe = document.createElement('iframe')
-    this.iframe.src = `/api/svg/${this.name}`
+    this.iframe.src = `${this.src}${this.name}`
     this.iframe.setAttribute('referrerpolicy', 'no-referrer')
     this.iframe.setAttribute('sandbox', 'allow-scripts')
-    this.iframe.onload = this.handleLoad.bind(this)
+    this.iframe.onerror = this.handleErrorBound
+    this.iframe.onload = this.handleLoadBound
     this.appendChild(this.iframe)
   }
 
@@ -140,7 +150,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
       offsetWidth: width
     } = this
 
-    if (this.scale !== -1) {
+    if (this.scale > 0) {
       height = width * this.scale
     }
 
@@ -150,21 +160,30 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
+  protected handleError (error: unknown): void {
+    this.propagator.dispatch('error', [{
+      code: 'err_drawer',
+      message: this.propagator.extractMessage(error)
+    }])
+  }
+
   protected handleLoad (): void {
     this.updateIframe(this.calculateDimensions())
   }
 
-  protected handleObserver (): void {
-    this.update()
+  protected handleObserver (mutations: MutationRecord[]): void {
+    const attributes = this.observer.normalize(mutations)
+
+    if (!attributes.includes('sc-updated')) {
+      this.update()
+    }
   }
 
   protected handleResizer (): void {
-    this.reset()
     this.update()
   }
 
   protected handleTheme (): void {
-    this.reset()
     this.update()
   }
 
@@ -182,20 +201,24 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected postSvg (dimensions: Dimensions): void {
-    const { svg } = this
+    try {
+      const { svg } = this
 
-    this.svg = this.drawer?.(this.data, {
-      theme: ScolaTheme.theme,
-      ...dimensions,
-      ...this.dataset
-    })
+      this.svg = this.drawer?.(this.data, {
+        theme: ScolaTheme.theme,
+        ...dimensions,
+        ...this.dataset
+      })
 
-    if (this.svg !== undefined) {
-      if (svg === undefined) {
-        this.appendChild(this.svg)
-      } else {
-        this.replaceChild(this.svg, svg)
+      if (this.svg !== undefined) {
+        if (svg === undefined) {
+          this.appendChild(this.svg)
+        } else {
+          this.replaceChild(this.svg, svg)
+        }
       }
+    } catch (error: unknown) {
+      this.handleError(error)
     }
   }
 
@@ -203,9 +226,23 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     window.removeEventListener('sc-theme', this.handleThemeBound)
   }
 
+  protected removeIframe (): void {
+    if (this.iframe !== undefined) {
+      this.iframe.onerror = null
+      this.iframe.onload = null
+      this.iframe.remove()
+      this.iframe = undefined
+    }
+  }
+
+  protected removeSvg (): void {
+    this.svg?.remove()
+    this.svg = undefined
+  }
+
   protected updateIframe (dimensions: Dimensions): void {
     if (this.iframe === undefined) {
-      this.svg?.remove()
+      this.removeSvg()
       this.appendIframe()
     }
 
@@ -216,7 +253,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   protected updateSvg (dimensions: Dimensions): void {
     if (this.svg === undefined) {
-      this.iframe?.remove()
+      this.removeIframe()
     }
 
     this.postSvg(dimensions)

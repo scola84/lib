@@ -1,13 +1,18 @@
 import type { ScolaElement } from '../elements/element'
 import { ScolaEvent } from './event'
-import { ScolaInteractor } from './interactor'
-import type { ScolaInteractorEvent } from './interactor'
+import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
     'sc-data-set': CustomEvent
   }
+}
+
+export interface ScolaPropagatorEvent {
+  data?: Struct
+  name: string
+  selector: string
 }
 
 export class ScolaPropagator {
@@ -17,38 +22,29 @@ export class ScolaPropagator {
 
   public element: ScolaElement
 
-  public interactor: ScolaInteractor
+  public events: Struct<ScolaPropagatorEvent[] | undefined> = {}
 
   public keydown: string[][]
-
-  protected handleInteractorBound = this.handleInteractor.bind(this)
 
   protected handleSetBound = this.handleSet.bind(this)
 
   public constructor (element: ScolaElement) {
     this.element = element
-    this.interactor = new ScolaInteractor(element)
-    this.reset()
   }
 
   public connect (): void {
-    this.interactor.observe(this.handleInteractorBound)
-    this.interactor.connect()
     this.addEventListeners()
   }
 
   public disconnect (): void {
-    this.interactor.disconnect()
     this.removeEventListeners()
   }
 
-  public dispatch (on: string, data: unknown[], trigger?: Event): boolean {
+  public dispatch (on: string, data?: unknown[], trigger?: Event): boolean {
     let dispatched = false
 
-    this.element
-      .getAttribute(`sc-on${on}`)
-      ?.trim()
-      .split(/\s+/u)
+    this
+      .getEvents(on)
       .forEach((event) => {
         dispatched = true
         this.dispatchEvent(event, data, trigger)
@@ -57,37 +53,30 @@ export class ScolaPropagator {
     return dispatched
   }
 
-  public dispatchEvent (event: string, data: unknown[], trigger?: Event): void {
-    const [
-      name = '',
-      selector = ''
-    ] = event.split('@')
+  public dispatchEvent (event: ScolaPropagatorEvent, data: unknown[] = [undefined], trigger?: Event): void {
+    let targets: HTMLElement[] | NodeList = []
 
-    if (name !== '') {
-      let targets: HTMLElement[] | NodeList = []
+    if (event.selector === '') {
+      targets = [this.element]
+    } else if (event.selector === 'console') {
+      // eslint-disable-next-line no-console
+      console.log(data)
+    } else {
+      targets = document.querySelectorAll(event.selector)
+    }
 
-      if (selector === '') {
-        targets = [this.element]
-      } else if (selector === 'console') {
-        // eslint-disable-next-line no-console
-        console.log(data)
-      } else {
-        targets = document.querySelectorAll(selector)
-      }
-
-      data.forEach((datum) => {
-        targets.forEach((target) => {
-          window.requestAnimationFrame(() => {
-            target.dispatchEvent(new ScolaEvent(name, {
-              bubbles: target === this.element,
-              detail: datum,
-              element: this.element,
-              trigger
-            }))
-          })
+    data.forEach((datum) => {
+      targets.forEach((target) => {
+        window.requestAnimationFrame(() => {
+          target.dispatchEvent(new ScolaEvent(event.name, {
+            bubbles: target === this.element,
+            detail: this.createDetail(event, datum),
+            element: this.element,
+            trigger
+          }))
         })
       })
-    }
+    })
   }
 
   public extractMessage (error: unknown): string {
@@ -103,119 +92,91 @@ export class ScolaPropagator {
     return String(error)
   }
 
-  public reset (): void {
-    this.interactor.cancel = this.element.hasAttribute('sc-cancel')
-    this.interactor.keyboard = this.interactor.hasKeyboard
-    this.keydown = this.parseKeydown()
+  public parseEvents (events: string, base: Struct = {}): ScolaPropagatorEvent[] {
+    return events
+      .trim()
+      .split(' ')
+      .map((event) => {
+        const [nameAndDataString, selector] = event.split('@')
+        const [name, dataString = undefined] = nameAndDataString.split('?')
+
+        const data = dataString
+          ?.split('&')
+          .reduce((params, kv) => {
+            const [key, value] = kv.split('=')
+            return {
+              ...params,
+              [key]: value
+            }
+          }, base)
+
+        return {
+          data,
+          name,
+          selector
+        }
+      })
   }
 
   public set (data: unknown): void {
     this.element
       .querySelectorAll<ScolaElement>(ScolaPropagator.selector)
       .forEach((target) => {
-        const name = (
-          target.getAttribute('sc-data-name') ??
-          target.getAttribute('name') ??
-          ''
-        )
-
-        if (
-          isStruct(data) &&
-          data[name] !== undefined
-        ) {
-          target.setData(data[name])
-        } else {
-          target.setData(data)
-        }
+        this.setData(target, data)
       })
+  }
+
+  public setData (target: ScolaElement, data: unknown): void {
+    const name = (
+      target.getAttribute('sc-data-name') ??
+      target.getAttribute('name') ??
+      ''
+    )
+
+    if (
+      isStruct(data) &&
+      data[name] !== undefined
+    ) {
+      target.setData(data[name])
+    } else {
+      target.setData(data)
+    }
   }
 
   protected addEventListeners (): void {
     this.element.addEventListener('sc-data-set', this.handleSetBound)
   }
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
-    switch (event.type) {
-      case 'start':
-        return this.handleInteractorStart(event)
-      default:
-        return false
-    }
-  }
-
-  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
-    if (this.interactor.isKeyboard(event.originalEvent, 'down')) {
-      return this.handleInteractorStartKeyboard(event.originalEvent)
-    }
-
-    return false
-  }
-
-  protected handleInteractorStartKeyboard (event: KeyboardEvent): boolean {
-    let handled = false
-
-    this.keydown.forEach(([binding, boundEvent]) => {
-      if (this.isBound(binding, event)) {
-        handled = true
-        this.dispatchEvent(boundEvent, [this.element.getData()], event)
+  protected createDetail (event: ScolaPropagatorEvent, data: unknown): unknown {
+    if (isStruct(data)) {
+      if (Object.keys(data).length === 0) {
+        return event.data
       }
-    })
+    }
 
-    return handled
+    return data ?? event.data
+  }
+
+  protected getEvents (on: string): ScolaPropagatorEvent[] {
+    let events = this.events[on]
+
+    if (events === undefined) {
+      const eventsString = this.element.getAttribute(`sc-on${on}`)
+
+      if (eventsString === null) {
+        events = []
+      } else {
+        events = this.parseEvents(eventsString)
+      }
+
+      this.events[on] = events
+    }
+
+    return events
   }
 
   protected handleSet (event: CustomEvent): void {
     this.element.setData(event.detail)
-  }
-
-  protected isBound (binding: string, event: KeyboardEvent): boolean {
-    return binding
-      .split('+')
-      .every((key) => {
-        if (
-          key === 'alt' &&
-          event.altKey
-        ) {
-          return true
-        } else if (
-          key === 'arrowend' &&
-          this.interactor.isArrowEnd(event)
-        ) {
-          return true
-        } else if (
-          key === 'arrowstart' &&
-          this.interactor.isArrowStart(event)
-        ) {
-          return true
-        } else if (
-          key === 'ctrl' &&
-          event.ctrlKey
-        ) {
-          return true
-        } else if (
-          key === 'shift' &&
-          event.shiftKey
-        ) {
-          return true
-        } else if (
-          event.key.toLowerCase() === key ||
-          event.code.toLowerCase() === key
-        ) {
-          return true
-        }
-
-        return false
-      })
-  }
-
-  protected parseKeydown (): string[][] {
-    return this.element
-      .getAttribute('sc-onkeydown')
-      ?.trim()
-      .split(/\s+/u)
-      .map((event) => {
-        return ((/^(?<type>[^:]+):(?<event>.*)$/u).exec(event))?.slice(1) ?? []
-      }) ?? []
   }
 
   protected removeEventListeners (): void {

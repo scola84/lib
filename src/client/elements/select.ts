@@ -1,11 +1,11 @@
-import type { ScolaElement } from './element'
 import { ScolaField } from '../helpers/field'
+import type { ScolaFieldElement } from './field'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 
-export class ScolaSelectElement extends HTMLSelectElement implements ScolaElement {
+export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldElement {
   public error?: Struct
 
   public field: ScolaField
@@ -31,6 +31,10 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaElemen
     })
   }
 
+  public clear (): void {
+    this.field.clear()
+  }
+
   public connectedCallback (): void {
     this.field.connect()
     this.mutator.connect()
@@ -49,6 +53,26 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaElemen
     return this.field.getData()
   }
 
+  public getError (): Struct | null {
+    let error: Struct | null = null
+
+    if (this.validity.badInput) {
+      error = {
+        code: `err_form_bad_${this.type}`
+      }
+    } else if (this.validity.typeMismatch) {
+      error = {
+        code: `err_form_type_mismatch_${this.type}`
+      }
+    } else if (this.validity.valueMissing) {
+      error = {
+        code: 'err_form_value_missing'
+      }
+    }
+
+    return error
+  }
+
   public reset (): void {}
 
   public setData (data: unknown): void {
@@ -60,6 +84,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaElemen
   }
 
   public updateAttributes (): void {
-    this.setAttribute('value', this.value)
+    this.setAttribute('sc-updated', Date.now().toString())
+    this.form?.setAttribute('sc-updated', Date.now().toString())
   }
 }

@@ -3,6 +3,7 @@ import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
+import type { ScolaPropagatorEvent } from '../helpers/propagator'
 import type { Struct } from '../../common'
 
 declare global {
@@ -12,6 +13,8 @@ declare global {
 }
 
 export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaElement {
+  public events: ScolaPropagatorEvent[]
+
   public mutator: ScolaMutator
 
   public observer: ScolaObserver
@@ -55,17 +58,16 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     this.removeEventListeners()
   }
 
-  public dispatch (data?: Struct, event?: Event): void {
-    this
-      .querySelectorAll('param')
-      .forEach((param) => {
-        this.propagator.dispatchEvent(param.value, [absorb(param.dataset, data)], event)
-      })
+  public dispatch (data: Struct = {}, trigger?: Event): void {
+    this.events.forEach((event) => {
+      this.propagator.dispatchEvent(event, [absorb(event.data ?? {}, data)], trigger)
+    })
   }
 
   public getData (): void {}
 
   public reset (): void {
+    this.events = this.parseEvents()
     this.wait = this.hasAttribute('sc-wait')
   }
 
@@ -83,6 +85,18 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     } else {
       this.dispatch(undefined, event)
     }
+  }
+
+  protected parseEvents (): ScolaPropagatorEvent[] {
+    const events: ScolaPropagatorEvent[] = []
+
+    this
+      .querySelectorAll('param')
+      .forEach((param) => {
+        events.push(...this.propagator.parseEvents(param.value, param.dataset))
+      })
+
+    return events
   }
 
   protected removeEventListeners (): void {

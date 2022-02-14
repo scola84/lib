@@ -3,22 +3,30 @@ import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
+import { ScolaSanitizer } from '../helpers/sanitizer'
 import type { Struct } from '../../common'
+import { marked } from 'marked'
 
-export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
-  public static icons: Struct<string | undefined> = {}
-
+export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
   public code: string
 
   public data: Struct = {}
 
+  public initialHTML: string
+
   public intl: ScolaIntl
+
+  public locale?: string
 
   public mutator: ScolaMutator
 
   public observer: ScolaObserver
 
   public propagator: ScolaPropagator
+
+  public sanitizer: ScolaSanitizer
+
+  public trim: boolean
 
   protected handleObserverBound = this.handleObserver.bind(this)
 
@@ -28,21 +36,14 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
+    this.sanitizer = new ScolaSanitizer()
     this.reset()
   }
 
   public static define (): void {
-    customElements.define('sc-icon', ScolaIconElement, {
-      extends: 'span'
+    customElements.define('sc-marked', ScolaMarkedElement, {
+      extends: 'div'
     })
-  }
-
-  public static defineIcons (icons: Struct<string>): void {
-    Object
-      .entries(icons)
-      .forEach(([code, svg]) => {
-        ScolaIconElement.icons[code] = svg
-      })
   }
 
   public connectedCallback (): void {
@@ -71,6 +72,9 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
 
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
+    this.initialHTML = this.innerHTML
+    this.locale = this.getAttribute('sc-locale') ?? ScolaIntl.locale
+    this.trim = this.hasAttribute('sc-trim')
   }
 
   public setData (data: unknown): void {
@@ -86,10 +90,27 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
   }
 
   public update (): void {
-    const code = this.intl.format(this.code, this.getData())
-    const html = ScolaIconElement.icons[code]
+    let string = this.intl.format(this.code, this.getData(), this.locale)
 
-    if (html !== undefined) {
+    if (this.trim) {
+      string = string
+        .replace(/\s+/u, ' ')
+        .trim()
+    }
+
+    const html = this.sanitizer.sanitizeHtml(marked(string, {
+      breaks: true,
+      smartLists: true,
+      smartypants: true,
+      xhtml: true
+    }))
+
+    if (
+      html === '' ||
+      html === this.code
+    ) {
+      this.innerHTML = this.initialHTML
+    } else {
       this.innerHTML = html
     }
   }

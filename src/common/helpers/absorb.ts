@@ -1,7 +1,7 @@
 import type { Struct } from './is-struct'
 import { isNil } from './is-nil'
 
-export function absorb (left: Struct, right?: Struct, keepEmpty = false): Struct {
+export function absorb (left: Struct, right?: Struct): Struct {
   const result: Struct = {}
 
   Object
@@ -15,10 +15,8 @@ export function absorb (left: Struct, right?: Struct, keepEmpty = false): Struct
       ) {
         result[key] = rightValue
       } else if (
-        keepEmpty || (
-          !isNil(leftValue) &&
-          leftValue !== ''
-        )
+        !isNil(leftValue) &&
+        leftValue !== ''
       ) {
         result[key] = leftValue
       }

@@ -1,11 +1,11 @@
-import type { ScolaElement } from './element'
 import { ScolaField } from '../helpers/field'
+import type { ScolaFieldElement } from './field'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 
-export class ScolaInputElement extends HTMLInputElement implements ScolaElement {
+export class ScolaInputElement extends HTMLInputElement implements ScolaFieldElement {
   public error?: Struct
 
   public field: ScolaField
@@ -34,6 +34,10 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaElement 
     })
   }
 
+  public clear (): void {
+    this.field.clear()
+  }
+
   public connectedCallback (): void {
     this.observer.observe(this.handleObserverBound, [
       'value'
@@ -56,6 +60,56 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaElement 
     return this.field.getData()
   }
 
+  public getError (): Struct | null {
+    let error: Struct | null = null
+
+    if (this.validity.badInput) {
+      error = {
+        code: `err_form_bad_input_${this.type}`
+      }
+    } else if (this.validity.patternMismatch) {
+      error = {
+        code: 'err_form_pattern_mismatch',
+        data: { pattern: this.pattern }
+      }
+    } else if (this.validity.rangeOverflow) {
+      error = {
+        code: 'err_form_range_overflow',
+        data: { max: this.max }
+      }
+    } else if (this.validity.rangeUnderflow) {
+      error = {
+        code: 'err_form_range_underflow',
+        data: { min: this.min }
+      }
+    } else if (this.validity.stepMismatch) {
+      error = {
+        code: 'err_form_step_mismatch',
+        data: { step: this.step }
+      }
+    } else if (this.validity.tooLong) {
+      error = {
+        code: 'err_form_too_long',
+        data: { max: this.maxLength }
+      }
+    } else if (this.validity.tooShort) {
+      error = {
+        code: 'err_form_too_short',
+        data: { min: this.minLength }
+      }
+    } else if (this.validity.typeMismatch) {
+      error = {
+        code: `err_form_type_mismatch_${this.type}`
+      }
+    } else if (this.validity.valueMissing) {
+      error = {
+        code: 'err_form_value_missing'
+      }
+    }
+
+    return error
+  }
+
   public reset (): void {
     this.field.debounce = Number(this.getAttribute('sc-debounce') ?? 250)
   }
@@ -70,7 +124,8 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaElement 
   }
 
   public updateAttributes (): void {
-    this.setAttribute('value', this.value)
+    this.setAttribute('sc-updated', Date.now().toString())
+    this.form?.setAttribute('sc-updated', Date.now().toString())
   }
 
   public updateStyle (): void {

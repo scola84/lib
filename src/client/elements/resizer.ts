@@ -4,8 +4,6 @@ import type { ScolaInteractorEvent } from '../helpers/interactor'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
-import type { Struct } from '../../common'
-import { absorb } from '../../common'
 
 type Direction = 'down' | 'end' | 'start' | 'up'
 
@@ -74,30 +72,28 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     this.propagator.disconnect()
   }
 
-  public getData (): Struct {
-    return absorb(this.dataset)
-  }
+  public getData (): void {}
 
   public maximize (): void {
     this.targetStyles.clear()
 
     document
       .querySelectorAll<HTMLElement>(this.target)
-      .forEach((element) => {
-        this.targetStyles.set(element, element.getAttribute('style') ?? '')
-        element.style.removeProperty('transform')
-        element.style.setProperty('height', '100%')
-        element.style.setProperty('left', '0px')
-        element.style.setProperty('top', '0px')
-        element.style.setProperty('width', '100%')
+      .forEach((target) => {
+        this.targetStyles.set(target, target.getAttribute('style') ?? '')
+        target.style.removeProperty('transform')
+        target.style.setProperty('height', '100%')
+        target.style.setProperty('left', '0px')
+        target.style.setProperty('top', '0px')
+        target.style.setProperty('width', '100%')
       })
   }
 
   public minimize (): void {
     document
       .querySelectorAll<HTMLElement>(this.target)
-      .forEach((element) => {
-        element.setAttribute('style', this.targetStyles.get(element) ?? '')
+      .forEach((target) => {
+        target.setAttribute('style', this.targetStyles.get(target) ?? '')
       })
 
     this.targetStyles.clear()
@@ -117,6 +113,14 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
   }
 
   public setData (): void {}
+
+  public toggle (): void {
+    if (this.hasAttribute('sc-maximized')) {
+      this.maximize()
+    } else {
+      this.minimize()
+    }
+  }
 
   public update (): void {}
 
@@ -162,27 +166,27 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
   }
 
   protected handleInteractorMoveBottom (event: ScolaInteractorEvent): boolean {
-    this.targetOffsets.forEach((offset, element) => {
+    this.targetOffsets.forEach((offset, target) => {
       const {
-        offsetTop: elementTop
-      } = element
+        offsetTop: targetTop
+      } = target
 
       const {
         height: parentHeight = 0
-      } = element.offsetParent?.getBoundingClientRect() ?? {}
+      } = target.offsetParent?.getBoundingClientRect() ?? {}
 
       const height = this.calculateSize(offset.height, event.distanceY)
 
       if (this.contain) {
-        if ((elementTop + height) > parentHeight) {
+        if ((targetTop + height) > parentHeight) {
           if (this.snap === 1) {
-            element.style.setProperty('height', `${parentHeight - elementTop}px`)
+            target.style.setProperty('height', `${parentHeight - targetTop}px`)
           }
         } else {
-          element.style.setProperty('height', `${height}px`)
+          target.style.setProperty('height', `${height}px`)
         }
       } else {
-        element.style.setProperty('height', `${height}px`)
+        target.style.setProperty('height', `${height}px`)
       }
     })
 
@@ -190,29 +194,29 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
   }
 
   protected handleInteractorMoveLeft (event: ScolaInteractorEvent): boolean {
-    this.targetOffsets.forEach((offset, element) => {
-      const position = window.getComputedStyle(element).getPropertyValue('position')
+    this.targetOffsets.forEach((offset, target) => {
+      const position = window.getComputedStyle(target).getPropertyValue('position')
 
       const {
-        offsetLeft: elementLeft,
-        offsetWidth: elementWidth
-      } = element
+        offsetLeft: targetLeft,
+        offsetWidth: targetWidth
+      } = target
 
       const width = this.calculateSize(offset.width, -event.distanceX)
 
       if (this.contain) {
-        if ((elementLeft - (width - elementWidth) < 0)) {
+        if ((targetLeft - (width - targetWidth) < 0)) {
           if (this.snap === 1) {
-            element.style.setProperty('width', `${elementWidth + elementLeft}px`)
+            target.style.setProperty('width', `${targetWidth + targetLeft}px`)
           }
         } else {
-          element.style.setProperty('width', `${width}px`)
+          target.style.setProperty('width', `${width}px`)
         }
       } else {
-        element.style.setProperty('width', `${width}px`)
+        target.style.setProperty('width', `${width}px`)
       }
 
-      const sizeDiff = element.offsetWidth - elementWidth
+      const sizeDiff = target.offsetWidth - targetWidth
 
       if (
         sizeDiff !== 0 && (
@@ -220,7 +224,7 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
           position === 'fixed'
         )
       ) {
-        element.style.setProperty('left', `${element.offsetLeft - sizeDiff}px`)
+        target.style.setProperty('left', `${target.offsetLeft - sizeDiff}px`)
       }
     })
 
@@ -228,27 +232,27 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
   }
 
   protected handleInteractorMoveRight (event: ScolaInteractorEvent): boolean {
-    this.targetOffsets.forEach((offset, element) => {
+    this.targetOffsets.forEach((offset, target) => {
       const {
-        offsetLeft: elementLeft
-      } = element
+        offsetLeft: targetLeft
+      } = target
 
       const {
         width: parentWidth = 0
-      } = element.offsetParent?.getBoundingClientRect() ?? {}
+      } = target.offsetParent?.getBoundingClientRect() ?? {}
 
       const width = this.calculateSize(offset.width, event.distanceX)
 
       if (this.contain) {
-        if ((elementLeft + width) > parentWidth) {
+        if ((targetLeft + width) > parentWidth) {
           if (this.snap === 1) {
-            element.style.setProperty('width', `${parentWidth - elementLeft}px`)
+            target.style.setProperty('width', `${parentWidth - targetLeft}px`)
           }
         } else {
-          element.style.setProperty('width', `${width}px`)
+          target.style.setProperty('width', `${width}px`)
         }
       } else {
-        element.style.setProperty('width', `${width}px`)
+        target.style.setProperty('width', `${width}px`)
       }
     })
 
@@ -256,29 +260,29 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
   }
 
   protected handleInteractorMoveTop (event: ScolaInteractorEvent): boolean {
-    this.targetOffsets.forEach((offset, element) => {
-      const position = window.getComputedStyle(element).getPropertyValue('position')
+    this.targetOffsets.forEach((offset, target) => {
+      const position = window.getComputedStyle(target).getPropertyValue('position')
 
       const {
-        offsetHeight: elementHeight,
-        offsetTop: elementTop
-      } = element
+        offsetHeight: targetHeight,
+        offsetTop: targetTop
+      } = target
 
       const height = this.calculateSize(offset.height, -event.distanceY)
 
       if (this.contain) {
-        if ((elementTop - (height - elementHeight) < 0)) {
+        if ((targetTop - (height - targetHeight) < 0)) {
           if (this.snap === 1) {
-            element.style.setProperty('height', `${elementHeight + elementTop}px`)
+            target.style.setProperty('height', `${targetHeight + targetTop}px`)
           }
         } else {
-          element.style.setProperty('height', `${height}px`)
+          target.style.setProperty('height', `${height}px`)
         }
       } else {
-        element.style.setProperty('height', `${height}px`)
+        target.style.setProperty('height', `${height}px`)
       }
 
-      const sizeDiff = element.offsetHeight - elementHeight
+      const sizeDiff = target.offsetHeight - targetHeight
 
       if (
         sizeDiff !== 0 && (
@@ -286,7 +290,7 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
           position === 'fixed'
         )
       ) {
-        element.style.setProperty('top', `${element.offsetTop - sizeDiff}px`)
+        target.style.setProperty('top', `${target.offsetTop - sizeDiff}px`)
       }
     })
 
@@ -294,15 +298,14 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
   }
 
   protected handleInteractorStart (): boolean {
-    this.propagator.dispatch('beforeresize', [this.getData()])
     this.targetOffsets.clear()
 
     document
       .querySelectorAll<HTMLElement>(this.target)
-      .forEach((element) => {
-        this.targetOffsets.set(element, {
-          height: element.offsetHeight,
-          width: element.offsetWidth
+      .forEach((target) => {
+        this.targetOffsets.set(target, {
+          height: target.offsetHeight,
+          width: target.offsetWidth
         })
       })
 
@@ -311,16 +314,8 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     return true
   }
 
-  protected handleObserver (mutations: MutationRecord[]): void {
-    const attributes = this.observer.normalize(mutations)
-
-    if (attributes.includes('sc-maximized')) {
-      if (this.hasAttribute('sc-maximized')) {
-        this.maximize()
-      } else {
-        this.minimize()
-      }
-    }
+  protected handleObserver (): void {
+    this.toggle()
   }
 
   protected shouldInteractorMoveBottom (): boolean {

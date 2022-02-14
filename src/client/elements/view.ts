@@ -136,6 +136,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       this.views.push(view)
     } else {
       if (this.isSame(view, this.view)) {
+        this.update()
         return
       }
 
@@ -382,8 +383,21 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public update (): void {
-    this.propagator.dispatch('beforeupdate', [this.getData()])
+    this.updateElements()
+    this.updateAttributes()
+    this.propagator.dispatch('update', [this.getData()])
+  }
 
+  public updateAttributes (): void {
+    this.toggleAttribute('hidden', false)
+    this.toggleAttribute('sc-has-next', this.pointer < this.views.length - 1)
+    this.toggleAttribute('sc-has-previous', this.pointer > 0)
+    this.setAttribute('sc-views', this.views.length.toString())
+    this.setAttribute('sc-pointer', this.pointer.toString())
+    this.setAttribute('sc-updated', Date.now().toString())
+  }
+
+  public updateElements (): void {
     const { view } = this
 
     if (view?.html === undefined) {
@@ -396,20 +410,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     } else {
       this.replaceChild(view.element, this.firstElementChild)
     }
-
-    this.updateAttributes()
-
-    window.requestAnimationFrame(() => {
-      this.propagator.dispatch('update', [this.getData()])
-    })
-  }
-
-  public updateAttributes (): void {
-    this.toggleAttribute('hidden', false)
-    this.toggleAttribute('sc-has-next', this.pointer < this.views.length - 1)
-    this.toggleAttribute('sc-has-previous', this.pointer > 0)
-    this.setAttribute('sc-views', this.views.length.toString())
-    this.setAttribute('sc-pointer', this.pointer.toString())
   }
 
   protected addEventListeners (): void {

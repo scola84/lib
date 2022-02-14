@@ -1,10 +1,9 @@
 import { isArray, isStruct } from '../../common'
-import type { ScolaAudioElement } from '../elements/audio'
-import type { ScolaVideoElement } from '../elements/video'
+import type { ScolaMediaElement } from '../elements/media'
 import type { Struct } from '../../common'
 
 export class ScolaMedia {
-  public element: ScolaAudioElement | ScolaVideoElement
+  public element: ScolaMediaElement
 
   protected handleCanPlayBound = this.handleCanPlay.bind(this)
 
@@ -18,7 +17,7 @@ export class ScolaMedia {
 
   protected handleVolumechangeBound = this.handleVolumechange.bind(this)
 
-  public constructor (element: ScolaAudioElement | ScolaVideoElement) {
+  public constructor (element: ScolaMediaElement) {
     this.element = element
   }
 
@@ -165,5 +164,7 @@ export class ScolaMedia {
     ) {
       this.element.poster = struct.poster
     }
+
+    this.element.update()
   }
 }

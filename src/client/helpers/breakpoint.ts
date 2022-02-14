@@ -12,7 +12,7 @@ export class ScolaBreakpoint {
 
   public callback?: Callback
 
-  public element: ScolaElement
+  public element: HTMLElement
 
   public parser: RegExp
 
@@ -35,8 +35,8 @@ export class ScolaBreakpoint {
     this.callback = callback
   }
 
-  public parse (name: string): string | undefined {
-    return this.parser.exec(this.element.getAttribute(name) ?? '')?.[1]
+  public parse (name: string, element = this.element): string | undefined {
+    return this.parser.exec(element.getAttribute(name) ?? '')?.[1]
   }
 
   public reset (): void {

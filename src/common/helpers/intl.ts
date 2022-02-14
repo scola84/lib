@@ -57,25 +57,25 @@ export class ScolaIntl {
       .match(/(?<var>:(?<name>[\w:?&=]+))/gu)
       ?.reduce((nextString, match) => {
         const index = nextString.indexOf(match)
-        const [, name, uri = 'string'] = match.split(/:+/u)
-        const [host, query = ''] = uri.split('?')
+        const [, name, typeOptions = 'string'] = match.split(/:+/u)
+        const [type, optionsString = undefined] = typeOptions.split('?')
 
         compiled.push(((literal: string): string => {
           return literal
         }).bind(null, nextString.slice(0, index)))
 
-        compiled.push(ScolaIntl.factory[host](
+        compiled.push(ScolaIntl.factory[type](
           name,
           locale,
-          query
-            .split('&')
+          optionsString
+            ?.split('&')
             .reduce((params, kvp) => {
               const [key, value] = kvp.split('=')
               return {
                 ...params,
                 [key]: value
               }
-            }, {})
+            }, {}) ?? {}
         ))
 
         return nextString.slice(index + match.length)
@@ -138,9 +138,11 @@ export class ScolaIntl {
       }
     }
 
-    return compiled.map((formatter) => {
-      return formatter(data)
-    }).join('')
+    return compiled
+      .map((formatter) => {
+        return formatter(data)
+      })
+      .join('')
   }
 
   public lookup (string: string, locale = ScolaIntl.locale): string | undefined {

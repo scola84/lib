@@ -27,7 +27,7 @@ export class ScolaTheme {
     document.body.addEventListener('sc-theme', this.handleThemeBound)
   }
 
-  public setTheme (theme: string): void {
+  public set (theme: string): void {
     document.body.classList.remove(ScolaTheme.theme)
     ScolaTheme.theme = theme
     document.body.classList.add(theme)
@@ -35,8 +35,8 @@ export class ScolaTheme {
     window.dispatchEvent(new CustomEvent('sc-theme', { detail: ScolaTheme.theme }))
   }
 
-  public toggleTheme (): void {
-    this.setTheme(ScolaTheme.themes[this.findThemeIndex() + 1] ?? ScolaTheme.themes[0])
+  public toggle (): void {
+    this.set(ScolaTheme.themes[this.findThemeIndex() + 1] ?? ScolaTheme.themes[0])
   }
 
   protected findThemeIndex (): number {
@@ -50,9 +50,9 @@ export class ScolaTheme {
       isStruct(event.detail) &&
       typeof event.detail.theme === 'string'
     ) {
-      this.setTheme(event.detail.theme)
+      this.set(event.detail.theme)
     } else {
-      this.toggleTheme()
+      this.toggle()
     }
   }
 }

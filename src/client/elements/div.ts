@@ -1,4 +1,4 @@
-import { absorb, cast, isArray, isStruct } from '../../common'
+import { cast, isArray, isStruct } from '../../common'
 import { ScolaDragger } from '../helpers/dragger'
 import { ScolaDropper } from '../helpers/dropper'
 import type { ScolaElement } from './element'
@@ -10,7 +10,6 @@ import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPaster } from '../helpers/paster'
 import { ScolaPropagator } from '../helpers/propagator'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -20,8 +19,6 @@ declare global {
 }
 
 export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
-  public datamap: Struct = {}
-
   public dragger?: ScolaDragger
 
   public dropper?: ScolaDropper
@@ -115,14 +112,13 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     this.removeEventListeners()
   }
 
-  public getData (): Struct {
-    return absorb(this.dataset, this.datamap, true)
-  }
+  public getData (): void {}
 
   public reset (): void {
     if (
-      this.hasAttribute('sc-onauxclick') ||
+      this.hasAttribute('sc-cancel') ||
       this.hasAttribute('sc-onclick') ||
+      this.hasAttribute('sc-oncontextmenu') ||
       this.hasAttribute('sc-ondblclick')
     ) {
       this.interactor.cancel = this.hasAttribute('sc-cancel')
@@ -133,10 +129,6 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   public setData (data: unknown): void {
-    if (isStruct(data)) {
-      this.datamap = data
-    }
-
     this.propagator.set(data)
   }
 
@@ -150,10 +142,10 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
   protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
-      case 'auxclick':
-        return this.handleInteractorAuxclick(event)
       case 'click':
         return this.handleInteractorClick(event)
+      case 'contextmenu':
+        return this.handleInteractorContextmenu(event)
       case 'dblclick':
         return this.handleInteractorDblclick(event)
       case 'start':
@@ -163,16 +155,16 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  protected handleInteractorAuxclick (event: ScolaInteractorEvent): boolean {
-    return this.propagator.dispatch('auxclick', [this.getData()], event.originalEvent)
+  protected handleInteractorClick (event: ScolaInteractorEvent): boolean {
+    return this.propagator.dispatch('click', undefined, event.originalEvent)
   }
 
-  protected handleInteractorClick (event: ScolaInteractorEvent): boolean {
-    return this.propagator.dispatch('click', [this.getData()], event.originalEvent)
+  protected handleInteractorContextmenu (event: ScolaInteractorEvent): boolean {
+    return this.propagator.dispatch('contextmenu', undefined, event.originalEvent)
   }
 
   protected handleInteractorDblclick (event: ScolaInteractorEvent): boolean {
-    return this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
+    return this.propagator.dispatch('dblclick', undefined, event.originalEvent)
   }
 
   protected handleInteractorStart (event: ScolaInteractorEvent): boolean {

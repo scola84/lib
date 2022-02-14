@@ -65,9 +65,18 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
         src: data
       })
     }
+
+    this.update()
   }
 
-  public update (): void {}
+  public update (): void {
+    this.updateAttributes()
+    this.propagator.dispatch('update')
+  }
+
+  public updateAttributes (): void {
+    this.setAttribute('sc-updated', Date.now().toString())
+  }
 
   protected setSourceFromFile (file: File): void {
     this.setSourceFromStruct({

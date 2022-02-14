@@ -3,12 +3,14 @@ import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 
-export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement {
+export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaElement {
   public mutator: ScolaMutator
 
   public observer: ScolaObserver
 
   public propagator: ScolaPropagator
+
+  protected handleObserverBound = this.handleObserver.bind(this)
 
   public constructor () {
     super()
@@ -18,12 +20,16 @@ export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement 
   }
 
   public static define (): void {
-    customElements.define('sc-label', ScolaLabelElement, {
-      extends: 'label'
+    customElements.define('sc-fieldset', ScolaFieldSetElement, {
+      extends: 'fieldset'
     })
   }
 
   public connectedCallback (): void {
+    this.observer.observe(this.handleObserverBound, [
+      'hidden'
+    ])
+
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
@@ -40,8 +46,26 @@ export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement 
   public reset (): void {}
 
   public setData (data: unknown): void {
+    this.toggleDisabled()
     this.propagator.set(data)
   }
 
   public update (): void {}
+
+  protected changeFocus (): void {
+    const element = this.querySelector('[sc-focus~="fieldset"]')
+
+    if (element instanceof HTMLElement) {
+      element.focus()
+    }
+  }
+
+  protected handleObserver (): void {
+    this.toggleDisabled()
+    this.changeFocus()
+  }
+
+  protected toggleDisabled (): void {
+    this.toggleAttribute('disabled', this.hasAttribute('hidden'))
+  }
 }

@@ -1,8 +1,7 @@
-import type { ScolaAudioElement } from '../elements/audio'
 import type { ScolaInputElement } from '../elements/input'
-import type { ScolaVideoElement } from '../elements/video'
+import type { ScolaMediaElement } from '../elements/media'
 
-export function inputRangeMedia (observer: ScolaInputElement, observable: ScolaAudioElement | ScolaVideoElement): void {
+export function inputRangeMedia (observer: ScolaInputElement, observable: ScolaMediaElement): void {
   const value = observable.getAttribute(`sc-${observer.name}`)
 
   if (value !== null) {

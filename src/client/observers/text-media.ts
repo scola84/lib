@@ -1,8 +1,7 @@
-import type { ScolaAudioElement } from '../elements/audio'
+import type { ScolaMediaElement } from '../elements/media'
 import type { ScolaTextElement } from '../elements/text'
-import type { ScolaVideoElement } from '../elements/video'
 
-export function formatMedia (observer: ScolaTextElement, observable: ScolaAudioElement | ScolaVideoElement): void {
+export function textMedia (observer: ScolaTextElement, observable: ScolaMediaElement): void {
   if (
     !Number.isNaN(observable.duration) &&
     observable.duration !== Infinity

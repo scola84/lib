@@ -7,20 +7,20 @@ export function tableView (observer: ScolaTableElement, observable: ScolaViewEle
     document.activeElement !== null
   )
 
-  observer.lister.clearItems()
-  observer.selector?.clearRows()
+  observer.lister.clear()
+  observer.selector?.clear()
 
   let key: unknown = null
 
   observable.views.forEach((view) => {
-    observer.addItem(view)
+    observer.add(view)
 
     if (view === observable.view) {
       key = view[observer.lister.key]
     }
   })
 
-  observer.updateBody()
+  observer.updateElements()
   observer.updateAttributes()
 
   const element = observer.elements.get(key)

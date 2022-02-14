@@ -1,4 +1,3 @@
-import { absorb, isStruct } from '../../common'
 import { ScolaDragger } from '../helpers/dragger'
 import { ScolaDropper } from '../helpers/dropper'
 import type { ScolaElement } from './element'
@@ -8,9 +7,10 @@ import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
+import { isStruct } from '../../common'
 
 export class ScolaButtonElement extends HTMLButtonElement implements ScolaElement {
-  public datamap: Struct = {}
+  public data: Struct = {}
 
   public dragger?: ScolaDragger
 
@@ -69,14 +69,18 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     this.propagator.disconnect()
   }
 
-  public getData (): Struct {
-    return absorb(this.dataset, this.datamap, true)
+  public getData (): Struct | undefined {
+    return {
+      ...this.dataset,
+      ...this.data
+    }
   }
 
   public reset (): void {
     if (
-      this.hasAttribute('sc-onauxclick') ||
+      this.hasAttribute('sc-cancel') ||
       this.hasAttribute('sc-onclick') ||
+      this.hasAttribute('sc-oncontextmenu') ||
       this.hasAttribute('sc-ondblclick')
     ) {
       this.interactor.cancel = this.hasAttribute('sc-cancel')
@@ -88,20 +92,21 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
 
   public setData (data: unknown): void {
     if (isStruct(data)) {
-      this.datamap = data
+      this.data = data
     }
 
     this.propagator.set(data)
+    this.update()
   }
 
   public update (): void {}
 
   protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
-      case 'auxclick':
-        return this.handleInteractorAuxclick(event)
       case 'click':
         return this.handleInteractorClick(event)
+      case 'contextmenu':
+        return this.handleInteractorContextmenu(event)
       case 'dblclick':
         return this.handleInteractorDblclick(event)
       case 'start':
@@ -111,12 +116,12 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     }
   }
 
-  protected handleInteractorAuxclick (event: ScolaInteractorEvent): boolean {
-    return this.propagator.dispatch('auxclick', [this.getData()], event.originalEvent)
-  }
-
   protected handleInteractorClick (event: ScolaInteractorEvent): boolean {
     return this.propagator.dispatch('click', [this.getData()], event.originalEvent)
+  }
+
+  protected handleInteractorContextmenu (event: ScolaInteractorEvent): boolean {
+    return this.propagator.dispatch('contextmenu', [this.getData()], event.originalEvent)
   }
 
   protected handleInteractorDblclick (event: ScolaInteractorEvent): boolean {

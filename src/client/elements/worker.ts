@@ -3,7 +3,6 @@ import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
-import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -121,9 +120,7 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   }
 
   protected handleWork (event: CustomEvent): void {
-    if (isStruct(event.detail)) {
-      this.worker?.postMessage(event.detail)
-    }
+    this.worker?.postMessage(event.detail)
   }
 
   protected removeEventListeners (): void {

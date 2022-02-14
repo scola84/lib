@@ -19,7 +19,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   font-size: 16px;
-  line-height: 1.5em;
+  line-height: 1.25;
   overflow: hidden;
 }
 
@@ -44,6 +44,7 @@ body {
 
 [is="sc-dispatcher"],
 [is="sc-event-source"],
+[is="sc-idb"],
 [is="sc-reloader"],
 [is="sc-requester"]:empty,
 [is="sc-worker"] {
@@ -136,12 +137,6 @@ body {
   justify-content: flex-start;
 }
 
-[sc-bg-color=""] {
-  background-color: var(--gc1);
-  color: var(--fc1);
-  fill: var(--fc1);
-}
-
 [sc-bg-color="black"] {
   background-color: #000;
 }
@@ -152,12 +147,14 @@ body {
 
 [sc-bg-color="contrast"] {
   background-color: var(--gc2);
-  color: var(--fc1);
-  fill: var(--fc1);
+}
+
+[sc-bg-color="normal"] {
+  background-color: var(--gc1);
 }
 
 [sc-bg-color="red"] {
-  background-color: #f00;
+  background-color: firebrick;
 }
 
 [sc-bg-color="theme"] {
@@ -178,40 +175,28 @@ body {
   cursor: pointer;
 }
 
-[sc-bg-color-interact=""]:hover {
-  background-color: var(--gc2);
-  color: var(--fc1);
-  fill: var(--fc1);
-}
-
-[sc-bg-color-interact=""]:active {
-  background-color: var(--gc3);
-  color: var(--fc1);
-  fill: var(--fc1);
-}
-
 [sc-bg-color-interact="contrast"]:hover {
   background-color: var(--gc3);
-  color: var(--fc1);
-  fill: var(--fc1);
 }
 
 [sc-bg-color-interact="contrast"]:active {
   background-color: var(--gc4);
-  color: var(--fc1);
-  fill: var(--fc1);
 }
 
-[sc-bg-color-active=""][sc-active] {
+[sc-bg-color-interact="normal"]:hover {
   background-color: var(--gc2);
-  color: var(--fc1);
-  fill: var(--fc1);
+}
+
+[sc-bg-color-interact="normal"]:active {
+  background-color: var(--gc3);
 }
 
 [sc-bg-color-active="contrast"][sc-active] {
   background-color: var(--gc3);
-  color: var(--fc1);
-  fill: var(--fc1);
+}
+
+[sc-bg-color-active="normal"][sc-active] {
+  background-color: var(--gc2);
 }
 
 [sc-bg-color-active="theme"][sc-active] {
@@ -224,34 +209,24 @@ body {
   outline: none;
 }
 
-[sc-bg-color-active-focus=""][sc-active] {
-  background-color: var(--gc1);
-  color: var(--fc1);
-  fill: var(--fc1);
-}
-
-[sc-focused] [sc-bg-color-active-focus=""][sc-active] {
-  background-color: var(--gc2);
-  color: var(--fc1);
-  fill: var(--fc1);
-}
-
 [sc-bg-color-active-focus="contrast"][sc-active] {
   background-color: var(--gc2);
-  color: var(--fc1);
-  fill: var(--fc1);
 }
 
 [sc-focused] [sc-bg-color-active-focus="contrast"][sc-active] {
   background-color: var(--gc3);
-  color: var(--fc1);
-  fill: var(--fc1);
+}
+
+[sc-bg-color-active-focus="normal"][sc-active] {
+  background-color: var(--gc1);
+}
+
+[sc-focused] [sc-bg-color-active-focus="normal"][sc-active] {
+  background-color: var(--gc2);
 }
 
 [sc-bg-color-active-focus="theme"][sc-active] {
   background-color: var(--gc2);
-  color: var(--fc1);
-  fill: var(--fc1);
 }
 
 [sc-focused] [sc-bg-color-active-focus="theme"][sc-active] {
@@ -260,12 +235,12 @@ body {
   fill: #fff;
 }
 
-[sc-border-color=""] {
-  border-color: var(--gc2);
-}
-
 [sc-border-color="contrast"] {
   border-color: var(--gc3);
+}
+
+[sc-border-color="normal"] {
+  border-color: var(--gc2);
 }
 
 [sc-border-color="theme"] {
@@ -286,8 +261,8 @@ body {
   padding: 3px;
 }
 
-[sc-checkbox-color=""],
-[sc-radio-color=""] {
+[sc-checkbox-color="normal"],
+[sc-radio-color="normal"] {
   border: 2px solid var(--fc2);
 }
 
@@ -296,8 +271,8 @@ body {
   border: 2px solid var(--fc2);
 }
 
-[sc-active] [sc-checkbox-color=""],
-[sc-checkbox-color=""]:checked {
+[sc-active] [sc-checkbox-color="normal"],
+[sc-checkbox-color="normal"]:checked {
   background-color: var(--fc1);
   border: 2px solid var(--fc1);
 }
@@ -308,8 +283,8 @@ body {
   border: 2px solid var(--tc1);
 }
 
-[sc-active] [sc-radio-color=""],
-[sc-radio-color=""]:checked {
+[sc-active] [sc-radio-color="normal"],
+[sc-radio-color="normal"]:checked {
   border: 2px solid var(--fc1);
 }
 
@@ -330,8 +305,8 @@ body {
   clip-path: polygon(6% 50%, 0% 56%, 31% 88%, 100% 19%, 94% 13%, 31% 75%);
 }
 
-[sc-active] [sc-checkbox-color=""]::before,
-[sc-checkbox-color=""]:checked::before {
+[sc-active] [sc-checkbox-color="normal"]::before,
+[sc-checkbox-color="normal"]:checked::before {
   background-color: var(--gc1);
 }
 
@@ -340,8 +315,8 @@ body {
   background-color: #fff;
 }
 
-[sc-active] [sc-radio-color=""]::before,
-[sc-radio-color=""]:checked::before {
+[sc-active] [sc-radio-color="normal"]::before,
+[sc-radio-color="normal"]:checked::before {
   background-color: var(--fc1);
 }
 
@@ -473,12 +448,12 @@ body {
   width: 1rem;
 }
 
-[sc-range-bg-color=""] {
-  --sc-range-bg-color: var(--gc2);
-}
-
 [sc-range-bg-color="contrast"] {
   --sc-range-bg-color: var(--gc3);
+}
+
+[sc-range-bg-color="normal"] {
+  --sc-range-bg-color: var(--gc2);
 }
 
 [sc-range-bg-color="white"] {
@@ -489,7 +464,7 @@ body {
   --sc-range-bg-color: rgba(255, 255, 255, 0.5);
 }
 
-[sc-range-fg-color=""] {
+[sc-range-fg-color="normal"] {
   --sc-range-fg-color: var(--fc1);
 }
 
@@ -543,20 +518,20 @@ body {
   overflow-y: scroll;
 }
 
-[sc-scrollbar-color=""]:hover {
-  scrollbar-color: var(--gc2) transparent;
-}
-
-[sc-scrollbar-color=""]:hover::-webkit-scrollbar-thumb {
-  background-color: var(--gc2);
-}
-
 [sc-scrollbar-color="contrast"]:hover {
   scrollbar-color: var(--gc3) transparent;
 }
 
 [sc-scrollbar-color="contrast"]:hover::-webkit-scrollbar-thumb {
   background-color: var(--gc3);
+}
+
+[sc-scrollbar-color="normal"]:hover {
+  scrollbar-color: var(--gc2) transparent;
+}
+
+[sc-scrollbar-color="normal"]:hover::-webkit-scrollbar-thumb {
+  background-color: var(--gc2);
 }
 
 [sc-scrollbar-color="theme"]:hover {
@@ -567,11 +542,6 @@ body {
   background-color: var(--tc1);
 }
 
-[sc-text-color=""] {
-  color: var(--fc1);
-  fill: var(--fc1);
-}
-
 [sc-text-color="black"] {
   color: #000;
   fill: #000;
@@ -580,6 +550,16 @@ body {
 [sc-text-color="contrast"] {
   color: var(--fc2);
   fill: var(--fc2);
+}
+
+[sc-text-color="normal"] {
+  color: var(--fc1);
+  fill: var(--fc1);
+}
+
+[sc-text-color="red"] {
+  color: firebrick;
+  fill: firebrick;
 }
 
 [sc-text-color="theme"] {
@@ -606,7 +586,11 @@ body {
   fill: var(--tc1);
 }
 
-[sc-text-color-active=""][sc-active] {
+[sc-text-color-interact="opacity"]:active {
+  opacity: 0.75;
+}
+
+[sc-text-color-active="normal"][sc-active] {
   color: var(--fc1);
   fill: var(--fc1);
 }

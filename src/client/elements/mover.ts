@@ -4,8 +4,6 @@ import type { ScolaInteractorEvent } from '../helpers/interactor'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
-import type { Struct } from '../../common'
-import { absorb } from '../../common'
 
 interface Offset {
   left: number
@@ -61,9 +59,7 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
     this.propagator.disconnect()
   }
 
-  public getData (): Struct {
-    return absorb(this.dataset)
-  }
+  public getData (): void {}
 
   public reset (): void {
     this.contain = this.hasAttribute('sc-contain')
@@ -101,16 +97,16 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleInteractorMove (event: ScolaInteractorEvent): boolean {
-    this.targetOffsets.forEach((offset, element) => {
+    this.targetOffsets.forEach((offset, target) => {
       const {
-        height: elementHeight,
-        width: elementWidth
-      } = element.getBoundingClientRect()
+        height: targetHeight,
+        width: targetWidth
+      } = target.getBoundingClientRect()
 
       const {
         height: parentHeight = 0,
         width: parentWidth = 0
-      } = element.offsetParent?.getBoundingClientRect() ?? {}
+      } = target.offsetParent?.getBoundingClientRect() ?? {}
 
       const left = this.calculatePosition(offset.left, event.distanceX)
       const top = this.calculatePosition(offset.top, event.distanceY)
@@ -118,30 +114,30 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
       if (this.contain) {
         if (left < 0) {
           if (this.snap === 1) {
-            element.style.setProperty('left', '0px')
+            target.style.setProperty('left', '0px')
           }
-        } else if ((left + elementWidth) > parentWidth) {
+        } else if ((left + targetWidth) > parentWidth) {
           if (this.snap === 1) {
-            element.style.setProperty('left', `${parentWidth - elementWidth}px`)
+            target.style.setProperty('left', `${parentWidth - targetWidth}px`)
           }
         } else {
-          element.style.setProperty('left', `${left}px`)
+          target.style.setProperty('left', `${left}px`)
         }
 
         if (top < 0) {
           if (this.snap === 1) {
-            element.style.setProperty('top', '0px')
+            target.style.setProperty('top', '0px')
           }
-        } else if ((top + elementHeight) > parentHeight) {
+        } else if ((top + targetHeight) > parentHeight) {
           if (this.snap === 1) {
-            element.style.setProperty('top', `${parentHeight - elementHeight}px`)
+            target.style.setProperty('top', `${parentHeight - targetHeight}px`)
           }
         } else {
-          element.style.setProperty('top', `${top}px`)
+          target.style.setProperty('top', `${top}px`)
         }
       } else {
-        element.style.setProperty('left', `${left}px`)
-        element.style.setProperty('top', `${top}px`)
+        target.style.setProperty('left', `${left}px`)
+        target.style.setProperty('top', `${top}px`)
       }
     })
 
@@ -149,15 +145,14 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleInteractorStart (): boolean {
-    this.propagator.dispatch('beforemove', [this.getData()])
     this.targetOffsets.clear()
 
     document
       .querySelectorAll<HTMLElement>(this.target)
-      .forEach((element) => {
-        this.targetOffsets.set(element, {
-          left: element.offsetLeft,
-          top: element.offsetTop
+      .forEach((target) => {
+        this.targetOffsets.set(target, {
+          left: target.offsetLeft,
+          top: target.offsetTop
         })
       })
 

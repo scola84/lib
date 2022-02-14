@@ -1,9 +1,6 @@
-import type { ScolaButtonElement } from '../elements/button'
+import type { ScolaElement } from '../elements/element'
 import type { ScolaViewElement } from '../elements/view'
 
-export function buttonView (observer: ScolaButtonElement, observable: ScolaViewElement): void {
-  observer.toggleAttribute(
-    observer.getAttribute('sc-observe-state') ?? '',
-    observable.isSame(observer.getData(), observable.view)
-  )
+export function buttonView (observer: ScolaElement, observable: ScolaViewElement): void {
+  observer.observer.toggle(observable.isSame(observer.getData(), observable.view))
 }

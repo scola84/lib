@@ -1,12 +1,12 @@
-import { absorb, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
+import { isStruct } from '../../common'
 
 export class ScolaTableCellElement extends HTMLTableCellElement implements ScolaElement {
-  public datamap: Struct = {}
+  public data: Struct = {}
 
   public mutator: ScolaMutator
 
@@ -40,17 +40,18 @@ export class ScolaTableCellElement extends HTMLTableCellElement implements Scola
   }
 
   public getData (): Struct {
-    return absorb(this.dataset, this.datamap, true)
+    return this.data
   }
 
   public reset (): void {}
 
   public setData (data: unknown): void {
     if (isStruct(data)) {
-      this.datamap = data
+      this.data = data
     }
 
     this.propagator.set(data)
+    this.update()
   }
 
   public update (): void {}

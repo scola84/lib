@@ -1,5 +1,5 @@
-import type { ScolaElement } from './element'
 import { ScolaMedia } from '../helpers/media'
+import type { ScolaMediaElement } from './media'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
@@ -23,7 +23,7 @@ declare global {
   }
 }
 
-export class ScolaVideoElement extends HTMLVideoElement implements ScolaElement {
+export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaElement {
   public media: ScolaMedia
 
   public mutator: ScolaMutator
@@ -96,6 +96,7 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaElement 
 
   public update (): void {
     this.updateAttributes()
+    this.propagator.dispatch('update')
   }
 
   public updateAttributes (): void {
@@ -103,6 +104,7 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaElement 
     this.toggleAttribute('sc-muted', this.muted)
     this.toggleAttribute('sc-playing', !this.paused)
     this.setAttribute('sc-time', (this.currentTime * 1000).toString())
+    this.setAttribute('sc-updated', Date.now().toString())
     this.setAttribute('sc-volume', this.volume.toString())
   }
 

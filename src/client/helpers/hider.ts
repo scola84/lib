@@ -44,6 +44,8 @@ export class ScolaHider {
 
   public mode: Mode | null
 
+  public transition: boolean
+
   protected handleBreakpointBound = this.handleBreakpoint.bind(this)
 
   protected handleHideModalBound = this.handleHideModal.bind(this)
@@ -95,6 +97,7 @@ export class ScolaHider {
       ?.trim()
       .split(/\s+/u) as Direction[]
 
+    this.transition = this.breakpoint.parse('sc-transition') === ''
     this.indexer.index = this.element.getAttribute('sc-hide-index')
     this.interactor.cancel = true
     this.interactor.edgeThreshold = Number(this.breakpoint.parse('sc-hide-interact-edge-threshold') ?? ScolaInteractor.edgeThreshold)
@@ -145,7 +148,7 @@ export class ScolaHider {
       this.activeElement?.focus()
       this.activeElement = undefined
     } else {
-      const element = this.element.querySelector('[sc-focus]')
+      const element = this.element.querySelector('[sc-focus~="hide"]')
 
       if (element instanceof HTMLElement) {
         if (document.activeElement instanceof HTMLElement) {
@@ -160,16 +163,19 @@ export class ScolaHider {
   }
 
   protected finalize (): void {
-    this.immediate = false
+    if (this.transition) {
+      this.immediate = false
+    }
+
     this.element.style.removeProperty('transition-timing-function')
 
     if (this.element.hasAttribute('hidden')) {
       this.element.style.setProperty('display', 'none', 'important')
       this.backdrop?.style.setProperty('display', 'none', 'important')
       this.indexer.remove(this.element, this.backdrop)
-      this.element.propagator.dispatch('hide', [this.element.getData()])
+      this.element.propagator.dispatch('afterhide', [this.element.getData()])
     } else {
-      this.element.propagator.dispatch('show', [this.element.getData()])
+      this.element.propagator.dispatch('aftershow', [this.element.getData()])
     }
 
     this.changeFocus()
@@ -729,8 +735,6 @@ export class ScolaHider {
   }
 
   protected toggleCenterHidden (): void {
-    this.element.propagator.dispatch('beforehide', [this.element.getData()])
-
     if (this.immediate) {
       this.element.style.setProperty('margin-bottom', `-${this.element.offsetHeight}px`)
       this.backdrop?.style.setProperty('opacity', '0')
@@ -747,7 +751,6 @@ export class ScolaHider {
   }
 
   protected toggleCenterVisible (): void {
-    this.element.propagator.dispatch('beforeshow', [this.element.getData()])
     this.element.style.removeProperty('display')
     this.element.style.setProperty('margin-bottom', `-${this.element.offsetHeight}px`)
     this.backdrop?.style.removeProperty('display')
@@ -787,8 +790,6 @@ export class ScolaHider {
   }
 
   protected toggleHeightHidden (): void {
-    this.element.propagator.dispatch('beforehide', [this.element.getData()])
-
     if (this.immediate) {
       this.element.style.setProperty('height', '0px')
       this.finalize()
@@ -806,7 +807,6 @@ export class ScolaHider {
   }
 
   protected toggleHeightVisible (): void {
-    this.element.propagator.dispatch('beforeshow', [this.element.getData()])
     this.element.style.removeProperty('display')
 
     window.requestAnimationFrame(() => {
@@ -848,16 +848,14 @@ export class ScolaHider {
   }
 
   protected toggleMoveEnd (): void {
-    if (this.interactor.dir === 'rtl') {
-      this.toggleMove('margin-left', 'offsetWidth')
-    } else {
+    if (this.interactor.dir === 'ltr') {
       this.toggleMove('margin-right', 'offsetWidth')
+    } else {
+      this.toggleMove('margin-left', 'offsetWidth')
     }
   }
 
   protected toggleMoveHidden (margin: MarginProperty, size: SizeProperty): void {
-    this.element.propagator.dispatch('beforehide', [this.element.getData()])
-
     if (this.immediate) {
       this.element.style.setProperty(margin, `-${this.element[size]}px`)
       this.backdrop?.style.setProperty('opacity', '0')
@@ -874,10 +872,10 @@ export class ScolaHider {
   }
 
   protected toggleMoveStart (): void {
-    if (this.interactor.dir === 'rtl') {
-      this.toggleMove('margin-right', 'offsetWidth')
-    } else {
+    if (this.interactor.dir === 'ltr') {
       this.toggleMove('margin-left', 'offsetWidth')
+    } else {
+      this.toggleMove('margin-right', 'offsetWidth')
     }
   }
 
@@ -886,7 +884,6 @@ export class ScolaHider {
   }
 
   protected toggleMoveVisible (margin: MarginProperty, size?: SizeProperty): void {
-    this.element.propagator.dispatch('beforeshow', [this.element.getData()])
     this.element.style.removeProperty('display')
     this.backdrop?.style.removeProperty('display')
     this.indexer.set(this.element, this.backdrop)
@@ -934,8 +931,6 @@ export class ScolaHider {
   }
 
   protected toggleOpacityHidden (): void {
-    this.element.propagator.dispatch('beforehide', [this.element.getData()])
-
     if (this.immediate) {
       this.element.style.setProperty('opacity', '0')
       this.backdrop?.style.setProperty('opacity', '0')
@@ -952,7 +947,6 @@ export class ScolaHider {
   }
 
   protected toggleOpacityVisible (): void {
-    this.element.propagator.dispatch('beforeshow', [this.element.getData()])
     this.element.style.removeProperty('display')
     this.element.style.setProperty('opacity', '0')
     this.backdrop?.style.removeProperty('display')

@@ -1,5 +1,5 @@
-import type { ScolaElement } from './element'
 import { ScolaMedia } from '../helpers/media'
+import type { ScolaMediaElement } from './media'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
@@ -18,7 +18,7 @@ declare global {
   }
 }
 
-export class ScolaAudioElement extends HTMLAudioElement implements ScolaElement {
+export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaElement {
   public media: ScolaMedia
 
   public mutator: ScolaMutator
@@ -57,7 +57,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaElement 
   }
 
   public connectedCallback (): void {
-    this.media.disconnect()
+    this.media.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
@@ -66,7 +66,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaElement 
   }
 
   public disconnectedCallback (): void {
-    this.media.connect()
+    this.media.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
@@ -89,6 +89,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaElement 
 
   public update (): void {
     this.updateAttributes()
+    this.propagator.dispatch('update')
   }
 
   public updateAttributes (): void {
@@ -96,6 +97,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaElement 
     this.toggleAttribute('sc-muted', this.muted)
     this.toggleAttribute('sc-playing', !this.paused)
     this.setAttribute('sc-time', (this.currentTime * 1000).toString())
+    this.setAttribute('sc-updated', Date.now().toString())
     this.setAttribute('sc-volume', this.volume.toString())
   }
 

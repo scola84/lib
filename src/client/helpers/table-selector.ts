@@ -3,6 +3,15 @@ import type { ScolaInteractorEvent } from './interactor'
 import type { ScolaTableElement } from '../elements/table'
 import { ScolaTableRowElement } from '../elements/table-row'
 import type { Struct } from '../../common'
+import { isStruct } from '../../common'
+
+declare global {
+  interface HTMLElementEventMap {
+    'sc-table-select-add': CustomEvent
+    'sc-table-select-clear': CustomEvent
+    'sc-table-select-delete': CustomEvent
+  }
+}
 
 type Mode = 'many' | 'one' | 'toggle'
 
@@ -10,6 +19,8 @@ export class ScolaTableSelector {
   public all: boolean
 
   public element: ScolaTableElement
+
+  public first: boolean
 
   public firstSelectedRow?: ScolaTableRowElement
 
@@ -29,12 +40,27 @@ export class ScolaTableSelector {
     return this.rows[this.rows.length - 1]
   }
 
+  protected handleAddBound = this.handleAdd.bind(this)
+
+  protected handleClearBound = this.handleClear.bind(this)
+
+  protected handleDeleteBound = this.handleDelete.bind(this)
+
   protected handleInteractorBound = this.handleInteractor.bind(this)
 
   public constructor (element: ScolaTableElement) {
     this.element = element
     this.interactor = new ScolaInteractor(element.body)
     this.reset()
+  }
+
+  public add (item: Struct): void {
+    const key = item[this.element.lister.key]
+    const row = this.element.elements.get(key)
+
+    if (row !== undefined) {
+      this.addRow(row)
+    }
   }
 
   public addRow (row: ScolaTableRowElement): void {
@@ -51,74 +77,82 @@ export class ScolaTableSelector {
       this.rows.push(row)
       this.updateRow(row, true)
       this.sortRows()
+      this.dispatch('select')
     }
   }
 
-  public clearRows (): void {
-    this.rows.forEach((row) => {
-      this.updateRow(row, false)
-    })
+  public clear (): void {
+    const { rows } = this
 
     this.firstSelectedRow = undefined
     this.lastSelectedRow = undefined
     this.rows = []
+
+    rows.forEach((row) => {
+      this.updateRow(row, false)
+    })
   }
 
   public connect (): void {
     this.interactor.observe(this.handleInteractorBound)
     this.interactor.connect()
+    this.addEventListeners()
     this.scrollTo()
   }
 
-  public deleteRow (item: Struct): void {
+  public delete (item: Struct): void {
     const index = this.rows.findIndex((findRow) => {
-      return item[this.element.lister.key] === findRow.datamap[this.element.lister.key]
+      return item[this.element.lister.key] === findRow.data[this.element.lister.key]
     })
 
     if (index > -1) {
-      const row = this.rows[index]
+      this.deleteRow(this.rows[index])
+    }
+  }
 
-      if (row === this.firstSelectedRow) {
-        this.firstSelectedRow = undefined
-      }
+  public deleteRow (row: ScolaTableRowElement): void {
+    if (row === this.firstSelectedRow) {
+      this.firstSelectedRow = undefined
+    }
 
-      if (row === this.lastSelectedRow) {
-        this.lastSelectedRow = undefined
-      }
+    if (row === this.lastSelectedRow) {
+      this.lastSelectedRow = undefined
+    }
 
-      this.rows.splice(index, 1)
+    this.rows.splice(this.rows.indexOf(row), 1)
 
-      if (
-        this.firstSelectedRow === undefined &&
-        this.lastSelectedRow === undefined
-      ) {
-        if (row.previousElementSibling instanceof ScolaTableRowElement) {
-          this.selectRows(row.previousElementSibling)
-        } else if (row.nextElementSibling instanceof ScolaTableRowElement) {
-          this.selectRows(row.nextElementSibling)
-        }
+    if (
+      this.firstSelectedRow === undefined &&
+      this.lastSelectedRow === undefined
+    ) {
+      if (row.nextElementSibling instanceof ScolaTableRowElement) {
+        this.selectRows(row.nextElementSibling)
+      } else if (row.previousElementSibling instanceof ScolaTableRowElement) {
+        this.selectRows(row.previousElementSibling)
       }
     }
   }
 
   public disconnect (): void {
     this.interactor.disconnect()
+    this.removeEventListeners()
   }
 
   public getItemsByRow (): Struct[] {
     return this.rows.map((row) => {
-      return row.datamap
+      return row.data
     })
   }
 
   public getKeysByRow (): unknown[] {
     return this.rows.map((row) => {
-      return row.datamap[this.element.lister.key]
+      return row.data[this.element.lister.key]
     })
   }
 
   public reset (): void {
     this.all = this.element.hasAttribute('sc-select-all')
+    this.first = this.element.hasAttribute('sc-select-first')
     this.interactor.keyboard = this.interactor.hasKeyboard
     this.interactor.mouse = this.interactor.hasMouse
     this.interactor.touch = this.interactor.hasTouch
@@ -191,10 +225,12 @@ export class ScolaTableSelector {
       this.updateRow(row, true)
       this.sortRows()
     }
+
+    this.dispatch('select')
   }
 
   public toggleAll (force: boolean): void {
-    this.clearRows()
+    this.clear()
 
     if (force) {
       this.element.body.childNodes.forEach((row) => {
@@ -209,6 +245,14 @@ export class ScolaTableSelector {
         }
       })
     }
+
+    this.dispatch('select')
+  }
+
+  protected addEventListeners (): void {
+    this.element.addEventListener('sc-table-select-add', this.handleAddBound)
+    this.element.addEventListener('sc-table-select-clear', this.handleClearBound)
+    this.element.addEventListener('sc-table-select-delete', this.handleDeleteBound)
   }
 
   protected calculatePageSize (): number {
@@ -302,6 +346,22 @@ export class ScolaTableSelector {
     return null
   }
 
+  protected handleAdd (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      this.add(event.detail)
+    }
+  }
+
+  protected handleClear (): void {
+    this.clear()
+  }
+
+  protected handleDelete (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      this.delete(event.detail)
+    }
+  }
+
   protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
       case 'click':
@@ -326,6 +386,8 @@ export class ScolaTableSelector {
   }
 
   protected handleInteractorClickMouse (event: MouseEvent): boolean {
+    let handled = false
+
     const row = this.determineRow(event)
 
     if (row !== null) {
@@ -337,8 +399,8 @@ export class ScolaTableSelector {
           !event.ctrlKey &&
           !event.shiftKey
         ) {
-          if (row.datamap.type === 'node') {
-            this.element.tree?.toggle(row.datamap)
+          if (row.data.type === 'node') {
+            this.element.tree?.toggle(row.data)
           }
 
           if (
@@ -346,17 +408,18 @@ export class ScolaTableSelector {
             this.rows.length > 1
           ) {
             this.selectRows(row)
-            this.dispatch('select', event)
-            return true
+            handled = true
           }
         }
       }
     }
 
-    return false
+    return handled
   }
 
   protected handleInteractorClickTouch (event: TouchEvent): boolean {
+    let handled = false
+
     const row = this.determineRow(event)
 
     if (row !== null) {
@@ -364,21 +427,19 @@ export class ScolaTableSelector {
         this.mode === 'many' ||
         this.mode === 'one'
       ) {
-        if (row.datamap.type === 'node') {
-          this.element.tree?.toggle(row.datamap)
+        if (row.data.type === 'node') {
+          this.element.tree?.toggle(row.data)
         }
 
         this.selectRows(row)
-        this.dispatch('select', event)
-        return true
+        handled = true
+      } else {
+        this.toggle(row)
+        handled = true
       }
-
-      this.toggle(row)
-      this.dispatch('select', event)
-      return true
     }
 
-    return false
+    return handled
   }
 
   protected handleInteractorDblclick (event: ScolaInteractorEvent): boolean {
@@ -431,20 +492,21 @@ export class ScolaTableSelector {
   }
 
   protected handleInteractorStartKeyboardDefault (event: KeyboardEvent): boolean {
+    let handled = false
     let lastRow: ScolaTableRowElement | null = null
 
     if (
       this.interactor.isArrowEnd(event) &&
-      this.firstSelectedRow?.datamap.type === 'node'
+      this.firstSelectedRow?.data.type === 'node'
     ) {
       lastRow = this.firstSelectedRow
-      this.element.tree?.toggle(lastRow.datamap, true)
+      this.element.tree?.toggle(lastRow.data, true)
     } else if (
       this.interactor.isArrowStart(event) &&
-      this.firstSelectedRow?.datamap.type === 'node'
+      this.firstSelectedRow?.data.type === 'node'
     ) {
       lastRow = this.firstSelectedRow
-      this.element.tree?.toggle(lastRow.datamap, false)
+      this.element.tree?.toggle(lastRow.data, false)
     } else if (this.interactor.isKeyForward(event)) {
       lastRow = this.findNext(this.lastRow) ?? this.lastRow ?? null
     } else if (this.interactor.isKeyBack(event)) {
@@ -460,22 +522,11 @@ export class ScolaTableSelector {
     }
 
     if (lastRow !== null) {
-      const dispatch = (
-        lastRow !== this.lastSelectedRow ||
-        this.rows.length > 1
-      )
-
-      this.selectRows(lastRow, lastRow)
-      lastRow.focus()
-
-      if (dispatch) {
-        this.dispatch('select', event)
-      }
-
-      return true
+      this.selectRows(lastRow)
+      handled = true
     }
 
-    return false
+    return handled
   }
 
   protected handleInteractorStartKeyboardDelete (event: Event): boolean {
@@ -484,8 +535,8 @@ export class ScolaTableSelector {
   }
 
   protected handleInteractorStartKeyboardEnter (event: Event): boolean {
-    if (this.firstSelectedRow?.datamap.type === 'node') {
-      this.element.tree?.toggle(this.firstSelectedRow.datamap)
+    if (this.firstSelectedRow?.data.type === 'node') {
+      this.element.tree?.toggle(this.firstSelectedRow.data)
     }
 
     this.dispatch('selectenter', event)
@@ -493,6 +544,7 @@ export class ScolaTableSelector {
   }
 
   protected handleInteractorStartKeyboardShift (event: KeyboardEvent): boolean {
+    let handled = false
     let lastRow: ScolaTableRowElement | null = null
 
     if (this.interactor.isKeyForward(event)) {
@@ -511,16 +563,15 @@ export class ScolaTableSelector {
 
     if (lastRow !== null) {
       this.selectRows(lastRow, this.firstSelectedRow)
-      this.dispatch('select', event)
-      return true
+      handled = true
     }
 
-    return false
+    return handled
   }
 
   protected handleInteractorStartKeyboardSpace (event: Event): boolean {
-    if (this.firstSelectedRow?.datamap.type === 'node') {
-      this.element.tree?.toggle(this.firstSelectedRow.datamap)
+    if (this.firstSelectedRow?.data.type === 'node') {
+      this.element.tree?.toggle(this.firstSelectedRow.data)
     }
 
     this.dispatch('selectspace', event)
@@ -528,16 +579,16 @@ export class ScolaTableSelector {
   }
 
   protected handleInteractorStartKeyboardStart (event: KeyboardEvent): boolean {
+    let handled = false
+
     if (this.interactor.isKeyForward(event)) {
       if (this.element.body.firstElementChild instanceof ScolaTableRowElement) {
-        this.selectRows(this.element.body.firstElementChild, this.element.body.firstElementChild)
-        this.element.body.firstElementChild.focus()
-        this.dispatch('select', event)
-        return true
+        this.selectRows(this.element.body.firstElementChild)
+        handled = true
       }
     }
 
-    return false
+    return handled
   }
 
   protected handleInteractorStartKeyboardTab (): boolean {
@@ -554,6 +605,8 @@ export class ScolaTableSelector {
   }
 
   protected handleInteractorStartMouse (event: MouseEvent): boolean {
+    let handled = false
+
     const row = this.determineRow(event)
 
     if (row !== null) {
@@ -564,8 +617,7 @@ export class ScolaTableSelector {
           this.selectRows(row)
         }
 
-        this.dispatch('select', event)
-        return true
+        handled = true
       } else if (this.mode === 'many') {
         if (event.ctrlKey) {
           this.toggle(row)
@@ -575,25 +627,29 @@ export class ScolaTableSelector {
           this.selectRows(row)
         }
 
-        this.dispatch('select', event)
-        return true
-      }
-
-      if (event.shiftKey) {
-        this.selectRows(row, this.firstSelectedRow)
+        handled = true
       } else {
-        this.toggle(row)
-      }
+        if (event.shiftKey) {
+          this.selectRows(row, this.firstSelectedRow)
+        } else {
+          this.toggle(row)
+        }
 
-      this.dispatch('select', event)
-      return true
+        handled = true
+      }
     }
 
-    return false
+    return handled
+  }
+
+  protected removeEventListeners (): void {
+    this.element.removeEventListener('sc-table-select-add', this.handleAddBound)
+    this.element.removeEventListener('sc-table-select-clear', this.handleClearBound)
+    this.element.removeEventListener('sc-table-select-delete', this.handleDeleteBound)
   }
 
   protected selectRows (lastRow: ScolaTableRowElement, firstRow = lastRow): void {
-    this.clearRows()
+    this.clear()
     this.firstSelectedRow = firstRow
     this.lastSelectedRow = lastRow
 
@@ -614,7 +670,12 @@ export class ScolaTableSelector {
     }
 
     this.sortRows()
+    this.dispatch('select')
     this.scrollTo()
+
+    window.requestAnimationFrame(() => {
+      lastRow.focus()
+    })
   }
 
   protected sortRows (): void {

@@ -92,6 +92,12 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
 
   public update (): void {
     this.updateElements()
+    this.updateAttributes()
+    this.propagator.dispatch('update')
+  }
+
+  public updateAttributes (): void {
+    this.setAttribute('sc-updated', Date.now().toString())
   }
 
   public updateElements (): void {

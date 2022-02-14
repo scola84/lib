@@ -29,7 +29,11 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   public url: URL
 
+  protected handleErrorBound = this.handleError.bind(this)
+
   protected handleMessageBound = this.handleMessage.bind(this)
+
+  protected handleOpenBound = this.handleOpen.bind(this)
 
   protected handleVisibilityChangeBound = this.handleVisibilityChange.bind(this)
 
@@ -47,57 +51,12 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
     })
   }
 
-  public connectedCallback (): void {
-    this.mutator.connect()
-    this.observer.connect()
-    this.propagator.connect()
-    this.addEventListeners()
-    this.start()
-  }
-
-  public disconnectedCallback (): void {
-    this.mutator.disconnect()
-    this.observer.disconnect()
-    this.propagator.disconnect()
-    this.removeEventListeners()
-    this.stop()
-  }
-
-  public getData (): void {}
-
-  public reset (): void {
-    this.event = this.getAttribute('sc-event') ?? ''
-    this.url = new URL(`${this.origin}${this.getAttribute('sc-path') ?? ''}`)
-  }
-
-  public restart (): void {
-    this.tries += 1
-
-    window.setTimeout(() => {
-      this.start()
-    }, this.tries * 1000)
-  }
-
-  public setData (): void {}
-
-  public start (): void {
-    this.source = new EventSource(this.url.toString())
-    this.source.onerror = this.handleError.bind(this)
-    this.source.onopen = this.handleOpen.bind(this)
-
-    this.event
-      .trim()
-      .split(/\s+/u)
-      .forEach((event) => {
-        this.source?.addEventListener(event, this.handleMessageBound)
-      })
-  }
-
-  public stop (): void {
+  public close (): void {
     if (this.source !== undefined) {
       this.source.close()
       this.source.onerror = null
       this.source.onopen = null
+      this.source = undefined
     }
 
     this.event
@@ -108,6 +67,54 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
       })
   }
 
+  public connectedCallback (): void {
+    this.mutator.connect()
+    this.observer.connect()
+    this.propagator.connect()
+    this.addEventListeners()
+    this.open()
+  }
+
+  public disconnectedCallback (): void {
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+    this.removeEventListeners()
+    this.close()
+  }
+
+  public getData (): void {}
+
+  public open (): EventSource {
+    this.source = new EventSource(this.url.toString())
+    this.source.onerror = this.handleErrorBound
+    this.source.onopen = this.handleOpenBound
+
+    this.event
+      .trim()
+      .split(/\s+/u)
+      .forEach((event) => {
+        this.source?.addEventListener(event, this.handleMessageBound)
+      })
+
+    return this.source
+  }
+
+  public reopen (): void {
+    this.tries += 1
+
+    window.setTimeout(() => {
+      this.open()
+    }, this.tries * 1000)
+  }
+
+  public reset (): void {
+    this.event = this.getAttribute('sc-event') ?? ''
+    this.url = new URL(`${this.origin}${this.getAttribute('sc-path') ?? ''}`)
+  }
+
+  public setData (): void {}
+
   public update (): void {}
 
   protected addEventListeners (): void {
@@ -115,8 +122,8 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
   }
 
   protected handleError (): void {
-    this.stop()
-    this.restart()
+    this.close()
+    this.reopen()
   }
 
   protected handleMessage (event: MessageEvent<string>): void {
@@ -133,8 +140,8 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   protected handleVisibilityChange (): void {
     if (document.visibilityState === 'visible') {
-      this.stop()
-      this.start()
+      this.close()
+      this.open()
     }
   }
 

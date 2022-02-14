@@ -217,13 +217,9 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   }
 
   public update (): void {
-    this.propagator.dispatch('beforeupdate', [{}])
     this.disable()
     this.enable()
-
-    window.requestAnimationFrame(() => {
-      this.propagator.dispatch('update', [{}])
-    })
+    this.propagator.dispatch('update')
   }
 
   public updateStyle (): void {

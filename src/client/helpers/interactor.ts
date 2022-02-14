@@ -35,7 +35,7 @@ type DirectionY = 'down' | 'none' | 'up'
 
 type Target = 'element' | 'window'
 
-type Type = 'auxclick' | 'click' | 'dblclick' | 'end' | 'move' | 'none' | 'start' | 'wheel' | 'zoom'
+type Type = 'click' | 'contextmenu' | 'dblclick' | 'end' | 'move' | 'none' | 'start' | 'wheel' | 'zoom'
 
 type InteractorEvent = KeyboardEvent | MouseEvent | TouchEvent | WheelEvent
 
@@ -123,6 +123,8 @@ export class ScolaInteractor {
 
     return this.event.endT
   }
+
+  protected handleContextmenuBound = this.handleContextmenu.bind(this)
 
   protected handleKeydownBound = this.handleKeydown.bind(this)
 
@@ -268,6 +270,7 @@ export class ScolaInteractor {
     }
 
     if (this.mouse) {
+      target.addEventListener('contextmenu', this.handleContextmenuBound)
       target.addEventListener('mousedown', this.handleMousedownBound)
 
       if (target !== this.element) {
@@ -429,18 +432,20 @@ export class ScolaInteractor {
     return this.element
   }
 
-  protected handleAuxclick (event: InteractorEvent, position: Position): void {
+  protected handleContextmenu (event: MouseEvent): void {
     this.event = this.createEvent(event)
-    this.event.endX = position.clientX
-    this.event.endY = position.clientY
-    this.event.startEdges = this.determineEdges(position)
+    this.event.endX = event.clientX
+    this.event.endY = event.clientY
+    this.event.startEdges = this.determineEdges(event)
     this.event.startX = this.event.endX
     this.event.startY = this.event.endY
-    this.event.type = 'auxclick'
+    this.event.type = 'contextmenu'
 
     const handled = this.callback?.(this.event)
 
     if (handled === true) {
+      event.preventDefault()
+
       if (this.cancel) {
         event.stopPropagation()
       }
@@ -498,14 +503,10 @@ export class ScolaInteractor {
 
   protected handleMousedown (event: MouseEvent): void {
     if (!this.touch) {
-      if (event.button === 0) {
-        if (this.isDblclick(event, event)) {
-          this.handleDblclick(event, event)
-        } else {
-          this.handleStartOnePointer(event, event)
-        }
-      } else if (event.button === 1) {
-        this.handleAuxclick(event, event)
+      if (this.isDblclick(event, event)) {
+        this.handleDblclick(event, event)
+      } else {
+        this.handleStartOnePointer(event, event)
       }
     }
   }

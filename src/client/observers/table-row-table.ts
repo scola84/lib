@@ -6,7 +6,7 @@ export function tableRowTable (observer: ScolaTableRowElement, observable: Scola
 
   if (parent !== null) {
     const index = observable.lister.items.findIndex((findItem) => {
-      return observer.datamap[parent.lister.key] === findItem[observable.lister.key]
+      return observer.data[parent.lister.key] === findItem[observable.lister.key]
     })
 
     if (index > -1) {

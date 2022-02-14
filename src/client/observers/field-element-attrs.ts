@@ -1,7 +1,7 @@
 import type { ScolaElement } from '../elements/element'
-import type { ScolaInputElement } from '../elements/input'
+import type { ScolaFieldElement } from '../elements/field'
 
-export function inputAttrs (observer: ScolaInputElement, observable: ScolaElement): void {
+export function fieldElementAttrs (observer: ScolaFieldElement, observable: ScolaElement): void {
   const value = observable.getAttribute(observer.name)
 
   if (value !== null) {

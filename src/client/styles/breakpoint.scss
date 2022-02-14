@@ -16,6 +16,7 @@
 
   [sc-border],
   [sc-border-bottom],
+  [sc-border-bottom-inside],
   [sc-border-end],
   [sc-border-start],
   [sc-border-top],
@@ -68,6 +69,14 @@
   [sc-border-top~="@#{$name}"],
   [sc-border-y~="@#{$name}"] {
     border-top-style: solid;
+  }
+
+  [sc-border-none~="first@#{$name}"]:first-of-type {
+    border-color: transparent;
+  }
+
+  [sc-border-none~="last@#{$name}"]:last-of-type {
+    border-color: transparent;
   }
 
   [sc-display~="@#{$name}"] {

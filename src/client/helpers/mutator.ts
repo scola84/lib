@@ -33,6 +33,14 @@ export class ScolaMutator {
     this.preset()
   }
 
+  public static definePresets (observers: Struct<Struct>): void {
+    Object
+      .entries(observers)
+      .forEach(([name, preset]) => {
+        ScolaMutator.presets[name] = preset
+      })
+  }
+
   public connect (): void {
     this.addEventListeners()
   }
@@ -46,7 +54,7 @@ export class ScolaMutator {
       .getAttribute('sc-preset')
       ?.split(' ')
       .forEach((name) => {
-        this.setAttributes(ScolaMutator.presets[name])
+        this.setAttributes(ScolaMutator.presets[name], false)
       })
   }
 
@@ -89,7 +97,7 @@ export class ScolaMutator {
     return map
   }
 
-  public setAttributes (data: unknown): void {
+  public setAttributes (data: unknown, overwrite = true): void {
     if (isStruct(data)) {
       Object
         .entries(data)
@@ -98,13 +106,19 @@ export class ScolaMutator {
         })
         .forEach(([name, value]) => {
           const attrName = String(name)
-          const attrValue = String(value)
-          const castValue = cast(value)
 
-          if (typeof castValue === 'boolean') {
-            this.element.toggleAttribute(attrName, castValue)
-          } else if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
-            this.element.setAttribute(attrName, attrValue)
+          if (
+            overwrite ||
+            !this.element.hasAttribute(attrName)
+          ) {
+            const attrValue = String(value)
+            const castValue = cast(value)
+
+            if (typeof castValue === 'boolean') {
+              this.element.toggleAttribute(attrName, castValue)
+            } else if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
+              this.element.setAttribute(attrName, attrValue)
+            }
           }
         })
     }

@@ -24,9 +24,15 @@ export class ScolaObserver {
 
   public save: string[]
 
+  public state: string[]
+
   public storage: Storage
 
   public target: string[]
+
+  public wait: boolean
+
+  protected handleHiddenBound = this.handleHidden.bind(this)
 
   protected saveStateBound = this.saveState.bind(this)
 
@@ -40,15 +46,11 @@ export class ScolaObserver {
     }
   }
 
-  public static define (name: string, handler: Handler): void {
-    ScolaObserver.observers[name] = handler
-  }
-
   public static defineObservers (observers: Struct<Handler>): void {
     Object
       .entries(observers)
       .forEach(([name, handler]) => {
-        ScolaObserver.define(name, handler)
+        ScolaObserver.observers[name] = handler
       })
   }
 
@@ -57,6 +59,15 @@ export class ScolaObserver {
 
     if (this.observer !== undefined) {
       this.connectSelf(...this.observer)
+    }
+
+    if (
+      this.element.hasAttribute('sc-onhide') ||
+      this.element.hasAttribute('sc-onshow')
+    ) {
+      this.connectSelf(this.handleHiddenBound, [
+        'hidden'
+      ])
     }
 
     if (this.save.length > 0) {
@@ -88,11 +99,24 @@ export class ScolaObserver {
       ?.trim()
       .split(/\s+/u) ?? []
 
+    this.state = this.element
+      .getAttribute('sc-observe-state')
+      ?.split(' ') ?? []
+
     this.storage = ScolaObserver.storage[this.element.getAttribute('sc-observe-storage') ?? 'session'] ?? window.sessionStorage
 
-    this.target = this.element.getAttribute('sc-observe-target')
+    this.target = this.element
+      .getAttribute('sc-observe-target')
       ?.trim()
       .split(/\s+/u) ?? []
+
+    this.wait = this.element.hasAttribute('sc-observe-wait')
+  }
+
+  public toggle (force: boolean): void {
+    this.state.forEach((state) => {
+      this.element.toggleAttribute(state, force)
+    })
   }
 
   protected connectSelf (callback: (mutations: MutationRecord[]) => void, filter?: string[]): void {
@@ -108,12 +132,9 @@ export class ScolaObserver {
 
   protected connectTargets (): void {
     this.target.forEach((target) => {
-      const {
-        filter = undefined,
-        name = '',
-        selector = ''
-      } = ((/(?<name>.+)@(?<p>(?<filter>[^;]*);)?(?<selector>.+)/u).exec(target))?.groups ?? {}
-
+      const [nameAndFilterString, selector] = target.split('@')
+      const [name, filterString = undefined] = nameAndFilterString.split('?')
+      const filter = filterString?.split('&')
       const callback = ScolaObserver.observers[name]
 
       if (
@@ -123,18 +144,30 @@ export class ScolaObserver {
         document
           .querySelectorAll(selector)
           .forEach((element) => {
-            const observer = new MutationObserver(callback.bind(null, this.element, element))
+            const handler = callback.bind(null, this.element, element)
+            const observer = new MutationObserver(handler)
 
             observer.observe(element, {
-              attributeFilter: filter?.split(','),
+              attributeFilter: filter,
               attributes: true
             })
 
             this.observers.push(observer)
-            window.requestAnimationFrame(callback.bind(null, this.element, element, []))
+
+            if (!this.wait) {
+              handler([])
+            }
           })
       }
     })
+  }
+
+  protected handleHidden (): void {
+    if (this.element.hasAttribute('hidden')) {
+      this.element.propagator.dispatch('hide', [this.element.getData()])
+    } else {
+      this.element.propagator.dispatch('show', [this.element.getData()])
+    }
   }
 
   protected loadState (): void {

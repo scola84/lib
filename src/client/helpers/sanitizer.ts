@@ -12,6 +12,9 @@ export class ScolaSanitizer {
       isValidAttribute(tag, name, value) || (
         name === 'is' &&
         ScolaSanitizer.prefix.test(value)
+      ) || (
+        name === 'name' &&
+        value === 'id'
       ) || ScolaSanitizer.prefix.test(name)
     )
   }

@@ -1,4 +1,3 @@
-import { absorb, isStruct } from '../../common'
 import { ScolaBreakpoint } from '../helpers/breakpoint'
 import type { ScolaElement } from './element'
 import type { ScolaEvent } from '../helpers/event'
@@ -8,7 +7,6 @@ import type { ScolaInteractorEvent } from '../helpers/interactor'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -54,8 +52,6 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public breakpoint: ScolaBreakpoint
 
-  public datamap: Struct = {}
-
   public immediate = true
 
   public indexer: ScolaIndexer
@@ -71,6 +67,8 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   public propagator: ScolaPropagator
 
   public top: Top
+
+  public transition: boolean
 
   public trigger?: MouseEvent
 
@@ -133,13 +131,9 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.removeEventListeners()
   }
 
-  public getData (): Struct {
-    return absorb(this.dataset, this.datamap, true)
-  }
+  public getData (): void {}
 
   public hide (): void {
-    this.propagator.dispatch('beforehide', [this.getData()])
-
     if (this.immediate) {
       this.style.setProperty('opacity', '0')
       this.style.setProperty('transition-property', 'none')
@@ -161,18 +155,14 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.interactor.touch = this.interactor.hasTouch
     this.left = (this.breakpoint.parse('sc-left') as Left | null) ?? 'center'
     this.top = (this.breakpoint.parse('sc-top') as Top | null) ?? 'center'
+    this.transition = this.breakpoint.parse('sc-transition') === ''
   }
 
   public setData (data: unknown): void {
-    if (isStruct(data)) {
-      this.datamap = data
-    }
-
     this.propagator.set(data)
   }
 
   public show (): void {
-    this.propagator.dispatch('beforeshow', [this.getData()])
     this.style.removeProperty('display')
     this.style.setProperty('opacity', '0')
     this.indexer.set(this)
@@ -337,16 +327,28 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     return style
   }
 
+  protected changeFocus (): void {
+    const element = this.querySelector('[sc-focus~="popup"]')
+
+    if (element instanceof HTMLElement) {
+      element.focus()
+    }
+  }
+
   protected finalize (): void {
-    this.immediate = false
+    if (this.transition) {
+      this.immediate = false
+    }
 
     if (this.hasAttribute('hidden')) {
       this.style.setProperty('display', 'none', 'important')
       this.indexer.remove(this)
-      this.propagator.dispatch('hide', [this.getData()])
+      this.propagator.dispatch('afterhide')
     } else {
-      this.propagator.dispatch('show', [this.getData()])
+      this.propagator.dispatch('aftershow')
     }
+
+    this.changeFocus()
   }
 
   protected handleBreakpoint (): void {

@@ -8,8 +8,8 @@ import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
-    'sc-requester-start': CustomEvent
-    'sc-requester-stop': CustomEvent
+    'sc-requester-abort': CustomEvent
+    'sc-requester-send': CustomEvent
     'sc-requester-toggle': CustomEvent
   }
 }
@@ -25,11 +25,12 @@ type Method =
   | 'TRACE'
 
 type Enctype =
+  | 'application/json'
   | 'application/x-www-form-urlencoded'
   | 'multipart/form-data'
 
 interface Request {
-  body: FormData | URLSearchParams | null
+  body: FormData | URLSearchParams | string | null
   method: Method
   url: string | null
 }
@@ -59,15 +60,15 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   public xhr?: XMLHttpRequest
 
+  protected handleAbortBound = this.handleAbort.bind(this)
+
   protected handleErrorBound = this.handleError.bind(this)
 
   protected handleLoadendBound = this.handleLoadend.bind(this)
 
   protected handleProgressBound = this.handleProgress.bind(this)
 
-  protected handleStartBound = this.handleStart.bind(this)
-
-  protected handleStopBound = this.handleStop.bind(this)
+  protected handleSendBound = this.handleSend.bind(this)
 
   protected handleToggleBound = this.handleToggle.bind(this)
 
@@ -86,6 +87,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     })
   }
 
+  public abort (): void {
+    this.xhr?.abort()
+    this.xhr = undefined
+  }
+
   public connectedCallback (): void {
     this.mutator.connect()
     this.observer.connect()
@@ -94,16 +100,16 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
     if (!this.wait) {
       this.wait = true
-      this.start()
+      this.send()
     }
   }
 
   public disconnectedCallback (): void {
+    this.abort()
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
     this.removeEventListeners()
-    this.stop()
   }
 
   public getData (): void {}
@@ -116,32 +122,31 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     this.wait = this.hasAttribute('sc-wait')
   }
 
-  public setData (): void {}
-
-  public start (options?: Struct): void {
-    if (this.xhr === undefined) {
-      this.send(this.createRequest(options))
+  public send (options?: Struct): void {
+    if (window.navigator.onLine) {
+      if (this.xhr === undefined) {
+        this.sendRequest(this.createRequest(options))
+      }
+    } else {
+      this.propagator.dispatch('offline', [options])
     }
   }
 
-  public stop (): void {
-    this.xhr?.abort()
-    this.xhr = undefined
-  }
+  public setData (): void {}
 
   public toggle (options?: Struct): void {
     if (this.xhr === undefined) {
-      this.start(options)
+      this.send(options)
     } else {
-      this.stop()
+      this.abort()
     }
   }
 
   public update (): void {}
 
   protected addEventListeners (): void {
-    this.addEventListener('sc-requester-start', this.handleStartBound)
-    this.addEventListener('sc-requester-stop', this.handleStopBound)
+    this.addEventListener('sc-requester-send', this.handleSendBound)
+    this.addEventListener('sc-requester-abort', this.handleAbortBound)
     this.addEventListener('sc-requester-toggle', this.handleToggleBound)
   }
 
@@ -149,18 +154,13 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     const method = String(options?.method ?? this.method) as Method
 
     let { url } = this as { url: string | null }
-    let body: FormData | URLSearchParams | null = null
+    let body: FormData | URLSearchParams | string | null = null
 
     if (method === 'GET') {
       url = this.createRequestUrl({
         ...this.view?.view?.params,
         ...options
       })
-    } else if (
-      options?.body instanceof FormData ||
-      options?.body instanceof URLSearchParams
-    ) {
-      ({ body } = options)
     } else {
       body = this.createRequestBody({
         ...this.view?.view?.params,
@@ -175,14 +175,21 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }
   }
 
-  protected createRequestBody (data?: Struct): FormData | URLSearchParams | null {
-    let body: FormData | URLSearchParams | null = null
-
-    if (this.enctype === 'application/x-www-form-urlencoded') {
-      body = new URLSearchParams()
-    } else {
-      body = new FormData()
+  protected createRequestBody (data?: Struct): FormData | URLSearchParams | string | null {
+    switch (this.enctype) {
+      case 'application/json':
+        return this.createRequestBodyJson(data)
+      case 'application/x-www-form-urlencoded':
+        return this.createRequestBodyFormUrlencoded(data)
+      case 'multipart/form-data':
+        return this.createRequestBodyFormData(data)
+      default:
+        return null
     }
+  }
+
+  protected createRequestBodyFormData (data?: Struct): FormData {
+    const body = new FormData()
 
     Object
       .entries(absorb(this.dataset, data))
@@ -197,18 +204,42 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       /* eslint-enable @typescript-eslint/indent */
       .forEach(([key, values]) => {
         values.forEach((value) => {
-          if (
-            value instanceof File &&
-            body instanceof FormData
-          ) {
+          if (value instanceof File) {
             body.append(String(key), value, value.name)
           } else {
-            body?.append(String(key), String(value))
+            body.append(String(key), String(value))
           }
         })
       })
 
     return body
+  }
+
+  protected createRequestBodyFormUrlencoded (data?: Struct): URLSearchParams {
+    const body = new URLSearchParams()
+
+    Object
+      .entries(absorb(this.dataset, data))
+      .map<[string, unknown[]]>(([key, value]) => {
+      /* eslint-disable @typescript-eslint/indent */
+        if (isArray(value)) {
+          return [key, value]
+        }
+
+        return [key, [value]]
+      })
+      /* eslint-enable @typescript-eslint/indent */
+      .forEach(([key, values]) => {
+        values.forEach((value) => {
+          body.append(String(key), String(value))
+        })
+      })
+
+    return body
+  }
+
+  protected createRequestBodyJson (data?: Struct): string {
+    return JSON.stringify(data)
   }
 
   protected createRequestUrl (data?: Struct): string | null {
@@ -233,6 +264,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }
 
     return url.toString()
+  }
+
+  protected handleAbort (): void {
+    this.abort()
   }
 
   protected handleError (error: unknown): void {
@@ -261,7 +296,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       } else {
         this.propagator.dispatch('error', [{
           body: this.xhr.responseText,
-          code: `err_${this.xhr.status}`,
+          code: `err_requester_${this.xhr.status}`,
           message: this.xhr.statusText
         }], event)
 
@@ -269,9 +304,13 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
           this.propagator.dispatch('errordata', [data], event)
         }
       }
-    }
 
-    this.xhr = undefined
+      this.xhr.upload.onprogress = null
+      this.xhr.onerror = null
+      this.xhr.onloadend = null
+      this.xhr.onprogress = null
+      this.xhr = undefined
+    }
   }
 
   protected handleProgress (event: ProgressEvent): void {
@@ -279,16 +318,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     this.setAttribute('sc-total', event.total.toString())
   }
 
-  protected handleStart (event: CustomEvent): void {
+  protected handleSend (event: CustomEvent): void {
     if (isStruct(event.detail)) {
-      this.start(event.detail)
-    } else {
-      this.start()
+      this.send(event.detail)
     }
-  }
-
-  protected handleStop (): void {
-    this.stop()
   }
 
   protected handleToggle (event: CustomEvent): void {
@@ -300,22 +333,22 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   }
 
   protected removeEventListeners (): void {
-    this.removeEventListener('sc-requester-start', this.handleStartBound)
-    this.removeEventListener('sc-requester-stop', this.handleStopBound)
+    this.removeEventListener('sc-requester-abort', this.handleAbortBound)
+    this.removeEventListener('sc-requester-send', this.handleSendBound)
     this.removeEventListener('sc-requester-toggle', this.handleToggleBound)
   }
 
-  protected send (request: Request): void {
+  protected sendRequest (request: Request): void {
     if (request.url !== null) {
       this.xhr = new window.XMLHttpRequest()
 
       if (request.method !== 'GET') {
-        this.xhr.upload.addEventListener('progress', this.handleProgressBound)
+        this.xhr.upload.onprogress = this.handleProgressBound
       }
 
-      this.xhr.addEventListener('error', this.handleErrorBound)
-      this.xhr.addEventListener('loadend', this.handleLoadendBound)
-      this.xhr.addEventListener('progress', this.handleProgressBound)
+      this.xhr.onerror = this.handleErrorBound
+      this.xhr.onloadend = this.handleLoadendBound
+      this.xhr.onprogress = this.handleProgressBound
 
       try {
         this.xhr.open(request.method, request.url)

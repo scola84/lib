@@ -1,27 +1,30 @@
 import type { Primitive, Struct } from '../../common'
 import { isPrimitive, isStruct } from '../../common'
-import type { ScolaInputElement } from '../elements/input'
+import type { ScolaFieldElement } from '../elements/field'
 import { ScolaInteractor } from './interactor'
 import type { ScolaInteractorEvent } from './interactor'
-import type { ScolaSelectElement } from '../elements/select'
-import type { ScolaTextAreaElement } from '../elements/textarea'
 import { debounce } from 'throttle-debounce'
 
 export class ScolaField {
   public debounce = 0
 
-  public element: ScolaInputElement | ScolaSelectElement | ScolaTextAreaElement
+  public element: ScolaFieldElement
 
   public interactor: ScolaInteractor
 
-  protected handleInputBound = this.handleInput.bind(this)
+  protected handleInputBound = debounce(0, this.handleInput.bind(this))
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
 
-  public constructor (element: ScolaInputElement | ScolaSelectElement | ScolaTextAreaElement) {
+  public constructor (element: ScolaFieldElement) {
     this.element = element
     this.interactor = new ScolaInteractor(element)
     this.reset()
+  }
+
+  public clear (): void {
+    this.element.value = ''
+    this.element.update()
   }
 
   public connect (): void {
@@ -46,6 +49,8 @@ export class ScolaField {
   }
 
   public setData (data: unknown): void {
+    this.clearError()
+
     if (isPrimitive(data)) {
       this.setValue(data)
     } else if (isStruct(data)) {
@@ -70,7 +75,7 @@ export class ScolaField {
   protected clearError (): void {
     if (this.element.error !== undefined) {
       this.element.error = undefined
-      this.element.toggleAttribute('sc-error', false)
+      this.element.toggleAttribute('sc-field-error', false)
     }
   }
 
@@ -172,8 +177,9 @@ export class ScolaField {
   }
 
   protected setError (error: Struct): void {
+    this.handleInputBound.cancel()
     this.element.error = error
-    this.element.toggleAttribute('sc-error', true)
+    this.element.toggleAttribute('sc-field-error', true)
   }
 
   protected setFile (file: File): void {
@@ -196,7 +202,5 @@ export class ScolaField {
     } else {
       this.element.value = value.toString()
     }
-
-    this.element.update()
   }
 }

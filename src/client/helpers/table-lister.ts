@@ -35,9 +35,9 @@ export class ScolaTableLister {
 
   public requestData?: Struct
 
-  public sortKey: string
+  public sortKey: string[]
 
-  public sortOrder: string
+  public sortOrder: string[]
 
   public threshold: number
 
@@ -58,7 +58,7 @@ export class ScolaTableLister {
     this.reset()
   }
 
-  public addItem (item: Struct): void {
+  public add (item: Struct): void {
     let key = item[this.key]
 
     if (key === undefined) {
@@ -86,7 +86,7 @@ export class ScolaTableLister {
     }
   }
 
-  public clearItems (): void {
+  public clear (): void {
     this.items = []
   }
 
@@ -94,7 +94,7 @@ export class ScolaTableLister {
     this.addEventListeners()
   }
 
-  public deleteItem (item: Struct): void {
+  public delete (item: Struct): void {
     const key = item[this.key]
 
     const index = this.items.findIndex((findItem) => {
@@ -121,7 +121,7 @@ export class ScolaTableLister {
 
     if (
       this.filter !== '' ||
-      this.sortKey !== ''
+      this.sortKey.length > 0
     ) {
       items = [...items]
 
@@ -129,7 +129,7 @@ export class ScolaTableLister {
         items = this.filterItems(items, this.intl.parse(this.filter))
       }
 
-      if (this.sortKey !== '') {
+      if (this.sortKey.length > 0) {
         items = this.sortItems(items, this.sortKey, this.sortOrder)
       }
     }
@@ -141,7 +141,7 @@ export class ScolaTableLister {
     return Array.from(this.element.body
       .querySelectorAll<ScolaTableRowElement>('tr'))
       .map((row) => {
-        return row.datamap
+        return row.data
       })
   }
 
@@ -149,13 +149,25 @@ export class ScolaTableLister {
     return Array.from(this.element.body
       .querySelectorAll<ScolaTableRowElement>('tr'))
       .map((row) => {
-        return row.datamap[this.element.lister.key]
+        return row.data[this.element.lister.key]
       })
+  }
+
+  public put (item: Struct): void {
+    const key = item[this.key]
+
+    const index = this.items.findIndex((findItem) => {
+      return key === findItem[this.key]
+    })
+
+    if (index > -1) {
+      this.items[index] = item
+    }
   }
 
   public request (): void {
     this.setLimit()
-    this.clearItems()
+    this.clear()
     this.requestItems()
   }
 
@@ -192,8 +204,8 @@ export class ScolaTableLister {
     this.filter = this.element.getAttribute('sc-list-filter') ?? ''
     this.key = this.element.getAttribute('sc-list-key') ?? 'id'
     this.mode = this.element.getAttribute('sc-list-mode') as Mode
-    this.sortKey = this.element.getAttribute('sc-list-sort-key') ?? ''
-    this.sortOrder = this.element.getAttribute('sc-list-sort-order') ?? ''
+    this.sortKey = this.element.getAttribute('sc-list-sort-key')?.split(' ') ?? []
+    this.sortOrder = this.element.getAttribute('sc-list-sort-order')?.split(' ') ?? []
     this.threshold = Number(this.element.getAttribute('sc-list-threshold') ?? 0.75)
   }
 
@@ -218,7 +230,7 @@ export class ScolaTableLister {
   protected addItems (items: unknown[]): void {
     items.forEach((item) => {
       if (isStruct(item)) {
-        this.addItem(item)
+        this.add(item)
       }
     })
 
@@ -295,23 +307,39 @@ export class ScolaTableLister {
     }
   }
 
-  protected sortItems (items: Struct[], sortKey: string, sortOrder: string): Struct[] {
-    let factor = 1
+  protected sortItems (items: Struct[], sortKey: string[], sortOrder: string[]): Struct[] {
+    items.sort((left, right) => {
+      let equivalence = 0
+      let key = ''
+      let order = 1
+      let lv = ''
+      let rv = ''
 
-    if (sortOrder === 'desc') {
-      factor = -1
-    }
+      for (let index = 0; index < sortKey.length; index += 1) {
+        key = sortKey[index]
+        lv = String(left[key])
+        rv = String(right[key])
 
-    return items.sort((left, right) => {
-      const lv = String(left[sortKey])
-      const rv = String(right[sortKey])
+        if (sortOrder[index] === 'desc') {
+          order = -1
+        } else {
+          order = 1
+        }
 
-      const compare = factor * lv.localeCompare(rv, undefined, {
-        numeric: true,
-        sensitivity: 'base'
-      })
+        equivalence = order * lv.localeCompare(rv, undefined, {
+          caseFirst: 'upper',
+          numeric: true,
+          sensitivity: 'variant'
+        })
 
-      return compare
+        if (equivalence !== 0) {
+          return equivalence
+        }
+      }
+
+      return equivalence
     })
+
+    return items
   }
 }

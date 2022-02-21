@@ -1,4 +1,4 @@
-import { cast, isPrimitive, isStruct } from '../../common'
+import { cast, isArray, isPrimitive, isStruct } from '../../common'
 import { ScolaDragger } from '../helpers/dragger'
 import { ScolaDropper } from '../helpers/dropper'
 import type { ScolaElement } from './element'
@@ -12,17 +12,18 @@ import { ScolaTableSelector } from '../helpers/table-selector'
 import { ScolaTableSorter } from '../helpers/table-sorter'
 import { ScolaTableTree } from '../helpers/table-tree'
 import type { Struct } from '../../common'
-import { isArray } from 'lodash'
 
 declare global {
   interface HTMLElementEventMap {
     'sc-table-add': CustomEvent
+    'sc-table-add-all': CustomEvent
     'sc-table-clear': CustomEvent
     'sc-table-delete': CustomEvent
-    'sc-table-export': CustomEvent
+    'sc-table-delete-all': CustomEvent
+    'sc-table-dispatch': CustomEvent
     'sc-table-put': CustomEvent
+    'sc-table-put-all': CustomEvent
     'sc-table-request': CustomEvent
-    'sc-table-request-items': CustomEvent
   }
 }
 
@@ -55,21 +56,25 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
   public wait: boolean
 
+  protected handleAddAllBound = this.handleAddAll.bind(this)
+
   protected handleAddBound = this.handleAdd.bind(this)
 
   protected handleClearBound = this.handleClear.bind(this)
 
+  protected handleDeleteAllBound = this.handleDeleteAll.bind(this)
+
   protected handleDeleteBound = this.handleDelete.bind(this)
 
-  protected handleExportBound = this.handleExport.bind(this)
+  protected handleDispatchBound = this.handleDispatch.bind(this)
 
   protected handleObserverBound = this.handleObserver.bind(this)
+
+  protected handlePutAllBound = this.handlePutAll.bind(this)
 
   protected handlePutBound = this.handlePut.bind(this)
 
   protected handleRequestBound = this.handleRequest.bind(this)
-
-  protected handleRequestItemsBound = this.handleRequestItems.bind(this)
 
   public constructor () {
     super()
@@ -114,8 +119,16 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     })
   }
 
-  public add (item: Struct): void {
-    this.lister.add(item)
+  public add (item: unknown): void {
+    if (isStruct(item)) {
+      this.lister.add(item)
+    }
+  }
+
+  public addAll (items: unknown[]): void {
+    items.forEach((item) => {
+      this.add(item)
+    })
   }
 
   public clear (): void {
@@ -153,14 +166,22 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       this.wait = true
 
       window.requestAnimationFrame(() => {
-        this.lister.request()
+        this.lister.start()
       })
     }
   }
 
-  public delete (item: Struct): void {
-    this.selector?.delete(item)
-    this.lister.delete(item)
+  public delete (item: unknown): void {
+    if (isStruct(item)) {
+      this.selector?.delete(item)
+      this.lister.delete(item)
+    }
+  }
+
+  public deleteAll (items: unknown[]): void {
+    items.forEach((item) => {
+      this.delete(item)
+    })
   }
 
   public disconnectedCallback (): void {
@@ -174,15 +195,23 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.removeEventListeners()
   }
 
-  public getData (): unknown {
+  public getData (): Struct {
     return {
       selected: this.selector?.rows.length,
       ...this.selector?.firstRow?.data
     }
   }
 
-  public put (item: Struct): void {
-    this.lister.put(item)
+  public put (item: unknown): void {
+    if (isStruct(item)) {
+      this.lister.put(item)
+    }
+  }
+
+  public putAll (items: unknown[]): void {
+    items.forEach((item) => {
+      this.put(item)
+    })
   }
 
   public reset (): void {
@@ -220,7 +249,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.setAttribute('sc-updated', Date.now().toString())
 
     if (this.body.hasAttribute('tabindex')) {
-      if (this.selector?.rows.length === 0) {
+      if (this.selector?.focusedRow === undefined) {
         this.body.setAttribute('tabindex', '0')
       } else {
         this.body.setAttribute('tabindex', '-1')
@@ -251,12 +280,14 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
   protected addEventListeners (): void {
     this.addEventListener('sc-table-add', this.handleAddBound)
+    this.addEventListener('sc-table-add-all', this.handleAddAllBound)
     this.addEventListener('sc-table-clear', this.handleClearBound)
     this.addEventListener('sc-table-delete', this.handleDeleteBound)
-    this.addEventListener('sc-table-export', this.handleExportBound)
+    this.addEventListener('sc-table-delete-all', this.handleDeleteAllBound)
+    this.addEventListener('sc-table-dispatch', this.handleDispatchBound)
     this.addEventListener('sc-table-put', this.handlePutBound)
+    this.addEventListener('sc-table-put-all', this.handlePutAllBound)
     this.addEventListener('sc-table-request', this.handleRequestBound)
-    this.addEventListener('sc-table-request-items', this.handleRequestItemsBound)
   }
 
   protected appendBodyCells (row: HTMLTableRowElement, item: Struct): void {
@@ -414,6 +445,13 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     }
   }
 
+  protected handleAddAll (event: CustomEvent): void {
+    if (isArray(event.detail)) {
+      this.addAll(event.detail)
+      this.update()
+    }
+  }
+
   protected handleClear (): void {
     this.clear()
   }
@@ -435,24 +473,42 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     }
   }
 
-  protected handleExport (event: CustomEvent): void {
-    if (isStruct(event.detail)) {
-      if (cast(event.detail.diff) === true) {
-        this.propagator.dispatch('exportdiff', [{
-          added: Array.from(this.lister.added),
-          deleted: Array.from(this.lister.deleted)
-        }], event)
-      } else if (cast(event.detail.list) === true) {
-        this.propagator.dispatch('exportlist', [{
-          items: this.lister.getItemsByRow(),
-          keys: this.lister.getKeysByRow()
-        }], event)
-      } else if (cast(event.detail.select) === true) {
-        this.propagator.dispatch('exportselect', [{
-          items: this.selector?.getItemsByRow(),
-          keys: this.selector?.getKeysByRow()
-        }], event)
+  protected handleDeleteAll (event: CustomEvent): void {
+    if (isArray(event.detail)) {
+      this.deleteAll(event.detail)
+      this.update()
+    }
+  }
+
+  protected handleDispatch (event: CustomEvent): void {
+    if (
+      isStruct(event.detail) &&
+      typeof event.detail.data === 'string' &&
+      typeof event.detail.on === 'string'
+    ) {
+      let data: unknown = null
+
+      switch (event.detail.data) {
+        case 'lister-diff':
+          data = this.lister.getDiff()
+          break
+        case 'lister-items':
+          data = this.lister.getItemsByRow()
+          break
+        case 'lister-keys':
+          data = this.lister.getKeysByRow()
+          break
+        case 'selector-items':
+          data = this.selector?.getItemsByRow()
+          break
+        case 'selector-keys':
+          data = this.selector?.getKeysByRow()
+          break
+        default:
+          break
       }
+
+      this.propagator.dispatch(event.detail.on, [data], event)
     }
   }
 
@@ -490,6 +546,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
   protected handleObserverSelectHandle (): void {
     this.removeAttribute('sc-select-all')
+    this.lister.reset()
     this.selector?.reset()
     this.selector?.clear()
   }
@@ -501,23 +558,27 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     }
   }
 
-  protected handleRequest (): void {
-    this.clear()
-    this.lister.request()
+  protected handlePutAll (event: CustomEvent): void {
+    if (isArray(event.detail)) {
+      this.putAll(event.detail)
+      this.update()
+    }
   }
 
-  protected handleRequestItems (): void {
-    this.lister.requestItems()
+  protected handleRequest (): void {
+    this.lister.request()
   }
 
   protected removeEventListeners (): void {
     this.removeEventListener('sc-table-add', this.handleAddBound)
+    this.removeEventListener('sc-table-add-all', this.handleAddAllBound)
     this.removeEventListener('sc-table-clear', this.handleClearBound)
     this.removeEventListener('sc-table-delete', this.handleDeleteBound)
-    this.removeEventListener('sc-table-export', this.handleExportBound)
+    this.removeEventListener('sc-table-delete-all', this.handleDeleteAllBound)
+    this.removeEventListener('sc-table-dispatch', this.handleDispatchBound)
     this.removeEventListener('sc-table-put', this.handlePutBound)
+    this.removeEventListener('sc-table-put-all', this.handlePutAllBound)
     this.removeEventListener('sc-table-request', this.handleRequestBound)
-    this.removeEventListener('sc-table-request-items', this.handleRequestItemsBound)
   }
 
   protected selectBody (): HTMLTableSectionElement {

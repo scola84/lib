@@ -9,13 +9,14 @@ export class ScolaSanitizer {
 
   public static checkAttribute (tag: string, name: string, value: string): boolean {
     return (
-      isValidAttribute(tag, name, value) || (
+      (
+        isValidAttribute(tag, name, value)
+      ) || (
         name === 'is' &&
         ScolaSanitizer.prefix.test(value)
       ) || (
-        name === 'name' &&
-        value === 'id'
-      ) || ScolaSanitizer.prefix.test(name)
+        ScolaSanitizer.prefix.test(name)
+      )
     )
   }
 

@@ -53,10 +53,12 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   public update (): void {}
 
   protected changeFocus (): void {
-    const element = this.querySelector('[sc-focus~="fieldset"]')
+    if (!this.hasAttribute('hidden')) {
+      const element = this.querySelector('[sc-focus~="fieldset"]')
 
-    if (element instanceof HTMLElement) {
-      element.focus()
+      if (element instanceof HTMLElement) {
+        element.focus()
+      }
     }
   }
 

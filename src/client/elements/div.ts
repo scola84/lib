@@ -115,17 +115,10 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   public getData (): void {}
 
   public reset (): void {
-    if (
-      this.hasAttribute('sc-cancel') ||
-      this.hasAttribute('sc-onclick') ||
-      this.hasAttribute('sc-oncontextmenu') ||
-      this.hasAttribute('sc-ondblclick')
-    ) {
-      this.interactor.cancel = this.hasAttribute('sc-cancel')
-      this.interactor.keyboard = this.interactor.hasKeyboard
-      this.interactor.mouse = this.interactor.hasMouse
-      this.interactor.touch = this.interactor.hasTouch
-    }
+    this.interactor.cancel = this.hasAttribute('sc-cancel')
+    this.interactor.keyboard = this.interactor.hasKeyboard
+    this.interactor.mouse = this.interactor.hasMouse
+    this.interactor.touch = this.interactor.hasTouch
   }
 
   public setData (data: unknown): void {

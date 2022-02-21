@@ -1,6 +1,6 @@
 import type { ScolaTableElement } from '../elements/table'
 import type { Struct } from '../../common'
-import { isArray } from 'lodash'
+import { isArray } from '../../common'
 
 export class ScolaTableTree {
   public element: ScolaTableElement

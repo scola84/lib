@@ -3,8 +3,6 @@ import type { ScolaObserver } from '../helpers/observer'
 import type { ScolaPropagator } from '../helpers/propagator'
 
 export interface ScolaElement extends HTMLElement {
-  data?: unknown
-
   mutator: ScolaMutator
 
   observer: ScolaObserver
@@ -12,8 +10,6 @@ export interface ScolaElement extends HTMLElement {
   propagator: ScolaPropagator
 
   getData: () => unknown
-
-  reset: () => void
 
   setData: (data: unknown) => void
 

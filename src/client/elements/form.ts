@@ -160,10 +160,12 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected changeFocus (): void {
-    const element = this.querySelector('[sc-focus~="form"]')
+    if (!this.hasAttribute('hidden')) {
+      const element = this.querySelector('[sc-focus~="form"]')
 
-    if (element instanceof HTMLElement) {
-      element.focus()
+      if (element instanceof HTMLElement) {
+        element.focus()
+      }
     }
   }
 
@@ -212,10 +214,12 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected toggleDisabled (): void {
+    const force = this.hasAttribute('hidden')
+
     this
       .querySelectorAll('fieldset')
       .forEach((element) => {
-        element.toggleAttribute('disabled', this.hasAttribute('hidden'))
+        element.toggleAttribute('disabled', force)
       })
   }
 }

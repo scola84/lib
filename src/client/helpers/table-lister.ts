@@ -31,6 +31,8 @@ export class ScolaTableLister {
 
   public limit: number
 
+  public locked: boolean
+
   public mode: Mode
 
   public requestData?: Struct
@@ -41,15 +43,9 @@ export class ScolaTableLister {
 
   public threshold: number
 
-  public get cursor (): unknown {
-    return this.items.slice(-1)[0]?.cursor
-  }
+  protected handleScrollXBound = this.handleScrollX.bind(this)
 
-  public get offset (): unknown {
-    return this.items.length
-  }
-
-  protected handleScrollBound = this.handleScroll.bind(this)
+  protected handleScrollYBound = this.handleScrollY.bind(this)
 
   public constructor (element: ScolaTableElement) {
     this.element = element
@@ -116,6 +112,13 @@ export class ScolaTableLister {
     this.removeEventListeners()
   }
 
+  public getDiff (): Struct {
+    return {
+      added: Array.from(this.added),
+      deleted: Array.from(this.deleted)
+    }
+  }
+
   public getItems (): Struct[] {
     let { items } = this
 
@@ -166,16 +169,11 @@ export class ScolaTableLister {
   }
 
   public request (): void {
-    this.setLimit()
-    this.clear()
-    this.requestItems()
-  }
-
-  public requestItems (): void {
     if (
-      this.requestData !== undefined ||
       this.limit === 0 ||
-      (this.items.length % this.limit) > 0
+      this.locked ||
+      (this.items.length % this.limit) > 0 ||
+      this.requestData !== undefined
     ) {
       return
     }
@@ -186,10 +184,10 @@ export class ScolaTableLister {
 
     switch (this.mode) {
       case 'cursor':
-        this.requestData.cursor = this.cursor
+        this.requestData.cursor = this.items.slice(-1)[0]?.cursor
         break
       case 'offset':
-        this.requestData.offset = this.offset
+        this.requestData.offset = this.items.length
         break
       default:
         break
@@ -203,6 +201,7 @@ export class ScolaTableLister {
     this.factor = Number(this.element.getAttribute('sc-list-item-factor') ?? 2)
     this.filter = this.element.getAttribute('sc-list-filter') ?? ''
     this.key = this.element.getAttribute('sc-list-key') ?? 'id'
+    this.locked = this.element.hasAttribute('sc-list-locked')
     this.mode = this.element.getAttribute('sc-list-mode') as Mode
     this.sortKey = this.element.getAttribute('sc-list-sort-key')?.split(' ') ?? []
     this.sortOrder = this.element.getAttribute('sc-list-sort-order')?.split(' ') ?? []
@@ -221,9 +220,16 @@ export class ScolaTableLister {
     this.requestData = undefined
   }
 
+  public start (): void {
+    this.limit = this.calculateLimit()
+    this.request()
+  }
+
   protected addEventListeners (): void {
-    if (this.axis !== null) {
-      this.element.body.addEventListener('scroll', this.handleScrollBound)
+    if (this.axis === 'x') {
+      this.element.body.addEventListener('scroll', this.handleScrollXBound)
+    } else if (this.axis === 'y') {
+      this.element.body.addEventListener('scroll', this.handleScrollYBound)
     }
   }
 
@@ -235,6 +241,32 @@ export class ScolaTableLister {
     })
 
     this.element.update()
+  }
+
+  protected calculateLimit (): number {
+    let bodySize: number | null = null
+    let limit = 0
+
+    if (
+      this.axis === 'x' &&
+      this.element.body.clientWidth > 0
+    ) {
+      bodySize = this.element.body.clientWidth
+    } else if (
+      this.axis === 'y' &&
+      this.element.body.clientHeight > 0
+    ) {
+      bodySize = this.element.body.clientHeight
+    }
+
+    const fontSize = parseFloat(window.getComputedStyle(this.element).getPropertyValue('font-size'))
+    const itemSize = Number(this.breakpoint.parse('sc-list-item-size') ?? 2)
+
+    if (bodySize !== null) {
+      limit = Math.floor(bodySize / (itemSize * fontSize)) * this.factor
+    }
+
+    return limit
   }
 
   protected filterItems (items: Struct[], queries: Struct[]): Struct[] {
@@ -257,53 +289,41 @@ export class ScolaTableLister {
     })
   }
 
-  protected handleScroll (): void {
+  protected handleScrollX (): void {
+    const {
+      clientWidth: bodyWidth,
+      scrollWidth: bodyScrollWidth,
+      scrollLeft: bodyScrollLeft
+    } = this.element.body
+
+    if (
+      bodyScrollWidth > bodyWidth &&
+      (bodyScrollWidth - bodyWidth - bodyScrollLeft) < (bodyWidth * this.threshold)
+    ) {
+      this.request()
+    }
+  }
+
+  protected handleScrollY (): void {
     const {
       clientHeight: bodyHeight,
-      clientWidth: bodyWidth,
       scrollHeight: bodyScrollHeight,
-      scrollWidth: bodyScrollWidth,
-      scrollLeft: bodyScrollLeft,
       scrollTop: bodyScrollTop
     } = this.element.body
 
-    if ((
+    if (
       bodyScrollHeight > bodyHeight &&
       (bodyScrollHeight - bodyHeight - bodyScrollTop) < (bodyHeight * this.threshold)
-    ) || (
-      bodyScrollWidth > bodyWidth &&
-      (bodyScrollWidth - bodyWidth - bodyScrollLeft) < (bodyWidth * this.threshold)
-    )) {
-      this.requestItems()
+    ) {
+      this.request()
     }
   }
 
   protected removeEventListeners (): void {
-    if (this.axis !== null) {
-      this.element.body.removeEventListener('scroll', this.handleScrollBound)
-    }
-  }
-
-  protected setLimit (): void {
-    let bodySize: number | null = null
-
-    if (
-      this.axis === 'x' &&
-      this.element.body.clientWidth > 0
-    ) {
-      bodySize = this.element.body.clientWidth
-    } else if (
-      this.axis === 'y' &&
-      this.element.body.clientHeight > 0
-    ) {
-      bodySize = this.element.body.clientHeight
-    }
-
-    const fontSize = parseFloat(window.getComputedStyle(this.element).getPropertyValue('font-size'))
-    const itemSize = Number(this.breakpoint.parse('sc-list-item-size') ?? 2)
-
-    if (bodySize !== null) {
-      this.limit = Math.floor(bodySize / (itemSize * fontSize)) * this.factor
+    if (this.axis === 'x') {
+      this.element.body.removeEventListener('scroll', this.handleScrollXBound)
+    } else if (this.axis === 'y') {
+      this.element.body.removeEventListener('scroll', this.handleScrollYBound)
     }
   }
 

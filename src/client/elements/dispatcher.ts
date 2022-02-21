@@ -93,7 +93,15 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     this
       .querySelectorAll('param')
       .forEach((param) => {
-        events.push(...this.propagator.parseEvents(param.value, param.dataset))
+        let base: Struct | undefined = {
+          ...param.dataset
+        }
+
+        if (Object.keys(base).length === 0) {
+          base = undefined
+        }
+
+        events.push(...this.propagator.parseEvents(param.value, base))
       })
 
     return events

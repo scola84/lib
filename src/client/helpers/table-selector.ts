@@ -20,11 +20,13 @@ export class ScolaTableSelector {
 
   public element: ScolaTableElement
 
-  public first: boolean
-
   public firstSelectedRow?: ScolaTableRowElement
 
+  public focusedRow?: ScolaTableRowElement
+
   public interactor: ScolaInteractor
+
+  public keyboardMode: string
 
   public lastSelectedRow?: ScolaTableRowElement
 
@@ -91,6 +93,10 @@ export class ScolaTableSelector {
     rows.forEach((row) => {
       this.updateRow(row, false)
     })
+
+    if (this.focusedRow !== undefined) {
+      this.focusRow(this.focusedRow, false)
+    }
   }
 
   public connect (): void {
@@ -122,6 +128,7 @@ export class ScolaTableSelector {
     this.rows.splice(this.rows.indexOf(row), 1)
 
     if (
+      this.mode !== 'toggle' &&
       this.firstSelectedRow === undefined &&
       this.lastSelectedRow === undefined
     ) {
@@ -152,10 +159,10 @@ export class ScolaTableSelector {
 
   public reset (): void {
     this.all = this.element.hasAttribute('sc-select-all')
-    this.first = this.element.hasAttribute('sc-select-first')
     this.interactor.keyboard = this.interactor.hasKeyboard
     this.interactor.mouse = this.interactor.hasMouse
     this.interactor.touch = this.interactor.hasTouch
+    this.keyboardMode = this.element.getAttribute('sc-select-keyboard-mode') ?? 'select'
     this.mode = (this.element.getAttribute('sc-select-mode') as Mode | null) ?? 'one'
   }
 
@@ -205,15 +212,16 @@ export class ScolaTableSelector {
     })
 
     if (index > -1) {
+      this.rows.splice(index, 1)
+
       if (this.firstSelectedRow === row) {
-        this.firstSelectedRow = undefined
+        this.firstSelectedRow = this.firstRow
       }
 
       if (this.lastSelectedRow === row) {
-        this.lastSelectedRow = undefined
+        this.lastSelectedRow = this.lastRow
       }
 
-      this.rows.splice(index, 1)
       this.updateRow(row, false)
     } else {
       if (this.firstSelectedRow === undefined) {
@@ -226,7 +234,7 @@ export class ScolaTableSelector {
       this.sortRows()
     }
 
-    this.dispatch('select')
+    this.dispatch('toggle')
   }
 
   public toggleAll (force: boolean): void {
@@ -246,7 +254,7 @@ export class ScolaTableSelector {
       })
     }
 
-    this.dispatch('select')
+    this.dispatch('toggle')
   }
 
   protected addEventListeners (): void {
@@ -344,6 +352,20 @@ export class ScolaTableSelector {
     }
 
     return null
+  }
+
+  protected focusRow (row: ScolaTableRowElement, focus: boolean): void {
+    this.focusedRow?.blur()
+    this.focusedRow?.setAttribute('tabindex', '-1')
+    this.focusedRow = undefined
+
+    if (focus) {
+      this.focusedRow = row
+      this.focusedRow.setAttribute('tabindex', '0')
+      this.focusedRow.focus()
+    }
+
+    this.element.updateAttributes()
   }
 
   protected handleAdd (event: CustomEvent): void {
@@ -458,29 +480,132 @@ export class ScolaTableSelector {
   }
 
   protected handleInteractorStartKeyboard (event: KeyboardEvent): boolean {
+    if (this.keyboardMode === 'focus') {
+      return this.handleInteractorStartKeyboardFocus(event)
+    } else if (this.keyboardMode === 'select') {
+      return this.handleInteractorStartKeyboardSelect(event)
+    }
+
+    return false
+  }
+
+  protected handleInteractorStartKeyboardFocus (event: KeyboardEvent): boolean {
+    let handled = false
+
+    if (this.focusedRow === undefined) {
+      handled = this.handleInteractorStartKeyboardFocusStart(event)
+    } else if (event.code === 'Enter') {
+      handled = this.handleInteractorStartKeyboardFocusEnter()
+    } else if (event.code === 'Space') {
+      handled = this.handleInteractorStartKeyboardFocusSpace()
+    } else if (!event.ctrlKey) {
+      if (event.shiftKey) {
+        if (
+          this.mode === 'many' ||
+          this.mode === 'toggle'
+        ) {
+          handled = this.handleInteractorStartKeyboardFocusShift(event)
+        }
+      } else {
+        handled = this.handleInteractorStartKeyboardFocusDefault(event)
+      }
+    }
+
+    return handled
+  }
+
+  protected handleInteractorStartKeyboardFocusDefault (event: KeyboardEvent): boolean {
+    let handled = false
+    let row: ScolaTableRowElement | null = null
+
+    if (this.interactor.isKeyForward(event)) {
+      if (this.focusedRow?.nextElementSibling instanceof ScolaTableRowElement) {
+        row = this.focusedRow.nextElementSibling
+      }
+    } else if (this.interactor.isKeyBack(event)) {
+      if (this.focusedRow?.previousElementSibling instanceof ScolaTableRowElement) {
+        row = this.focusedRow.previousElementSibling
+      }
+    }
+
+    if (row !== null) {
+      this.focusRow(row, true)
+      handled = true
+    }
+
+    return handled
+  }
+
+  protected handleInteractorStartKeyboardFocusEnter (): boolean {
+    if (document.activeElement instanceof ScolaTableRowElement) {
+      if (this.mode === 'toggle') {
+        this.toggle(document.activeElement)
+      } else {
+        this.selectRows(document.activeElement)
+      }
+    }
+
+    if (this.firstSelectedRow?.data.type === 'node') {
+      this.element.tree?.toggle(this.firstSelectedRow.data)
+    }
+
+    return true
+  }
+
+  protected handleInteractorStartKeyboardFocusShift (event: KeyboardEvent): boolean {
+    return this.handleInteractorStartKeyboardSelectShift(event)
+  }
+
+  protected handleInteractorStartKeyboardFocusSpace (): boolean {
+    if (document.activeElement instanceof ScolaTableRowElement) {
+      if (this.mode === 'toggle') {
+        this.toggle(document.activeElement)
+      } else {
+        this.selectRows(document.activeElement)
+      }
+    }
+
+    if (this.firstSelectedRow?.data.type === 'node') {
+      this.element.tree?.toggle(this.firstSelectedRow.data)
+    }
+
+    return true
+  }
+
+  protected handleInteractorStartKeyboardFocusStart (event: KeyboardEvent): boolean {
+    let handled = false
+
+    if (this.element.body.firstElementChild instanceof ScolaTableRowElement) {
+      if (this.interactor.isKeyForward(event)) {
+        this.focusRow(this.element.body.firstElementChild, true)
+        handled = true
+      }
+    }
+
+    return handled
+  }
+
+  protected handleInteractorStartKeyboardSelect (event: KeyboardEvent): boolean {
     let handled = false
 
     if (this.firstSelectedRow === undefined) {
-      handled = this.handleInteractorStartKeyboardStart(event)
+      handled = this.handleInteractorStartKeyboardSelectStart(event)
     } else if (event.code === 'Delete') {
-      handled = this.handleInteractorStartKeyboardDelete(event)
-    } else if (event.code === 'Enter') {
-      handled = this.handleInteractorStartKeyboardEnter(event)
-    } else if (event.code === 'Space') {
-      handled = this.handleInteractorStartKeyboardSpace(event)
+      handled = this.handleInteractorStartKeyboardSelectDelete(event)
     } else if (event.code === 'Tab') {
       if (!event.shiftKey) {
         handled = this.handleInteractorStartKeyboardTab()
       }
     } else if (!event.ctrlKey) {
-      if (
-        event.shiftKey && (
+      if (event.shiftKey) {
+        if (
           this.mode === 'many' ||
           this.mode === 'toggle'
-        )) {
-        handled = this.handleInteractorStartKeyboardShift(event)
+        ) {
+          handled = this.handleInteractorStartKeyboardSelectShift(event)
+        }
       } else {
-        handled = this.handleInteractorStartKeyboardDefault(event)
+        handled = this.handleInteractorStartKeyboardSelectDefault(event)
       }
     }
 
@@ -491,23 +616,11 @@ export class ScolaTableSelector {
     return handled
   }
 
-  protected handleInteractorStartKeyboardDefault (event: KeyboardEvent): boolean {
+  protected handleInteractorStartKeyboardSelectDefault (event: KeyboardEvent): boolean {
     let handled = false
     let lastRow: ScolaTableRowElement | null = null
 
-    if (
-      this.interactor.isArrowEnd(event) &&
-      this.firstSelectedRow?.data.type === 'node'
-    ) {
-      lastRow = this.firstSelectedRow
-      this.element.tree?.toggle(lastRow.data, true)
-    } else if (
-      this.interactor.isArrowStart(event) &&
-      this.firstSelectedRow?.data.type === 'node'
-    ) {
-      lastRow = this.firstSelectedRow
-      this.element.tree?.toggle(lastRow.data, false)
-    } else if (this.interactor.isKeyForward(event)) {
+    if (this.interactor.isKeyForward(event)) {
       lastRow = this.findNext(this.lastRow) ?? this.lastRow ?? null
     } else if (this.interactor.isKeyBack(event)) {
       lastRow = this.findPrevious(this.firstRow) ?? this.firstRow ?? null
@@ -529,21 +642,12 @@ export class ScolaTableSelector {
     return handled
   }
 
-  protected handleInteractorStartKeyboardDelete (event: Event): boolean {
+  protected handleInteractorStartKeyboardSelectDelete (event: Event): boolean {
     this.dispatch('selectdelete', event)
     return true
   }
 
-  protected handleInteractorStartKeyboardEnter (event: Event): boolean {
-    if (this.firstSelectedRow?.data.type === 'node') {
-      this.element.tree?.toggle(this.firstSelectedRow.data)
-    }
-
-    this.dispatch('selectenter', event)
-    return true
-  }
-
-  protected handleInteractorStartKeyboardShift (event: KeyboardEvent): boolean {
+  protected handleInteractorStartKeyboardSelectShift (event: KeyboardEvent): boolean {
     let handled = false
     let lastRow: ScolaTableRowElement | null = null
 
@@ -569,16 +673,7 @@ export class ScolaTableSelector {
     return handled
   }
 
-  protected handleInteractorStartKeyboardSpace (event: Event): boolean {
-    if (this.firstSelectedRow?.data.type === 'node') {
-      this.element.tree?.toggle(this.firstSelectedRow.data)
-    }
-
-    this.dispatch('selectspace', event)
-    return true
-  }
-
-  protected handleInteractorStartKeyboardStart (event: KeyboardEvent): boolean {
+  protected handleInteractorStartKeyboardSelectStart (event: KeyboardEvent): boolean {
     let handled = false
 
     if (this.interactor.isKeyForward(event)) {
@@ -594,9 +689,9 @@ export class ScolaTableSelector {
   protected handleInteractorStartKeyboardTab (): boolean {
     let handled = false
 
-    const button = this.rows[0].querySelector('button')
+    const button = this.firstRow?.querySelector('button')
 
-    if (button !== null) {
+    if (button instanceof HTMLButtonElement) {
       handled = document.activeElement !== button
       button.focus()
     }
@@ -674,7 +769,7 @@ export class ScolaTableSelector {
     this.scrollTo()
 
     window.requestAnimationFrame(() => {
-      lastRow.focus()
+      this.focusRow(lastRow, true)
     })
   }
 
@@ -685,17 +780,7 @@ export class ScolaTableSelector {
   }
 
   protected updateRow (row: ScolaTableRowElement, active: boolean): void {
-    if (active) {
-      row.toggleAttribute('sc-active', true)
-
-      if (this.rows.length === 1) {
-        row.setAttribute('tabindex', '0')
-      }
-    } else {
-      row.toggleAttribute('sc-active', false)
-      row.setAttribute('tabindex', '-1')
-    }
-
+    row.toggleAttribute('sc-active', active)
     this.element.updateAttributes()
   }
 }

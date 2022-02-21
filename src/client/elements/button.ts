@@ -26,6 +26,8 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
 
+  protected handleObserverBound = this.handleObserver.bind(this)
+
   public constructor () {
     super()
     this.interactor = new ScolaInteractor(this)
@@ -52,6 +54,11 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
 
   public connectedCallback (): void {
     this.interactor.observe(this.handleInteractorBound)
+
+    this.observer.observe(this.handleObserverBound, [
+      'hidden'
+    ])
+
     this.dragger?.connect()
     this.dropper?.connect()
     this.interactor.connect()
@@ -69,7 +76,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     this.propagator.disconnect()
   }
 
-  public getData (): Struct | undefined {
+  public getData (): Struct {
     return {
       ...this.dataset,
       ...this.data
@@ -77,17 +84,10 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   }
 
   public reset (): void {
-    if (
-      this.hasAttribute('sc-cancel') ||
-      this.hasAttribute('sc-onclick') ||
-      this.hasAttribute('sc-oncontextmenu') ||
-      this.hasAttribute('sc-ondblclick')
-    ) {
-      this.interactor.cancel = this.hasAttribute('sc-cancel')
-      this.interactor.keyboard = this.interactor.hasKeyboard
-      this.interactor.mouse = this.interactor.hasMouse
-      this.interactor.touch = this.interactor.hasTouch
-    }
+    this.interactor.cancel = this.hasAttribute('sc-cancel')
+    this.interactor.keyboard = this.interactor.hasKeyboard
+    this.interactor.mouse = this.interactor.hasMouse
+    this.interactor.touch = this.interactor.hasTouch
   }
 
   public setData (data: unknown): void {
@@ -100,6 +100,14 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   }
 
   public update (): void {}
+
+  protected changeFocus (): void {
+    if (!this.hasAttribute('hidden')) {
+      if (this.getAttribute('sc-focus')?.includes('button') === true) {
+        this.focus()
+      }
+    }
+  }
 
   protected handleInteractor (event: ScolaInteractorEvent): boolean {
     switch (event.type) {
@@ -143,5 +151,9 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     }
 
     return handled
+  }
+
+  protected handleObserver (): void {
+    this.changeFocus()
   }
 }

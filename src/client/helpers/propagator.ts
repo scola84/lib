@@ -92,7 +92,7 @@ export class ScolaPropagator {
     return String(error)
   }
 
-  public parseEvents (events: string, base: Struct = {}): ScolaPropagatorEvent[] {
+  public parseEvents (events: string, base?: Struct): ScolaPropagatorEvent[] {
     return events
       .trim()
       .split(' ')
@@ -108,7 +108,7 @@ export class ScolaPropagator {
               ...params,
               [key]: value
             }
-          }, base)
+          }, base) ?? base
 
         return {
           data,

@@ -34,6 +34,8 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   public items: Struct[] = []
 
+  public locked = false
+
   public mutator: ScolaMutator
 
   public observer: ScolaObserver
@@ -218,26 +220,30 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
       this.immediate = false
     }
 
-    this.body.style.removeProperty('transition-timing-function')
+    if (!this.locked) {
+      this.body.style.removeProperty('transition-timing-function')
 
-    const elementBox = this.getBoundingClientRect()
+      const elementBox = this.getBoundingClientRect()
 
-    Array
-      .from(this.body.children)
-      .forEach((element) => {
-        const itemBox = element.getBoundingClientRect()
+      Array
+        .from(this.body.children)
+        .forEach((element) => {
+          const itemBox = element.getBoundingClientRect()
 
-        const hidden = !(
-          itemBox.right <= elementBox.right &&
+          const hidden = !(
+            itemBox.right <= elementBox.right &&
           itemBox.left >= elementBox.left
-        )
+          )
 
-        if (hidden) {
-          element.toggleAttribute('hidden', true)
-        } else {
-          element.toggleAttribute('hidden', false)
-        }
-      })
+          if (hidden) {
+            element.toggleAttribute('hidden', true)
+          } else {
+            element.toggleAttribute('hidden', false)
+          }
+        })
+    }
+
+    this.locked = false
   }
 
   protected findPointer (element: HTMLElement): number {
@@ -547,7 +553,9 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   }
 
   protected handleResizer (): void {
-    this.update()
+    this.immediate = true
+    this.locked = true
+    this.moveToPointer()
   }
 
   protected handleTransitionend (event: TransitionEvent): void {
@@ -744,7 +752,12 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   }
 
   protected transform (translateX: number, translateY: number): void {
-    this.body.style.setProperty('transition-property', 'transform')
+    if (this.immediate) {
+      this.body.style.setProperty('transition-property', 'none')
+    } else {
+      this.body.style.setProperty('transition-property', 'transform')
+    }
+
     this.body.style.setProperty('transform', `translate(${translateX}px,${translateY}px)`)
 
     if (this.immediate) {

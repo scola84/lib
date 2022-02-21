@@ -205,10 +205,6 @@ body {
   fill: #fff;
 }
 
-[sc-bg-color-active-focus][sc-active]:focus-visible {
-  outline: none;
-}
-
 [sc-bg-color-active-focus="contrast"][sc-active] {
   background-color: var(--gc2);
 }
@@ -732,10 +728,9 @@ body {
   cursor: grabbing;
 }
 
-.sc-table[sc-drag-handle] [sc-handle="drag"],
-.sc-table[sc-select-handle] [sc-handle="select"] {
-  flex-basis: 2.25rem;
-  justify-content: flex-end;
+.sc-table:not([sc-drag-handle]) [sc-handle="drag"],
+.sc-table:not([sc-select-handle]) [sc-handle="select"] {
+  flex-basis: 0 !important;
 }
 
 .sc-table[sc-tree] [sc-tree-inset] {

@@ -328,10 +328,12 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected changeFocus (): void {
-    const element = this.querySelector('[sc-focus~="popup"]')
+    if (!this.hasAttribute('hidden')) {
+      const element = this.querySelector('[sc-focus~="popup"]')
 
-    if (element instanceof HTMLElement) {
-      element.focus()
+      if (element instanceof HTMLElement) {
+        element.focus()
+      }
     }
   }
 

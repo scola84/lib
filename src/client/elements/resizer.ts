@@ -74,6 +74,8 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
 
   public getData (): void {}
 
+  public isSame (): void {}
+
   public maximize (): void {
     this.targetStyles.clear()
 

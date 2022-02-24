@@ -85,6 +85,8 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   public getData (): void {}
 
+  public isSame (): void {}
+
   public open (): EventSource {
     this.source = new EventSource(this.url.toString())
     this.source.onerror = this.handleErrorBound

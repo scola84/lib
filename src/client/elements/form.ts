@@ -1,4 +1,4 @@
-import { cast, isArray, isPrimitive } from '../../common'
+import { cast, isArray, isPrimitive, isSame } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaInputElement } from './input'
 import { ScolaMutator } from '../helpers/mutator'
@@ -130,6 +130,10 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
         return errors
       }, {})
       /* eslint-enable @typescript-eslint/indent */
+  }
+
+  public isSame (data: unknown): boolean {
+    return isSame(data, this.getData())
   }
 
   public setData (data: unknown): void {

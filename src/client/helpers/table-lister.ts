@@ -67,9 +67,7 @@ export class ScolaTableLister {
       })
     }
 
-    const index = this.items.findIndex((findItem) => {
-      return key === findItem[this.key]
-    })
+    const index = this.findIndex(key)
 
     if (index === -1) {
       this.items.push(item)
@@ -110,6 +108,12 @@ export class ScolaTableLister {
 
   public disconnect (): void {
     this.removeEventListeners()
+  }
+
+  public findIndex (key: unknown): number {
+    return this.items.findIndex((findItem) => {
+      return key === findItem[this.key]
+    })
   }
 
   public getDiff (): Struct {
@@ -157,11 +161,7 @@ export class ScolaTableLister {
   }
 
   public put (item: Struct): void {
-    const key = item[this.key]
-
-    const index = this.items.findIndex((findItem) => {
-      return key === findItem[this.key]
-    })
+    const index = this.findIndex(item[this.key])
 
     if (index > -1) {
       this.items[index] = item

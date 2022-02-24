@@ -10,7 +10,7 @@ declare global {
 }
 
 export interface ScolaPropagatorEvent {
-  data?: Struct
+  data: Struct
   name: string
   selector: string
 }
@@ -92,7 +92,7 @@ export class ScolaPropagator {
     return String(error)
   }
 
-  public parseEvents (events: string, base?: Struct): ScolaPropagatorEvent[] {
+  public parseEvents (events: string, base: Struct = {}): ScolaPropagatorEvent[] {
     return events
       .trim()
       .split(' ')
@@ -148,13 +148,16 @@ export class ScolaPropagator {
   }
 
   protected createDetail (event: ScolaPropagatorEvent, data: unknown): unknown {
-    if (isStruct(data)) {
-      if (Object.keys(data).length === 0) {
-        return event.data
-      }
+    let detail = data
+
+    if (
+      isStruct(detail) &&
+      Object.keys(detail).length === 0
+    ) {
+      detail = undefined
     }
 
-    return data ?? event.data
+    return detail ?? event.data
   }
 
   protected getEvents (on: string): ScolaPropagatorEvent[] {

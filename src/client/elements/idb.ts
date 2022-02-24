@@ -213,6 +213,8 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
   public getData (): void {}
 
+  public isSame (): void {}
+
   public async open (): Promise<IDBPDatabase> {
     let migration: Migration | null = null
 

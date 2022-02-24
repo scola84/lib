@@ -18,12 +18,13 @@ declare global {
   }
 }
 
-export interface View extends Struct {
+export interface ScolaView extends Struct {
   element?: Element
   html?: string
   name: string
   params?: Struct
   source?: string
+  title?: string
 }
 
 export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
@@ -54,7 +55,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public regexp: RegExp
 
-  public requestView?: View
+  public requestView?: ScolaView
 
   public sanitizer: ScolaSanitizer
 
@@ -66,12 +67,12 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public unique: boolean
 
-  public views: View[] = []
+  public views: ScolaView[] = []
 
   public wait: boolean
 
-  public get view (): View | undefined {
-    return this.views[this.pointer]
+  public get view (): ScolaView | null {
+    return this.views[this.pointer] ?? null
   }
 
   protected handleAddBound = this.handleAdd.bind(this)
@@ -235,7 +236,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.go(this.pointer + 1)
   }
 
-  public getData (): View | undefined {
+  public getData (): ScolaView | null {
     return this.view
   }
 
@@ -247,7 +248,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       this.pointer = pointer
     }
 
-    if (this.view === undefined) {
+    if (this.view === null) {
       return
     }
 
@@ -270,8 +271,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  public isSame (left?: unknown, right?: unknown): boolean {
-    return isSame(this.createView(left), this.createView(right))
+  public isSame (data: unknown, view: unknown = this.view): boolean {
+    return isSame(this.createView(data), this.createView(view))
   }
 
   public loadState (): void {
@@ -360,7 +361,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public toString (): string {
-    if (this.view === undefined) {
+    if (this.view === null) {
       return ''
     }
 
@@ -400,15 +401,19 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   public updateElements (): void {
     const { view } = this
 
-    if (view?.html === undefined) {
-      this.innerHTML = ''
-    } else if (view.element === undefined) {
-      this.innerHTML = this.sanitizer.sanitizeHtml(view.html)
-      view.element = this.firstElementChild ?? undefined
-    } else if (this.firstElementChild === null) {
-      this.appendChild(view.element)
-    } else {
-      this.replaceChild(view.element, this.firstElementChild)
+    if (view !== null) {
+      if (view.html === undefined) {
+        this.innerHTML = ''
+      } else if (view.element === undefined) {
+        this.innerHTML = this.sanitizer.sanitizeHtml(view.html)
+        view.element = this.firstElementChild ?? undefined
+      } else if (this.firstElementChild === null) {
+        this.appendChild(view.element)
+      } else {
+        this.replaceChild(view.element, this.firstElementChild)
+      }
+
+      view.title = this.firstElementChild?.getAttribute('sc-title') ?? ''
     }
   }
 
@@ -421,8 +426,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.addEventListener('sc-view-sort', this.handleSortBound)
   }
 
-  protected createView (options?: unknown): View {
-    const view: View = {
+  protected createView (options?: unknown): ScolaView {
+    const view: ScolaView = {
       name: '',
       params: {}
     }
@@ -501,7 +506,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
         })
       }
 
-      if (view !== undefined) {
+      if (view !== null) {
         this.pointer = this.views.indexOf(view)
       }
 

@@ -6,6 +6,8 @@ import type { ScolaInteractorEvent } from './interactor'
 export class ScolaDragger {
   public activeElement?: HTMLElement
 
+  public data: unknown
+
   public element: ScolaElement
 
   public handle: boolean
@@ -50,6 +52,10 @@ export class ScolaDragger {
     this.type = this.element.getAttribute('sc-drag-type') ?? ''
   }
 
+  public setData (data: unknown): void {
+    this.data = data
+  }
+
   protected addEventListeners (): void {
     this.element.addEventListener('dragend', this.handleDragendBound)
     this.element.addEventListener('dragstart', this.handleDragstartBound)
@@ -82,7 +88,7 @@ export class ScolaDragger {
 
         if (typeof element.setData === 'function') {
           this.indexer.set(element)
-          element.setData(this.element.getData())
+          element.setData(this.data)
           event.dataTransfer.setDragImage(element, 0, 0)
         }
 

@@ -23,14 +23,14 @@ export class ScolaIntl {
         return formatter.format(new Date(String(data[name] ?? new Date(0))))
       }
     },
-    enum: (name: string, locale: string) => {
+    enum: (name: string, locale: string, options: Struct<string>) => {
       const formatter = new ScolaIntl()
       return (data: Struct): string => {
-        if (ScolaIntl.strings[locale]?.[`${name}_${String(data[name])}`] === undefined) {
+        if (ScolaIntl.strings[locale]?.[`${name}_${String(data[options.counter])}`] === undefined) {
           return formatter.format(`${name}_d`, data, locale)
         }
 
-        return formatter.format(`${name}_${String(data[name])}`, data, locale)
+        return formatter.format(`${name}_${String(data[options.counter])}`, data, locale)
       }
     },
     number: (name: string, locale: string, options: Struct<string>) => {

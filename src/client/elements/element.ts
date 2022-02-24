@@ -11,6 +11,8 @@ export interface ScolaElement extends HTMLElement {
 
   getData: () => unknown
 
+  isSame: (data: unknown) => unknown
+
   setData: (data: unknown) => void
 
   update: () => void

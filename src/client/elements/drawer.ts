@@ -4,6 +4,7 @@ import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import { ScolaTheme } from '../helpers/theme'
 import type { Struct } from '../../common'
+import { isSame } from '../../common'
 
 type Drawer = (data: unknown, options: Struct) => SVGElement
 
@@ -93,6 +94,10 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   public getData (): unknown {
     return this.data
+  }
+
+  public isSame (data: unknown): boolean {
+    return isSame(data, this.getData())
   }
 
   public reset (): void {

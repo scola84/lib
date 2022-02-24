@@ -29,6 +29,12 @@ type Enctype =
   | 'application/x-www-form-urlencoded'
   | 'multipart/form-data'
 
+interface ScolaRequesterElementData {
+  loaded: number
+  state: number
+  total: number
+}
+
 interface Request {
   body: FormData | URLSearchParams | string | null
   method: Method
@@ -112,7 +118,15 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     this.removeEventListeners()
   }
 
-  public getData (): void {}
+  public getData (): ScolaRequesterElementData {
+    return {
+      loaded: Number(this.getAttribute('sc-loaded')),
+      state: Number(this.getAttribute('sc-state')),
+      total: Number(this.getAttribute('sc-total'))
+    }
+  }
+
+  public isSame (): void {}
 
   public reset (): void {
     this.enctype = (this.getAttribute('sc-enctype') as Enctype | null) ?? 'application/x-www-form-urlencoded'

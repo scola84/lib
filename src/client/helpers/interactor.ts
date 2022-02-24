@@ -126,6 +126,8 @@ export class ScolaInteractor {
 
   protected handleContextmenuBound = this.handleContextmenu.bind(this)
 
+  protected handleDragendBound = this.handleDragend.bind(this)
+
   protected handleKeydownBound = this.handleKeydown.bind(this)
 
   protected handleKeyupBound = this.handleKeyup.bind(this)
@@ -250,6 +252,7 @@ export class ScolaInteractor {
   }
 
   protected addEventListenersMoveEnd (): void {
+    window.addEventListener('dragend', this.handleDragendBound)
     window.addEventListener('keyup', this.handleKeyupBound)
     window.addEventListener('mousemove', this.handleMousemoveBound)
     window.addEventListener('mouseup', this.handleMouseupBound)
@@ -467,6 +470,12 @@ export class ScolaInteractor {
       if (this.cancel) {
         event.stopPropagation()
       }
+    }
+  }
+
+  protected handleDragend (event: MouseEvent): void {
+    if (!this.touch) {
+      this.handleEnd(event)
     }
   }
 
@@ -707,6 +716,7 @@ export class ScolaInteractor {
   }
 
   protected removeEventListenersMoveEnd (): void {
+    window.removeEventListener('dragend', this.handleDragendBound)
     window.removeEventListener('keyup', this.handleKeyupBound)
     window.removeEventListener('mousemove', this.handleMousemoveBound)
     window.removeEventListener('mouseup', this.handleMouseupBound)

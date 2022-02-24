@@ -61,6 +61,8 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
 
   public getData (): void {}
 
+  public isSame (): void {}
+
   public reset (): void {
     this.contain = this.hasAttribute('sc-contain')
     this.interactor.mouse = this.interactor.hasMouse

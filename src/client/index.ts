@@ -50,24 +50,17 @@ import { ScolaTheme } from './helpers/theme'
 import { ScolaVideoElement } from './elements/video'
 import { ScolaViewElement } from './elements/view'
 import { ScolaWorkerElement } from './elements/worker'
-import { buttonCarousel } from './observers/button-carousel'
 import { buttonCarouselHider } from './observers/button-carousel-hider'
-import { buttonView } from './observers/button-view'
-import { elementAttrs } from './observers/element-attrs'
-import { elementAttrsInv } from './observers/element-attrs-inv'
-import { fieldElementAttrs } from './observers/field-element-attrs'
-import { fieldValue } from './observers/field-value'
-import { inputRangeMedia } from './observers/input-range-media'
-import { inputRangeRequester } from './observers/input-range-requester'
+import { elementHasAttrs } from './observers/element-has-attrs'
+import { elementHasAttrsInv } from './observers/element-has-attrs-inv'
+import { elementHasData } from './observers/element-has-data'
+import { elementSetData } from './observers/element-set-data'
+import { fieldElementAttr } from './observers/field-element-attr'
+import { inputMediaTime } from './observers/input-media-time'
+import { inputMediaVolume } from './observers/input-media-volume'
+import { inputRequester } from './observers/input-requester'
 import { tableRowTable } from './observers/table-row-table'
 import { tableView } from './observers/table-view'
-import { textCarousel } from './observers/text-carousel'
-import { textFieldError } from './observers/text-field-error'
-import { textFieldValue } from './observers/text-field-value'
-import { textForm } from './observers/text-form'
-import { textMedia } from './observers/text-media'
-import { textRecorder } from './observers/text-recorder'
-import { textView } from './observers/text-view'
 
 export * from '../common'
 export * from './styles'
@@ -165,22 +158,15 @@ export function defineElements (): void {
 }
 
 export const observers = {
-  'sc-button-carousel': buttonCarousel,
   'sc-button-carousel-hider': buttonCarouselHider,
-  'sc-button-view': buttonView,
-  'sc-element-attrs': elementAttrs,
-  'sc-element-attrs-inv': elementAttrsInv,
-  'sc-field-element-attrs': fieldElementAttrs,
-  'sc-field-value': fieldValue,
-  'sc-input-range-media': inputRangeMedia,
-  'sc-input-range-requester': inputRangeRequester,
+  'sc-element-has-attrs': elementHasAttrs,
+  'sc-element-has-attrs-inv': elementHasAttrsInv,
+  'sc-element-has-data': elementHasData,
+  'sc-element-set-data': elementSetData,
+  'sc-field-element-attr': fieldElementAttr,
+  'sc-input-media-time': inputMediaTime,
+  'sc-input-media-volume': inputMediaVolume,
+  'sc-input-requester': inputRequester,
   'sc-table-row-table': tableRowTable,
-  'sc-table-view': tableView,
-  'sc-text-carousel': textCarousel,
-  'sc-text-field-error': textFieldError,
-  'sc-text-field-value': textFieldValue,
-  'sc-text-form': textForm,
-  'sc-text-media': textMedia,
-  'sc-text-recorder': textRecorder,
-  'sc-text-view': textView
+  'sc-table-view': tableView
 }

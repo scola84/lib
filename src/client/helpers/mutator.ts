@@ -111,8 +111,8 @@ export class ScolaMutator {
             overwrite ||
             !this.element.hasAttribute(attrName)
           ) {
-            const attrValue = String(value)
             const castValue = cast(value)
+            const attrValue = String(castValue)
 
             if (typeof castValue === 'boolean') {
               this.element.toggleAttribute(attrName, castValue)

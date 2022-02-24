@@ -1,16 +1,14 @@
 import type { ScolaInputElement } from '../elements/input'
 import type { ScolaRequesterElement } from '../elements/requester'
 
-export function inputRangeRequester (observer: ScolaInputElement, observable: ScolaRequesterElement, mutations: MutationRecord[]): void {
+export function inputRequester (observer: ScolaInputElement, observable: ScolaRequesterElement, mutations: MutationRecord[]): void {
   if (mutations.length > 0) {
-    const loaded = Number(observable.getAttribute('sc-loaded'))
-    const state = Number(observable.getAttribute('sc-state'))
-    const total = Number(observable.getAttribute('sc-total'))
+    const data = observable.getData()
 
-    if (total === 0) {
+    if (data.total === 0) {
       observer.setAttribute('max', '100')
 
-      if (state === 4) {
+      if (data.state === 4) {
         observer.setData(({
           value: '100'
         }))
@@ -20,24 +18,24 @@ export function inputRangeRequester (observer: ScolaInputElement, observable: Sc
         }))
       }
     } else {
-      observer.setAttribute('max', total.toString())
+      observer.setAttribute('max', data.total.toString())
 
       if (
-        total === loaded &&
-        state === 1 &&
+        data.total === data.loaded &&
+        data.state === 1 &&
         observer.value === '0'
       ) {
         observer.setData(({
-          value: (total / 10).toString()
+          value: (data.total / 10).toString()
         }))
       } else {
         observer.setData(({
-          value: loaded.toString()
+          value: data.loaded.toString()
         }))
       }
     }
 
-    if (state === 4) {
+    if (data.state === 4) {
       window.setTimeout(() => {
         observer.hidden = true
 

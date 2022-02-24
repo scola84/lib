@@ -47,6 +47,8 @@ export class ScolaReloaderElement extends HTMLObjectElement implements ScolaElem
 
   public getData (): void {}
 
+  public isSame (): void {}
+
   public reset (): void {}
 
   public setData (): void {}

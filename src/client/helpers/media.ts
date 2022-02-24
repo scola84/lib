@@ -1,6 +1,17 @@
-import { isArray, isStruct } from '../../common'
+import { isArray, isSame, isStruct } from '../../common'
 import type { ScolaMediaElement } from '../elements/media'
 import type { Struct } from '../../common'
+
+export interface ScolaMediaData {
+  currentTime: number
+  duration: number
+  length: Date
+  muted: boolean
+  playing: boolean
+  src: string
+  time: Date
+  volume: number
+}
 
 export class ScolaMedia {
   public element: ScolaMediaElement
@@ -33,10 +44,30 @@ export class ScolaMedia {
     this.removeEventListeners()
   }
 
-  public getData (): Struct {
-    return {
-      src: this.element.src
+  public getData (): ScolaMediaData | null {
+    if (
+      Number.isNaN(this.element.duration) ||
+      this.element.duration === Infinity
+    ) {
+      return null
     }
+
+    return {
+      currentTime: Math.round(this.element.currentTime * 1000),
+      duration: Math.round(this.element.duration * 1000),
+      length: new Date(this.element.duration * 1000),
+      muted: this.element.muted,
+      playing: !this.element.paused,
+      src: this.element.src,
+      time: new Date(this.element.currentTime * 1000),
+      volume: this.element.volume
+    }
+  }
+
+  public isSame (data: unknown): boolean {
+    return isSame(data, {
+      src: this.element.src
+    })
   }
 
   public jumpTime (delta: number): void {

@@ -1,9 +1,9 @@
+import { isSame, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
-import { isStruct } from '../../common'
 
 export class ScolaTableRowElement extends HTMLTableRowElement implements ScolaElement {
   public data: Struct = {}
@@ -41,6 +41,10 @@ export class ScolaTableRowElement extends HTMLTableRowElement implements ScolaEl
 
   public getData (): Struct {
     return this.data
+  }
+
+  public isSame (data: unknown): boolean {
+    return isSame(data, this.getData())
   }
 
   public reset (): void {}

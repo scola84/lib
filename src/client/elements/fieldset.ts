@@ -43,6 +43,8 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
 
   public getData (): void {}
 
+  public isSame (): void {}
+
   public reset (): void {}
 
   public setData (data: unknown): void {

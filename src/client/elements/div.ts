@@ -114,6 +114,8 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
   public getData (): void {}
 
+  public isSame (): void {}
+
   public reset (): void {
     this.interactor.cancel = this.hasAttribute('sc-cancel')
     this.interactor.keyboard = this.interactor.hasKeyboard
@@ -122,6 +124,7 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   public setData (data: unknown): void {
+    this.dragger?.setData(data)
     this.propagator.set(data)
   }
 

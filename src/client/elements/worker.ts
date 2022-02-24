@@ -90,6 +90,8 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
 
   public getData (): void {}
 
+  public isSame (): void {}
+
   public postMessage (message: Struct | null): void {
     this.worker?.postMessage(JSON.stringify(message))
   }

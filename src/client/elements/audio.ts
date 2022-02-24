@@ -1,9 +1,9 @@
 import { ScolaMedia } from '../helpers/media'
+import type { ScolaMediaData } from '../helpers/media'
 import type { ScolaMediaElement } from './media'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
-import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 
 declare global {
@@ -73,8 +73,12 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
     this.removeEventListeners()
   }
 
-  public getData (): Struct {
+  public getData (): ScolaMediaData | null {
     return this.media.getData()
+  }
+
+  public isSame (data: unknown): boolean {
+    return this.media.isSame(data)
   }
 
   public reset (): void {}
@@ -93,12 +97,9 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   }
 
   public updateAttributes (): void {
-    this.setAttribute('sc-length', (this.duration * 1000).toString())
     this.toggleAttribute('sc-muted', this.muted)
     this.toggleAttribute('sc-playing', !this.paused)
-    this.setAttribute('sc-time', (this.currentTime * 1000).toString())
     this.setAttribute('sc-updated', Date.now().toString())
-    this.setAttribute('sc-volume', this.volume.toString())
   }
 
   protected addEventListeners (): void {
@@ -112,7 +113,10 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   }
 
   protected handleJump (event: CustomEvent): void {
-    if (isStruct(event.detail)) {
+    if (
+      isStruct(event.detail) &&
+      event.detail.delta !== undefined
+    ) {
       this.media.jumpTime(Number(event.detail.delta))
     }
   }
@@ -130,7 +134,10 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   }
 
   protected handleTime (event: CustomEvent): void {
-    if (isStruct(event.detail)) {
+    if (
+      isStruct(event.detail) &&
+      event.detail.time !== undefined
+    ) {
       this.media.setTime(Number(event.detail.time))
     }
   }
@@ -140,7 +147,10 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   }
 
   protected handleVolume (event: CustomEvent): void {
-    if (isStruct(event.detail)) {
+    if (
+      isStruct(event.detail) &&
+      event.detail.volume !== undefined
+    ) {
       this.media.setVolume(Number(event.detail.volume))
     }
   }

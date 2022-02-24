@@ -148,6 +148,8 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
+  public isSame (): void {}
+
   public reset (): void {
     this.interactor.keyboard = this.interactor.hasKeyboard
     this.interactor.mouse = this.interactor.hasMouse

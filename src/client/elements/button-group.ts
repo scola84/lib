@@ -59,6 +59,8 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
 
   public getData (): void {}
 
+  public isSame (): void {}
+
   public reset (): void {
     this.interactor.keyboard = this.interactor.hasKeyboard
   }

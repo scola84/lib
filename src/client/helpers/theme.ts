@@ -48,9 +48,9 @@ export class ScolaTheme {
   protected handleTheme (event: CustomEvent): void {
     if (
       isStruct(event.detail) &&
-      typeof event.detail.theme === 'string'
+      event.detail.theme !== undefined
     ) {
-      this.set(event.detail.theme)
+      this.set(String(event.detail.theme))
     } else {
       this.toggle()
     }

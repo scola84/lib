@@ -37,6 +37,8 @@ export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement 
 
   public getData (): void {}
 
+  public isSame (): void {}
+
   public reset (): void {}
 
   public setData (data: unknown): void {

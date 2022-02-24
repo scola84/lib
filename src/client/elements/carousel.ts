@@ -1,4 +1,4 @@
-import { isArray, isStruct } from '../../common'
+import { isArray, isSame, isStruct } from '../../common'
 import { ScolaBreakpoint } from '../helpers/breakpoint'
 import type { ScolaBreakpointEvent } from '../helpers/breakpoint'
 import { ScolaDivElement } from './div'
@@ -20,6 +20,11 @@ declare global {
 }
 
 type Axis = 'x' | 'y'
+
+interface ScolaCarouselElementData {
+  elements: number
+  pointer: number
+}
 
 export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement {
   public axis: Axis
@@ -127,8 +132,11 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     this.go(this.pointer + 1)
   }
 
-  public getData (): Struct[] {
-    return this.items
+  public getData (): ScolaCarouselElementData {
+    return {
+      elements: this.body.children.length,
+      pointer: this.pointer + 1
+    }
   }
 
   public go (pointer: number): void {
@@ -140,6 +148,12 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     }
 
     this.moveToPointer()
+  }
+
+  public isSame (data: unknown): boolean {
+    return isSame(data, {
+      pointer: this.pointer.toString()
+    })
   }
 
   public reset (): void {

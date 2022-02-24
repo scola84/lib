@@ -77,7 +77,7 @@ export class ScolaTableSelector {
 
       this.lastSelectedRow = row
       this.rows.push(row)
-      this.updateRow(row, true)
+      this.toggleActive(row, true)
       this.sortRows()
       this.dispatch('select')
     }
@@ -91,11 +91,11 @@ export class ScolaTableSelector {
     this.rows = []
 
     rows.forEach((row) => {
-      this.updateRow(row, false)
+      this.toggleActive(row, false)
     })
 
     if (this.focusedRow !== undefined) {
-      this.focusRow(this.focusedRow, false)
+      this.toggleFocus(this.focusedRow, false)
     }
   }
 
@@ -206,7 +206,7 @@ export class ScolaTableSelector {
     }
   }
 
-  public toggle (row: ScolaTableRowElement): void {
+  public toggle (row: ScolaTableRowElement, focus = false): void {
     const index = this.rows.findIndex((findRow) => {
       return row === findRow
     })
@@ -222,16 +222,25 @@ export class ScolaTableSelector {
         this.lastSelectedRow = this.lastRow
       }
 
-      this.updateRow(row, false)
+      this.toggleActive(row, false)
+
+      if (focus) {
+        this.toggleFocus(row, false)
+      }
     } else {
+      this.rows.push(row)
+      this.sortRows()
+
       if (this.firstSelectedRow === undefined) {
         this.firstSelectedRow = row
       }
 
       this.lastSelectedRow = row
-      this.rows.push(row)
-      this.updateRow(row, true)
-      this.sortRows()
+      this.toggleActive(row, true)
+
+      if (focus) {
+        this.toggleFocus(row, true)
+      }
     }
 
     this.dispatch('toggle')
@@ -249,7 +258,7 @@ export class ScolaTableSelector {
 
           this.lastSelectedRow = row
           this.rows.push(row)
-          this.updateRow(row, true)
+          this.toggleActive(row, true)
         }
       })
     }
@@ -352,20 +361,6 @@ export class ScolaTableSelector {
     }
 
     return null
-  }
-
-  protected focusRow (row: ScolaTableRowElement, focus: boolean): void {
-    this.focusedRow?.blur()
-    this.focusedRow?.setAttribute('tabindex', '-1')
-    this.focusedRow = undefined
-
-    if (focus) {
-      this.focusedRow = row
-      this.focusedRow.setAttribute('tabindex', '0')
-      this.focusedRow.focus()
-    }
-
-    this.element.updateAttributes()
   }
 
   protected handleAdd (event: CustomEvent): void {
@@ -529,7 +524,7 @@ export class ScolaTableSelector {
     }
 
     if (row !== null) {
-      this.focusRow(row, true)
+      this.toggleFocus(row, true)
       handled = true
     }
 
@@ -577,7 +572,7 @@ export class ScolaTableSelector {
 
     if (this.element.body.firstElementChild instanceof ScolaTableRowElement) {
       if (this.interactor.isKeyForward(event)) {
-        this.focusRow(this.element.body.firstElementChild, true)
+        this.toggleFocus(this.element.body.firstElementChild, true)
         handled = true
       }
     }
@@ -706,16 +701,19 @@ export class ScolaTableSelector {
 
     if (row !== null) {
       if (this.mode === 'one') {
-        if (event.ctrlKey) {
-          this.toggle(row)
-        } else if (!this.rows.includes(row)) {
+        if (
+          event.ctrlKey &&
+          this.rows.includes(row)
+        ) {
+          this.toggle(row, true)
+        } else {
           this.selectRows(row)
         }
 
         handled = true
       } else if (this.mode === 'many') {
         if (event.ctrlKey) {
-          this.toggle(row)
+          this.toggle(row, true)
         } else if (event.shiftKey) {
           this.selectRows(row, this.firstSelectedRow)
         } else if (!this.rows.includes(row)) {
@@ -760,7 +758,7 @@ export class ScolaTableSelector {
 
       if (row !== null) {
         this.rows.push(row)
-        this.updateRow(row, true)
+        this.toggleActive(row, true)
       }
     }
 
@@ -769,7 +767,7 @@ export class ScolaTableSelector {
     this.scrollTo()
 
     window.requestAnimationFrame(() => {
-      this.focusRow(lastRow, true)
+      this.toggleFocus(lastRow, true)
     })
   }
 
@@ -779,8 +777,31 @@ export class ScolaTableSelector {
     })
   }
 
-  protected updateRow (row: ScolaTableRowElement, active: boolean): void {
-    row.toggleAttribute('sc-active', active)
+  protected toggleActive (row: ScolaTableRowElement, force: boolean): void {
+    row.toggleAttribute('sc-active', force)
+    this.update()
+  }
+
+  protected toggleFocus (row: ScolaTableRowElement, force: boolean): void {
+    this.focusedRow?.blur()
+    this.focusedRow?.setAttribute('tabindex', '-1')
+    this.focusedRow = undefined
+
+    if (force) {
+      this.focusedRow = row
+      this.focusedRow.setAttribute('tabindex', '0')
+      this.focusedRow.focus()
+    }
+
+    this.update()
+  }
+
+  protected update (): void {
+    this.element.dragger?.setData({
+      selected: this.rows.length,
+      ...this.firstRow?.data
+    })
+
     this.element.updateAttributes()
   }
 }

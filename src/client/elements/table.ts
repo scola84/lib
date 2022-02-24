@@ -1,4 +1,4 @@
-import { cast, isArray, isPrimitive, isStruct } from '../../common'
+import { cast, isArray, isPrimitive, isSame, isStruct } from '../../common'
 import { ScolaDragger } from '../helpers/dragger'
 import { ScolaDropper } from '../helpers/dropper'
 import type { ScolaElement } from './element'
@@ -25,6 +25,13 @@ declare global {
     'sc-table-put-all': CustomEvent
     'sc-table-request': CustomEvent
   }
+}
+
+export interface ScolaTableElementData {
+  added: number
+  deleted: number
+  elements: number
+  selected: number
 }
 
 export class ScolaTableElement extends HTMLTableElement implements ScolaElement {
@@ -195,11 +202,17 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.removeEventListeners()
   }
 
-  public getData (): Struct {
+  public getData (): ScolaTableElementData {
     return {
-      selected: this.selector?.rows.length,
-      ...this.selector?.firstRow?.data
+      added: this.lister.added.size,
+      deleted: this.lister.deleted.size,
+      elements: this.elements.size,
+      selected: this.selector?.rows.length ?? 0
     }
+  }
+
+  public isSame (data: unknown): boolean {
+    return isSame(data, this.getData())
   }
 
   public put (item: unknown): void {
@@ -247,6 +260,15 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   public updateAttributes (): void {
     this.setAttribute('sc-elements', this.elements.size.toString())
     this.setAttribute('sc-updated', Date.now().toString())
+
+    if (
+      this.selector === undefined ||
+      this.selector.rows.length === 0
+    ) {
+      this.removeAttribute('sc-selected')
+    } else {
+      this.setAttribute('sc-selected', this.selector.rows.length.toString())
+    }
 
     if (this.body.hasAttribute('tabindex')) {
       if (this.selector?.focusedRow === undefined) {

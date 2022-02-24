@@ -1,7 +1,7 @@
 import { cast, hyphenize } from '../../common'
 import type { ScolaElement } from '../elements/element'
 
-export function elementAttrsInv (observer: ScolaElement, observable: ScolaElement): void {
+export function elementHasAttrsInv (observer: ScolaElement, observable: ScolaElement): void {
   observer.observer.toggle(!Object
     .entries(observer.dataset)
     .every(([name, value]) => {

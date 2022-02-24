@@ -1,14 +1,25 @@
 import type { Primitive, Struct } from '../../common'
-import { isPrimitive, isStruct } from '../../common'
+import { isPrimitive, isSame, isStruct } from '../../common'
 import type { ScolaFieldElement } from '../elements/field'
 import { ScolaInteractor } from './interactor'
 import type { ScolaInteractorEvent } from './interactor'
 import { debounce } from 'throttle-debounce'
 
+export interface ScolaFieldData extends Struct {
+  value: string
+}
+
+export interface ScolaFieldError extends Struct {
+  code: string
+  data: Struct
+}
+
 export class ScolaField {
   public debounce = 0
 
   public element: ScolaFieldElement
+
+  public error?: ScolaFieldError
 
   public interactor: ScolaInteractor
 
@@ -38,10 +49,20 @@ export class ScolaField {
     this.removeEventListeners()
   }
 
-  public getData (): Struct {
+  public getData (): ScolaFieldData | ScolaFieldError {
+    if (this.error !== undefined) {
+      return this.error
+    }
+
     return {
       value: this.element.value
     }
+  }
+
+  public isSame (data: unknown): boolean {
+    return isSame(data, {
+      value: this.element.value
+    })
   }
 
   public reset (): void {
@@ -54,8 +75,14 @@ export class ScolaField {
     if (isPrimitive(data)) {
       this.setValue(data)
     } else if (isStruct(data)) {
-      if (isPrimitive(data.code)) {
-        this.setError(data)
+      if (
+        typeof data.code === 'string' &&
+        isStruct(data.data)
+      ) {
+        this.setError({
+          code: data.code,
+          data: data.data
+        })
       } else if (data.file instanceof File) {
         this.setFile(data.file)
       } else if (isPrimitive(data.value)) {
@@ -73,8 +100,8 @@ export class ScolaField {
   }
 
   protected clearError (): void {
-    if (this.element.error !== undefined) {
-      this.element.error = undefined
+    if (this.error !== undefined) {
+      this.error = undefined
       this.element.toggleAttribute('sc-field-error', false)
     }
   }
@@ -176,9 +203,9 @@ export class ScolaField {
     this.element.removeEventListener('input', this.handleInputBound)
   }
 
-  protected setError (error: Struct): void {
+  protected setError (error: ScolaFieldError): void {
     this.handleInputBound.cancel()
-    this.element.error = error
+    this.error = error
     this.element.toggleAttribute('sc-field-error', true)
   }
 
@@ -202,5 +229,7 @@ export class ScolaField {
     } else {
       this.element.value = value.toString()
     }
+
+    this.element.update()
   }
 }

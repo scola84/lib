@@ -1,4 +1,4 @@
-import { ScolaIntl, isStruct } from '../../common'
+import { ScolaIntl, isSame, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
@@ -67,6 +67,10 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
       ...this.dataset,
       ...this.data
     }
+  }
+
+  public isSame (data: unknown): boolean {
+    return isSame(data, this.getData())
   }
 
   public reset (): void {

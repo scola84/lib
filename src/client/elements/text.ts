@@ -1,4 +1,4 @@
-import { ScolaIntl, isStruct } from '../../common'
+import { ScolaIntl, isSame, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
@@ -65,6 +65,10 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
     }
   }
 
+  public isSame (data: unknown): boolean {
+    return isSame(data, this.getData())
+  }
+
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
     this.initialText = this.textContent?.trim() ?? ''
@@ -74,7 +78,11 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
 
   public setData (data: unknown): void {
     if (isStruct(data)) {
-      this.data = data
+      if (isStruct(data.data)) {
+        this.data = data.data
+      } else {
+        this.data = data
+      }
 
       if (typeof data.code === 'string') {
         this.setAttribute('sc-code', data.code)

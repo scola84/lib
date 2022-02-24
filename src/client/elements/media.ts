@@ -1,5 +1,5 @@
+import type { ScolaMedia, ScolaMediaData } from '../helpers/media'
 import type { ScolaElement } from './element'
-import type { ScolaMedia } from '../helpers/media'
 
 export interface ScolaMediaElement extends ScolaElement {
   currentTime: number
@@ -17,6 +17,8 @@ export interface ScolaMediaElement extends ScolaElement {
   volume: number
 
   canPlayType: (type: string) => CanPlayTypeResult
+
+  getData: () => ScolaMediaData | null
 
   pause: () => void
 

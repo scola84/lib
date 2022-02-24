@@ -84,6 +84,8 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
 
   public getData (): void {}
 
+  public isSame (): void {}
+
   public reset (): void {
     this.timeout = Number(this.getAttribute('sc-timeout') ?? -1)
   }

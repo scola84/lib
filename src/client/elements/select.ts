@@ -1,3 +1,4 @@
+import type { ScolaFieldData, ScolaFieldError } from '../helpers/field'
 import { ScolaField } from '../helpers/field'
 import type { ScolaFieldElement } from './field'
 import { ScolaMutator } from '../helpers/mutator'
@@ -49,7 +50,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     this.propagator.disconnect()
   }
 
-  public getData (): Struct {
+  public getData (): ScolaFieldData | ScolaFieldError {
     return this.field.getData()
   }
 
@@ -71,6 +72,10 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     }
 
     return error
+  }
+
+  public isSame (data: unknown): boolean {
+    return this.field.isSame(data)
   }
 
   public reset (): void {}

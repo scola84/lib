@@ -1,9 +1,14 @@
+import { isSame, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
-import { isStruct } from '../../common'
+
+export interface ScolaImageElementData {
+  src: string
+  srcset: string
+}
 
 export class ScolaImageElement extends HTMLImageElement implements ScolaElement {
   public mutator: ScolaMutator
@@ -44,11 +49,15 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
     this.clear()
   }
 
-  public getData (): Struct {
+  public getData (): ScolaImageElementData {
     return {
       src: this.src,
       srcset: this.srcset
     }
+  }
+
+  public isSame (data: unknown): boolean {
+    return isSame(data, this.getData())
   }
 
   public reset (): void {}

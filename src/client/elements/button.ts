@@ -1,3 +1,4 @@
+import { isSame, isStruct } from '../../common'
 import { ScolaDragger } from '../helpers/dragger'
 import { ScolaDropper } from '../helpers/dropper'
 import type { ScolaElement } from './element'
@@ -7,7 +8,6 @@ import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
-import { isStruct } from '../../common'
 
 export class ScolaButtonElement extends HTMLButtonElement implements ScolaElement {
   public data: Struct = {}
@@ -83,6 +83,10 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     }
   }
 
+  public isSame (data: unknown): boolean {
+    return isSame(data, this.getData())
+  }
+
   public reset (): void {
     this.interactor.cancel = this.hasAttribute('sc-cancel')
     this.interactor.keyboard = this.interactor.hasKeyboard
@@ -95,6 +99,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
       this.data = data
     }
 
+    this.dragger?.setData(data)
     this.propagator.set(data)
     this.update()
   }

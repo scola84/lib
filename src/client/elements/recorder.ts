@@ -20,6 +20,10 @@ declare global {
 
 type Type = 'audio' | 'code' | 'image' | 'video'
 
+export interface ScolaRecorderElementData {
+  length: Date
+}
+
 export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement {
   public static CodeScanner: typeof Html5Qrcode
 
@@ -158,7 +162,22 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     }
   }
 
-  public getData (): void {}
+  public getData (): ScolaRecorderElementData | null {
+    if (
+      !(
+        this.type === 'audio' ||
+        this.type === 'video'
+      ) || !this.hasAttribute('sc-started')
+    ) {
+      return null
+    }
+
+    return {
+      length: new Date(Number(this.getAttribute('sc-duration') ?? 0))
+    }
+  }
+
+  public isSame (): void {}
 
   public reset (): void {
     this.codeFps = Number(this.getAttribute('sc-code-fps') ?? 1)

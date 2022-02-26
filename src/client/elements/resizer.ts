@@ -116,14 +116,6 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
 
   public setData (): void {}
 
-  public toggle (): void {
-    if (this.hasAttribute('sc-maximized')) {
-      this.maximize()
-    } else {
-      this.minimize()
-    }
-  }
-
   public update (): void {}
 
   protected calculateSize (size: number, distance: number): number {
@@ -317,7 +309,15 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
   }
 
   protected handleObserver (): void {
-    this.toggle()
+    this.handleObserverMaximized()
+  }
+
+  protected handleObserverMaximized (): void {
+    if (this.hasAttribute('sc-maximized')) {
+      this.maximize()
+    } else {
+      this.minimize()
+    }
   }
 
   protected shouldInteractorMoveBottom (): boolean {

@@ -5,13 +5,21 @@ import { ScolaInteractor } from './interactor'
 import type { ScolaInteractorEvent } from './interactor'
 import { debounce } from 'throttle-debounce'
 
+declare global {
+  interface HTMLElementEventMap {
+    'sc-field-clear': CustomEvent
+    'sc-field-focus': CustomEvent
+    'sc-field-validate': CustomEvent
+  }
+}
+
 export interface ScolaFieldData extends Struct {
   value: string
 }
 
 export interface ScolaFieldError extends Struct {
   code: string
-  data: Struct
+  data?: unknown
 }
 
 export class ScolaField {
@@ -23,9 +31,17 @@ export class ScolaField {
 
   public interactor: ScolaInteractor
 
+  protected handleClearBound = this.handleClear.bind(this)
+
+  protected handleFalsifyBound = this.handleFalsify.bind(this)
+
+  protected handleFocusBound = this.handleFocus.bind(this)
+
   protected handleInputBound = debounce(0, this.handleInput.bind(this))
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
+
+  protected handleVerifyBound = this.handleVerify.bind(this)
 
   public constructor (element: ScolaFieldElement) {
     this.element = element
@@ -34,8 +50,8 @@ export class ScolaField {
   }
 
   public clear (): void {
-    this.element.value = ''
-    this.element.update()
+    this.clearError()
+    this.clearValid()
   }
 
   public connect (): void {
@@ -47,6 +63,14 @@ export class ScolaField {
   public disconnect (): void {
     this.interactor.disconnect()
     this.removeEventListeners()
+  }
+
+  public falsify (): void {
+    const error = this.element.getError()
+
+    if (error !== null) {
+      this.setData(error)
+    }
   }
 
   public getData (): ScolaFieldData | ScolaFieldError {
@@ -70,15 +94,12 @@ export class ScolaField {
   }
 
   public setData (data: unknown): void {
-    this.clearError()
+    this.clear()
 
     if (isPrimitive(data)) {
       this.setValue(data)
     } else if (isStruct(data)) {
-      if (
-        typeof data.code === 'string' &&
-        isStruct(data.data)
-      ) {
+      if (typeof data.code === 'string') {
         this.setError({
           code: data.code,
           data: data.data
@@ -89,25 +110,60 @@ export class ScolaField {
         this.setValue(data.value)
       }
     }
+
+    this.verify()
+  }
+
+  public verify (): void {
+    const error = this.element.getError()
+
+    if (error === null) {
+      this.setValid()
+    }
   }
 
   protected addEventListeners (): void {
     if (this.debounce > 0) {
-      this.handleInputBound = debounce(this.debounce, this.handleInputBound)
+      this.handleInputBound = debounce(this.debounce, this.handleInput.bind(this))
     }
 
     this.element.addEventListener('input', this.handleInputBound)
+    this.element.addEventListener('sc-field-clear', this.handleClearBound)
+    this.element.addEventListener('sc-field-falsify', this.handleFalsifyBound)
+    this.element.addEventListener('sc-field-focus', this.handleFocusBound)
+    this.element.addEventListener('sc-field-verify', this.handleVerifyBound)
+  }
+
+  protected clearDebounce (): void {
+    this.handleInputBound.cancel()
+    this.removeEventListeners()
+    this.addEventListeners()
   }
 
   protected clearError (): void {
-    if (this.error !== undefined) {
-      this.error = undefined
-      this.element.toggleAttribute('sc-field-error', false)
-    }
+    this.error = undefined
+    this.element.toggleAttribute('sc-field-error', false)
+  }
+
+  protected clearValid (): void {
+    this.element.toggleAttribute('sc-field-valid', false)
+  }
+
+  protected handleClear (): void {
+    this.clear()
+  }
+
+  protected handleFalsify (): void {
+    this.falsify()
+  }
+
+  protected handleFocus (): void {
+    this.element.focus()
   }
 
   protected handleInput (event: Event): void {
     this.clearError()
+    this.clearValid()
 
     if (this.element instanceof HTMLInputElement) {
       if (
@@ -199,12 +255,20 @@ export class ScolaField {
     }], event)
   }
 
+  protected handleVerify (): void {
+    this.verify()
+  }
+
   protected removeEventListeners (): void {
     this.element.removeEventListener('input', this.handleInputBound)
+    this.element.removeEventListener('sc-field-clear', this.handleClearBound)
+    this.element.removeEventListener('sc-field-falsify', this.handleFalsifyBound)
+    this.element.removeEventListener('sc-field-focus', this.handleFocusBound)
+    this.element.removeEventListener('sc-field-verify', this.handleVerifyBound)
   }
 
   protected setError (error: ScolaFieldError): void {
-    this.handleInputBound.cancel()
+    this.clearDebounce()
     this.error = error
     this.element.toggleAttribute('sc-field-error', true)
   }
@@ -218,9 +282,12 @@ export class ScolaField {
     }
   }
 
-  protected setValue (value: Primitive): void {
-    this.clearError()
+  protected setValid (): void {
+    this.clear()
+    this.element.toggleAttribute('sc-field-valid', true)
+  }
 
+  protected setValue (value: Primitive): void {
     if (
       this.element.type === 'checkbox' ||
       this.element.type === 'radio'

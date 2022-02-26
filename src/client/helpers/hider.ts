@@ -133,7 +133,6 @@ export class ScolaHider {
         this.toggleOpacity()
         break
       default:
-        this.element.removeAttribute('hidden')
         break
     }
   }

@@ -24,14 +24,13 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
 
   public trim: boolean
 
-  protected handleObserverBound = this.handleObserver.bind(this)
-
   public constructor () {
     super()
     this.intl = new ScolaIntl()
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
+    this.initialText = this.textContent?.trim() ?? ''
     this.reset()
   }
 
@@ -42,10 +41,6 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this.handleObserverBound, [
-      'sc-code'
-    ])
-
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
@@ -71,7 +66,6 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
 
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
-    this.initialText = this.textContent?.trim() ?? ''
     this.locale = this.getAttribute('sc-locale') ?? ScolaIntl.locale
     this.trim = this.hasAttribute('sc-trim')
   }
@@ -85,10 +79,10 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
       }
 
       if (typeof data.code === 'string') {
-        this.setAttribute('sc-code', data.code)
-      } else {
-        this.update()
+        this.code = data.code
       }
+
+      this.update()
     }
   }
 
@@ -109,10 +103,5 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
     } else {
       this.textContent = string
     }
-  }
-
-  protected handleObserver (): void {
-    this.reset()
-    this.update()
   }
 }

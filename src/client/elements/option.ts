@@ -5,14 +5,16 @@ import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 
-export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
-  public static snippets: Struct<string | undefined> = {}
-
+export class ScolaOptionElement extends HTMLOptionElement implements ScolaElement {
   public code: string
 
   public data: Struct = {}
 
+  public initialText: string
+
   public intl: ScolaIntl
+
+  public locale?: string
 
   public mutator: ScolaMutator
 
@@ -20,27 +22,22 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
 
   public propagator: ScolaPropagator
 
+  public trim: boolean
+
   public constructor () {
     super()
     this.intl = new ScolaIntl()
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
+    this.initialText = this.textContent?.trim() ?? ''
     this.reset()
   }
 
   public static define (): void {
-    customElements.define('sc-icon', ScolaIconElement, {
-      extends: 'span'
+    customElements.define('sc-option', ScolaOptionElement, {
+      extends: 'option'
     })
-  }
-
-  public static defineSnippets (snippets: Struct<string>): void {
-    Object
-      .entries(snippets)
-      .forEach(([code, snippet]) => {
-        ScolaIconElement.snippets[code] = snippet
-      })
   }
 
   public connectedCallback (): void {
@@ -69,6 +66,8 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
 
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
+    this.locale = this.getAttribute('sc-locale') ?? ScolaIntl.locale
+    this.trim = this.hasAttribute('sc-trim')
   }
 
   public setData (data: unknown): void {
@@ -88,11 +87,21 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
   }
 
   public update (): void {
-    const code = this.intl.format(this.code, this.getData())
-    const snippet = ScolaIconElement.snippets[code]
+    let string = this.intl.format(this.code, this.getData(), this.locale)
 
-    if (snippet !== undefined) {
-      this.innerHTML = snippet
+    if (this.trim) {
+      string = string
+        .replace(/\s+/u, ' ')
+        .trim()
+    }
+
+    if (
+      string === '' ||
+      string === this.code
+    ) {
+      this.textContent = this.initialText
+    } else {
+      this.textContent = string
     }
   }
 }

@@ -4,9 +4,8 @@ import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
 import { ScolaTheme } from '../helpers/theme'
 import type { Struct } from '../../common'
-import { isSame } from '../../common'
 
-type Drawer = (data: unknown, options: Struct) => SVGElement
+type Drawer = (data: unknown, options: Struct) => Promise<SVGElement | undefined> | SVGElement | undefined
 
 interface Dimensions {
   height: number
@@ -20,6 +19,8 @@ interface Drawers {
 export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   public static drawers: Drawers = {}
 
+  public static origin = window.location.origin
+
   public data: unknown
 
   public drawer?: Drawer
@@ -32,15 +33,15 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   public observer: ScolaObserver
 
+  public origin = ScolaDrawerElement.origin
+
   public propagator: ScolaPropagator
 
   public resizer: ResizeObserver
 
   public scale: number
 
-  public src: string
-
-  public svg?: SVGElement
+  public url: string
 
   protected handleErrorBound = this.handleError.bind(this)
 
@@ -70,8 +71,8 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   public static defineDrawers (drawers: Struct<Drawer>): void {
     Object
       .entries(drawers)
-      .forEach(([name, handler]) => {
-        ScolaDrawerElement.drawers[name] = handler
+      .forEach(([name, drawer]) => {
+        ScolaDrawerElement.drawers[name] = drawer
       })
   }
 
@@ -82,6 +83,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     this.observer.connect()
     this.propagator.connect()
     this.addEventListeners()
+    this.load()
   }
 
   public disconnectedCallback (): void {
@@ -92,22 +94,22 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     this.removeEventListeners()
   }
 
-  public getData (): unknown {
-    return this.data
-  }
+  public getData (): void {}
 
-  public isSame (data: unknown): boolean {
-    return isSame(data, this.getData())
+  public isSame (): void {}
+
+  public postMessage (data: unknown): void {
+    if (this.drawer === undefined) {
+      this.postIframe(data)
+    } else {
+      this.postSvg(data)
+    }
   }
 
   public reset (): void {
     this.name = this.getAttribute('sc-name') ?? ''
     this.scale = Number(this.getAttribute('sc-scale') ?? 0)
-    this.src = this.getAttribute('sc-src') ?? ''
-
-    if (this.name !== '') {
-      this.drawer = ScolaDrawerElement.drawers[this.name]
-    }
+    this.url = this.getAttribute('sc-url') ?? ''
   }
 
   public setData (data: unknown): void {
@@ -116,37 +118,17 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   }
 
   public update (): void {
-    this.updateElements()
+    this.postMessage(this.data)
     this.updateAttributes()
-    this.propagator.dispatch('update', [this.getData()])
+    this.propagator.dispatch('update')
   }
 
   public updateAttributes (): void {
     this.setAttribute('sc-updated', Date.now().toString())
   }
 
-  public updateElements (): void {
-    const dimensions = this.calculateDimensions()
-
-    if (this.drawer === undefined) {
-      this.updateIframe(dimensions)
-    } else {
-      this.updateSvg(dimensions)
-    }
-  }
-
   protected addEventListeners (): void {
     window.addEventListener('sc-theme', this.handleThemeBound)
-  }
-
-  protected appendIframe (): void {
-    this.iframe = document.createElement('iframe')
-    this.iframe.src = `${this.src}${this.name}`
-    this.iframe.setAttribute('referrerpolicy', 'no-referrer')
-    this.iframe.setAttribute('sandbox', 'allow-scripts')
-    this.iframe.onerror = this.handleErrorBound
-    this.iframe.onload = this.handleLoadBound
-    this.appendChild(this.iframe)
   }
 
   protected calculateDimensions (): Dimensions {
@@ -165,6 +147,29 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
+  protected createDrawer (): Drawer | undefined {
+    return ScolaDrawerElement.drawers[this.name]
+  }
+
+  protected createIframe (): HTMLIFrameElement {
+    const iframe = document.createElement('iframe')
+
+    iframe.src = `${this.origin}${this.url}${this.name}`
+    iframe.setAttribute('referrerpolicy', 'no-referrer')
+    iframe.setAttribute('sandbox', 'allow-scripts')
+    iframe.onerror = this.handleErrorBound
+    iframe.onload = this.handleLoadBound
+    return iframe
+  }
+
+  protected createOptions (dimensions: Dimensions): Struct {
+    return {
+      theme: ScolaTheme.theme,
+      ...dimensions,
+      ...this.dataset
+    }
+  }
+
   protected handleError (error: unknown): void {
     this.propagator.dispatch('error', [{
       code: 'err_drawer',
@@ -173,7 +178,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleLoad (): void {
-    this.updateIframe(this.calculateDimensions())
+    this.update()
   }
 
   protected handleObserver (mutations: MutationRecord[]): void {
@@ -192,75 +197,49 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     this.update()
   }
 
-  protected postIframe (dimensions: Dimensions): void {
-    if (this.iframe !== undefined) {
-      this.iframe.contentWindow?.postMessage({
-        data: this.data,
-        options: {
-          theme: ScolaTheme.theme,
-          ...dimensions,
-          ...this.dataset
-        }
-      }, '*')
+  protected load (): void {
+    if (ScolaDrawerElement.drawers[this.name] === undefined) {
+      this.iframe = this.createIframe()
+      this.appendChild(this.iframe)
+    } else {
+      this.drawer = this.createDrawer()
     }
   }
 
-  protected postSvg (dimensions: Dimensions): void {
-    try {
-      const { svg } = this
+  protected postIframe (data: unknown): void {
+    const dimensions = this.calculateDimensions()
+    const options = this.createOptions(dimensions)
 
-      this.svg = this.drawer?.(this.data, {
-        theme: ScolaTheme.theme,
-        ...dimensions,
-        ...this.dataset
+    this.iframe?.style.setProperty('height', `${dimensions.height}px`)
+    this.iframe?.style.setProperty('width', `${dimensions.width}px`)
+
+    this.iframe?.contentWindow?.postMessage({
+      data,
+      options
+    }, '*')
+  }
+
+  protected postSvg (data: unknown): void {
+    const dimensions = this.calculateDimensions()
+    const options = this.createOptions(dimensions)
+
+    Promise
+      .resolve()
+      .then(() => {
+        return this.drawer?.(data, options)
       })
-
-      if (this.svg !== undefined) {
-        if (svg === undefined) {
-          this.appendChild(this.svg)
-        } else {
-          this.replaceChild(this.svg, svg)
+      .then((svg) => {
+        if (svg !== undefined) {
+          this.innerHTML = ''
+          this.appendChild(svg)
         }
-      }
-    } catch (error: unknown) {
-      this.handleError(error)
-    }
+      })
+      .catch((error) => {
+        this.handleError(error)
+      })
   }
 
   protected removeEventListeners (): void {
     window.removeEventListener('sc-theme', this.handleThemeBound)
-  }
-
-  protected removeIframe (): void {
-    if (this.iframe !== undefined) {
-      this.iframe.onerror = null
-      this.iframe.onload = null
-      this.iframe.remove()
-      this.iframe = undefined
-    }
-  }
-
-  protected removeSvg (): void {
-    this.svg?.remove()
-    this.svg = undefined
-  }
-
-  protected updateIframe (dimensions: Dimensions): void {
-    if (this.iframe === undefined) {
-      this.removeSvg()
-      this.appendIframe()
-    }
-
-    this.iframe?.style.setProperty('height', `${dimensions.height}px`)
-    this.iframe?.style.setProperty('width', `${dimensions.width}px`)
-    this.postIframe(dimensions)
-  }
-
-  protected updateSvg (dimensions: Dimensions): void {
-    if (this.svg === undefined) {
-      this.removeIframe()
-    }
-
-    this.postSvg(dimensions)
   }
 }

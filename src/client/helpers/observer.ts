@@ -7,7 +7,7 @@ import { isStruct } from '../../common'
 type Handler = ((observer: any, observable: any, mutations: MutationRecord[]) => void)
 
 export class ScolaObserver {
-  public static observers: Struct<Handler | undefined> = {}
+  public static handlers: Struct<Handler | undefined> = {}
 
   public static storage: Struct<Storage | undefined> = {
     local: window.localStorage,
@@ -46,11 +46,11 @@ export class ScolaObserver {
     }
   }
 
-  public static defineObservers (observers: Struct<Handler>): void {
+  public static defineHandlers (handlers: Struct<Handler>): void {
     Object
-      .entries(observers)
+      .entries(handlers)
       .forEach(([name, handler]) => {
-        ScolaObserver.observers[name] = handler
+        ScolaObserver.handlers[name] = handler
       })
   }
 
@@ -135,17 +135,17 @@ export class ScolaObserver {
       const [nameAndFilterString, selector] = target.split('@')
       const [name, filterString = undefined] = nameAndFilterString.split('?')
       const filter = filterString?.split('&')
-      const callback = ScolaObserver.observers[name]
+      const handler = ScolaObserver.handlers[name]
 
       if (
-        callback !== undefined &&
+        handler !== undefined &&
         selector !== ''
       ) {
         document
-          .querySelectorAll(selector)
+          .querySelectorAll<ScolaElement>(selector)
           .forEach((element) => {
-            const handler = callback.bind(null, this.element, element)
-            const observer = new MutationObserver(handler)
+            const observerHandler = handler.bind(null, this.element, element)
+            const observer = new MutationObserver(observerHandler)
 
             observer.observe(element, {
               attributeFilter: filter,
@@ -155,7 +155,7 @@ export class ScolaObserver {
             this.observers.push(observer)
 
             if (!this.wait) {
-              handler([])
+              observerHandler([])
             }
           })
       }

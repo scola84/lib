@@ -14,6 +14,7 @@ import type { Struct } from '../../common'
 declare global {
   interface HTMLElementEventMap {
     'sc-carousel-back': CustomEvent
+    'sc-carousel-clear': CustomEvent
     'sc-carousel-forward': CustomEvent
     'sc-carousel-go': CustomEvent
   }
@@ -60,6 +61,8 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   protected handleBackBound = this.handleBack.bind(this)
 
   protected handleBreakpointBound = this.handleBreakpoint.bind(this)
+
+  protected handleClearBound = this.handleClear.bind(this)
 
   protected handleForwardBound = this.handleForward.bind(this)
 
@@ -117,6 +120,10 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     this.observer.connect()
     this.propagator.connect()
     this.addEventListeners()
+
+    window.requestAnimationFrame(() => {
+      this.go(this.pointer)
+    })
   }
 
   public disconnectedCallback (): void {
@@ -126,6 +133,14 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     this.propagator.disconnect()
     this.resizer.disconnect()
     this.removeEventListeners()
+  }
+
+  public findPointer (id: string): number {
+    return Array
+      .from(this.body.children)
+      .findIndex((element) => {
+        return element.id === id
+      })
   }
 
   public forward (): void {
@@ -168,8 +183,6 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   }
 
   public setData (data: unknown): void {
-    this.clear()
-
     if (isArray(data)) {
       data.forEach((item) => {
         if (isStruct(item)) {
@@ -179,6 +192,8 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
       this.pointer = 0
       this.update()
+    } else {
+      this.propagator.set(data)
     }
   }
 
@@ -205,6 +220,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   protected addEventListeners (): void {
     this.addEventListener('sc-carousel-back', this.handleBackBound)
+    this.addEventListener('sc-carousel-clear', this.handleClearBound)
     this.addEventListener('sc-carousel-forward', this.handleForwardBound)
     this.addEventListener('sc-carousel-go', this.handleGoBound)
     this.body.addEventListener('transitionend', this.handleTransitionendBound)
@@ -260,10 +276,6 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     this.locked = false
   }
 
-  protected findPointer (element: HTMLElement): number {
-    return Array.prototype.indexOf.call(this.body.children, element)
-  }
-
   protected handleBack (): void {
     this.back()
   }
@@ -272,6 +284,10 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     if (event.changed) {
       this.reset()
     }
+  }
+
+  protected handleClear (): void {
+    this.clear()
   }
 
   protected handleForward (): void {
@@ -285,7 +301,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     ) {
       this.go(Number(event.detail.pointer))
     } else if (event instanceof ScolaEvent) {
-      this.go(this.findPointer(event.element))
+      this.go(this.findPointer(event.element.id))
     }
   }
 
@@ -745,6 +761,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   protected removeEventListeners (): void {
     this.removeEventListener('sc-carousel-back', this.handleBackBound)
+    this.removeEventListener('sc-carousel-clear', this.handleClearBound)
     this.removeEventListener('sc-carousel-forward', this.handleForwardBound)
     this.removeEventListener('sc-carousel-go', this.handleGoBound)
     this.body.removeEventListener('transitionend', this.handleTransitionendBound)

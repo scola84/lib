@@ -29,6 +29,7 @@ import { ScolaMessageElement } from './elements/message'
 import { ScolaMoverElement } from './elements/mover'
 import { ScolaMutator } from './helpers/mutator'
 import { ScolaObserver } from './helpers/observer'
+import { ScolaOptionElement } from './elements/option'
 import { ScolaPaster } from './helpers/paster'
 import { ScolaPopupElement } from './elements/popup'
 import { ScolaPropagator } from './helpers/propagator'
@@ -51,10 +52,11 @@ import { ScolaVideoElement } from './elements/video'
 import { ScolaViewElement } from './elements/view'
 import { ScolaWorkerElement } from './elements/worker'
 import { buttonCarouselHider } from './observers/button-carousel-hider'
+import { carouselSelect } from './observers/carousel-select'
+import { elementGetData } from './observers/element-get-data'
 import { elementHasAttrs } from './observers/element-has-attrs'
 import { elementHasAttrsInv } from './observers/element-has-attrs-inv'
 import { elementHasData } from './observers/element-has-data'
-import { elementSetData } from './observers/element-set-data'
 import { fieldElementAttr } from './observers/field-element-attr'
 import { inputMediaTime } from './observers/input-media-time'
 import { inputMediaVolume } from './observers/input-media-volume'
@@ -99,6 +101,7 @@ export {
   ScolaMoverElement,
   ScolaMutator,
   ScolaObserver,
+  ScolaOptionElement,
   ScolaPaster,
   ScolaPopupElement,
   ScolaPropagator,
@@ -141,6 +144,7 @@ export function defineElements (): void {
   ScolaMarkedElement.define()
   ScolaMessageElement.define()
   ScolaMoverElement.define()
+  ScolaOptionElement.define()
   ScolaPopupElement.define()
   ScolaRecorderElement.define()
   ScolaReloaderElement.define()
@@ -157,12 +161,13 @@ export function defineElements (): void {
   ScolaWorkerElement.define()
 }
 
-export const observers = {
+export const observerHandlers = {
   'sc-button-carousel-hider': buttonCarouselHider,
+  'sc-carousel-select': carouselSelect,
+  'sc-element-get-data': elementGetData,
   'sc-element-has-attrs': elementHasAttrs,
   'sc-element-has-attrs-inv': elementHasAttrsInv,
   'sc-element-has-data': elementHasData,
-  'sc-element-set-data': elementSetData,
   'sc-field-element-attr': fieldElementAttr,
   'sc-input-media-time': inputMediaTime,
   'sc-input-media-volume': inputMediaVolume,

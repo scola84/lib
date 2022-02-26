@@ -32,16 +32,19 @@ export class ScolaMedia {
     this.element = element
   }
 
+  public clear (): void {
+    if (this.element.src.startsWith('blob:')) {
+      URL.revokeObjectURL(this.element.src)
+    }
+  }
+
   public connect (): void {
     this.addEventListeners()
   }
 
   public disconnect (): void {
-    if (this.element.src.startsWith('blob:')) {
-      URL.revokeObjectURL(this.element.src)
-    }
-
     this.removeEventListeners()
+    this.clear()
   }
 
   public getData (): ScolaMediaData | null {

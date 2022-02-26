@@ -33,7 +33,9 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   public clear (): void {
+    this.value = this.querySelector<HTMLOptionElement>('option[selected]')?.value ?? ''
     this.field.clear()
+    this.update()
   }
 
   public connectedCallback (): void {
@@ -54,8 +56,8 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     return this.field.getData()
   }
 
-  public getError (): Struct | null {
-    let error: Struct | null = null
+  public getError (): ScolaFieldError | null {
+    let error: ScolaFieldError | null = null
 
     if (this.validity.badInput) {
       error = {
@@ -82,6 +84,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
 
   public setData (data: unknown): void {
     this.field.setData(data)
+    this.propagator.set(data)
   }
 
   public update (): void {

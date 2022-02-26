@@ -11,6 +11,10 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   public field: ScolaField
 
+  public initialChecked: boolean
+
+  public initialValue: string
+
   public mutator: ScolaMutator
 
   public observer: ScolaObserver
@@ -25,6 +29,8 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
+    this.initialChecked = this.checked
+    this.initialValue = this.value
     this.reset()
     this.update()
   }
@@ -36,7 +42,10 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public clear (): void {
+    this.checked = this.initialChecked
+    this.value = this.initialValue
     this.field.clear()
+    this.update()
   }
 
   public connectedCallback (): void {
@@ -61,8 +70,8 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     return this.field.getData()
   }
 
-  public getError (): Struct | null {
-    let error: Struct | null = null
+  public getError (): ScolaFieldError | null {
+    let error: ScolaFieldError | null = null
 
     if (this.validity.badInput) {
       error = {

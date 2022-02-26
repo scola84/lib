@@ -132,7 +132,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     this.enctype = (this.getAttribute('sc-enctype') as Enctype | null) ?? 'application/x-www-form-urlencoded'
     this.exact = this.hasAttribute('sc-exact')
     this.method = (this.getAttribute('sc-method') as Method | null) ?? 'GET'
-    this.url = `${this.origin}${this.getAttribute('sc-path') ?? ''}`
+    this.url = this.getAttribute('sc-url') ?? ''
     this.wait = this.hasAttribute('sc-wait')
   }
 
@@ -257,7 +257,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   }
 
   protected createRequestUrl (data?: Struct): string | null {
-    const url = new URL(this.url)
+    const url = new URL(`${this.origin}${this.url}`)
 
     Object
       .entries(absorb(this.dataset, data))

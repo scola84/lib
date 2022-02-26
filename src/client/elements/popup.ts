@@ -93,7 +93,6 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
     this.reset()
-    this.toggle()
   }
 
   public static define (): void {
@@ -204,14 +203,6 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
         this.finalize()
       }
     })
-  }
-
-  public toggle (): void {
-    if (this.hasAttribute('hidden')) {
-      this.hide()
-    } else {
-      this.show()
-    }
   }
 
   public update (): void {}
@@ -390,7 +381,15 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleObserver (): void {
-    this.toggle()
+    this.handleObserverHidden()
+  }
+
+  protected handleObserverHidden (): void {
+    if (this.hasAttribute('hidden')) {
+      this.hide()
+    } else {
+      this.show()
+    }
   }
 
   protected handleShow (event: ScolaEvent): void {

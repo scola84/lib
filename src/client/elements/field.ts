@@ -1,5 +1,5 @@
+import type { ScolaField, ScolaFieldError } from '../helpers/field'
 import type { ScolaElement } from './element'
-import type { ScolaField } from '../helpers/field'
 
 export interface ScolaFieldElement extends ScolaElement {
   field: ScolaField
@@ -11,4 +11,6 @@ export interface ScolaFieldElement extends ScolaElement {
   value: string
 
   clear: () => void
+
+  getError: () => ScolaFieldError | null
 }

@@ -51,22 +51,6 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
     })
   }
 
-  public close (): void {
-    if (this.source !== undefined) {
-      this.source.close()
-      this.source.onerror = null
-      this.source.onopen = null
-      this.source = undefined
-    }
-
-    this.event
-      .trim()
-      .split(/\s+/u)
-      .forEach((event) => {
-        this.source?.removeEventListener(event, this.handleMessageBound)
-      })
-  }
-
   public connectedCallback (): void {
     this.mutator.connect()
     this.observer.connect()
@@ -87,29 +71,6 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   public isSame (): void {}
 
-  public open (): EventSource {
-    this.source = new EventSource(this.url.toString())
-    this.source.onerror = this.handleErrorBound
-    this.source.onopen = this.handleOpenBound
-
-    this.event
-      .trim()
-      .split(/\s+/u)
-      .forEach((event) => {
-        this.source?.addEventListener(event, this.handleMessageBound)
-      })
-
-    return this.source
-  }
-
-  public reopen (): void {
-    this.tries += 1
-
-    window.setTimeout(() => {
-      this.open()
-    }, this.tries * 1000)
-  }
-
   public reset (): void {
     this.event = this.getAttribute('sc-event') ?? ''
     this.url = new URL(`${this.origin}${this.getAttribute('sc-path') ?? ''}`)
@@ -121,6 +82,22 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   protected addEventListeners (): void {
     document.addEventListener('visibilitychange', this.handleVisibilityChangeBound)
+  }
+
+  protected close (): void {
+    if (this.source !== undefined) {
+      this.source.close()
+      this.source.onerror = null
+      this.source.onopen = null
+      this.source = undefined
+    }
+
+    this.event
+      .trim()
+      .split(/\s+/u)
+      .forEach((event) => {
+        this.source?.removeEventListener(event, this.handleMessageBound)
+      })
   }
 
   protected handleError (): void {
@@ -147,7 +124,30 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
     }
   }
 
+  protected open (): EventSource {
+    this.source = new EventSource(this.url.toString())
+    this.source.onerror = this.handleErrorBound
+    this.source.onopen = this.handleOpenBound
+
+    this.event
+      .trim()
+      .split(/\s+/u)
+      .forEach((event) => {
+        this.source?.addEventListener(event, this.handleMessageBound)
+      })
+
+    return this.source
+  }
+
   protected removeEventListeners (): void {
     document.removeEventListener('visibilitychange', this.handleVisibilityChangeBound)
+  }
+
+  protected reopen (): void {
+    this.tries += 1
+
+    window.setTimeout(() => {
+      this.open()
+    }, this.tries * 1000)
   }
 }

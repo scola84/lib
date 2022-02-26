@@ -11,6 +11,7 @@ declare global {
   interface HTMLElementEventMap {
     'sc-view-add': CustomEvent
     'sc-view-back': CustomEvent
+    'sc-view-clear': CustomEvent
     'sc-view-delete': CustomEvent
     'sc-view-forward': CustomEvent
     'sc-view-rewind': CustomEvent
@@ -20,9 +21,9 @@ declare global {
 
 export interface ScolaView extends Struct {
   element?: Element
-  html?: string
   name: string
   params?: Struct
+  snippet?: string
   source?: string
   title?: string
 }
@@ -30,12 +31,12 @@ export interface ScolaView extends Struct {
 export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   public static origin = window.location.origin
 
+  public static snippets: Struct<string | undefined> = {}
+
   public static storage: Struct<Storage | undefined> = {
     local: window.localStorage,
     session: window.sessionStorage
   }
-
-  public static views: Struct<string | undefined> = {}
 
   public hider?: ScolaHider
 
@@ -79,6 +80,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   protected handleBackBound = this.handleBack.bind(this)
 
+  protected handleClearBound = this.handleClear.bind(this)
+
   protected handleDeleteBound = this.handleDelete.bind(this)
 
   protected handleForwardBound = this.handleForward.bind(this)
@@ -109,11 +112,11 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     })
   }
 
-  public static defineViews (views: Struct<string>): void {
+  public static defineSnippets (snippets: Struct<string>): void {
     Object
-      .entries(views)
-      .forEach(([name, html]) => {
-        ScolaViewElement.views[name] = html
+      .entries(snippets)
+      .forEach(([name, snippet]) => {
+        ScolaViewElement.snippets[name] = snippet
       })
   }
 
@@ -257,41 +260,22 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       return
     }
 
-    const html = ScolaViewElement.views[this.view.name]
+    const snippet = ScolaViewElement.snippets[this.view.name]
 
-    if (html === undefined) {
+    if (snippet === undefined) {
       if (this.requestView === undefined) {
         this.requestView = this.view
         this.propagator.dispatch('request', [this.view])
         this.update()
       }
     } else {
-      this.view.html = html
+      this.view.snippet = snippet
       this.update()
     }
   }
 
   public isSame (data: unknown, view: unknown = this.view): boolean {
     return isSame(this.createView(data), this.createView(view))
-  }
-
-  public loadState (): void {
-    this.loadStateFromElement(this)
-
-    const stateStruct: unknown = JSON.parse(this.storage.getItem(`sc-view-${this.id}`) ?? 'null')
-
-    if (isStruct(stateStruct)) {
-      this.loadStateFromStorage(stateStruct)
-    } else {
-      this.loadStateFromLocation(window.location.pathname)
-    }
-
-    if (
-      this.pointer === -1 &&
-      !this.hasAttribute('hidden')
-    ) {
-      this.update()
-    }
   }
 
   public reset (): void {
@@ -309,43 +293,16 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.go(0)
   }
 
-  public saveState (): void {
-    let current = ''
-    let url = (this.origin + window.location.pathname).replace(/\/$/u, '')
-
-    if (
-      this.isConnected &&
-      !this.hasAttribute('hidden')
-    ) {
-      if (this.save.includes('storage')) {
-        this.storage.setItem(`sc-view-${this.id}`, JSON.stringify(this.toObject()))
-      }
-
-      if (this.save.includes('location')) {
-        current = this.toString()
-      }
-    }
-
-    const previous = (this.regexp.exec(url) ?? []).shift()
-
-    if (previous === undefined) {
-      url += current
-    } else {
-      url = url.replace(previous, current)
-    }
-
-    window.history.replaceState(null, '', url)
-  }
-
   public setData (data: unknown): void {
     if (typeof data === 'string') {
       if (this.requestView !== undefined) {
-        this.requestView.html = data
+        this.requestView.snippet = data
         this.update()
+        this.requestView = undefined
       }
+    } else {
+      this.propagator.set(data)
     }
-
-    this.requestView = undefined
   }
 
   public toObject (): Struct {
@@ -402,10 +359,10 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     const { view } = this
 
     if (view !== null) {
-      if (view.html === undefined) {
+      if (view.snippet === undefined) {
         this.innerHTML = ''
       } else if (view.element === undefined) {
-        this.innerHTML = this.sanitizer.sanitizeHtml(view.html)
+        this.innerHTML = this.sanitizer.sanitizeHtml(view.snippet)
         view.element = this.firstElementChild ?? undefined
       } else if (this.firstElementChild === null) {
         this.appendChild(view.element)
@@ -420,6 +377,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   protected addEventListeners (): void {
     this.addEventListener('sc-view-add', this.handleAddBound)
     this.addEventListener('sc-view-back', this.handleBackBound)
+    this.addEventListener('sc-view-clear', this.handleClearBound)
     this.addEventListener('sc-view-delete', this.handleDeleteBound)
     this.addEventListener('sc-view-forward', this.handleForwardBound)
     this.addEventListener('sc-view-rewind', this.handleRewindBound)
@@ -463,6 +421,10 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   protected handleBack (): void {
     this.back()
+  }
+
+  protected handleClear (): void {
+    this.clear()
   }
 
   protected handleDelete (event: CustomEvent): void {
@@ -513,6 +475,25 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       if (this.save !== '') {
         this.saveState()
       }
+    }
+  }
+
+  protected loadState (): void {
+    this.loadStateFromElement(this)
+
+    const stateStruct: unknown = JSON.parse(this.storage.getItem(`sc-view-${this.id}`) ?? 'null')
+
+    if (isStruct(stateStruct)) {
+      this.loadStateFromStorage(stateStruct)
+    } else {
+      this.loadStateFromLocation(window.location.pathname)
+    }
+
+    if (
+      this.pointer === -1 &&
+      !this.hasAttribute('hidden')
+    ) {
+      this.update()
     }
   }
 
@@ -571,9 +552,38 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   protected removeEventListeners (): void {
     this.removeEventListener('sc-view-add', this.handleAddBound)
     this.removeEventListener('sc-view-back', this.handleBackBound)
+    this.removeEventListener('sc-view-clear', this.handleClearBound)
     this.removeEventListener('sc-view-delete', this.handleDeleteBound)
     this.removeEventListener('sc-view-forward', this.handleForwardBound)
     this.removeEventListener('sc-view-rewind', this.handleRewindBound)
     this.removeEventListener('sc-view-sort', this.handleSortBound)
+  }
+
+  protected saveState (): void {
+    let current = ''
+    let url = (this.origin + window.location.pathname).replace(/\/$/u, '')
+
+    if (
+      this.isConnected &&
+      !this.hasAttribute('hidden')
+    ) {
+      if (this.save.includes('storage')) {
+        this.storage.setItem(`sc-view-${this.id}`, JSON.stringify(this.toObject()))
+      }
+
+      if (this.save.includes('location')) {
+        current = this.toString()
+      }
+    }
+
+    const previous = (this.regexp.exec(url) ?? []).shift()
+
+    if (previous === undefined) {
+      url += current
+    } else {
+      url = url.replace(previous, current)
+    }
+
+    window.history.replaceState(null, '', url)
   }
 }

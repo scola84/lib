@@ -244,7 +244,6 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       this.lister.limit === 0 &&
       this.lister.mode !== null
     ) {
-      this.clear()
       this.lister.request()
     } else {
       this.updateElements()
@@ -397,7 +396,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       if (isStruct(item)) {
         keys.push(item[this.lister.key])
         this.appendBodyRow(item)
-        this.tree?.update(item, level)
+        this.tree?.updateRow(item, level)
 
         if (
           isArray(item.items) &&

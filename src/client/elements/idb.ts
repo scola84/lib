@@ -131,14 +131,6 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       })
   }
 
-  public close (): void {
-    if (this.database !== undefined) {
-      this.database.close()
-      this.database.onerror = null
-      this.database = undefined
-    }
-  }
-
   public connectedCallback (): void {
     this.mutator.connect()
     this.observer.connect()
@@ -215,30 +207,6 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
   public isSame (): void {}
 
-  public async open (): Promise<IDBPDatabase> {
-    let migration: Migration | null = null
-
-    this.database = await openDB(this.name, this.version, {
-      upgrade: (database, oldVersion, newVersion) => {
-        migration = ScolaIdbElement.migrations[`${this.name}_${oldVersion}_${newVersion ?? 0}`] ?? null
-
-        database.createObjectStore(this.versionName, {
-          autoIncrement: true,
-          keyPath: this.key
-        })
-      }
-    })
-
-    try {
-      await (migration as Migration | null)?.(this.database)
-    } catch (error: unknown) {
-      this.handleError(error)
-    }
-
-    this.database.onerror = this.handleErrorBound
-    return this.database
-  }
-
   public async put (data: unknown): Promise<unknown> {
     return this
       .getDatabase()
@@ -291,6 +259,14 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     this.addEventListener('sc-idb-get-all', this.handleGetAllBound)
     this.addEventListener('sc-idb-put', this.handlePutBound)
     this.addEventListener('sc-idb-put-all', this.handlePutAllBound)
+  }
+
+  protected close (): void {
+    if (this.database !== undefined) {
+      this.database.close()
+      this.database.onerror = null
+      this.database = undefined
+    }
   }
 
   protected async getDatabase (): Promise<IDBPDatabase> {
@@ -430,6 +406,30 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
           this.handleError(error)
         })
     }
+  }
+
+  protected async open (): Promise<IDBPDatabase> {
+    let migration: Migration | null = null
+
+    this.database = await openDB(this.name, this.version, {
+      upgrade: (database, oldVersion, newVersion) => {
+        migration = ScolaIdbElement.migrations[`${this.name}_${oldVersion}_${newVersion ?? 0}`] ?? null
+
+        database.createObjectStore(this.versionName, {
+          autoIncrement: true,
+          keyPath: this.key
+        })
+      }
+    })
+
+    try {
+      await (migration as Migration | null)?.(this.database)
+    } catch (error: unknown) {
+      this.handleError(error)
+    }
+
+    this.database.onerror = this.handleErrorBound
+    return this.database
   }
 
   protected removeEventListeners (): void {

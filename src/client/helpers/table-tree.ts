@@ -69,7 +69,7 @@ export class ScolaTableTree {
     }
   }
 
-  public update (item: Struct, level: number): void {
+  public updateRow (item: Struct, level: number): void {
     const key = item[this.element.lister.key]
     const row = this.element.elements.get(key)
 

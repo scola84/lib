@@ -11,6 +11,8 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   public field: ScolaField
 
+  public initialValue: string
+
   public mutator: ScolaMutator
 
   public observer: ScolaObserver
@@ -25,6 +27,7 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
+    this.initialValue = this.value
     this.reset()
   }
 
@@ -35,7 +38,9 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
   }
 
   public clear (): void {
+    this.value = this.initialValue
     this.field.clear()
+    this.update()
   }
 
   public connectedCallback (): void {
@@ -60,8 +65,8 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     return this.field.getData()
   }
 
-  public getError (): Struct | null {
-    let error: Struct | null = null
+  public getError (): ScolaFieldError | null {
+    let error: ScolaFieldError | null = null
 
     if (this.validity.badInput) {
       error = {

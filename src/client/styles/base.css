@@ -149,6 +149,10 @@ body {
   background-color: var(--gc2);
 }
 
+[sc-bg-color="green"] {
+  background-color: green;
+}
+
 [sc-bg-color="normal"] {
   background-color: var(--gc1);
 }
@@ -546,6 +550,11 @@ body {
 [sc-text-color="contrast"] {
   color: var(--fc2);
   fill: var(--fc2);
+}
+
+[sc-text-color="green"] {
+  color: green;
+  fill: green;
 }
 
 [sc-text-color="normal"] {

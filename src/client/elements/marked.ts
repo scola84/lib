@@ -28,8 +28,6 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
 
   public trim: boolean
 
-  protected handleObserverBound = this.handleObserver.bind(this)
-
   public constructor () {
     super()
     this.intl = new ScolaIntl()
@@ -37,6 +35,7 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
     this.sanitizer = new ScolaSanitizer()
+    this.initialHTML = this.innerHTML
     this.reset()
   }
 
@@ -47,10 +46,6 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this.handleObserverBound, [
-      'sc-code'
-    ])
-
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
@@ -76,20 +71,23 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
 
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
-    this.initialHTML = this.innerHTML
     this.locale = this.getAttribute('sc-locale') ?? ScolaIntl.locale
     this.trim = this.hasAttribute('sc-trim')
   }
 
   public setData (data: unknown): void {
     if (isStruct(data)) {
-      this.data = data
+      if (isStruct(data.data)) {
+        this.data = data.data
+      } else {
+        this.data = data
+      }
 
       if (typeof data.code === 'string') {
-        this.setAttribute('sc-code', data.code)
-      } else {
-        this.update()
+        this.code = data.code
       }
+
+      this.update()
     }
   }
 
@@ -117,10 +115,5 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
     } else {
       this.innerHTML = html
     }
-  }
-
-  protected handleObserver (): void {
-    this.reset()
-    this.update()
   }
 }

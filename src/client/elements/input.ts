@@ -66,7 +66,11 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.propagator.disconnect()
   }
 
-  public getData (): ScolaFieldData | ScolaFieldError {
+  public falsify (): void {
+    this.field.falsify()
+  }
+
+  public getData (): ScolaFieldData {
     return this.field.getData()
   }
 
@@ -120,6 +124,19 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     return error
   }
 
+  public getValue (): string | null {
+    if (
+      this.type === 'checkbox' ||
+      this.type === 'radio'
+    ) {
+      if (!this.checked) {
+        return null
+      }
+    }
+
+    return this.value
+  }
+
   public isSame (data: unknown): boolean {
     return this.field.isSame(data)
   }
@@ -148,6 +165,10 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
       this.style.setProperty('--min', this.min)
       this.style.setProperty('--value', this.value)
     }
+  }
+
+  public verify (): void {
+    this.field.verify()
   }
 
   protected handleObserver (): void {

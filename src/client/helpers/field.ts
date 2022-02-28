@@ -8,13 +8,15 @@ import { debounce } from 'throttle-debounce'
 declare global {
   interface HTMLElementEventMap {
     'sc-field-clear': CustomEvent
+    'sc-field-falsify': CustomEvent
     'sc-field-focus': CustomEvent
-    'sc-field-validate': CustomEvent
+    'sc-field-verify': CustomEvent
   }
 }
 
 export interface ScolaFieldData extends Struct {
-  value: string
+  name: string
+  value: string | null
 }
 
 export interface ScolaFieldError extends Struct {
@@ -73,18 +75,16 @@ export class ScolaField {
     }
   }
 
-  public getData (): ScolaFieldData | ScolaFieldError {
-    if (this.error !== undefined) {
-      return this.error
-    }
-
+  public getData (): ScolaFieldData {
     return {
-      value: this.element.value
+      name: this.element.name,
+      value: this.element.getValue()
     }
   }
 
   public isSame (data: unknown): boolean {
     return isSame(data, {
+      name: this.element.name,
       value: this.element.value
     })
   }
@@ -104,14 +104,14 @@ export class ScolaField {
           code: data.code,
           data: data.data
         })
+      } else if (data.valid === true) {
+        this.setValid()
       } else if (data.file instanceof File) {
         this.setFile(data.file)
       } else if (isPrimitive(data.value)) {
         this.setValue(data.value)
       }
     }
-
-    this.verify()
   }
 
   public verify (): void {
@@ -154,7 +154,11 @@ export class ScolaField {
   }
 
   protected handleFalsify (): void {
-    this.falsify()
+    const dispatched = this.element.propagator.dispatch('falsify', [this.getData()])
+
+    if (!dispatched) {
+      this.falsify()
+    }
   }
 
   protected handleFocus (): void {
@@ -256,7 +260,11 @@ export class ScolaField {
   }
 
   protected handleVerify (): void {
-    this.verify()
+    const dispatched = this.element.propagator.dispatch('verify', [this.getData()])
+
+    if (!dispatched) {
+      this.verify()
+    }
   }
 
   protected removeEventListeners (): void {
@@ -297,6 +305,7 @@ export class ScolaField {
       this.element.value = value.toString()
     }
 
+    this.verify()
     this.element.update()
   }
 }

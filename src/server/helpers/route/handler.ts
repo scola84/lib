@@ -116,7 +116,11 @@ export abstract class RouteHandler {
         response.statusCode = 201
       }
 
-      const result = await this.handle(data, response, request)
+      const result = await Promise
+        .resolve()
+        .then(() => {
+          return this.handle(data, response, request)
+        })
 
       if (isNil(result)) {
         if (result === null) {
@@ -149,13 +153,13 @@ export abstract class RouteHandler {
   protected authenticate (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<unknown>
 
   protected async authenticate (): Promise<unknown> {
-    return Promise.resolve(undefined)
+    return Promise.resolve(null)
   }
 
   protected authorize (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void>
 
   protected async authorize (): Promise<void> {
-    return Promise.resolve(undefined)
+    return Promise.resolve()
   }
 
   protected normalizeErrors (errors: ErrorObject[] = []): Struct {

@@ -53,6 +53,7 @@ import { ScolaViewElement } from './elements/view'
 import { ScolaWorkerElement } from './elements/worker'
 import { buttonCarouselHider } from './observers/button-carousel-hider'
 import { carouselSelect } from './observers/carousel-select'
+import { elementFieldError } from './observers/element-field-error'
 import { elementGetData } from './observers/element-get-data'
 import { elementHasAttrs } from './observers/element-has-attrs'
 import { elementHasAttrsInv } from './observers/element-has-attrs-inv'
@@ -164,6 +165,7 @@ export function defineElements (): void {
 export const observerHandlers = {
   'sc-button-carousel-hider': buttonCarouselHider,
   'sc-carousel-select': carouselSelect,
+  'sc-element-field-error': elementFieldError,
   'sc-element-get-data': elementGetData,
   'sc-element-has-attrs': elementHasAttrs,
   'sc-element-has-attrs-inv': elementHasAttrsInv,

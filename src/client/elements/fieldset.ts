@@ -1,7 +1,21 @@
+import { cast, isPrimitive } from '../../common'
 import type { ScolaElement } from './element'
+import { ScolaInputElement } from './input'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
+import { ScolaSelectElement } from './select'
+import { ScolaTextAreaElement } from './textarea'
+import type { Struct } from '../../common'
+import { isArray } from 'lodash'
+
+declare global {
+  interface HTMLElementEventMap {
+    'sc-fieldset-clear': CustomEvent
+    'sc-field-focus': CustomEvent
+    'sc-field-validate': CustomEvent
+  }
+}
 
 export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaElement {
   public mutator: ScolaMutator
@@ -10,7 +24,11 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
 
   public propagator: ScolaPropagator
 
+  protected handleFalsifyBound = this.handleFalsify.bind(this)
+
   protected handleObserverBound = this.handleObserver.bind(this)
+
+  protected handleVerifyBound = this.handleVerify.bind(this)
 
   public constructor () {
     super()
@@ -33,15 +51,71 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
+    this.addEventListeners()
   }
 
   public disconnectedCallback (): void {
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
+    this.removeEventListeners()
   }
 
-  public getData (): void {}
+  public falsify (): void {
+    Array
+      .from(this.elements)
+      .forEach((element) => {
+        if (
+          element instanceof ScolaInputElement ||
+          element instanceof ScolaSelectElement ||
+          element instanceof ScolaTextAreaElement
+        ) {
+          element.falsify()
+        }
+      })
+  }
+
+  public getData (): Struct {
+    return Array
+      .from(this.elements)
+      .reduce<Struct>((data, element) => {
+      /* eslint-disable @typescript-eslint/indent */
+        if (
+          element instanceof ScolaInputElement ||
+          element instanceof ScolaSelectElement ||
+          element instanceof ScolaTextAreaElement
+        ) {
+          const {
+            name,
+            value
+          } = element.getData()
+
+          let castValue: unknown = value
+
+          if (isPrimitive(value)) {
+            castValue = cast(value)
+          }
+
+          if (data[name] === undefined) {
+            data[name] = castValue
+          } else {
+            let dataValue = data[name]
+
+            if (!isArray(dataValue)) {
+              data[name] = [data[name]]
+              dataValue = data[name]
+            }
+
+            if (isArray(dataValue)) {
+              dataValue.push(castValue)
+            }
+          }
+        }
+
+        return data
+      }, {})
+      /* eslint-enable @typescript-eslint/indent */
+  }
 
   public isSame (): void {}
 
@@ -54,6 +128,25 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
 
   public update (): void {}
 
+  public verify (): void {
+    Array
+      .from(this.elements)
+      .forEach((element) => {
+        if (
+          element instanceof ScolaInputElement ||
+          element instanceof ScolaSelectElement ||
+          element instanceof ScolaTextAreaElement
+        ) {
+          element.verify()
+        }
+      })
+  }
+
+  protected addEventListeners (): void {
+    this.addEventListener('sc-fieldset-falsify', this.handleFalsifyBound)
+    this.addEventListener('sc-fieldset-verify', this.handleVerifyBound)
+  }
+
   protected changeFocus (): void {
     if (!this.hasAttribute('hidden')) {
       const element = this.querySelector('[sc-focus~="fieldset"]')
@@ -64,9 +157,30 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
     }
   }
 
+  protected handleFalsify (): void {
+    const dispatched = this.propagator.dispatch('falsify', [this.getData()])
+
+    if (!dispatched) {
+      this.falsify()
+    }
+  }
+
   protected handleObserver (): void {
     this.toggleDisabled()
     this.changeFocus()
+  }
+
+  protected handleVerify (): void {
+    const dispatched = this.propagator.dispatch('verify', [this.getData()])
+
+    if (!dispatched) {
+      this.verify()
+    }
+  }
+
+  protected removeEventListeners (): void {
+    this.removeEventListener('sc-fieldset-falsify', this.handleFalsifyBound)
+    this.removeEventListener('sc-fieldset-verify', this.handleVerifyBound)
   }
 
   protected toggleDisabled (): void {

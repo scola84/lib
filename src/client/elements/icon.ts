@@ -12,6 +12,8 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
 
   public data: Struct = {}
 
+  public initialCode: string | null
+
   public intl: ScolaIntl
 
   public mutator: ScolaMutator
@@ -26,6 +28,7 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
+    this.initialCode = this.getAttribute('sc-code')
     this.reset()
   }
 
@@ -79,7 +82,10 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
         this.data = data
       }
 
-      if (typeof data.code === 'string') {
+      if (
+        this.initialCode === null &&
+        typeof data.code === 'string'
+      ) {
         this.code = data.code
       }
 

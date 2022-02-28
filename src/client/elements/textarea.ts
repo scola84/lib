@@ -61,7 +61,11 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     this.propagator.disconnect()
   }
 
-  public getData (): ScolaFieldData | ScolaFieldError {
+  public falsify (): void {
+    this.field.falsify()
+  }
+
+  public getData (): ScolaFieldData {
     return this.field.getData()
   }
 
@@ -95,6 +99,10 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     return error
   }
 
+  public getValue (): string {
+    return this.value
+  }
+
   public isSame (data: unknown): boolean {
     return this.field.isSame(data)
   }
@@ -125,5 +133,9 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
       this.style.setProperty('height', '0px')
       this.style.setProperty('height', `${this.scrollHeight}px`)
     }
+  }
+
+  public verify (): void {
+    this.field.verify()
   }
 }

@@ -12,7 +12,9 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
 
   public data: Struct = {}
 
-  public initialHTML: string
+  public initialCode: string | null
+
+  public initialInnerHtml: string
 
   public intl: ScolaIntl
 
@@ -35,7 +37,8 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
     this.sanitizer = new ScolaSanitizer()
-    this.initialHTML = this.innerHTML
+    this.initialCode = this.getAttribute('sc-code')
+    this.initialInnerHtml = this.innerHTML
     this.reset()
   }
 
@@ -83,7 +86,10 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
         this.data = data
       }
 
-      if (typeof data.code === 'string') {
+      if (
+        this.initialCode === null &&
+        typeof data.code === 'string'
+      ) {
         this.code = data.code
       }
 
@@ -111,7 +117,7 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
       html === '' ||
       html === this.code
     ) {
-      this.innerHTML = this.initialHTML
+      this.innerHTML = this.initialInnerHtml
     } else {
       this.innerHTML = html
     }

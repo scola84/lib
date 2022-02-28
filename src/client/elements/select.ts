@@ -52,7 +52,11 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     this.propagator.disconnect()
   }
 
-  public getData (): ScolaFieldData | ScolaFieldError {
+  public falsify (): void {
+    this.field.falsify()
+  }
+
+  public getData (): ScolaFieldData {
     return this.field.getData()
   }
 
@@ -76,6 +80,10 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     return error
   }
 
+  public getValue (): string {
+    return this.value
+  }
+
   public isSame (data: unknown): boolean {
     return this.field.isSame(data)
   }
@@ -94,5 +102,9 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   public updateAttributes (): void {
     this.setAttribute('sc-updated', Date.now().toString())
     this.form?.setAttribute('sc-updated', Date.now().toString())
+  }
+
+  public verify (): void {
+    this.field.verify()
   }
 }

@@ -10,6 +10,8 @@ export class ScolaOptionElement extends HTMLOptionElement implements ScolaElemen
 
   public data: Struct = {}
 
+  public initialCode: string | null
+
   public initialText: string
 
   public intl: ScolaIntl
@@ -30,6 +32,7 @@ export class ScolaOptionElement extends HTMLOptionElement implements ScolaElemen
     this.mutator = new ScolaMutator(this)
     this.observer = new ScolaObserver(this)
     this.propagator = new ScolaPropagator(this)
+    this.initialCode = this.getAttribute('sc-code')
     this.initialText = this.textContent?.trim() ?? ''
     this.reset()
   }
@@ -78,7 +81,10 @@ export class ScolaOptionElement extends HTMLOptionElement implements ScolaElemen
         this.data = data
       }
 
-      if (typeof data.code === 'string') {
+      if (
+        this.initialCode === null &&
+        typeof data.code === 'string'
+      ) {
         this.code = data.code
       }
 

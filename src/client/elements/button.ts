@@ -1,11 +1,6 @@
-import { ScolaDragger } from '../helpers/dragger'
-import { ScolaDropper } from '../helpers/dropper'
+import { ScolaDragger, ScolaDropper, ScolaInteractor, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
 import type { ScolaElement } from './element'
-import { ScolaInteractor } from '../helpers/interactor'
-import type { ScolaInteractorEvent } from '../helpers/interactor'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
+import type { ScolaInteractorEvent } from '../helpers'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 

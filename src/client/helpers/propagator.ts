@@ -1,4 +1,4 @@
-import type { ScolaElement } from '../elements/element'
+import type { ScolaElement } from '../elements'
 import { ScolaEvent } from './event'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'

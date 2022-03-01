@@ -1,4 +1,4 @@
-import type { ScolaElement } from '../elements/element'
+import type { ScolaElement } from '../elements'
 
 export class ScolaPaster {
   public element: ScolaElement

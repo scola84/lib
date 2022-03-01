@@ -1,10 +1,15 @@
+import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
 import type { ScolaElement } from './element'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 
-type Handler = (data: unknown) => Promise<unknown> | unknown
+declare global {
+  interface HTMLElementEventMap {
+    'sc-work': CustomEvent
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Handler = (data: any) => Promise<unknown> | unknown
 
 export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElement {
   public static handlers: Struct<Handler | undefined> = {}
@@ -29,8 +34,6 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
 
   public worker?: Worker
 
-  public workerData: unknown
-
   public workerUrl?: string
 
   protected handleErrorBound = this.handleError.bind(this)
@@ -38,6 +41,8 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   protected handleLoadBound = this.handleLoad.bind(this)
 
   protected handleMessageBound = this.handleMessage.bind(this)
+
+  protected handleWorkBound = this.handleWork.bind(this)
 
   public constructor () {
     super()
@@ -98,26 +103,16 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
     this.url = this.getAttribute('sc-url') ?? ''
   }
 
-  public setData (data: unknown): void {
-    this.workerData = data
-    this.update()
-  }
+  public setData (): void {}
 
   public toObject (): Struct {
     return {}
   }
 
-  public update (): void {
-    this.postMessage(this.workerData)
-    this.updateAttributes()
-    this.propagator.dispatch('update')
-  }
-
-  public updateAttributes (): void {
-    this.setAttribute('sc-updated', Date.now().toString())
-  }
+  public update (): void {}
 
   protected addEventListeners (): void {
+    this.addEventListener('sc-work', this.handleWorkBound)
     window.addEventListener('message', this.handleMessageBound)
   }
 
@@ -143,6 +138,11 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
           .then((data) => {
             self.postMessage(data)
           })
+          .catch((error) => {
+            setTimeout(() => {
+              throw error
+            })
+          })
       }
     `
 
@@ -167,7 +167,7 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   }
 
   protected handleLoad (): void {
-    this.update()
+    this.propagator.dispatch('load')
   }
 
   protected handleMessage (event: MessageEvent): void {
@@ -177,6 +177,10 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
     ) {
       this.propagator.dispatch('message', [event.data], event)
     }
+  }
+
+  protected handleWork (event: CustomEvent): void {
+    this.postMessage(event.detail)
   }
 
   protected load (): void {
@@ -195,10 +199,13 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   }
 
   protected postWorker (data: unknown): void {
-    this.worker?.postMessage(data)
+    this.worker?.postMessage({
+      data
+    })
   }
 
   protected removeEventListeners (): void {
+    this.removeEventListener('sc-work', this.handleWorkBound)
     window.removeEventListener('message', this.handleMessageBound)
   }
 }

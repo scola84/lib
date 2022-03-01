@@ -1,15 +1,7 @@
+import { ScolaDragger, ScolaDropper, ScolaFocuser, ScolaHider, ScolaInteractor, ScolaMutator, ScolaObserver, ScolaPaster, ScolaPropagator } from '../helpers'
 import { cast, isArray, isStruct } from '../../common'
-import { ScolaDragger } from '../helpers/dragger'
-import { ScolaDropper } from '../helpers/dropper'
 import type { ScolaElement } from './element'
-import { ScolaFocuser } from '../helpers/focuser'
-import { ScolaHider } from '../helpers/hider'
-import { ScolaInteractor } from '../helpers/interactor'
-import type { ScolaInteractorEvent } from '../helpers/interactor'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPaster } from '../helpers/paster'
-import { ScolaPropagator } from '../helpers/propagator'
+import type { ScolaInteractorEvent } from '../helpers'
 import type { Struct } from '../../common'
 
 declare global {
@@ -114,7 +106,9 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   public getData (): Struct {
-    return {}
+    return {
+      ...this.dataset
+    }
   }
 
   public reset (): void {
@@ -130,7 +124,9 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   public toObject (): Struct {
-    return {}
+    return {
+      ...this.dataset
+    }
   }
 
   public update (): void {}
@@ -157,15 +153,15 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleInteractorClick (event: ScolaInteractorEvent): boolean {
-    return this.propagator.dispatch('click', undefined, event.originalEvent)
+    return this.propagator.dispatch('click', [this.getData()], event.originalEvent)
   }
 
   protected handleInteractorContextmenu (event: ScolaInteractorEvent): boolean {
-    return this.propagator.dispatch('contextmenu', undefined, event.originalEvent)
+    return this.propagator.dispatch('contextmenu', [this.getData()], event.originalEvent)
   }
 
   protected handleInteractorDblclick (event: ScolaInteractorEvent): boolean {
-    return this.propagator.dispatch('dblclick', undefined, event.originalEvent)
+    return this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
   }
 
   protected handleInteractorStart (event: ScolaInteractorEvent): boolean {

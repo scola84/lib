@@ -1,5 +1,5 @@
 import { isArray, isStruct } from '../../common'
-import type { ScolaMediaElement } from '../elements/media'
+import type { ScolaMediaElement } from '../elements'
 import type { Struct } from '../../common'
 
 export interface ScolaMediaData extends Struct {

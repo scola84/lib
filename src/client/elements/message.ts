@@ -1,9 +1,6 @@
+import { ScolaHider, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
 import { ScolaDivElement } from './div'
 import type { ScolaElement } from './element'
-import { ScolaHider } from '../helpers/hider'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 

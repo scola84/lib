@@ -1,4 +1,4 @@
-import type { ScolaElement } from '../elements/element'
+import type { ScolaElement } from '../elements'
 import { ScolaInteractor } from './interactor'
 import type { ScolaInteractorEvent } from './interactor'
 

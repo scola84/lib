@@ -1,19 +1,15 @@
-import { cast, isPrimitive } from '../../common'
+import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { cast, isArray, isPrimitive } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaInputElement } from './input'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
 import { ScolaSelectElement } from './select'
 import { ScolaTextAreaElement } from './textarea'
 import type { Struct } from '../../common'
-import { isArray } from 'lodash'
 
 declare global {
   interface HTMLElementEventMap {
-    'sc-fieldset-clear': CustomEvent
-    'sc-field-focus': CustomEvent
-    'sc-field-validate': CustomEvent
+    'sc-fieldset-falsify': CustomEvent
+    'sc-fieldset-verify': CustomEvent
   }
 }
 

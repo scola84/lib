@@ -1,10 +1,8 @@
+import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { absorb, isStruct } from '../../common'
 import type { ScolaElement } from './element'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
-import type { ScolaPropagatorEvent } from '../helpers/propagator'
+import type { ScolaPropagatorEvent } from '../helpers'
 import type { Struct } from '../../common'
-import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -60,10 +58,7 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
 
   public dispatch (data: Struct = {}, trigger?: Event): void {
     this.events.forEach((event) => {
-      this.propagator.dispatchEvent(event, [{
-        ...event.data,
-        ...data
-      }], trigger)
+      this.propagator.dispatchEvent(event, [absorb(event.data, data)], trigger)
     })
   }
 

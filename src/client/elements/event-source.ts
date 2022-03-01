@@ -1,7 +1,5 @@
+import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
 import type { ScolaElement } from './element'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 
 declare global {

@@ -1,9 +1,6 @@
-import type { ScolaFieldData, ScolaFieldError } from '../helpers/field'
-import { ScolaField } from '../helpers/field'
+import { ScolaField, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import type { ScolaFieldData, ScolaFieldError } from '../helpers'
 import type { ScolaFieldElement } from './field'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 
 export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFieldElement {

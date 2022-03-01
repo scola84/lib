@@ -1,4 +1,4 @@
-import type { ScolaTableElement } from '../elements/table'
+import type { ScolaTableElement } from '../elements'
 import type { Struct } from '../../common'
 import { isArray } from '../../common'
 

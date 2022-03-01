@@ -1,6 +1,6 @@
 import type { Primitive, Struct } from '../../common'
 import { isPrimitive, isStruct } from '../../common'
-import type { ScolaFieldElement } from '../elements/field'
+import type { ScolaFieldElement } from '../elements'
 import { ScolaInteractor } from './interactor'
 import type { ScolaInteractorEvent } from './interactor'
 import { debounce } from 'throttle-debounce'

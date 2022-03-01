@@ -1,9 +1,7 @@
+import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
 import { isArray, isStruct } from '../../common'
 import type { IDBPDatabase } from 'idb/with-async-ittr'
 import type { ScolaElement } from './element'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 import { openDB } from 'idb/with-async-ittr'
 

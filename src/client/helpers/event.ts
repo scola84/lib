@@ -1,4 +1,4 @@
-import type { ScolaElement } from '../elements/element'
+import type { ScolaElement } from '../elements'
 
 interface ScolaEventInit extends CustomEventInit {
   element: ScolaElement

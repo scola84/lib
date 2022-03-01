@@ -11,6 +11,9 @@ try {
     .command('sql-ts', 'creates TypeScript interfaces from a SQL database', {
       executableFile: 'sql-ts'
     })
+    .command('ts-barrel', 'creates a TypeScript barrel', {
+      executableFile: 'ts-barrel'
+    })
     .exitOverride()
     .parse()
 } catch (error: unknown) {

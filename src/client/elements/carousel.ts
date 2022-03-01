@@ -1,14 +1,8 @@
+import { ScolaBreakpoint, ScolaEvent, ScolaInteractor, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import type { ScolaBreakpointEvent, ScolaInteractorEvent } from '../helpers'
 import { isArray, isStruct } from '../../common'
-import { ScolaBreakpoint } from '../helpers/breakpoint'
-import type { ScolaBreakpointEvent } from '../helpers/breakpoint'
 import { ScolaDivElement } from './div'
 import type { ScolaElement } from './element'
-import { ScolaEvent } from '../helpers/event'
-import { ScolaInteractor } from '../helpers/interactor'
-import type { ScolaInteractorEvent } from '../helpers/interactor'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 
 declare global {

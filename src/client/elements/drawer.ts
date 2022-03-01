@@ -1,11 +1,9 @@
+import { ScolaMutator, ScolaObserver, ScolaPropagator, ScolaTheme } from '../helpers'
 import type { ScolaElement } from './element'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
-import { ScolaTheme } from '../helpers/theme'
 import type { Struct } from '../../common'
 
-type Drawer = (data: unknown, options: Struct) => Promise<SVGElement | undefined> | SVGElement | undefined
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Drawer = (data: any, options: Struct) => Promise<SVGElement | undefined> | SVGElement | undefined
 
 interface Dimensions {
   height: number

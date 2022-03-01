@@ -1,12 +1,10 @@
+import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
 import type { Html5Qrcode } from 'html5-qrcode'
 import type { Html5QrcodeCameraScanConfig } from 'html5-qrcode/esm/html5-qrcode'
 import { ImageCapture } from 'image-capture'
 import type { Options } from 'recordrtc'
 import type RtcRecorder from 'recordrtc'
 import type { ScolaElement } from './element'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 
 declare global {

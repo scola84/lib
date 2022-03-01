@@ -1,9 +1,6 @@
 import { ScolaIntl, isStruct } from '../../common'
+import { ScolaMutator, ScolaObserver, ScolaPropagator, ScolaSanitizer } from '../helpers'
 import type { ScolaElement } from './element'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
-import { ScolaSanitizer } from '../helpers/sanitizer'
 import type { Struct } from '../../common'
 import { marked } from 'marked'
 

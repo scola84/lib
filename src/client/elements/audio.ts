@@ -1,9 +1,6 @@
-import { ScolaMedia } from '../helpers/media'
-import type { ScolaMediaData } from '../helpers/media'
+import { ScolaMedia, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import type { ScolaMediaData } from '../helpers'
 import type { ScolaMediaElement } from './media'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 

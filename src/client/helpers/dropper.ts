@@ -1,5 +1,4 @@
-import type { ScolaElement } from '../elements/element'
-import type { ScolaTableElement } from '../elements/table'
+import type { ScolaElement, ScolaTableElement } from '../elements'
 import type { Struct } from '../../common'
 
 export class ScolaDropper {

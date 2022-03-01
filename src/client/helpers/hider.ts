@@ -1,6 +1,6 @@
 import { ScolaBreakpoint } from './breakpoint'
 import type { ScolaBreakpointEvent } from './breakpoint'
-import type { ScolaElement } from '../elements/element'
+import type { ScolaElement } from '../elements'
 import { ScolaIndexer } from './indexer'
 import { ScolaInteractor } from './interactor'
 import type { ScolaInteractorEvent } from './interactor'

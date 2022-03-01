@@ -6,12 +6,14 @@ import commonjs from '@rollup/plugin-commonjs'
 import { generateSW } from 'rollup-plugin-workbox'
 import gzip from 'rollup-plugin-gzip'
 import minify from 'rollup-plugin-minify-html-literals'
+import { onwarn } from '../helpers'
 import resolve from '@rollup/plugin-node-resolve'
 import { terser } from 'rollup-plugin-terser'
 import typescript from '@rollup/plugin-typescript'
 
 const options: RollupOptions = {
   input: 'src/worker/index.ts',
+  onwarn,
   output: {
     dir: '.',
     entryFileNames: 'dist/client/worker.js',

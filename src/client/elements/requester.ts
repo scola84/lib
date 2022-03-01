@@ -1,8 +1,6 @@
+import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
 import { absorb, isArray, isStruct } from '../../common'
 import type { ScolaElement } from './element'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
 import type { ScolaViewElement } from './view'
 import type { Struct } from '../../common'
 
@@ -194,7 +192,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }
   }
 
-  protected createRequestBody (data?: Struct): FormData | URLSearchParams | string | null {
+  protected createRequestBody (data: Struct): FormData | URLSearchParams | string | null {
     switch (this.enctype) {
       case 'application/json':
         return this.createRequestBodyJson(data)
@@ -207,11 +205,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }
   }
 
-  protected createRequestBodyFormData (data?: Struct): FormData {
+  protected createRequestBodyFormData (data: Struct): FormData {
     const body = new FormData()
 
     Object
-      .entries(absorb(this.dataset, data))
+      .entries(data)
       .map<[string, unknown[]]>(([key, value]) => {
       /* eslint-disable @typescript-eslint/indent */
         if (isArray(value)) {
@@ -234,11 +232,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     return body
   }
 
-  protected createRequestBodyFormUrlencoded (data?: Struct): URLSearchParams {
+  protected createRequestBodyFormUrlencoded (data: Struct): URLSearchParams {
     const body = new URLSearchParams()
 
     Object
-      .entries(absorb(this.dataset, data))
+      .entries(data)
       .map<[string, unknown[]]>(([key, value]) => {
       /* eslint-disable @typescript-eslint/indent */
         if (isArray(value)) {

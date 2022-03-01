@@ -1,7 +1,7 @@
 import { ScolaInteractor } from './interactor'
 import type { ScolaInteractorEvent } from './interactor'
-import type { ScolaTableElement } from '../elements/table'
-import { ScolaTableRowElement } from '../elements/table-row'
+import type { ScolaTableElement } from '../elements'
+import { ScolaTableRowElement } from '../elements'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 

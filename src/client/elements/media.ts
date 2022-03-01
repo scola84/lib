@@ -1,4 +1,4 @@
-import type { ScolaMedia, ScolaMediaData } from '../helpers/media'
+import type { ScolaMedia, ScolaMediaData } from '../helpers'
 import type { ScolaElement } from './element'
 
 export interface ScolaMediaElement extends ScolaElement {

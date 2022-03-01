@@ -12,7 +12,8 @@ const options: RollupOptions = {
     'index': 'src/cli/index.ts',
     'sql-diff': 'src/cli/commands/sql-diff.ts',
     'sql-schema': 'src/cli/commands/sql-schema.ts',
-    'sql-ts': 'src/cli/commands/sql-ts.ts'
+    'sql-ts': 'src/cli/commands/sql-ts.ts',
+    'ts-barrel': 'src/cli/commands/ts-barrel.ts'
   },
   output: {
     banner: '#!/usr/bin/env node',

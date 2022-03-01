@@ -5,6 +5,7 @@ import commonjs from '@rollup/plugin-commonjs'
 import copy from 'rollup-plugin-copy'
 import gzip from 'rollup-plugin-gzip'
 import minify from 'rollup-plugin-minify-html-literals'
+import { onwarn } from '../helpers'
 import postcss from 'rollup-plugin-postcss'
 import resolve from '@rollup/plugin-node-resolve'
 import { terser } from 'rollup-plugin-terser'
@@ -15,6 +16,7 @@ const pkg = require(`${process.cwd()}/package.json`) as Record<string, unknown>
 
 const options: RollupOptions = {
   input: 'src/client/index.ts',
+  onwarn,
   output: [{
     dir: '.',
     entryFileNames: 'dist/client/index.mjs',

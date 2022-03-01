@@ -1,5 +1,5 @@
 import { cast, hyphenize, isStruct } from '../../common'
-import type { ScolaElement } from '../elements/element'
+import type { ScolaElement } from '../elements'
 import { ScolaSanitizer } from './sanitizer'
 import type { Struct } from '../../common'
 
@@ -112,12 +112,17 @@ export class ScolaMutator {
             !this.element.hasAttribute(attrName)
           ) {
             const castValue = cast(value)
-            const attrValue = String(castValue)
 
-            if (typeof castValue === 'boolean') {
-              this.element.toggleAttribute(attrName, castValue)
-            } else if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
-              this.element.setAttribute(attrName, attrValue)
+            if (castValue === false) {
+              this.element.removeAttribute(attrName)
+            } else if (castValue === true) {
+              this.element.setAttribute(attrName, '')
+            } else {
+              const attrValue = String(castValue)
+
+              if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
+                this.element.setAttribute(attrName, attrValue)
+              }
             }
           }
         })
@@ -133,15 +138,18 @@ export class ScolaMutator {
         })
         .forEach(([name, value]) => {
           const attrName = String(name)
-          const attrValue = String(value)
           const castValue = cast(value)
 
           if (typeof castValue === 'boolean') {
             this.element.toggleAttribute(attrName)
           } else if (value === this.element.getAttribute(attrName)) {
             this.element.removeAttribute(attrName)
-          } else if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
-            this.element.setAttribute(attrName, attrValue)
+          } else {
+            const attrValue = String(value)
+
+            if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
+              this.element.setAttribute(attrName, attrValue)
+            }
           }
         })
     }

@@ -1,4 +1,4 @@
-import type { ScolaField, ScolaFieldError } from '../helpers/field'
+import type { ScolaField, ScolaFieldError } from '../helpers'
 import type { ScolaElement } from './element'
 
 export interface ScolaFieldElement extends ScolaElement {

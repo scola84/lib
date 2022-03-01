@@ -1,7 +1,7 @@
+import { isExternal, onwarn } from '../helpers'
 import type { RollupOptions } from 'rollup'
 import commonjs from '@rollup/plugin-commonjs'
 import copy from 'rollup-plugin-copy'
-import { isExternal } from '../helpers'
 import minify from 'rollup-plugin-minify-html-literals'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
@@ -9,6 +9,7 @@ import typescript from '@rollup/plugin-typescript'
 const options: RollupOptions = {
   external: isExternal,
   input: 'src/server/index.ts',
+  onwarn,
   output: [{
     dir: '.',
     entryFileNames: 'dist/server/index.js',

@@ -1,7 +1,6 @@
 import { ScolaIntl, isArray, isStruct } from '../../common'
+import type { ScolaTableElement, ScolaTableRowElement } from '../elements'
 import { ScolaBreakpoint } from './breakpoint'
-import type { ScolaTableElement } from '../elements/table'
-import type { ScolaTableRowElement } from '../elements/table-row'
 import type { Struct } from '../../common'
 
 type Axis = 'x' | 'y'

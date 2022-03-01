@@ -1,16 +1,8 @@
+import { ScolaDragger, ScolaDropper, ScolaMutator, ScolaObserver, ScolaPropagator, ScolaTableLister, ScolaTableSelector, ScolaTableSorter, ScolaTableTree } from '../helpers'
 import { cast, isArray, isPrimitive, isStruct } from '../../common'
-import { ScolaDragger } from '../helpers/dragger'
-import { ScolaDropper } from '../helpers/dropper'
 import type { ScolaElement } from './element'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
 import { ScolaTableCellElement } from './table-cell'
-import { ScolaTableLister } from '../helpers/table-lister'
 import { ScolaTableRowElement } from './table-row'
-import { ScolaTableSelector } from '../helpers/table-selector'
-import { ScolaTableSorter } from '../helpers/table-sorter'
-import { ScolaTableTree } from '../helpers/table-tree'
 import type { Struct } from '../../common'
 
 declare global {
@@ -24,6 +16,7 @@ declare global {
     'sc-table-put': CustomEvent
     'sc-table-put-all': CustomEvent
     'sc-table-request': CustomEvent
+    'sc-table-start': CustomEvent
   }
 }
 
@@ -82,6 +75,8 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   protected handlePutBound = this.handlePut.bind(this)
 
   protected handleRequestBound = this.handleRequest.bind(this)
+
+  protected handleStartBound = this.handleStart.bind(this)
 
   public constructor () {
     super()
@@ -244,7 +239,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       this.lister.limit === 0 &&
       this.lister.mode !== null
     ) {
-      this.lister.request()
+      this.lister.start()
     } else {
       this.updateElements()
       this.updateAttributes()
@@ -309,6 +304,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.addEventListener('sc-table-put', this.handlePutBound)
     this.addEventListener('sc-table-put-all', this.handlePutAllBound)
     this.addEventListener('sc-table-request', this.handleRequestBound)
+    this.addEventListener('sc-table-start', this.handleStartBound)
   }
 
   protected appendBodyCells (row: HTMLTableRowElement, item: Struct): void {
@@ -378,7 +374,10 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
         }
       }
     } else {
-      element.setData(item)
+      if (!this.templates.has('body-cell')) {
+        element.setData(item)
+      }
+
       this.body.appendChild(element)
     }
 
@@ -590,6 +589,10 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.lister.request()
   }
 
+  protected handleStart (): void {
+    this.lister.start()
+  }
+
   protected removeEventListeners (): void {
     this.removeEventListener('sc-table-add', this.handleAddBound)
     this.removeEventListener('sc-table-add-all', this.handleAddAllBound)
@@ -600,6 +603,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.removeEventListener('sc-table-put', this.handlePutBound)
     this.removeEventListener('sc-table-put-all', this.handlePutAllBound)
     this.removeEventListener('sc-table-request', this.handleRequestBound)
+    this.removeEventListener('sc-table-start', this.handleStartBound)
   }
 
   protected selectBody (): HTMLTableSectionElement {

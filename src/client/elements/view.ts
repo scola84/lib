@@ -1,10 +1,6 @@
+import { ScolaHider, ScolaMutator, ScolaObserver, ScolaPropagator, ScolaSanitizer } from '../helpers'
 import { absorb, isArray, isPrimitive, isSame, isStruct } from '../../common'
 import type { ScolaElement } from './element'
-import { ScolaHider } from '../helpers/hider'
-import { ScolaMutator } from '../helpers/mutator'
-import { ScolaObserver } from '../helpers/observer'
-import { ScolaPropagator } from '../helpers/propagator'
-import { ScolaSanitizer } from '../helpers/sanitizer'
 import type { Struct } from '../../common'
 
 declare global {

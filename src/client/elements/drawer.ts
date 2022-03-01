@@ -94,9 +94,9 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     this.removeEventListeners()
   }
 
-  public getData (): void {}
-
-  public isSame (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public postMessage (data: unknown): void {
     if (this.drawer === undefined) {
@@ -115,6 +115,10 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   public setData (data: unknown): void {
     this.data = data
     this.update()
+  }
+
+  public toObject (): Struct {
+    return {}
   }
 
   public update (): void {

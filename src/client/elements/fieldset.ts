@@ -76,54 +76,18 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   public getData (): Struct {
-    return Array
-      .from(this.elements)
-      .reduce<Struct>((data, element) => {
-      /* eslint-disable @typescript-eslint/indent */
-        if (
-          element instanceof ScolaInputElement ||
-          element instanceof ScolaSelectElement ||
-          element instanceof ScolaTextAreaElement
-        ) {
-          const {
-            name,
-            value
-          } = element.getData()
-
-          let castValue: unknown = value
-
-          if (isPrimitive(value)) {
-            castValue = cast(value)
-          }
-
-          if (data[name] === undefined) {
-            data[name] = castValue
-          } else {
-            let dataValue = data[name]
-
-            if (!isArray(dataValue)) {
-              data[name] = [data[name]]
-              dataValue = data[name]
-            }
-
-            if (isArray(dataValue)) {
-              dataValue.push(castValue)
-            }
-          }
-        }
-
-        return data
-      }, {})
-      /* eslint-enable @typescript-eslint/indent */
+    return this.serialize()
   }
-
-  public isSame (): void {}
 
   public reset (): void {}
 
   public setData (data: unknown): void {
     this.toggleDisabled()
     this.propagator.set(data)
+  }
+
+  public toObject (): Struct {
+    return this.serialize()
   }
 
   public update (): void {}
@@ -181,6 +145,48 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   protected removeEventListeners (): void {
     this.removeEventListener('sc-fieldset-falsify', this.handleFalsifyBound)
     this.removeEventListener('sc-fieldset-verify', this.handleVerifyBound)
+  }
+
+  protected serialize (): Struct {
+    return Array
+      .from(this.elements)
+      .reduce<Struct>((data, element) => {
+      /* eslint-disable @typescript-eslint/indent */
+        if (
+          element instanceof ScolaInputElement ||
+          element instanceof ScolaSelectElement ||
+          element instanceof ScolaTextAreaElement
+        ) {
+          const {
+            name,
+            value
+          } = element.getData()
+
+          let castValue: unknown = value
+
+          if (isPrimitive(value)) {
+            castValue = cast(value)
+          }
+
+          if (data[name] === undefined) {
+            data[name] = castValue
+          } else {
+            let dataValue = data[name]
+
+            if (!isArray(dataValue)) {
+              data[name] = [data[name]]
+              dataValue = data[name]
+            }
+
+            if (isArray(dataValue)) {
+              dataValue.push(castValue)
+            }
+          }
+        }
+
+        return data
+      }, {})
+      /* eslint-enable @typescript-eslint/indent */
   }
 
   protected toggleDisabled (): void {

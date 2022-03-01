@@ -137,16 +137,16 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     return this.value
   }
 
-  public isSame (data: unknown): boolean {
-    return this.field.isSame(data)
-  }
-
   public reset (): void {
     this.field.debounce = Number(this.getAttribute('sc-debounce') ?? 250)
   }
 
   public setData (data: unknown): void {
     this.field.setData(data)
+  }
+
+  public toObject (): Struct {
+    return this.field.toObject()
   }
 
   public update (): void {

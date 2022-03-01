@@ -46,7 +46,9 @@ export function cast (value: unknown): boolean | number | string | null | undefi
     !Number.isNaN(Number(value))
   ) || Number.isFinite(value)) {
     return Number(value)
+  } else if (typeof value === 'string') {
+    return value
   }
 
-  return String(value)
+  return JSON.stringify(value)
 }

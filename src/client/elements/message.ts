@@ -82,15 +82,19 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
     this.removeEventListeners()
   }
 
-  public getData (): void {}
-
-  public isSame (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public reset (): void {
     this.timeout = Number(this.getAttribute('sc-timeout') ?? -1)
   }
 
   public setData (): void {}
+
+  public toObject (): Struct {
+    return {}
+  }
 
   public update (): void {
     this.updateElements()

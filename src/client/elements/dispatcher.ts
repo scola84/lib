@@ -67,9 +67,9 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     })
   }
 
-  public getData (): void {}
-
-  public isSame (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public reset (): void {
     this.events = this.parseEvents()
@@ -77,6 +77,10 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
   }
 
   public setData (): void {}
+
+  public toObject (): Struct {
+    return {}
+  }
 
   public update (): void {}
 

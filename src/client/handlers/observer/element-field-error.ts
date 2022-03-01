@@ -1,5 +1,5 @@
-import type { ScolaElement } from '../elements/element'
-import type { ScolaFieldElement } from '../elements/field'
+import type { ScolaElement } from '../../elements/element'
+import type { ScolaFieldElement } from '../../elements/field'
 
 export function elementFieldError (observer: ScolaElement, observable: ScolaFieldElement): void {
   window.requestAnimationFrame(() => {

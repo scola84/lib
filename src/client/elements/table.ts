@@ -1,4 +1,4 @@
-import { cast, isArray, isPrimitive, isSame, isStruct } from '../../common'
+import { cast, isArray, isPrimitive, isStruct } from '../../common'
 import { ScolaDragger } from '../helpers/dragger'
 import { ScolaDropper } from '../helpers/dropper'
 import type { ScolaElement } from './element'
@@ -27,7 +27,7 @@ declare global {
   }
 }
 
-export interface ScolaTableElementData {
+export interface ScolaTableElementData extends Struct {
   added: number
   deleted: number
   elements: number
@@ -211,10 +211,6 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     }
   }
 
-  public isSame (data: unknown): boolean {
-    return isSame(data, this.getData())
-  }
-
   public put (item: unknown): void {
     if (isStruct(item)) {
       this.lister.put(item)
@@ -237,6 +233,10 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     } else {
       this.tree.setData(data)
     }
+  }
+
+  public toObject (): Struct {
+    return {}
   }
 
   public update (): void {

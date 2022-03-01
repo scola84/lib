@@ -81,9 +81,9 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
     }
   }
 
-  public getData (): void {}
-
-  public isSame (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public postMessage (data: unknown): void {
     if (this.worker === undefined) {
@@ -101,6 +101,10 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   public setData (data: unknown): void {
     this.workerData = data
     this.update()
+  }
+
+  public toObject (): Struct {
+    return {}
   }
 
   public update (): void {

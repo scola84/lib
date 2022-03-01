@@ -7,6 +7,7 @@ import type { ScolaInteractorEvent } from '../helpers/interactor'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -130,7 +131,9 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.removeEventListeners()
   }
 
-  public getData (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public hide (): void {
     if (this.immediate) {
@@ -146,8 +149,6 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
       })
     }
   }
-
-  public isSame (): void {}
 
   public reset (): void {
     this.interactor.keyboard = this.interactor.hasKeyboard
@@ -203,6 +204,10 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
         this.finalize()
       }
     })
+  }
+
+  public toObject (): Struct {
+    return {}
   }
 
   public update (): void {}

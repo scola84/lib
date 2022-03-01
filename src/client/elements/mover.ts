@@ -4,6 +4,7 @@ import type { ScolaInteractorEvent } from '../helpers/interactor'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 
 interface Offset {
   left: number
@@ -59,9 +60,9 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
     this.propagator.disconnect()
   }
 
-  public getData (): void {}
-
-  public isSame (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public reset (): void {
     this.contain = this.hasAttribute('sc-contain')
@@ -72,6 +73,10 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
   }
 
   public setData (): void {}
+
+  public toObject (): Struct {
+    return {}
+  }
 
   public update (): void {}
 

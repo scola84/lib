@@ -1,4 +1,4 @@
-import { ScolaIntl, isSame, isStruct } from '../../common'
+import { ScolaIntl, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
@@ -68,10 +68,6 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  public isSame (data: unknown): boolean {
-    return isSame(data, this.getData())
-  }
-
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
     this.locale = this.getAttribute('sc-locale') ?? ScolaIntl.locale
@@ -94,6 +90,13 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
       }
 
       this.update()
+    }
+  }
+
+  public toObject (): Struct {
+    return {
+      ...this.dataset,
+      ...this.data
     }
   }
 

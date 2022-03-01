@@ -1,8 +1,8 @@
-import { cast, hyphenize } from '../../common'
-import type { ScolaElement } from '../elements/element'
+import { cast, hyphenize } from '../../../common'
+import type { ScolaElement } from '../../elements/element'
 
-export function elementHasAttrs (observer: ScolaElement, observable: ScolaElement): void {
-  observer.observer.toggle(Object
+export function elementsAttrsInv (observer: ScolaElement, observable: ScolaElement): void {
+  observer.observer.toggle(!Object
     .entries(observer.dataset)
     .every(([name, value]) => {
       return value

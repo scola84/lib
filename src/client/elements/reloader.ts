@@ -2,6 +2,7 @@ import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -45,13 +46,17 @@ export class ScolaReloaderElement extends HTMLObjectElement implements ScolaElem
     this.removeEventListeners()
   }
 
-  public getData (): void {}
-
-  public isSame (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public reset (): void {}
 
   public setData (): void {}
+
+  public toObject (): Struct {
+    return {}
+  }
 
   public update (): void {}
 

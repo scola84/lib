@@ -84,15 +84,15 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     return this.value
   }
 
-  public isSame (data: unknown): boolean {
-    return this.field.isSame(data)
-  }
-
   public reset (): void {}
 
   public setData (data: unknown): void {
     this.field.setData(data)
     this.propagator.set(data)
+  }
+
+  public toObject (): Struct {
+    return this.field.toObject()
   }
 
   public update (): void {

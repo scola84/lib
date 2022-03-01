@@ -1,6 +1,7 @@
 import type { ScolaMutator } from '../helpers/mutator'
 import type { ScolaObserver } from '../helpers/observer'
 import type { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 
 export interface ScolaElement extends HTMLElement {
   mutator: ScolaMutator
@@ -9,9 +10,9 @@ export interface ScolaElement extends HTMLElement {
 
   propagator: ScolaPropagator
 
-  getData: () => unknown
+  getData: () => Struct | null
 
-  isSame: (data: unknown) => unknown
+  toObject: () => Struct
 
   setData: (data: unknown) => void
 

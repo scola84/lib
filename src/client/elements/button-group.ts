@@ -4,6 +4,7 @@ import type { ScolaInteractorEvent } from '../helpers/interactor'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 
 export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElement {
   public buttons: HTMLElement[]
@@ -57,9 +58,9 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
     this.propagator.disconnect()
   }
 
-  public getData (): void {}
-
-  public isSame (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public reset (): void {
     this.interactor.keyboard = this.interactor.hasKeyboard
@@ -67,6 +68,10 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
 
   public setData (data: unknown): void {
     this.propagator.set(data)
+  }
+
+  public toObject (): Struct {
+    return {}
   }
 
   public update (): void {}

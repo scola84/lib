@@ -7,6 +7,7 @@ import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -20,7 +21,7 @@ declare global {
 
 type Type = 'audio' | 'code' | 'image' | 'video'
 
-export interface ScolaRecorderElementData {
+export interface ScolaRecorderElementData extends Struct {
   length: Date
 }
 
@@ -177,8 +178,6 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     }
   }
 
-  public isSame (): void {}
-
   public reset (): void {
     this.codeFps = Number(this.getAttribute('sc-code-fps') ?? 1)
     this.codeOverlay = Number(this.getAttribute('sc-code-overlay') ?? 250)
@@ -225,6 +224,10 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
       this.toggleAttribute('sc-started', false)
     }
+  }
+
+  public toObject (): Struct {
+    return {}
   }
 
   public toggle (): void {

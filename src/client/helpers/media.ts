@@ -1,8 +1,8 @@
-import { isArray, isSame, isStruct } from '../../common'
+import { isArray, isStruct } from '../../common'
 import type { ScolaMediaElement } from '../elements/media'
 import type { Struct } from '../../common'
 
-export interface ScolaMediaData {
+export interface ScolaMediaData extends Struct {
   currentTime: number
   duration: number
   length: Date
@@ -67,12 +67,6 @@ export class ScolaMedia {
     }
   }
 
-  public isSame (data: unknown): boolean {
-    return isSame(data, {
-      src: this.element.src
-    })
-  }
-
   public jumpTime (delta: number): void {
     const time = this.element.currentTime + (delta / 1000)
 
@@ -114,6 +108,12 @@ export class ScolaMedia {
   public setVolume (volume: number): void {
     this.element.muted = false
     this.element.volume = volume
+  }
+
+  public toObject (): Struct {
+    return {
+      src: this.element.src
+    }
   }
 
   public toggle (): void {

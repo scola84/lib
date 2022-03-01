@@ -4,6 +4,7 @@ import type { ScolaMediaElement } from './media'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 
 declare global {
@@ -84,14 +85,14 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
     return this.media.getData()
   }
 
-  public isSame (data: unknown): boolean {
-    return this.media.isSame(data)
-  }
-
   public reset (): void {}
 
   public setData (data: unknown): void {
     this.media.setData(data)
+  }
+
+  public toObject (): Struct {
+    return this.media.toObject()
   }
 
   public toggle (): void {

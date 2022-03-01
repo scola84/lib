@@ -203,9 +203,9 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       })
   }
 
-  public getData (): void {}
-
-  public isSame (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public async put (data: unknown): Promise<unknown> {
     return this
@@ -239,6 +239,10 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
   }
 
   public setData (): void {}
+
+  public toObject (): Struct {
+    return {}
+  }
 
   public update (): void {
     this.updateAttributes()

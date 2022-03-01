@@ -67,9 +67,9 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
     this.close()
   }
 
-  public getData (): void {}
-
-  public isSame (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public reset (): void {
     this.event = this.getAttribute('sc-event') ?? ''
@@ -77,6 +77,10 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
   }
 
   public setData (): void {}
+
+  public toObject (): Struct {
+    return {}
+  }
 
   public update (): void {}
 

@@ -29,7 +29,7 @@ type Enctype =
   | 'application/x-www-form-urlencoded'
   | 'multipart/form-data'
 
-interface ScolaRequesterElementData {
+interface ScolaRequesterElementData extends Struct {
   loaded: number
   state: number
   total: number
@@ -126,8 +126,6 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }
   }
 
-  public isSame (): void {}
-
   public reset (): void {
     this.enctype = (this.getAttribute('sc-enctype') as Enctype | null) ?? 'application/x-www-form-urlencoded'
     this.exact = this.hasAttribute('sc-exact')
@@ -147,6 +145,13 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   }
 
   public setData (): void {}
+
+  public toObject (): Struct {
+    return {
+      method: this.method,
+      url: this.url
+    }
+  }
 
   public toggle (options?: Struct): void {
     if (this.xhr === undefined) {

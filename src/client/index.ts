@@ -51,19 +51,19 @@ import { ScolaTheme } from './helpers/theme'
 import { ScolaVideoElement } from './elements/video'
 import { ScolaViewElement } from './elements/view'
 import { ScolaWorkerElement } from './elements/worker'
-import { buttonCarouselHider } from './observers/button-carousel-hider'
-import { carouselSelect } from './observers/carousel-select'
-import { elementFieldError } from './observers/element-field-error'
-import { elementGetData } from './observers/element-get-data'
-import { elementHasAttrs } from './observers/element-has-attrs'
-import { elementHasAttrsInv } from './observers/element-has-attrs-inv'
-import { elementHasData } from './observers/element-has-data'
-import { fieldElementAttr } from './observers/field-element-attr'
-import { inputMediaTime } from './observers/input-media-time'
-import { inputMediaVolume } from './observers/input-media-volume'
-import { inputRequester } from './observers/input-requester'
-import { tableRowTable } from './observers/table-row-table'
-import { tableView } from './observers/table-view'
+import { buttonCarouselHider } from './handlers/observer/button-carousel-hider'
+import { carouselSelect } from './handlers/observer/carousel-select'
+import { elementFieldError } from './handlers/observer/element-field-error'
+import { elementsAttrs } from './handlers/observer/elements-attrs'
+import { elementsAttrsInv } from './handlers/observer/elements-attrs-inv'
+import { elementsData } from './handlers/observer/elements-data'
+import { elementsSame } from './handlers/observer/elements-same'
+import { fieldElementAttr } from './handlers/observer/field-element-attr'
+import { inputMediaTime } from './handlers/observer/input-media-time'
+import { inputMediaVolume } from './handlers/observer/input-media-volume'
+import { inputRequester } from './handlers/observer/input-requester'
+import { tableRowTable } from './handlers/observer/table-row-table'
+import { tableView } from './handlers/observer/table-view'
 
 export * from '../common'
 export * from './styles'
@@ -166,10 +166,10 @@ export const observerHandlers = {
   'sc-button-carousel-hider': buttonCarouselHider,
   'sc-carousel-select': carouselSelect,
   'sc-element-field-error': elementFieldError,
-  'sc-element-get-data': elementGetData,
-  'sc-element-has-attrs': elementHasAttrs,
-  'sc-element-has-attrs-inv': elementHasAttrsInv,
-  'sc-element-has-data': elementHasData,
+  'sc-elements-attrs': elementsAttrs,
+  'sc-elements-attrs-inv': elementsAttrsInv,
+  'sc-elements-data': elementsData,
+  'sc-elements-same': elementsSame,
   'sc-field-element-attr': fieldElementAttr,
   'sc-input-media-time': inputMediaTime,
   'sc-input-media-volume': inputMediaVolume,

@@ -3,14 +3,13 @@ import { Struct, isStruct } from './helpers/is-struct'
 import { ScolaIntl } from './helpers/intl'
 import { absorb } from './helpers/absorb'
 import { cast } from './helpers/cast'
-import { en } from './strings/en'
 import { hyphenize } from './helpers/hyphenize'
 import { isArray } from './helpers/is-array'
 import { isDate } from './helpers/is-date'
 import { isNil } from './helpers/is-nil'
 import { isObject } from './helpers/is-object'
 import { isSame } from './helpers/is-same'
-import { nl } from './strings/nl'
+import { strings } from './strings'
 
 export {
   Primitive,
@@ -25,10 +24,6 @@ export {
   isObject,
   isPrimitive,
   isSame,
-  isStruct
-}
-
-export const strings = {
-  en,
-  nl
+  isStruct,
+  strings
 }

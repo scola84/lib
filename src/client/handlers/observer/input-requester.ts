@@ -1,5 +1,5 @@
-import type { ScolaInputElement } from '../elements/input'
-import type { ScolaRequesterElement } from '../elements/requester'
+import type { ScolaInputElement } from '../../elements/input'
+import type { ScolaRequesterElement } from '../../elements/requester'
 
 export function inputRequester (observer: ScolaInputElement, observable: ScolaRequesterElement, mutations: MutationRecord[]): void {
   if (mutations.length > 0) {

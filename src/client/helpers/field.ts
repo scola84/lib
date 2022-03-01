@@ -1,5 +1,5 @@
 import type { Primitive, Struct } from '../../common'
-import { isPrimitive, isSame, isStruct } from '../../common'
+import { isPrimitive, isStruct } from '../../common'
 import type { ScolaFieldElement } from '../elements/field'
 import { ScolaInteractor } from './interactor'
 import type { ScolaInteractorEvent } from './interactor'
@@ -82,13 +82,6 @@ export class ScolaField {
     }
   }
 
-  public isSame (data: unknown): boolean {
-    return isSame(data, {
-      name: this.element.name,
-      value: this.element.value
-    })
-  }
-
   public reset (): void {
     this.interactor.keyboard = this.interactor.hasKeyboard
   }
@@ -111,6 +104,13 @@ export class ScolaField {
       } else if (isPrimitive(data.value)) {
         this.setValue(data.value)
       }
+    }
+  }
+
+  public toObject (): Struct {
+    return {
+      name: this.element.name,
+      value: this.element.getValue()
     }
   }
 

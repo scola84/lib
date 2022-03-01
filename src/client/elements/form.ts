@@ -1,4 +1,4 @@
-import { cast, isArray, isPrimitive, isSame } from '../../common'
+import { cast, isArray, isPrimitive } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaInputElement } from './input'
 import { ScolaMutator } from '../helpers/mutator'
@@ -78,34 +78,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   public getData (): Struct {
-    return Array
-      .from(new FormData(this).entries())
-      .reduce<Struct>((data, [name, value]) => {
-      /* eslint-disable @typescript-eslint/indent */
-        let castValue: unknown = value
-
-        if (isPrimitive(value)) {
-          castValue = cast(value)
-        }
-
-        if (data[name] === undefined) {
-          data[name] = castValue
-        } else {
-          let dataValue = data[name]
-
-          if (!isArray(dataValue)) {
-            data[name] = [data[name]]
-            dataValue = data[name]
-          }
-
-          if (isArray(dataValue)) {
-            dataValue.push(castValue)
-          }
-        }
-
-        return data
-      }, {})
-      /* eslint-enable @typescript-eslint/indent */
+    return this.serialize()
   }
 
   public getErrors (): Struct {
@@ -132,15 +105,15 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
       /* eslint-enable @typescript-eslint/indent */
   }
 
-  public isSame (data: unknown): boolean {
-    return isSame(data, this.getData())
-  }
-
   public setData (data: unknown): void {
     this.toggleDisabled()
     this.changeFocus()
     this.propagator.set(data)
     this.update()
+  }
+
+  public toObject (): Struct {
+    return this.serialize()
   }
 
   public update (): void {
@@ -215,6 +188,37 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     this.removeEventListener('sc-form-clear', this.handleClearBound)
     this.removeEventListener('sc-form-focus', this.handleFocusBound)
     this.removeEventListener('submit', this.handleSubmitBound)
+  }
+
+  protected serialize (): Struct {
+    return Array
+      .from(new FormData(this).entries())
+      .reduce<Struct>((data, [name, value]) => {
+      /* eslint-disable @typescript-eslint/indent */
+        let castValue: unknown = value
+
+        if (isPrimitive(value)) {
+          castValue = cast(value)
+        }
+
+        if (data[name] === undefined) {
+          data[name] = castValue
+        } else {
+          let dataValue = data[name]
+
+          if (!isArray(dataValue)) {
+            data[name] = [data[name]]
+            dataValue = data[name]
+          }
+
+          if (isArray(dataValue)) {
+            dataValue.push(castValue)
+          }
+        }
+
+        return data
+      }, {})
+      /* eslint-enable @typescript-eslint/indent */
   }
 
   protected toggleDisabled (): void {

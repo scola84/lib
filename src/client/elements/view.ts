@@ -274,10 +274,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  public isSame (data: unknown, view: unknown = this.view): boolean {
-    return isSame(this.createView(data), this.createView(view))
-  }
-
   public reset (): void {
     this.name = this.getAttribute('sc-name')
     this.params = Object.fromEntries(new URLSearchParams(this.getAttribute('sc-params') ?? '').entries())
@@ -305,15 +301,19 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  public toObject (): Struct {
+  public toObject (): Struct<string> {
     return {
-      pointer: this.pointer,
-      views: this.views.map((view) => {
-        return {
-          name: view.name,
-          params: view.params
-        }
-      })
+      name: this.view?.name ?? '',
+      params: Object
+        .entries(this.view?.params ?? {})
+        .map(([name, value]) => {
+          if (isPrimitive(value)) {
+            return `${name}=${value.toString()}`
+          }
+
+          return name
+        })
+        .join('&')
     }
   }
 
@@ -322,22 +322,16 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       return ''
     }
 
-    let params = Object
-      .entries(this.view.params ?? {})
-      .map(([name, value]) => {
-        if (isPrimitive(value)) {
-          return `${name}=${value.toString()}`
-        }
-
-        return name
-      })
-      .join('&')
+    let {
+      name,
+      params
+    } = this.toObject()
 
     if (params.length > 0) {
       params = `:${params}`
     }
 
-    return `/${this.view.name}${params}@${this.id}`
+    return `/${name}${params}@${this.id}`
   }
 
   public update (): void {
@@ -478,6 +472,10 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
+  protected isSame (data: unknown, view: unknown = this.view): boolean {
+    return isSame(this.createView(data), this.createView(view))
+  }
+
   protected loadState (): void {
     this.loadStateFromElement(this)
 
@@ -568,7 +566,15 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       !this.hasAttribute('hidden')
     ) {
       if (this.save.includes('storage')) {
-        this.storage.setItem(`sc-view-${this.id}`, JSON.stringify(this.toObject()))
+        this.storage.setItem(`sc-view-${this.id}`, JSON.stringify({
+          pointer: this.pointer,
+          views: this.views.map((view) => {
+            return {
+              name: view.name,
+              params: view.params
+            }
+          })
+        }))
       }
 
       if (this.save.includes('location')) {

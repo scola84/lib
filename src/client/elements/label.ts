@@ -2,6 +2,7 @@ import type { ScolaElement } from './element'
 import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 
 export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement {
   public mutator: ScolaMutator
@@ -35,14 +36,18 @@ export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement 
     this.propagator.disconnect()
   }
 
-  public getData (): void {}
-
-  public isSame (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public reset (): void {}
 
   public setData (data: unknown): void {
     this.propagator.set(data)
+  }
+
+  public toObject (): Struct {
+    return {}
   }
 
   public update (): void {}

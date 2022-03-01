@@ -10,6 +10,7 @@ import { ScolaMutator } from '../helpers/mutator'
 import { ScolaObserver } from '../helpers/observer'
 import { ScolaPaster } from '../helpers/paster'
 import { ScolaPropagator } from '../helpers/propagator'
+import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -112,9 +113,9 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     this.removeEventListeners()
   }
 
-  public getData (): void {}
-
-  public isSame (): void {}
+  public getData (): Struct {
+    return {}
+  }
 
   public reset (): void {
     this.interactor.cancel = this.hasAttribute('sc-cancel')
@@ -126,6 +127,10 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   public setData (data: unknown): void {
     this.dragger?.setData(data)
     this.propagator.set(data)
+  }
+
+  public toObject (): Struct {
+    return {}
   }
 
   public update (): void {}

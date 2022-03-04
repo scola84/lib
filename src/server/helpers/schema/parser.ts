@@ -9,9 +9,11 @@ export type SchemaAttributes = Struct<string | undefined>
 
 export class SchemaParser {
   public async parse (path: string, fields: Schema = {}): Promise<Schema> {
-    const html = (await readFile(path)).toString()
+    const [file, id] = path.split('#')
+    const html = (await readFile(file)).toString()
     const node = parseFragment(html)
-    return this.extract(node.childNodes[0] as Element, fields)
+    const root = this.findRoot(node as Element, id) ?? node
+    return this.extract(root as Element, fields)
   }
 
   protected async extract (element: Element, fields: Schema): Promise<Schema> {
@@ -31,7 +33,9 @@ export class SchemaParser {
           }
 
           if (element.nodeName === 'select') {
-            this.extractSelect(element.childNodes, field)
+            this.extractSelect(attributes, element.childNodes, field)
+          } else if (element.nodeName === 'textarea') {
+            field.type = 'textarea'
           }
 
           this.extractConstraints(attributes, field)
@@ -123,6 +127,10 @@ export class SchemaParser {
     if (attributes['sc-type'] !== undefined) {
       field.type = attributes['sc-type']
     }
+
+    if (attributes['sc-unique'] !== undefined) {
+      field.unique = attributes['sc-unique']
+    }
   }
 
   protected extractRadio (attributes: SchemaAttributes, field: SchemaField): void {
@@ -135,8 +143,13 @@ export class SchemaParser {
     }
   }
 
-  protected extractSelect (childNodes: ChildNode[], field: SchemaField): void {
-    field.type = 'select'
+  protected extractSelect (attributes: SchemaAttributes, childNodes: ChildNode[], field: SchemaField): void {
+    if (attributes.multiple === undefined) {
+      field.type = 'select'
+    } else {
+      field.type = 'selectall'
+    }
+
     field.values = []
 
     for (const option of childNodes) {
@@ -160,6 +173,31 @@ export class SchemaParser {
     ) {
       await this.parse(`${attributes['sc-name']}.html`, fields)
     }
+  }
+
+  protected findRoot (element: Element, id?: string): Element | null {
+    const attributes = this.normalizeAttributes(element)
+
+    if (attributes.id === id) {
+      return element
+    }
+
+    let found = null
+
+    for (const child of element.childNodes) {
+      if (
+        child.nodeName !== '#comment' &&
+        child.nodeName !== '#text'
+      ) {
+        found = this.findRoot(child as Element, id)
+
+        if (found !== null) {
+          return found
+        }
+      }
+    }
+
+    return found
   }
 
   protected normalizeAttributes (element: Element): SchemaAttributes {

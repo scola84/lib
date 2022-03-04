@@ -31,6 +31,7 @@ export interface SchemaField {
   sort?: boolean
   step?: number
   type: string
+  unique?: string
   values?: unknown[]
 }
 
@@ -219,6 +220,30 @@ export class SchemaValidator {
 
       return true
     },
+    selectall (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
+      let values = data[name]
+
+      if (!isArray(values)) {
+        values = [values]
+      }
+
+      if (isArray(values)) {
+        const included = values.every((value) => {
+          return field.values?.includes(value) === true
+        })
+
+        if (!included) {
+          errors[name] = {
+            code: 'err_validator_bad_input_selectall',
+            data: { values: field.values }
+          }
+
+          return false
+        }
+      }
+
+      return true
+    },
     step (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
       if ((Number(data[name]) % (field.step ?? 0)) !== 0) {
         errors[name] = {
@@ -235,6 +260,17 @@ export class SchemaValidator {
       if (typeof data[name] === 'string') {
         errors[name] = {
           code: 'err_validator_bad_input_text'
+        }
+
+        return false
+      }
+
+      return true
+    },
+    textarea (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
+      if (typeof data[name] === 'string') {
+        errors[name] = {
+          code: 'err_validator_bad_input_textarea'
         }
 
         return false

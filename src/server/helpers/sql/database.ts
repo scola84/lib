@@ -1,6 +1,6 @@
 import type { Connection, DeleteResult, InsertResult, UpdateResult } from './connection'
+import type { Formatter } from './formatter'
 import type { Readable } from 'stream'
-import { ScolaIntl } from '../../../common'
 import type { Struct } from '../../../common'
 import type pino from 'pino'
 
@@ -42,8 +42,6 @@ export abstract class Database {
    */
   public dsn?: string
 
-  public intl = new ScolaIntl()
-
   /**
    * The logger.
    *
@@ -67,47 +65,9 @@ export abstract class Database {
   public population?: Partial<Struct<Array<Partial<unknown>>>>
 
   /**
-   * Formats a query to a dialect-specific form.
-   *
-   * Delimits identifiers. An identifier should be written as $[name].
-   *
-   * Replaces parameters with the given values. Stringifies and delimits the parameter when possible. A parameter should be written as `$(name)`.
-   *
-   * @param query - The query
-   * @param values - The values
-   * @returns The formatted query
-   * @throws a parameter from the query is not found in the values object
-   *
-   * @example
-   * ```ts
-   * const query = database.format(sql`
-   *   SELECT *
-   *   FROM t1
-   *   WHERE $[c1] = $(c1)
-   * `, {
-   *   c1: 'v1'
-   * })
-   *
-   * console.log(query) // query = 'SELECT * FROM t1 WHERE `c1` = "v1"' in MySQL
-   * ```
-   *
-   * @example
-   * ```ts
-   * const query = database.format(sql`
-   *   INSERT
-   *   INTO t1 ($[c1])
-   *   VALUES $(values)
-   * `, {
-   *   values: [
-   *     ['v1'],
-   *     ['v2']
-   *   ]
-   * })
-   *
-   * console.log(query) // query = 'INSERT INTO t1 (`c1`) VALUES ("v1"), ("v2")' in MySQL
-   * ```
+   * The formatter.
    */
-  public abstract format: (query: string, values: Struct) => string
+  public abstract formatter: Formatter
 
   /**
    * The connection pool.
@@ -520,22 +480,6 @@ export abstract class Database {
    * Acquires a new connection to the database.
    */
   public abstract connect (): Promise<Connection>
-
-  public abstract limit (query: { count?: number, cursor?: string, offset?: number }): {
-    limit: string
-    order: string | null
-    values: Struct
-    where: string | null
-  }
-
-  public abstract search (query: {search?: string}, columns: string[], locale?: string): {
-    where: string | null
-    values: Struct
-  }
-
-  public abstract sort (query: { sortKey?: string, sortOrder?: string}): {
-    order: string
-  }
 
   /**
    * Starts the database client.

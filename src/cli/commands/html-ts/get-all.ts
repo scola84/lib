@@ -87,16 +87,16 @@ ${Object
       order: limitOrder,
       where: limitWhere,
       values: limitValues
-    } = this.database.limit(data.query)
+    } = this.database.formatter.formatLimit(data.query)
 
     const {
       where: searchWhere,
       values: searchValues
-    } = this.database.search(data.query, this.search)
+    } = this.database.formatter.formatSearch(data.query, this.search)
 
     const {
       order
-    } = this.database.sort(data.query)
+    } = this.database.formatter.formatSort(data.query)
 
     return this.database.selectAll(sql\`
       SELECT *

@@ -2,10 +2,9 @@ import type { DeleteResult, InsertResult, UpdateResult } from '../connection'
 import type { PoolConnection, ResultSetHeader } from 'mysql2/promise'
 import type { Connection as BaseConnection } from 'mysql'
 import { Connection } from '../connection'
+import { MysqlFormatter } from './formatter'
 import type { Readable } from 'stream'
 import type { Struct } from '../../../../common'
-import { format } from '../format'
-import { formatters } from './formatters'
 import { sql } from '../tag'
 
 interface StreamConnection extends PoolConnection {
@@ -18,7 +17,7 @@ interface StreamConnection extends PoolConnection {
 export class MysqlConnection extends Connection {
   public connection: PoolConnection
 
-  public format = format(formatters)
+  public formatter = new MysqlFormatter()
 
   /**
    * Creates a MySQL connection.
@@ -121,7 +120,7 @@ export class MysqlConnection extends Connection {
   }
 
   public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
-    const [result] = await this.connection.query(this.format(query, values))
+    const [result] = await this.connection.query(this.formatter.formatQuery(query, values))
     return result as unknown as Result
   }
 
@@ -150,7 +149,7 @@ export class MysqlConnection extends Connection {
 
   public stream<Values>(query: string, values?: Partial<Values>): Readable {
     return (this.connection as StreamConnection).connection
-      .query(this.format(query, values))
+      .query(this.formatter.formatQuery(query, values))
       .stream()
   }
 

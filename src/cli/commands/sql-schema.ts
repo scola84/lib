@@ -29,7 +29,7 @@ Example:
 program
   .argument('<container>', 'the container of the local database')
   .argument('<source>', 'the Data Source Name (DSN) of the remote database')
-  .argument('[target]', 'the file to write the diff to', '.docker/{dialect}/initdb.d/{context}/{database}.sql')
+  .argument('[target]', 'the file to write the diff to', '.docker/{dialect}/docker-entrypoint-initdb.d/{context}/{database}.sql')
   .option('-e, --exclude <exclude...>', 'a list of tables')
   .option('-i, --include <include...>', 'a list of tables')
   .parse()

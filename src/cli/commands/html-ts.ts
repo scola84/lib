@@ -12,7 +12,7 @@ Description:
   Creates TypeScript route handlers from an HTML file.
 
 Example:
-  $ scola html-ts contact contact-add.html ./contact
+  $ scola html-ts contact contact.html#put ./contact
 `)
 
 program

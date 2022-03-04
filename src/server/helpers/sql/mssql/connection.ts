@@ -1,11 +1,10 @@
 import type { DeleteResult, InsertResult, UpdateResult } from '../connection'
 import type { IResult, Request } from 'mssql'
 import { Connection } from '../connection'
+import { MssqlFormatter } from './formatter'
 import type { Readable } from 'stream'
 import type { Struct } from '../../../../common'
 import { Transform } from 'stream'
-import { format } from '../format'
-import { formatters } from './formatters'
 import { sql } from '../tag'
 
 /**
@@ -14,7 +13,7 @@ import { sql } from '../tag'
 export class MssqlConnection extends Connection {
   public connection: Request
 
-  public format = format(formatters)
+  public formatter = new MssqlFormatter()
 
   /**
    * Creates a MSSQL connection.
@@ -116,7 +115,7 @@ export class MssqlConnection extends Connection {
   }
 
   public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
-    const result = await this.connection.query(this.format(query, values))
+    const result = await this.connection.query(this.formatter.formatQuery(query, values))
     return result as unknown as Result
   }
 
@@ -156,7 +155,7 @@ export class MssqlConnection extends Connection {
 
     this.connection.pipe(transform)
     // eslint-disable-next-line no-void
-    void this.connection.query(this.format(query, values))
+    void this.connection.query(this.formatter.formatQuery(query, values))
     return transform
   }
 

@@ -1,5 +1,6 @@
 export * from './connection'
 export * from './database'
+export * from './formatter'
 export * from './mssql'
 export * from './mysql'
 export * from './postgresql'

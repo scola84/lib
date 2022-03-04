@@ -1,3 +1,4 @@
+import type { Formatter } from './formatter'
 import type { Readable } from 'stream'
 import type { Struct } from '../../../common'
 
@@ -41,47 +42,9 @@ export abstract class Connection {
   public connection: unknown
 
   /**
-   * Formats a query to a dialect-specific form.
-   *
-   * Delimits identifiers. An identifier should be written as $[name].
-   *
-   * Replaces parameters with the given values. Stringifies and delimits the parameter when possible. A parameter should be written as `$(name)`.
-   *
-   * @param query - The query
-   * @param values - The values
-   * @returns The formatted query
-   * @throws a parameter from the query is not found in the values object
-   *
-   * @example
-   * ```ts
-   * const query = connection.format(sql`
-   *   SELECT *
-   *   FROM t1
-   *   WHERE $[c1] = $(c1)
-   * `, {
-   *   c1: 'v1'
-   * })
-   *
-   * console.log(query) // query = 'SELECT * FROM t1 WHERE `c1` = "v1"' in MySQL
-   * ```
-   *
-   * @example
-   * ```ts
-   * const query = connection.format(sql`
-   *   INSERT
-   *   INTO t1 ($[c1])
-   *   VALUES $(values)
-   * `, {
-   *   values: [
-   *     ['v1'],
-   *     ['v2']
-   *   ]
-   * })
-   *
-   * console.log(query) // query = 'INSERT INTO t1 (`c1`) VALUES ("v1"), ("v2")' in MySQL
-   * ```
+   * The formatter.
    */
-  public abstract format: (query: string, values: Struct) => string
+  public abstract formatter: Formatter
 
   /**
    * Deletes zero or more rows from the database.

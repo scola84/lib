@@ -12,7 +12,7 @@ Description:
   Dumps the diff of a SQL database and a DDL file.
 
   Extracts the context (app or lib) from <container> and writes the DDL file
-  from ".docker/mysql/initdb.d/{context}/{database}.sql" to
+  from ".docker/mysql/docker-entrypoint-initdb.d/{context}/{database}.sql" to
   "/tmp/scola-sql-diff-in.sql".
 
   Runs mysql-schema-diff to compare the remote database at <source> with the
@@ -71,7 +71,7 @@ try {
   })
 
   child.execSync([
-    `cat .docker/mysql/initdb.d/${context}/${database}.sql`,
+    `cat .docker/mysql/docker-entrypoint-initdb.d/${context}/${database}.sql`,
     '| sed "s/USE/-- USE/g" ',
     '> /tmp/scola-sql-diff-in.sql'
   ].join(' '))

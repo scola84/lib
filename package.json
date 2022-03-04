@@ -26,7 +26,7 @@
     "fastify-multer": "^2.0.2",
     "fastify-sse-v2": "^2.0.6",
     "fastq": "^1.13.0",
-    "fluent-json-schema": "^3.0.1",
+    "fluent-json-schema": "^3.1.0",
     "fs-extra": "^10.0.1",
     "html-minifier-terser": "^6.1.0",
     "idb": "^7.0.0",
@@ -47,7 +47,7 @@
     "postcss": "^8.4.7",
     "pwa-asset-generator": "^6.0.6",
     "redis": "^4.0.4",
-    "rollup": "^2.68.0",
+    "rollup": "^2.69.1",
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-gzip": "^3.0.0",
     "rollup-plugin-minify-html-literals": "^1.2.6",
@@ -57,9 +57,9 @@
     "sqlstring": "^2.3.2",
     "svgo": "^2.8.0",
     "throttle-debounce": "^3.0.1",
-    "workbox-cacheable-response": "^6.5.0",
-    "workbox-expiration": "^6.5.0",
-    "workbox-range-requests": "^6.5.0"
+    "workbox-cacheable-response": "^6.5.1",
+    "workbox-expiration": "^6.5.1",
+    "workbox-range-requests": "^6.5.1"
   },
   "description": "The Scola Library",
   "devDependencies": {

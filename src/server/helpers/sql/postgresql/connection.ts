@@ -2,10 +2,9 @@ import type { DeleteResult, InsertResult, UpdateResult } from '../connection'
 import { Connection } from '../connection'
 import PgQueryStream from 'pg-query-stream'
 import type { PoolClient } from 'pg'
+import { PostgresqlFormatter } from './formatter'
 import type { Readable } from 'stream'
 import type { Struct } from '../../../../common'
-import { format } from '../format'
-import { formatters } from './formatters'
 import { sql } from '../tag'
 
 /**
@@ -14,7 +13,7 @@ import { sql } from '../tag'
 export class PostgresqlConnection extends Connection {
   public connection: PoolClient
 
-  public format = format(formatters)
+  public formatter = new PostgresqlFormatter()
 
   /**
    * Creates a PostgreSQL connection.
@@ -113,7 +112,7 @@ export class PostgresqlConnection extends Connection {
   }
 
   public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
-    const { rows } = await this.connection.query(this.format(query, values))
+    const { rows } = await this.connection.query(this.formatter.formatQuery(query, values))
     return rows as unknown as Result
   }
 
@@ -141,7 +140,7 @@ export class PostgresqlConnection extends Connection {
   }
 
   public stream<Values>(query: string, values?: Partial<Values>): Readable {
-    return this.connection.query(new PgQueryStream(this.format(query, values)))
+    return this.connection.query(new PgQueryStream(this.formatter.formatQuery(query, values)))
   }
 
   public async update<Values>(query: string, values?: Values): Promise<UpdateResult> {

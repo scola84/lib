@@ -2,6 +2,9 @@ import commander from 'commander'
 
 try {
   commander.program
+    .command('html-sql', 'creates a DDL file from an HTML file', {
+      executableFile: 'html-sql'
+    })
     .command('html-ts', 'creates TypeScript route handlers from an HTML file', {
       executableFile: 'html-ts'
     })

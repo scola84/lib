@@ -1,5 +1,6 @@
 import type { Queue } from './queue'
 import type { QueueRun as QueueRunBase } from './base'
+import type { Struct } from '../../common'
 import { createQueue } from './queue'
 
 export interface QueueRun<Options = unknown> extends Required<QueueRunBase> {
@@ -71,7 +72,7 @@ export interface QueueRun<Options = unknown> extends Required<QueueRunBase> {
   status: 'err' | 'ok' | 'pending'
 }
 
-export function createQueueRun<Options = Record<string, unknown>> (run?: Partial<QueueRun<Options>>): QueueRun<Options> {
+export function createQueueRun<Options = Struct> (run?: Partial<QueueRun<Options>>): QueueRun<Options> {
   return {
     aggr_err: 0,
     aggr_ok: 0,

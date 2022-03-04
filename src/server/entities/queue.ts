@@ -1,4 +1,5 @@
 import type { Queue as QueueBase } from './base'
+import type { Struct } from '../../common'
 
 export interface Queue<Options = unknown> extends Required<QueueBase> {
   /**
@@ -66,7 +67,7 @@ export interface Queue<Options = unknown> extends Required<QueueBase> {
   schedule_next: Date | null
 }
 
-export function createQueue<Options = Record<string, unknown>> (queue?: Partial<Queue<Options>>): Queue<Options> {
+export function createQueue<Options = Struct> (queue?: Partial<Queue<Options>>): Queue<Options> {
   return {
     database: 'database',
     date_created: new Date(),

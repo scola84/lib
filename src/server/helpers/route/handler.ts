@@ -1,11 +1,12 @@
+/* eslint-disable max-lines-per-function */
 import type { IncomingMessage, ServerResponse } from 'http'
-import { isNil, isPrimitive, isStruct } from '../../../common'
-import Ajv from 'ajv'
+import { cast, isArray, isNil, isPrimitive, isStruct } from '../../../common'
 import type { Database } from '../sql'
 import type { ErrorObject } from 'ajv'
-import type { ObjectSchema } from 'fluent-json-schema'
 import type { RedisClientType } from 'redis'
 import type { Router } from './router'
+import type { Schema } from '../schema'
+import { SchemaValidator } from '../schema/validator'
 import type { Struct } from '../../../common'
 import type { URL } from 'url'
 import busboy from 'busboy'
@@ -30,7 +31,7 @@ export interface RouteHandlerOptions {
   requestType: string
   responseType: string
   router: Router
-  schema: Struct<ObjectSchema | undefined>
+  schema: Struct<Schema>
   store: RedisClientType
   url: string
 }
@@ -52,13 +53,13 @@ export abstract class RouteHandler {
 
   public router: Router
 
-  public schema: Struct<ObjectSchema | undefined>
+  public schema: Struct<Schema>
 
   public store: RedisClientType
 
   public url: string
 
-  public validator: Ajv
+  public validators: Struct<SchemaValidator | undefined>
 
   public constructor (options?: Partial<RouteHandlerOptions>) {
     const handlerOptions = {
@@ -90,22 +91,13 @@ export abstract class RouteHandler {
     this.url = handlerOptions.url ?? '/'
   }
 
-  public createValidator (): Ajv {
-    const validator = new Ajv({
-      allErrors: true,
-      coerceTypes: true,
-      useDefaults: true
-    })
-
-    Object
+  public createValidators (): Struct<SchemaValidator> {
+    return Object
       .entries(this.schema)
-      .forEach(([name, schema]) => {
-        if (schema !== undefined) {
-          validator.addSchema(schema.valueOf(), name)
-        }
-      })
-
-    return validator
+      .reduce<Struct<SchemaValidator>>((validators, [name, fields]) => {
+      validators[name] = new SchemaValidator(fields)
+      return validators
+    }, {})
   }
 
   public async handleRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
@@ -146,7 +138,7 @@ export abstract class RouteHandler {
       url: this.url
     }, 'Starting route handler')
 
-    this.validator = this.createValidator()
+    this.validators = this.createValidators()
     this.router.register(this.method, this.url, this)
   }
 
@@ -232,7 +224,22 @@ export abstract class RouteHandler {
       })
 
       parser.on('field', (name, value) => {
-        body[name] = value
+        const castValue = cast(value)
+
+        if (body[name] === undefined) {
+          body[name] = castValue
+        } else {
+          let bodyValue = body[name]
+
+          if (!isArray(bodyValue)) {
+            body[name] = [body[name]]
+            bodyValue = body[name]
+          }
+
+          if (isArray(bodyValue)) {
+            bodyValue.push(castValue)
+          }
+        }
       })
 
       parser.on('file', (name, stream, info) => {
@@ -305,15 +312,19 @@ export abstract class RouteHandler {
     }
 
     try {
-      if (this.schema.body !== undefined) {
-        this.validate('body', data.body)
+      if (this.validators.body !== undefined) {
+        if (isStruct(data.body)) {
+          this.validate('body', data.body)
+        } else {
+          this.validate('body', {})
+        }
       }
 
-      if (this.schema.headers !== undefined) {
+      if (this.validators.headers !== undefined) {
         this.validate('headers', data.headers)
       }
 
-      if (this.schema.query !== undefined) {
+      if (this.validators.query !== undefined) {
         this.validate('query', data.query)
       }
     } catch (error: unknown) {
@@ -396,15 +407,15 @@ export abstract class RouteHandler {
     return JSON.stringify(data)
   }
 
-  protected validate<Data = Struct>(name: string, data: Data): Data {
-    const schema = this.validator.getSchema(name)
-
-    if (schema === undefined) {
+  protected validate<Data extends Struct = Struct>(name: string, data: Data): Data {
+    if (this.validators[name] === undefined) {
       throw new Error(`Schema "${name}" is undefined`)
     }
 
-    if (schema(data) === false) {
-      throw this.normalizeErrors(schema.errors ?? undefined) as unknown as Error
+    const errors = this.validators[name]?.validate(data)
+
+    if (!isNil(errors)) {
+      throw errors as unknown as Error
     }
 
     return data

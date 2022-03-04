@@ -3,6 +3,7 @@ import { cast, isStruct } from '../../../../common'
 import { Database } from '../database'
 import type { PoolConfig } from 'pg'
 import { PostgresqlConnection } from './connection'
+import type { Struct } from '../../../../common'
 import { URL } from 'url'
 import { format } from '../format'
 import { formatters } from './formatters'
@@ -21,6 +22,96 @@ export class PostgresqlDatabase extends Database {
 
   public async connect (): Promise<PostgresqlConnection> {
     return new PostgresqlConnection(await this.pool.connect())
+  }
+
+  public limit (query: { count?: number, cursor?: string, offset?: number }): {
+    limit: string
+    order: string | null
+    values: Struct
+    where: string | null
+  } {
+    const values: Struct = {}
+
+    let limit = 'LIMIT'
+    let order = null
+    let where = null
+
+    if (query.count !== undefined) {
+      values.count = query.count
+      limit += ' $(count)'
+    }
+
+    if (query.cursor !== undefined) {
+      values.cursor = query.cursor
+      order = `$[${'cursor'}] ASC`
+      where = `$[${'cursor'}] > $(cursor)`
+    } else if (query.offset !== undefined) {
+      values.offset = query.offset
+      limit += ' OFFSET $(offset)'
+    }
+
+    return {
+      limit,
+      order,
+      values,
+      where
+    }
+  }
+
+  public search (query: {search?: string}, columns: string[], locale?: string): {
+    where: string | null
+    values: Struct
+  } {
+    const values: Struct = {}
+
+    let where: string | null = this.intl
+      .parse(String(query.search ?? ''), locale)
+      .map(({ name, value }, index) => {
+        if (name === undefined) {
+          return columns
+            .map((column) => {
+              values[`${column}${index}`] = value
+              return `$[${column}] = $(${column}${index})`
+            })
+            .join(') OR (')
+        }
+
+        if (columns.includes(name)) {
+          values[name] = value
+          return `$[${name}] = $(${name})`
+        }
+
+        return ''
+      })
+      .filter((part) => {
+        return part !== ''
+      })
+      .join(') AND (')
+
+    if (where.length > 0) {
+      where = `(${where})`
+    } else {
+      where = null
+    }
+
+    return {
+      values,
+      where
+    }
+  }
+
+  public sort (query: { sortKey?: string, sortOrder?: string}): {
+    order: string
+  } {
+    let order = '1'
+
+    if (query.sortKey !== undefined) {
+      order = `${query.sortKey} ${query.sortOrder ?? 'ASC'}`
+    }
+
+    return {
+      order
+    }
   }
 
   public async start (): Promise<void> {

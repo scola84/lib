@@ -1,5 +1,4 @@
 export * from '../common'
-export * from './define'
 export * from './elements'
 export * from './handlers'
 export * from './helpers'

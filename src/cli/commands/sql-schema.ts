@@ -41,14 +41,6 @@ try {
     target
   ] = program.args
 
-  if (typeof container !== 'string') {
-    throw new Error('error: missing required argument "container"')
-  }
-
-  if (typeof source !== 'string') {
-    throw new Error('error: missing required argument "source"')
-  }
-
   const {
     exclude,
     include

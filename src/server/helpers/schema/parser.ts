@@ -1,0 +1,192 @@
+import type { ChildNode, Element } from 'parse5'
+import type { Schema, SchemaField } from './validator'
+import { isArray, isStruct } from '../../../common'
+import type { Struct } from '../../../common'
+import { parseFragment } from 'parse5'
+import { readFile } from 'fs-extra'
+
+export type SchemaAttributes = Struct<string | undefined>
+
+export class SchemaParser {
+  public async parse (path: string, fields: Schema = {}): Promise<Schema> {
+    const html = (await readFile(path)).toString()
+    const node = parseFragment(html)
+    return this.extract(node.childNodes[0] as Element, fields)
+  }
+
+  protected async extract (element: Element, fields: Schema): Promise<Schema> {
+    const attributes = this.normalizeAttributes(element)
+
+    if (typeof attributes.name === 'string') {
+      if (
+        element.nodeName === 'input' ||
+        element.nodeName === 'select' ||
+        element.nodeName === 'textarea'
+      ) {
+        let field = fields[attributes.name]
+
+        if (typeof field === 'undefined') {
+          field = {
+            type: ''
+          }
+
+          if (element.nodeName === 'select') {
+            this.extractSelect(element.childNodes, field)
+          }
+
+          this.extractConstraints(attributes, field)
+          this.extractDatabaseOptions(attributes, field)
+          fields[attributes.name] = field
+        } else {
+          field.values?.push(attributes.value)
+          this.extractRadio(attributes, field)
+        }
+      }
+    }
+
+    await this.extractView(attributes, fields)
+
+    if (Array.isArray(element.childNodes)) {
+      await Promise.all(element.childNodes.map(async (child) => {
+        await this.extract(child as Element, fields)
+      }))
+    }
+
+    return this.sortObject(fields)
+  }
+
+  protected extractConstraints (attributes: SchemaAttributes, field: SchemaField): void {
+    if (attributes.type !== undefined) {
+      field.type = attributes.type
+
+      if (
+        attributes.type === 'checkbox' ||
+        attributes.type === 'radio'
+      ) {
+        field.values = [attributes.value]
+        this.extractRadio(attributes, field)
+      } else if (attributes.value !== undefined) {
+        field.default = attributes.value
+      }
+    }
+
+    if (attributes.max !== undefined) {
+      field.max = Number(attributes.max)
+    }
+
+    if (attributes.maxLength !== undefined) {
+      field.maxLength = Number(attributes.maxLength)
+    }
+
+    if (attributes.min !== undefined) {
+      field.min = Number(attributes.min)
+    }
+
+    if (attributes.minLength !== undefined) {
+      field.minLength = Number(attributes.minLength)
+    }
+
+    if (attributes.pattern !== undefined) {
+      field.pattern = new RegExp(attributes.pattern, 'iu')
+    }
+
+    if (attributes.required !== undefined) {
+      field.required = true
+    }
+
+    if (attributes.step !== undefined) {
+      field.step = Number(attributes.step)
+    }
+  }
+
+  protected extractDatabaseOptions (attributes: SchemaAttributes, field: SchemaField): void {
+    if (attributes['sc-cursor'] !== undefined) {
+      field.cursor = Number(attributes['sc-cursor'])
+    }
+
+    if (attributes['sc-index'] !== undefined) {
+      field.index = attributes['sc-index']
+    }
+
+    if (attributes['sc-key'] !== undefined) {
+      field.key = true
+    }
+
+    if (attributes['sc-search'] !== undefined) {
+      field.search = true
+    }
+
+    if (attributes['sc-sort'] !== undefined) {
+      field.sort = true
+    }
+
+    if (attributes['sc-type'] !== undefined) {
+      field.type = attributes['sc-type']
+    }
+  }
+
+  protected extractRadio (attributes: SchemaAttributes, field: SchemaField): void {
+    if (
+      attributes.type === 'radio' &&
+      attributes.checked === '' &&
+      attributes.value !== undefined
+    ) {
+      field.default = attributes.value
+    }
+  }
+
+  protected extractSelect (childNodes: ChildNode[], field: SchemaField): void {
+    field.type = 'select'
+    field.values = []
+
+    for (const option of childNodes) {
+      if (option.nodeName === 'option') {
+        const optionAttributes = this.normalizeAttributes(option)
+
+        field.values.push(optionAttributes.value)
+
+        if (optionAttributes.selected === '') {
+          field.default = optionAttributes.value
+        }
+      }
+    }
+  }
+
+  protected async extractView (attributes: SchemaAttributes, fields: Schema): Promise<void> {
+    if (
+      attributes.is === 'sc-view' &&
+      typeof attributes['sc-name'] === 'string' &&
+      attributes['sc-noparse'] === undefined
+    ) {
+      await this.parse(`${attributes['sc-name']}.html`, fields)
+    }
+  }
+
+  protected normalizeAttributes (element: Element): SchemaAttributes {
+    if (isArray(element.attrs)) {
+      return element.attrs.reduce<SchemaAttributes>((attributes, attribute) => {
+        attributes[attribute.name] = attribute.value
+        return attributes
+      }, {})
+    }
+
+    return {}
+  }
+
+  protected sortObject<T> (object: Struct): T {
+    return Object
+      .keys(object)
+      .sort()
+      .reduce<Struct>((result, key) => {
+      const value = object[key]
+
+      if (isStruct(value)) {
+        result[key] = this.sortObject(value)
+      } else {
+        result[key] = value
+      }
+
+      return result
+    }, {}) as T
+  }
+}

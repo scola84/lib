@@ -1,5 +1,6 @@
 import type { Connection, DeleteResult, InsertResult, UpdateResult } from './connection'
 import type { Readable } from 'stream'
+import { ScolaIntl } from '../../../common'
 import type { Struct } from '../../../common'
 import type pino from 'pino'
 
@@ -40,6 +41,8 @@ export abstract class Database {
    * The DSN (Data Source Name) of the database server.
    */
   public dsn?: string
+
+  public intl = new ScolaIntl()
 
   /**
    * The logger.
@@ -517,6 +520,22 @@ export abstract class Database {
    * Acquires a new connection to the database.
    */
   public abstract connect (): Promise<Connection>
+
+  public abstract limit (query: { count?: number, cursor?: string, offset?: number }): {
+    limit: string
+    order: string | null
+    values: Struct
+    where: string | null
+  }
+
+  public abstract search (query: {search?: string}, columns: string[], locale?: string): {
+    where: string | null
+    values: Struct
+  }
+
+  public abstract sort (query: { sortKey?: string, sortOrder?: string}): {
+    order: string
+  }
 
   /**
    * Starts the database client.

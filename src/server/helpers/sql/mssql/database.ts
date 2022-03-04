@@ -1,6 +1,7 @@
 import { ConnectionPool } from 'mssql'
 import { Database } from '../database'
 import { MssqlConnection } from './connection'
+import type { Struct } from '../../../../common'
 import { URL } from 'url'
 import { cast } from '../../../../common'
 import type { config } from 'mssql'
@@ -18,6 +19,97 @@ export class MssqlDatabase extends Database {
 
   public async connect (): Promise<MssqlConnection> {
     return Promise.resolve(new MssqlConnection(this.pool.request()))
+  }
+
+  public limit (query: { count?: number, cursor?: string, offset?: number }): {
+    limit: string
+    order: string | null
+    values: Struct
+    where: string | null
+  } {
+    const values: Struct = {}
+
+    let limit = ''
+    let order = null
+    let where = null
+
+    if (query.cursor !== undefined) {
+      values.cursor = query.cursor
+      limit += 'OFFSET 0 ROWS'
+      order = `$[${'cursor'}] ASC`
+      where = `$[${'cursor'}] > $(cursor)`
+    } else if (query.offset !== undefined) {
+      values.offset = query.offset
+      limit += 'OFFSET $(offset) ROWS'
+    }
+
+    if (query.count !== undefined) {
+      values.count = query.count
+      limit += ' FETCH NEXT $(count) ROWS ONLY'
+    }
+
+    return {
+      limit,
+      order,
+      values,
+      where
+    }
+  }
+
+  public search (query: {search?: string}, columns: string[], locale?: string): {
+    where: string | null
+    values: Struct
+  } {
+    const values: Struct = {}
+
+    let where: string | null = this.intl
+      .parse(String(query.search ?? ''), locale)
+      .map(({ name, value }, index) => {
+        if (name === undefined) {
+          return columns
+            .map((column) => {
+              values[`${column}${index}`] = value
+              return `$[${column}] = $(${column}${index})`
+            })
+            .join(') OR (')
+        }
+
+        if (columns.includes(name)) {
+          values[name] = value
+          return `$[${name}] = $(${name})`
+        }
+
+        return ''
+      })
+      .filter((part) => {
+        return part !== ''
+      })
+      .join(') AND (')
+
+    if (where.length > 0) {
+      where = `(${where})`
+    } else {
+      where = null
+    }
+
+    return {
+      values,
+      where
+    }
+  }
+
+  public sort (query: { sortKey?: string, sortOrder?: string}): {
+    order: string
+  } {
+    let order = '1'
+
+    if (query.sortKey !== undefined) {
+      order = `${query.sortKey} ${query.sortOrder ?? 'ASC'}`
+    }
+
+    return {
+      order
+    }
   }
 
   public async start (): Promise<void> {

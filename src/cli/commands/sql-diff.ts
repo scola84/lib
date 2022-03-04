@@ -40,14 +40,6 @@ try {
     target
   ] = program.args
 
-  if (typeof container !== 'string') {
-    throw new Error('error: missing required argument "container"')
-  }
-
-  if (typeof source !== 'string') {
-    throw new Error('error: missing required argument "source"')
-  }
-
   const [context] = container.split('_')
   const url = new URL(source)
   const database = url.pathname.slice(1)

@@ -2,6 +2,9 @@ import commander from 'commander'
 
 try {
   commander.program
+    .command('html-ts', 'creates TypeScript route handlers from an HTML file', {
+      executableFile: 'html-ts'
+    })
     .command('sql-diff', 'dumps the diff of a SQL database and a DDL file', {
       executableFile: 'sql-diff'
     })

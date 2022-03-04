@@ -42,14 +42,6 @@ try {
     target
   ] = program.args
 
-  if (typeof source !== 'string') {
-    throw new Error('error: missing required argument "source"')
-  }
-
-  if (typeof target !== 'string') {
-    throw new Error('error: missing required argument "target"')
-  }
-
   const clients = {
     mssql: ['mssql'],
     mysql: ['mysql', 'mysql2'],

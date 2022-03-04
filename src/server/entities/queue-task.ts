@@ -1,5 +1,6 @@
 import type { QueueRun } from './queue-run'
 import type { QueueTask as QueueTaskBase } from './base'
+import type { Struct } from '../../common'
 import { createQueueRun } from './queue-run'
 
 export interface QueueTask<Payload = unknown, Options = unknown, Result = unknown> extends Required<QueueTaskBase> {
@@ -66,7 +67,7 @@ export interface QueueTask<Payload = unknown, Options = unknown, Result = unknow
   status: 'err' | 'ok' | 'pending'
 }
 
-export function createQueueTask<Payload = Record<string, unknown>, Options = Record<string, unknown>, Result = Record<string, unknown>> (task?: Partial<QueueTask<Payload, Options, Result>>): QueueTask<Payload, Options, Result> {
+export function createQueueTask<Payload = Struct, Options = Struct, Result = Struct> (task?: Partial<QueueTask<Payload, Options, Result>>): QueueTask<Payload, Options, Result> {
   return {
     date_created: new Date(),
     date_queued: null,

@@ -15,7 +15,7 @@ import { sql } from '../sql'
 import waitUntil from 'async-wait-until'
 
 export interface Commands {
-  [key: string]: (queuer: Queuer, message: Record<string, unknown>) => Promise<void> | void
+  [key: string]: (queuer: Queuer, message: Struct) => Promise<void> | void
 }
 
 export interface QueuerOptions {
@@ -81,12 +81,12 @@ export class Queuer {
     resume: (queuer: Queuer): void => {
       queuer.resume()
     },
-    run: async (queuer: Queuer, message: Record<string, unknown>): Promise<void> => {
+    run: async (queuer: Queuer, message: Struct): Promise<void> => {
       if (typeof message.id === 'number') {
         await queuer.run(message.id, message.parameters)
       }
     },
-    skip: async (queuer: Queuer, message: Record<string, unknown>): Promise<void> => {
+    skip: async (queuer: Queuer, message: Struct): Promise<void> => {
       if (typeof message.id === 'number') {
         await queuer.skip(message.id)
       }
@@ -403,7 +403,7 @@ export class Queuer {
    * @param queue - The queue
    * @param parameters - The parameters
    */
-  protected async runQueue (queue: Queue, parameters?: Record<string, unknown>): Promise<void> {
+  protected async runQueue (queue: Queue, parameters?: Struct): Promise<void> {
     if (!this.suspended) {
       const runner = this.createQueueRunner()
 

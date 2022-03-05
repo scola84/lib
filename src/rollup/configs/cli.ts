@@ -9,8 +9,7 @@ import typescript from '@rollup/plugin-typescript'
 const options: RollupOptions = {
   external: isExternal,
   input: {
-    'html-sql': 'src/cli/commands/html-sql.ts',
-    'html-ts': 'src/cli/commands/html-ts.ts',
+    'html-api': 'src/cli/commands/html-api.ts',
     'index': 'src/cli/index.ts',
     'sql-diff': 'src/cli/commands/sql-diff.ts',
     'sql-schema': 'src/cli/commands/sql-schema.ts',

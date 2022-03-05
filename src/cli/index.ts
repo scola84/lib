@@ -2,11 +2,8 @@ import commander from 'commander'
 
 try {
   commander.program
-    .command('html-sql', 'creates a DDL file from an HTML file', {
-      executableFile: 'html-sql'
-    })
-    .command('html-ts', 'creates TypeScript route handlers from an HTML file', {
-      executableFile: 'html-ts'
+    .command('html-api', 'creates API files from an HTML file', {
+      executableFile: 'html-api'
     })
     .command('sql-diff', 'dumps the diff of a SQL database and a DDL file', {
       executableFile: 'sql-diff'

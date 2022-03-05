@@ -2,6 +2,7 @@ import type { ChildNode, Element } from 'parse5'
 import type { Schema, SchemaField } from './validator'
 import { isArray, isStruct } from '../../../common'
 import type { Struct } from '../../../common'
+import { dirname } from 'path'
 import { parseFragment } from 'parse5'
 import { readFile } from 'fs-extra'
 
@@ -9,14 +10,15 @@ export type SchemaAttributes = Struct<string | undefined>
 
 export class SchemaParser {
   public async parse (path: string, fields: Schema = {}): Promise<Schema> {
+    const dir = dirname(path)
     const [file, id] = path.split('#')
     const html = (await readFile(file)).toString()
     const node = parseFragment(html)
     const root = this.findRoot(node as Element, id) ?? node
-    return this.extract(root as Element, fields)
+    return this.extract(root as Element, fields, dir)
   }
 
-  protected async extract (element: Element, fields: Schema): Promise<Schema> {
+  protected async extract (element: Element, fields: Schema, dir: string): Promise<Schema> {
     const attributes = this.normalizeAttributes(element)
 
     if (typeof attributes.name === 'string') {
@@ -48,11 +50,11 @@ export class SchemaParser {
       }
     }
 
-    await this.extractView(attributes, fields)
+    await this.extractView(attributes, fields, dir)
 
     if (Array.isArray(element.childNodes)) {
       await Promise.all(element.childNodes.map(async (child) => {
-        await this.extract(child as Element, fields)
+        await this.extract(child as Element, fields, dir)
       }))
     }
 
@@ -165,13 +167,13 @@ export class SchemaParser {
     }
   }
 
-  protected async extractView (attributes: SchemaAttributes, fields: Schema): Promise<void> {
+  protected async extractView (attributes: SchemaAttributes, fields: Schema, dir: string): Promise<void> {
     if (
       attributes.is === 'sc-view' &&
       typeof attributes['sc-name'] === 'string' &&
       attributes['sc-noparse'] === undefined
     ) {
-      await this.parse(`${attributes['sc-name']}.html`, fields)
+      await this.parse(`${dir}/${attributes['sc-name']}.html`, fields)
     }
   }
 

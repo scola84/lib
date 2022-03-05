@@ -1,5 +1,5 @@
 import type { ChildNode, Element } from 'parse5'
-import type { Schema, SchemaField } from './validator'
+import type { Schema, SchemaField, SchemaFieldKey } from './validator'
 import { isArray, isStruct } from '../../../common'
 import type { Struct } from '../../../common'
 import { dirname } from 'path'
@@ -9,9 +9,9 @@ import { readFile } from 'fs-extra'
 export type SchemaAttributes = Struct<string | undefined>
 
 export class SchemaParser {
-  public async parse (path: string, fields: Schema = {}): Promise<Schema> {
-    const dir = dirname(path)
-    const [file, id] = path.split('#')
+  public async parse (url: string, fields: Schema = {}): Promise<Schema> {
+    const dir = dirname(url)
+    const [file, id] = url.split('#')
     const html = (await readFile(file)).toString()
     const node = parseFragment(html)
     const root = this.findRoot(node as Element, id) ?? node
@@ -21,12 +21,12 @@ export class SchemaParser {
   protected async extract (element: Element, fields: Schema, dir: string): Promise<Schema> {
     const attributes = this.normalizeAttributes(element)
 
-    if (typeof attributes.name === 'string') {
-      if (
-        element.nodeName === 'input' ||
-        element.nodeName === 'select' ||
-        element.nodeName === 'textarea'
-      ) {
+    if (
+      element.nodeName === 'input' ||
+      element.nodeName === 'select' ||
+      element.nodeName === 'textarea'
+    ) {
+      if (typeof attributes.name === 'string') {
         let field = fields[attributes.name]
 
         if (typeof field === 'undefined') {
@@ -105,17 +105,29 @@ export class SchemaParser {
     }
   }
 
+  protected extractDatabaseKey (string: string): SchemaFieldKey | undefined {
+    return (((/(?<table>.+)\.(?<column>.+)/u).exec(string))?.groups as unknown as SchemaFieldKey | null) ?? undefined
+  }
+
   protected extractDatabaseOptions (attributes: SchemaAttributes, field: SchemaField): void {
     if (attributes['sc-cursor'] !== undefined) {
       field.cursor = Number(attributes['sc-cursor'])
+    }
+
+    if (attributes['sc-fkey'] !== undefined) {
+      field.fkey = this.extractDatabaseKey(attributes['sc-fkey'])
     }
 
     if (attributes['sc-index'] !== undefined) {
       field.index = attributes['sc-index']
     }
 
-    if (attributes['sc-key'] !== undefined) {
-      field.key = true
+    if (attributes['sc-lkey'] !== undefined) {
+      field.lkey = this.extractDatabaseKey(attributes['sc-lkey'])
+    }
+
+    if (attributes['sc-pkey'] !== undefined) {
+      field.pkey = true
     }
 
     if (attributes['sc-search'] !== undefined) {

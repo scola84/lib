@@ -37,11 +37,6 @@ program
   .parse()
 
 try {
-  const [
-    source,
-    target
-  ] = program.args
-
   const clients = {
     mssql: ['mssql'],
     mysql: ['mysql', 'mysql2'],
@@ -63,6 +58,11 @@ try {
     unknown: ['TVP', 'json']
   }
 
+  const [
+    source,
+    target
+  ] = program.args
+
   const url = new URL(source)
   const dialect = url.protocol.slice(0, -1) as Dialects
 
@@ -74,14 +74,6 @@ try {
     } catch (error: unknown) {
       return false
     }
-  })
-
-  if (client === undefined) {
-    throw new Error(`Client for dialect "${dialect}" is undefined`)
-  }
-
-  fs.mkdirSync(target, {
-    recursive: true
   })
 
   if (typeof url.hostname !== 'string') {
@@ -99,6 +91,14 @@ try {
   if (typeof url.username !== 'string') {
     url.username = 'root'
   }
+
+  if (client === undefined) {
+    throw new Error(`Client for dialect "${dialect}" is undefined`)
+  }
+
+  fs.mkdirSync(target, {
+    recursive: true
+  })
 
   sqlts
     .toObject({
@@ -192,7 +192,7 @@ try {
       fs.writeFileSync(`${target}/index.ts`, `${data.trim()}\n`)
     })
     .catch((error) => {
-      logger.log(String(error))
+      logger.error(String(error))
     })
 } catch (error: unknown) {
   logger.error(String(error))

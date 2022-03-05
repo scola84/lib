@@ -19,12 +19,14 @@ export interface SchemaField {
   cursor?: number
   default?: string
   index?: string
-  key?: boolean
+  fkey?: SchemaFieldKey
+  lkey?: SchemaFieldKey
   max?: number
   maxLength?: number
   min?: number
   minLength?: number
   pattern?: RegExp
+  pkey?: boolean
   required?: boolean
   schema?: Schema
   search?: boolean
@@ -33,6 +35,11 @@ export interface SchemaField {
   type: string
   unique?: string
   values?: unknown[]
+}
+
+export interface SchemaFieldKey {
+  column: string
+  table: string
 }
 
 export type Schema = Struct<SchemaField>

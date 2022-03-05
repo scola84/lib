@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import type { Database, UpdateResult } from '../sql'
 import type { Job } from 'node-schedule'
 import type { Queue } from '../../entities'

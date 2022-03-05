@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import type { IncomingMessage, ServerResponse } from 'http'
 import { cast, isArray, isNil, isPrimitive, isStruct } from '../../../common'
 import type { Database } from '../sql'
@@ -224,40 +223,11 @@ export abstract class RouteHandler {
       })
 
       parser.on('field', (name, value) => {
-        const castValue = cast(value)
-
-        if (body[name] === undefined) {
-          body[name] = castValue
-        } else {
-          let bodyValue = body[name]
-
-          if (!isArray(bodyValue)) {
-            body[name] = [body[name]]
-            bodyValue = body[name]
-          }
-
-          if (isArray(bodyValue)) {
-            bodyValue.push(castValue)
-          }
-        }
+        this.parseFormDataField(body, name, value)
       })
 
       parser.on('file', (name, stream, info) => {
-        const file = {
-          name: info.filename,
-          size: 0,
-          tmpname: `${this.dir}/${randomUUID()}`,
-          type: info.mimeType
-        }
-
-        stream.on('data', (data) => {
-          if (Buffer.isBuffer(data)) {
-            file.size += data.length
-          }
-        })
-
-        body[name] = file
-        stream.pipe(createWriteStream(file.tmpname))
+        this.parseFormDataFile(body, name, stream, info)
       })
 
       parser.on('close', () => {
@@ -268,6 +238,43 @@ export abstract class RouteHandler {
 
       request.pipe(parser)
     })
+  }
+
+  protected parseFormDataField (body: Struct, name: string, value: string): void {
+    const castValue = cast(value)
+
+    if (body[name] === undefined) {
+      body[name] = castValue
+    } else {
+      let bodyValue = body[name]
+
+      if (!isArray(bodyValue)) {
+        body[name] = [body[name]]
+        bodyValue = body[name]
+      }
+
+      if (isArray(bodyValue)) {
+        bodyValue.push(castValue)
+      }
+    }
+  }
+
+  protected parseFormDataFile (body: Struct, name: string, stream: NodeJS.ReadableStream, info: busboy.FileInfo): void {
+    const file = {
+      name: info.filename,
+      size: 0,
+      tmpname: `${this.dir}/${randomUUID()}`,
+      type: info.mimeType
+    }
+
+    stream.on('data', (data) => {
+      if (Buffer.isBuffer(data)) {
+        file.size += data.length
+      }
+    })
+
+    body[name] = file
+    stream.pipe(createWriteStream(file.tmpname))
   }
 
   protected async parseFormUrlencoded (request: IncomingMessage): Promise<Struct> {

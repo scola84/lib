@@ -1,12 +1,11 @@
-import { ScolaIntl, isArray, isDate, isNil, isObject, isPrimitive } from '../../../../common'
+import type { Query, QueryClauses } from '../query'
+import { isArray, isDate, isNil, isObject, isPrimitive } from '../../../../common'
 import { Formatter } from '../formatter'
 import type { SchemaField } from '../../schema'
 import type { Struct } from '../../../../common'
 import { literal } from 'pg-format'
 
 export class PostgresqlFormatter extends Formatter {
-  public intl = new ScolaIntl()
-
   public formatDdl (object: string, fields: Struct<SchemaField>): string {
     const lines = [
       `CREATE TABLE "public"."${object}" (`,
@@ -24,7 +23,12 @@ export class PostgresqlFormatter extends Formatter {
             return line.padStart(line.length + 2, ' ')
           }),
         ...this
-          .formatDdlPrimaryKey(object, fields)
+          .formatDdlConstraintPrimaryKey(object, fields)
+          .map((line) => {
+            return line.padStart(line.length + 2, ' ')
+          }),
+        ...this
+          .formatDdlConstraintForeignKeys(object, fields)
           .map((line) => {
             return line.padStart(line.length + 2, ' ')
           })
@@ -32,6 +36,9 @@ export class PostgresqlFormatter extends Formatter {
       ');',
       this
         .formatDdlIndex(object, fields)
+        .join(',\n'),
+      this
+        .formatDdlIndexCursor(object, fields)
         .join(',\n'),
       this
         .formatDdlIndexUnique(object, fields)
@@ -49,47 +56,40 @@ export class PostgresqlFormatter extends Formatter {
     return `"${value.replace(/\./gu, '"."')}"`
   }
 
-  public formatLimit (query: { count?: number, cursor?: string, offset?: number }): {
-    limit: string
-    order: string | null
-    values: Struct
-    where: string | null
-  } {
+  public formatLimit (query: Query): QueryClauses {
     const values: Struct = {}
 
-    let limit = 'LIMIT'
+    let limit = null
     let order = null
     let where = null
 
-    if (query.count !== undefined) {
-      values.count = query.count
-      limit += ' $(count)'
-    }
-
     if (query.cursor !== undefined) {
+      values.count = query.count
       values.cursor = query.cursor
+      limit = 'LIMIT $(count)'
       order = `$[${'cursor'}] ASC`
       where = `$[${'cursor'}] > $(cursor)`
     } else if (query.offset !== undefined) {
+      values.count = query.count
       values.offset = query.offset
-      limit += ' OFFSET $(offset)'
+      limit = 'LIMIT $(count) OFFSET $(offset)'
     }
 
     return {
-      limit,
-      order,
+      limit: limit ?? undefined,
+      order: order ?? undefined,
       values,
-      where
+      where: where ?? undefined
     }
   }
 
   public formatParameter (value: unknown): string {
     if ((
       isArray(value) ||
-    isDate(value) ||
-    isNil(value) ||
-    isObject(value) ||
-    isPrimitive(value)
+      isDate(value) ||
+      isNil(value) ||
+      isObject(value) ||
+      isPrimitive(value)
     ) && (
       typeof value !== 'symbol'
     )) {
@@ -97,62 +97,6 @@ export class PostgresqlFormatter extends Formatter {
     }
 
     return String(value)
-  }
-
-  public formatSearch (query: {search?: string}, columns: string[], locale?: string): {
-    where: string | null
-    values: Struct
-  } {
-    const values: Struct = {}
-
-    let where: string | null = this.intl
-      .parse(String(query.search ?? ''), locale)
-      .map(({ name, value }, index) => {
-        if (name === undefined) {
-          return columns
-            .map((column) => {
-              values[`${column}${index}`] = value
-              return `$[${column}] = $(${column}${index})`
-            })
-            .join(') OR (')
-        }
-
-        if (columns.includes(name)) {
-          values[name] = value
-          return `$[${name}] = $(${name})`
-        }
-
-        return ''
-      })
-      .filter((part) => {
-        return part !== ''
-      })
-      .join(') AND (')
-
-    if (where.length > 0) {
-      where = `(${where})`
-    } else {
-      where = null
-    }
-
-    return {
-      values,
-      where
-    }
-  }
-
-  public formatSort (query: { sortKey?: string, sortOrder?: string}): {
-    order: string
-  } {
-    let order = '1'
-
-    if (query.sortKey !== undefined) {
-      order = `${query.sortKey} ${query.sortOrder ?? 'ASC'}`
-    }
-
-    return {
-      order
-    }
   }
 
   protected formatDdlColumn (name: string, field: SchemaField): string {
@@ -201,7 +145,7 @@ export class PostgresqlFormatter extends Formatter {
   protected formatDdlColumnNumber (name: string, field: SchemaField): string {
     let ddl = `"${name}"`
 
-    if (field.key === true) {
+    if (field.pkey === true) {
       ddl += ' SERIAL'
     } else {
       ddl += ' INTEGER'
@@ -245,9 +189,50 @@ export class PostgresqlFormatter extends Formatter {
   protected formatDdlColumns (fields: Struct<SchemaField>): string[] {
     return Object
       .entries(fields)
+      .filter(([,field]) => {
+        return field.lkey === undefined
+      })
       .map(([name, field]) => {
         return this.formatDdlColumn(name, field)
       })
+  }
+
+  protected formatDdlConstraintForeignKeys (object: string, fields: Struct<SchemaField>): string[] {
+    return Object
+      .entries(fields)
+      .filter(([, field]) => {
+        return field.fkey !== undefined
+      })
+      .map(([name, field]) => {
+        return [
+          `CONSTRAINT "fkey_${object}_${name}"`,
+          `FOREIGN KEY ("${name}")`,
+          `REFERENCES "${field.fkey?.table ?? ''}" ("${field.fkey?.column ?? ''}")`,
+          'ON DELETE CASCADE'
+        ].join(' ')
+      })
+  }
+
+  protected formatDdlConstraintPrimaryKey (object: string, fields: Struct<SchemaField>): string[] {
+    const lines = []
+
+    const columns = Object
+      .entries(fields)
+      .filter(([, field]) => {
+        return field.pkey === true
+      })
+      .map(([name]) => {
+        return `"${name}"`
+      })
+
+    if (columns.length > 0) {
+      lines.push([
+        `CONSTRAINT "pkey_${object}"`,
+        `PRIMARY KEY (${columns.join(',')})`
+      ].join(' '))
+    }
+
+    return lines
   }
 
   protected formatDdlCursor (fields: Struct<SchemaField>): string[] {
@@ -270,7 +255,10 @@ export class PostgresqlFormatter extends Formatter {
       })
 
     if (columns.length > 0) {
-      lines.push(`"cursor" TEXT GENERATED ALWAYS AS (${columns.join(' || ')}) STORED`)
+      lines.push([
+        '"cursor" TEXT GENERATED ALWAYS',
+        `AS (${columns.join(' || ')}) STORED`
+      ].join(' '))
     }
 
     return lines
@@ -301,8 +289,30 @@ export class PostgresqlFormatter extends Formatter {
     return Object
       .entries(indexes)
       .map(([name, columns = []]) => {
-        return `CREATE INDEX "${object}_${name}" ON "${object}" (${columns.join(',')})`
+        return [
+          `CREATE INDEX "index_${object}_${name}"`,
+          `ON "${object}" (${columns.join(',')})`
+        ].join(' ')
       })
+  }
+
+  protected formatDdlIndexCursor (object: string, fields: Struct<SchemaField>): string[] {
+    const lines = []
+
+    const hasCursor = Object
+      .entries(fields)
+      .some(([,field]) => {
+        return field.cursor !== undefined
+      })
+
+    if (hasCursor) {
+      lines.push([
+        `CREATE INDEX "index_${object}_cursor"`,
+        `ON "${object}" ("cursor");`
+      ].join(' '))
+    }
+
+    return lines
   }
 
   protected formatDdlIndexUnique (object: string, fields: Struct<SchemaField>): string[] {
@@ -330,26 +340,10 @@ export class PostgresqlFormatter extends Formatter {
     return Object
       .entries(indexes)
       .map(([name, columns = []]) => {
-        return `CREATE UNIQUE INDEX "${object}_${name}" ON "${object}" (${columns.join(',')});`
+        return [
+          `CREATE UNIQUE INDEX "index_${object}_${name}"`,
+          `ON "${object}" (${columns.join(',')});`
+        ].join(' ')
       })
-  }
-
-  protected formatDdlPrimaryKey (object: string, fields: Struct<SchemaField>): string[] {
-    const lines = []
-
-    const columns = Object
-      .entries(fields)
-      .filter(([, field]) => {
-        return field.key === true
-      })
-      .map(([name]) => {
-        return name
-      })
-
-    if (columns.length > 0) {
-      lines.push(`CONSTRAINT "${object}_pkey" PRIMARY KEY (${columns.join(',')})`)
-    }
-
-    return lines
   }
 }

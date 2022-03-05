@@ -1,7 +1,7 @@
 import type { Struct } from './is-struct'
 
-interface Query extends Struct {
-  name?: string
+interface Search extends Struct {
+  key?: string
   value: string
 }
 
@@ -160,24 +160,24 @@ export class ScolaIntl {
       ?.shift()
   }
 
-  public parse (string: string, locale = ScolaIntl.locale): Query[] {
+  public parse (string: string, locale = ScolaIntl.locale): Search[] {
     return string
       .match(/(?:[^\s"]+|"[^"]*")+/gu)
       ?.map((match) => {
         const [
-          name,
+          key,
           value
         ] = match.match(/(?:[^:"]+|"[^"]*")+/gu) ?? []
 
         if (typeof value === 'string') {
           return {
-            name: this.lookup(name.replace(/"/gu, ''), locale) ?? name,
+            key: this.lookup(key.replace(/"/gu, ''), locale) ?? key,
             value: value.replace(/"/gu, '')
           }
         }
 
         return {
-          value: name.replace(/"/gu, '')
+          value: key.replace(/"/gu, '')
         }
       }) ?? []
   }

@@ -1,7 +1,131 @@
-import type { SchemaField } from '../schema'
+import type { Query, QueryClauses, QueryKeys } from './query'
+import type { SchemaField, SchemaFieldKey } from '../schema'
+import { ScolaIntl } from '../../../common'
 import type { Struct } from '../../../common'
 
 export abstract class Formatter {
+  public intl = new ScolaIntl()
+
+  public formatClauses (object: string, query: Query, keys: QueryKeys): Required<QueryClauses> {
+    const formatKey = keys.foreign?.find((key) => {
+      return query[key.column] !== undefined
+    }) ?? keys.link?.find((key) => {
+      return query[key.column] !== undefined
+    })
+
+    const searchKeys = keys.search?.filter((key) => {
+      return (
+        key.table === `'${object}'` ||
+        key.table === formatKey?.table
+      )
+    })
+
+    const sortKeys = keys.sort?.filter((key) => {
+      return (
+        key.table === `'${object}'` ||
+        key.table === formatKey?.table
+      )
+    })
+
+    return this.formatClausesByKey(
+      object,
+      this.formatJoinForeignKeys(query, keys.foreign ?? []),
+      this.formatJoinLinkKeys(query, keys.link ?? []),
+      this.formatLimit(query),
+      this.formatSearchKeys(query, searchKeys ?? []),
+      this.formatSortKeys(query, sortKeys ?? [])
+    )
+  }
+
+  public formatClausesByKey (object: string, joinForeign: QueryClauses, joinLink: QueryClauses, limit: QueryClauses, search: QueryClauses, sort: QueryClauses): Required<QueryClauses> {
+    return {
+      join: [
+        joinForeign.join,
+        joinLink.join
+      ].filter((value) => {
+        return value !== undefined
+      }).join(' '),
+      limit: limit.limit ?? '',
+      order: limit.order ?? sort.order ?? '1',
+      select: [
+        `$[${object}].*`,
+        joinForeign.select
+      ].filter((value) => {
+        return value !== undefined
+      }).join(', '),
+      values: {
+        ...joinForeign.values,
+        ...joinLink.values,
+        ...limit.values,
+        ...search.values
+      },
+      where: [
+        joinForeign.where,
+        joinLink.where,
+        limit.where,
+        search.where
+      ].filter((value) => {
+        return value !== undefined
+      }).join(' AND ')
+    }
+  }
+
+  public formatJoinForeignKeys (query: Query, keys: SchemaFieldKey[]): QueryClauses {
+    const values: Struct = {}
+
+    let join = null
+    let select = null
+    let where = null
+
+    const joinKey = keys.find((key) => {
+      return query[key.column] === undefined
+    })
+
+    if (joinKey !== undefined) {
+      join = `JOIN $[${joinKey.table}] USING ($[${joinKey.column}])`
+      select = `$[${joinKey.table}.${joinKey.column}].*`
+    }
+
+    const whereKey = keys.find((key) => {
+      return query[key.column] !== undefined
+    })
+
+    if (whereKey !== undefined) {
+      values[`${whereKey.table}_${whereKey.column}`] = query[whereKey.column]
+      where = `WHERE $[${whereKey.table}.${whereKey.column}] = $(${whereKey.table}_${whereKey.column})`
+    }
+
+    return {
+      join: join ?? undefined,
+      select: select ?? undefined,
+      values,
+      where: where ?? undefined
+    }
+  }
+
+  public formatJoinLinkKeys (query: Query, keys: SchemaFieldKey[]): QueryClauses {
+    const values: Struct = {}
+
+    let join = null
+    let where = null
+
+    const linkKey = keys.find((key) => {
+      return query[key.column] !== undefined
+    })
+
+    if (linkKey !== undefined) {
+      values[`${linkKey.table}_${linkKey.column}`] = query[linkKey.column]
+      join = `JOIN $[${linkKey.table}] USING ($[${linkKey.column}])`
+      where = `WHERE $[${linkKey.table}.${linkKey.column}] = $(${linkKey.table}_${linkKey.column})`
+    }
+
+    return {
+      join: join ?? undefined,
+      values,
+      where: where ?? undefined
+    }
+  }
+
   /**
    * Formats a query to a dialect-specific form.
    *
@@ -61,25 +185,72 @@ export abstract class Formatter {
     }, query)
   }
 
+  public formatSearchKeys (query: Query, keys: SchemaFieldKey[], locale?: string): QueryClauses {
+    const values: Struct = {}
+
+    let where: string | null = this.intl
+      .parse(String(query.search ?? ''), locale)
+      .map((search, index) => {
+        if (search.key === undefined) {
+          return keys
+            .map((key) => {
+              values[`${key.table}_${key.column}_${index}`] = search.value
+              return `$[${key.table}.${key.column}] = $(${key.table}_${key.column}_${index})`
+            })
+            .join(') OR (')
+        }
+
+        const searchKey = keys.find((key) => {
+          return `${key.table}_${key.column}` === search.key
+        })
+
+        if (searchKey !== undefined) {
+          values[`${searchKey.table}_${searchKey.column}`] = search.value
+          return `$[${searchKey.table}.${searchKey.column}] = $(${searchKey.table}_${searchKey.column})`
+        }
+
+        return ''
+      })
+      .filter((part) => {
+        return part !== ''
+      })
+      .join(') AND (')
+
+    if (where.length > 0) {
+      where = `(${where})`
+    } else {
+      where = null
+    }
+
+    return {
+      values,
+      where: where ?? undefined
+    }
+  }
+
+  public formatSortKeys (query: Query, keys: SchemaFieldKey[]): QueryClauses {
+    let order = null
+
+    if (query.sortKey !== undefined) {
+      const sortKey = keys.find((key) => {
+        return `${key.table}_${key.column}` === query.sortKey
+      })
+
+      if (sortKey !== undefined) {
+        order = `$[${sortKey.table}.${sortKey.column}] ${query.sortOrder ?? 'ASC'}`
+      }
+    }
+
+    return {
+      order: order ?? undefined
+    }
+  }
+
   public abstract formatDdl (name: string, fields: Struct<SchemaField>): string
 
   public abstract formatIdentifier (value: string): string
 
-  public abstract formatLimit (query: { count?: number, cursor?: string, offset?: number }): {
-    limit: string
-    order: string | null
-    values: Struct
-    where: string | null
-  }
+  public abstract formatLimit (query: Query): QueryClauses
 
   public abstract formatParameter (value: unknown): string
-
-  public abstract formatSearch (query: {search?: string}, columns: string[], locale?: string): {
-    where: string | null
-    values: Struct
-  }
-
-  public abstract formatSort (query: { sortKey?: string, sortOrder?: string}): {
-    order: string
-  }
 }

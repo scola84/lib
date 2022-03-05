@@ -54,7 +54,7 @@ try {
   let targetFile = target
 
   if (typeof targetFile !== 'string') {
-    targetFile = `.docker/${dialect}/initdb.d/${context}/${database}.sql`
+    targetFile = `.docker/${dialect}/docker-entrypoint-initdb.d/${context}/${database}.sql`
   }
 
   if (typeof url.hostname !== 'string') {

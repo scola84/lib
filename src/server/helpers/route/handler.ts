@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'http'
-import { cast, isArray, isNil, isPrimitive, isStruct } from '../../../common'
+import { cast, isArray, isNil, isPrimitive, isStruct, setPush } from '../../../common'
+import type { Bucket } from '../file'
 import type { Database } from '../sql'
 import type { ErrorObject } from 'ajv'
 import type { RedisClientType } from 'redis'
@@ -9,7 +10,6 @@ import { SchemaValidator } from '../schema/validator'
 import type { Struct } from '../../../common'
 import type { URL } from 'url'
 import busboy from 'busboy'
-import { createWriteStream } from 'fs'
 import { parse } from 'querystring'
 import type pino from 'pino'
 import { randomUUID } from 'crypto'
@@ -23,12 +23,10 @@ export interface RouteData {
 }
 
 export interface RouteHandlerOptions {
+  bucket: Bucket
   database: Database
-  dir: string
   logger: pino.Logger
   method: string
-  requestType: string
-  responseType: string
   router: Router
   schema: Struct<Schema>
   store: RedisClientType
@@ -38,17 +36,13 @@ export interface RouteHandlerOptions {
 export abstract class RouteHandler {
   public static options?: Partial<RouteHandlerOptions>
 
-  public database: Database
+  public bucket?: Bucket
 
-  public dir: string
+  public database: Database
 
   public logger?: pino.Logger
 
   public method = 'GET'
-
-  public requestType?: string
-
-  public responseType?: string
 
   public router: Router
 
@@ -78,12 +72,10 @@ export abstract class RouteHandler {
       throw new Error('Option "store" is undefined')
     }
 
+    this.bucket = handlerOptions.bucket
     this.database = handlerOptions.database
-    this.dir = handlerOptions.dir ?? '/tmp'
     this.logger = handlerOptions.logger
     this.method = handlerOptions.method ?? 'GET'
-    this.requestType = handlerOptions.requestType
-    this.responseType = handlerOptions.responseType
     this.router = handlerOptions.router
     this.schema = handlerOptions.schema ?? {}
     this.store = handlerOptions.store
@@ -103,25 +95,30 @@ export abstract class RouteHandler {
     await this.prepareRoute(data, response, request)
 
     try {
-      if (request.method === 'POST') {
-        response.statusCode = 201
-      }
-
       const result = await Promise
         .resolve()
         .then(() => {
           return this.handle(data, response, request)
         })
 
-      if (isNil(result)) {
-        if (result === null) {
+      if (!response.headersSent) {
+        if (isNil(result)) {
+          if (
+            request.method === 'GET' &&
+            result === undefined
+          ) {
+            response.statusCode = 404
+          }
+
+          response.removeHeader('content-type')
           response.end()
+        } else {
+          response.end(this.formatBody(result, response))
         }
-      } else {
-        response.end(this.stringify(result, response))
       }
     } catch (error: unknown) {
       response.statusCode = 500
+      response.removeHeader('content-type')
       response.end()
       throw error
     }
@@ -153,6 +150,67 @@ export abstract class RouteHandler {
     return Promise.resolve()
   }
 
+  protected formatBody (data: unknown, response?: ServerResponse): string {
+    let body = ''
+
+    const [contentType] = response
+      ?.getHeader('content-type')
+      ?.toString()
+      .split(';') ?? []
+
+    switch (contentType) {
+      case 'application/json':
+        body = this.formatBodyJson(data)
+        break
+      case 'text/event-stream':
+        body = this.formatBodyEventStream(data)
+        break
+      case 'text/html':
+        body = String(data)
+        break
+      default:
+        break
+    }
+
+    if (response?.headersSent === false) {
+      response.setHeader('content-length', body.length.toString())
+    }
+
+    return body
+  }
+
+  protected formatBodyEventStream (data: unknown): string {
+    let body = ''
+
+    if (isStruct(data)) {
+      if (isPrimitive(data.data)) {
+        body += `data: ${data.data.toString()}\n`
+      }
+
+      if (isPrimitive(data.event)) {
+        body += `event: ${data.event.toString()}\n`
+      }
+
+      if (isPrimitive(data.id)) {
+        body += `id: ${data.id.toString()}\n`
+      }
+
+      if (isPrimitive(data.retry)) {
+        body += `retry: ${data.retry.toString()}\n`
+      }
+    }
+
+    if (body.length === 0) {
+      return ''
+    }
+
+    return `${body}\n`
+  }
+
+  protected formatBodyJson (data: unknown): string {
+    return JSON.stringify(data)
+  }
+
   protected normalizeErrors (errors: ErrorObject[] = []): Struct {
     return errors.reduce<Struct>((result, validationResult) => {
       const {
@@ -182,24 +240,26 @@ export abstract class RouteHandler {
     }, {})
   }
 
-  protected async parse (request: IncomingMessage): Promise<unknown> {
+  protected async parseBody (request: IncomingMessage): Promise<unknown> {
     let body: unknown = null
 
-    switch (this.requestType) {
+    const [contentType] = request.headers['content-type']?.split(';') ?? []
+
+    switch (contentType) {
       case 'application/json':
-        body = await this.parseJson(request)
+        body = await this.parseBodyJson(request)
         break
       case 'application/x-www-form-urlencoded':
-        body = await this.parseFormUrlencoded(request)
+        body = await this.parseBodyFormUrlencoded(request)
         break
       case 'multipart/form-data':
-        body = await this.parseFormData(request)
+        body = await this.parseBodyFormData(request)
         break
       case 'application/octet-stream':
-        body = await this.parseOctetStream(request)
+        body = await this.parseBodyOctetStream(request)
         break
       case 'text/plain':
-        body = await this.parsePlain(request)
+        body = await this.parseBodyPlain(request)
         break
       default:
         break
@@ -208,7 +268,7 @@ export abstract class RouteHandler {
     return body
   }
 
-  protected async parseFormData (request: IncomingMessage): Promise<Struct> {
+  protected async parseBodyFormData (request: IncomingMessage): Promise<Struct> {
     return new Promise((resolve, reject) => {
       const body: Struct = {}
 
@@ -223,11 +283,26 @@ export abstract class RouteHandler {
       })
 
       parser.on('field', (name, value) => {
-        this.parseFormDataField(body, name, value)
+        setPush(body, name, cast(value))
       })
 
       parser.on('file', (name, stream, info) => {
-        this.parseFormDataFile(body, name, stream, info)
+        const file = {
+          id: randomUUID(),
+          name: info.filename,
+          size: 0,
+          type: info.mimeType
+        }
+
+        setPush(body, name, file)
+
+        stream.on('data', (data) => {
+          if (Buffer.isBuffer(data)) {
+            file.size += data.length
+          }
+        })
+
+        this.bucket?.put(file.id, stream)
       })
 
       parser.on('close', () => {
@@ -240,7 +315,7 @@ export abstract class RouteHandler {
     })
   }
 
-  protected parseFormDataField (body: Struct, name: string, value: string): void {
+  protected parseBodyFormDataField (body: Struct, name: string, value: string): void {
     const castValue = cast(value)
 
     if (body[name] === undefined) {
@@ -259,35 +334,17 @@ export abstract class RouteHandler {
     }
   }
 
-  protected parseFormDataFile (body: Struct, name: string, stream: NodeJS.ReadableStream, info: busboy.FileInfo): void {
-    const file = {
-      name: info.filename,
-      size: 0,
-      tmpname: `${this.dir}/${randomUUID()}`,
-      type: info.mimeType
-    }
-
-    stream.on('data', (data) => {
-      if (Buffer.isBuffer(data)) {
-        file.size += data.length
-      }
-    })
-
-    body[name] = file
-    stream.pipe(createWriteStream(file.tmpname))
-  }
-
-  protected async parseFormUrlencoded (request: IncomingMessage): Promise<Struct> {
+  protected async parseBodyFormUrlencoded (request: IncomingMessage): Promise<Struct> {
     return {
-      ...parse(await this.parsePlain(request))
+      ...parse(await this.parseBodyPlain(request))
     }
   }
 
-  protected async parseJson (request: IncomingMessage): Promise<unknown> {
-    return JSON.parse(await this.parsePlain(request)) as unknown
+  protected async parseBodyJson (request: IncomingMessage): Promise<unknown> {
+    return JSON.parse(await this.parseBodyPlain(request)) as unknown
   }
 
-  protected async parseOctetStream (request: IncomingMessage): Promise<Buffer> {
+  protected async parseBodyOctetStream (request: IncomingMessage): Promise<Buffer> {
     let body = Buffer.from([])
 
     for await (const data of request) {
@@ -299,44 +356,37 @@ export abstract class RouteHandler {
     return body
   }
 
-  protected async parsePlain (request: IncomingMessage): Promise<string> {
+  protected async parseBodyPlain (request: IncomingMessage): Promise<string> {
     let body = ''
 
-    for await (const string of request) {
-      body += String(string)
+    for await (const data of request) {
+      body += String(data)
     }
 
     return body
   }
 
   protected async prepareRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
+    if (request.method === 'POST') {
+      response.statusCode = 201
+    }
+
+    response.setHeader('content-type', 'application/json')
+
     try {
-      data.body = await this.parse(request)
+      data.body = await this.parseBody(request)
     } catch (error: unknown) {
-      response.statusCode = 400
+      response.statusCode = 415
+      response.removeHeader('content-type')
       response.end()
       throw error
     }
 
     try {
-      if (this.validators.body !== undefined) {
-        if (isStruct(data.body)) {
-          this.validate('body', data.body)
-        } else {
-          this.validate('body', {})
-        }
-      }
-
-      if (this.validators.headers !== undefined) {
-        this.validate('headers', data.headers)
-      }
-
-      if (this.validators.query !== undefined) {
-        this.validate('query', data.query)
-      }
+      this.validateData(data)
     } catch (error: unknown) {
       response.statusCode = 400
-      response.end(this.stringify(error, response))
+      response.end(this.formatBody(error, response))
       throw error
     }
 
@@ -344,6 +394,7 @@ export abstract class RouteHandler {
       data.user = await this.authenticate(data, response, request)
     } catch (error: unknown) {
       response.statusCode = 401
+      response.removeHeader('content-type')
       response.end()
       throw error
     }
@@ -352,66 +403,10 @@ export abstract class RouteHandler {
       await this.authorize(data, response, request)
     } catch (error: unknown) {
       response.statusCode = 403
+      response.removeHeader('content-type')
       response.end()
       throw error
     }
-  }
-
-  protected stringify (data: unknown, response?: ServerResponse): string {
-    let body = ''
-
-    switch (this.responseType) {
-      case 'application/json':
-        body = this.stringifyJson(data)
-        break
-      case 'text/event-stream':
-        body = this.stringifyEventStream(data)
-        break
-      case 'text/html':
-        body = String(data)
-        break
-      default:
-        break
-    }
-
-    if (response?.headersSent === false) {
-      response.setHeader('content-length', body.length.toString())
-      response.setHeader('content-type', this.responseType ?? '')
-    }
-
-    return body
-  }
-
-  protected stringifyEventStream (data: unknown): string {
-    let body = ''
-
-    if (isStruct(data)) {
-      if (isPrimitive(data.data)) {
-        body += `data: ${data.data.toString()}\n`
-      }
-
-      if (isPrimitive(data.event)) {
-        body += `event: ${data.event.toString()}\n`
-      }
-
-      if (isPrimitive(data.id)) {
-        body += `id: ${data.id.toString()}\n`
-      }
-
-      if (isPrimitive(data.retry)) {
-        body += `retry: ${data.retry.toString()}\n`
-      }
-    }
-
-    if (body.length === 0) {
-      return ''
-    }
-
-    return `${body}\n`
-  }
-
-  protected stringifyJson (data: unknown): string {
-    return JSON.stringify(data)
   }
 
   protected validate<Data extends Struct = Struct>(name: string, data: Data): Data {
@@ -426,6 +421,24 @@ export abstract class RouteHandler {
     }
 
     return data
+  }
+
+  protected validateData (data: RouteData): void {
+    if (this.validators.body !== undefined) {
+      if (isStruct(data.body)) {
+        this.validate('body', data.body)
+      } else {
+        this.validate('body', {})
+      }
+    }
+
+    if (this.validators.headers !== undefined) {
+      this.validate('headers', data.headers)
+    }
+
+    if (this.validators.query !== undefined) {
+      this.validate('query', data.query)
+    }
   }
 
   protected abstract handle (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<unknown> | unknown

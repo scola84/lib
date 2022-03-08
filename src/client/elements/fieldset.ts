@@ -1,5 +1,5 @@
 import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
-import { cast, isArray, isPrimitive } from '../../common'
+import { cast, isPrimitive, setPush } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaInputElement } from './input'
 import { ScolaSelectElement } from './select'
@@ -146,8 +146,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   protected serialize (): Struct {
     return Array
       .from(this.elements)
-      .reduce<Struct>((data, element) => {
-      /* eslint-disable @typescript-eslint/indent */
+      .reduce((data, element) => {
         if (
           element instanceof ScolaInputElement ||
           element instanceof ScolaSelectElement ||
@@ -164,25 +163,11 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
             castValue = cast(value)
           }
 
-          if (data[name] === undefined) {
-            data[name] = castValue
-          } else {
-            let dataValue = data[name]
-
-            if (!isArray(dataValue)) {
-              data[name] = [data[name]]
-              dataValue = data[name]
-            }
-
-            if (isArray(dataValue)) {
-              dataValue.push(castValue)
-            }
-          }
+          setPush(data, name, castValue)
         }
 
         return data
       }, {})
-      /* eslint-enable @typescript-eslint/indent */
   }
 
   protected toggleDisabled (): void {

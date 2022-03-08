@@ -19,8 +19,6 @@ interface GetAllData extends RouteData {
 export class GetAllHandler extends RouteHandler {
   public keys: QueryKeys = ${formatKeys(options.object, schema, relations, 4)}
 
-  public responseType = '${options.content}'
-
   public schema = {
     query: ${formatQuerySchema(schema, 6)}
   }

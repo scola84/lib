@@ -17,8 +17,6 @@ interface DeleteData extends RouteData {
 }
 
 export class DeleteHandler extends RouteHandler {
-  public responseType = '${options.content}'
-
   public schema = {
     query: ${formatQuerySchema(schema, 6)}
   }

@@ -17,8 +17,6 @@ interface GetData extends RouteData {
 }
 
 export class GetHandler extends RouteHandler {
-  public responseType = '${options.content}'
-
   public schema = {
     query: ${formatQuerySchema(schema, 6)}
   }

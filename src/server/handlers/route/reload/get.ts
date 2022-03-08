@@ -18,8 +18,6 @@ export class ReloadGetHandler extends RouteHandler {
 
   public file: string
 
-  public responseType = 'text/event-stream'
-
   public responses = new Set<ServerResponse>()
 
   public watcher?: FSWatcher
@@ -43,7 +41,7 @@ export class ReloadGetHandler extends RouteHandler {
       this.responses.delete(response)
     })
 
-    response.setHeader('content-type', this.responseType)
+    response.setHeader('content-type', 'text/event-stream')
     response.write('\n')
   }
 
@@ -53,7 +51,7 @@ export class ReloadGetHandler extends RouteHandler {
     this.watcher.on('change', debounce(this.debounce, false, () => {
       if (readFileSync(this.file).length > 0) {
         this.responses.forEach((response) => {
-          response.write(this.stringify({
+          response.write(this.formatBody({
             data: JSON.stringify({
               reload: true
             }),

@@ -30,7 +30,6 @@ Example:
 program
   .argument('<source>', 'name and source file')
   .argument('[target]', 'directory to write the files to', process.cwd())
-  .option('-c, --content <content>', 'content-type of the responses', 'application/json')
   .option('-d, --dialect <dialect>', 'dialect of the SQL file', 'postgres')
   .option('-d, --methods <methods>', 'methods to include in the API', 'DELETE|GET|POST|PUT')
   .option('-r, --relation <relation...>', 'name and source file of a related object')
@@ -58,7 +57,6 @@ try {
   ] = source.split('@')
 
   const {
-    content,
     dialect,
     methods,
     relation,
@@ -67,7 +65,6 @@ try {
   } = program.opts<Options>()
 
   const options = {
-    content,
     methods,
     object,
     url: url.replace('{object}', object)

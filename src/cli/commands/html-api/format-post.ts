@@ -19,8 +19,6 @@ interface PostData extends RouteData {
 export class PostHandler extends RouteHandler {
   public keys: QueryKeys = ${formatKeys(schema, 4)}
 
-  public responseType = '${options.content}'
-
   public schema = {
     body: ${formatBodySchema(schema, 6)}
   }

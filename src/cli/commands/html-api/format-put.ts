@@ -17,8 +17,6 @@ interface PutData extends RouteData {
 }
 
 export class PutHandler extends RouteHandler {
-  public responseType = '${options.content}'
-
   public schema = {
     body: ${formatBodySchema(schema, 6)}
   }

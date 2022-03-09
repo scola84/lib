@@ -2,12 +2,12 @@ import type { Database, UpdateResult } from '../sql'
 import type { Queue, QueueRun, QueueTask } from '../../entities'
 import type { Readable, Transform, Writable } from 'stream'
 import Ajv from 'ajv'
+import type { Logger } from 'pino'
 import type { ObjectSchema } from 'fluent-json-schema'
 import type { Queuer } from './queuer'
 import type { RedisClientType } from 'redis'
 import type { Struct } from '../../../common'
 import type { queue as fastq } from 'fastq'
-import type pino from 'pino'
 import { pipeline } from '../stream'
 import { promise } from 'fastq'
 import { sql } from '../sql'
@@ -46,7 +46,7 @@ export interface QueueHandlerOptions {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  logger?: pino.Logger
+  logger?: Logger
 
   /**
    * The name.
@@ -120,7 +120,7 @@ export abstract class QueueHandler {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  public logger?: pino.Logger
+  public logger?: Logger
 
   /**
    * The name.

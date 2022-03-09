@@ -1,8 +1,8 @@
 import type { Connection, DeleteResult, InsertResult, UpdateResult } from './connection'
 import type { Formatter } from './formatter'
+import type { Logger } from 'pino'
 import type { Readable } from 'stream'
 import type { Struct } from '../../../common'
-import type pino from 'pino'
 
 export interface DatabaseOptions {
   /**
@@ -15,7 +15,7 @@ export interface DatabaseOptions {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  logger?: pino.Logger
+  logger?: Logger
 
   /**
    * The name of the database.
@@ -47,7 +47,7 @@ export abstract class Database {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  public logger?: pino.Logger
+  public logger?: Logger
 
   /**
    * The name of the database.

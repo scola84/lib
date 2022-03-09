@@ -1,5 +1,6 @@
 import type { Database, UpdateResult } from '../sql'
 import type { Job } from 'node-schedule'
+import type { Logger } from 'pino'
 import type { Queue } from '../../entities'
 import type { QueueHandler } from './handler'
 import { QueueRunner } from '../../helpers/queue/runner'
@@ -8,7 +9,6 @@ import type { RedisClientType } from 'redis'
 import type { Struct } from '../../../common'
 import { isStruct } from '../../../common'
 import { parseExpression } from 'cron-parser'
-import type pino from 'pino'
 import { scheduleJob } from 'node-schedule'
 import { sql } from '../sql'
 import waitUntil from 'async-wait-until'
@@ -37,7 +37,7 @@ export interface QueuerOptions {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  logger: pino.Logger
+  logger: Logger
 
   /**
    * The names of the queues to run as a SQL pattern.
@@ -128,7 +128,7 @@ export class Queuer {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  public logger: pino.Logger
+  public logger: Logger
 
   /**
    * The names of the queues to run as a SQL pattern.

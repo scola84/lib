@@ -1,11 +1,11 @@
 import type { Database } from '../sql'
 import type { FastifyServer } from '../fastify'
+import type { Logger } from 'pino'
 import type { Queuer } from '../queue'
 import type { RedisClientType } from 'redis'
 import type { Router } from '../route'
 import type { Struct } from '../../../common'
 import { isMatch } from 'micromatch'
-import type pino from 'pino'
 
 export interface Services {
   [key: string]: {
@@ -27,7 +27,7 @@ export interface ServiceManagerOptions {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  logger?: pino.Logger
+  logger?: Logger
 
   /**
    * The names of `services` to manage as one or more micromatch patterns, separated by a colon.
@@ -113,7 +113,7 @@ export class ServiceManager {
    *
    * @see https://www.npmjs.com/package/pino
    */
-  public logger?: pino.Logger
+  public logger?: Logger
 
   /**
    * The names of `services` to manage as one or more micromatch patterns, separated by a colon.

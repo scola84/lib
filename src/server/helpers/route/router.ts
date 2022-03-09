@@ -1,12 +1,12 @@
 import type { IncomingMessage, Server, ServerResponse } from 'http'
+import type { Logger } from 'pino'
 import type { RouteHandler } from './handler'
 import { URL } from 'url'
 import { createServer } from 'http'
-import type pino from 'pino'
 
 export interface RouterOptions {
   address?: string
-  logger?: pino.Logger
+  logger?: Logger
   port?: number
 }
 
@@ -17,7 +17,7 @@ export class Router {
 
   public handlers: Map<string, Map<string, RouteHandler>> = new Map()
 
-  public logger?: pino.Logger
+  public logger?: Logger
 
   public port: number
 

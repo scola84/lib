@@ -3,6 +3,7 @@ import { cast, isArray, isNil, isPrimitive, isStruct, setPush } from '../../../c
 import type { Bucket } from '../file'
 import type { Database } from '../sql'
 import type { ErrorObject } from 'ajv'
+import type { Logger } from 'pino'
 import type { RedisClientType } from 'redis'
 import type { Router } from './router'
 import type { Schema } from '../schema'
@@ -11,7 +12,6 @@ import type { Struct } from '../../../common'
 import type { URL } from 'url'
 import busboy from 'busboy'
 import { parse } from 'querystring'
-import type pino from 'pino'
 import { randomUUID } from 'crypto'
 
 export interface RouteData {
@@ -25,7 +25,7 @@ export interface RouteData {
 export interface RouteHandlerOptions {
   bucket: Bucket
   database: Database
-  logger: pino.Logger
+  logger: Logger
   method: string
   router: Router
   schema: Struct<Schema>
@@ -40,7 +40,7 @@ export abstract class RouteHandler {
 
   public database: Database
 
-  public logger?: pino.Logger
+  public logger?: Logger
 
   public method = 'GET'
 

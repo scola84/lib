@@ -78,6 +78,7 @@
       "declaration"
     ],
     "function-call-argument-newline": "off",
+    "id-length": "off",
     "lines-around-comment": "off",
     "max-len": "off",
     "max-lines": "off",

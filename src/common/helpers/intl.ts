@@ -17,13 +17,13 @@ export class ScolaIntl {
   public static cache: StringsCache = {}
 
   public static factory: Factory = {
-    date: (name: string, locale: string, options: Struct<string>) => {
+    d: (name: string, locale: string, options: Struct<string>) => {
       const formatter = new Intl.DateTimeFormat(locale, options)
       return (data: Struct): string => {
         return formatter.format(new Date(String(data[name] ?? new Date(0))))
       }
     },
-    enum: (name: string, locale: string, options: Struct<string>) => {
+    e: (name: string, locale: string, options: Struct<string>) => {
       const formatter = new ScolaIntl()
       return (data: Struct): string => {
         if (ScolaIntl.strings[locale]?.[`${name}_${String(data[options.counter])}`] === undefined) {
@@ -33,13 +33,13 @@ export class ScolaIntl {
         return formatter.format(`${name}_${String(data[options.counter])}`, data, locale)
       }
     },
-    number: (name: string, locale: string, options: Struct<string>) => {
+    n: (name: string, locale: string, options: Struct<string>) => {
       const formatter = new Intl.NumberFormat(locale, options)
       return (data: Struct): string => {
         return formatter.format(Number(data[name] ?? 0))
       }
     },
-    string: (name: string) => {
+    s: (name: string) => {
       return (data: Struct): string => {
         return String(data[name] ?? '')
       }
@@ -48,17 +48,19 @@ export class ScolaIntl {
 
   public static locale = 'en'
 
+  public static matcher = /%\([^)]+\)[dens]/gu
+
   public static strings: Strings = {}
 
   public static compile (string: string, locale: string): Formatter[] {
     const compiled = []
 
-    const lastString = string
-      .match(/(?<var>:(?<name>[\w:?&=]+))/gu)
+    const lastString = ScolaIntl.matcher
+      .exec(string)
       ?.reduce((nextString, match) => {
         const index = nextString.indexOf(match)
-        const [, name, typeOptions = 'string'] = match.split(/:+/u)
-        const [type, optionsString = undefined] = typeOptions.split('?')
+        const [name, optionsString = undefined] = match.slice(2, -2).split('?')
+        const type = match.slice(-1)
 
         compiled.push(((literal: string): string => {
           return literal
@@ -69,8 +71,8 @@ export class ScolaIntl {
           locale,
           optionsString
             ?.split('&')
-            .reduce((params, kvp) => {
-              const [key, value] = kvp.split('=')
+            .reduce((params, kv) => {
+              const [key, value] = kv.split('=')
               return {
                 ...params,
                 [key]: value

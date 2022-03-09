@@ -192,8 +192,8 @@ try {
       fs.writeFileSync(`${target}/index.ts`, `${data.trim()}\n`)
     })
     .catch((error) => {
-      logger.error(String(error))
+      logger.error(String(error).toLowerCase())
     })
 } catch (error: unknown) {
-  logger.error(String(error))
+  logger.error(String(error).toLowerCase())
 }

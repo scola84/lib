@@ -1,4 +1,5 @@
 export * from './absorb'
+export * from './camelize'
 export * from './cast'
 export * from './hyphenize'
 export * from './intl'

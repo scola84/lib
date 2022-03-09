@@ -1,4 +1,5 @@
 import type { Options } from './options'
+import { camelize } from './camelize'
 import { formatCode } from './format-code'
 import { formatGroup } from './format-group'
 
@@ -6,25 +7,12 @@ export function formatFactory (options: Options): string {
   return `
 ${formatImport(options.methods)}
 
-export function ${formatFunction(options.object)} (): void {
+export function ${camelize(options.object)} (): void {
   ${formatHandlers(options, 4)}
 
   ${formatStart(options.methods, 0)}
 }
 `.trim()
-}
-
-function formatFunction (object: string): string {
-  return object
-    .split('_')
-    .map((string, index) => {
-      if (index === 0) {
-        return string
-      }
-
-      return string[0].toUpperCase() + string.slice(1)
-    })
-    .join('')
 }
 
 function formatHandlers (options: Options, space: number): string {

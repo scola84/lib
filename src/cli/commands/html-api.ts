@@ -125,8 +125,8 @@ try {
       }
     })
     .catch((error) => {
-      logger.error(String(error))
+      logger.error(String(error).toLowerCase())
     })
 } catch (error: unknown) {
-  logger.error(String(error))
+  logger.error(String(error).toLowerCase())
 }

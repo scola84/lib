@@ -9,12 +9,12 @@ import typescript from '@rollup/plugin-typescript'
 const options: RollupOptions = {
   external: isExternal,
   input: {
+    'barrel': 'src/cli/commands/barrel.ts',
     'html-api': 'src/cli/commands/html-api.ts',
     'index': 'src/cli/index.ts',
     'sql-diff': 'src/cli/commands/sql-diff.ts',
     'sql-schema': 'src/cli/commands/sql-schema.ts',
-    'sql-ts': 'src/cli/commands/sql-ts.ts',
-    'ts-barrel': 'src/cli/commands/ts-barrel.ts'
+    'sql-ts': 'src/cli/commands/sql-ts.ts'
   },
   output: {
     banner: '#!/usr/bin/env node',

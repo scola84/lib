@@ -2,6 +2,9 @@ import commander from 'commander'
 
 try {
   commander.program
+    .command('barrel', 'creates a barrel file', {
+      executableFile: 'barrel'
+    })
     .command('html-api', 'creates API files from an HTML file', {
       executableFile: 'html-api'
     })
@@ -13,9 +16,6 @@ try {
     })
     .command('sql-ts', 'creates TypeScript interfaces from a SQL database', {
       executableFile: 'sql-ts'
-    })
-    .command('ts-barrel', 'creates a TypeScript barrel', {
-      executableFile: 'ts-barrel'
     })
     .exitOverride()
     .parse()

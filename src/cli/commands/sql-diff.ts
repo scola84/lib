@@ -88,5 +88,5 @@ try {
     `> ${targetFile}`
   ].join(' '))
 } catch (error: unknown) {
-  logger.error(String(error))
+  logger.error(String(error).toLowerCase())
 }

@@ -1,4 +1,4 @@
-import { ScolaMutator, ScolaObserver, ScolaPropagator, ScolaTheme } from '../helpers'
+import { Mutator, Observer, Propagator, Theme } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 
@@ -25,15 +25,15 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   public iframe?: HTMLIFrameElement
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
   public name: string
 
-  public observer: ScolaObserver
+  public observer: Observer
 
   public origin = ScolaDrawerElement.origin
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public resizer: ResizeObserver
 
@@ -53,9 +53,9 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.resizer = new ResizeObserver(this.handleResizerBound)
     this.reset()
   }
@@ -166,7 +166,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   protected createOptions (dimensions: Dimensions): Struct {
     return {
-      theme: ScolaTheme.theme,
+      theme: Theme.theme,
       ...dimensions,
       ...this.dataset
     }

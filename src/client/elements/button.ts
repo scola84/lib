@@ -1,23 +1,23 @@
-import { ScolaDragger, ScolaDropper, ScolaInteractor, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Dragger, Dropper, Interactor, Mutator, Observer, Propagator } from '../helpers'
+import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
-import type { ScolaInteractorEvent } from '../helpers'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 
 export class ScolaButtonElement extends HTMLButtonElement implements ScolaElement {
   public data: Struct = {}
 
-  public dragger?: ScolaDragger
+  public dragger?: Dragger
 
-  public dropper?: ScolaDropper
+  public dropper?: Dropper
 
-  public interactor: ScolaInteractor
+  public interactor: Interactor
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
 
@@ -25,17 +25,17 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
 
   public constructor () {
     super()
-    this.interactor = new ScolaInteractor(this)
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.interactor = new Interactor(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
 
     if (this.hasAttribute('sc-drag')) {
-      this.dragger = new ScolaDragger(this)
+      this.dragger = new Dragger(this)
     }
 
     if (this.hasAttribute('sc-drop')) {
-      this.dropper = new ScolaDropper(this)
+      this.dropper = new Dropper(this)
     }
 
     this.reset()
@@ -112,7 +112,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     }
   }
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
+  protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'click':
         return this.handleInteractorClick(event)
@@ -127,19 +127,19 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     }
   }
 
-  protected handleInteractorClick (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorClick (event: InteractorEvent): boolean {
     return this.propagator.dispatch('click', [this.getData()], event.originalEvent)
   }
 
-  protected handleInteractorContextmenu (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorContextmenu (event: InteractorEvent): boolean {
     return this.propagator.dispatch('contextmenu', [this.getData()], event.originalEvent)
   }
 
-  protected handleInteractorDblclick (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorDblclick (event: InteractorEvent): boolean {
     return this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
   }
 
-  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorStart (event: InteractorEvent): boolean {
     let handled = false
 
     if (this.interactor.isKeyboard(event.originalEvent)) {

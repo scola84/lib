@@ -1,12 +1,12 @@
+import { Sanitizer } from './sanitizer'
 import type { ScolaElement } from '../elements'
-import { ScolaSanitizer } from './sanitizer'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Handler = ((observer: any, observable: any, mutations: MutationRecord[]) => void)
 
-export class ScolaObserver {
+export class Observer {
   public static handlers: Struct<Handler | undefined> = {}
 
   public static storage: Struct<Storage | undefined> = {
@@ -20,7 +20,7 @@ export class ScolaObserver {
 
   public observers: MutationObserver[] = []
 
-  public sanitizer: ScolaSanitizer
+  public sanitizer: Sanitizer
 
   public save: string[]
 
@@ -38,7 +38,7 @@ export class ScolaObserver {
 
   public constructor (element: ScolaElement) {
     this.element = element
-    this.sanitizer = new ScolaSanitizer()
+    this.sanitizer = new Sanitizer()
     this.reset()
 
     if (this.save.length > 0) {
@@ -50,7 +50,7 @@ export class ScolaObserver {
     Object
       .entries(handlers)
       .forEach(([name, handler]) => {
-        ScolaObserver.handlers[name] = handler
+        Observer.handlers[name] = handler
       })
   }
 
@@ -103,7 +103,7 @@ export class ScolaObserver {
       .getAttribute('sc-observe-state')
       ?.split(' ') ?? []
 
-    this.storage = ScolaObserver.storage[this.element.getAttribute('sc-observe-storage') ?? 'session'] ?? window.sessionStorage
+    this.storage = Observer.storage[this.element.getAttribute('sc-observe-storage') ?? 'session'] ?? window.sessionStorage
 
     this.target = this.element
       .getAttribute('sc-observe-target')
@@ -135,7 +135,7 @@ export class ScolaObserver {
       const [nameAndFilterString, selector] = target.split('@')
       const [name, filterString = undefined] = nameAndFilterString.split('?')
       const filter = filterString?.split('&')
-      const handler = ScolaObserver.handlers[name]
+      const handler = Observer.handlers[name]
 
       if (
         handler !== undefined &&

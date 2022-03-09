@@ -1,4 +1,4 @@
-import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Mutator, Observer, Propagator } from '../helpers'
 import { absorb, isArray, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaViewElement } from './view'
@@ -48,13 +48,13 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   public method: Method
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
   public origin = ScolaRequesterElement.origin
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public url: string
 
@@ -79,9 +79,9 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   public constructor () {
     super()
     this.view = this.closest<ScolaViewElement>('[is="sc-view"]') ?? undefined
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.reset()
   }
 

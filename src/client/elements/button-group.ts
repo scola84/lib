@@ -1,18 +1,18 @@
-import { ScolaInteractor, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Interactor, Mutator, Observer, Propagator } from '../helpers'
+import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
-import type { ScolaInteractorEvent } from '../helpers'
 import type { Struct } from '../../common'
 
 export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElement {
   public buttons: HTMLElement[]
 
-  public interactor: ScolaInteractor
+  public interactor: Interactor
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public get firstButton (): HTMLElement | undefined {
     return this.buttons[0]
@@ -27,10 +27,10 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
   public constructor () {
     super()
     this.buttons = this.selectButtons()
-    this.interactor = new ScolaInteractor(this)
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.interactor = new Interactor(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.reset()
   }
 
@@ -73,7 +73,7 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
 
   public update (): void {}
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
+  protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'start':
         return this.handleInteractorStart(event)
@@ -82,7 +82,7 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
     }
   }
 
-  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorStart (event: InteractorEvent): boolean {
     if (document.activeElement instanceof HTMLElement) {
       const index = this.buttons.indexOf(document.activeElement)
 

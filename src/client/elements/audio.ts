@@ -1,5 +1,5 @@
-import { ScolaMedia, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
-import type { ScolaMediaData } from '../helpers'
+import { Media, Mutator, Observer, Propagator } from '../helpers'
+import type { MediaData } from '../helpers'
 import type { ScolaMediaElement } from './media'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
@@ -17,13 +17,13 @@ declare global {
 }
 
 export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaElement {
-  public media: ScolaMedia
+  public media: Media
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   protected handleJumpBound = this.handleJump.bind(this)
 
@@ -41,10 +41,10 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
 
   public constructor () {
     super()
-    this.media = new ScolaMedia(this)
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.media = new Media(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.update()
   }
 
@@ -71,7 +71,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
     this.removeEventListeners()
   }
 
-  public getData (): ScolaMediaData | null {
+  public getData (): MediaData | null {
     return this.media.getData()
   }
 

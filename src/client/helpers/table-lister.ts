@@ -1,18 +1,18 @@
-import { ScolaIntl, isArray, isStruct } from '../../common'
+import { I18n, isArray, isStruct } from '../../common'
 import type { ScolaTableElement, ScolaTableRowElement } from '../elements'
-import { ScolaBreakpoint } from './breakpoint'
+import { Breakpoint } from './breakpoint'
 import type { Struct } from '../../common'
 
 type Axis = 'x' | 'y'
 
 type Mode = 'cursor' | 'offset' | null
 
-export class ScolaTableLister {
+export class TableLister {
   public added = new Set()
 
   public axis: string | null
 
-  public breakpoint: ScolaBreakpoint
+  public breakpoint: Breakpoint
 
   public deleted = new Set()
 
@@ -22,7 +22,7 @@ export class ScolaTableLister {
 
   public filter: string
 
-  public intl: ScolaIntl
+  public I18n: I18n
 
   public items: Struct[] = []
 
@@ -48,8 +48,8 @@ export class ScolaTableLister {
 
   public constructor (element: ScolaTableElement) {
     this.element = element
-    this.breakpoint = new ScolaBreakpoint(element)
-    this.intl = new ScolaIntl()
+    this.breakpoint = new Breakpoint(element)
+    this.I18n = new I18n()
     this.reset()
   }
 
@@ -132,7 +132,7 @@ export class ScolaTableLister {
       items = [...items]
 
       if (this.filter !== '') {
-        items = this.filterItems(items, this.intl.parse(this.filter))
+        items = this.filterItems(items, this.I18n.parse(this.filter))
       }
 
       if (this.sortKey.length > 0) {

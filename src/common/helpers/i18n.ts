@@ -13,7 +13,7 @@ type Strings = Struct<Struct<string | undefined> | undefined>
 
 type StringsCache = Struct<Struct<Formatter[] | undefined> | undefined>
 
-export class ScolaIntl {
+export class I18n {
   public static cache: StringsCache = {}
 
   public static factory: Factory = {
@@ -24,9 +24,9 @@ export class ScolaIntl {
       }
     },
     e: (name: string, locale: string, options: Struct<string>) => {
-      const formatter = new ScolaIntl()
+      const formatter = new I18n()
       return (data: Struct): string => {
-        if (ScolaIntl.strings[locale]?.[`${name}_${String(data[options.counter])}`] === undefined) {
+        if (I18n.strings[locale]?.[`${name}_${String(data[options.counter])}`] === undefined) {
           return formatter.format(`${name}_d`, data, locale)
         }
 
@@ -55,7 +55,7 @@ export class ScolaIntl {
   public static compile (string: string, locale: string): Formatter[] {
     const compiled = []
 
-    const lastString = ScolaIntl.matcher
+    const lastString = I18n.matcher
       .exec(string)
       ?.reduce((nextString, match) => {
         const index = nextString.indexOf(match)
@@ -66,7 +66,7 @@ export class ScolaIntl {
           return literal
         }).bind(null, nextString.slice(0, index)))
 
-        compiled.push(ScolaIntl.factory[type](
+        compiled.push(I18n.factory[type](
           name,
           locale,
           optionsString
@@ -91,51 +91,51 @@ export class ScolaIntl {
   }
 
   public static define (locale: string, strings: Struct<string>): void {
-    if (ScolaIntl.strings[locale] === undefined) {
-      ScolaIntl.strings[locale] = strings
+    if (I18n.strings[locale] === undefined) {
+      I18n.strings[locale] = strings
     } else {
-      Object.assign(ScolaIntl.strings[locale], strings)
+      Object.assign(I18n.strings[locale], strings)
     }
   }
 
   public static defineStrings (strings: Strings): void {
-    ScolaIntl.strings = strings
+    I18n.strings = strings
   }
 
-  public static precompile (locale = ScolaIntl.locale): void {
+  public static precompile (locale = I18n.locale): void {
     Object
-      .entries(ScolaIntl.strings[locale] ?? {})
+      .entries(I18n.strings[locale] ?? {})
       .forEach(([code, string]) => {
-        let localeCache = ScolaIntl.cache[locale]
+        let localeCache = I18n.cache[locale]
 
         if (localeCache === undefined) {
           localeCache = {}
-          ScolaIntl.cache[locale] = localeCache
+          I18n.cache[locale] = localeCache
         }
 
-        localeCache[code] = ScolaIntl.compile(string ?? '', locale)
+        localeCache[code] = I18n.compile(string ?? '', locale)
       })
   }
 
-  public format (code: string, data: Struct, locale = ScolaIntl.locale): string {
+  public format (code: string, data: Struct, locale = I18n.locale): string {
     let compiled: Formatter[] | undefined = []
-    let string = ScolaIntl.strings[locale]?.[code]
+    let string = I18n.strings[locale]?.[code]
 
     if (string === undefined) {
-      compiled = ScolaIntl.compile(code, locale)
+      compiled = I18n.compile(code, locale)
       string = code
     } else {
-      let localeCache = ScolaIntl.cache[locale]
+      let localeCache = I18n.cache[locale]
 
       if (localeCache === undefined) {
         localeCache = {}
-        ScolaIntl.cache[locale] = localeCache
+        I18n.cache[locale] = localeCache
       }
 
       compiled = localeCache[code]
 
       if (compiled === undefined) {
-        compiled = ScolaIntl.compile(string, locale)
+        compiled = I18n.compile(string, locale)
         localeCache[code] = compiled
       }
     }
@@ -147,8 +147,8 @@ export class ScolaIntl {
       .join('')
   }
 
-  public lookup (string: string, locale = ScolaIntl.locale): string | undefined {
-    const localeStrings = ScolaIntl.strings[locale]
+  public lookup (string: string, locale = I18n.locale): string | undefined {
+    const localeStrings = I18n.strings[locale]
 
     if (localeStrings === undefined) {
       return undefined
@@ -162,7 +162,7 @@ export class ScolaIntl {
       ?.shift()
   }
 
-  public parse (string: string, locale = ScolaIntl.locale): Search[] {
+  public parse (string: string, locale = I18n.locale): Search[] {
     return string
       .match(/(?:[^\s"]+|"[^"]*")+/gu)
       ?.map((match) => {

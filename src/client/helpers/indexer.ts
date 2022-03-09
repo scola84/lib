@@ -1,12 +1,12 @@
-export class ScolaIndexer {
+export class Indexer {
   public static indexes: number[] = [0]
 
   public index: string | null = null
 
   public get (): number {
-    const index = Math.max(...ScolaIndexer.indexes) + 1
+    const index = Math.max(...Indexer.indexes) + 1
 
-    ScolaIndexer.indexes.push(index)
+    Indexer.indexes.push(index)
     return index
   }
 
@@ -15,7 +15,7 @@ export class ScolaIndexer {
       const elementIndex = element.style.getPropertyValue('z-index')
       const backdropIndex = backdrop?.style.getPropertyValue('z-index')
 
-      ScolaIndexer.indexes = ScolaIndexer.indexes.filter((index) => {
+      Indexer.indexes = Indexer.indexes.filter((index) => {
         return (
           index.toString() !== elementIndex &&
           index.toString() !== backdropIndex

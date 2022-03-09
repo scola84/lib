@@ -1,4 +1,4 @@
-import { ScolaDragger, ScolaDropper, ScolaMutator, ScolaObserver, ScolaPropagator, ScolaTableLister, ScolaTableSelector, ScolaTableSorter, ScolaTableTree } from '../helpers'
+import { Dragger, Dropper, Mutator, Observer, Propagator, TableLister, TableSelector, TableSorter, TableTree } from '../helpers'
 import { cast, isArray, isPrimitive, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaTableCellElement } from './table-cell'
@@ -30,29 +30,29 @@ export interface ScolaTableElementData extends Struct {
 export class ScolaTableElement extends HTMLTableElement implements ScolaElement {
   public body: HTMLTableSectionElement
 
-  public dragger?: ScolaDragger
+  public dragger?: Dragger
 
-  public dropper?: ScolaDropper
+  public dropper?: Dropper
 
   public elements = new Map<unknown, ScolaTableRowElement>()
 
   public head: HTMLTableSectionElement
 
-  public lister: ScolaTableLister
+  public lister: TableLister
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
-  public selector?: ScolaTableSelector
+  public selector?: TableSelector
 
-  public sorter?: ScolaTableSorter
+  public sorter?: TableSorter
 
   public templates: Map<string, HTMLTemplateElement>
 
-  public tree?: ScolaTableTree
+  public tree?: TableTree
 
   public wait: boolean
 
@@ -80,32 +80,32 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
   public constructor () {
     super()
-    this.lister = new ScolaTableLister(this)
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.lister = new TableLister(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.body = this.selectBody()
     this.head = this.selectHead()
     this.templates = this.mutator.selectTemplates()
 
     if (this.hasAttribute('sc-drag')) {
-      this.dragger = new ScolaDragger(this)
+      this.dragger = new Dragger(this)
     }
 
     if (this.hasAttribute('sc-drop')) {
-      this.dropper = new ScolaDropper(this)
+      this.dropper = new Dropper(this)
     }
 
     if (this.hasAttribute('sc-select')) {
-      this.selector = new ScolaTableSelector(this)
+      this.selector = new TableSelector(this)
     }
 
     if (this.hasAttribute('sc-sort')) {
-      this.sorter = new ScolaTableSorter(this)
+      this.sorter = new TableSorter(this)
     }
 
     if (this.hasAttribute('sc-tree')) {
-      this.tree = new ScolaTableTree(this)
+      this.tree = new TableTree(this)
     }
 
     this.reset()

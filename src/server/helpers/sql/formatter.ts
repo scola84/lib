@@ -1,10 +1,10 @@
 import type { Query, QueryClauses, QueryKeys } from './query'
 import type { SchemaField, SchemaFieldKey } from '../schema'
-import { ScolaIntl } from '../../../common'
+import { I18n } from '../../../common'
 import type { Struct } from '../../../common'
 
 export abstract class Formatter {
-  public intl = new ScolaIntl()
+  public I18n = new I18n()
 
   public formatClauses (object: string, query: Query, keys: QueryKeys): Required<QueryClauses> {
     const formatKey = keys.foreign?.find((key) => {
@@ -188,7 +188,7 @@ export abstract class Formatter {
   public formatSearchKeys (query: Query, keys: SchemaFieldKey[], locale?: string): QueryClauses {
     const values: Struct = {}
 
-    let where: string | null = this.intl
+    let where: string | null = this.I18n
       .parse(String(query.search ?? ''), locale)
       .map((search, index) => {
         if (search.key === undefined) {

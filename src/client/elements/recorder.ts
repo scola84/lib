@@ -1,4 +1,4 @@
-import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Mutator, Observer, Propagator } from '../helpers'
 import type { Html5Qrcode } from 'html5-qrcode'
 import type { Html5QrcodeCameraScanConfig } from 'html5-qrcode/esm/html5-qrcode'
 import { ImageCapture } from 'image-capture'
@@ -46,11 +46,11 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   public intervalId?: number
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public resizer: ResizeObserver
 
@@ -82,10 +82,10 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   public constructor () {
     super()
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
     this.resizer = new ResizeObserver(this.handleResizerBound)
-    this.propagator = new ScolaPropagator(this)
+    this.propagator = new Propagator(this)
     this.reset()
   }
 

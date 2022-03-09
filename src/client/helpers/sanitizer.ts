@@ -1,10 +1,10 @@
 import { addHook, isValidAttribute, sanitize } from 'dompurify'
 
 addHook('uponSanitizeAttribute', (element, event) => {
-  event.forceKeepAttr = ScolaSanitizer.checkAttribute(element.tagName, event.attrName, event.attrValue)
+  event.forceKeepAttr = Sanitizer.checkAttribute(element.tagName, event.attrName, event.attrValue)
 })
 
-export class ScolaSanitizer {
+export class Sanitizer {
   public static prefix = /^sc-/u
 
   public static checkAttribute (tag: string, name: string, value: string): boolean {
@@ -13,9 +13,9 @@ export class ScolaSanitizer {
         isValidAttribute(tag, name, value)
       ) || (
         name === 'is' &&
-        ScolaSanitizer.prefix.test(value)
+        Sanitizer.prefix.test(value)
       ) || (
-        ScolaSanitizer.prefix.test(name)
+        Sanitizer.prefix.test(name)
       )
     )
   }
@@ -30,10 +30,10 @@ export class ScolaSanitizer {
   }
 
   public checkAttribute (tag: string, name: string, value: string): boolean {
-    return ScolaSanitizer.checkAttribute(tag, name, value)
+    return Sanitizer.checkAttribute(tag, name, value)
   }
 
   public sanitizeHtml (html: string): string {
-    return ScolaSanitizer.sanitizeHtml(html)
+    return Sanitizer.sanitizeHtml(html)
   }
 }

@@ -1,4 +1,4 @@
-import type { ScolaMedia, ScolaMediaData } from '../helpers'
+import type { Media, MediaData } from '../helpers'
 import type { ScolaElement } from './element'
 
 export interface ScolaMediaElement extends ScolaElement {
@@ -6,7 +6,7 @@ export interface ScolaMediaElement extends ScolaElement {
 
   duration: number
 
-  media: ScolaMedia
+  media: Media
 
   muted: boolean
 
@@ -18,7 +18,7 @@ export interface ScolaMediaElement extends ScolaElement {
 
   canPlayType: (type: string) => CanPlayTypeResult
 
-  getData: () => ScolaMediaData | null
+  getData: () => MediaData | null
 
   pause: () => void
 

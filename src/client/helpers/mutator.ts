@@ -1,6 +1,6 @@
 import { cast, hyphenize, isStruct } from '../../common'
+import { Sanitizer } from './sanitizer'
 import type { ScolaElement } from '../elements'
-import { ScolaSanitizer } from './sanitizer'
 import type { Struct } from '../../common'
 
 declare global {
@@ -12,12 +12,12 @@ declare global {
   }
 }
 
-export class ScolaMutator {
+export class Mutator {
   public static presets: Struct<Struct | undefined> = {}
 
   public element: ScolaElement
 
-  public sanitizer: ScolaSanitizer
+  public sanitizer: Sanitizer
 
   protected handleRotateAttributesBound = this.handleRotateAttributes.bind(this)
 
@@ -29,7 +29,7 @@ export class ScolaMutator {
 
   public constructor (element: ScolaElement) {
     this.element = element
-    this.sanitizer = new ScolaSanitizer()
+    this.sanitizer = new Sanitizer()
     this.preset()
   }
 
@@ -37,7 +37,7 @@ export class ScolaMutator {
     Object
       .entries(observers)
       .forEach(([name, preset]) => {
-        ScolaMutator.presets[name] = preset
+        Mutator.presets[name] = preset
       })
   }
 
@@ -54,7 +54,7 @@ export class ScolaMutator {
       .getAttribute('sc-preset')
       ?.split(' ')
       .forEach((name) => {
-        this.setAttributes(ScolaMutator.presets[name], false)
+        this.setAttributes(Mutator.presets[name], false)
       })
   }
 

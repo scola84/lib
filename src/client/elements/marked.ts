@@ -1,5 +1,5 @@
-import { ScolaIntl, isStruct } from '../../common'
-import { ScolaMutator, ScolaObserver, ScolaPropagator, ScolaSanitizer } from '../helpers'
+import { Mutator, Observer, Propagator, Sanitizer } from '../helpers'
+import { I18n, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 import { marked } from 'marked'
@@ -13,27 +13,27 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
 
   public initialInnerHtml: string
 
-  public intl: ScolaIntl
+  public I18n: I18n
 
   public locale?: string
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
-  public sanitizer: ScolaSanitizer
+  public sanitizer: Sanitizer
 
   public trim: boolean
 
   public constructor () {
     super()
-    this.intl = new ScolaIntl()
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
-    this.sanitizer = new ScolaSanitizer()
+    this.I18n = new I18n()
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
+    this.sanitizer = new Sanitizer()
     this.initialCode = this.getAttribute('sc-code')
     this.initialInnerHtml = this.innerHTML
     this.reset()
@@ -67,7 +67,7 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
 
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
-    this.locale = this.getAttribute('sc-locale') ?? ScolaIntl.locale
+    this.locale = this.getAttribute('sc-locale') ?? I18n.locale
     this.trim = this.hasAttribute('sc-trim')
   }
 
@@ -98,7 +98,7 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
   }
 
   public update (): void {
-    let string = this.intl.format(this.code, this.getData(), this.locale)
+    let string = this.I18n.format(this.code, this.getData(), this.locale)
 
     if (this.trim) {
       string = string

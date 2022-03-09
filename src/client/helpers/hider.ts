@@ -1,9 +1,9 @@
-import { ScolaBreakpoint } from './breakpoint'
-import type { ScolaBreakpointEvent } from './breakpoint'
+import { Breakpoint } from './breakpoint'
+import type { BreakpointEvent } from './breakpoint'
+import { Indexer } from './indexer'
+import { Interactor } from './interactor'
+import type { InteractorEvent } from './interactor'
 import type { ScolaElement } from '../elements'
-import { ScolaIndexer } from './indexer'
-import { ScolaInteractor } from './interactor'
-import type { ScolaInteractorEvent } from './interactor'
 
 declare global {
   interface HTMLElementEventMap {
@@ -19,7 +19,7 @@ type Mode = 'center' | 'height' | 'move-bottom' | 'move-end' | 'move-start' | 'm
 
 type SizeProperty = 'offsetHeight' | 'offsetWidth'
 
-export class ScolaHider {
+export class Hider {
   public static distanceThreshold = 0.1
 
   public static selector = '[is^="sc-"]'
@@ -28,7 +28,7 @@ export class ScolaHider {
 
   public backdrop: HTMLElement | null
 
-  public breakpoint: ScolaBreakpoint
+  public breakpoint: Breakpoint
 
   public direction?: Direction[]
 
@@ -38,9 +38,9 @@ export class ScolaHider {
 
   public immediate = true
 
-  public indexer: ScolaIndexer
+  public indexer: Indexer
 
-  public interactor: ScolaInteractor
+  public interactor: Interactor
 
   public mode: Mode | null
 
@@ -57,9 +57,9 @@ export class ScolaHider {
   public constructor (element: ScolaElement) {
     this.element = element
     this.backdrop = this.selectBackdrop()
-    this.breakpoint = new ScolaBreakpoint(element)
-    this.indexer = new ScolaIndexer()
-    this.interactor = new ScolaInteractor(element)
+    this.breakpoint = new Breakpoint(element)
+    this.indexer = new Indexer()
+    this.interactor = new Interactor(element)
 
     if (this.breakpoint.parse('sc-hide-initial') === '') {
       this.element.toggleAttribute('hidden', true)
@@ -100,13 +100,13 @@ export class ScolaHider {
     this.transition = this.breakpoint.parse('sc-transition') === ''
     this.indexer.index = this.element.getAttribute('sc-hide-index')
     this.interactor.cancel = true
-    this.interactor.edgeThreshold = Number(this.breakpoint.parse('sc-hide-interact-edge-threshold') ?? ScolaInteractor.edgeThreshold)
+    this.interactor.edgeThreshold = Number(this.breakpoint.parse('sc-hide-interact-edge-threshold') ?? Interactor.edgeThreshold)
     this.interactor.keyboard = this.breakpoint.parse('sc-hide-interact-keyboard') === ''
     this.interactor.mouse = this.breakpoint.parse('sc-hide-interact-mouse') === ''
     this.interactor.target = 'window'
     this.interactor.touch = this.breakpoint.parse('sc-hide-interact-touch') === ''
     this.mode = this.breakpoint.parse('sc-hide-mode') as Mode
-    this.distanceThreshold = Number(this.breakpoint.parse('sc-hide-distance-threshold') ?? ScolaHider.distanceThreshold)
+    this.distanceThreshold = Number(this.breakpoint.parse('sc-hide-distance-threshold') ?? Hider.distanceThreshold)
   }
 
   public toggle (): void {
@@ -180,7 +180,7 @@ export class ScolaHider {
     this.changeFocus()
   }
 
-  protected handleBreakpoint (event: ScolaBreakpointEvent): void {
+  protected handleBreakpoint (event: BreakpointEvent): void {
     if (event.changed) {
       this.interactor.disconnect()
       this.reset()
@@ -197,7 +197,7 @@ export class ScolaHider {
     this.hideModal()
   }
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
+  protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'end':
         return this.handleInteractorEnd(event)
@@ -210,7 +210,7 @@ export class ScolaHider {
     }
   }
 
-  protected handleInteractorEnd (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorEnd (event: InteractorEvent): boolean {
     let handled = false
 
     if (this.mode?.startsWith('move-') === true) {
@@ -240,7 +240,7 @@ export class ScolaHider {
     return handled
   }
 
-  protected handleInteractorEndMoveBottom (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorEndMoveBottom (event: InteractorEvent): boolean {
     this.setTimingFunction(event.velocityY)
 
     if (this.element.hasAttribute('hidden')) {
@@ -267,7 +267,7 @@ export class ScolaHider {
     return true
   }
 
-  protected handleInteractorEndMoveLeft (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorEndMoveLeft (event: InteractorEvent): boolean {
     this.setTimingFunction(event.velocityX)
 
     if (this.element.hasAttribute('hidden')) {
@@ -294,7 +294,7 @@ export class ScolaHider {
     return true
   }
 
-  protected handleInteractorEndMoveRight (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorEndMoveRight (event: InteractorEvent): boolean {
     this.setTimingFunction(event.velocityX)
 
     if (this.element.hasAttribute('hidden')) {
@@ -321,7 +321,7 @@ export class ScolaHider {
     return true
   }
 
-  protected handleInteractorEndMoveTop (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorEndMoveTop (event: InteractorEvent): boolean {
     this.setTimingFunction(event.velocityY)
 
     if (this.element.hasAttribute('hidden')) {
@@ -348,7 +348,7 @@ export class ScolaHider {
     return true
   }
 
-  protected handleInteractorMove (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorMove (event: InteractorEvent): boolean {
     if (this.shouldMoveBottom(event)) {
       return this.handleInteractorMoveBottom(event)
     } else if (this.shouldMoveLeft(event)) {
@@ -362,7 +362,7 @@ export class ScolaHider {
     return false
   }
 
-  protected handleInteractorMoveBottom (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorMoveBottom (event: InteractorEvent): boolean {
     if (this.element.hasAttribute('hidden')) {
       if (
         this.isValidMargin(-this.element.offsetHeight - event.distanceY, -this.element.offsetHeight, 0) &&
@@ -383,7 +383,7 @@ export class ScolaHider {
     return false
   }
 
-  protected handleInteractorMoveLeft (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorMoveLeft (event: InteractorEvent): boolean {
     if (this.element.hasAttribute('hidden')) {
       if (
         this.isValidMargin(-this.element.offsetWidth + event.distanceX, -this.element.offsetWidth, 0) &&
@@ -404,7 +404,7 @@ export class ScolaHider {
     return false
   }
 
-  protected handleInteractorMoveRight (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorMoveRight (event: InteractorEvent): boolean {
     if (this.element.hasAttribute('hidden')) {
       if (
         this.isValidMargin(-this.element.offsetWidth - event.distanceX, -this.element.offsetWidth, 0) &&
@@ -425,7 +425,7 @@ export class ScolaHider {
     return false
   }
 
-  protected handleInteractorMoveTop (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorMoveTop (event: InteractorEvent): boolean {
     if (this.element.hasAttribute('hidden')) {
       if (
         this.isValidMargin(-this.element.offsetHeight + event.distanceY, -this.element.offsetHeight, 0) &&
@@ -446,7 +446,7 @@ export class ScolaHider {
     return false
   }
 
-  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorStart (event: InteractorEvent): boolean {
     let handled = false
 
     if (this.interactor.isKeyboard(event.originalEvent)) {
@@ -581,7 +581,7 @@ export class ScolaHider {
     this.element.style.setProperty('transition-timing-function', this.interactor.getTimingFunction(velocity))
   }
 
-  protected shouldMove (event: ScolaInteractorEvent): boolean {
+  protected shouldMove (event: InteractorEvent): boolean {
     if (this.element.hasAttribute('hidden')) {
       if (event.originalEvent.target instanceof HTMLElement) {
         const element = event.originalEvent.target.closest('[sc-hide-mode]')
@@ -613,7 +613,7 @@ export class ScolaHider {
     return true
   }
 
-  protected shouldMoveBottom (event: ScolaInteractorEvent): boolean {
+  protected shouldMoveBottom (event: InteractorEvent): boolean {
     if (this.mode === 'move-bottom') {
       if (event.type === 'end') {
         this.toggleScrollElement(event, true)
@@ -638,7 +638,7 @@ export class ScolaHider {
     return false
   }
 
-  protected shouldMoveLeft (event: ScolaInteractorEvent): boolean {
+  protected shouldMoveLeft (event: InteractorEvent): boolean {
     if ((
       this.mode === 'move-start' &&
       this.interactor.dir === 'ltr'
@@ -669,7 +669,7 @@ export class ScolaHider {
     return false
   }
 
-  protected shouldMoveRight (event: ScolaInteractorEvent): boolean {
+  protected shouldMoveRight (event: InteractorEvent): boolean {
     if ((
       this.mode === 'move-end' &&
       this.interactor.dir === 'ltr'
@@ -700,7 +700,7 @@ export class ScolaHider {
     return false
   }
 
-  protected shouldMoveTop (event: ScolaInteractorEvent): boolean {
+  protected shouldMoveTop (event: InteractorEvent): boolean {
     if (this.mode === 'move-top') {
       if (event.type === 'end') {
         this.toggleScrollElement(event, true)
@@ -972,7 +972,7 @@ export class ScolaHider {
     })
   }
 
-  protected toggleScrollElement (event: ScolaInteractorEvent, scroll: boolean): void {
+  protected toggleScrollElement (event: InteractorEvent, scroll: boolean): void {
     if (scroll) {
       event.startScroll.element?.style.removeProperty('overflow')
     } else {

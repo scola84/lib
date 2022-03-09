@@ -1,4 +1,4 @@
-import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
@@ -6,17 +6,17 @@ import { isStruct } from '../../common'
 export class ScolaTableCellElement extends HTMLTableCellElement implements ScolaElement {
   public data: Struct = {}
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public constructor () {
     super()
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
   }
 
   public static define (): void {

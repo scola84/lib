@@ -9,20 +9,20 @@ declare global {
   }
 }
 
-export interface ScolaPropagatorEvent {
+export interface PropagatorEvent {
   data: Struct
   name: string
   selector: string
 }
 
-export class ScolaPropagator {
+export class Propagator {
   public static selector = ':scope > [is^="sc-"]:not([sc-nodata])'
 
   public cancel: boolean
 
   public element: ScolaElement
 
-  public events: Struct<ScolaPropagatorEvent[] | undefined> = {}
+  public events: Struct<PropagatorEvent[] | undefined> = {}
 
   public keydown: string[][]
 
@@ -53,7 +53,7 @@ export class ScolaPropagator {
     return dispatched
   }
 
-  public dispatchEvent (event: ScolaPropagatorEvent, data: unknown[] = [undefined], trigger?: Event): void {
+  public dispatchEvent (event: PropagatorEvent, data: unknown[] = [undefined], trigger?: Event): void {
     let targets: HTMLElement[] | NodeList = []
 
     if (event.selector === '') {
@@ -92,7 +92,7 @@ export class ScolaPropagator {
     return String(error)
   }
 
-  public parseEvents (events: string, base: Struct = {}): ScolaPropagatorEvent[] {
+  public parseEvents (events: string, base: Struct = {}): PropagatorEvent[] {
     return events
       .trim()
       .split(' ')
@@ -120,7 +120,7 @@ export class ScolaPropagator {
 
   public set (data: unknown): void {
     this.element
-      .querySelectorAll<ScolaElement>(ScolaPropagator.selector)
+      .querySelectorAll<ScolaElement>(Propagator.selector)
       .forEach((target) => {
         this.setData(target, data)
       })
@@ -147,7 +147,7 @@ export class ScolaPropagator {
     this.element.addEventListener('sc-data-set', this.handleSetBound)
   }
 
-  protected createDetail (event: ScolaPropagatorEvent, data: unknown): unknown {
+  protected createDetail (event: PropagatorEvent, data: unknown): unknown {
     let detail = data
 
     if (
@@ -160,7 +160,7 @@ export class ScolaPropagator {
     return detail ?? event.data
   }
 
-  protected getEvents (on: string): ScolaPropagatorEvent[] {
+  protected getEvents (on: string): PropagatorEvent[] {
     let events = this.events[on]
 
     if (events === undefined) {

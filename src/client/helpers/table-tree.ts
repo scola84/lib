@@ -2,7 +2,7 @@ import type { ScolaTableElement } from '../elements'
 import type { Struct } from '../../common'
 import { isArray } from '../../common'
 
-export class ScolaTableTree {
+export class TableTree {
   public element: ScolaTableElement
 
   public keys = new Set<unknown>()

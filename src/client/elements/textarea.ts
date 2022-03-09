@@ -1,29 +1,29 @@
-import { ScolaField, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
-import type { ScolaFieldData, ScolaFieldError } from '../helpers'
+import { Field, Mutator, Observer, Propagator } from '../helpers'
+import type { FieldData, FieldError } from '../helpers'
 import type { ScolaFieldElement } from './field'
 import type { Struct } from '../../common'
 
 export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFieldElement {
   public error?: Struct
 
-  public field: ScolaField
+  public field: Field
 
   public initialValue: string
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public resize: boolean
 
   public constructor () {
     super()
-    this.field = new ScolaField(this)
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.field = new Field(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.initialValue = this.value
     this.reset()
   }
@@ -62,12 +62,12 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     this.field.falsify()
   }
 
-  public getData (): ScolaFieldData {
+  public getData (): FieldData {
     return this.field.getData()
   }
 
-  public getError (): ScolaFieldError | null {
-    let error: ScolaFieldError | null = null
+  public getError (): FieldError | null {
+    let error: FieldError | null = null
 
     if (this.validity.badInput) {
       error = {

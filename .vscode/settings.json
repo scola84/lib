@@ -23,6 +23,7 @@
   "[yaml]": {
     "editor.defaultFormatter": "redhat.vscode-yaml"
   },
+  "css.validate": false,
   "editor.tabSize": 2,
   "eslint.format.enable": true
 }

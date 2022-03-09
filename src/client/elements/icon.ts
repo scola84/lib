@@ -1,5 +1,5 @@
-import { ScolaIntl, isStruct } from '../../common'
-import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Mutator, Observer, Propagator } from '../helpers'
+import { I18n, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 
@@ -12,20 +12,20 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
 
   public initialCode: string | null
 
-  public intl: ScolaIntl
+  public I18n: I18n
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public constructor () {
     super()
-    this.intl = new ScolaIntl()
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.I18n = new I18n()
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.initialCode = this.getAttribute('sc-code')
     this.reset()
   }
@@ -95,7 +95,7 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
   }
 
   public update (): void {
-    const code = this.intl.format(this.code, this.getData())
+    const code = this.I18n.format(this.code, this.getData())
     const snippet = ScolaIconElement.snippets[code]
 
     if (snippet !== undefined) {

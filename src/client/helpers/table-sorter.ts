@@ -1,14 +1,14 @@
-import { ScolaInteractor } from './interactor'
-import type { ScolaInteractorEvent } from './interactor'
+import { Interactor } from './interactor'
+import type { InteractorEvent } from './interactor'
 import type { ScolaTableElement } from '../elements'
 import { ScolaTableRowElement } from '../elements'
 import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 
-export class ScolaTableSorter {
+export class TableSorter {
   public element: ScolaTableElement
 
-  public interactor: ScolaInteractor
+  public interactor: Interactor
 
   public type: string
 
@@ -18,7 +18,7 @@ export class ScolaTableSorter {
 
   public constructor (element: ScolaTableElement) {
     this.element = element
-    this.interactor = new ScolaInteractor(element.body)
+    this.interactor = new Interactor(element.body)
     this.reset()
   }
 
@@ -133,7 +133,7 @@ export class ScolaTableSorter {
     }
   }
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
+  protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'start':
         return this.handleInteractorStart(event)
@@ -142,7 +142,7 @@ export class ScolaTableSorter {
     }
   }
 
-  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorStart (event: InteractorEvent): boolean {
     if (this.interactor.isKeyboard(event.originalEvent, 'down')) {
       return this.handleInteractorStartKeyboard(event.originalEvent)
     }

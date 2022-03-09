@@ -1,5 +1,5 @@
-import { ScolaBreakpoint, ScolaIndexer, ScolaInteractor, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
-import type { ScolaEvent, ScolaInteractorEvent } from '../helpers'
+import { Breakpoint, Indexer, Interactor, Mutator, Observer, Propagator } from '../helpers'
+import type { InteractorEvent, ScolaEvent } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 
@@ -45,21 +45,21 @@ const topAlternatives: Record<Top, Top[]> = {
 export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   public anchor?: HTMLElement
 
-  public breakpoint: ScolaBreakpoint
+  public breakpoint: Breakpoint
 
   public immediate = true
 
-  public indexer: ScolaIndexer
+  public indexer: Indexer
 
-  public interactor: ScolaInteractor
+  public interactor: Interactor
 
   public left: Left
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public top: Top
 
@@ -81,12 +81,12 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
-    this.breakpoint = new ScolaBreakpoint(this)
-    this.indexer = new ScolaIndexer()
-    this.interactor = new ScolaInteractor(this)
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.breakpoint = new Breakpoint(this)
+    this.indexer = new Indexer()
+    this.interactor = new Interactor(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.reset()
   }
 
@@ -357,7 +357,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.toggleAttribute('hidden', true)
   }
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
+  protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'start':
         return this.handleInteractorStart(event)
@@ -366,7 +366,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorStart (event: InteractorEvent): boolean {
     if (
       !this.hasAttribute('hidden') && (
         this.interactor.isKey(event.originalEvent, 'Escape') ||

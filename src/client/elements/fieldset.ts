@@ -1,4 +1,4 @@
-import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Mutator, Observer, Propagator } from '../helpers'
 import { cast, isPrimitive, setPush } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaInputElement } from './input'
@@ -14,11 +14,11 @@ declare global {
 }
 
 export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaElement {
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   protected handleFalsifyBound = this.handleFalsify.bind(this)
 
@@ -28,9 +28,9 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
 
   public constructor () {
     super()
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
   }
 
   public static define (): void {

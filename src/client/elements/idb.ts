@@ -1,4 +1,4 @@
-import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Mutator, Observer, Propagator } from '../helpers'
 import { isArray, isStruct } from '../../common'
 import type { IDBPDatabase } from 'idb/with-async-ittr'
 import type { ScolaElement } from './element'
@@ -28,13 +28,13 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
   public key: string
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
   public name: string
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public version: number
 
@@ -64,9 +64,9 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
   public constructor () {
     super()
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.reset()
   }
 

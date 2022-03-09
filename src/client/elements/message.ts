@@ -1,4 +1,4 @@
-import { ScolaHider, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Hider, Mutator, Observer, Propagator } from '../helpers'
 import { ScolaDivElement } from './div'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
@@ -15,15 +15,15 @@ declare global {
 export class ScolaMessageElement extends HTMLDivElement implements ScolaElement {
   public activeElement?: HTMLElement
 
-  public hider?: ScolaHider
+  public hider?: Hider
 
   public items: Struct[] = []
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public templates: Map<string, HTMLTemplateElement>
 
@@ -41,13 +41,13 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
 
   public constructor () {
     super()
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.templates = this.mutator.selectTemplates()
 
     if (this.hasAttribute('sc-hide')) {
-      this.hider = new ScolaHider(this)
+      this.hider = new Hider(this)
     }
 
     this.reset()

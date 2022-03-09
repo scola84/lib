@@ -1,7 +1,7 @@
-import { ScolaDragger, ScolaDropper, ScolaFocuser, ScolaHider, ScolaInteractor, ScolaMutator, ScolaObserver, ScolaPaster, ScolaPropagator } from '../helpers'
+import { Dragger, Dropper, Focuser, Hider, Interactor, Mutator, Observer, Paster, Propagator } from '../helpers'
 import { cast, isArray, isStruct } from '../../common'
+import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
-import type { ScolaInteractorEvent } from '../helpers'
 import type { Struct } from '../../common'
 
 declare global {
@@ -12,23 +12,23 @@ declare global {
 }
 
 export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
-  public dragger?: ScolaDragger
+  public dragger?: Dragger
 
-  public dropper?: ScolaDropper
+  public dropper?: Dropper
 
-  public focuser?: ScolaFocuser
+  public focuser?: Focuser
 
-  public hider?: ScolaHider
+  public hider?: Hider
 
-  public interactor: ScolaInteractor
+  public interactor: Interactor
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public paster?: ScolaPaster
+  public paster?: Paster
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
 
@@ -38,29 +38,29 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
-    this.interactor = new ScolaInteractor(this)
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.interactor = new Interactor(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
 
     if (this.hasAttribute('sc-drag')) {
-      this.dragger = new ScolaDragger(this)
+      this.dragger = new Dragger(this)
     }
 
     if (this.hasAttribute('sc-drop')) {
-      this.dropper = new ScolaDropper(this)
+      this.dropper = new Dropper(this)
     }
 
     if (this.hasAttribute('sc-focus')) {
-      this.focuser = new ScolaFocuser(this)
+      this.focuser = new Focuser(this)
     }
 
     if (this.hasAttribute('sc-hide')) {
-      this.hider = new ScolaHider(this)
+      this.hider = new Hider(this)
     }
 
     if (this.hasAttribute('sc-paste')) {
-      this.paster = new ScolaPaster(this)
+      this.paster = new Paster(this)
     }
 
     this.reset()
@@ -137,7 +137,7 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
+  protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'click':
         return this.handleInteractorClick(event)
@@ -152,19 +152,19 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  protected handleInteractorClick (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorClick (event: InteractorEvent): boolean {
     return this.propagator.dispatch('click', [this.getData()], event.originalEvent)
   }
 
-  protected handleInteractorContextmenu (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorContextmenu (event: InteractorEvent): boolean {
     return this.propagator.dispatch('contextmenu', [this.getData()], event.originalEvent)
   }
 
-  protected handleInteractorDblclick (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorDblclick (event: InteractorEvent): boolean {
     return this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
   }
 
-  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorStart (event: InteractorEvent): boolean {
     let handled = false
 
     if (this.interactor.isKeyboard(event.originalEvent)) {

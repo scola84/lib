@@ -1,4 +1,4 @@
-import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 
@@ -20,15 +20,15 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
 
   public iframeUrl: string
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
   public name: string
 
-  public observer: ScolaObserver
+  public observer: Observer
 
   public origin = ScolaWorkerElement.origin
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public url: string
 
@@ -46,9 +46,9 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
 
   public constructor () {
     super()
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.reset()
   }
 

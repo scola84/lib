@@ -1,17 +1,17 @@
+import { Interactor } from './interactor'
+import type { InteractorEvent } from './interactor'
 import type { ScolaElement } from '../elements'
-import { ScolaInteractor } from './interactor'
-import type { ScolaInteractorEvent } from './interactor'
 
-export class ScolaFocuser {
+export class Focuser {
   public element: ScolaElement
 
-  public interactor: ScolaInteractor
+  public interactor: Interactor
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
 
   public constructor (element: ScolaElement) {
     this.element = element
-    this.interactor = new ScolaInteractor(element)
+    this.interactor = new Interactor(element)
     this.reset()
   }
 
@@ -31,7 +31,7 @@ export class ScolaFocuser {
     this.interactor.touch = this.interactor.hasTouch
   }
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
+  protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'click':
         return this.handleInteractorClick(event)
@@ -42,12 +42,12 @@ export class ScolaFocuser {
     }
   }
 
-  protected handleInteractorClick (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorClick (event: InteractorEvent): boolean {
     this.toggleAttribute(event.originalEvent.composedPath().includes(this.element))
     return true
   }
 
-  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorStart (event: InteractorEvent): boolean {
     this.toggleAttribute(event.originalEvent.composedPath().includes(this.element))
     return true
   }

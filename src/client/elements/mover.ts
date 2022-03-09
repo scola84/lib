@@ -1,6 +1,6 @@
-import { ScolaInteractor, ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Interactor, Mutator, Observer, Propagator } from '../helpers'
+import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
-import type { ScolaInteractorEvent } from '../helpers'
 import type { Struct } from '../../common'
 
 interface Offset {
@@ -11,13 +11,13 @@ interface Offset {
 export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
   public contain: boolean
 
-  public interactor: ScolaInteractor
+  public interactor: Interactor
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public snap: number
 
@@ -29,10 +29,10 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
-    this.interactor = new ScolaInteractor(this)
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.interactor = new Interactor(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.reset()
   }
 
@@ -81,7 +81,7 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
     return Math.round((position + distance) / this.snap) * this.snap
   }
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
+  protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'end':
         return this.handleInteractorEnd()
@@ -100,7 +100,7 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
     return true
   }
 
-  protected handleInteractorMove (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorMove (event: InteractorEvent): boolean {
     this.targetOffsets.forEach((offset, target) => {
       const {
         height: targetHeight,

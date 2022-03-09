@@ -1,13 +1,13 @@
 import type { ScolaElement } from '../elements'
 
-type Callback = (event: ScolaBreakpointEvent) => void
+type Callback = (event: BreakpointEvent) => void
 
-export interface ScolaBreakpointEvent {
+export interface BreakpointEvent {
   changed: boolean
   breakpoint: string
 }
 
-export class ScolaBreakpoint {
+export class Breakpoint {
   public breakpoint: string
 
   public callback?: Callback

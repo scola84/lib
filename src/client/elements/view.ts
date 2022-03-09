@@ -1,4 +1,4 @@
-import { ScolaHider, ScolaMutator, ScolaObserver, ScolaPropagator, ScolaSanitizer } from '../helpers'
+import { Hider, Mutator, Observer, Propagator, Sanitizer } from '../helpers'
 import { absorb, isArray, isPrimitive, isSame, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-export interface ScolaView extends Struct {
+export interface View extends Struct {
   element?: Element
   name: string
   params?: Struct
@@ -34,13 +34,13 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     session: window.sessionStorage
   }
 
-  public hider?: ScolaHider
+  public hider?: Hider
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
   public name: string | null
 
-  public observer: ScolaObserver
+  public observer: Observer
 
   public origin = ScolaViewElement.origin
 
@@ -48,13 +48,13 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public pointer = -1
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public regexp: RegExp
 
-  public requestView?: ScolaView
+  public requestView?: View
 
-  public sanitizer: ScolaSanitizer
+  public sanitizer: Sanitizer
 
   public save: string
 
@@ -64,11 +64,11 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public unique: boolean
 
-  public views: ScolaView[] = []
+  public views: View[] = []
 
   public wait: boolean
 
-  public get view (): ScolaView | null {
+  public get view (): View | null {
     return this.views[this.pointer] ?? null
   }
 
@@ -90,13 +90,13 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
-    this.sanitizer = new ScolaSanitizer()
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
+    this.sanitizer = new Sanitizer()
 
     if (this.hasAttribute('sc-hide')) {
-      this.hider = new ScolaHider(this)
+      this.hider = new Hider(this)
     }
 
     this.reset()
@@ -235,7 +235,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.go(this.pointer + 1)
   }
 
-  public getData (): ScolaView | null {
+  public getData (): View | null {
     return this.view
   }
 
@@ -374,8 +374,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.addEventListener('sc-view-sort', this.handleSortBound)
   }
 
-  protected createView (options?: unknown): ScolaView {
-    const view: ScolaView = {
+  protected createView (options?: unknown): View {
+    const view: View = {
       name: '',
       params: {}
     }

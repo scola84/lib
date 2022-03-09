@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-export class ScolaTheme {
+export class Theme {
   public static storage: Storage = localStorage
 
   public static theme: string
@@ -20,7 +20,7 @@ export class ScolaTheme {
   protected handleThemeBound = this.handleTheme.bind(this)
 
   public constructor () {
-    ScolaTheme.theme = ScolaTheme.themes[this.findThemeIndex()] ?? ScolaTheme.themes[0]
+    Theme.theme = Theme.themes[this.findThemeIndex()] ?? Theme.themes[0]
   }
 
   public listen (): void {
@@ -28,19 +28,19 @@ export class ScolaTheme {
   }
 
   public set (theme: string): void {
-    document.body.classList.remove(ScolaTheme.theme)
-    ScolaTheme.theme = theme
+    document.body.classList.remove(Theme.theme)
+    Theme.theme = theme
     document.body.classList.add(theme)
-    ScolaTheme.storage.setItem('sc-theme', theme)
-    window.dispatchEvent(new CustomEvent('sc-theme', { detail: ScolaTheme.theme }))
+    Theme.storage.setItem('sc-theme', theme)
+    window.dispatchEvent(new CustomEvent('sc-theme', { detail: Theme.theme }))
   }
 
   public toggle (): void {
-    this.set(ScolaTheme.themes[this.findThemeIndex() + 1] ?? ScolaTheme.themes[0])
+    this.set(Theme.themes[this.findThemeIndex() + 1] ?? Theme.themes[0])
   }
 
   protected findThemeIndex (): number {
-    return ScolaTheme.themes.findIndex((theme) => {
+    return Theme.themes.findIndex((theme) => {
       return document.body.classList.contains(theme)
     })
   }

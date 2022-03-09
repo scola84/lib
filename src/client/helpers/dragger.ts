@@ -1,9 +1,9 @@
+import { Indexer } from './indexer'
+import { Interactor } from './interactor'
+import type { InteractorEvent } from './interactor'
 import type { ScolaElement } from '../elements'
-import { ScolaIndexer } from './indexer'
-import { ScolaInteractor } from './interactor'
-import type { ScolaInteractorEvent } from './interactor'
 
-export class ScolaDragger {
+export class Dragger {
   public activeElement?: HTMLElement
 
   public data: unknown
@@ -12,9 +12,9 @@ export class ScolaDragger {
 
   public handle: boolean
 
-  public indexer: ScolaIndexer
+  public indexer: Indexer
 
-  public interactor: ScolaInteractor
+  public interactor: Interactor
 
   public templates: Map<string, HTMLTemplateElement>
 
@@ -28,8 +28,8 @@ export class ScolaDragger {
 
   public constructor (element: ScolaElement) {
     this.element = element
-    this.indexer = new ScolaIndexer()
-    this.interactor = new ScolaInteractor(element)
+    this.indexer = new Indexer()
+    this.interactor = new Interactor(element)
     this.templates = this.element.mutator.selectTemplates()
     this.reset()
   }
@@ -100,7 +100,7 @@ export class ScolaDragger {
     }
   }
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
+  protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'start':
         return this.handleInteractorStart(event)
@@ -109,7 +109,7 @@ export class ScolaDragger {
     }
   }
 
-  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorStart (event: InteractorEvent): boolean {
     if (
       this.handle &&
       event.originalEvent.target instanceof HTMLElement &&

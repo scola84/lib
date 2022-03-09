@@ -1,8 +1,8 @@
 import type { Primitive, Struct } from '../../common'
 import { isPrimitive, isStruct } from '../../common'
+import { Interactor } from './interactor'
+import type { InteractorEvent } from './interactor'
 import type { ScolaFieldElement } from '../elements'
-import { ScolaInteractor } from './interactor'
-import type { ScolaInteractorEvent } from './interactor'
 import { debounce } from 'throttle-debounce'
 
 declare global {
@@ -14,24 +14,24 @@ declare global {
   }
 }
 
-export interface ScolaFieldData extends Struct {
+export interface FieldData extends Struct {
   name: string
   value: string | null
 }
 
-export interface ScolaFieldError extends Struct {
+export interface FieldError extends Struct {
   code: string
   data?: unknown
 }
 
-export class ScolaField {
+export class Field {
   public debounce = 0
 
   public element: ScolaFieldElement
 
-  public error?: ScolaFieldError
+  public error?: FieldError
 
-  public interactor: ScolaInteractor
+  public interactor: Interactor
 
   protected handleClearBound = this.handleClear.bind(this)
 
@@ -47,7 +47,7 @@ export class ScolaField {
 
   public constructor (element: ScolaFieldElement) {
     this.element = element
-    this.interactor = new ScolaInteractor(element)
+    this.interactor = new Interactor(element)
     this.reset()
   }
 
@@ -75,7 +75,7 @@ export class ScolaField {
     }
   }
 
-  public getData (): ScolaFieldData {
+  public getData (): FieldData {
     return {
       name: this.element.name,
       value: this.element.getValue()
@@ -221,7 +221,7 @@ export class ScolaField {
     }], event)
   }
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
+  protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'start':
         return this.handleInteractorStart(event)
@@ -230,7 +230,7 @@ export class ScolaField {
     }
   }
 
-  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorStart (event: InteractorEvent): boolean {
     if (this.interactor.isKeyboard(event.originalEvent)) {
       return this.handleInteractorStartKeyboard(event.originalEvent)
     }
@@ -275,7 +275,7 @@ export class ScolaField {
     this.element.removeEventListener('sc-field-verify', this.handleVerifyBound)
   }
 
-  protected setError (error: ScolaFieldError): void {
+  protected setError (error: FieldError): void {
     this.clearDebounce()
     this.error = error
     this.element.toggleAttribute('sc-field-error', true)

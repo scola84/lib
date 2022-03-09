@@ -1,7 +1,7 @@
 import type { ScolaElement, ScolaTableElement } from '../elements'
 import type { Struct } from '../../common'
 
-export class ScolaDropper {
+export class Dropper {
   public copy: boolean
 
   public element: ScolaElement

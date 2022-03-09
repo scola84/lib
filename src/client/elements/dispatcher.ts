@@ -1,7 +1,7 @@
-import { ScolaMutator, ScolaObserver, ScolaPropagator } from '../helpers'
+import { Mutator, Observer, Propagator } from '../helpers'
 import { absorb, isStruct } from '../../common'
+import type { PropagatorEvent } from '../helpers'
 import type { ScolaElement } from './element'
-import type { ScolaPropagatorEvent } from '../helpers'
 import type { Struct } from '../../common'
 
 declare global {
@@ -11,13 +11,13 @@ declare global {
 }
 
 export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaElement {
-  public events: ScolaPropagatorEvent[]
+  public events: PropagatorEvent[]
 
-  public mutator: ScolaMutator
+  public mutator: Mutator
 
-  public observer: ScolaObserver
+  public observer: Observer
 
-  public propagator: ScolaPropagator
+  public propagator: Propagator
 
   public wait: boolean
 
@@ -25,9 +25,9 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
 
   public constructor () {
     super()
-    this.mutator = new ScolaMutator(this)
-    this.observer = new ScolaObserver(this)
-    this.propagator = new ScolaPropagator(this)
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
     this.reset()
   }
 
@@ -91,8 +91,8 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     }
   }
 
-  protected parseEvents (): ScolaPropagatorEvent[] {
-    const events: ScolaPropagatorEvent[] = []
+  protected parseEvents (): PropagatorEvent[] {
+    const events: PropagatorEvent[] = []
 
     this
       .querySelectorAll('param')

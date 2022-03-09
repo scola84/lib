@@ -2,7 +2,7 @@ import { isArray, isStruct } from '../../common'
 import type { ScolaMediaElement } from '../elements'
 import type { Struct } from '../../common'
 
-export interface ScolaMediaData extends Struct {
+export interface MediaData extends Struct {
   currentTime: number
   duration: number
   length: Date
@@ -13,7 +13,7 @@ export interface ScolaMediaData extends Struct {
   volume: number
 }
 
-export class ScolaMedia {
+export class Media {
   public element: ScolaMediaElement
 
   protected handleCanPlayBound = this.handleCanPlay.bind(this)
@@ -47,7 +47,7 @@ export class ScolaMedia {
     this.clear()
   }
 
-  public getData (): ScolaMediaData | null {
+  public getData (): MediaData | null {
     if (
       Number.isNaN(this.element.duration) ||
       this.element.duration === Infinity

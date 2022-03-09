@@ -1,5 +1,5 @@
-import { ScolaInteractor } from './interactor'
-import type { ScolaInteractorEvent } from './interactor'
+import { Interactor } from './interactor'
+import type { InteractorEvent } from './interactor'
 import type { ScolaTableElement } from '../elements'
 import { ScolaTableRowElement } from '../elements'
 import type { Struct } from '../../common'
@@ -15,7 +15,7 @@ declare global {
 
 type Mode = 'many' | 'one' | 'toggle'
 
-export class ScolaTableSelector {
+export class TableSelector {
   public all: boolean
 
   public element: ScolaTableElement
@@ -24,7 +24,7 @@ export class ScolaTableSelector {
 
   public focusedRow?: ScolaTableRowElement
 
-  public interactor: ScolaInteractor
+  public interactor: Interactor
 
   public keyboardMode: string
 
@@ -52,7 +52,7 @@ export class ScolaTableSelector {
 
   public constructor (element: ScolaTableElement) {
     this.element = element
-    this.interactor = new ScolaInteractor(element.body)
+    this.interactor = new Interactor(element.body)
     this.reset()
   }
 
@@ -379,7 +379,7 @@ export class ScolaTableSelector {
     }
   }
 
-  protected handleInteractor (event: ScolaInteractorEvent): boolean {
+  protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'click':
         return this.handleInteractorClick(event)
@@ -392,7 +392,7 @@ export class ScolaTableSelector {
     }
   }
 
-  protected handleInteractorClick (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorClick (event: InteractorEvent): boolean {
     if (this.interactor.isMouse(event.originalEvent)) {
       return this.handleInteractorClickMouse(event.originalEvent)
     } else if (this.interactor.isTouch(event.originalEvent)) {
@@ -459,12 +459,12 @@ export class ScolaTableSelector {
     return handled
   }
 
-  protected handleInteractorDblclick (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorDblclick (event: InteractorEvent): boolean {
     this.dispatch('selectdblclick', event.originalEvent)
     return true
   }
 
-  protected handleInteractorStart (event: ScolaInteractorEvent): boolean {
+  protected handleInteractorStart (event: InteractorEvent): boolean {
     if (this.interactor.isKeyboard(event.originalEvent)) {
       return this.handleInteractorStartKeyboard(event.originalEvent)
     } else if (this.interactor.isMouse(event.originalEvent)) {

@@ -37,13 +37,15 @@ export class SchemaParser {
           if (element.nodeName === 'select') {
             this.extractSelect(attributes, element.childNodes, field)
           } else if (element.nodeName === 'textarea') {
-            field.type = 'textarea'
+            this.extractTextarea(field)
           }
 
           this.extractConstraints(attributes, field)
           this.extractDatabaseOptions(attributes, field)
           fields[attributes.name] = field
-        } else {
+        } else if (field.type === 'checkbox') {
+          field.values?.push(attributes.value)
+        } else if (field.type === 'radio') {
           field.values?.push(attributes.value)
           this.extractRadio(attributes, field)
         }
@@ -65,10 +67,9 @@ export class SchemaParser {
     if (attributes.type !== undefined) {
       field.type = attributes.type
 
-      if (
-        attributes.type === 'checkbox' ||
-        attributes.type === 'radio'
-      ) {
+      if (field.type === 'checkbox') {
+        field.values = [attributes.value]
+      } else if (field.type === 'radio') {
         field.values = [attributes.value]
         this.extractRadio(attributes, field)
       } else if (attributes.value !== undefined) {
@@ -102,6 +103,10 @@ export class SchemaParser {
 
     if (attributes.step !== undefined) {
       field.step = Number(attributes.step)
+    }
+
+    if (attributes['sc-custom'] !== undefined) {
+      field.custom = attributes['sc-custom']
     }
   }
 
@@ -149,7 +154,6 @@ export class SchemaParser {
 
   protected extractRadio (attributes: SchemaAttributes, field: SchemaField): void {
     if (
-      attributes.type === 'radio' &&
       attributes.checked === '' &&
       attributes.value !== undefined
     ) {
@@ -177,6 +181,10 @@ export class SchemaParser {
         }
       }
     }
+  }
+
+  protected extractTextarea (field: SchemaField): void {
+    field.type = 'textarea'
   }
 
   protected async extractView (attributes: SchemaAttributes, fields: Schema, dir: string): Promise<void> {

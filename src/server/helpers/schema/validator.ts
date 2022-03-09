@@ -17,6 +17,7 @@ interface Validators extends Struct<ValidatorBase | undefined> {
 
 export interface SchemaField {
   cursor?: number
+  custom?: string
   default?: string
   index?: string
   fkey?: SchemaFieldKey
@@ -99,6 +100,35 @@ export class SchemaValidator {
         }
 
         return false
+      }
+
+      return true
+    },
+    file (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
+      let values = data[name]
+
+      if (!isArray(values)) {
+        values = [values]
+      }
+
+      if (isArray(values)) {
+        const valid = values.every((value) => {
+          return (
+            isStruct(value) &&
+            typeof value.id === 'string' &&
+            typeof value.name === 'string' &&
+            typeof value.size === 'number' &&
+            typeof value.type === 'string'
+          )
+        })
+
+        if (!valid) {
+          errors[name] = {
+            code: 'err_validator_bad_input_file'
+          }
+
+          return false
+        }
       }
 
       return true
@@ -340,43 +370,7 @@ export class SchemaValidator {
     Object
       .entries(schema)
       .forEach(([name, field]) => {
-        if (field.required === true) {
-          validators.push(SchemaValidator.validators.required.bind(null, name, field))
-        }
-
-        const typeValidator = SchemaValidator.validators[field.type]
-
-        if (typeValidator !== undefined) {
-          validators.push(typeValidator.bind(null, name, field))
-        }
-
-        if (field.max !== undefined) {
-          validators.push(SchemaValidator.validators.max.bind(null, name, field))
-        }
-
-        if (field.maxLength !== undefined) {
-          validators.push(SchemaValidator.validators.maxLength.bind(null, name, field))
-        }
-
-        if (field.min !== undefined) {
-          validators.push(SchemaValidator.validators.min.bind(null, name, field))
-        }
-
-        if (field.minLength !== undefined) {
-          validators.push(SchemaValidator.validators.minLength.bind(null, name, field))
-        }
-
-        if (field.pattern !== undefined) {
-          validators.push(SchemaValidator.validators.pattern.bind(null, name, field))
-        }
-
-        if (field.step !== undefined) {
-          validators.push(SchemaValidator.validators.step.bind(null, name, field))
-        }
-
-        if (field.schema !== undefined) {
-          validators.push(this.compileChild(name, field))
-        }
+        this.compileField(name, field, validators)
       }, {})
 
     return validators
@@ -403,5 +397,53 @@ export class SchemaValidator {
     }
 
     return validator
+  }
+
+  protected compileField (name: string, field: SchemaField, validators: Validator[]): void {
+    if (field.required === true) {
+      validators.push(SchemaValidator.validators.required.bind(null, name, field))
+    }
+
+    const typeValidator = SchemaValidator.validators[field.type]
+
+    if (typeValidator !== undefined) {
+      validators.push(typeValidator.bind(null, name, field))
+    }
+
+    if (field.custom !== undefined) {
+      const customValidator = SchemaValidator.validators[field.custom]
+
+      if (customValidator !== undefined) {
+        validators.push(customValidator.bind(null, name, field))
+      }
+    }
+
+    if (field.max !== undefined) {
+      validators.push(SchemaValidator.validators.max.bind(null, name, field))
+    }
+
+    if (field.maxLength !== undefined) {
+      validators.push(SchemaValidator.validators.maxLength.bind(null, name, field))
+    }
+
+    if (field.min !== undefined) {
+      validators.push(SchemaValidator.validators.min.bind(null, name, field))
+    }
+
+    if (field.minLength !== undefined) {
+      validators.push(SchemaValidator.validators.minLength.bind(null, name, field))
+    }
+
+    if (field.pattern !== undefined) {
+      validators.push(SchemaValidator.validators.pattern.bind(null, name, field))
+    }
+
+    if (field.step !== undefined) {
+      validators.push(SchemaValidator.validators.step.bind(null, name, field))
+    }
+
+    if (field.schema !== undefined) {
+      validators.push(this.compileChild(name, field))
+    }
   }
 }

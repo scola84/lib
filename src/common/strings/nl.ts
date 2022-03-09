@@ -17,6 +17,7 @@ export const nl = {
   err_validator_bad_input_color: 'Voer een geldige kleur in',
   err_validator_bad_input_date: 'Voer een geldige datum in',
   err_validator_bad_input_email: 'Voer een geldig e-mailadres in',
+  err_validator_bad_input_file: 'Voer een geldig bestand in',
   err_validator_bad_input_number: 'Voer een geldig getal in',
   err_validator_bad_input_radio: 'Voer een geldige waarde in',
   err_validator_bad_input_range: 'Voer een geldig getal in',

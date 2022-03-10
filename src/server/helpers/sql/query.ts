@@ -10,18 +10,26 @@ export interface Query extends Struct {
   sortOrder?: string
 }
 
-export interface QueryClauses {
+export interface QueryKeys {
+  auth?: Struct<SchemaFieldKey[][]>
+  foreign?: SchemaFieldKey[]
+  link?: SchemaFieldKey[]
+  primary?: SchemaFieldKey[]
+  search?: SchemaFieldKey[]
+  sort?: SchemaFieldKey[]
+}
+
+export interface QueryOutput {
+  query: string
+  values: Struct
+}
+
+export interface QueryParts {
   join?: string
   limit?: string
   order?: string
+  parts?: QueryParts[]
   select?: string
   values?: Struct
   where?: string
-}
-
-export interface QueryKeys {
-  foreign?: SchemaFieldKey[]
-  link?: SchemaFieldKey[]
-  search?: SchemaFieldKey[]
-  sort?: SchemaFieldKey[]
 }

@@ -1,4 +1,4 @@
-import type { Query, QueryClauses } from '../query'
+import type { Query, QueryParts } from '../query'
 import { Formatter } from '../formatter'
 import type { SchemaField } from '../../schema'
 import type { Struct } from '../../../../common'
@@ -56,7 +56,15 @@ export class MysqlFormatter extends Formatter {
     return `\`${value.replace(/\./gu, '`.`')}\``
   }
 
-  public formatLimit (query: Query): QueryClauses {
+  public formatParameter (value: unknown): string {
+    if (isStruct(value)) {
+      return escape(JSON.stringify(value))
+    }
+
+    return escape(value)
+  }
+
+  protected createSelectAllPartsLimit (query: Query): QueryParts {
     const values: Struct = {
       count: query.count
     }
@@ -83,14 +91,6 @@ export class MysqlFormatter extends Formatter {
       values,
       where: where ?? undefined
     }
-  }
-
-  public formatParameter (value: unknown): string {
-    if (isStruct(value)) {
-      return escape(JSON.stringify(value))
-    }
-
-    return escape(value)
   }
 
   protected formatDdlColumn (name: string, field: SchemaField): string {

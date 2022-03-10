@@ -51,7 +51,7 @@ export class ReloadGetHandler extends RouteHandler {
     this.watcher.on('change', debounce(this.debounce, false, () => {
       if (readFileSync(this.file).length > 0) {
         this.responses.forEach((response) => {
-          response.write(this.formatBody({
+          response.write(this.body.format({
             data: JSON.stringify({
               reload: true
             }),

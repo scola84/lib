@@ -1,4 +1,4 @@
-import type { Query, QueryClauses } from '../query'
+import type { Query, QueryParts } from '../query'
 import { isArray, isDate, isNil, isObject, isPrimitive } from '../../../../common'
 import { Formatter } from '../formatter'
 import type { SchemaField } from '../../schema'
@@ -56,7 +56,23 @@ export class PostgresqlFormatter extends Formatter {
     return `"${value.replace(/\./gu, '"."')}"`
   }
 
-  public formatLimit (query: Query): QueryClauses {
+  public formatParameter (value: unknown): string {
+    if ((
+      isArray(value) ||
+      isDate(value) ||
+      isNil(value) ||
+      isObject(value) ||
+      isPrimitive(value)
+    ) && (
+      typeof value !== 'symbol'
+    )) {
+      return literal(value)
+    }
+
+    return String(value)
+  }
+
+  protected createSelectAllPartsLimit (query: Query): QueryParts {
     const values: Struct = {}
 
     let limit = null
@@ -81,22 +97,6 @@ export class PostgresqlFormatter extends Formatter {
       values,
       where: where ?? undefined
     }
-  }
-
-  public formatParameter (value: unknown): string {
-    if ((
-      isArray(value) ||
-      isDate(value) ||
-      isNil(value) ||
-      isObject(value) ||
-      isPrimitive(value)
-    ) && (
-      typeof value !== 'symbol'
-    )) {
-      return literal(value)
-    }
-
-    return String(value)
   }
 
   protected formatDdlColumn (name: string, field: SchemaField): string {

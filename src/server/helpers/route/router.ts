@@ -105,11 +105,10 @@ export class Router {
         throw new Error(`Method "${request.method ?? ''} ${url.pathname}" not allowed`)
       } else {
         await handler.handleRoute({
-          body: null,
           headers: request.headers,
+          method: request.method ?? 'GET',
           query: Object.fromEntries(url.searchParams),
-          url,
-          user: null
+          url
         }, response, request)
       }
     }

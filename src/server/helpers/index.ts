@@ -1,6 +1,7 @@
 export * from './fastify'
 export * from './sql'
 export * from './queue'
+export * from './rest'
 export * from './route'
 export * from './schema'
 export * from './service'

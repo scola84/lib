@@ -1,5 +1,5 @@
-import { Mutator, Observer, Propagator } from '../helpers'
 import { I18n, isStruct } from '../../common'
+import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 
@@ -8,11 +8,11 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
 
   public data: Struct = {}
 
+  public i18n: I18n
+
   public initialCode: string | null
 
   public initialText: string
-
-  public I18n: I18n
 
   public locale?: string
 
@@ -26,7 +26,7 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
 
   public constructor () {
     super()
-    this.I18n = new I18n()
+    this.i18n = new I18n()
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
@@ -94,7 +94,7 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
   }
 
   public update (): void {
-    let string = this.I18n.format(this.code, this.getData(), this.locale)
+    let string = this.i18n.format(this.code, this.getData(), this.locale)
 
     if (this.trim) {
       string = string

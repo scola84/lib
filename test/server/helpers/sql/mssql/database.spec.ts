@@ -1,5 +1,6 @@
 import { ConnectionPool } from 'mssql'
 import { MssqlDatabase } from '../../../../../src/server/helpers/sql/mssql'
+import type { SqlId } from '../../../../../src/server/helpers/sql/result'
 import type { config } from 'mssql'
 import { expect } from 'chai'
 import { sql } from '../../../../../src/server/helpers/sql/tag'
@@ -9,12 +10,12 @@ describe('MssqlConnection', () => {
     it('create a pool with options', createAPoolWithOptions)
     it('delete one row', deleteOneRow)
     it('depopulate', depopulate)
+    it('execute', execute)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('not fail to start and stop when DSN is undefined', notFailToStartAndStopWhenDsnIsUndefined)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
     it('populate', populate)
-    it('query', query)
     it('select multiple rows', selectMultipleRows)
     it('select and resolve undefined', selectAndResolveUndefined)
     it('select one and reject undefined', selectOneAndRejectUndefined)
@@ -146,6 +147,31 @@ async function depopulate (): Promise<void> {
   }
 }
 
+async function execute (): Promise<void> {
+  const database = new MssqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
+
+  try {
+    await database.start()
+
+    await database.execute({
+      string: sql`
+        SELECT *
+        FROM test_database
+      `
+    })
+
+    const pool = database.pool as unknown as ExtendedPool
+
+    expect(pool.size).gt(0)
+    expect(pool.available).equal(pool.size)
+  } finally {
+    await database.stop()
+  }
+}
+
 async function insertABulkOfRows (): Promise<void> {
   const database = new MssqlDatabase({
     dsn: helpers.dsn,
@@ -222,7 +248,7 @@ async function parseABigIntAsANumber (): Promise<void> {
       name: 'name'
     })
 
-    const data = await database.selectOne<{ id: number }, { id: number }>(sql`
+    const data = await database.selectOne<{ id: SqlId }, { id: SqlId }>(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)
@@ -252,29 +278,6 @@ async function populate (): Promise<void> {
         name: 'name'
       }]
     })
-
-    const pool = database.pool as unknown as ExtendedPool
-
-    expect(pool.size).gt(0)
-    expect(pool.available).equal(pool.size)
-  } finally {
-    await database.stop()
-  }
-}
-
-async function query (): Promise<void> {
-  const database = new MssqlDatabase({
-    dsn: helpers.dsn,
-    password: helpers.password
-  })
-
-  try {
-    await database.start()
-
-    await database.query(sql`
-      SELECT *
-      FROM test_database
-    `)
 
     const pool = database.pool as unknown as ExtendedPool
 

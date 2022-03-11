@@ -1,6 +1,6 @@
-import type { Database, InsertResult, UpdateResult } from '../sql'
 import { PassThrough, Writable } from 'stream'
 import type { Queue, QueueRun, QueueTask } from '../../entities'
+import type { SqlDatabase, SqlInsertResult, SqlUpdateResult } from '../sql'
 import type { Readable } from 'stream'
 import type { RedisClientType } from 'redis'
 import type { Struct } from '../../../common'
@@ -12,16 +12,16 @@ export interface QueueRunnerOptions {
   /**
    * The database containing the queues.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  database: Database
+  database: SqlDatabase
 
   /**
    * The databases to run generator queries on.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  databases: Partial<Struct<Database>>
+  databases: Partial<Struct<SqlDatabase>>
 
   /**
    * The store.
@@ -38,16 +38,16 @@ export class QueueRunner {
   /**
    * The database containing the queues.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  public database: Database
+  public database: SqlDatabase
 
   /**
    * The databases to run generator queries on.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  public databases: Partial<Struct<Database>>
+  public databases: Partial<Struct<SqlDatabase>>
 
   /**
    * The store to write.
@@ -91,7 +91,7 @@ export class QueueRunner {
     const database = this.databases[queue.database ?? '']
 
     if (database === undefined) {
-      throw new Error('Database is undefined')
+      throw new Error(`Database "${queue.database ?? ''}" is undefined`)
     }
 
     return database.stream(queue.query ?? '', parameters)
@@ -177,8 +177,8 @@ export class QueueRunner {
    * @param run - The queue run
    * @returns The insert result
    */
-  protected async insertQueueRun (run: QueueRun): Promise<InsertResult> {
-    return this.database.insertOne<QueueRun>(sql`
+  protected async insertQueueRun (run: QueueRun): Promise<SqlInsertResult<number>> {
+    return this.database.insertOne<QueueRun, number>(sql`
       INSERT INTO queue_run (
         fkey_queue_id,
         name,
@@ -202,8 +202,8 @@ export class QueueRunner {
    * @param payload - The payload of the task
    * @returns The insert result
    */
-  protected async insertQueueTask (run: QueueRun, payload: unknown): Promise<InsertResult> {
-    return this.database.insertOne<QueueTask>(sql`
+  protected async insertQueueTask (run: QueueRun, payload: unknown): Promise<SqlInsertResult<number>> {
+    return this.database.insertOne<QueueTask, number>(sql`
       INSERT INTO queue_task (
         fkey_queue_run_id,
         payload
@@ -250,7 +250,7 @@ export class QueueRunner {
    * @param error - The error
    * @returns The update result
    */
-  protected async updateQueueRunErr (run: QueueRun, error: unknown): Promise<UpdateResult> {
+  protected async updateQueueRunErr (run: QueueRun, error: unknown): Promise<SqlUpdateResult> {
     return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
@@ -272,7 +272,7 @@ export class QueueRunner {
    * @param run - The queue run
    * @returns The update result
    */
-  protected async updateQueueRunTotal (run: QueueRun): Promise<UpdateResult> {
+  protected async updateQueueRunTotal (run: QueueRun): Promise<SqlUpdateResult> {
     return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET

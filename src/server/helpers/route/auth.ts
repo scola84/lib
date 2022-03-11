@@ -1,6 +1,6 @@
-import type { Database, DeleteResult, InsertResult } from '../sql'
 import type { GroupUserRole, Role, User, UserToken } from '../../entities'
 import type { IncomingHttpHeaders, ServerResponse } from 'http'
+import type { SqlDatabase, SqlDeleteResult, SqlId, SqlInsertResult } from '../sql'
 import { parse, serialize } from 'cookie'
 import { randomBytes, scrypt } from 'crypto'
 import type { RedisClientType } from 'redis'
@@ -9,17 +9,17 @@ import { createUserToken } from '../../entities'
 import { isStruct } from '../../../common'
 import { sql } from '../sql'
 
-export interface AuthOptions {
-  database: Database
+export interface RouteAuthOptions {
+  database: SqlDatabase
   store?: RedisClientType
 }
 
-export class Auth {
-  public database: Database
+export class RouteAuth {
+  public database: SqlDatabase
 
   public store?: RedisClientType
 
-  public constructor (options: AuthOptions) {
+  public constructor (options: RouteAuthOptions) {
     this.database = options.database
     this.store = options.store
   }
@@ -194,7 +194,7 @@ export class Auth {
     })
   }
 
-  protected async deleteUserToken (userToken: Partial<UserToken>): Promise<DeleteResult> {
+  protected async deleteUserToken (userToken: Partial<UserToken>): Promise<SqlDeleteResult> {
     return this.database.delete<UserToken>(sql`
       DELETE
       FROM $[user_token]
@@ -216,7 +216,7 @@ export class Auth {
     })
   }
 
-  protected async insertUserToken (userToken: Partial<UserToken>): Promise<InsertResult> {
+  protected async insertUserToken (userToken: Partial<UserToken>): Promise<SqlInsertResult<SqlId>> {
     return this.database.insert<UserToken>(sql`
       INSERT INTO $[user_token] (
         $[expires],

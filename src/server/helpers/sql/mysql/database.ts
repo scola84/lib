@@ -1,8 +1,8 @@
 import type { Pool, PoolOptions } from 'mysql2/promise'
 import { cast, isStruct } from '../../../../common'
-import { Database } from '../database'
 import { MysqlConnection } from './connection'
 import { MysqlFormatter } from './formatter'
+import { SqlDatabase } from '../database'
 import { URL } from 'url'
 import { createPool } from 'mysql2/promise'
 import { readFileSync } from 'fs-extra'
@@ -11,7 +11,7 @@ import { set } from 'lodash'
 /**
  * Manages MySQL connections.
  */
-export class MysqlDatabase extends Database {
+export class MysqlDatabase extends SqlDatabase {
   public formatter = new MysqlFormatter()
 
   public pool: Pool

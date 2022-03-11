@@ -82,7 +82,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   public getErrors (): Struct {
     return Array
       .from(this.elements)
-      .reduce<Struct<Struct>>((errors, element) => {
+      .reduce<Struct>((errors, element) => {
       /* eslint-disable @typescript-eslint/indent */
         let error = null
 

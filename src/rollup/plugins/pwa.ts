@@ -1,9 +1,9 @@
+import { existsSync, readFileSync } from 'fs-extra'
 import type { Plugin } from 'rollup'
 import type { Result } from 'pwa-asset-generator/dist/models/result'
-import child from 'child_process'
-import fs from 'fs'
+import { dirname } from 'path'
+import { execSync } from 'child_process'
 import { generateImages } from 'pwa-asset-generator'
-import path from 'path'
 
 interface Base {
   output: string
@@ -25,7 +25,7 @@ async function createIdentity (options: Options, base: Base): Promise<Result | n
 
   let identity = null
 
-  if (fs.existsSync(file)) {
+  if (existsSync(file)) {
     identity = await generateImages(file, `${options.dest}/pwa`, {
       favicon: true,
       log: false,
@@ -69,8 +69,8 @@ function createIndexBase (options: Options, base: Base): string {
 
   let index = ''
 
-  if (fs.existsSync(file)) {
-    index = fs.readFileSync(file).toString()
+  if (existsSync(file)) {
+    index = readFileSync(file).toString()
   } else {
     index = [
       '<!DOCTYPE html>',
@@ -102,8 +102,8 @@ function createManifest (options: Options, base: Base, identity?: Result): strin
 
   let manifest = {}
 
-  if (fs.existsSync(file)) {
-    manifest = JSON.parse(fs.readFileSync(file).toString()) as Record<string, unknown>
+  if (existsSync(file)) {
+    manifest = JSON.parse(readFileSync(file).toString()) as Record<string, unknown>
   }
 
   return JSON.stringify({
@@ -119,9 +119,7 @@ function createManifest (options: Options, base: Base, identity?: Result): strin
 function determineOrigin (origin?: string): string {
   switch (origin) {
     case 'true':
-      return ((/src (?<ip>[^\s]+)/u).exec(child
-        .execSync('ip route get 255.255.255.255')
-        .toString()))?.groups?.ip ?? 'localhost'
+      return ((/src (?<ip>[^\s]+)/u).exec(execSync('ip route get 255.255.255.255').toString()))?.groups?.ip ?? 'localhost'
     case undefined:
       return 'localhost'
     default:
@@ -160,11 +158,11 @@ export function pwa (options: Options): Plugin {
     name: 'pwa',
     renderStart: (output, input) => {
       if (typeof output.entryFileNames === 'string') {
-        base.output = path.dirname(output.entryFileNames)
+        base.output = dirname(output.entryFileNames)
       }
 
       if (Array.isArray(input.input)) {
-        base.input = path.dirname(input.input[0] ?? '')
+        base.input = dirname(input.input[0] ?? '')
       }
     }
   }

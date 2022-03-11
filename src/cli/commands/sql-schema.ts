@@ -1,8 +1,8 @@
 import { Command } from 'commander'
 import { URL } from 'url'
-import child from 'child_process'
-import fs from 'fs'
-import path from 'path'
+import { dirname } from 'path'
+import { execSync } from 'child_process'
+import { mkdirSync } from 'fs-extra'
 
 interface Options {
   exclude?: string[]
@@ -73,7 +73,7 @@ try {
     url.username = 'root'
   }
 
-  fs.mkdirSync(path.dirname(targetFile), {
+  mkdirSync(dirname(targetFile), {
     recursive: true
   })
 
@@ -84,7 +84,7 @@ try {
       })
       .join(' ')
 
-    child.execSync([
+    execSync([
       `docker exec ${container} mysqldump`,
       excludeFlags,
       `--host ${url.hostname}`,
@@ -113,7 +113,7 @@ try {
       })
       .join(' ')
 
-    child.execSync([
+    execSync([
       'docker exec',
       `--env PGPASSWORD=${decodeURIComponent(url.password)}`,
       `${container} pg_dump`,

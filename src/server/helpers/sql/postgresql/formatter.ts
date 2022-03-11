@@ -1,17 +1,15 @@
-import type { Query, QueryParts } from '../query'
+import type { SqlQueryParts, SqlSelectAllParameters } from '../query'
 import { isArray, isDate, isNil, isObject, isPrimitive } from '../../../../common'
-import { Formatter } from '../formatter'
 import type { SchemaField } from '../../schema'
+import { SqlFormatter } from '../formatter'
 import type { Struct } from '../../../../common'
 import { literal } from 'pg-format'
 
-export class PostgresqlFormatter extends Formatter {
+export class PostgresqlFormatter extends SqlFormatter {
   public formatDdl (object: string, fields: Struct<SchemaField>): string {
     const lines = [
       `CREATE TABLE "public"."${object}" (`,
       [
-        '  "created" TIMESTAMPTZ NOT NULL DEFAULT now()',
-        '  "updated" TIMESTAMPTZ NOT NULL DEFAULT now()',
         ...this
           .formatDdlColumns(fields)
           .map((line) => {
@@ -72,22 +70,22 @@ export class PostgresqlFormatter extends Formatter {
     return String(value)
   }
 
-  protected createSelectAllPartsLimit (query: Query): QueryParts {
+  protected createSelectAllPartsLimit (parameters: SqlSelectAllParameters): SqlQueryParts {
     const values: Struct = {}
 
     let limit = null
     let order = null
     let where = null
 
-    if (query.cursor !== undefined) {
-      values.count = query.count
-      values.cursor = query.cursor
+    if (parameters.cursor !== undefined) {
+      values.count = parameters.count
+      values.cursor = parameters.cursor
       limit = 'LIMIT $(count)'
       order = `$[${'cursor'}] ASC`
       where = `$[${'cursor'}] > $(cursor)`
-    } else if (query.offset !== undefined) {
-      values.count = query.count
-      values.offset = query.offset
+    } else if (parameters.offset !== undefined) {
+      values.count = parameters.count
+      values.offset = parameters.offset
       limit = 'LIMIT $(count) OFFSET $(offset)'
     }
 
@@ -103,6 +101,8 @@ export class PostgresqlFormatter extends Formatter {
     switch (field.type) {
       case 'date':
         return this.formatDdlColumnDate(name, field)
+      case 'file':
+        return this.formatDdlColumnFile(name, field)
       case 'number':
         return this.formatDdlColumnNumber(name, field)
       case 'textarea':
@@ -122,7 +122,10 @@ export class PostgresqlFormatter extends Formatter {
     }
 
     if (field.default !== undefined) {
-      ddl += ' DEFAULT now()'
+      ddl += ` DEFAULT '${
+        new Date(Date.parse(field.default))
+          .toISOString()
+      }'::TIMESTAMPTZ`
     }
 
     return ddl
@@ -136,7 +139,17 @@ export class PostgresqlFormatter extends Formatter {
     }
 
     if (field.default !== undefined) {
-      ddl += ` DEFAULT '${field.default}'::character`
+      ddl += ` DEFAULT '${field.default}'::CHARACTER`
+    }
+
+    return ddl
+  }
+
+  protected formatDdlColumnFile (name: string, field: SchemaField): string {
+    let ddl = `"${name}" JSON`
+
+    if (field.required === true) {
+      ddl += ' NOT NULL'
     }
 
     return ddl
@@ -148,7 +161,11 @@ export class PostgresqlFormatter extends Formatter {
     if (field.pkey === true) {
       ddl += ' SERIAL'
     } else {
-      ddl += ' INTEGER'
+      if (field.step === undefined) {
+        ddl += ' INTEGER'
+      } else {
+        ddl += ' NUMERIC'
+      }
 
       if (field.required === true) {
         ddl += ' NOT NULL'
@@ -163,7 +180,7 @@ export class PostgresqlFormatter extends Formatter {
   }
 
   protected formatDdlColumnTextarea (name: string, field: SchemaField): string {
-    let ddl = `${name} TEXT`
+    let ddl = `"${name}" TEXT`
 
     if (field.required === true) {
       ddl += ' NOT NULL'
@@ -173,14 +190,17 @@ export class PostgresqlFormatter extends Formatter {
   }
 
   protected formatDdlColumnTime (name: string, field: SchemaField): string {
-    let ddl = `${name} TIMETZ`
+    let ddl = `"${name}" TIMESTAMPTZ`
 
     if (field.required === true) {
       ddl += ' NOT NULL'
     }
 
     if (field.default !== undefined) {
-      ddl += ' DEFAULT now()'
+      ddl += ` DEFAULT '${
+        new Date(Date.parse(field.default))
+          .toISOString()
+      }'::TIMESTAMPTZ`
     }
 
     return ddl
@@ -190,7 +210,7 @@ export class PostgresqlFormatter extends Formatter {
     return Object
       .entries(fields)
       .filter(([,field]) => {
-        return field.lkey === undefined
+        return field.rkey === undefined
       })
       .map(([name, field]) => {
         return this.formatDdlColumn(name, field)

@@ -1,5 +1,5 @@
 import type { Plugin } from 'rollup'
-import { chmodSync } from 'fs'
+import { chmodSync } from 'fs-extra'
 import { createFilter } from '@rollup/pluginutils'
 
 interface Options {

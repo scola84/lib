@@ -1,4 +1,4 @@
-import type { Database, UpdateResult } from '../sql'
+import type { SqlDatabase, SqlUpdateResult } from '../sql'
 import type { Job } from 'node-schedule'
 import type { Logger } from 'pino'
 import type { Queue } from '../../entities'
@@ -21,16 +21,16 @@ export interface QueuerOptions {
   /**
    * The database containing the queues.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  database: Database
+  database: SqlDatabase
 
   /**
    * The databases to run generator queries on.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  databases: Partial<Struct<Database>>
+  databases: Partial<Struct<SqlDatabase>>
 
   /**
    * The logger.
@@ -100,14 +100,14 @@ export class Queuer {
    *
    * @see {@link Database}
    */
-  public database: Database
+  public database: SqlDatabase
 
   /**
    * The databases to run generator queries on.
    *
    * @see {@link Database}
    */
-  public databases: Partial<Struct<Database>>
+  public databases: Partial<Struct<SqlDatabase>>
 
   /**
    * The active queue handlers.
@@ -543,7 +543,7 @@ export class Queuer {
    * @param queue - The queue
    * @returns The update result
    */
-  protected async updateQueue (queue: Queue): Promise<UpdateResult> {
+  protected async updateQueue (queue: Queue): Promise<SqlUpdateResult> {
     return this.database.update<Queue>(sql`
       UPDATE queue
       SET schedule_next = $(schedule_next)
@@ -568,7 +568,7 @@ export class Queuer {
    * @param task - The task properties
    * @returns The update result
    */
-  protected async updateQueueTasks (task: Pick<QueueTask, 'fkey_queue_run_id' | 'reason' | 'status'>): Promise<UpdateResult> {
+  protected async updateQueueTasks (task: Pick<QueueTask, 'fkey_queue_run_id' | 'reason' | 'status'>): Promise<SqlUpdateResult> {
     return this.database.update<QueueTask>(sql`
       UPDATE queue_task
       SET

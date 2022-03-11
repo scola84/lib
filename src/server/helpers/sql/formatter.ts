@@ -1,60 +1,100 @@
-import type { Query, QueryKeys, QueryOutput, QueryParts } from './query'
-import type { SchemaField, SchemaFieldKey } from '../schema'
+import type { Schema, SchemaField, SchemaFieldKey } from '../schema'
+import type { SqlQuery, SqlQueryKeys, SqlQueryParts, SqlSelectAllParameters } from './query'
 import { I18n } from '../../../common'
 import type { Struct } from '../../../common'
 import type { User } from '../../entities'
 
-export abstract class Formatter {
-  public I18n = new I18n()
+export abstract class SqlFormatter {
+  public i18n = new I18n()
 
-  public createSelect (object: string, keys: QueryKeys, authKeys: SchemaFieldKey[], query: Query, user?: User): QueryOutput {
-    if (authKeys.length === 0) {
-      throw new Error('Auth keys are undefined')
-    }
+  public createDeleteQuery (object: string, keys: SqlQueryKeys, data: Struct): SqlQuery {
+    const values: Struct = {}
 
-    const auth = this.createAuthParts(keys, authKeys, user)
-
-    if (
-      auth.parts === undefined ||
-      auth.parts.length === 0
-    ) {
-      throw new Error('Auth is undefined')
-    }
-
-    const select = this.createSelectParts(query, keys)
-
-    if (select.where === undefined) {
-      throw new Error('Where is undefined')
-    }
-
-    const queries = auth.parts.map((authPart) => {
-      if (authPart.where === undefined) {
-        throw new Error('Where is undefined')
-      }
-
-      return `
-        SELECT [${object}].*
-        FROM $[${object}]
-        ${authPart.join ?? ''}
-        WHERE ${[
-          select.where,
-          authPart.where
-        ].join(' AND ')}
-      `
+    const where = keys.primary?.map((key) => {
+      values[key.column] = data[key.column]
+      return `$[${key.column}] = $(${key.column})`
     })
 
+    if (where === undefined) {
+      throw new Error(`Where is undefined for "${object}"`)
+    }
+
+    const string = `
+      DELETE
+      FROM $[${object}]
+      WHERE ${where.join(' AND ')}
+    `
+
     return {
-      query: queries.join(' UNION '),
-      values: {
-        ...select.values,
-        ...auth.values
-      }
+      string,
+      values
     }
   }
 
-  public createSelectAll (object: string, keys: QueryKeys, authKeys: SchemaFieldKey[], query: Query, user?: User): QueryOutput {
+  public createInsertQuery (object: string, schema: Schema, data: Struct): SqlQuery {
+    const columns: string[] = []
+    const keys: string[] = []
+    const values: Struct = {}
+
+    Object
+      .keys(schema)
+      .forEach((name) => {
+        values[name] = data[name]
+        columns.push(`$[${name}]`)
+        keys.push(`$(${name})`)
+      })
+
+    const string = `
+      INSERT INTO $[${object}] (
+        ${columns.join(',')}
+      ) VALUES (
+        ${keys.join(',')}
+      )
+    `
+
+    return {
+      string,
+      values
+    }
+  }
+
+  public createPatchQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct): SqlQuery {
+    const values: Struct = {}
+
+    const set = Object
+      .keys(schema)
+      .filter((name) => {
+        return data[name] !== undefined
+      })
+      .map((name) => {
+        values[name] = data[name]
+        return `$[${name}] = $(${name})`
+      })
+
+    const where = keys.primary?.map((key) => {
+      values[key.column] = data[key.column]
+      return `$[${key.column}] = $(${key.column})`
+    })
+
+    if (where === undefined) {
+      throw new Error(`Where is undefined for "${object}"`)
+    }
+
+    const string = `
+      UPDATE $[${object}]
+      SET (${set.join(',')})
+      WHERE ${where.join(' AND ')}
+    `
+
+    return {
+      string,
+      values
+    }
+  }
+
+  public createSelectAllQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], parameters: SqlSelectAllParameters, user?: User): SqlQuery {
     if (authKeys.length === 0) {
-      throw new Error('Auth keys are undefined')
+      throw new Error(`Auth keys are undefined for "${object}"`)
     }
 
     const auth = this.createAuthParts(keys, authKeys, user)
@@ -63,14 +103,14 @@ export abstract class Formatter {
       auth.parts === undefined ||
       auth.parts.length === 0
     ) {
-      throw new Error('Auth is undefined')
+      throw new Error(`Auth is undefined for "${object}"`)
     }
 
-    const selectAll = this.createSelectAllParts(object, query, keys)
+    const selectAll = this.createSelectAllParts(object, parameters, keys)
 
     const queries = auth.parts.map((authPart) => {
       if (authPart.where === undefined) {
-        throw new Error('Where is undefined')
+        throw new Error(`Where is undefined for "${object}"`)
       }
 
       return `
@@ -88,7 +128,7 @@ export abstract class Formatter {
     })
 
     return {
-      query: `
+      string: `
         ${queries.join(' UNION ')}
         ORDER BY ${selectAll.order ?? '1'}
         ${selectAll.limit ?? ''}
@@ -97,6 +137,82 @@ export abstract class Formatter {
         ...selectAll.values,
         ...auth.values
       }
+    }
+  }
+
+  public createSelectQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], parameters: Struct, user?: User): SqlQuery {
+    if (authKeys.length === 0) {
+      throw new Error(`Auth keys are undefined for "${object}"`)
+    }
+
+    const auth = this.createAuthParts(keys, authKeys, user)
+
+    if (
+      auth.parts === undefined ||
+      auth.parts.length === 0
+    ) {
+      throw new Error(`Auth is undefined for "${object}"`)
+    }
+
+    const select = this.createSelectParts(parameters, keys)
+
+    if (select.where === undefined) {
+      throw new Error(`Where is undefined for "${object}"`)
+    }
+
+    const queries = auth.parts.map((authPart) => {
+      if (authPart.where === undefined) {
+        throw new Error(`Where is undefined for "${object}"`)
+      }
+
+      return `
+        SELECT $[${object}].*
+        FROM $[${object}]
+        ${authPart.join ?? ''}
+        WHERE ${[
+          select.where,
+          authPart.where
+        ].join(' AND ')}
+      `
+    })
+
+    return {
+      string: queries.join(' UNION '),
+      values: {
+        ...select.values,
+        ...auth.values
+      }
+    }
+  }
+
+  public createUpdateQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct): SqlQuery {
+    const values: Struct = {}
+
+    const set = Object
+      .keys(schema)
+      .map((name) => {
+        values[name] = data[name]
+        return `$[${name}] = $(${name})`
+      })
+
+    const where = keys.primary?.map((key) => {
+      values[key.column] = data[key.column]
+      return `$[${key.column}] = $(${key.column})`
+    })
+
+    if (where === undefined) {
+      throw new Error(`Where is undefined for "${object}"`)
+    }
+
+    const string = `
+      UPDATE $[${object}]
+      SET (${set.join(',')})
+      WHERE ${where.join(' AND ')}
+    `
+
+    return {
+      string,
+      values
     }
   }
 
@@ -141,30 +257,30 @@ export abstract class Formatter {
    * console.log(query) // query = 'INSERT INTO t1 (`c1`) VALUES ("v1"), ("v2")' in MySQL
    * ```
    */
-  public formatQuery (query: string, values: Struct = {}): string {
-    return (query.match(/\$[([][\w\s.]+[\])]/gu) ?? []).reduce((result, match) => {
+  public formatQuery ({ string, values }: SqlQuery): string {
+    return (string.match(/\$[([][\w\s.]+[\])]/gu) ?? []).reduce((result, match) => {
       const key = match.slice(2, -1)
 
       if (match[1] === '[') {
         return result.replace(match, this.formatIdentifier(key))
       }
 
-      const value = values[key]
+      const value = values?.[key]
 
       if (value === undefined) {
         throw new Error(`Parameter "${key}" is undefined`)
       }
 
       return result.replace(match, this.formatParameter(value))
-    }, query)
+    }, string)
   }
 
-  protected createAuthParts (keys: QueryKeys, authKeys: SchemaFieldKey[], user?: User): QueryParts {
+  protected createAuthParts (keys: SqlQueryKeys, authKeys: SchemaFieldKey[], user?: User): SqlQueryParts {
     const values: Struct = {}
 
     const parts = authKeys
       .map((authKey) => {
-        return keys.auth?.[authKey.table]?.map((joinKeys) => {
+        return keys.auth?.[authKey.column]?.map((joinKeys) => {
           const join: string[] = []
 
           let where = null
@@ -197,11 +313,11 @@ export abstract class Formatter {
     }
   }
 
-  protected createSelectAllParts (object: string, query: Query, keys: QueryKeys): QueryParts {
+  protected createSelectAllParts (object: string, parameters: SqlSelectAllParameters, keys: SqlQueryKeys): SqlQueryParts {
     const filterKey = keys.foreign?.find((key) => {
-      return query[key.column] === undefined
-    }) ?? keys.link?.find((key) => {
-      return query[key.column] === undefined
+      return parameters[key.column] === undefined
+    }) ?? keys.related?.find((key) => {
+      return parameters[key.column] === undefined
     })
 
     const searchKeys = keys.search?.filter((key) => {
@@ -218,27 +334,25 @@ export abstract class Formatter {
       )
     })
 
-    return this.createSelectAllPartsByKey(
-      object,
-      this.createSelectAllPartsForeignKeys(query, keys.foreign ?? []),
-      this.createSelectAllPartsLinkKeys(query, keys.link ?? []),
-      this.createSelectAllPartsSearchKeys(query, searchKeys ?? []),
-      this.createSelectAllPartsSortKeys(query, sortKeys ?? []),
-      this.createSelectAllPartsLimit(query)
-    )
+    return this.createSelectAllPartsByKey(object, parameters, keys, searchKeys, sortKeys)
   }
 
-  protected createSelectAllPartsByKey (object: string, foreignParts: QueryParts, linkParts: QueryParts, searchParts: QueryParts, sortParts: QueryParts, limitParts: QueryParts): QueryParts {
+  protected createSelectAllPartsByKey (object: string, parameters: SqlSelectAllParameters, keys: SqlQueryKeys, searchKeys?: SchemaFieldKey[], sortKeys?: SchemaFieldKey[]): SqlQueryParts {
+    const foreignParts = this.createSelectAllPartsForeignKeys(parameters, keys.foreign ?? [])
+    const relatedParts = this.createSelectAllPartsRelatedKeys(parameters, keys.related ?? [])
+    const searchParts = this.createSelectAllPartsSearchKeys(parameters, searchKeys ?? [])
+    const sortParts = this.createSelectAllPartsSortKeys(parameters, sortKeys ?? [])
+    const limitParts = this.createSelectAllPartsLimit(parameters)
+
     const join = [
       foreignParts.join,
-      linkParts.join
+      relatedParts.join
     ].filter((value) => {
       return value !== undefined
     }).join(' ')
 
     const { limit } = limitParts
     const order = limitParts.order ?? sortParts.order ?? '1'
-    const parts: QueryParts[] = []
 
     const select = [
       `$[${object}].*`,
@@ -249,14 +363,14 @@ export abstract class Formatter {
 
     const values = {
       ...foreignParts.values,
-      ...linkParts.values,
+      ...relatedParts.values,
       ...limitParts.values,
       ...searchParts.values
     }
 
     const where = [
       foreignParts.where,
-      linkParts.where,
+      relatedParts.where,
       limitParts.where,
       searchParts.where
     ].filter((value) => {
@@ -267,14 +381,13 @@ export abstract class Formatter {
       join,
       limit,
       order,
-      parts,
       select,
       values,
       where
     }
   }
 
-  protected createSelectAllPartsForeignKeys (query: Query, keys: SchemaFieldKey[]): QueryParts {
+  protected createSelectAllPartsForeignKeys (parameters: SqlSelectAllParameters, keys: SchemaFieldKey[]): SqlQueryParts {
     const values: Struct = {}
 
     let join = null
@@ -282,7 +395,7 @@ export abstract class Formatter {
     let where = null
 
     const joinKey = keys.find((key) => {
-      return query[key.column] === undefined
+      return parameters[key.column] === undefined
     })
 
     if (joinKey !== undefined) {
@@ -291,11 +404,11 @@ export abstract class Formatter {
     }
 
     const whereKey = keys.find((key) => {
-      return query[key.column] !== undefined
+      return parameters[key.column] !== undefined
     })
 
     if (whereKey !== undefined) {
-      values[`${whereKey.table}_${whereKey.column}`] = query[whereKey.column]
+      values[`${whereKey.table}_${whereKey.column}`] = parameters[whereKey.column]
       where = `$[${whereKey.table}.${whereKey.column}] = $(${whereKey.table}_${whereKey.column})`
     }
 
@@ -307,20 +420,20 @@ export abstract class Formatter {
     }
   }
 
-  protected createSelectAllPartsLinkKeys (query: Query, keys: SchemaFieldKey[]): QueryParts {
+  protected createSelectAllPartsRelatedKeys (parameters: SqlSelectAllParameters, keys: SchemaFieldKey[]): SqlQueryParts {
     const values: Struct = {}
 
     let join = null
     let where = null
 
-    const linkKey = keys.find((key) => {
-      return query[key.column] !== undefined
+    const relatedKey = keys.find((key) => {
+      return parameters[key.column] !== undefined
     })
 
-    if (linkKey !== undefined) {
-      values[`${linkKey.table}_${linkKey.column}`] = query[linkKey.column]
-      join = `JOIN $[${linkKey.table}] USING ($[${linkKey.column}])`
-      where = `$[${linkKey.table}.${linkKey.column}] = $(${linkKey.table}_${linkKey.column})`
+    if (relatedKey !== undefined) {
+      values[`${relatedKey.table}_${relatedKey.column}`] = parameters[relatedKey.column]
+      join = `JOIN $[${relatedKey.table}] USING ($[${relatedKey.column}])`
+      where = `$[${relatedKey.table}.${relatedKey.column}] = $(${relatedKey.table}_${relatedKey.column})`
     }
 
     return {
@@ -330,31 +443,24 @@ export abstract class Formatter {
     }
   }
 
-  protected createSelectAllPartsSearchKeys (query: Query, keys: SchemaFieldKey[], locale?: string): QueryParts {
+  protected createSelectAllPartsSearchKeys (parameters: SqlSelectAllParameters, keys: SchemaFieldKey[], locale?: string): SqlQueryParts {
     const values: Struct = {}
 
-    let where: string | undefined = this.I18n
-      .parse(String(query.search ?? ''), locale)
+    let where: string | undefined = this.i18n
+      .parse(String(parameters.search ?? ''), locale)
       .map((search, index) => {
-        if (search.key === undefined) {
-          return keys
-            .map((key) => {
-              values[`${key.table}_${key.column}_${index}`] = search.value
-              return `$[${key.table}.${key.column}] = $(${key.table}_${key.column}_${index})`
-            })
-            .join(') OR (')
-        }
-
-        const searchKey = keys.find((key) => {
-          return `${key.table}_${key.column}` === search.key
-        })
-
-        if (searchKey !== undefined) {
-          values[`${searchKey.table}_${searchKey.column}`] = search.value
-          return `$[${searchKey.table}.${searchKey.column}] = $(${searchKey.table}_${searchKey.column})`
-        }
-
-        return ''
+        return keys
+          .filter((key) => {
+            return (
+              search.key === undefined ||
+            `${key.table}_${key.column}` === search.key
+            )
+          })
+          .map((key) => {
+            values[`${key.table}_${key.column}_${index}`] = search.value
+            return `$[${key.table}.${key.column}] LIKE $(${key.table}_${key.column}_${index})`
+          })
+          .join(') OR (')
       })
       .filter((part) => {
         return part !== ''
@@ -373,16 +479,16 @@ export abstract class Formatter {
     }
   }
 
-  protected createSelectAllPartsSortKeys (query: Query, keys: SchemaFieldKey[]): QueryParts {
+  protected createSelectAllPartsSortKeys (parameters: SqlSelectAllParameters, keys: SchemaFieldKey[]): SqlQueryParts {
     let order = null
 
-    if (query.sortKey !== undefined) {
+    if (parameters.sortKey !== undefined) {
       const sortKey = keys.find((key) => {
-        return `${key.table}_${key.column}` === query.sortKey
+        return `${key.table}_${key.column}` === parameters.sortKey
       })
 
       if (sortKey !== undefined) {
-        order = `$[${sortKey.table}.${sortKey.column}] ${query.sortOrder ?? 'ASC'}`
+        order = `$[${sortKey.table}.${sortKey.column}] ${parameters.sortOrder ?? 'ASC'}`
       }
     }
 
@@ -391,12 +497,12 @@ export abstract class Formatter {
     }
   }
 
-  protected createSelectParts (query: Query, keys: QueryKeys): QueryParts {
+  protected createSelectParts (parameters: Struct, keys: SqlQueryKeys): SqlQueryParts {
     const values: Struct = {}
 
     let where = keys.primary
       ?.map((key) => {
-        values[`${key.table}_${key.column}`] = query[key.column]
+        values[`${key.table}_${key.column}`] = parameters[key.column]
         return `$[${key.table}.${key.column}] = $(${key.table}_${key.column})`
       })
       .join(') AND (')
@@ -422,5 +528,5 @@ export abstract class Formatter {
 
   public abstract formatParameter (value: unknown): string
 
-  protected abstract createSelectAllPartsLimit (query: Query): QueryParts
+  protected abstract createSelectAllPartsLimit (parameters: SqlSelectAllParameters): SqlQueryParts
 }

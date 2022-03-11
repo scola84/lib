@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest, FastifySchema, RouteOptions, ValidationResult } from 'fastify'
-import type { Database } from '../sql'
 import type { FastifyServer } from './server'
 import type { RedisClientType } from 'redis'
+import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import { isArray } from '../../../common'
 import type pino from 'pino'
@@ -10,9 +10,9 @@ export interface FastifyHandlerOptions extends RouteOptions {
   /**
    * The database.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  database: Database
+  database: SqlDatabase
 
   /**
    * The logger.
@@ -50,9 +50,9 @@ export abstract class FastifyHandler {
   /**
    * The database.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  public database?: Database
+  public database?: SqlDatabase
 
   /**
    * The logger.

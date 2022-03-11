@@ -1,6 +1,6 @@
+import { mkdirSync, writeFileSync } from 'fs-extra'
 import { Command } from 'commander'
 import { URL } from 'url'
-import fs from 'fs'
 import sqlts from '@rmp135/sql-ts'
 
 type Dialects = 'mssql' | 'mysql' | 'postgres'
@@ -96,7 +96,7 @@ try {
     throw new Error(`Client for dialect "${dialect}" is undefined`)
   }
 
-  fs.mkdirSync(target, {
+  mkdirSync(target, {
     recursive: true
   })
 
@@ -140,7 +140,7 @@ try {
     })
     .then((database) => {
       for (const table of database.tables) {
-        fs.writeFileSync(
+        writeFileSync(
           `${target}/${table.name.replace('_', '-')}.ts`,
           sqlts
             .fromObject({
@@ -189,7 +189,7 @@ try {
         '}'
       ].join('\n')
 
-      fs.writeFileSync(`${target}/index.ts`, `${data.trim()}\n`)
+      writeFileSync(`${target}/index.ts`, `${data.trim()}\n`)
     })
     .catch((error) => {
       logger.error(String(error).toLowerCase())

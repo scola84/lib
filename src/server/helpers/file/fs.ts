@@ -1,22 +1,44 @@
-import { createReadStream, createWriteStream } from 'fs-extra'
-import type { Bucket } from './bucket'
+import { createReadStream, createWriteStream, mkdirSync, unlink } from 'fs-extra'
+import type { FileBucket } from './bucket'
+import type { Readable } from 'stream'
+import { isNil } from '../../../common'
 
-export interface FsBucketOptions {
+export interface FsFileBucketOptions {
   dir: string
 }
 
-export class FsBucket implements Bucket {
+export class FsFileBucket implements FileBucket {
   public dir: string
 
-  public constructor (options: FsBucketOptions) {
+  public constructor (options: FsFileBucketOptions) {
     this.dir = options.dir
+
+    mkdirSync(this.dir, {
+      recursive: true
+    })
   }
 
-  public async get (id: string): Promise<NodeJS.ReadableStream> {
-    return Promise.resolve(createReadStream(`${this.dir}/${id}`))
+  public async delete (id: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      unlink(`${this.dir}/${id}`, (error) => {
+        if (isNil(error)) {
+          resolve()
+        } else {
+          reject(error)
+        }
+      })
+    })
   }
 
-  public async put (id: string, stream: NodeJS.ReadableStream): Promise<void> {
+  public async get (id: string): Promise<Readable | undefined> {
+    try {
+      return await Promise.resolve(createReadStream(`${this.dir}/${id}`))
+    } catch (error: unknown) {
+      return undefined
+    }
+  }
+
+  public async put (id: string, stream: Readable): Promise<void> {
     return new Promise((resolve, reject) => {
       const writer = createWriteStream(`${this.dir}/${id}`)
 

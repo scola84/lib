@@ -1,6 +1,6 @@
-import type { Database, UpdateResult } from '../sql'
 import type { Queue, QueueRun, QueueTask } from '../../entities'
 import type { Readable, Transform, Writable } from 'stream'
+import type { SqlDatabase, SqlUpdateResult } from '../sql'
 import Ajv from 'ajv'
 import type { Logger } from 'pino'
 import type { ObjectSchema } from 'fluent-json-schema'
@@ -30,9 +30,9 @@ export interface QueueHandlerOptions {
   /**
    * The database containing the queues.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  database: Database
+  database: SqlDatabase
 
   /**
    * The host.
@@ -104,9 +104,9 @@ export abstract class QueueHandler {
   /**
    * The database containing the queues.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  public database: Database
+  public database: SqlDatabase
 
   /**
    * The host.
@@ -588,7 +588,7 @@ export abstract class QueueHandler {
    * @param task - The task
    * @returns The update result
    */
-  protected async updateQueueRun (task: QueueTask): Promise<UpdateResult> {
+  protected async updateQueueRun (task: QueueTask): Promise<SqlUpdateResult> {
     return this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
@@ -620,7 +620,7 @@ export abstract class QueueHandler {
    * @param task - The task
    * @returns The update result
    */
-  protected async updateQueueTaskOnFinish (task: QueueTask): Promise<UpdateResult> {
+  protected async updateQueueTaskOnFinish (task: QueueTask): Promise<SqlUpdateResult> {
     return this.database.update<QueueTask>(sql`
       UPDATE queue_task
       SET
@@ -645,7 +645,7 @@ export abstract class QueueHandler {
    * @param task - The task
    * @returns The update result
    */
-  protected async updateQueueTaskOnRead (task: Pick<QueueTask, 'id'>): Promise<UpdateResult> {
+  protected async updateQueueTaskOnRead (task: Pick<QueueTask, 'id'>): Promise<SqlUpdateResult> {
     return this.database.update<QueueTask>(sql`
       UPDATE queue_task
       SET
@@ -667,7 +667,7 @@ export abstract class QueueHandler {
    * @param task - The task
    * @returns The update result
    */
-  protected async updateQueueTaskOnRun (task: QueueTask): Promise<UpdateResult> {
+  protected async updateQueueTaskOnRun (task: QueueTask): Promise<SqlUpdateResult> {
     return this.database.update<QueueTask>(sql`
       UPDATE queue_task
       SET

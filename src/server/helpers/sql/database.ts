@@ -1,10 +1,12 @@
-import type { Connection, DeleteResult, InsertResult, UpdateResult } from './connection'
-import type { Formatter } from './formatter'
+import type { SqlDeleteResult, SqlId, SqlInsertResult, SqlUpdateResult } from './result'
 import type { Logger } from 'pino'
 import type { Readable } from 'stream'
+import type { SqlConnection } from './connection'
+import type { SqlFormatter } from './formatter'
+import type { SqlQuery } from './query'
 import type { Struct } from '../../../common'
 
-export interface DatabaseOptions {
+export interface SqlDatabaseOptions {
   /**
    * The DSN (Data Source Name) of the database server.
    */
@@ -36,7 +38,7 @@ export interface DatabaseOptions {
 /**
  * Manages database connections.
  */
-export abstract class Database {
+export abstract class SqlDatabase {
   /**
    * The DSN (Data Source Name) of the database server.
    */
@@ -67,7 +69,7 @@ export abstract class Database {
   /**
    * The formatter.
    */
-  public abstract formatter: Formatter
+  public abstract formatter: SqlFormatter
 
   /**
    * The connection pool.
@@ -79,7 +81,7 @@ export abstract class Database {
    *
    * @param options - The database options
    */
-  public constructor (options: DatabaseOptions = {}) {
+  public constructor (options: SqlDatabaseOptions = {}) {
     this.dsn = options.dsn
     this.logger = options.logger
     this.name = options.name
@@ -92,7 +94,7 @@ export abstract class Database {
    *
    * Acquires a connection, executes the query and releases the connection.
    *
-   * @param query - The query
+   * @param string - The SQL string
    * @param values - The values
    * @returns The number of affected rows
    *
@@ -109,11 +111,11 @@ export abstract class Database {
    * console.log(count) // count = 1 if there is one row with c1 = v1
    * ```
    */
-  public async delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult> {
+  public async delete<Values>(string: string, values?: Partial<Values>): Promise<SqlDeleteResult> {
     const connection = await this.connect()
 
     try {
-      return await connection.delete<Values>(query, values)
+      return await connection.delete<Values>(string, values)
     } finally {
       connection.release()
     }
@@ -148,11 +150,29 @@ export abstract class Database {
   }
 
   /**
-   * Inserts one row into the database.
+   * Executes any query against the database.
    *
    * Acquires a connection, executes the query and releases the connection.
    *
    * @param query - The query
+   * @returns The query-specific result
+   */
+  public async execute<Values, Result>(query: SqlQuery<Values>): Promise<Result> {
+    const connection = await this.connect()
+
+    try {
+      return await connection.execute<Values, Result>(query)
+    } finally {
+      connection.release()
+    }
+  }
+
+  /**
+   * Inserts one row into the database.
+   *
+   * Acquires a connection, executes the query and releases the connection.
+   *
+   * @param string - The SQL string
    * @param values - The values
    * @returns The id of the inserted row
    *
@@ -169,11 +189,11 @@ export abstract class Database {
    * console.log(id) // id = 1
    * ```
    */
-  public async insert<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
+  public async insert<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<SqlInsertResult<Id>> {
     const connection = await this.connect()
 
     try {
-      return await connection.insert<Values, ID>(query, values)
+      return await connection.insert<Values, Id>(string, values)
     } finally {
       connection.release()
     }
@@ -184,7 +204,7 @@ export abstract class Database {
    *
    * Acquires a connection, executes the query and releases the connection.
    *
-   * @param query - The query
+   * @param string - The SQL string
    * @param values - The values
    * @returns The ids of the inserted rows
    *
@@ -217,11 +237,11 @@ export abstract class Database {
    * console.log(result) // result = [{ id: 1 }, { id: 2 }]
    * ```
    */
-  public async insertAll<Values, ID = number>(query: string, values?: Partial<Values>): Promise<Array<InsertResult<ID>>> {
+  public async insertAll<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<Array< SqlInsertResult<Id>>> {
     const connection = await this.connect()
 
     try {
-      return await connection.insertAll<Values, ID>(query, values)
+      return await connection.insertAll<Values, Id>(string, values)
     } finally {
       connection.release()
     }
@@ -232,7 +252,7 @@ export abstract class Database {
    *
    * Acquires a connection, executes the query and releases the connection.
    *
-   * @param query - The query
+   * @param string - The SQL string
    * @param values - The values
    * @returns The id of the inserted row
    *
@@ -249,11 +269,11 @@ export abstract class Database {
    * console.log(id) // id = 1
    * ```
    */
-  public async insertOne<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
+  public async insertOne<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<SqlInsertResult<Id>> {
     const connection = await this.connect()
 
     try {
-      return await connection.insertOne<Values, ID>(query, values)
+      return await connection.insertOne<Values, Id>(string, values)
     } finally {
       connection.release()
     }
@@ -288,30 +308,11 @@ export abstract class Database {
   }
 
   /**
-   * Executes any query against the database.
-   *
-   * Acquires a connection, executes the query and releases the connection.
-   *
-   * @param query - The query
-   * @param values - The values
-   * @returns The query-specific result set
-   */
-  public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
-    const connection = await this.connect()
-
-    try {
-      return await connection.query<Values, Result>(query, values)
-    } finally {
-      connection.release()
-    }
-  }
-
-  /**
    * Selects zero or one row from the database.
    *
    * Acquires a connection, executes the query and releases the connection.
    *
-   * @param query - The query
+   * @param string - The SQL string
    * @param values - The values
    * @returns The selected row
    *
@@ -330,11 +331,11 @@ export abstract class Database {
    * console.log(result) // result = { id: 1, c1: 'v1' }
    * ```
    */
-  public async select<Values, Result>(query: string, values?: Partial<Values>): Promise<Result | undefined> {
+  public async select<Values, Result>(string: string, values?: Partial<Values>): Promise<Result | undefined> {
     const connection = await this.connect()
 
     try {
-      return await connection.select<Values, Result>(query, values)
+      return await connection.select<Values, Result>(string, values)
     } finally {
       connection.release()
     }
@@ -345,7 +346,7 @@ export abstract class Database {
    *
    * Acquires a connection, executes the query and releases the connection.
    *
-   * @param query - The query
+   * @param string - The SQL string
    * @param values - The values
    * @returns The selected rows
    *
@@ -364,11 +365,11 @@ export abstract class Database {
    * console.log(result) // result = [{ id: 1, c1: 'v1' }]
    * ```
    */
-  public async selectAll<Values, Result>(query: string, values?: Partial<Values>): Promise<Result[]> {
+  public async selectAll<Values, Result>(string: string, values?: Partial<Values>): Promise<Result[]> {
     const connection = await this.connect()
 
     try {
-      return await connection.selectAll<Values, Result>(query, values)
+      return await connection.selectAll<Values, Result>(string, values)
     } finally {
       connection.release()
     }
@@ -379,7 +380,7 @@ export abstract class Database {
    *
    * Acquires a connection, executes the query and releases the connection.
    *
-   * @param query - The query
+   * @param string - The SQL string
    * @param values - The values
    * @returns The selected row
    * @throws zero rows were found
@@ -399,11 +400,11 @@ export abstract class Database {
    * console.log(result) // result = { id: 1, c1: 'v1' }
    * ```
    */
-  public async selectOne<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
+  public async selectOne<Values, Result>(string: string, values?: Partial<Values>): Promise<Result> {
     const connection = await this.connect()
 
     try {
-      return await connection.selectOne<Values, Result>(query, values)
+      return await connection.selectOne<Values, Result>(string, values)
     } finally {
       connection.release()
     }
@@ -414,7 +415,7 @@ export abstract class Database {
    *
    * Acquires a connection, streams the rows and releases the connection.
    *
-   * @param query - The query
+   * @param string - The SQL string
    * @param values - The values
    * @returns The stream
    *
@@ -432,9 +433,9 @@ export abstract class Database {
    * })
    * ```
    */
-  public async stream<Values>(query: string, values?: Partial<Values>): Promise<Readable> {
+  public async stream<Values>(string: string, values?: Partial<Values>): Promise<Readable> {
     const connection = await this.connect()
-    const stream = connection.stream<Values>(query, values)
+    const stream = connection.stream<Values>(string, values)
 
     stream.once('close', () => {
       connection.release()
@@ -448,7 +449,7 @@ export abstract class Database {
    *
    * Acquires a connection, executes the query and releases the connection.
    *
-   * @param query - The query
+   * @param string - The SQL string
    * @param values - The values
    * @returns The number of affected rows
    *
@@ -466,11 +467,11 @@ export abstract class Database {
    * console.log(count) // count = 1
    * ```
    */
-  public async update<Values>(query: string, values?: Partial<Values>): Promise<UpdateResult> {
+  public async update<Values>(string: string, values?: Partial<Values>): Promise<SqlUpdateResult> {
     const connection = await this.connect()
 
     try {
-      return await connection.update<Values>(query, values)
+      return await connection.update<Values>(string, values)
     } finally {
       connection.release()
     }
@@ -479,7 +480,7 @@ export abstract class Database {
   /**
    * Acquires a new connection to the database.
    */
-  public abstract connect (): Promise<Connection>
+  public abstract connect (): Promise<SqlConnection>
 
   /**
    * Starts the database client.

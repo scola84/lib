@@ -1,9 +1,9 @@
-import type { Database } from '../sql'
 import type { FastifyServer } from '../fastify'
 import type { Logger } from 'pino'
 import type { Queuer } from '../queue'
 import type { RedisClientType } from 'redis'
 import type { Router } from '../route'
+import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import { isMatch } from 'micromatch'
 
@@ -18,9 +18,9 @@ export interface ServiceManagerOptions {
   /**
    * The databases to manage.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  databases?: Struct<Database>
+  databases?: Struct<SqlDatabase>
 
   /**
    * The logger.
@@ -104,9 +104,9 @@ export class ServiceManager {
   /**
    * The databases to manage.
    *
-   * @see {@link Database}
+   * @see {@link SqlDatabase}
    */
-  public databases?: Struct<Database>
+  public databases?: Struct<SqlDatabase>
 
   /**
    * The logger.

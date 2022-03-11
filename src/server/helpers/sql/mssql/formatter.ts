@@ -1,17 +1,15 @@
-import type { Query, QueryParts } from '../query'
-import { Formatter } from '../formatter'
+import type { SqlQueryParts, SqlSelectAllParameters } from '../query'
 import type { SchemaField } from '../../schema'
+import { SqlFormatter } from '../formatter'
 import type { Struct } from '../../../../common'
 import { escape } from 'sqlstring'
 import { isStruct } from '../../../../common'
 
-export class MssqlFormatter extends Formatter {
+export class MssqlFormatter extends SqlFormatter {
   public formatDdl (object: string, fields: Struct<SchemaField>): string {
     const lines = [
       `CREATE TABLE [${object}] (`,
       [
-        '  [created] DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
-        '  [updated] DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
         ...this
           .formatDdlColumns(fields)
           .map((line) => {
@@ -67,22 +65,22 @@ export class MssqlFormatter extends Formatter {
     return escape(value)
   }
 
-  protected createSelectAllPartsLimit (query: Query): QueryParts {
+  protected createSelectAllPartsLimit (parameters: SqlSelectAllParameters): SqlQueryParts {
     const values: Struct = {}
 
     let limit = null
     let order = null
     let where = null
 
-    if (query.cursor !== undefined) {
-      values.count = query.count
-      values.cursor = query.cursor
+    if (parameters.cursor !== undefined) {
+      values.count = parameters.count
+      values.cursor = parameters.cursor
       limit = 'OFFSET 0 ROWS FETCH NEXT $(count) ROWS ONLY'
       order = `$[${'cursor'}] ASC`
       where = `$[${'cursor'}] > $(cursor)`
-    } else if (query.offset !== undefined) {
-      values.count = query.count
-      values.offset = query.offset
+    } else if (parameters.offset !== undefined) {
+      values.count = parameters.count
+      values.offset = parameters.offset
       limit = 'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
     }
 
@@ -98,6 +96,8 @@ export class MssqlFormatter extends Formatter {
     switch (field.type) {
       case 'date':
         return this.formatDdlColumnDate(name, field)
+      case 'file':
+        return this.formatDdlColumnFile(name, field)
       case 'number':
         return this.formatDdlColumnNumber(name, field)
       case 'textarea':
@@ -117,7 +117,10 @@ export class MssqlFormatter extends Formatter {
     }
 
     if (field.default !== undefined) {
-      ddl += ' DEFAULT CURRENT_TIMESTAMP'
+      ddl += ` DEFAULT '${
+        new Date(Date.parse(field.default))
+          .toISOString()
+      }'`
     }
 
     return ddl
@@ -137,8 +140,24 @@ export class MssqlFormatter extends Formatter {
     return ddl
   }
 
+  protected formatDdlColumnFile (name: string, field: SchemaField): string {
+    let ddl = `[${name}] TEXT`
+
+    if (field.required === true) {
+      ddl += ' NOT NULL'
+    }
+
+    return ddl
+  }
+
   protected formatDdlColumnNumber (name: string, field: SchemaField): string {
-    let ddl = `[${name}] INTEGER`
+    let ddl = `[${name}]`
+
+    if (field.step === undefined) {
+      ddl += ' INTEGER'
+    } else {
+      ddl += ' FLOAT'
+    }
 
     if (field.required === true) {
       ddl += ' NOT NULL'
@@ -156,7 +175,7 @@ export class MssqlFormatter extends Formatter {
   }
 
   protected formatDdlColumnTextarea (name: string, field: SchemaField): string {
-    let ddl = `${name} TEXT`
+    let ddl = `[${name}] TEXT`
 
     if (field.required === true) {
       ddl += ' NOT NULL'
@@ -166,14 +185,17 @@ export class MssqlFormatter extends Formatter {
   }
 
   protected formatDdlColumnTime (name: string, field: SchemaField): string {
-    let ddl = `${name} TIME`
+    let ddl = `[${name}] DATETIME`
 
     if (field.required === true) {
       ddl += ' NOT NULL'
     }
 
     if (field.default !== undefined) {
-      ddl += ' DEFAULT CURRENT_TIMESTAMP'
+      ddl += ` DEFAULT '${
+        new Date(Date.parse(field.default))
+          .toISOString()
+      }'`
     }
 
     return ddl
@@ -183,7 +205,7 @@ export class MssqlFormatter extends Formatter {
     return Object
       .entries(fields)
       .filter(([,field]) => {
-        return field.lkey === undefined
+        return field.rkey === undefined
       })
       .map(([name, field]) => {
         return this.formatDdlColumn(name, field)

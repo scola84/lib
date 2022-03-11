@@ -1,9 +1,9 @@
 import { Pool, types } from 'pg'
 import { cast, isStruct } from '../../../../common'
-import { Database } from '../database'
 import type { PoolConfig } from 'pg'
 import { PostgresqlConnection } from './connection'
 import { PostgresqlFormatter } from './formatter'
+import { SqlDatabase } from '../database'
 import { URL } from 'url'
 import { readFileSync } from 'fs-extra'
 import { set } from 'lodash'
@@ -13,7 +13,7 @@ types.setTypeParser(types.builtins.INT8, parseInt)
 /**
  * Manages PostgreSQL connections.
  */
-export class PostgresqlDatabase extends Database {
+export class PostgresqlDatabase extends SqlDatabase {
   public formatter = new PostgresqlFormatter()
 
   public pool: Pool

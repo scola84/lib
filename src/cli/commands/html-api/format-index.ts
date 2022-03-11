@@ -1,9 +1,8 @@
 import type { Options } from './options'
 import { camelize } from './camelize'
-import { formatCode } from './format-code'
 import { formatGroup } from './format-group'
 
-export function formatFactory (options: Options): string {
+export function formatIndex (options: Options): string {
   return `
 ${formatImport(options.methods)}
 
@@ -19,43 +18,27 @@ function formatHandlers (options: Options, space: number): string {
   const handlers = []
 
   if (options.methods.includes('DELETE')) {
-    handlers.push(`const deleteHandler = new DeleteHandler(${formatCode({
-      method: 'DELETE',
-      url: options.url
-    }, space).trim()})`)
+    handlers.push('const deleteHandler = new DeleteHandler()')
   }
 
   if (options.methods.includes('GET')) {
-    handlers.push(`const getAllHandler = new GetAllHandler(${formatCode({
-      method: 'GET',
-      url: `${options.url}/all`
-    }, space).trim()})`)
-
-    handlers.push(`const getHandler = new GetHandler(${formatCode({
-      method: 'GET',
-      url: options.url
-    }, space).trim()})`)
+    handlers.push('const getAllHandler = new GetAllHandler()')
+    handlers.push('const getHandler = new GetHandler()')
   }
 
   if (options.methods.includes('POST')) {
-    handlers.push(`const postHandler = new PostHandler(${formatCode({
-      method: 'POST',
-      url: options.url
-    }, space).trim()})`)
+    handlers.push('const postHandler = new PostHandler()')
   }
 
   if (options.methods.includes('PUT')) {
-    handlers.push(`const putHandler = new PutHandler(${formatCode({
-      method: 'PUT',
-      url: options.url
-    }, space).trim()})`)
+    handlers.push('const putHandler = new PutHandler()')
   }
 
   return handlers
     .map((line) => {
       return line.padStart(line.length + space - 2, ' ')
     })
-    .join('\n\n')
+    .join('\n')
     .trimStart()
 }
 

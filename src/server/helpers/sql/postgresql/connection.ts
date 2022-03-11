@@ -1,16 +1,17 @@
-import type { DeleteResult, InsertResult, UpdateResult } from '../connection'
-import { Connection } from '../connection'
+import type { SqlDeleteResult, SqlId, SqlInsertResult, SqlUpdateResult } from '../result'
 import PgQueryStream from 'pg-query-stream'
 import type { PoolClient } from 'pg'
 import { PostgresqlFormatter } from './formatter'
 import type { Readable } from 'stream'
+import { SqlConnection } from '../connection'
+import type { SqlQuery } from '../query'
 import type { Struct } from '../../../../common'
 import { sql } from '../tag'
 
 /**
  * Executes PostgreSQL queries.
  */
-export class PostgresqlConnection extends Connection {
+export class PostgresqlConnection extends SqlConnection {
   public connection: PoolClient
 
   public formatter = new PostgresqlFormatter()
@@ -25,8 +26,8 @@ export class PostgresqlConnection extends Connection {
     this.connection = connection
   }
 
-  public async delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult> {
-    await this.query(query, values)
+  public async delete<Values>(string: string, values?: Partial<Values>): Promise<SqlDeleteResult> {
+    await this.execute({ string, values })
 
     const result = {
       count: 0
@@ -59,27 +60,41 @@ export class PostgresqlConnection extends Connection {
       }))
   }
 
-  public async insert<Values, ID = number>(query: string, values?: Partial<Values>, key = 'id'): Promise<InsertResult<ID>> {
-    const [object] = await this.query<Values, Array<InsertResult<ID>>>(sql`
-      ${query}
-      RETURNING ${key} AS id
-    `, values)
+  public async execute<Values, Result>(query: SqlQuery<Partial<Values>>): Promise<Result> {
+    const { rows } = await this.connection.query(this.formatter.formatQuery(query))
+    return rows as unknown as Result
+  }
+
+  public async insert<Values, Id = SqlId>(string: string, values?: Partial<Values>, key = 'id'): Promise<SqlInsertResult<Id>> {
+    const [object] = await this.execute<Values, Array<SqlInsertResult<Id>>>({
+      string: sql`
+        ${string}
+        RETURNING ${key} AS id
+      `,
+      values
+    })
 
     return object
   }
 
-  public async insertAll<Values, ID = number>(query: string, values?: Partial<Values>, key = 'id'): Promise<Array<InsertResult<ID>>> {
-    return this.query<Values, Array<InsertResult<ID>>>(sql`
-      ${query}
-      RETURNING ${key} AS id
-    `, values)
+  public async insertAll<Values, Id = SqlId>(string: string, values?: Partial<Values>, key = 'id'): Promise<Array<SqlInsertResult<Id>>> {
+    return this.execute<Values, Array<SqlInsertResult<Id>>>({
+      string: sql`
+        ${string}
+        RETURNING ${key} AS id
+      `,
+      values
+    })
   }
 
-  public async insertOne<Values, ID = number>(query: string, values?: Partial<Values>, key = 'id'): Promise<InsertResult<ID>> {
-    const [object] = await this.query<Values, Array<InsertResult<ID>>>(sql`
-      ${query}
-      RETURNING ${key} AS id
-    `, values)
+  public async insertOne<Values, Id = SqlId>(string: string, values?: Partial<Values>, key = 'id'): Promise<SqlInsertResult<Id>> {
+    const [object] = await this.execute<Values, Array<SqlInsertResult<Id>>>({
+      string: sql`
+        ${string}
+        RETURNING ${key} AS id
+      `,
+      values
+    })
 
     return object
   }
@@ -111,26 +126,21 @@ export class PostgresqlConnection extends Connection {
       }))
   }
 
-  public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
-    const { rows } = await this.connection.query(this.formatter.formatQuery(query, values))
-    return rows as unknown as Result
-  }
-
   public release (): void {
     this.connection.release()
   }
 
-  public async select<Values, Result>(query: string, values?: Partial<Values>): Promise<Result | undefined> {
-    const [object] = await this.query<Values, Result[]>(query, values)
+  public async select<Values, Result>(string: string, values?: Partial<Values>): Promise<Result | undefined> {
+    const [object] = await this.execute<Values, Result[]>({ string, values })
     return object
   }
 
-  public async selectAll<Values, Result>(query: string, values?: Partial<Values>): Promise<Result[]> {
-    return this.query<Values, Result[]>(query, values)
+  public async selectAll<Values, Result>(string: string, values?: Partial<Values>): Promise<Result[]> {
+    return this.execute<Values, Result[]>({ string, values })
   }
 
-  public async selectOne<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
-    const [object] = await this.query<Values, Result[]>(query, values)
+  public async selectOne<Values, Result>(string: string, values?: Partial<Values>): Promise<Result> {
+    const [object] = await this.execute<Values, Result[]>({ string, values })
 
     if (object === undefined) {
       throw new Error(`Object is undefined (${JSON.stringify(values)})`)
@@ -139,12 +149,12 @@ export class PostgresqlConnection extends Connection {
     return object
   }
 
-  public stream<Values>(query: string, values?: Partial<Values>): Readable {
-    return this.connection.query(new PgQueryStream(this.formatter.formatQuery(query, values)))
+  public stream<Values>(string: string, values?: Partial<Values>): Readable {
+    return this.connection.query(new PgQueryStream(this.formatter.formatQuery({ string, values })))
   }
 
-  public async update<Values>(query: string, values?: Values): Promise<UpdateResult> {
-    await this.query(query, values)
+  public async update<Values>(string: string, values?: Values): Promise<SqlUpdateResult> {
+    await this.execute({ string, values })
 
     const result = {
       count: 0

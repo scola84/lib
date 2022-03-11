@@ -34,7 +34,7 @@ export class ReloadGetHandler extends RouteHandler {
     super.start()
   }
 
-  protected handle (data: RouteData, response: ServerResponse): void {
+  protected handle (data: RouteData, response: ServerResponse): null {
     this.responses.add(response)
 
     response.once('close', () => {
@@ -43,6 +43,7 @@ export class ReloadGetHandler extends RouteHandler {
 
     response.setHeader('content-type', 'text/event-stream')
     response.write('\n')
+    return null
   }
 
   protected startWatcher (): void {
@@ -51,7 +52,7 @@ export class ReloadGetHandler extends RouteHandler {
     this.watcher.on('change', debounce(this.debounce, false, () => {
       if (readFileSync(this.file).length > 0) {
         this.responses.forEach((response) => {
-          response.write(this.body.format({
+          response.write(this.codec.encode({
             data: JSON.stringify({
               reload: true
             }),

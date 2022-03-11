@@ -1,4 +1,7 @@
-export interface Bucket {
-  get: (key: string) => Promise<NodeJS.ReadableStream>
-  put: (key: string, stream: NodeJS.ReadableStream) => Promise<unknown>
+import type { Readable } from 'stream'
+
+export interface FileBucket {
+  delete: (id: string) => Promise<unknown>
+  get: (id: string) => Promise<Readable | undefined>
+  put: (id: string, stream: Readable) => Promise<unknown>
 }

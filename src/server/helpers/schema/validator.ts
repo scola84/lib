@@ -1,4 +1,4 @@
-import { cast, isArray, isNil, isStruct } from '../../../common'
+import { cast, isArray, isFile, isNil, isStruct } from '../../../common'
 import type { Struct } from '../../../common'
 
 type Validator = (data: Struct, errors: Struct) => boolean
@@ -15,13 +15,13 @@ interface Validators extends Struct<ValidatorBase | undefined> {
   step: ValidatorBase
 }
 
-export interface SchemaField {
+export interface SchemaField extends Struct {
+  auth?: SchemaFieldKey[][]
   cursor?: number
   custom?: string
   default?: string
   index?: string
   fkey?: SchemaFieldKey
-  lkey?: SchemaFieldKey
   max?: number
   maxLength?: number
   min?: number
@@ -29,6 +29,7 @@ export interface SchemaField {
   pattern?: RegExp
   pkey?: boolean
   required?: boolean
+  rkey?: SchemaFieldKey
   schema?: Schema
   search?: boolean
   sort?: boolean
@@ -113,13 +114,7 @@ export class SchemaValidator {
 
       if (isArray(values)) {
         const valid = values.every((value) => {
-          return (
-            isStruct(value) &&
-            typeof value.id === 'string' &&
-            typeof value.name === 'string' &&
-            typeof value.size === 'number' &&
-            typeof value.type === 'string'
-          )
+          return isFile(value)
         })
 
         if (!valid) {
@@ -179,6 +174,10 @@ export class SchemaValidator {
         return false
       }
 
+      return true
+    },
+    now (name: string, field: SchemaField, data: Struct): boolean {
+      data[name] = new Date().toISOString()
       return true
     },
     number (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {

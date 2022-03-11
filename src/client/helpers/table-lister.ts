@@ -22,7 +22,7 @@ export class TableLister {
 
   public filter: string
 
-  public I18n: I18n
+  public i18n: I18n
 
   public items: Struct[] = []
 
@@ -49,7 +49,7 @@ export class TableLister {
   public constructor (element: ScolaTableElement) {
     this.element = element
     this.breakpoint = new Breakpoint(element)
-    this.I18n = new I18n()
+    this.i18n = new I18n()
     this.reset()
   }
 
@@ -132,7 +132,7 @@ export class TableLister {
       items = [...items]
 
       if (this.filter !== '') {
-        items = this.filterItems(items, this.I18n.parse(this.filter))
+        items = this.filterItems(items, this.i18n.parse(this.filter))
       }
 
       if (this.sortKey.length > 0) {

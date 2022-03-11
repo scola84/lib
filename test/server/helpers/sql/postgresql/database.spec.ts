@@ -2,6 +2,7 @@ import mock, { restore } from 'mock-fs'
 import { Pool } from 'pg'
 import type { PoolConfig } from 'pg'
 import { PostgresqlDatabase } from '../../../../../src/server/helpers/sql/postgresql'
+import type { SqlId } from '../../../../../src/server/helpers/sql/result'
 import { expect } from 'chai'
 import { sql } from '../../../../../src/server/helpers/sql/tag'
 
@@ -11,12 +12,12 @@ describe('PostgresqlConnection', () => {
     it('create a pool with SSL options', createAPoolWithSslOptions)
     it('delete one row', deleteOneRow)
     it('depopulate', depopulate)
+    it('execute', execute)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('not fail to start and stop when DSN is undefined', notFailToStartAndStopWhenDsnIsUndefined)
     it('parse a BigInt as a Number', parseABigIntAsANumber)
     it('populate', populate)
-    it('query', query)
     it('select multiple rows', selectMultipleRows)
     it('select and resolve undefined', selectAndResolveUndefined)
     it('select one and reject undefined', selectOneAndRejectUndefined)
@@ -154,6 +155,28 @@ async function depopulate (): Promise<void> {
   }
 }
 
+async function execute (): Promise<void> {
+  const database = new PostgresqlDatabase({
+    dsn: helpers.dsn,
+    password: helpers.password
+  })
+
+  try {
+    await database.start()
+
+    await database.execute({
+      string: sql`
+        SELECT *
+        FROM test_database
+      `
+    })
+
+    expect(database.pool.idleCount).gt(0)
+  } finally {
+    await database.stop()
+  }
+}
+
 async function insertABulkOfRows (): Promise<void> {
   const database = new PostgresqlDatabase({
     dsn: helpers.dsn,
@@ -232,7 +255,7 @@ async function parseABigIntAsANumber (): Promise<void> {
       name: 'name'
     })
 
-    const data = await database.selectOne<{ id: number }, { id: number }>(sql`
+    const data = await database.selectOne<{ id: SqlId }, { id: SqlId }>(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)
@@ -264,26 +287,6 @@ async function populate (): Promise<void> {
 
     expect(database.pool.totalCount).gt(0)
     expect(database.pool.idleCount).equal(database.pool.totalCount)
-  } finally {
-    await database.stop()
-  }
-}
-
-async function query (): Promise<void> {
-  const database = new PostgresqlDatabase({
-    dsn: helpers.dsn,
-    password: helpers.password
-  })
-
-  try {
-    await database.start()
-
-    await database.query(sql`
-      SELECT *
-      FROM test_database
-    `)
-
-    expect(database.pool.idleCount).gt(0)
   } finally {
     await database.stop()
   }

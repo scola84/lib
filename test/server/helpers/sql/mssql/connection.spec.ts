@@ -7,15 +7,9 @@ import subset from 'chai-subset'
 describe('MssqlConnection', () => {
   use(subset)
 
-  describe('should fail to', () => {
-    it('format a query with an undefined parameter', formatAQueryWithAnUndefinedParameter)
-  })
-
   describe('should', () => {
     it('delete one row', deleteOneRow)
     it('depopulate', depopulate)
-    it('format a query', formatAQuery)
-    it('format a query for bulk insert', formatAQueryForBulkInsert)
     it('insert a bulk of rows', insertABulkOfRows)
     it('insert one row', insertOneRow)
     it('populate', populate)
@@ -145,96 +139,6 @@ async function depopulate (): Promise<void> {
     })
 
     expect(data).eql(undefined)
-  } finally {
-    connection.release()
-  }
-}
-
-function formatAQuery (): void {
-  const expectedQuery = `
-    SELECT *
-    FROM [scola].[test_connection]
-    WHERE
-      [test] = 1 AND
-      [test] = NULL AND
-      [test] = 1 AND
-      [test] = '{\\"number\\":3}' AND
-      [test] = 'value'
-  `
-
-  const rawQuery = `
-    SELECT *
-    FROM $[scola.test_connection]
-    WHERE
-      $[test] = $(test1) AND
-      $[test] = $(test2) AND
-      $[test] = $(test1) AND
-      $[test] = $(test3) AND
-      $[test] = $(test4)
-  `
-
-  const rawValues = {
-    test1: 1,
-    test2: null,
-    test3: {
-      number: 3
-    },
-    test4: 'value'
-  }
-
-  const connection = new MssqlConnection(helpers.pool.request())
-
-  try {
-    expect(connection.format(rawQuery, rawValues)).equal(expectedQuery)
-  } finally {
-    connection.release()
-  }
-}
-
-function formatAQueryForBulkInsert (): void {
-  const expectedQuery = `
-    INSERT INTO test_connection (name)
-    VALUES ('name1'), ('name2')
-  `
-
-  const rawQuery = `
-    INSERT INTO test_connection (name)
-    VALUES $(list)
-  `
-
-  const rawValues = {
-    list: [
-      ['name1'],
-      ['name2']
-    ]
-  }
-
-  const connection = new MssqlConnection(helpers.pool.request())
-
-  try {
-    expect(connection.format(rawQuery, rawValues)).equal(expectedQuery)
-  } finally {
-    connection.release()
-  }
-}
-
-function formatAQueryWithAnUndefinedParameter (): void {
-  const rawQuery = `
-    SELECT *
-    FROM test
-    WHERE test = $(test1)
-  `
-
-  const rawValues = {
-    test2: 2
-  }
-
-  const connection = new MssqlConnection(helpers.pool.request())
-
-  try {
-    connection.format(rawQuery, rawValues)
-  } catch (error: unknown) {
-    expect(String(error)).match(/Parameter "test1" is undefined/u)
   } finally {
     connection.release()
   }

@@ -1,7 +1,7 @@
 import type { Options as MinifierOptions } from 'html-minifier-terser'
 import type { Plugin } from 'rollup'
 import { minify } from 'html-minifier-terser'
-import { readFileSync } from 'fs'
+import { readFileSync } from 'fs-extra'
 
 interface Options {
   minify?: boolean

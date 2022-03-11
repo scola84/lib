@@ -1,7 +1,7 @@
 import { ConnectionPool } from 'mssql'
-import { Database } from '../database'
 import { MssqlConnection } from './connection'
 import { MssqlFormatter } from './formatter'
+import { SqlDatabase } from '../database'
 import { URL } from 'url'
 import { cast } from '../../../../common'
 import type { config } from 'mssql'
@@ -10,7 +10,7 @@ import { set } from 'lodash'
 /**
  * Manages MSSQL connections.
  */
-export class MssqlDatabase extends Database {
+export class MssqlDatabase extends SqlDatabase {
   public formatter = new MssqlFormatter()
 
   public pool: ConnectionPool

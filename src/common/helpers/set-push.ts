@@ -1,5 +1,5 @@
 import type { Struct } from './is-struct'
-import { isArray } from 'lodash'
+import { isArray } from './is-array'
 
 export function setPush (struct: Struct, name: string, value: unknown): void {
   if (struct[name] === undefined) {

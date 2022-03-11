@@ -1,57 +1,28 @@
 import type { Options } from './options'
 import type { Schema } from '../../../server/helpers/schema'
+import type { Struct } from '../../../common'
+import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
-import { formatGroup } from './format-group'
-import { formatInterface } from './format-interface'
 import { pickField } from './pick-field'
 
-export function formatPut (options: Options, schema: Schema): string {
+export function formatPut (options: Options, schema: Schema, relations: Struct<Schema>): string {
   return `
-import type { RouteData, Struct } from '@scola/lib'
-import { RouteHandler, sql } from '@scola/lib'
+import { RestPutHandler } from '@scola/lib'
 
-interface PutDataBody extends Struct ${formatBodyInterface(schema, 0)}
+export class PutHandler extends RestPutHandler {
+  public keys = ${formatKeys(options.object, schema, relations, 4)}
 
-interface PutData extends RouteData {
-  body: PutDataBody
-}
+  public method = 'PUT'
 
-export class PutHandler extends RouteHandler {
+  public object = '${options.object}'
+
   public schema = {
     body: ${formatBodySchema(schema, 6)}
   }
 
-  protected async handle (data: PutData): Promise<void> {
-    await this.database.insert(sql\`
-      UPDATE $[${options.object}]
-      SET ${
-        formatQueryColumns(schema, 6)
-      }
-      WHERE ${
-        formatQueryKeys(schema, 6)
-      }\`, ${
-        formatQueryValues(schema, 4)
-      })
-  }
+  public url = '${options.url}'
 }
 `.trim()
-}
-
-function formatBodyInterface (schema: Schema, space: number): string {
-  return formatInterface(
-    Object
-      .entries(schema)
-      .filter(([, field]) => {
-        return field.lkey === undefined
-      })
-      .reduce((result, [name, field]) => {
-        return {
-          [name]: field,
-          ...result
-        }
-      }, {}),
-    space
-  )
 }
 
 function formatBodySchema (schema: Schema, space: number): string {
@@ -59,11 +30,14 @@ function formatBodySchema (schema: Schema, space: number): string {
     Object
       .entries(schema)
       .filter(([,field]) => {
-        return field.lkey === undefined
+        return field.rkey === undefined && (
+          field.pkey !== true ||
+          field.fkey !== undefined
+        )
       })
-      .reduce((value, [name, field]) => {
+      .reduce((result, [name, field]) => {
         return {
-          ...value,
+          ...result,
           [name]: pickField(field)
         }
       }, {}),
@@ -71,56 +45,17 @@ function formatBodySchema (schema: Schema, space: number): string {
   ).trimStart()
 }
 
-function formatQueryColumns (schema: Schema, space: number): string {
-  return formatGroup(
-    [
-      '$[updated] = $(_date)',
-      ...Object
-        .entries(schema)
-        .filter(([,field]) => {
-          return (
-            field.pkey !== true &&
-            field.lkey === undefined
-          )
-        })
-        .map(([name]) => {
-          return `$[${name}] = $(${name})`
-        })
-    ],
-    space,
-    ['', '']
-  ).trimEnd()
-}
+function formatKeys (object: string, schema: Schema, relations: Struct<Schema>, space: number): string {
+  const {
+    auth,
+    primary
+  } = createKeys(object, schema, relations)
 
-function formatQueryKeys (schema: Schema, space: number): string {
-  return formatGroup(
-    Object
-      .entries(schema)
-      .filter(([, field]) => {
-        return field.pkey === true
-      })
-      .map(([name]) => {
-        return `$[${name}] = $(${name})`
-      }),
-    space,
-    ['(', ')'],
-    ' AND'
-  )
-}
-
-function formatQueryValues (schema: Schema, space: number): string {
-  return formatGroup(
-    [
-      '_date: new Date().toISOString()',
-      ...Object
-        .entries(schema)
-        .filter(([,field]) => {
-          return field.lkey === undefined
-        })
-        .map(([name]) => {
-          return `${name}: data.body.${name}`
-        })
-    ],
+  return formatCode(
+    {
+      auth,
+      primary
+    },
     space
-  )
+  ).trimStart()
 }

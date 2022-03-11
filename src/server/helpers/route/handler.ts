@@ -1,13 +1,13 @@
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http'
 import { isNil, isStruct } from '../../../common'
-import type { Auth } from './auth'
-import type { Body } from './body'
-import type { Database } from '../sql'
 import type { Logger } from 'pino'
 import type { RedisClientType } from 'redis'
+import type { RouteAuth } from './auth'
+import type { RouteCodec } from './codec'
 import type { Router } from './router'
 import type { Schema } from '../schema'
 import { SchemaValidator } from '../schema/validator'
+import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import type { URL } from 'url'
 import type { User } from '../../entities'
@@ -22,9 +22,9 @@ export interface RouteData {
 }
 
 export interface RouteHandlerOptions {
-  auth: Auth
-  body: Body
-  database: Database
+  auth: RouteAuth
+  codec: RouteCodec
+  database: SqlDatabase
   logger: Logger
   method: string
   router: Router
@@ -36,11 +36,11 @@ export interface RouteHandlerOptions {
 export abstract class RouteHandler {
   public static options?: Partial<RouteHandlerOptions>
 
-  public auth?: Auth
+  public auth?: RouteAuth
 
-  public body: Body
+  public codec: RouteCodec
 
-  public database: Database
+  public database: SqlDatabase
 
   public logger?: Logger
 
@@ -48,7 +48,7 @@ export abstract class RouteHandler {
 
   public router: Router
 
-  public schema: Struct<Schema>
+  public schema: Struct<Schema | undefined>
 
   public store: RedisClientType
 
@@ -62,8 +62,8 @@ export abstract class RouteHandler {
       ...options
     }
 
-    if (handlerOptions.body === undefined) {
-      throw new Error('Option "body" is undefined')
+    if (handlerOptions.codec === undefined) {
+      throw new Error('Option "codec" is undefined')
     }
 
     if (handlerOptions.database === undefined) {
@@ -79,7 +79,7 @@ export abstract class RouteHandler {
     }
 
     this.auth = handlerOptions.auth
-    this.body = handlerOptions.body
+    this.codec = handlerOptions.codec
     this.database = handlerOptions.database
     this.logger = handlerOptions.logger
     this.method = handlerOptions.method ?? 'GET'
@@ -91,11 +91,13 @@ export abstract class RouteHandler {
 
   public createValidators (): Struct<SchemaValidator> {
     return Object
-      .entries(this.schema)
-      .reduce<Struct<SchemaValidator>>((validators, [name, fields]) => {
-      validators[name] = new SchemaValidator(fields)
-      return validators
-    }, {})
+      .entries(this.schema as Struct<Schema>)
+      .reduce((validators, [name, fields]) => {
+        return {
+          ...validators,
+          [name]: new SchemaValidator(fields)
+        }
+      }, {})
   }
 
   public async handleRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
@@ -108,23 +110,19 @@ export abstract class RouteHandler {
           return this.handle(data, response, request)
         })
 
-      if (!response.headersSent) {
-        if (isNil(result)) {
-          if (
-            request.method === 'GET' &&
-            result === undefined
-          ) {
-            response.statusCode = 404
-          }
-
+      if (isNil(result)) {
+        if (result === undefined) {
           response.removeHeader('content-type')
           response.end()
-        } else {
-          response.end(this.body.format(result, response))
         }
+      } else {
+        response.end(this.codec.encode(result, response))
       }
     } catch (error: unknown) {
-      response.statusCode = 500
+      if (response.statusCode < 300) {
+        response.statusCode = 500
+      }
+
       response.removeHeader('content-type')
       response.end()
       throw error
@@ -153,7 +151,7 @@ export abstract class RouteHandler {
     response.setHeader('content-type', 'application/json')
 
     try {
-      data.body = await this.body.parse(request)
+      data.body = await this.codec.decode(request)
     } catch (error: unknown) {
       response.statusCode = 415
       response.removeHeader('content-type')
@@ -165,7 +163,7 @@ export abstract class RouteHandler {
       this.validateData(data)
     } catch (error: unknown) {
       response.statusCode = 400
-      response.end(this.body.format(error, response))
+      response.end(this.codec.encode(error, response))
       throw error
     }
 

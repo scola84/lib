@@ -1,8 +1,8 @@
 import { Command } from 'commander'
 import { URL } from 'url'
-import child from 'child_process'
-import fs from 'fs'
-import path from 'path'
+import { dirname } from 'path'
+import { execSync } from 'child_process'
+import { mkdirSync } from 'fs-extra'
 
 const logger = console
 const program = new Command()
@@ -66,17 +66,17 @@ try {
     url.username = 'root'
   }
 
-  fs.mkdirSync(path.dirname(targetFile), {
+  mkdirSync(dirname(targetFile), {
     recursive: true
   })
 
-  child.execSync([
+  execSync([
     `cat .docker/mysql/docker-entrypoint-initdb.d/${context}/${database}.sql`,
     '| sed "s/USE/-- USE/g" ',
     '> /tmp/scola-sql-diff-in.sql'
   ].join(' '))
 
-  child.execSync([
+  execSync([
     'mysql-schema-diff',
     `--host ${url.hostname}`,
     '--no-old-defs',

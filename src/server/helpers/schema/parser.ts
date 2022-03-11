@@ -41,6 +41,7 @@ export class SchemaParser {
           }
 
           this.extractConstraints(attributes, field)
+          this.extractDatabaseAuth(attributes, field)
           this.extractDatabaseOptions(attributes, field)
           fields[attributes.name] = field
         } else if (field.type === 'checkbox') {
@@ -60,7 +61,7 @@ export class SchemaParser {
       }))
     }
 
-    return this.sortObject(fields)
+    return this.sortObject(fields) as Schema
   }
 
   protected extractConstraints (attributes: SchemaAttributes, field: SchemaField): void {
@@ -110,8 +111,35 @@ export class SchemaParser {
     }
   }
 
-  protected extractDatabaseKey (string: string): SchemaFieldKey | undefined {
-    return (((/(?<table>.+)\.(?<column>.+)/u).exec(string))?.groups as unknown as SchemaFieldKey | null) ?? undefined
+  protected extractDatabaseAuth (attributes: SchemaAttributes, field: SchemaField): void {
+    const auth = [
+      attributes['sc-auth-group'],
+      attributes['sc-auth-user']
+    ].filter((keys) => {
+      return keys !== undefined
+    }).map((keys) => {
+      return (keys ?? '')
+        .split(' ')
+        .map((key) => {
+          return this.extractDatabaseKey(key)
+        })
+    })
+
+    if (auth.length > 0) {
+      field.auth = auth
+    }
+  }
+
+  protected extractDatabaseKey (string: string): SchemaFieldKey {
+    const [
+      table,
+      column
+    ] = string.split('.')
+
+    return {
+      column,
+      table
+    }
   }
 
   protected extractDatabaseOptions (attributes: SchemaAttributes, field: SchemaField): void {
@@ -127,8 +155,8 @@ export class SchemaParser {
       field.index = attributes['sc-index']
     }
 
-    if (attributes['sc-lkey'] !== undefined) {
-      field.lkey = this.extractDatabaseKey(attributes['sc-lkey'])
+    if (attributes['sc-rkey'] !== undefined) {
+      field.rkey = this.extractDatabaseKey(attributes['sc-rkey'])
     }
 
     if (attributes['sc-pkey'] !== undefined) {
@@ -224,29 +252,33 @@ export class SchemaParser {
 
   protected normalizeAttributes (element: Element): SchemaAttributes {
     if (isArray(element.attrs)) {
-      return element.attrs.reduce<SchemaAttributes>((attributes, attribute) => {
-        attributes[attribute.name] = attribute.value
-        return attributes
+      return element.attrs.reduce((attributes, attribute) => {
+        return {
+          ...attributes,
+          [attribute.name]: attribute.value
+        }
       }, {})
     }
 
     return {}
   }
 
-  protected sortObject<T> (object: Struct): T {
+  protected sortObject (object: Struct): Struct {
     return Object
       .keys(object)
       .sort()
       .reduce<Struct>((result, key) => {
-      const value = object[key]
+      /* eslint-disable @typescript-eslint/indent */
+        const value = object[key]
 
-      if (isStruct(value)) {
-        result[key] = this.sortObject(value)
-      } else {
-        result[key] = value
-      }
+        if (isStruct(value)) {
+          result[key] = this.sortObject(value)
+        } else {
+          result[key] = value
+        }
 
-      return result
-    }, {}) as T
+        return result
+      }, {})
+      /* eslint-disable @typescript-eslint/indent */
   }
 }

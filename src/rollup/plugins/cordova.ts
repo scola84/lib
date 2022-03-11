@@ -1,5 +1,5 @@
 import type { Plugin } from 'rollup'
-import fs from 'fs'
+import { existsSync } from 'fs-extra'
 import { run } from 'cordova-res'
 
 interface Options {
@@ -14,8 +14,8 @@ export function cordova (options: Options): Plugin {
       const splashFile = `${options.src}/cordova/splash.png`
 
       if (
-        fs.existsSync(iconFile) ||
-        fs.existsSync(splashFile)
+        existsSync(iconFile) ||
+        existsSync(splashFile)
       ) {
         await run({
           logstream: null,

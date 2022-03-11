@@ -1,9 +1,10 @@
-import type { DeleteResult, InsertResult, UpdateResult } from '../connection'
 import type { PoolConnection, ResultSetHeader } from 'mysql2/promise'
+import type { SqlDeleteResult, SqlId, SqlInsertResult, SqlUpdateResult } from '../result'
 import type { Connection as BaseConnection } from 'mysql'
-import { Connection } from '../connection'
 import { MysqlFormatter } from './formatter'
 import type { Readable } from 'stream'
+import { SqlConnection } from '../connection'
+import type { SqlQuery } from '../query'
 import type { Struct } from '../../../../common'
 import { sql } from '../tag'
 
@@ -14,7 +15,7 @@ interface StreamConnection extends PoolConnection {
 /**
  * Executes MySQL queries.
  */
-export class MysqlConnection extends Connection {
+export class MysqlConnection extends SqlConnection {
   public connection: PoolConnection
 
   public formatter = new MysqlFormatter()
@@ -29,8 +30,8 @@ export class MysqlConnection extends Connection {
     this.connection = connection
   }
 
-  public async delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult> {
-    const { affectedRows } = await this.query<Values, ResultSetHeader>(query, values)
+  public async delete<Values>(string: string, values?: Partial<Values>): Promise<SqlDeleteResult> {
+    const { affectedRows } = await this.execute<Values, ResultSetHeader>({ string, values })
 
     const result = {
       count: affectedRows
@@ -63,8 +64,13 @@ export class MysqlConnection extends Connection {
       }))
   }
 
-  public async insert<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
-    const { insertId } = await this.query<Values, { insertId: ID }>(query, values)
+  public async execute<Values, Result>(query: SqlQuery<Partial<Values>>): Promise<Result> {
+    const [result] = await this.connection.query(this.formatter.formatQuery(query))
+    return result as unknown as Result
+  }
+
+  public async insert<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<SqlInsertResult<Id>> {
+    const { insertId } = await this.execute<Values, { insertId: Id }>({ string, values })
 
     const result = {
       id: insertId
@@ -73,8 +79,8 @@ export class MysqlConnection extends Connection {
     return result
   }
 
-  public async insertAll<Values, ID = number>(query: string, values?: Partial<Values>): Promise<Array<InsertResult<ID>>> {
-    const { insertId } = await this.query<Values, { insertId: ID }>(query, values)
+  public async insertAll<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<Array<SqlInsertResult<Id>>> {
+    const { insertId } = await this.execute<Values, { insertId: Id }>({ string, values })
 
     const result = [{
       id: insertId
@@ -83,8 +89,8 @@ export class MysqlConnection extends Connection {
     return result
   }
 
-  public async insertOne<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
-    const { insertId } = await this.query<Values, { insertId: ID }>(query, values)
+  public async insertOne<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<SqlInsertResult<Id>> {
+    const { insertId } = await this.execute<Values, { insertId: Id }>({ string, values })
 
     const result = {
       id: insertId
@@ -119,26 +125,21 @@ export class MysqlConnection extends Connection {
       }))
   }
 
-  public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
-    const [result] = await this.connection.query(this.formatter.formatQuery(query, values))
-    return result as unknown as Result
-  }
-
   public release (): void {
     this.connection.release()
   }
 
-  public async select<Values, Result>(query: string, values?: Partial<Values>): Promise<Result | undefined> {
-    const [object] = await this.query<Values, Result[]>(query, values)
+  public async select<Values, Result>(string: string, values?: Partial<Values>): Promise<Result | undefined> {
+    const [object] = await this.execute<Values, Result[]>({ string, values })
     return object
   }
 
-  public async selectAll<Values, Result>(query: string, values?: Partial<Values>): Promise<Result[]> {
-    return this.query<Values, Result[]>(query, values)
+  public async selectAll<Values, Result>(string: string, values?: Partial<Values>): Promise<Result[]> {
+    return this.execute<Values, Result[]>({ string, values })
   }
 
-  public async selectOne<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
-    const [object] = await this.query<Values, Result[]>(query, values)
+  public async selectOne<Values, Result>(string: string, values?: Partial<Values>): Promise<Result> {
+    const [object] = await this.execute<Values, Result[]>({ string, values })
 
     if (object === undefined) {
       throw new Error(`Object is undefined (${JSON.stringify(values)})`)
@@ -147,14 +148,14 @@ export class MysqlConnection extends Connection {
     return object
   }
 
-  public stream<Values>(query: string, values?: Partial<Values>): Readable {
+  public stream<Values>(string: string, values?: Partial<Values>): Readable {
     return (this.connection as StreamConnection).connection
-      .query(this.formatter.formatQuery(query, values))
+      .query(this.formatter.formatQuery({ string, values }))
       .stream()
   }
 
-  public async update<Values>(query: string, values?: Partial<Values>): Promise<UpdateResult> {
-    const { affectedRows } = await this.query<Values, ResultSetHeader>(query, values)
+  public async update<Values>(string: string, values?: Partial<Values>): Promise<SqlUpdateResult> {
+    const { affectedRows } = await this.execute<Values, ResultSetHeader>({ string, values })
 
     const result = {
       count: affectedRows

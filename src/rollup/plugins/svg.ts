@@ -1,7 +1,7 @@
 import type { OptimizeOptions, OptimizedSvg } from 'svgo'
 import type { Plugin } from 'rollup'
 import { optimize } from 'svgo'
-import { readFileSync } from 'fs'
+import { readFileSync } from 'fs-extra'
 
 interface Options {
   minify?: boolean

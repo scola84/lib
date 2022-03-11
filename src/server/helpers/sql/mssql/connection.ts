@@ -1,8 +1,9 @@
-import type { DeleteResult, InsertResult, UpdateResult } from '../connection'
 import type { IResult, Request } from 'mssql'
-import { Connection } from '../connection'
+import type { SqlDeleteResult, SqlId, SqlInsertResult, SqlUpdateResult } from '../result'
 import { MssqlFormatter } from './formatter'
 import type { Readable } from 'stream'
+import { SqlConnection } from '../connection'
+import type { SqlQuery } from '../query'
 import type { Struct } from '../../../../common'
 import { Transform } from 'stream'
 import { sql } from '../tag'
@@ -10,7 +11,7 @@ import { sql } from '../tag'
 /**
  * Executes MSSQL queries.
  */
-export class MssqlConnection extends Connection {
+export class MssqlConnection extends SqlConnection {
   public connection: Request
 
   public formatter = new MssqlFormatter()
@@ -25,8 +26,8 @@ export class MssqlConnection extends Connection {
     this.connection = connection
   }
 
-  public async delete<Values>(query: string, values?: Partial<Values>): Promise<DeleteResult> {
-    const { rowsAffected } = await this.query<Values, IResult<unknown>>(query, values)
+  public async delete<Values>(string: string, values?: Partial<Values>): Promise<SqlDeleteResult> {
+    const { rowsAffected } = await this.execute<Values, IResult<unknown>>({ string, values })
 
     const result = {
       count: rowsAffected[0]
@@ -59,29 +60,43 @@ export class MssqlConnection extends Connection {
       }))
   }
 
-  public async insert<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
-    const { recordset: [object] } = await this.query<Values, IResult<{ id: ID }>>(sql`
-      ${query};
-      SELECT SCOPE_IDENTITY() AS id;
-    `, values)
+  public async execute<Values, Result>(query: SqlQuery<Partial<Values>>): Promise<Result> {
+    const result = await this.connection.query(this.formatter.formatQuery(query))
+    return result as unknown as Result
+  }
+
+  public async insert<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<SqlInsertResult<Id>> {
+    const { recordset: [object] } = await this.execute<Values, IResult<{ id: Id }>>({
+      string: sql`
+        ${string};
+        SELECT SCOPE_IDENTITY() AS id;
+      `,
+      values
+    })
 
     return object
   }
 
-  public async insertAll<Values, ID = number>(query: string, values?: Partial<Values>): Promise<Array<InsertResult<ID>>> {
-    const { recordset } = await this.query<Values, IResult<{ id: ID }>>(sql`
-      ${query};
-      SELECT SCOPE_IDENTITY() AS id;
-    `, values)
+  public async insertAll<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<Array<SqlInsertResult<Id>>> {
+    const { recordset } = await this.execute<Values, IResult<{ id: Id }>>({
+      string: sql`
+        ${string};
+        SELECT SCOPE_IDENTITY() AS id;
+      `,
+      values
+    })
 
     return recordset
   }
 
-  public async insertOne<Values, ID = number>(query: string, values?: Partial<Values>): Promise<InsertResult<ID>> {
-    const { recordset: [object] } = await this.query<Values, IResult<{ id: ID }>>(sql`
-      ${query};
-      SELECT SCOPE_IDENTITY() AS id;
-    `, values)
+  public async insertOne<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<SqlInsertResult<Id>> {
+    const { recordset: [object] } = await this.execute<Values, IResult<{ id: Id }>>({
+      string: sql`
+        ${string};
+        SELECT SCOPE_IDENTITY() AS id;
+      `,
+      values
+    })
 
     return object
   }
@@ -114,27 +129,22 @@ export class MssqlConnection extends Connection {
       }))
   }
 
-  public async query<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
-    const result = await this.connection.query(this.formatter.formatQuery(query, values))
-    return result as unknown as Result
-  }
-
   public release (): void {
     this.connection.cancel()
   }
 
-  public async select<Values, Result>(query: string, values?: Partial<Values>): Promise<Result | undefined> {
-    const { recordset: [object] } = await this.query<Values, IResult<Result>>(query, values)
+  public async select<Values, Result>(string: string, values?: Partial<Values>): Promise<Result | undefined> {
+    const { recordset: [object] } = await this.execute<Values, IResult<Result>>({ string, values })
     return object
   }
 
-  public async selectAll<Values, Result>(query: string, values?: Partial<Values>): Promise<Result[]> {
-    const { recordset } = await this.query<Values, IResult<Result>>(query, values)
+  public async selectAll<Values, Result>(string: string, values?: Partial<Values>): Promise<Result[]> {
+    const { recordset } = await this.execute<Values, IResult<Result>>({ string, values })
     return recordset
   }
 
-  public async selectOne<Values, Result>(query: string, values?: Partial<Values>): Promise<Result> {
-    const { recordset: [object] } = await this.query<Values, IResult<Result>>(query, values)
+  public async selectOne<Values, Result>(string: string, values?: Partial<Values>): Promise<Result> {
+    const { recordset: [object] } = await this.execute<Values, IResult<Result>>({ string, values })
 
     if (object === undefined) {
       throw new Error(`Object is undefined (${JSON.stringify(values)})`)
@@ -143,7 +153,7 @@ export class MssqlConnection extends Connection {
     return object
   }
 
-  public stream<Values>(query: string, values?: Partial<Values>): Readable {
+  public stream<Values>(string: string, values?: Partial<Values>): Readable {
     this.connection.stream = true
 
     const transform = new Transform({
@@ -155,12 +165,12 @@ export class MssqlConnection extends Connection {
 
     this.connection.pipe(transform)
     // eslint-disable-next-line no-void
-    void this.connection.query(this.formatter.formatQuery(query, values))
+    void this.connection.query(this.formatter.formatQuery({ string, values }))
     return transform
   }
 
-  public async update<Values>(query: string, values?: Partial<Values>): Promise<UpdateResult> {
-    const { rowsAffected } = await this.query<Values, IResult<unknown>>(query, values)
+  public async update<Values>(string: string, values?: Partial<Values>): Promise<SqlUpdateResult> {
+    const { rowsAffected } = await this.execute<Values, IResult<unknown>>({ string, values })
 
     const result = {
       count: rowsAffected[0]

@@ -77,20 +77,20 @@ export class PostgresqlFormatter extends SqlFormatter {
     let order = null
     let where = null
 
-    if (parameters.cursor !== undefined) {
+    if (parameters.cursor === undefined) {
+      values.count = parameters.count
+      values.offset = parameters.offset ?? 0
+      limit = 'LIMIT $(count) OFFSET $(offset)'
+    } else {
       values.count = parameters.count
       values.cursor = parameters.cursor
-      limit = 'LIMIT $(count)'
+      limit = 'LIMIT $(count) OFFSET 0'
       order = `$[${'cursor'}] ASC`
       where = `$[${'cursor'}] > $(cursor)`
-    } else if (parameters.offset !== undefined) {
-      values.count = parameters.count
-      values.offset = parameters.offset
-      limit = 'LIMIT $(count) OFFSET $(offset)'
     }
 
     return {
-      limit: limit ?? undefined,
+      limit,
       order: order ?? undefined,
       values,
       where: where ?? undefined

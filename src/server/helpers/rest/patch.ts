@@ -45,8 +45,8 @@ export abstract class RestPatchHandler extends RestHandler {
 
     await this.deleteFiles(schema, object, data.body)
 
-    const patchQuery = this.database.formatter.createPatchQuery(this.object, this.keys, schema, data.body)
+    const updatePartialQuery = this.database.formatter.createUpdatePartialQuery(this.object, this.keys, schema, data.body)
 
-    await this.database.execute(patchQuery)
+    await this.database.execute(updatePartialQuery)
   }
 }

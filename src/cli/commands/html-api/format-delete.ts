@@ -2,7 +2,6 @@ import type { Options } from './options'
 import type { Schema } from '../../../server/helpers/schema'
 import type { Struct } from '../../../common'
 import { createKeys } from './create-keys'
-import { createPrimaryFields } from './create-primary-fields'
 import { formatCode } from './format-code'
 import { pickField } from './pick-field'
 import { sortKeys } from './sort-keys'
@@ -48,6 +47,20 @@ function createFileFields (schema: Schema): Schema {
         values: []
       }
     })
+}
+
+function createPrimaryFields (schema: Schema): Schema {
+  return Object
+    .entries(schema)
+    .filter(([, field]) => {
+      return field.pkey === true
+    })
+    .reduce((result, [name, field]) => {
+      return {
+        ...result,
+        [name]: field
+      }
+    }, {})
 }
 
 function createQueryFields (schema: Schema): Schema {

@@ -72,20 +72,20 @@ export class MssqlFormatter extends SqlFormatter {
     let order = null
     let where = null
 
-    if (parameters.cursor !== undefined) {
+    if (parameters.cursor === undefined) {
+      values.count = parameters.count
+      values.offset = parameters.offset ?? 0
+      limit = 'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+    } else {
       values.count = parameters.count
       values.cursor = parameters.cursor
       limit = 'OFFSET 0 ROWS FETCH NEXT $(count) ROWS ONLY'
       order = `$[${'cursor'}] ASC`
       where = `$[${'cursor'}] > $(cursor)`
-    } else if (parameters.offset !== undefined) {
-      values.count = parameters.count
-      values.offset = parameters.offset
-      limit = 'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
     }
 
     return {
-      limit: limit ?? undefined,
+      limit,
       order: order ?? undefined,
       values,
       where: where ?? undefined

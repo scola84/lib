@@ -1,6 +1,5 @@
 import { ConnectionPool } from 'mssql'
 import { MssqlDatabase } from '../../../../../src/server/helpers/sql/mssql'
-import type { SqlId } from '../../../../../src/server/helpers/sql/result'
 import type { config } from 'mssql'
 import { expect } from 'chai'
 import { sql } from '../../../../../src/server/helpers/sql/tag'
@@ -99,7 +98,7 @@ async function deleteOneRow (): Promise<void> {
   try {
     await database.start()
 
-    const { id } = await database.insertOne(sql`
+    const { id } = await database.insert(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
     `, {
@@ -209,7 +208,7 @@ async function insertOneRow (): Promise<void> {
   try {
     await database.start()
 
-    await database.insertOne(sql`
+    await database.insert(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
     `, {
@@ -241,14 +240,14 @@ async function parseABigIntAsANumber (): Promise<void> {
   try {
     await database.start()
 
-    const { id } = await database.insertOne(sql`
+    const { id } = await database.insert(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
     `, {
       name: 'name'
     })
 
-    const data = await database.selectOne<{ id: SqlId }, { id: SqlId }>(sql`
+    const data = await database.selectOne(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)
@@ -447,7 +446,7 @@ async function updateOneRow (): Promise<void> {
   try {
     await database.start()
 
-    const { id } = await database.insertOne(sql`
+    const { id } = await database.insert(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
     `, {
@@ -459,7 +458,7 @@ async function updateOneRow (): Promise<void> {
       SET name = $(name)
       WHERE id = $(id)
     `, {
-      id,
+      id: id,
       name: 'name-update'
     })
 

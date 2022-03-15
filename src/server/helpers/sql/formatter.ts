@@ -3,6 +3,7 @@ import type { SqlQuery, SqlQueryKeys, SqlQueryParts, SqlSelectAllParameters } fr
 import { I18n } from '../../../common'
 import type { Struct } from '../../../common'
 import type { User } from '../../entities'
+import { sql } from './tag'
 
 export abstract class SqlFormatter {
   public i18n = new I18n()
@@ -19,7 +20,7 @@ export abstract class SqlFormatter {
       throw new Error(`Where is undefined for "${object}"`)
     }
 
-    const string = `
+    const string = sql`
       DELETE
       FROM $[${object}]
       WHERE ${where.join(' AND ')}
@@ -31,24 +32,24 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createInsertQuery (object: string, schema: Schema, data: Struct): SqlQuery {
+  public createInsertQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct): SqlQuery {
     const columns: string[] = []
-    const keys: string[] = []
     const values: Struct = {}
+    const valuesKeys: string[] = []
 
     Object
       .keys(schema)
       .forEach((name) => {
-        values[name] = data[name]
         columns.push(`$[${name}]`)
-        keys.push(`$(${name})`)
+        valuesKeys.push(`$(${name})`)
+        values[name] = data[name]
       })
 
-    const string = `
+    const string = sql`
       INSERT INTO $[${object}] (
         ${columns.join(',')}
       ) VALUES (
-        ${keys.join(',')}
+        ${valuesKeys.join(',')}
       )
     `
 
@@ -59,42 +60,34 @@ export abstract class SqlFormatter {
   }
 
   public createSelectAllQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], parameters: SqlSelectAllParameters, user?: User): SqlQuery {
-    if (authKeys.length === 0) {
-      throw new Error(`Auth keys are undefined for "${object}"`)
-    }
-
     const auth = this.createAuthParts(keys, authKeys, user)
-
-    if (
-      auth.parts === undefined ||
-      auth.parts.length === 0
-    ) {
-      throw new Error(`Auth is undefined for "${object}"`)
-    }
-
     const selectAll = this.createSelectAllParts(object, parameters, keys)
 
     const queries = auth.parts.map((authPart) => {
-      if (authPart.where === undefined) {
+      if (
+        keys.auth !== undefined &&
+        authPart.where === undefined
+      ) {
         throw new Error(`Where is undefined for "${object}"`)
       }
 
-      return `
-        SELECT ${selectAll.select ?? `$[${object}].*`}
+      return sql`
+        SELECT ${this.joinStrings(', ', [
+          `$[${object}].*`,
+          selectAll.select
+        ]) ?? '*'}
         FROM $[${object}]
         ${selectAll.join ?? ''}
         ${authPart.join ?? ''}
-        WHERE ${[
+        WHERE ${this.joinStrings(' AND ', [
           selectAll.where,
           authPart.where
-        ].filter((value) => {
-          return value !== undefined
-        }).join(' AND ')}
+        ]) ?? 'true'}
       `
     })
 
     return {
-      string: `
+      string: sql`
         ${queries.join(' UNION ')}
         ORDER BY ${selectAll.order ?? '1'}
         ${selectAll.limit ?? ''}
@@ -107,19 +100,7 @@ export abstract class SqlFormatter {
   }
 
   public createSelectQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], parameters: Struct, user?: User): SqlQuery {
-    if (authKeys.length === 0) {
-      throw new Error(`Auth keys are undefined for "${object}"`)
-    }
-
     const auth = this.createAuthParts(keys, authKeys, user)
-
-    if (
-      auth.parts === undefined ||
-      auth.parts.length === 0
-    ) {
-      throw new Error(`Auth is undefined for "${object}"`)
-    }
-
     const select = this.createSelectParts(parameters, keys)
 
     if (select.where === undefined) {
@@ -127,18 +108,21 @@ export abstract class SqlFormatter {
     }
 
     const queries = auth.parts.map((authPart) => {
-      if (authPart.where === undefined) {
+      if (
+        keys.auth !== undefined &&
+        authPart.where === undefined
+      ) {
         throw new Error(`Where is undefined for "${object}"`)
       }
 
-      return `
+      return sql`
         SELECT $[${object}].*
         FROM $[${object}]
         ${authPart.join ?? ''}
-        WHERE ${[
+        WHERE ${this.joinStrings(' AND ', [
           select.where,
           authPart.where
-        ].join(' AND ')}
+        ]) ?? 'true'}
       `
     })
 
@@ -173,7 +157,7 @@ export abstract class SqlFormatter {
       throw new Error(`Where is undefined for "${object}"`)
     }
 
-    const string = `
+    const string = sql`
       UPDATE $[${object}]
       SET ${set.join(',')}
       WHERE ${where.join(' AND ')}
@@ -204,7 +188,7 @@ export abstract class SqlFormatter {
       throw new Error(`Where is undefined for "${object}"`)
     }
 
-    const string = `
+    const string = sql`
       UPDATE $[${object}]
       SET ${set.join(',')}
       WHERE ${where.join(' AND ')}
@@ -270,13 +254,7 @@ export abstract class SqlFormatter {
         return result.replace(match, this.formatIdentifier(key))
       }
 
-      const value = query.values?.[key]
-
-      if (value === undefined) {
-        throw new Error(`Parameter "${key}" is undefined`)
-      }
-
-      return result.replace(match, this.formatParameter(value))
+      return result.replace(match, this.formatParameter(query.values?.[key]))
     }, query.string)
   }
 
@@ -288,10 +266,14 @@ export abstract class SqlFormatter {
       .trim()
   }
 
-  protected createAuthParts (keys: SqlQueryKeys, authKeys: SchemaFieldKey[], user?: User): SqlQueryParts {
+  protected createAuthParts (keys: SqlQueryKeys, authKeys: SchemaFieldKey[], user?: User): Required<Pick<SqlQueryParts, 'parts' | 'values'>> {
+    if (authKeys.length === 0) {
+      throw new Error('Auth keys are undefined')
+    }
+
     const values: Struct = {}
 
-    const parts = authKeys
+    let parts: SqlQueryParts[] = authKeys
       .map((authKey) => {
         return keys.auth?.[authKey.column]?.map((joinKeys) => {
           const join: string[] = []
@@ -319,6 +301,14 @@ export abstract class SqlFormatter {
         }) ?? []
       })
       .flat()
+
+    if (parts.length === 0) {
+      if (keys.auth === undefined) {
+        parts = [{}]
+      } else {
+        throw new Error('Auth is undefined')
+      }
+    }
 
     return {
       parts,
@@ -371,7 +361,7 @@ export abstract class SqlFormatter {
 
     const { limit } = limitParts
     const order = limitParts.order ?? sortParts.order ?? '1'
-    const select = foreignParts.select ?? `$[${object}].*`
+    const { select } = foreignParts
 
     const values = {
       ...foreignParts.values,
@@ -401,7 +391,7 @@ export abstract class SqlFormatter {
       })
       .forEach((key) => {
         join.push(`JOIN $[${key.table}] ON $[${object}.${key.column}] = $[${key.table}.${key.column}]`)
-        select.push(`$[${key.table}.${key.column}].*`)
+        select.push(`$[${key.table}].*`)
       })
 
     let where = null
@@ -418,7 +408,7 @@ export abstract class SqlFormatter {
     return {
       join: this.joinStrings(' ', join) ?? undefined,
       select: this.joinStrings(', ', select) ?? undefined,
-      values,
+      values: values,
       where: where ?? undefined
     }
   }
@@ -441,7 +431,7 @@ export abstract class SqlFormatter {
 
     return {
       join: join ?? undefined,
-      values,
+      values: values,
       where: where ?? undefined
     }
   }
@@ -527,7 +517,7 @@ export abstract class SqlFormatter {
     return filteredStrings.join(delimiter)
   }
 
-  public abstract formatDdl (name: string, fields: Struct<SchemaField>): string
+  public abstract formatDdl (database: string, object: string, fields: Struct<SchemaField>): string
 
   public abstract formatIdentifier (value: string): string
 

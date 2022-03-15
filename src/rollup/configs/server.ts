@@ -9,7 +9,7 @@ import typescript from '@rollup/plugin-typescript'
 const options: RollupOptions = {
   external: isExternal,
   input: 'src/server/index.ts',
-  onwarn,
+  onwarn: onwarn,
   output: [{
     dir: '.',
     entryFileNames: 'dist/server/index.js',

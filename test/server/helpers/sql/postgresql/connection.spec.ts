@@ -59,7 +59,7 @@ async function deleteOneRow (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    const { id } = await connection.insertOne(sql`
+    const { id } = await connection.insert(sql`
       INSERT INTO test_connection (name)
       VALUES ($(name))
     `, {
@@ -178,7 +178,7 @@ async function insertOneRow (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    const { id } = await connection.insertOne(sql`
+    const { id } = await connection.insert(sql`
       INSERT INTO test_connection (
         name,
         value_boolean,
@@ -416,7 +416,7 @@ async function updateOneRow (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    const { id } = await connection.insertOne(sql`
+    const { id } = await connection.insert(sql`
       INSERT INTO test_connection (name)
       VALUES ($(name))
     `, {
@@ -428,7 +428,7 @@ async function updateOneRow (): Promise<void> {
       SET name = $(name)
       WHERE id = $(id)
     `, {
-      id,
+      id: id,
       name: 'name-update'
     })
 

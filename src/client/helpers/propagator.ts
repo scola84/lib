@@ -72,7 +72,7 @@ export class Propagator {
             bubbles: target === this.element,
             detail: this.createDetail(event, datum),
             element: this.element,
-            trigger
+            trigger: trigger
           }))
         })
       })

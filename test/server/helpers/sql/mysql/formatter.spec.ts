@@ -50,10 +50,10 @@ const foreignKeysExpectations = {
   withCursor: {
     string: [
       [
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[cursor] ASC',
       'LIMIT $(count) OFFSET 0'
@@ -68,8 +68,8 @@ const foreignKeysExpectations = {
   withForeignKey: {
     string: [
       [
-        'SELECT $[address.address_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[contact_address.contact_id] = $(contact_address_contact_id) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address.address_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[contact_address.contact_id] = $(contact_address_contact_id) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address].*, $[address].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[contact_address.contact_id] = $(contact_address_contact_id) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].*, $[address].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[contact_address.contact_id] = $(contact_address_contact_id) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'LIMIT $(count) OFFSET $(offset)'
@@ -85,10 +85,10 @@ const foreignKeysExpectations = {
   withSearch: {
     string: [
       [
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_user.user_id] = $(case_user_user_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_user.user_id] = $(case_user_user_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'LIMIT $(count) OFFSET $(offset)'
@@ -105,10 +105,10 @@ const foreignKeysExpectations = {
   withSort: {
     string: [
       [
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'LIMIT $(count) OFFSET $(offset)'
@@ -123,10 +123,10 @@ const foreignKeysExpectations = {
   withoutParameters: {
     string: [
       [
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address.address_id].*, $[contact.contact_id].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'LIMIT $(count) OFFSET $(offset)'
@@ -212,7 +212,7 @@ const relatedKeysExpectations = {
   }
 }
 
-const noKeysExpectations = {
+const withoutKeysExpectations = {
   withCursor: {
     string: [
       [
@@ -306,10 +306,10 @@ describe('MysqlFormatter', () => {
       })
 
       describe('no keys', () => {
-        it('with cursor', createASelectAllQueryWithoutKeysWithCursor.bind(null, formatter, noKeysExpectations))
-        it('with search', createASelectAllQueryWithoutKeysWithSearch.bind(null, formatter, noKeysExpectations))
-        it('with sort', createASelectAllQueryWithoutKeysWithSort.bind(null, formatter, noKeysExpectations))
-        it('without parameters', createASelectAllQueryWithoutKeysWithoutParameters.bind(null, formatter, noKeysExpectations))
+        it('with cursor', createASelectAllQueryWithoutKeysWithCursor.bind(null, formatter, withoutKeysExpectations))
+        it('with search', createASelectAllQueryWithoutKeysWithSearch.bind(null, formatter, withoutKeysExpectations))
+        it('with sort', createASelectAllQueryWithoutKeysWithSort.bind(null, formatter, withoutKeysExpectations))
+        it('without parameters', createASelectAllQueryWithoutKeysWithoutParameters.bind(null, formatter, withoutKeysExpectations))
       })
     })
 
@@ -326,11 +326,13 @@ function formatAQuery (): void {
     SELECT *
     FROM \`scola\`.\`test_connection\`
     WHERE
-      \`test\` = 1 AND
       \`test\` = NULL AND
+      \`test\` = NULL AND
+      \`test\` = true AND
       \`test\` = 1 AND
-      \`test\` = '{\\"number\\":3}' AND
-      \`test\` = 'value'
+      \`test\` = '1' AND
+      \`test\` = '1' AND
+      \`test\` = '{\\"number\\":3}'
   `
 
   const rawString = `
@@ -339,18 +341,22 @@ function formatAQuery (): void {
     WHERE
       $[test] = $(test1) AND
       $[test] = $(test2) AND
-      $[test] = $(test1) AND
       $[test] = $(test3) AND
-      $[test] = $(test4)
+      $[test] = $(test4) AND
+      $[test] = $(test5) AND
+      $[test] = $(test5) AND
+      $[test] = $(test6)
   `
 
   const rawValues = {
-    test1: 1,
-    test2: null,
-    test3: {
+    test1: null,
+    test2: undefined,
+    test3: true,
+    test4: 1,
+    test5: '1',
+    test6: {
       number: 3
-    },
-    test4: 'value'
+    }
   }
 
   expect(formatter.formatQuery({

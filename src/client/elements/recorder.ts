@@ -357,7 +357,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
     const scannerOptions: Html5QrcodeCameraScanConfig = {
       fps: this.codeFps,
-      videoConstraints
+      videoConstraints: videoConstraints
     }
 
     this.codeScanner = new ScolaRecorderElement.CodeScanner(this.id, false)
@@ -368,7 +368,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
           this.toggleAttribute('sc-has-code', true)
 
           this.propagator.dispatch('code', [{
-            code,
+            code: code,
             value: code
           }])
         }
@@ -502,7 +502,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
             })
 
             this.propagator.dispatch('image', [{
-              file,
+              file: file,
               filename: file.name,
               filesize: file.size,
               filetype: file.type
@@ -553,7 +553,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
       })
 
       this.propagator.dispatch(this.type, [{
-        file,
+        file: file,
         filename: file.name,
         filesize: file.size,
         filetype: file.type

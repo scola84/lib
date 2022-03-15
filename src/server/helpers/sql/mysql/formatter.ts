@@ -6,8 +6,9 @@ import { escape } from 'sqlstring'
 import { isStruct } from '../../../../common'
 
 export class MysqlFormatter extends SqlFormatter {
-  public formatDdl (object: string, fields: Struct<SchemaField>): string {
+  public formatDdl (database: string, object: string, fields: Struct<SchemaField>): string {
     const lines = [
+      `USE \`${database}\`;`,
       `CREATE TABLE \`${object}\` (`,
       [
         ...this
@@ -84,9 +85,9 @@ export class MysqlFormatter extends SqlFormatter {
     }
 
     return {
-      limit,
+      limit: limit,
       order: order ?? undefined,
-      values,
+      values: values,
       where: where ?? undefined
     }
   }
@@ -95,6 +96,8 @@ export class MysqlFormatter extends SqlFormatter {
     switch (field.type) {
       case 'date':
         return this.formatDdlColumnDate(name, field)
+      case 'datetime-local':
+        return this.formatDdlColumnDatetimeLocal(name, field)
       case 'file':
         return this.formatDdlColumnFile(name, field)
       case 'number':
@@ -115,11 +118,14 @@ export class MysqlFormatter extends SqlFormatter {
       ddl += ' NOT NULL'
     }
 
-    if (field.default !== undefined) {
-      ddl += ` DEFAULT '${
-        new Date(Date.parse(field.default))
-          .toISOString()
-      }'`
+    return ddl
+  }
+
+  protected formatDdlColumnDatetimeLocal (name: string, field: SchemaField): string {
+    let ddl = `\`${name}\` DATETIME`
+
+    if (field.required === true) {
+      ddl += ' NOT NULL'
     }
 
     return ddl
@@ -133,7 +139,7 @@ export class MysqlFormatter extends SqlFormatter {
     }
 
     if (field.default !== undefined) {
-      ddl += ` DEFAULT '${field.default}'`
+      ddl += ` DEFAULT '${field.default.toString()}'`
     }
 
     return ddl
@@ -163,7 +169,7 @@ export class MysqlFormatter extends SqlFormatter {
     }
 
     if (field.default !== undefined) {
-      ddl += ` DEFAULT ${field.default}`
+      ddl += ` DEFAULT ${field.default.toString()}`
     }
 
     if (field.pkey === true) {
@@ -188,13 +194,6 @@ export class MysqlFormatter extends SqlFormatter {
 
     if (field.required === true) {
       ddl += ' NOT NULL'
-    }
-
-    if (field.default !== undefined) {
-      ddl += ` DEFAULT '${
-        new Date(Date.parse(field.default))
-          .toISOString()
-      }'`
     }
 
     return ddl

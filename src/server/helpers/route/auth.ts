@@ -1,10 +1,10 @@
 import type { GroupUserRole, Role, User, UserToken } from '../../entities'
 import type { IncomingHttpHeaders, ServerResponse } from 'http'
-import type { SqlDatabase, SqlDeleteResult, SqlId, SqlInsertResult } from '../sql'
 import { parse, serialize } from 'cookie'
 import { randomBytes, scrypt } from 'crypto'
 import type { RedisClientType } from 'redis'
 import type { RouteData } from './handler'
+import type { SqlDatabase } from '../sql'
 import { createUserToken } from '../../entities'
 import { isStruct } from '../../../common'
 import { sql } from '../sql'
@@ -157,7 +157,7 @@ export class RouteAuth {
 
     user.role = role
     user.token = this.createUserToken(user, headers)
-    user.token.token_id = (await this.insertUserToken(user.token)).id
+    user.token.token_id = (await this.insertUserToken(user.token)).token_id
     await this.store?.hSet('sc-auth', user.token.hash, JSON.stringify(user))
     response.setHeader('Set-Cookie', this.createCookie(user.token))
   }
@@ -194,8 +194,8 @@ export class RouteAuth {
     })
   }
 
-  protected async deleteUserToken (userToken: Partial<UserToken>): Promise<SqlDeleteResult> {
-    return this.database.delete<UserToken>(sql`
+  protected async deleteUserToken (userToken: Partial<UserToken>): Promise<void> {
+    await this.database.delete<UserToken>(sql`
       DELETE
       FROM $[user_token]
       WHERE $[token_id] = $(token_id)
@@ -216,8 +216,8 @@ export class RouteAuth {
     })
   }
 
-  protected async insertUserToken (userToken: Partial<UserToken>): Promise<SqlInsertResult<SqlId>> {
-    return this.database.insert<UserToken>(sql`
+  protected async insertUserToken (userToken: Partial<UserToken>): Promise<Pick<UserToken, 'token_id'>> {
+    return this.database.insert<UserToken, Pick<UserToken, 'token_id'>>(sql`
       INSERT INTO $[user_token] (
         $[expires],
         $[group_id],
@@ -229,7 +229,7 @@ export class RouteAuth {
         $(token),
         $(user_id)
       )
-    `, userToken)
+    `, userToken, 'token_id')
   }
 
   protected async selectRoleByUserGroup (userId: number | string, groupId: number | string): Promise<Role | undefined> {

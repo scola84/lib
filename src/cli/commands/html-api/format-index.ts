@@ -15,26 +15,30 @@ export function ${camelize(options.object)} (): void {
 }
 
 function formatHandlers (options: Options, space: number): string {
-  const handlers = []
+  const lines = []
 
   if (options.methods.includes('DELETE')) {
-    handlers.push('const deleteHandler = new DeleteHandler()')
+    lines.push('const deleteHandler = new DeleteHandler()')
   }
 
   if (options.methods.includes('GET')) {
-    handlers.push('const getAllHandler = new GetAllHandler()')
-    handlers.push('const getHandler = new GetHandler()')
+    lines.push('const getAllHandler = new GetAllHandler()')
+    lines.push('const getHandler = new GetHandler()')
+  }
+
+  if (options.methods.includes('PATCH')) {
+    lines.push('const patchHandler = new PatchHandler()')
   }
 
   if (options.methods.includes('POST')) {
-    handlers.push('const postHandler = new PostHandler()')
+    lines.push('const postHandler = new PostHandler()')
   }
 
   if (options.methods.includes('PUT')) {
-    handlers.push('const putHandler = new PutHandler()')
+    lines.push('const putHandler = new PutHandler()')
   }
 
-  return handlers
+  return lines
     .map((line) => {
       return line.padStart(line.length + space - 2, ' ')
     })
@@ -43,47 +47,55 @@ function formatHandlers (options: Options, space: number): string {
 }
 
 function formatImport (methods: string): string {
-  const imports = []
+  const lines = []
 
   if (methods.includes('DELETE')) {
-    imports.push('import { DeleteHandler } from \'./delete\'')
+    lines.push('import { DeleteHandler } from \'./delete\'')
   }
 
   if (methods.includes('GET')) {
-    imports.push('import { GetAllHandler } from \'./get-all\'')
-    imports.push('import { GetHandler } from \'./get\'')
+    lines.push('import { GetAllHandler } from \'./get-all\'')
+    lines.push('import { GetHandler } from \'./get\'')
+  }
+
+  if (methods.includes('PATCH')) {
+    lines.push('import { PatchHandler } from \'./patch\'')
   }
 
   if (methods.includes('POST')) {
-    imports.push('import { PostHandler } from \'./post\'')
+    lines.push('import { PostHandler } from \'./post\'')
   }
 
   if (methods.includes('PUT')) {
-    imports.push('import { PutHandler } from \'./put\'')
+    lines.push('import { PutHandler } from \'./put\'')
   }
 
-  return imports.join('\n')
+  return lines.join('\n')
 }
 
 function formatStart (methods: string, space: number): string {
-  const imports = []
+  const lines = []
 
   if (methods.includes('DELETE')) {
-    imports.push('deleteHandler.start()')
+    lines.push('deleteHandler.start()')
   }
 
   if (methods.includes('GET')) {
-    imports.push('getAllHandler.start()')
-    imports.push('getHandler.start()')
+    lines.push('getAllHandler.start()')
+    lines.push('getHandler.start()')
+  }
+
+  if (methods.includes('PATCH')) {
+    lines.push('patchHandler.start()')
   }
 
   if (methods.includes('POST')) {
-    imports.push('postHandler.start()')
+    lines.push('postHandler.start()')
   }
 
   if (methods.includes('PUT')) {
-    imports.push('putHandler.start()')
+    lines.push('putHandler.start()')
   }
 
-  return formatGroup(imports, space, ['', ''], '').trim()
+  return formatGroup(lines, space, ['', ''], '').trim()
 }

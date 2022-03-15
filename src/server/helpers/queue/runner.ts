@@ -1,8 +1,8 @@
 import { PassThrough, Writable } from 'stream'
 import type { Queue, QueueRun, QueueTask } from '../../entities'
-import type { SqlDatabase, SqlInsertResult, SqlUpdateResult } from '../sql'
 import type { Readable } from 'stream'
 import type { RedisClientType } from 'redis'
+import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import { createQueueRun } from '../../entities'
 import { pipeline } from '../stream'
@@ -160,7 +160,7 @@ export class QueueRunner {
       await Promise.all(queues.map(async ({ id }): Promise<void> => {
         await this.store.publish('queue', JSON.stringify({
           command: 'run',
-          id,
+          id: id,
           parameters: {
             id: run.id
           }
@@ -177,8 +177,8 @@ export class QueueRunner {
    * @param run - The queue run
    * @returns The insert result
    */
-  protected async insertQueueRun (run: QueueRun): Promise<SqlInsertResult<number>> {
-    return this.database.insertOne<QueueRun, number>(sql`
+  protected async insertQueueRun (run: QueueRun): Promise<Pick<QueueRun, 'id'>> {
+    return this.database.insert<QueueRun, Pick<QueueRun, 'id'>>(sql`
       INSERT INTO queue_run (
         fkey_queue_id,
         name,
@@ -202,8 +202,8 @@ export class QueueRunner {
    * @param payload - The payload of the task
    * @returns The insert result
    */
-  protected async insertQueueTask (run: QueueRun, payload: unknown): Promise<SqlInsertResult<number>> {
-    return this.database.insertOne<QueueTask, number>(sql`
+  protected async insertQueueTask (run: QueueRun, payload: unknown): Promise<Pick<QueueTask, 'id'>> {
+    return this.database.insert<QueueTask, Pick<QueueTask, 'id'>>(sql`
       INSERT INTO queue_task (
         fkey_queue_run_id,
         payload
@@ -213,7 +213,7 @@ export class QueueRunner {
       )
     `, {
       fkey_queue_run_id: run.id,
-      payload
+      payload: payload
     })
   }
 
@@ -248,10 +248,9 @@ export class QueueRunner {
    *
    * @param run - The queue run
    * @param error - The error
-   * @returns The update result
    */
-  protected async updateQueueRunErr (run: QueueRun, error: unknown): Promise<SqlUpdateResult> {
-    return this.database.update<QueueRun>(sql`
+  protected async updateQueueRunErr (run: QueueRun, error: unknown): Promise<void> {
+    await this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
         status = 'err',
@@ -270,10 +269,9 @@ export class QueueRunner {
    * Sets `aggr_total` to the total of tasks which have been triggered.
    *
    * @param run - The queue run
-   * @returns The update result
    */
-  protected async updateQueueRunTotal (run: QueueRun): Promise<SqlUpdateResult> {
-    return this.database.update<QueueRun>(sql`
+  protected async updateQueueRunTotal (run: QueueRun): Promise<void> {
+    await this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
         aggr_total = $(aggr_total),

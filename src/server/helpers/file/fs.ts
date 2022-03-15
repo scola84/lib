@@ -1,4 +1,5 @@
 import { createReadStream, createWriteStream, mkdirSync, unlink } from 'fs-extra'
+import type { File } from '../../../common'
 import type { FileBucket } from './bucket'
 import type { Readable } from 'stream'
 import { isNil } from '../../../common'
@@ -18,9 +19,9 @@ export class FsFileBucket implements FileBucket {
     })
   }
 
-  public async delete (id: string): Promise<void> {
+  public async delete (file: File): Promise<void> {
     return new Promise((resolve, reject) => {
-      unlink(`${this.dir}/${id}`, (error) => {
+      unlink(`${this.dir}/${file.id}`, (error) => {
         if (isNil(error)) {
           resolve()
         } else {
@@ -30,17 +31,17 @@ export class FsFileBucket implements FileBucket {
     })
   }
 
-  public async get (id: string): Promise<Readable | undefined> {
+  public async get (file: File): Promise<Readable | undefined> {
     try {
-      return await Promise.resolve(createReadStream(`${this.dir}/${id}`))
+      return await Promise.resolve(createReadStream(`${this.dir}/${file.id}`))
     } catch (error: unknown) {
       return undefined
     }
   }
 
-  public async put (id: string, stream: Readable): Promise<void> {
+  public async put (file: File, stream: Readable): Promise<void> {
     return new Promise((resolve, reject) => {
-      const writer = createWriteStream(`${this.dir}/${id}`)
+      const writer = createWriteStream(`${this.dir}/${file.id}`)
 
       writer.once('error', reject)
       writer.once('finish', resolve)

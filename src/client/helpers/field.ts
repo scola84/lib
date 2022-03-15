@@ -201,7 +201,7 @@ export class Field {
 
     this.element.propagator.dispatch('file', files.map((file) => {
       return {
-        file,
+        file: file,
         name: file.name,
         size: file.size,
         type: file.type

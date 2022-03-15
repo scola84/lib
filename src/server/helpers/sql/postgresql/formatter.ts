@@ -1,13 +1,34 @@
-import type { SqlQueryParts, SqlSelectAllParameters } from '../query'
+import type { Schema, SchemaField } from '../../schema'
+import type { SqlQuery, SqlQueryKeys, SqlQueryParts, SqlSelectAllParameters } from '../query'
 import { isArray, isDate, isNil, isObject, isPrimitive } from '../../../../common'
-import type { SchemaField } from '../../schema'
 import { SqlFormatter } from '../formatter'
 import type { Struct } from '../../../../common'
 import { literal } from 'pg-format'
+import { sql } from '../tag'
 
 export class PostgresqlFormatter extends SqlFormatter {
-  public formatDdl (object: string, fields: Struct<SchemaField>): string {
+  public createInsertQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct): SqlQuery {
+    let {
+      string,
+      values
+    } = super.createInsertQuery(object, keys, schema, data)
+
+    if (keys.primary?.length === 1) {
+      string = sql`
+        ${string}
+        RETURNING $[${keys.primary[0].column}] AS id
+      `
+    }
+
+    return {
+      string,
+      values
+    }
+  }
+
+  public formatDdl (database: string, object: string, fields: Struct<SchemaField>): string {
     const lines = [
+      `\\connect "${database}"`,
       `CREATE TABLE "public"."${object}" (`,
       [
         ...this
@@ -62,7 +83,8 @@ export class PostgresqlFormatter extends SqlFormatter {
       isObject(value) ||
       isPrimitive(value)
     ) && (
-      typeof value !== 'symbol'
+      typeof value !== 'symbol' &&
+      !Number.isFinite(value)
     )) {
       return literal(value)
     }
@@ -90,9 +112,9 @@ export class PostgresqlFormatter extends SqlFormatter {
     }
 
     return {
-      limit,
+      limit: limit,
       order: order ?? undefined,
-      values,
+      values: values,
       where: where ?? undefined
     }
   }
@@ -101,6 +123,8 @@ export class PostgresqlFormatter extends SqlFormatter {
     switch (field.type) {
       case 'date':
         return this.formatDdlColumnDate(name, field)
+      case 'datetime-local':
+        return this.formatDdlColumnDatetimeLocal(name, field)
       case 'file':
         return this.formatDdlColumnFile(name, field)
       case 'number':
@@ -121,11 +145,14 @@ export class PostgresqlFormatter extends SqlFormatter {
       ddl += ' NOT NULL'
     }
 
-    if (field.default !== undefined) {
-      ddl += ` DEFAULT '${
-        new Date(Date.parse(field.default))
-          .toISOString()
-      }'::TIMESTAMPTZ`
+    return ddl
+  }
+
+  protected formatDdlColumnDatetimeLocal (name: string, field: SchemaField): string {
+    let ddl = `"${name}" TIMESTAMPTZ`
+
+    if (field.required === true) {
+      ddl += ' NOT NULL'
     }
 
     return ddl
@@ -139,7 +166,7 @@ export class PostgresqlFormatter extends SqlFormatter {
     }
 
     if (field.default !== undefined) {
-      ddl += ` DEFAULT '${field.default}'::CHARACTER`
+      ddl += ` DEFAULT '${field.default.toString()}'::CHARACTER`
     }
 
     return ddl
@@ -172,7 +199,7 @@ export class PostgresqlFormatter extends SqlFormatter {
       }
 
       if (field.default !== undefined) {
-        ddl += ` DEFAULT ${field.default}`
+        ddl += ` DEFAULT ${field.default.toString()}`
       }
     }
 
@@ -194,13 +221,6 @@ export class PostgresqlFormatter extends SqlFormatter {
 
     if (field.required === true) {
       ddl += ' NOT NULL'
-    }
-
-    if (field.default !== undefined) {
-      ddl += ` DEFAULT '${
-        new Date(Date.parse(field.default))
-          .toISOString()
-      }'::TIMESTAMPTZ`
     }
 
     return ddl

@@ -1,7 +1,8 @@
+import type { File } from '../../../common'
 import type { Readable } from 'stream'
 
 export interface FileBucket {
-  delete: (id: string) => Promise<unknown>
-  get: (id: string) => Promise<Readable | undefined>
-  put: (id: string, stream: Readable) => Promise<unknown>
+  delete: (file: File) => Promise<unknown>
+  get: (file: File) => Promise<Readable | undefined>
+  put: (file: File, stream: Readable) => Promise<unknown>
 }

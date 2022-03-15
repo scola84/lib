@@ -30,9 +30,12 @@ function formatBodySchema (schema: Schema, space: number): string {
     Object
       .entries(schema)
       .filter(([,field]) => {
-        return field.rkey === undefined && (
-          field.pkey !== true ||
-          field.fkey !== undefined
+        return (
+          field.rkey === undefined &&
+          field.default !== '$created'
+        ) && (
+          field.fkey === undefined ||
+          field.pkey === true
         )
       })
       .reduce((result, [name, field]) => {

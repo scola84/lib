@@ -1,5 +1,6 @@
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http'
 import { isNil, isStruct } from '../../../common'
+import type { FileBucket } from '../file'
 import type { Logger } from 'pino'
 import type { RedisClientType } from 'redis'
 import type { RouteAuth } from './auth'
@@ -23,6 +24,7 @@ export interface RouteData {
 
 export interface RouteHandlerOptions {
   auth: RouteAuth
+  bucket: FileBucket
   codec: RouteCodec
   database: SqlDatabase
   logger: Logger
@@ -37,6 +39,8 @@ export abstract class RouteHandler {
   public static options?: Partial<RouteHandlerOptions>
 
   public auth?: RouteAuth
+
+  public bucket?: FileBucket
 
   public codec: RouteCodec
 
@@ -79,6 +83,7 @@ export abstract class RouteHandler {
     }
 
     this.auth = handlerOptions.auth
+    this.bucket = handlerOptions.bucket
     this.codec = handlerOptions.codec
     this.database = handlerOptions.database
     this.logger = handlerOptions.logger
@@ -151,23 +156,6 @@ export abstract class RouteHandler {
     response.setHeader('content-type', 'application/json')
 
     try {
-      data.body = await this.codec.decode(request)
-    } catch (error: unknown) {
-      response.statusCode = 415
-      response.removeHeader('content-type')
-      response.end()
-      throw error
-    }
-
-    try {
-      this.validateData(data)
-    } catch (error: unknown) {
-      response.statusCode = 400
-      response.end(this.codec.encode(error, response))
-      throw error
-    }
-
-    try {
       data.user = await this.auth?.authenticate(data)
     } catch (error: unknown) {
       await this.auth?.logout(data, response)
@@ -186,14 +174,31 @@ export abstract class RouteHandler {
       response.end()
       throw error
     }
+
+    try {
+      data.body = await this.codec.decode(request, this.schema.body)
+    } catch (error: unknown) {
+      response.statusCode = 415
+      response.removeHeader('content-type')
+      response.end()
+      throw error
+    }
+
+    try {
+      this.validateData(data)
+    } catch (error: unknown) {
+      response.statusCode = 400
+      response.end(this.codec.encode(error, response))
+      throw error
+    }
   }
 
-  protected validate<Data extends Struct = Struct>(name: string, data: Data): Data {
+  protected validate<Data extends Struct = Struct>(name: string, data: Data, user?: User): Data {
     if (this.validators[name] === undefined) {
       throw new Error(`Schema "${name}" is undefined`)
     }
 
-    const errors = this.validators[name]?.validate(data)
+    const errors = this.validators[name]?.validate(data, user)
 
     if (!isNil(errors)) {
       throw errors as unknown as Error
@@ -205,18 +210,18 @@ export abstract class RouteHandler {
   protected validateData (data: RouteData): void {
     if (this.validators.body !== undefined) {
       if (isStruct(data.body)) {
-        this.validate('body', data.body)
+        this.validate('body', data.body, data.user)
       } else {
-        this.validate('body', {})
+        this.validate('body', {}, data.user)
       }
     }
 
     if (this.validators.headers !== undefined) {
-      this.validate('headers', data.headers)
+      this.validate('headers', data.headers, data.user)
     }
 
     if (this.validators.query !== undefined) {
-      this.validate('query', data.query)
+      this.validate('query', data.query, data.user)
     }
   }
 

@@ -34,7 +34,7 @@ export class Dropper {
 
     this.element.propagator.dispatch('dropfile', files.map((file) => {
       return {
-        file,
+        file: file,
         name: file.name,
         size: file.size,
         type: file.type

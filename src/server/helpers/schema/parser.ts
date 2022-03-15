@@ -34,13 +34,15 @@ export class SchemaParser {
             type: ''
           }
 
+          this.extractBase(attributes, field)
+          this.extractFile(attributes, field)
+          this.extractNumber(attributes, field)
+          this.extractString(attributes, field)
+
           if (element.nodeName === 'select') {
             this.extractSelect(attributes, element.childNodes, field)
-          } else if (element.nodeName === 'textarea') {
-            this.extractTextarea(field)
           }
 
-          this.extractConstraints(attributes, field)
           this.extractDatabaseAuth(attributes, field)
           this.extractDatabaseOptions(attributes, field)
           fields[attributes.name] = field
@@ -64,7 +66,7 @@ export class SchemaParser {
     return this.sortObject(fields) as Schema
   }
 
-  protected extractConstraints (attributes: SchemaAttributes, field: SchemaField): void {
+  protected extractBase (attributes: SchemaAttributes, field: SchemaField): void {
     if (attributes.type !== undefined) {
       field.type = attributes.type
 
@@ -75,35 +77,13 @@ export class SchemaParser {
         this.extractRadio(attributes, field)
       } else if (attributes.value !== undefined) {
         field.default = attributes.value
+      } else if (attributes['sc-value'] !== undefined) {
+        field.default = attributes['sc-value']
       }
-    }
-
-    if (attributes.max !== undefined) {
-      field.max = Number(attributes.max)
-    }
-
-    if (attributes.maxLength !== undefined) {
-      field.maxLength = Number(attributes.maxLength)
-    }
-
-    if (attributes.min !== undefined) {
-      field.min = Number(attributes.min)
-    }
-
-    if (attributes.minLength !== undefined) {
-      field.minLength = Number(attributes.minLength)
-    }
-
-    if (attributes.pattern !== undefined) {
-      field.pattern = new RegExp(attributes.pattern, 'iu')
     }
 
     if (attributes.required !== undefined) {
       field.required = true
-    }
-
-    if (attributes.step !== undefined) {
-      field.step = Number(attributes.step)
     }
 
     if (attributes['sc-custom'] !== undefined) {
@@ -171,12 +151,32 @@ export class SchemaParser {
       field.sort = true
     }
 
-    if (attributes['sc-type'] !== undefined) {
-      field.type = attributes['sc-type']
-    }
-
     if (attributes['sc-unique'] !== undefined) {
       field.unique = attributes['sc-unique']
+    }
+  }
+
+  protected extractFile (attributes: SchemaAttributes, field: SchemaField): void {
+    if (attributes.accept !== undefined) {
+      field.accept = attributes.accept
+        .split(',')
+        .map((accept) => {
+          return accept.trim()
+        })
+    }
+  }
+
+  protected extractNumber (attributes: SchemaAttributes, field: SchemaField): void {
+    if (attributes.max !== undefined) {
+      field.max = Number(attributes.max)
+    }
+
+    if (attributes.min !== undefined) {
+      field.min = Number(attributes.min)
+    }
+
+    if (attributes.step !== undefined) {
+      field.step = Number(attributes.step)
     }
   }
 
@@ -190,12 +190,6 @@ export class SchemaParser {
   }
 
   protected extractSelect (attributes: SchemaAttributes, childNodes: ChildNode[], field: SchemaField): void {
-    if (attributes.multiple === undefined) {
-      field.type = 'select'
-    } else {
-      field.type = 'selectall'
-    }
-
     field.values = []
 
     for (const option of childNodes) {
@@ -211,8 +205,18 @@ export class SchemaParser {
     }
   }
 
-  protected extractTextarea (field: SchemaField): void {
-    field.type = 'textarea'
+  protected extractString (attributes: SchemaAttributes, field: SchemaField): void {
+    if (attributes.maxLength !== undefined) {
+      field.maxLength = Number(attributes.maxLength)
+    }
+
+    if (attributes.minLength !== undefined) {
+      field.minLength = Number(attributes.minLength)
+    }
+
+    if (attributes.pattern !== undefined) {
+      field.pattern = new RegExp(attributes.pattern, 'iu')
+    }
   }
 
   protected async extractView (attributes: SchemaAttributes, fields: Schema, dir: string): Promise<void> {

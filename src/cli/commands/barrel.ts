@@ -1,9 +1,10 @@
-import { camelize, formatGroup } from './barrel/'
-import { readdirSync, writeFileSync } from 'fs-extra'
+import { formatName, formatWildcard, readers } from './barrel/'
 import { Command } from 'commander'
-import type { Struct } from '../../common'
+import { writeFileSync } from 'fs-extra'
 
 interface Options {
+  defaults?: boolean
+  name?: string
   type: string
 }
 
@@ -20,12 +21,19 @@ Example:
 
 program
   .argument('[target]', 'directory to create the barrel for', process.cwd())
+  .option('-d, --defaults', 'whether to import defaults')
+  .option('-n, --name <name>', 'output name')
   .option('-t, --type <type>', 'output type', 'ts')
   .parse()
 
 try {
   const [target] = program.args
-  const { type } = program.opts<Options>()
+
+  const {
+    defaults,
+    name,
+    type
+  } = program.opts<Options>()
 
   let targetDir = target
 
@@ -33,63 +41,33 @@ try {
     targetDir = process.cwd()
   }
 
-  const writers: Struct<(() => void) | undefined> = {
-    html: () => {
-      const files = readdirSync(targetDir)
-        .filter((file) => {
-          return file !== 'index.ts'
-        })
-        .map((file) => {
-          return file.replace('.html', '')
-        })
-        .sort((left, right) => {
-          if (right.includes(left)) {
-            return -1
-          }
+  if (readers[type] === undefined) {
+    throw new Error(`Reader for type "${type}" is undefined`)
+  }
 
-          if (left < right) {
-            return -1
-          }
+  const files = readers[type]?.(targetDir) ?? []
 
-          return 1
-        })
-
-      const imports = files
-        .map((file) => {
-          return `import ${camelize(file)} from './${file}.html'`
-        })
-        .join('\n')
-
-      const exports = files
-        .map((file) => {
-          return camelize(file)
-        })
-
-      return [
-        imports,
-        `export ${formatGroup(exports, 0)}`
-      ].join('\n\n')
-    },
-    ts: () => {
-      return readdirSync(targetDir)
-        .filter((file) => {
-          return file !== 'index.ts'
-        })
-        .map((file) => {
-          return file.replace('.ts', '')
-        })
-        .map((file) => {
-          return `export * from './${file}'`
-        })
-        .join('\n')
+  files.sort(([,leftBase], [,rightBase]) => {
+    if (rightBase.includes(leftBase)) {
+      return -1
     }
+
+    if (leftBase < rightBase) {
+      return -1
+    }
+
+    return 1
+  })
+
+  let data = ''
+
+  if (name === undefined) {
+    data = formatWildcard(files)
+  } else {
+    data = formatName(files, name, defaults)
   }
 
-  if (writers[type] === undefined) {
-    throw new Error(`Writer for type "${type}" is undefined`)
-  }
-
-  writeFileSync(`${targetDir}/index.ts`, `${writers[type]?.() ?? ''}\n`)
+  writeFileSync(`${targetDir}/index.ts`, `${data}\n`)
 } catch (error: unknown) {
   logger.error(String(error).toLowerCase())
 }

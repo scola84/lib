@@ -16,7 +16,7 @@ const pkg = require(`${process.cwd()}/package.json`) as Record<string, unknown>
 
 const options: RollupOptions = {
   input: 'src/client/index.ts',
-  onwarn,
+  onwarn: onwarn,
   output: [{
     dir: '.',
     entryFileNames: 'dist/client/index.mjs',

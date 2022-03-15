@@ -13,7 +13,7 @@ import typescript from '@rollup/plugin-typescript'
 
 const options: RollupOptions = {
   input: 'src/worker/index.ts',
-  onwarn,
+  onwarn: onwarn,
   output: {
     dir: '.',
     entryFileNames: 'dist/client/worker.js',

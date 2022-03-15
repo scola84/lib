@@ -102,12 +102,12 @@ try {
 
   sqlts
     .toObject({
-      client,
+      client: client,
       connection: String(url),
       // eslint-disable-next-line no-template-curly-in-string
       interfaceNameFormat: '${table}',
       tableNameCasing: 'pascal',
-      typeMap
+      typeMap: typeMap
     })
     .then((database) => {
       database.tables = database.tables.filter((table) => {

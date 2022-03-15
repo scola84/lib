@@ -1,11 +1,11 @@
 import type { Queue, QueueRun, QueueTask } from '../../entities'
 import type { Readable, Transform, Writable } from 'stream'
-import type { SqlDatabase, SqlUpdateResult } from '../sql'
 import Ajv from 'ajv'
 import type { Logger } from 'pino'
 import type { ObjectSchema } from 'fluent-json-schema'
 import type { Queuer } from './queuer'
 import type { RedisClientType } from 'redis'
+import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import type { queue as fastq } from 'fastq'
 import { pipeline } from '../stream'
@@ -362,7 +362,7 @@ export abstract class QueueHandler {
     await Promise.all(queues.map(async ({ id }) => {
       await this.store.publish('queue', JSON.stringify({
         command: 'run',
-        id,
+        id: id,
         parameters: {
           id: task.run.id
         }
@@ -586,10 +586,9 @@ export abstract class QueueHandler {
    * When the queue run has finished, sets `status` to either 'ok' or 'err', depending on the result of the task.
    *
    * @param task - The task
-   * @returns The update result
    */
-  protected async updateQueueRun (task: QueueTask): Promise<SqlUpdateResult> {
-    return this.database.update<QueueRun>(sql`
+  protected async updateQueueRun (task: QueueTask): Promise<void> {
+    await this.database.update<QueueRun>(sql`
       UPDATE queue_run
       SET
         aggr_${task.status} = aggr_${task.status} + 1,
@@ -618,10 +617,9 @@ export abstract class QueueHandler {
    * Sets `status`, `reason` and `result`.
    *
    * @param task - The task
-   * @returns The update result
    */
-  protected async updateQueueTaskOnFinish (task: QueueTask): Promise<SqlUpdateResult> {
-    return this.database.update<QueueTask>(sql`
+  protected async updateQueueTaskOnFinish (task: QueueTask): Promise<void> {
+    await this.database.update<QueueTask>(sql`
       UPDATE queue_task
       SET
         date_updated = NOW(),
@@ -643,10 +641,9 @@ export abstract class QueueHandler {
    * Sets `date_queued` and `host`.
    *
    * @param task - The task
-   * @returns The update result
    */
-  protected async updateQueueTaskOnRead (task: Pick<QueueTask, 'id'>): Promise<SqlUpdateResult> {
-    return this.database.update<QueueTask>(sql`
+  protected async updateQueueTaskOnRead (task: Pick<QueueTask, 'id'>): Promise<void> {
+    await this.database.update<QueueTask>(sql`
       UPDATE queue_task
       SET
         date_queued = NOW(),
@@ -665,10 +662,9 @@ export abstract class QueueHandler {
    * Sets `date_started`.
    *
    * @param task - The task
-   * @returns The update result
    */
-  protected async updateQueueTaskOnRun (task: QueueTask): Promise<SqlUpdateResult> {
-    return this.database.update<QueueTask>(sql`
+  protected async updateQueueTaskOnRun (task: QueueTask): Promise<void> {
+    await this.database.update<QueueTask>(sql`
       UPDATE queue_task
       SET
         date_started = NOW(),

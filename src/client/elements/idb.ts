@@ -1,8 +1,9 @@
 import { Mutator, Observer, Propagator } from '../helpers'
 import { isArray, isStruct } from '../../common'
 import type { IDBPDatabase } from 'idb/with-async-ittr'
-import type { ScolaElement } from './element'
+import type { ScolaTransactionElement } from './transaction'
 import type { Struct } from '../../common'
+import { Transaction } from '../helpers/transaction'
 import { openDB } from 'idb/with-async-ittr'
 
 declare global {
@@ -16,12 +17,17 @@ declare global {
     'sc-idb-get-all': CustomEvent
     'sc-idb-put': CustomEvent
     'sc-idb-put-all': CustomEvent
+    'sc-idb-tadd': CustomEvent
+    'sc-idb-tcommit': CustomEvent
+    'sc-idb-tdelete': CustomEvent
+    'sc-idb-tput': CustomEvent
+    'sc-idb-trollback': CustomEvent
   }
 }
 
 type Migration = (database: IDBPDatabase) => Promise<void>
 
-export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
+export class ScolaIdbElement extends HTMLObjectElement implements ScolaTransactionElement {
   public static migrations: Struct<Migration | undefined> = {}
 
   public database?: IDBPDatabase
@@ -38,7 +44,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
   public version: number
 
-  public get versionName (): string {
+  public get nameVersion (): string {
     return `${this.name}-${this.version}`
   }
 
@@ -62,6 +68,16 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
   protected handlePutBound = this.handlePut.bind(this)
 
+  protected handleTAddBound = this.handleTAdd.bind(this)
+
+  protected handleTCommitBound = this.handleTCommit.bind(this)
+
+  protected handleTDeleteBound = this.handleTDelete.bind(this)
+
+  protected handleTPutBound = this.handleTPut.bind(this)
+
+  protected handleTRollbackBound = this.handleTRollback.bind(this)
+
   public constructor () {
     super()
     this.mutator = new Mutator(this)
@@ -84,11 +100,11 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       })
   }
 
-  public async add (data: unknown): Promise<unknown> {
+  public async add (data: Struct): Promise<Struct> {
     return this
       .getDatabase()
       .then(async (database) => {
-        return database.add(this.versionName, data)
+        return database.add(this.nameVersion, data)
       })
       .then((key) => {
         if (isStruct(data)) {
@@ -107,7 +123,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     await Promise.all(data.map(async (datum) => {
       if (isStruct(datum)) {
         await database
-          .add(this.versionName, datum)
+          .add(this.nameVersion, datum)
           .then((key) => {
             datum[this.key] = key
           })
@@ -122,11 +138,32 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     return this
       .getDatabase()
       .then(async (database) => {
-        return database.clear(this.versionName)
+        return database.clear(this.nameVersion)
       })
       .then(() => {
         this.update()
       })
+  }
+
+  public async commit (transaction: Transaction): Promise<void> {
+    if (isStruct(transaction.result)) {
+      switch (transaction.type) {
+        case 'tadd':
+          await this.delete(transaction.data)
+          await this.put(transaction.result)
+          break
+        case 'tdelete':
+          await this.delete(transaction.result)
+          break
+        case 'tput':
+          await this.put(transaction.result)
+          break
+        default:
+          break
+      }
+    }
+
+    await transaction.delete()
   }
 
   public connectedCallback (): void {
@@ -136,19 +173,17 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     this.addEventListeners()
   }
 
-  public async delete (data: unknown): Promise<unknown> {
+  public async delete (data: Struct): Promise<Struct> {
     return this
       .getDatabase()
       .then(async (database) => {
-        if (isStruct(data)) {
-          const key = data[this.key]
+        const key = data[this.key]
 
-          if (
-            typeof key === 'number' ||
-            typeof key === 'string'
-          ) {
-            await database.delete(this.versionName, key)
-          }
+        if (
+          typeof key === 'number' ||
+          typeof key === 'string'
+        ) {
+          await database.delete(this.nameVersion, key)
         }
       })
       .then(() => {
@@ -168,7 +203,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
           typeof key === 'number' ||
           typeof key === 'string'
         ) {
-          await database.delete(this.versionName, key)
+          await database.delete(this.nameVersion, key)
         }
       }
     }))
@@ -185,11 +220,20 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     this.close()
   }
 
-  public async get (key: IDBValidKey): Promise<unknown> {
+  public async get (data: Struct): Promise<Struct | undefined> {
     return this
       .getDatabase()
       .then(async (database) => {
-        return database.get(this.versionName, key)
+        const key = data[this.key]
+
+        if (
+          typeof key === 'number' ||
+          typeof key === 'string'
+        ) {
+          return await database.get(this.nameVersion, key) as unknown as Struct
+        }
+
+        return undefined
       })
   }
 
@@ -197,7 +241,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     return this
       .getDatabase()
       .then(async (database) => {
-        return database.getAll(this.versionName)
+        return database.getAll(this.nameVersion)
       })
   }
 
@@ -205,11 +249,11 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     return {}
   }
 
-  public async put (data: unknown): Promise<unknown> {
+  public async put (data: Struct): Promise<Struct> {
     return this
       .getDatabase()
       .then(async (database) => {
-        return database.put(this.versionName, data)
+        return database.put(this.nameVersion, data)
       })
       .then(() => {
         this.update()
@@ -222,7 +266,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
     await Promise.all(data.map(async (datum) => {
       if (isStruct(datum)) {
-        await database.put(this.versionName, datum)
+        await database.put(this.nameVersion, datum)
       }
     }))
 
@@ -234,6 +278,24 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     this.key = this.getAttribute('sc-key') ?? 'id'
     this.name = this.getAttribute('sc-name') ?? 'idb'
     this.version = Number(this.getAttribute('sc-version') ?? 1)
+  }
+
+  public async rollback (transaction: Transaction): Promise<void> {
+    switch (transaction.type) {
+      case 'tadd':
+        await this.delete(transaction.data)
+        break
+      case 'tdelete':
+        await this.put(transaction.data)
+        break
+      case 'tput':
+        await this.put(transaction.data)
+        break
+      default:
+        break
+    }
+
+    await transaction.delete()
   }
 
   public setData (): void {}
@@ -261,6 +323,11 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     this.addEventListener('sc-idb-get-all', this.handleGetAllBound)
     this.addEventListener('sc-idb-put', this.handlePutBound)
     this.addEventListener('sc-idb-put-all', this.handlePutAllBound)
+    this.addEventListener('sc-idb-tadd', this.handleTAddBound)
+    this.addEventListener('sc-idb-tcommit', this.handleTCommitBound)
+    this.addEventListener('sc-idb-tdelete', this.handleTDeleteBound)
+    this.addEventListener('sc-idb-tput', this.handleTPutBound)
+    this.addEventListener('sc-idb-trollback', this.handleTRollbackBound)
   }
 
   protected close (): void {
@@ -351,25 +418,18 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
   protected handleGet (event: CustomEvent): void {
     if (isStruct(event.detail)) {
-      const key = event.detail[this.key]
-
-      if (
-        typeof key === 'string' ||
-        typeof key === 'number'
-      ) {
-        this
-          .get(key)
-          .then((data) => {
-            if (data === undefined) {
-              this.propagator.dispatch('request', [event.detail], event)
-            } else {
-              this.propagator.dispatch('get', [data], event)
-            }
-          })
-          .catch((error) => {
-            this.handleError(error)
-          })
-      }
+      this
+        .get(event.detail)
+        .then((data) => {
+          if (data === undefined) {
+            this.propagator.dispatch('request', [event.detail], event)
+          } else {
+            this.propagator.dispatch('get', [data], event)
+          }
+        })
+        .catch((error) => {
+          this.handleError(error)
+        })
     }
   }
 
@@ -410,6 +470,101 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     }
   }
 
+  protected handleTAdd (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      this
+        .add(event.detail)
+        .then(async (data) => {
+          const transaction = new Transaction(this, {
+            data: data,
+            type: 'tadd'
+          })
+
+          await transaction.put()
+          this.propagator.dispatch('tadd', [transaction], event)
+        })
+        .catch((error) => {
+          this.handleError(error)
+        })
+    }
+  }
+
+  protected handleTCommit (event: CustomEvent): void {
+    if (event.detail instanceof Transaction) {
+      this
+        .commit(event.detail)
+        .catch((error) => {
+          this.handleError(error)
+        })
+    }
+  }
+
+  protected handleTDelete (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      this
+        .get(event.detail)
+        .then(async (data) => {
+          if (
+            data !== undefined &&
+            isStruct(event.detail)
+          ) {
+            await this
+              .delete(data)
+              .then(async () => {
+                const transaction = new Transaction(this, {
+                  data: data,
+                  type: 'tdelete'
+                })
+
+                await transaction.put()
+                this.propagator.dispatch('tdelete', [transaction], event)
+              })
+          }
+        })
+        .catch((error) => {
+          this.handleError(error)
+        })
+    }
+  }
+
+  protected handleTPut (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      this
+        .get(event.detail)
+        .then(async (data) => {
+          if (
+            data !== undefined &&
+            isStruct(event.detail)
+          ) {
+            await this
+              .put(event.detail)
+              .then(async () => {
+                const transaction = new Transaction(this, {
+                  data: data,
+                  type: 'tput'
+                })
+
+                await transaction.put()
+                this.propagator.dispatch('tput', [transaction], event)
+              })
+          }
+        })
+        .catch((error) => {
+          this.handleError(error)
+        })
+    }
+  }
+
+  protected handleTRollback (event: CustomEvent): void {
+    if (event.detail instanceof Transaction) {
+      this
+        .rollback(event.detail)
+        .catch((error) => {
+          this.handleError(error)
+        })
+    }
+  }
+
   protected async open (): Promise<IDBPDatabase> {
     let migration: Migration | null = null
 
@@ -417,7 +572,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       upgrade: (database, oldVersion, newVersion) => {
         migration = ScolaIdbElement.migrations[`${this.name}_${oldVersion}_${newVersion ?? 0}`] ?? null
 
-        database.createObjectStore(this.versionName, {
+        database.createObjectStore(this.nameVersion, {
           autoIncrement: true,
           keyPath: this.key
         })
@@ -444,5 +599,10 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     this.removeEventListener('sc-idb-get-all', this.handleGetAllBound)
     this.removeEventListener('sc-idb-put', this.handlePutBound)
     this.removeEventListener('sc-idb-put-all', this.handlePutAllBound)
+    this.removeEventListener('sc-idb-tadd', this.handleTAddBound)
+    this.removeEventListener('sc-idb-tcommit', this.handleTCommitBound)
+    this.removeEventListener('sc-idb-tdelete', this.handleTDeleteBound)
+    this.removeEventListener('sc-idb-tput', this.handleTPutBound)
+    this.removeEventListener('sc-idb-trollback', this.handleTRollbackBound)
   }
 }

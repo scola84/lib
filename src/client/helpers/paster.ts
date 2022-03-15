@@ -41,7 +41,7 @@ export class Paster {
 
     this.element.propagator.dispatch('pastefile', files.map((file) => {
       return {
-        file,
+        file: file,
         name: file.name,
         size: file.size,
         type: file.type

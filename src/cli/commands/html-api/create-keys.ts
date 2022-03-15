@@ -14,12 +14,18 @@ export function createKeys (object: string, schema: Schema, relations: Struct<Sc
   }
 }
 
-function createAuthKeys (schema: Schema): Struct<SchemaFieldKey[][]> {
-  return sortKeys(Object
+function createAuthKeys (schema: Schema): Struct<SchemaFieldKey[][]> | undefined {
+  const keys = Object
     .entries(schema)
     .filter(([,field]) => {
       return field.auth !== undefined
     })
+
+  if (keys.length === 0) {
+    return undefined
+  }
+
+  return sortKeys(keys
     .reduce((result, [name, field]) => {
       return {
         ...result,

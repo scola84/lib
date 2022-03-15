@@ -1,25 +1,17 @@
-import { cast, isArray, isFile, isNil, isStruct } from '../../../common'
-import type { Struct } from '../../../common'
+import type { Primitive, Struct } from '../../../common'
+import type { User } from '../../entities'
+import { isStruct } from '../../../common'
 
-type Validator = (data: Struct, errors: Struct) => boolean
+type BoundValidator = (data: Struct, errors: Struct, user?: User) => boolean | null
 
-type ValidatorBase = (name: string, field: SchemaField, data: Struct, errors: Struct) => boolean
-
-interface Validators extends Struct<ValidatorBase | undefined> {
-  max: ValidatorBase
-  maxLength: ValidatorBase
-  min: ValidatorBase
-  minLength: ValidatorBase
-  pattern: ValidatorBase
-  required: ValidatorBase
-  step: ValidatorBase
-}
+type Validator = (name: string, field: SchemaField, data: Struct, errors: Struct, user?: User) => boolean | null
 
 export interface SchemaField extends Struct {
+  accept?: string[]
   auth?: SchemaFieldKey[][]
   cursor?: number
   custom?: string
-  default?: string
+  default?: Primitive
   index?: string
   fkey?: SchemaFieldKey
   max?: number
@@ -47,314 +39,40 @@ export interface SchemaFieldKey {
 export type Schema = Struct<SchemaField>
 
 export class SchemaValidator {
-  public static validators: Validators = {
-    checkbox (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      let values = data[name]
-
-      if (!isArray(values)) {
-        values = [values]
-      }
-
-      if (isArray(values)) {
-        const included = values.every((value) => {
-          return field.values?.includes(value) === true
-        })
-
-        if (!included) {
-          errors[name] = {
-            code: 'err_validator_bad_input_checkbox',
-            data: { values: field.values }
-          }
-
-          return false
-        }
-      }
-
-      return true
-    },
-    color (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (!(/[a-f0-9]{7}/iu).test(String(data[name]))) {
-        errors[name] = {
-          code: 'err_validator_bad_input_color'
-        }
-
-        return false
-      }
-
-      return true
-    },
-    date (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (Number.isNaN(Date.parse(String(data[name])))) {
-        errors[name] = {
-          code: 'err_validator_bad_input_date'
-        }
-
-        return false
-      }
-
-      return true
-    },
-    email (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (!(/.+@.+/iu).test(String(data[name]))) {
-        errors[name] = {
-          code: 'err_validator_bad_input_email'
-        }
-
-        return false
-      }
-
-      return true
-    },
-    file (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      let values = data[name]
-
-      if (!isArray(values)) {
-        values = [values]
-      }
-
-      if (isArray(values)) {
-        const valid = values.every((value) => {
-          return isFile(value)
-        })
-
-        if (!valid) {
-          errors[name] = {
-            code: 'err_validator_bad_input_file'
-          }
-
-          return false
-        }
-      }
-
-      return true
-    },
-    max (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (Number(data[name]) > (field.max ?? Infinity)) {
-        errors[name] = {
-          code: 'err_validator_range_overflow',
-          data: { max: field.max }
-        }
-
-        return false
-      }
-
-      return true
-    },
-    maxLength (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (String(data[name]).length > (field.maxLength ?? Infinity)) {
-        errors[name] = {
-          code: 'err_validator_too_long',
-          data: { maxLength: field.maxLength }
-        }
-
-        return false
-      }
-
-      return true
-    },
-    min (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (Number(data[name]) < (field.min ?? -Infinity)) {
-        errors[name] = {
-          code: 'err_validator_range_underflow',
-          data: { min: field.min }
-        }
-
-        return false
-      }
-
-      return true
-    },
-    minLength (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (String(data[name]).length < (field.minLength ?? -Infinity)) {
-        errors[name] = {
-          code: 'err_validator_too_short',
-          data: { minLength: field.minLength }
-        }
-
-        return false
-      }
-
-      return true
-    },
-    now (name: string, field: SchemaField, data: Struct): boolean {
-      data[name] = new Date().toISOString()
-      return true
-    },
-    number (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (Number.isNaN(cast(data[name]))) {
-        errors[name] = {
-          code: 'err_validator_bad_input_number'
-        }
-
-        return false
-      }
-
-      return true
-    },
-    pattern (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (field.pattern?.test(String(data[name])) === false) {
-        errors[name] = {
-          code: 'err_validator_pattern_mismatch',
-          data: { pattern: field.pattern.source }
-        }
-
-        return false
-      }
-
-      return true
-    },
-    radio (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (field.values?.includes(data[name]) !== true) {
-        errors[name] = {
-          code: 'err_validator_bad_input_radio',
-          data: { values: field.values }
-        }
-
-        return false
-      }
-
-      return true
-    },
-    range (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (Number.isNaN(cast(data[name]))) {
-        errors[name] = {
-          code: 'err_validator_bad_input_range'
-        }
-
-        return false
-      }
-
-      return true
-    },
-    required (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (
-        isNil(data[name]) ||
-        String(data[name]) === ''
-      ) {
-        if (field.default === undefined) {
-          errors[name] = {
-            code: 'err_validator_value_missing'
-          }
-        } else {
-          data[name] = field.default
-        }
-
-        return false
-      }
-
-      return true
-    },
-    select (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (field.values?.includes(data[name]) !== true) {
-        errors[name] = {
-          code: 'err_validator_bad_input_select',
-          data: { values: field.values }
-        }
-
-        return false
-      }
-
-      return true
-    },
-    selectall (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      let values = data[name]
-
-      if (!isArray(values)) {
-        values = [values]
-      }
-
-      if (isArray(values)) {
-        const included = values.every((value) => {
-          return field.values?.includes(value) === true
-        })
-
-        if (!included) {
-          errors[name] = {
-            code: 'err_validator_bad_input_selectall',
-            data: { values: field.values }
-          }
-
-          return false
-        }
-      }
-
-      return true
-    },
-    step (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if ((Number(data[name]) % (field.step ?? 0)) !== 0) {
-        errors[name] = {
-          code: 'err_validator_step_mismatch',
-          data: { step: field.step }
-        }
-
-        return false
-      }
-
-      return true
-    },
-    text (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (typeof data[name] === 'string') {
-        errors[name] = {
-          code: 'err_validator_bad_input_text'
-        }
-
-        return false
-      }
-
-      return true
-    },
-    textarea (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (typeof data[name] === 'string') {
-        errors[name] = {
-          code: 'err_validator_bad_input_textarea'
-        }
-
-        return false
-      }
-
-      return true
-    },
-    time (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (Number.isNaN(Date.parse(`1970-01-01 ${String(data[name])}`))) {
-        errors[name] = {
-          code: 'err_validator_bad_input_time'
-        }
-
-        return false
-      }
-
-      return true
-    },
-    url (name: string, field: SchemaField, data: Struct, errors: Struct): boolean {
-      if (!(/.+:\/\/.+/iu).test(String(data[name]))) {
-        errors[name] = {
-          code: 'err_validator_bad_input_url'
-        }
-
-        return false
-      }
-
-      return true
-    }
-  }
+  public static validators: Struct<Validator | undefined> = {}
 
   public schema: Schema
 
-  public validators: Validator[]
+  public validators: BoundValidator[][]
 
   public constructor (schema: Schema) {
     this.schema = schema
     this.validators = this.compile(schema)
   }
 
-  public validate (data: Struct): Struct | null {
+  public static defineValidators (validators: Struct<Validator>): void {
+    Object
+      .entries(validators)
+      .forEach(([name, validator]) => {
+        SchemaValidator.validators[name] = validator
+      })
+  }
+
+  public validate (data: Struct, user?: User): Struct | null {
     let hasErrors = false
+    let isValid: boolean | null = false
 
     const errors: Struct = {}
 
-    for (const validator of this.validators) {
-      if (!validator(data, errors)) {
-        hasErrors = true
+    for (const validators of this.validators) {
+      for (const validator of validators) {
+        isValid = validator(data, errors, user)
+
+        if (isValid === null) {
+          break
+        } else if (!isValid) {
+          hasErrors = true
+        }
       }
     }
 
@@ -365,17 +83,15 @@ export class SchemaValidator {
     return null
   }
 
-  protected compile (schema: Schema, validators: Validator[] = []): Validator[] {
-    Object
+  protected compile (schema: Schema): BoundValidator[][] {
+    return Object
       .entries(schema)
-      .forEach(([name, field]) => {
-        this.compileField(name, field, validators)
-      }, {})
-
-    return validators
+      .map(([name, field]) => {
+        return this.compileField(name, field)
+      })
   }
 
-  protected compileChild (name: string, field: SchemaField): Validator {
+  protected compileChild (name: string, field: SchemaField): BoundValidator {
     const childValidator = new SchemaValidator(field.schema ?? {})
 
     function validator (data: Struct, errors: Struct): boolean {
@@ -398,51 +114,46 @@ export class SchemaValidator {
     return validator
   }
 
-  protected compileField (name: string, field: SchemaField, validators: Validator[]): void {
-    if (field.required === true) {
-      validators.push(SchemaValidator.validators.required.bind(null, name, field))
-    }
+  protected compileField (name: string, field: SchemaField): BoundValidator[] {
+    const validators = []
 
-    const typeValidator = SchemaValidator.validators[field.type]
-
-    if (typeValidator !== undefined) {
-      validators.push(typeValidator.bind(null, name, field))
-    }
+    validators.push(SchemaValidator.validators.required?.bind(null, name, field))
+    validators.push(SchemaValidator.validators[field.type]?.bind(null, name, field))
 
     if (field.custom !== undefined) {
-      const customValidator = SchemaValidator.validators[field.custom]
-
-      if (customValidator !== undefined) {
-        validators.push(customValidator.bind(null, name, field))
-      }
+      validators.push(SchemaValidator.validators[field.custom]?.bind(null, name, field))
     }
 
     if (field.max !== undefined) {
-      validators.push(SchemaValidator.validators.max.bind(null, name, field))
+      validators.push(SchemaValidator.validators.max?.bind(null, name, field))
     }
 
     if (field.maxLength !== undefined) {
-      validators.push(SchemaValidator.validators.maxLength.bind(null, name, field))
+      validators.push(SchemaValidator.validators['max-length']?.bind(null, name, field))
     }
 
     if (field.min !== undefined) {
-      validators.push(SchemaValidator.validators.min.bind(null, name, field))
+      validators.push(SchemaValidator.validators.min?.bind(null, name, field))
     }
 
     if (field.minLength !== undefined) {
-      validators.push(SchemaValidator.validators.minLength.bind(null, name, field))
+      validators.push(SchemaValidator.validators['min-length']?.bind(null, name, field))
     }
 
     if (field.pattern !== undefined) {
-      validators.push(SchemaValidator.validators.pattern.bind(null, name, field))
+      validators.push(SchemaValidator.validators.pattern?.bind(null, name, field))
     }
 
     if (field.step !== undefined) {
-      validators.push(SchemaValidator.validators.step.bind(null, name, field))
+      validators.push(SchemaValidator.validators.step?.bind(null, name, field))
     }
 
     if (field.schema !== undefined) {
       validators.push(this.compileChild(name, field))
     }
+
+    return validators.filter((validator) => {
+      return validator !== undefined
+    }) as BoundValidator[]
   }
 }

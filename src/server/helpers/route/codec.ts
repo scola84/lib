@@ -1,7 +1,10 @@
 import type { IncomingMessage, ServerResponse } from 'http'
-import { cast, isArray, isPrimitive, isStruct, setPush } from '../../../common'
+import { cast, isPrimitive, isStruct, setPush } from '../../../common'
 import type { FileBucket } from '../file'
+import type { Readable } from 'stream'
+import type { Schema } from '../schema'
 import type { Struct } from '../../../common'
+import { Writable } from 'stream'
 import busboy from 'busboy'
 import { parse } from 'querystring'
 import { randomUUID } from 'crypto'
@@ -17,7 +20,7 @@ export class RouteCodec {
     this.bucket = options.bucket
   }
 
-  public async decode (request: IncomingMessage): Promise<unknown> {
+  public async decode (request: IncomingMessage, schema?: Schema): Promise<unknown> {
     let body: unknown = null
 
     const [contentType] = request.headers['content-type']?.split(';') ?? []
@@ -26,14 +29,14 @@ export class RouteCodec {
       case 'application/json':
         body = await this.decodeJson(request)
         break
+      case 'application/octet-stream':
+        body = await this.decodeOctetStream(request)
+        break
       case 'application/x-www-form-urlencoded':
         body = await this.decodeFormUrlencoded(request)
         break
       case 'multipart/form-data':
-        body = await this.decodeFormData(request)
-        break
-      case 'application/octet-stream':
-        body = await this.decodeOctetStream(request)
+        body = await this.decodeFormData(request, schema)
         break
       case 'text/plain':
         body = await this.decodePlain(request)
@@ -45,7 +48,7 @@ export class RouteCodec {
     return body
   }
 
-  public async decodeFormData (request: IncomingMessage): Promise<Struct> {
+  public async decodeFormData (request: IncomingMessage, schema?: Schema): Promise<Struct> {
     return new Promise((resolve, reject) => {
       const body: Struct = {}
 
@@ -64,6 +67,11 @@ export class RouteCodec {
       })
 
       decoder.on('file', (name, stream, info) => {
+        if (schema?.[name] === undefined) {
+          this.discardStream(stream)
+          return
+        }
+
         const file = {
           id: randomUUID(),
           name: info.filename,
@@ -71,15 +79,14 @@ export class RouteCodec {
           type: info.mimeType
         }
 
-        setPush(body, name, file)
-
         stream.on('data', (data) => {
           if (Buffer.isBuffer(data)) {
             file.size += data.length
           }
         })
 
-        this.bucket?.put(file.id, stream)
+        setPush(body, name, file)
+        this.bucket?.put(file, stream)
       })
 
       decoder.on('close', () => {
@@ -90,25 +97,6 @@ export class RouteCodec {
 
       request.pipe(decoder)
     })
-  }
-
-  public decodeFormDataField (body: Struct, name: string, value: string): void {
-    const castValue = cast(value)
-
-    if (body[name] === undefined) {
-      body[name] = castValue
-    } else {
-      let bodyValue = body[name]
-
-      if (!isArray(bodyValue)) {
-        body[name] = [body[name]]
-        bodyValue = body[name]
-      }
-
-      if (isArray(bodyValue)) {
-        bodyValue.push(castValue)
-      }
-    }
   }
 
   public async decodeFormUrlencoded (request: IncomingMessage): Promise<Struct> {
@@ -202,5 +190,13 @@ export class RouteCodec {
 
   public encodeJson (data: unknown): string {
     return JSON.stringify(data)
+  }
+
+  protected discardStream (stream: Readable): void {
+    stream.pipe(new Writable({
+      write (chunk, encoding, callback) {
+        callback()
+      }
+    }))
   }
 }

@@ -1,5 +1,4 @@
 import type { IResult, Request } from 'mssql'
-import type { SqlDeleteResult, SqlId, SqlInsertResult, SqlUpdateResult } from '../result'
 import { MssqlFormatter } from './formatter'
 import type { Readable } from 'stream'
 import { SqlConnection } from '../connection'
@@ -26,14 +25,13 @@ export class MssqlConnection extends SqlConnection {
     this.connection = connection
   }
 
-  public async delete<Values>(string: string, values?: Partial<Values>): Promise<SqlDeleteResult> {
-    const { rowsAffected } = await this.execute<Values, IResult<unknown>>({ string, values })
+  public async delete<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined> {
+    await this.execute<Values, IResult<unknown>>({
+      string,
+      values
+    })
 
-    const result = {
-      count: rowsAffected[0]
-    }
-
-    return result
+    return values
   }
 
   public async depopulate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void> {
@@ -60,45 +58,35 @@ export class MssqlConnection extends SqlConnection {
       }))
   }
 
-  public async execute<Values, Result>(query: SqlQuery<Partial<Values>>): Promise<Result> {
-    const result = await this.connection.query(this.formatter.formatQuery(query))
-    return result as unknown as Result
+  public async execute<Values = Struct, Result = Struct>(query: SqlQuery<Partial<Values>>): Promise<IResult<Result>> {
+    return this.connection.query<Result>(this.formatter.formatQuery(query))
   }
 
-  public async insert<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<SqlInsertResult<Id>> {
-    const { recordset: [object] } = await this.execute<Values, IResult<{ id: Id }>>({
+  public async insert<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key = 'id'): Promise<Result> {
+    const { recordset: [object] } = await this.execute<Values, Result>({
       string: sql`
         ${string};
-        SELECT SCOPE_IDENTITY() AS id;
+        SELECT SCOPE_IDENTITY() AS ${key};
       `,
-      values
+      values: values
     })
 
-    return object
+    return {
+      ...values,
+      ...object
+    }
   }
 
-  public async insertAll<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<Array<SqlInsertResult<Id>>> {
-    const { recordset } = await this.execute<Values, IResult<{ id: Id }>>({
+  public async insertAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key = 'id'): Promise<Result[]> {
+    const { recordset } = await this.execute<Values, Result>({
       string: sql`
         ${string};
-        SELECT SCOPE_IDENTITY() AS id;
+        SELECT SCOPE_IDENTITY() AS ${key};
       `,
-      values
+      values: values
     })
 
     return recordset
-  }
-
-  public async insertOne<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<SqlInsertResult<Id>> {
-    const { recordset: [object] } = await this.execute<Values, IResult<{ id: Id }>>({
-      string: sql`
-        ${string};
-        SELECT SCOPE_IDENTITY() AS id;
-      `,
-      values
-    })
-
-    return object
   }
 
   public async populate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void> {
@@ -133,18 +121,29 @@ export class MssqlConnection extends SqlConnection {
     this.connection.cancel()
   }
 
-  public async select<Values, Result>(string: string, values?: Partial<Values>): Promise<Result | undefined> {
-    const { recordset: [object] } = await this.execute<Values, IResult<Result>>({ string, values })
+  public async select<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result | undefined> {
+    const { recordset: [object] } = await this.execute<Values, Result>({
+      string,
+      values
+    })
+
     return object
   }
 
-  public async selectAll<Values, Result>(string: string, values?: Partial<Values>): Promise<Result[]> {
-    const { recordset } = await this.execute<Values, IResult<Result>>({ string, values })
+  public async selectAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result[]> {
+    const { recordset } = await this.execute<Values, Result>({
+      string,
+      values
+    })
+
     return recordset
   }
 
-  public async selectOne<Values, Result>(string: string, values?: Partial<Values>): Promise<Result> {
-    const { recordset: [object] } = await this.execute<Values, IResult<Result>>({ string, values })
+  public async selectOne<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result> {
+    const { recordset: [object] } = await this.execute<Values, Result>({
+      string,
+      values
+    })
 
     if (object === undefined) {
       throw new Error(`Object is undefined (${JSON.stringify(values)})`)
@@ -153,29 +152,33 @@ export class MssqlConnection extends SqlConnection {
     return object
   }
 
-  public stream<Values>(string: string, values?: Partial<Values>): Readable {
+  public stream<Values = Struct>(string: string, values?: Partial<Values>): Readable {
     this.connection.stream = true
 
     const transform = new Transform({
       objectMode: true,
-      transform (data, encoding, callback) {
+      transform: (data, encoding, callback) => {
         callback(null, data)
       }
     })
 
     this.connection.pipe(transform)
+
     // eslint-disable-next-line no-void
-    void this.connection.query(this.formatter.formatQuery({ string, values }))
+    void this.connection.query(this.formatter.formatQuery({
+      string,
+      values
+    }))
+
     return transform
   }
 
-  public async update<Values>(string: string, values?: Partial<Values>): Promise<SqlUpdateResult> {
-    const { rowsAffected } = await this.execute<Values, IResult<unknown>>({ string, values })
+  public async update<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined> {
+    await this.execute<Values, IResult<unknown>>({
+      string,
+      values
+    })
 
-    const result = {
-      count: rowsAffected[0]
-    }
-
-    return result
+    return values
   }
 }

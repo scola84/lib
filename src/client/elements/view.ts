@@ -504,7 +504,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected loadStateFromLocation (string: string): void {
-    const result = this.regexp.exec(string)
+    const result = string.match(this.regexp)
 
     if (result !== null) {
       const {
@@ -513,8 +513,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       } = result.groups ?? {}
 
       const view = this.createView({
-        name,
-        params,
+        name: name,
+        params: params,
         source: 'location'
       })
 
@@ -578,7 +578,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       }
     }
 
-    const previous = (this.regexp.exec(url) ?? []).shift()
+    const previous = (url.match(this.regexp) ?? []).shift()
 
     if (previous === undefined) {
       url += current

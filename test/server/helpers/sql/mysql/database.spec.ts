@@ -1,7 +1,6 @@
 import type { ConnectionOptions, Pool } from 'mysql2/promise'
 import mock, { restore } from 'mock-fs'
 import { MysqlDatabase } from '../../../../../src/server/helpers/sql/mysql'
-import type { SqlId } from '../../../../../src/server/helpers/sql/result'
 import { createPool } from 'mysql2/promise'
 import type denque from 'denque'
 import { expect } from 'chai'
@@ -125,7 +124,7 @@ async function deleteOneRow (): Promise<void> {
       }
     } = database.pool as unknown as ExtendedPool
 
-    const { id } = await database.insertOne(sql`
+    const { id } = await database.insert(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
     `, {
@@ -255,7 +254,7 @@ async function insertOneRow (): Promise<void> {
       }
     } = database.pool as unknown as ExtendedPool
 
-    await database.insertOne(sql`
+    await database.insert(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
     `, {
@@ -285,14 +284,14 @@ async function parseABigIntAsANumber (): Promise<void> {
   try {
     await database.start()
 
-    const { id } = await database.insertOne(sql`
+    const { id } = await database.insert(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
     `, {
       name: 'name'
     })
 
-    const data = await database.selectOne<{ id: SqlId }, { id: SqlId }>(sql`
+    const data = await database.selectOne(sql`
       SELECT *
       FROM test_database
       WHERE id = $(id)
@@ -522,7 +521,7 @@ async function updateOneRow (): Promise<void> {
       }
     } = database.pool as unknown as ExtendedPool
 
-    const { id } = await database.insertOne(sql`
+    const { id } = await database.insert(sql`
       INSERT INTO test_database (name)
       VALUES ($(name))
     `, {
@@ -534,7 +533,7 @@ async function updateOneRow (): Promise<void> {
       SET name = $(name)
       WHERE id = $(id)
     `, {
-      id,
+      id: id,
       name: 'name-update'
     })
 

@@ -108,7 +108,7 @@ export class Router {
           headers: request.headers,
           method: request.method ?? 'GET',
           query: Object.fromEntries(url.searchParams),
-          url
+          url: url
         }, response, request)
       }
     }

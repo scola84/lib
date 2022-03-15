@@ -58,6 +58,7 @@ function formatQuerySchema (schema: Schema, space: number): string {
     sortKeys({
       ...createQueryKeys(schema),
       count: {
+        default: 10,
         required: true,
         type: 'number'
       },

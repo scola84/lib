@@ -8,7 +8,7 @@ import type { SqlDatabase } from '../../server/helpers/sql'
 import type { Struct } from '../../common'
 
 interface Options {
-  content: string
+  database: string
   dialect: string
   methods: string
   relation?: string[]
@@ -30,8 +30,9 @@ Example:
 program
   .argument('<source>', 'name and source file')
   .argument('[target]', 'directory to write the files to', process.cwd())
+  .option('-D, --database <database>', 'database of the SQL file', 'postgres')
   .option('-d, --dialect <dialect>', 'dialect of the SQL file', 'postgres')
-  .option('-d, --methods <methods>', 'methods to include in the API', 'DELETE,GET,PATCH,POST,PUT')
+  .option('-m, --methods <methods>', 'methods to include in the API', 'DELETE,GET,PATCH,POST,PUT')
   .option('-r, --relation <relation...>', 'name and source file of a related object')
   .option('-t, --type <type>', 'output type', 'ts')
   .option('-u, --url <url>', 'URL of the API', '/api/{object}')
@@ -57,6 +58,7 @@ try {
   ] = source.split('@')
 
   const {
+    database,
     dialect,
     methods,
     relation,
@@ -65,8 +67,8 @@ try {
   } = program.opts<Options>()
 
   const options = {
-    methods,
-    object,
+    methods: methods,
+    object: object,
     url: url.replace('{object}', object)
   }
 
@@ -125,7 +127,7 @@ try {
 
         writeFileSync(`${targetDir}/index.ts`, `${formatIndex(options)}\n`)
       } else if (type === 'sql') {
-        writeFileSync(`${targetDir}/${object}.sql`, databases[dialect].formatter.formatDdl(object, schema))
+        writeFileSync(`${targetDir}/${object}.sql`, databases[dialect].formatter.formatDdl(database, object, schema))
       }
     })
     .catch((error) => {

@@ -1,4 +1,3 @@
-import type { SqlDeleteResult, SqlId, SqlInsertResult, SqlUpdateResult } from './result'
 import type { Readable } from 'stream'
 import type { SqlFormatter } from './formatter'
 import type { SqlQuery } from './query'
@@ -38,7 +37,7 @@ export abstract class SqlConnection {
    * console.log(count) // count = 1 if there is one row with c1 = v1
    * ```
    */
-  public abstract delete<Values>(string: string, values?: Partial<Values>): Promise<SqlDeleteResult>
+  public abstract delete<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined>
 
   /**
    * Depopulates the database.
@@ -62,17 +61,16 @@ export abstract class SqlConnection {
    * Executes any query against the database.
    *
    * @param query - The query
-   * @returns The query-specific result
+   * @returns The query result
    */
-  public abstract execute<Values, Result>(query: SqlQuery<Values>): Promise<Result>
+  public abstract execute<Values = Struct>(query: SqlQuery<Values>): Promise<unknown>
 
   /**
    * Inserts one row into the database.
    *
-   * Discards a duplicate key error.
-   *
    * @param string - The SQL string
    * @param values - The values
+   * @param key - The primary key
    * @returns The id of the inserted row
    *
    * @example
@@ -88,13 +86,14 @@ export abstract class SqlConnection {
    * console.log(id) // id = 1
    * ```
    */
-  public abstract insert<Values, Id = SqlId>(string: string, values?: Partial<Values>, key?: string): Promise<SqlInsertResult<Id>>
+  public abstract insert<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string): Promise<Result>
 
   /**
    * Inserts zero or more rows into the database.
    *
    * @param string - The SQL string
    * @param values - The values
+   * @param key - The primary key
    * @returns The ids of the inserted rows
    *
    * @example
@@ -126,29 +125,7 @@ export abstract class SqlConnection {
    * console.log(result) // result = [{ id: 1 }, { id: 2 }]
    * ```
    */
-  public abstract insertAll<Values, Id = SqlId>(string: string, values?: Partial<Values>, key?: string): Promise<Array<SqlInsertResult<Id>>>
-
-  /**
-   * Inserts one row into the database.
-   *
-   * @param string - The SQL string
-   * @param values - The values
-   * @returns The id of the inserted row
-   *
-   * @example
-   * ```ts
-   * const { id } = connection.insertOne(sql`
-   *   INSERT
-   *   INTO t1 (c1)
-   *   VALUES ($(c1))
-   * `, {
-   *   c1: 'v1'
-   * })
-   *
-   * console.log(id) // id = 1
-   * ```
-   */
-  public abstract insertOne<Values, Id = SqlId>(string: string, values?: Partial<Values>, key?: string): Promise<SqlInsertResult<Id>>
+  public abstract insertAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string): Promise<Result[]>
 
   /**
    * Populates the database.
@@ -195,7 +172,7 @@ export abstract class SqlConnection {
    * console.log(result) // result = { id: 1, c1: 'v1' }
    * ```
    */
-  public abstract select<Values, Result>(string: string, values?: Partial<Values>): Promise<Result | undefined>
+  public abstract select<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result | undefined>
 
   /**
    * Selects multiple rows from the database.
@@ -219,7 +196,7 @@ export abstract class SqlConnection {
    * console.log(result) // result = [{ id: 1, c1: 'v1' }]
    * ```
    */
-  public abstract selectAll<Values, Result>(string: string, values?: Partial<Values>): Promise<Result[]>
+  public abstract selectAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result[]>
 
   /**
    * Selects one row from the database.
@@ -244,7 +221,7 @@ export abstract class SqlConnection {
    * console.log(result) // result = { id: 1, c1: 'v1' }
    * ```
    */
-  public abstract selectOne<Values, Result>(string: string, values?: Partial<Values>): Promise<Result>
+  public abstract selectOne<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result>
 
   /**
    * Creates a stream of the selected rows.
@@ -267,7 +244,7 @@ export abstract class SqlConnection {
    * })
    * ```
    */
-  public abstract stream<Values>(string: string, values?: Partial<Values>): Readable
+  public abstract stream<Values = Struct>(string: string, values?: Partial<Values>): Readable
 
   /**
    * Updates zero or more rows in the database.
@@ -290,5 +267,5 @@ export abstract class SqlConnection {
    * console.log(count) // count = 1
    * ```
    */
-  public abstract update<Values>(string: string, values?: Partial<Values>): Promise<SqlUpdateResult>
+  public abstract update<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined>
 }

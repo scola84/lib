@@ -59,6 +59,183 @@ const keys: Struct<SqlQueryKeys> = {
   }
 }
 
+const withForeignKeys: SqlQueryKeys = {
+  auth: {
+    address_id: [
+      [
+        {
+          column: 'case_id',
+          table: 'case_address'
+        },
+        {
+          column: 'group_id',
+          table: 'case_group'
+        }
+      ],
+      [
+        {
+          column: 'case_id',
+          table: 'case_address'
+        },
+        {
+          column: 'user_id',
+          table: 'case_user'
+        }
+      ]
+    ],
+    contact_id: [
+      [
+        {
+          column: 'case_id',
+          table: 'case_contact'
+        },
+        {
+          column: 'group_id',
+          table: 'case_group'
+        }
+      ],
+      [
+        {
+          column: 'case_id',
+          table: 'case_contact'
+        },
+        {
+          column: 'user_id',
+          table: 'case_user'
+        }
+      ]
+    ]
+  },
+  foreign: [
+    {
+      column: 'address_id',
+      table: 'address'
+    },
+    {
+      column: 'contact_id',
+      table: 'contact'
+    }
+  ],
+  primary: [
+    {
+      column: 'address_id',
+      table: 'contact_address'
+    },
+    {
+      column: 'contact_id',
+      table: 'contact_address'
+    }
+  ],
+  search: [
+    {
+      column: 'begin',
+      table: 'contact_address'
+    },
+    {
+      column: 'address_line1',
+      table: 'address'
+    },
+    {
+      column: 'family_name',
+      table: 'contact'
+    }
+  ],
+  sort: [
+    {
+      column: 'end',
+      table: 'contact_address'
+    },
+    {
+      column: 'address_line1',
+      table: 'address'
+    },
+    {
+      column: 'family_name',
+      table: 'contact'
+    }
+  ]
+}
+
+const withRelatedKeys: SqlQueryKeys = {
+  auth: {
+    case_id: [
+      [
+        {
+          column: 'group_id',
+          table: 'case_group'
+        }
+      ],
+      [
+        {
+          column: 'user_id',
+          table: 'case_user'
+        }
+      ]
+    ]
+  },
+  primary: [
+    {
+      column: 'address_id',
+      table: 'address'
+    }
+  ],
+  related: [
+    {
+      column: 'case_id',
+      table: 'case_address'
+    }
+  ],
+  search: [
+    {
+      column: 'address_line1',
+      table: 'address'
+    }
+  ],
+  sort: [
+    {
+      column: 'address_line1',
+      table: 'address'
+    }
+  ]
+}
+
+const withoutKeys: SqlQueryKeys = {
+  auth: {
+    case_id: [
+      [
+        {
+          column: 'group_id',
+          table: 'case_group'
+        }
+      ],
+      [
+        {
+          column: 'user_id',
+          table: 'case_user'
+        }
+      ]
+    ]
+  },
+  primary: [
+    {
+      column: 'case_id',
+      table: 'case'
+    }
+  ],
+  search: [
+    {
+      column: 'name',
+      table: 'case'
+    }
+  ],
+  sort: [
+    {
+      column: 'name',
+      table: 'case'
+    }
+  ]
+}
+
 const user: Partial<User> = {
   group_id: 1,
   user_id: 1
@@ -269,7 +446,7 @@ export function createAnInsertQuery (formatter: SqlFormatter, expectations: Stru
   const {
     string,
     values
-  } = formatter.createInsertQuery('contact', {
+  } = formatter.createInsertQuery('contact', keys, {
     family_name: {
       type: 'text'
     },
@@ -333,181 +510,4 @@ export function createAnUpdatePartialQuery (formatter: SqlFormatter, expectation
 
   expect(formatter.sanitizeQuery(string)).eq(expectations.formatAnUpdatePartialQuery.string)
   expect(values).eql(expectations.formatAnUpdatePartialQuery.values)
-}
-
-const withForeignKeys: SqlQueryKeys = {
-  auth: {
-    address_id: [
-      [
-        {
-          column: 'case_id',
-          table: 'case_address'
-        },
-        {
-          column: 'group_id',
-          table: 'case_group'
-        }
-      ],
-      [
-        {
-          column: 'case_id',
-          table: 'case_address'
-        },
-        {
-          column: 'user_id',
-          table: 'case_user'
-        }
-      ]
-    ],
-    contact_id: [
-      [
-        {
-          column: 'case_id',
-          table: 'case_contact'
-        },
-        {
-          column: 'group_id',
-          table: 'case_group'
-        }
-      ],
-      [
-        {
-          column: 'case_id',
-          table: 'case_contact'
-        },
-        {
-          column: 'user_id',
-          table: 'case_user'
-        }
-      ]
-    ]
-  },
-  foreign: [
-    {
-      column: 'address_id',
-      table: 'address'
-    },
-    {
-      column: 'contact_id',
-      table: 'contact'
-    }
-  ],
-  primary: [
-    {
-      column: 'address_id',
-      table: 'contact_address'
-    },
-    {
-      column: 'contact_id',
-      table: 'contact_address'
-    }
-  ],
-  search: [
-    {
-      column: 'begin',
-      table: 'contact_address'
-    },
-    {
-      column: 'address_line1',
-      table: 'address'
-    },
-    {
-      column: 'family_name',
-      table: 'contact'
-    }
-  ],
-  sort: [
-    {
-      column: 'end',
-      table: 'contact_address'
-    },
-    {
-      column: 'address_line1',
-      table: 'address'
-    },
-    {
-      column: 'family_name',
-      table: 'contact'
-    }
-  ]
-}
-
-const withRelatedKeys: SqlQueryKeys = {
-  auth: {
-    case_id: [
-      [
-        {
-          column: 'group_id',
-          table: 'case_group'
-        }
-      ],
-      [
-        {
-          column: 'user_id',
-          table: 'case_user'
-        }
-      ]
-    ]
-  },
-  primary: [
-    {
-      column: 'address_id',
-      table: 'address'
-    }
-  ],
-  related: [
-    {
-      column: 'case_id',
-      table: 'case_address'
-    }
-  ],
-  search: [
-    {
-      column: 'address_line1',
-      table: 'address'
-    }
-  ],
-  sort: [
-    {
-      column: 'address_line1',
-      table: 'address'
-    }
-  ]
-}
-
-const withoutKeys: SqlQueryKeys = {
-  auth: {
-    case_id: [
-      [
-        {
-          column: 'group_id',
-          table: 'case_group'
-        }
-      ],
-      [
-        {
-          column: 'user_id',
-          table: 'case_user'
-        }
-      ]
-    ]
-  },
-  primary: [
-    {
-      column: 'case_id',
-      table: 'case'
-    }
-  ],
-  search: [
-    {
-      column: 'name',
-      table: 'case'
-    }
-  ],
-  sort: [
-    {
-      column: 'name',
-      table: 'case'
-    }
-  ]
 }

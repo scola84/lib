@@ -1,13 +1,34 @@
-import type { SqlQueryParts, SqlSelectAllParameters } from '../query'
-import type { SchemaField } from '../../schema'
+import type { Schema, SchemaField } from '../../schema'
+import type { SqlQuery, SqlQueryKeys, SqlQueryParts, SqlSelectAllParameters } from '../query'
 import { SqlFormatter } from '../formatter'
 import type { Struct } from '../../../../common'
 import { escape } from 'sqlstring'
 import { isStruct } from '../../../../common'
+import { sql } from '../tag'
 
 export class MssqlFormatter extends SqlFormatter {
-  public formatDdl (object: string, fields: Struct<SchemaField>): string {
+  public createInsertQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct): SqlQuery {
+    let {
+      string,
+      values
+    } = super.createInsertQuery(object, keys, schema, data)
+
+    if (keys.primary?.length === 1) {
+      string = sql`
+        ${string};
+        SELECT SCOPE_IDENTITY() AS id;
+      `
+    }
+
+    return {
+      string,
+      values
+    }
+  }
+
+  public formatDdl (database: string, object: string, fields: Struct<SchemaField>): string {
     const lines = [
+      `USE [${database}];`,
       `CREATE TABLE [${object}] (`,
       [
         ...this
@@ -80,14 +101,14 @@ export class MssqlFormatter extends SqlFormatter {
       values.count = parameters.count
       values.cursor = parameters.cursor
       limit = 'OFFSET 0 ROWS FETCH NEXT $(count) ROWS ONLY'
-      order = `$[${'cursor'}] ASC`
-      where = `$[${'cursor'}] > $(cursor)`
+      order = '$[cursor] ASC'
+      where = '$[cursor] > $(cursor)'
     }
 
     return {
-      limit,
+      limit: limit,
       order: order ?? undefined,
-      values,
+      values: values,
       where: where ?? undefined
     }
   }
@@ -96,6 +117,8 @@ export class MssqlFormatter extends SqlFormatter {
     switch (field.type) {
       case 'date':
         return this.formatDdlColumnDate(name, field)
+      case 'datetime-local':
+        return this.formatDdlColumnDatetimeLocal(name, field)
       case 'file':
         return this.formatDdlColumnFile(name, field)
       case 'number':
@@ -116,11 +139,14 @@ export class MssqlFormatter extends SqlFormatter {
       ddl += ' NOT NULL'
     }
 
-    if (field.default !== undefined) {
-      ddl += ` DEFAULT '${
-        new Date(Date.parse(field.default))
-          .toISOString()
-      }'`
+    return ddl
+  }
+
+  protected formatDdlColumnDatetimeLocal (name: string, field: SchemaField): string {
+    let ddl = `[${name}] DATETIME`
+
+    if (field.required === true) {
+      ddl += ' NOT NULL'
     }
 
     return ddl
@@ -134,7 +160,7 @@ export class MssqlFormatter extends SqlFormatter {
     }
 
     if (field.default !== undefined) {
-      ddl += ` DEFAULT '${field.default}'`
+      ddl += ` DEFAULT '${field.default.toString()}'`
     }
 
     return ddl
@@ -164,7 +190,7 @@ export class MssqlFormatter extends SqlFormatter {
     }
 
     if (field.default !== undefined) {
-      ddl += ` DEFAULT ${field.default}`
+      ddl += ` DEFAULT ${field.default.toString()}`
     }
 
     if (field.pkey === true) {
@@ -189,13 +215,6 @@ export class MssqlFormatter extends SqlFormatter {
 
     if (field.required === true) {
       ddl += ' NOT NULL'
-    }
-
-    if (field.default !== undefined) {
-      ddl += ` DEFAULT '${
-        new Date(Date.parse(field.default))
-          .toISOString()
-      }'`
     }
 
     return ddl

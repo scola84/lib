@@ -48,15 +48,15 @@ export class I18n {
 
   public static locale = 'en'
 
-  public static matcher = /%\([^)]+\)[dens]/gu
+  public static matcher = /\$\([^)]+\)[dens]/gu
 
   public static strings: Strings = {}
 
   public static compile (string: string, locale: string): Formatter[] {
     const compiled = []
 
-    const lastString = I18n.matcher
-      .exec(string)
+    const lastString = string
+      .match(I18n.matcher)
       ?.reduce((nextString, match) => {
         const index = nextString.indexOf(match)
         const [name, optionsString = undefined] = match.slice(2, -2).split('?')

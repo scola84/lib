@@ -9,7 +9,7 @@
  * * string — neither a boolean, number, null or undefined
  *
  * @param value - The value
- * @returns The result
+ * @returns The cast value
  * @see https://stackoverflow.com/a/175787
  */
 export function cast (value: unknown): boolean | number | string | null | undefined {

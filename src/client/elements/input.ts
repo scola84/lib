@@ -129,6 +129,11 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
       if (!this.checked) {
         return null
       }
+    } else if (
+      this.type === 'date' ||
+      this.type === 'time'
+    ) {
+      return this.valueAsDate?.toISOString() ?? null
     }
 
     return this.value

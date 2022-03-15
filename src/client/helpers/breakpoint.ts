@@ -36,7 +36,7 @@ export class Breakpoint {
   }
 
   public parse (name: string, element = this.element): string | undefined {
-    return this.parser.exec(element.getAttribute(name) ?? '')?.[1]
+    return element.getAttribute(name)?.match(this.parser)?.[1]
   }
 
   public reset (): void {

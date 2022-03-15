@@ -57,7 +57,7 @@ export class ReloadGetHandler extends RouteHandler {
               reload: true
             }),
             event: this.event
-          }))
+          }, response))
         })
       }
     }))

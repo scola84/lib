@@ -1,4 +1,3 @@
-import type { SqlDatabase, SqlUpdateResult } from '../sql'
 import type { Job } from 'node-schedule'
 import type { Logger } from 'pino'
 import type { Queue } from '../../entities'
@@ -6,6 +5,7 @@ import type { QueueHandler } from './handler'
 import { QueueRunner } from '../../helpers/queue/runner'
 import type { QueueTask } from '../../entities/base'
 import type { RedisClientType } from 'redis'
+import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import { isStruct } from '../../../common'
 import { parseExpression } from 'cron-parser'
@@ -77,20 +77,20 @@ export class Queuer {
    * The commands which can be executed through the 'queue' channel.
    */
   public static commands: Commands = {
-    resume: (queuer: Queuer): void => {
+    resume: (queuer: Queuer) => {
       queuer.resume()
     },
-    run: async (queuer: Queuer, message: Struct): Promise<void> => {
+    run: async (queuer: Queuer, message: Struct) => {
       if (typeof message.id === 'number') {
         await queuer.run(message.id, message.parameters)
       }
     },
-    skip: async (queuer: Queuer, message: Struct): Promise<void> => {
+    skip: async (queuer: Queuer, message: Struct) => {
       if (typeof message.id === 'number') {
         await queuer.skip(message.id)
       }
     },
-    suspend: (queuer: Queuer): void => {
+    suspend: (queuer: Queuer) => {
       queuer.suspend()
     }
   }
@@ -541,10 +541,9 @@ export class Queuer {
    * Parses `schedule` of the queue and updates `schedule_next` of the queue in the database accordingly.
    *
    * @param queue - The queue
-   * @returns The update result
    */
-  protected async updateQueue (queue: Queue): Promise<SqlUpdateResult> {
-    return this.database.update<Queue>(sql`
+  protected async updateQueue (queue: Queue): Promise<void> {
+    await this.database.update<Queue>(sql`
       UPDATE queue
       SET schedule_next = $(schedule_next)
       WHERE id = $(id)
@@ -566,10 +565,9 @@ export class Queuer {
    * * belong to the given queue run
    *
    * @param task - The task properties
-   * @returns The update result
    */
-  protected async updateQueueTasks (task: Pick<QueueTask, 'fkey_queue_run_id' | 'reason' | 'status'>): Promise<SqlUpdateResult> {
-    return this.database.update<QueueTask>(sql`
+  protected async updateQueueTasks (task: Pick<QueueTask, 'fkey_queue_run_id' | 'reason' | 'status'>): Promise<void> {
+    await this.database.update<QueueTask>(sql`
       UPDATE queue_task
       SET
         date_updated = NOW(),

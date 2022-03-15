@@ -154,7 +154,7 @@ body {
 }
 
 [sc-bg-color="black-transparent"] {
-  background-color: rgb(0 0 0 / 50%);
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 [sc-bg-color="contrast"] {
@@ -184,7 +184,7 @@ body {
 }
 
 [sc-bg-color="white-transparent"] {
-  background-color: rgb(255 255 255 / 50%);
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 [sc-bg-color-interact] {
@@ -473,7 +473,7 @@ body {
 }
 
 [sc-range-bg-color="white-transparent"] {
-  --sc-range-bg-color: rgb(255 255 255 / 50%);
+  --sc-range-bg-color: rgba(255, 255, 255, 0.5);
 }
 
 [sc-range-fg-color="normal"] {
@@ -677,7 +677,7 @@ body {
 }
 
 .sc-recorder[sc-type="code"][sc-started] + .sc-code-overlay {
-  border-color: rgba(0 0 0 / 50%);
+  border-color: rgba(0, 0, 0, 0.5);
   border-style: solid;
   border-width: var(--sc-code-overlay-y) var(--sc-code-overlay-x);
 }

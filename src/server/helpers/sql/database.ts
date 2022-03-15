@@ -1,4 +1,3 @@
-import type { SqlDeleteResult, SqlId, SqlInsertResult, SqlUpdateResult } from './result'
 import type { Logger } from 'pino'
 import type { Readable } from 'stream'
 import type { SqlConnection } from './connection'
@@ -111,7 +110,7 @@ export abstract class SqlDatabase {
    * console.log(count) // count = 1 if there is one row with c1 = v1
    * ```
    */
-  public async delete<Values>(string: string, values?: Partial<Values>): Promise<SqlDeleteResult> {
+  public async delete<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined> {
     const connection = await this.connect()
 
     try {
@@ -155,13 +154,13 @@ export abstract class SqlDatabase {
    * Acquires a connection, executes the query and releases the connection.
    *
    * @param query - The query
-   * @returns The query-specific result
+   * @returns The query result
    */
-  public async execute<Values, Result>(query: SqlQuery<Values>): Promise<Result> {
+  public async execute<Values = Struct>(query: SqlQuery<Values>): Promise<unknown> {
     const connection = await this.connect()
 
     try {
-      return await connection.execute<Values, Result>(query)
+      return await connection.execute(query)
     } finally {
       connection.release()
     }
@@ -174,11 +173,11 @@ export abstract class SqlDatabase {
    *
    * @param string - The SQL string
    * @param values - The values
-   * @returns The id of the inserted row
+   * @returns The query result
    *
    * @example
    * ```ts
-   * const { id } = database.insert(sql`
+   * const result = database.insert(sql`
    *   INSERT
    *   INTO t1 (c1)
    *   VALUES ($(c1))
@@ -186,14 +185,14 @@ export abstract class SqlDatabase {
    *   c1: 'v1'
    * })
    *
-   * console.log(id) // id = 1
+   * console.log(result) // {"insertId": 1} in MySQL
    * ```
    */
-  public async insert<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<SqlInsertResult<Id>> {
+  public async insert<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string): Promise<Result> {
     const connection = await this.connect()
 
     try {
-      return await connection.insert<Values, Id>(string, values)
+      return await connection.insert(string, values, key)
     } finally {
       connection.release()
     }
@@ -206,6 +205,7 @@ export abstract class SqlDatabase {
    *
    * @param string - The SQL string
    * @param values - The values
+   * @param key - The primary key
    * @returns The ids of the inserted rows
    *
    * @example
@@ -237,43 +237,11 @@ export abstract class SqlDatabase {
    * console.log(result) // result = [{ id: 1 }, { id: 2 }]
    * ```
    */
-  public async insertAll<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<Array< SqlInsertResult<Id>>> {
+  public async insertAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string): Promise<Result[]> {
     const connection = await this.connect()
 
     try {
-      return await connection.insertAll<Values, Id>(string, values)
-    } finally {
-      connection.release()
-    }
-  }
-
-  /**
-   * Inserts one row into the database.
-   *
-   * Acquires a connection, executes the query and releases the connection.
-   *
-   * @param string - The SQL string
-   * @param values - The values
-   * @returns The id of the inserted row
-   *
-   * @example
-   * ```ts
-   * const { id } = database.insertOne(sql`
-   *   INSERT
-   *   INTO t1 (c1)
-   *   VALUES ($(c1))
-   * `, {
-   *   c1: 'v1'
-   * })
-   *
-   * console.log(id) // id = 1
-   * ```
-   */
-  public async insertOne<Values, Id = SqlId>(string: string, values?: Partial<Values>): Promise<SqlInsertResult<Id>> {
-    const connection = await this.connect()
-
-    try {
-      return await connection.insertOne<Values, Id>(string, values)
+      return await connection.insertAll(string, values, key)
     } finally {
       connection.release()
     }
@@ -331,11 +299,11 @@ export abstract class SqlDatabase {
    * console.log(result) // result = { id: 1, c1: 'v1' }
    * ```
    */
-  public async select<Values, Result>(string: string, values?: Partial<Values>): Promise<Result | undefined> {
+  public async select<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result | undefined> {
     const connection = await this.connect()
 
     try {
-      return await connection.select<Values, Result>(string, values)
+      return await connection.select(string, values)
     } finally {
       connection.release()
     }
@@ -365,11 +333,11 @@ export abstract class SqlDatabase {
    * console.log(result) // result = [{ id: 1, c1: 'v1' }]
    * ```
    */
-  public async selectAll<Values, Result>(string: string, values?: Partial<Values>): Promise<Result[]> {
+  public async selectAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result[]> {
     const connection = await this.connect()
 
     try {
-      return await connection.selectAll<Values, Result>(string, values)
+      return await connection.selectAll(string, values)
     } finally {
       connection.release()
     }
@@ -400,11 +368,11 @@ export abstract class SqlDatabase {
    * console.log(result) // result = { id: 1, c1: 'v1' }
    * ```
    */
-  public async selectOne<Values, Result>(string: string, values?: Partial<Values>): Promise<Result> {
+  public async selectOne<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result> {
     const connection = await this.connect()
 
     try {
-      return await connection.selectOne<Values, Result>(string, values)
+      return await connection.selectOne(string, values)
     } finally {
       connection.release()
     }
@@ -433,7 +401,7 @@ export abstract class SqlDatabase {
    * })
    * ```
    */
-  public async stream<Values>(string: string, values?: Partial<Values>): Promise<Readable> {
+  public async stream<Values = Struct>(string: string, values?: Partial<Values>): Promise<Readable> {
     const connection = await this.connect()
     const stream = connection.stream<Values>(string, values)
 
@@ -467,7 +435,7 @@ export abstract class SqlDatabase {
    * console.log(count) // count = 1
    * ```
    */
-  public async update<Values>(string: string, values?: Partial<Values>): Promise<SqlUpdateResult> {
+  public async update<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined> {
     const connection = await this.connect()
 
     try {

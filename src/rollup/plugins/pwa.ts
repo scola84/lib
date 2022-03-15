@@ -119,7 +119,11 @@ function createManifest (options: Options, base: Base, identity?: Result): strin
 function determineOrigin (origin?: string): string {
   switch (origin) {
     case 'true':
-      return ((/src (?<ip>[^\s]+)/u).exec(execSync('ip route get 255.255.255.255').toString()))?.groups?.ip ?? 'localhost'
+      return execSync('ip route get 255.255.255.255')
+        .toString()
+        .match(/src (?<ip>[^\s]+)/u)
+        ?.groups
+        ?.ip ?? 'localhost'
     case undefined:
       return 'localhost'
     default:

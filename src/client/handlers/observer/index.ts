@@ -13,17 +13,17 @@ import { tableRowTable } from './table-row-table'
 import { tableView } from './table-view'
 
 export const observerHandlers = {
-  'sc-button-carousel-hider': buttonCarouselHider,
-  'sc-carousel-select': carouselSelect,
-  'sc-element-field-error': elementFieldError,
-  'sc-elements-attrs': elementsAttrs,
-  'sc-elements-attrs-inv': elementsAttrsInv,
-  'sc-elements-data': elementsData,
-  'sc-elements-same': elementsSame,
-  'sc-field-element-attr': fieldElementAttr,
-  'sc-input-media-time': inputMediaTime,
-  'sc-input-media-volume': inputMediaVolume,
-  'sc-input-requester': inputRequester,
-  'sc-table-row-table': tableRowTable,
-  'sc-table-view': tableView
+  'button-carousel-hider': buttonCarouselHider,
+  'carousel-select': carouselSelect,
+  'element-field-error': elementFieldError,
+  'elements-attrs': elementsAttrs,
+  'elements-attrs-inv': elementsAttrsInv,
+  'elements-data': elementsData,
+  'elements-same': elementsSame,
+  'field-element-attr': fieldElementAttr,
+  'input-media-time': inputMediaTime,
+  'input-media-volume': inputMediaVolume,
+  'input-requester': inputRequester,
+  'table-row-table': tableRowTable,
+  'table-view': tableView
 }

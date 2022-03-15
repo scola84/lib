@@ -75,21 +75,19 @@ async function deleteOneRow (): Promise<void> {
   const connection = new MssqlConnection(helpers.pool.request())
 
   try {
-    const { id } = await connection.insertOne(sql`
+    const { id } = await connection.insert(sql`
       INSERT INTO test_connection (name)
       VALUES ($(name))
     `, {
       name: 'name'
     })
 
-    const { count } = await connection.delete(sql`
+    await connection.delete(sql`
       DELETE FROM test_connection
       WHERE id = $(id)
     `, {
       id
     })
-
-    expect(count).equal(1)
 
     const data = await connection.select(sql`
       SELECT *
@@ -197,7 +195,7 @@ async function insertOneRow (): Promise<void> {
   const connection = new MssqlConnection(helpers.pool.request())
 
   try {
-    const { id } = await connection.insertOne(sql`
+    const { id } = await connection.insert(sql`
       INSERT INTO test_connection (
         name,
         value_boolean,
@@ -439,23 +437,21 @@ async function updateOneRow (): Promise<void> {
   const connection = new MssqlConnection(helpers.pool.request())
 
   try {
-    const { id } = await connection.insertOne(sql`
+    const { id } = await connection.insert(sql`
       INSERT INTO test_connection (name)
       VALUES ($(name))
     `, {
       name: 'name'
     })
 
-    const { count } = await connection.update(sql`
+    await connection.update(sql`
       UPDATE test_connection
       SET name = $(name)
       WHERE id = $(id)
     `, {
-      id,
+      id: id,
       name: 'name-update'
     })
-
-    expect(count).equal(1)
 
     const data = await connection.selectOne(sql`
       SELECT *

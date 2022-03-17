@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'http'
 import { cast, isPrimitive, isStruct, setPush } from '../../../common'
 import type { FileBucket } from '../file'
+import type { FileInfo } from 'busboy'
 import type { Readable } from 'stream'
 import type { Schema } from '../schema'
 import type { Struct } from '../../../common'
@@ -63,30 +64,11 @@ export class RouteCodec {
       })
 
       decoder.on('field', (name, value) => {
-        setPush(body, name, cast(value))
+        this.decodeFormDataField(name, value, body)
       })
 
       decoder.on('file', (name, stream, info) => {
-        if (schema?.[name] === undefined) {
-          this.discardStream(stream)
-          return
-        }
-
-        const file = {
-          id: randomUUID(),
-          name: info.filename,
-          size: 0,
-          type: info.mimeType
-        }
-
-        stream.on('data', (data) => {
-          if (Buffer.isBuffer(data)) {
-            file.size += data.length
-          }
-        })
-
-        setPush(body, name, file)
-        this.bucket?.put(file, stream)
+        this.decodeFormDataFile(name, stream, info, body, schema)
       })
 
       decoder.on('close', () => {
@@ -99,10 +81,70 @@ export class RouteCodec {
     })
   }
 
-  public async decodeFormUrlencoded (request: IncomingMessage): Promise<Struct> {
-    return {
-      ...parse(await this.decodePlain(request))
+  public decodeFormDataField (name: string, value: unknown, body: Struct): void {
+    let castValue = cast(value)
+
+    if (castValue === '') {
+      castValue = null
     }
+
+    setPush(body, name, castValue)
+  }
+
+  public decodeFormDataFile (name: string, stream: Readable, info: FileInfo, body: Struct, schema?: Schema): void {
+    if (schema?.[name] === undefined) {
+      this.discardStream(stream)
+      return
+    }
+
+    const file = {
+      id: randomUUID(),
+      name: info.filename,
+      size: 0,
+      type: info.mimeType
+    }
+
+    stream.on('data', (data) => {
+      if (Buffer.isBuffer(data)) {
+        file.size += data.length
+      }
+    })
+
+    setPush(body, name, file)
+    this.bucket?.put(file, stream)
+  }
+
+  public async decodeFormUrlencoded (request: IncomingMessage): Promise<Struct> {
+    return Object
+      .entries({
+        ...parse(await this.decodePlain(request))
+      })
+      .reduce<Struct>((result, [name, value]) => {
+      /* eslint-disable @typescript-eslint/indent */
+        let castValue: unknown = null
+
+        if (isPrimitive(value)) {
+          if (value === '') {
+            castValue = null
+          } else {
+            castValue = cast(value)
+          }
+        } else if (Array.isArray(value)) {
+          castValue = value.map((mapValue) => {
+            if (mapValue === '') {
+              return null
+            }
+
+            return cast(mapValue)
+          })
+        }
+
+        return {
+          [name]: castValue,
+          ...result
+        }
+      }, {})
+      /* eslint-disable @typescript-eslint/indent */
   }
 
   public async decodeJson (request: IncomingMessage): Promise<unknown> {

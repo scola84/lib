@@ -41,8 +41,6 @@ export class ScolaTableCellElement extends HTMLTableCellElement implements Scola
     return this.data
   }
 
-  public reset (): void {}
-
   public setData (data: unknown): void {
     if (isStruct(data)) {
       this.data = data

@@ -82,6 +82,8 @@ export class Media {
   }
 
   public setData (data: unknown): void {
+    this.clear()
+
     if (isArray(data)) {
       this.setSourceFromArray(data)
     } else if (isStruct(data)) {
@@ -94,6 +96,8 @@ export class Media {
       this.setSourceFromStruct({
         src: data
       })
+    } else {
+      this.element.removeAttribute('src')
     }
   }
 
@@ -182,8 +186,12 @@ export class Media {
   }
 
   protected setSourceFromFile (file: File): void {
-    this.setSourceFromStruct({
-      src: URL.createObjectURL(file)
+    const src = URL.createObjectURL(file)
+
+    window.requestAnimationFrame(() => {
+      this.setSourceFromStruct({
+        src
+      })
     })
   }
 

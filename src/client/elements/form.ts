@@ -1,6 +1,7 @@
 import { Mutator, Observer, Propagator } from '../helpers'
 import { cast, isPrimitive, setPush } from '../../common'
 import type { ScolaElement } from './element'
+import type { ScolaFieldElement } from './field'
 import { ScolaInputElement } from './input'
 import { ScolaSelectElement } from './select'
 import { ScolaTextAreaElement } from './textarea'
@@ -8,7 +9,7 @@ import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
-    'sc-form-clear': CustomEvent
+    'sc-form-reset': CustomEvent
     'sc-form-focus': CustomEvent
   }
 }
@@ -22,11 +23,23 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
 
   public propagator: Propagator
 
-  protected handleClearBound = this.handleClear.bind(this)
+  public get fieldElements (): ScolaFieldElement[] {
+    return Array
+      .from(this.elements)
+      .filter((element) => {
+        return (
+          element instanceof ScolaInputElement ||
+          element instanceof ScolaSelectElement ||
+          element instanceof ScolaTextAreaElement
+        )
+      }) as ScolaFieldElement[]
+  }
 
   protected handleFocusBound = this.handleFocus.bind(this)
 
   protected handleObserverBound = this.handleObserver.bind(this)
+
+  protected handleResetBound = this.handleReset.bind(this)
 
   protected handleSubmitBound = this.handleSubmit.bind(this)
 
@@ -41,20 +54,6 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     customElements.define('sc-form', ScolaFormElement, {
       extends: 'form'
     })
-  }
-
-  public clear (): void {
-    Array
-      .from(this.elements)
-      .forEach((element) => {
-        if (
-          element instanceof ScolaInputElement ||
-          element instanceof ScolaSelectElement ||
-          element instanceof ScolaTextAreaElement
-        ) {
-          element.clear()
-        }
-      })
   }
 
   public connectedCallback (): void {
@@ -80,27 +79,21 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   public getErrors (): Struct {
-    return Array
-      .from(this.elements)
-      .reduce<Struct>((errors, element) => {
-      /* eslint-disable @typescript-eslint/indent */
-        let error = null
+    return this.fieldElements.reduce<Struct>((errors, fieldElement) => {
+      const error = fieldElement.getError()
 
-        if (
-          element instanceof ScolaInputElement ||
-          element instanceof ScolaSelectElement ||
-          element instanceof ScolaTextAreaElement
-        ) {
-          error = element.getError()
+      if (error !== null) {
+        errors[fieldElement.name] = error
+      }
 
-          if (error !== null) {
-            errors[element.name] = error
-          }
-        }
+      return errors
+    }, {})
+  }
 
-        return errors
-      }, {})
-      /* eslint-enable @typescript-eslint/indent */
+  public reset (): void {
+    this.fieldElements.forEach((fieldElement) => {
+      fieldElement.reset()
+    })
   }
 
   public setData (data: unknown): void {
@@ -129,8 +122,8 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected addEventListeners (): void {
-    this.addEventListener('sc-form-clear', this.handleClearBound)
     this.addEventListener('sc-form-focus', this.handleFocusBound)
+    this.addEventListener('sc-form-reset', this.handleResetBound)
     this.addEventListener('submit', this.handleSubmitBound)
   }
 
@@ -145,7 +138,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected focusErrorElement (): void {
-    const element = this.querySelector('[sc-field-error]')
+    const element = this.querySelector('[sc-field-error]:not([hidden]')
 
     if (element instanceof HTMLElement) {
       if (element.parentElement?.hasAttribute('tabindex') === false) {
@@ -158,10 +151,6 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     }
   }
 
-  protected handleClear (): void {
-    this.clear()
-  }
-
   protected handleFocus (): void {
     this.changeFocus()
   }
@@ -171,20 +160,37 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     this.changeFocus()
   }
 
+  protected handleReset (): void {
+    this.reset()
+  }
+
   protected handleSubmit (event: Event): void {
     event.preventDefault()
+    this.setValues()
 
-    if (this.checkValidity()) {
-      this.setData({})
-      this.propagator.dispatch('submit', [this.getData()], event)
-    } else {
-      this.setData(this.getErrors())
+    if (!this.checkValidity()) {
+      const errors = this.getErrors()
+
+      this.propagator.dispatch('error', [errors], event)
+      this.setData(errors)
+      return
     }
+
+    this.setData({})
+    this.propagator.dispatch('submit', [this.getData()], event)
+  }
+
+  protected isFieldElement (element: Element): element is ScolaFieldElement {
+    return (
+      element instanceof ScolaInputElement ||
+      element instanceof ScolaSelectElement ||
+      element instanceof ScolaTextAreaElement
+    )
   }
 
   protected removeEventListeners (): void {
-    this.removeEventListener('sc-form-clear', this.handleClearBound)
     this.removeEventListener('sc-form-focus', this.handleFocusBound)
+    this.removeEventListener('sc-form-reset', this.handleResetBound)
     this.removeEventListener('submit', this.handleSubmitBound)
   }
 
@@ -192,15 +198,54 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     return Array
       .from(new FormData(this).entries())
       .reduce((data, [name, value]) => {
-        let castValue: unknown = value
+        let castValue: unknown = null
 
         if (isPrimitive(value)) {
-          castValue = cast(value)
+          if (value === '') {
+            castValue = null
+          } else {
+            castValue = cast(value)
+          }
+        } else if (value instanceof File) {
+          if (
+            value.size === 0 &&
+            value.name === ''
+          ) {
+            castValue = null
+          }
         }
 
         setPush(data, name, castValue)
         return data
       }, {})
+  }
+
+  protected setValues (): void {
+    const method = this.getAttribute('sc-method')
+
+    this.fieldElements.forEach((fieldElement) => {
+      const value = fieldElement.getAttribute('sc-value')
+
+      switch (value) {
+        case '$created':
+          if (method === 'POST') {
+            fieldElement.setData(new Date().toISOString())
+          }
+
+          break
+        case '$updated':
+          if (
+            method === 'PATCH' ||
+            method === 'PUT'
+          ) {
+            fieldElement.setData(new Date().toISOString())
+          }
+
+          break
+        default:
+          break
+      }
+    })
   }
 
   protected toggleDisabled (): void {

@@ -34,12 +34,6 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     })
   }
 
-  public clear (): void {
-    this.value = this.initialValue
-    this.field.clear()
-    this.update()
-  }
-
   public connectedCallback (): void {
     this.field.connect()
     this.mutator.connect()
@@ -100,8 +94,13 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     return this.value
   }
 
+  public isEmpty (): boolean {
+    return this.innerHTML === ''
+  }
+
   public reset (): void {
     this.resize = this.hasAttribute('sc-resize')
+    this.field.setData(this.initialValue)
   }
 
   public setData (data: unknown): void {
@@ -121,6 +120,7 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
   }
 
   public updateAttributes (): void {
+    this.toggleAttribute('sc-empty', this.isEmpty())
     this.setAttribute('sc-updated', Date.now().toString())
     this.form?.setAttribute('sc-updated', Date.now().toString())
   }

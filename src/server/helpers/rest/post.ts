@@ -27,7 +27,7 @@ export abstract class RestPostHandler extends RestHandler {
     }))
   }
 
-  protected async handle (data: PostData, response: ServerResponse): Promise<unknown> {
+  protected async handle (data: PostData, response: ServerResponse): Promise<Struct | undefined> {
     if (
       this.keys.auth !== undefined &&
       data.user === undefined
@@ -45,29 +45,24 @@ export abstract class RestPostHandler extends RestHandler {
     await this.authorizeLinks(data, response)
 
     const insertQuery = this.database.formatter.createInsertQuery(this.object, this.keys, schema, data.body)
-    const { id } = await this.database.insert(insertQuery.string, insertQuery.values)
+    const object = await this.database.insert(insertQuery.string, insertQuery.values, null)
 
     await this.moveFiles(schema, data.body)
 
     if (
-      id !== undefined &&
-      this.keys.primary?.length === 1
+      this.keys.primary?.length === 1 &&
+      object[this.keys.primary[0].column] !== undefined
     ) {
-      const [primaryKey] = this.keys.primary
-
-      await this.insertLinks(data, primaryKey, id)
-
-      const result = {
-        [primaryKey.column]: id
-      }
-
-      return result
+      await this.insertLinks(data, object, this.keys.primary[0])
     }
 
-    return undefined
+    const selectQuery = this.database.formatter.createSelectQuery(this.object, this.keys, this.keys.primary ?? [], object, data.user)
+
+    response.statusCode = 201
+    return this.database.select(selectQuery.string, selectQuery.values)
   }
 
-  protected async insertLinks (data: PostData, primaryKey: SchemaFieldKey, id: unknown): Promise<void> {
+  protected async insertLinks (data: PostData, object: Struct, primaryKey: SchemaFieldKey): Promise<void> {
     await Promise.all(this.keys.related?.map(async (key) => {
       const insertQuery = this.database.formatter.createInsertQuery(key.table, this.keys, {
         [key.column]: {
@@ -78,10 +73,10 @@ export abstract class RestPostHandler extends RestHandler {
         }
       }, {
         [key.column]: data.body[key.column],
-        [primaryKey.column]: id
+        [primaryKey.column]: object[primaryKey.column]
       })
 
-      await this.database.insert(insertQuery.string, insertQuery.values)
+      await this.database.insert(insertQuery.string, insertQuery.values, null)
     }) ?? [])
   }
 

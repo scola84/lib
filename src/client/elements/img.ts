@@ -54,10 +54,12 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
     }
   }
 
-  public reset (): void {}
-
   public setData (data: unknown): void {
-    if (isStruct(data)) {
+    this.clear()
+
+    if (data instanceof File) {
+      this.setSourceFromFile(data)
+    } else if (isStruct(data)) {
       if (data.file instanceof File) {
         this.setSourceFromFile(data.file)
       } else {
@@ -67,6 +69,8 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
       this.setSourceFromStruct({
         src: data
       })
+    } else {
+      this.removeAttribute('src')
     }
 
     this.update()
@@ -89,8 +93,12 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
   }
 
   protected setSourceFromFile (file: File): void {
-    this.setSourceFromStruct({
-      src: URL.createObjectURL(file)
+    const src = URL.createObjectURL(file)
+
+    window.requestAnimationFrame(() => {
+      this.setSourceFromStruct({
+        src
+      })
     })
   }
 

@@ -1,5 +1,5 @@
 import { Mutator, Observer, Propagator, Transaction } from '../helpers'
-import { absorb, isArray, isStruct } from '../../common'
+import { absorb, isArray, isNil, isPrimitive, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaViewElement } from './view'
 import type { Struct } from '../../common'
@@ -181,7 +181,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     let data = null
 
     if (options instanceof Transaction) {
-      ({ data } = options)
+      data = options.commit
     } else if (isStruct(options)) {
       data = options
     }
@@ -191,12 +191,18 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     let { url } = this as { url: string | null }
     let body: FormData | URLSearchParams | string | null = null
 
-    if (method === 'GET') {
+    if (
+      method === 'DELETE' ||
+      method === 'GET'
+    ) {
       url = this.createRequestUrl({
         ...this.view?.view?.params,
         ...data
       })
-    } else {
+    } else if (
+      method === 'POST' ||
+      method === 'PUT'
+    ) {
       body = this.createRequestBody({
         ...this.view?.view?.params,
         ...data
@@ -239,10 +245,12 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       /* eslint-enable @typescript-eslint/indent */
       .forEach(([key, values]) => {
         values.forEach((value) => {
-          if (value instanceof File) {
-            body.append(String(key), value, value.name)
-          } else {
-            body.append(String(key), String(value))
+          if (isNil(value)) {
+            body.append(key, '')
+          } else if (isPrimitive(value)) {
+            body.append(key, value.toString())
+          } else if (value instanceof File) {
+            body.append(key, value, value.name)
           }
         })
       })
@@ -266,7 +274,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       /* eslint-enable @typescript-eslint/indent */
       .forEach(([key, values]) => {
         values.forEach((value) => {
-          body.append(String(key), String(value))
+          if (isNil(value)) {
+            body.append(key, '')
+          } else if (isPrimitive(value)) {
+            body.append(key, value.toString())
+          }
         })
       })
 
@@ -283,7 +295,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     Object
       .entries(absorb(this.dataset, data))
       .forEach(([key, value]) => {
-        url.searchParams.set(key, String(value))
+        if (isNil(value)) {
+          url.searchParams.append(key, '')
+        } else if (isPrimitive(value)) {
+          url.searchParams.append(key, value.toString())
+        }
       })
 
     if (this.exact) {

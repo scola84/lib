@@ -16,7 +16,7 @@ export class PostgresqlFormatter extends SqlFormatter {
     if (keys.primary?.length === 1) {
       string = sql`
         ${string}
-        RETURNING $[${keys.primary[0].column}] AS id
+        RETURNING $[${keys.primary[0].column}]
       `
     }
 
@@ -185,7 +185,7 @@ export class PostgresqlFormatter extends SqlFormatter {
   protected formatDdlColumnNumber (name: string, field: SchemaField): string {
     let ddl = `"${name}"`
 
-    if (field.pkey === true) {
+    if (field.serial === true) {
       ddl += ' SERIAL'
     } else {
       if (field.step === undefined) {

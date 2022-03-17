@@ -1,5 +1,5 @@
-import type { Options } from './options'
-import { camelize } from './camelize'
+import type { Options } from '../html-api'
+import { camelize } from '../../../common/helpers/camelize'
 import { formatGroup } from './format-group'
 
 export function formatIndex (options: Options): string {

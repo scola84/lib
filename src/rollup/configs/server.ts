@@ -2,7 +2,6 @@ import { isExternal, onwarn } from '../helpers'
 import type { RollupOptions } from 'rollup'
 import commonjs from '@rollup/plugin-commonjs'
 import copy from 'rollup-plugin-copy'
-import minify from 'rollup-plugin-minify-html-literals'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
 
@@ -28,7 +27,6 @@ const options: RollupOptions = {
         src: 'src/index.ts'
       }]
     }),
-    minify(),
     resolve()
   ]
 }

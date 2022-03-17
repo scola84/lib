@@ -1,4 +1,4 @@
-import type { Options } from './options'
+import type { Options } from '../html-api'
 import type { Schema } from '../../../server/helpers/schema'
 import type { Struct } from '../../../common'
 import { createKeys } from './create-keys'
@@ -6,7 +6,7 @@ import { formatCode } from './format-code'
 import { pickField } from './pick-field'
 import { sortKeys } from './sort-keys'
 
-export function formatDelete (options: Options, schema: Schema, relations: Struct<Schema>): string {
+export function formatDelete (schema: Schema, relations: Struct<Schema>, options: Options): string {
   return `
 import { RestDeleteHandler } from '@scola/lib'
 

@@ -1,5 +1,5 @@
 import type { Struct } from '../../../common'
-import { camelize } from './camelize'
+import { camelize } from '../../../common/helpers/camelize'
 import { readdirSync } from 'fs-extra'
 
 export const readers: Struct<((targetDir: string) => string[][]) | undefined> = {

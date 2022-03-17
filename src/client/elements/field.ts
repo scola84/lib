@@ -10,13 +10,15 @@ export interface ScolaFieldElement extends ScolaElement {
 
   value: string
 
-  clear: () => void
-
   falsify: () => void
 
   getError: () => FieldError | null
 
+  isEmpty: () => boolean
+
   getValue: () => string | null
+
+  reset: () => void
 
   verify: () => void
 }

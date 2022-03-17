@@ -1,7 +1,7 @@
+import { cast, isPrimitive, isStruct } from '../../common'
 import { Sanitizer } from './sanitizer'
 import type { ScolaElement } from '../elements'
 import type { Struct } from '../../common'
-import { isStruct } from '../../common'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Handler = ((observer: any, observable: any, mutations: MutationRecord[]) => void)
@@ -180,10 +180,16 @@ export class Observer {
         Object
           .entries(states)
           .forEach(([name, value]) => {
-            if (value === null) {
+            const castValue = cast(value)
+
+            if (castValue === null) {
               this.element.removeAttribute(name)
-            } else if (this.sanitizer.checkAttribute(this.element.nodeName, name, String(value))) {
-              this.element.setAttribute(name, String(value))
+            } else if (isPrimitive(castValue)) {
+              const attrValue = castValue.toString()
+
+              if (this.sanitizer.checkAttribute(this.element.nodeName, name, attrValue)) {
+                this.element.setAttribute(name, attrValue)
+              }
             }
           })
       }

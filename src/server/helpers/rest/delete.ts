@@ -55,7 +55,7 @@ export abstract class RestDeleteHandler extends RestHandler {
       }))
   }
 
-  protected async handle (data: DeleteData, response: ServerResponse): Promise<void> {
+  protected async handle (data: DeleteData, response: ServerResponse): Promise<Struct | undefined> {
     if (
       this.keys.auth !== undefined &&
       data.user === undefined
@@ -80,7 +80,7 @@ export abstract class RestDeleteHandler extends RestHandler {
 
     if (typeof data.query.file === 'string') {
       await this.deleteFile(object, data.query.file)
-      return
+      return object
     }
 
     await this.deleteFiles(schema, object)
@@ -88,5 +88,6 @@ export abstract class RestDeleteHandler extends RestHandler {
     const deleteQuery = this.database.formatter.createDeleteQuery(this.object, this.keys, data.query)
 
     await this.database.delete(deleteQuery.string, deleteQuery.values)
+    return object
   }
 }

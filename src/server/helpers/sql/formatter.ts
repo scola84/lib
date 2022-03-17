@@ -82,7 +82,7 @@ export abstract class SqlFormatter {
         WHERE ${this.joinStrings(' AND ', [
           selectAll.where,
           authPart.where
-        ]) ?? 'true'}
+        ]) ?? '1=1'}
       `
     })
 
@@ -122,7 +122,7 @@ export abstract class SqlFormatter {
         WHERE ${this.joinStrings(' AND ', [
           select.where,
           authPart.where
-        ]) ?? 'true'}
+        ]) ?? '1=1'}
       `
     })
 
@@ -140,6 +140,11 @@ export abstract class SqlFormatter {
 
     const set = Object
       .keys(schema)
+      .filter((name) => {
+        return keys.primary?.every((key) => {
+          return key.column !== name
+        })
+      })
       .filter((name) => {
         return data[name] !== undefined
       })
@@ -174,6 +179,11 @@ export abstract class SqlFormatter {
 
     const set = Object
       .keys(schema)
+      .filter((name) => {
+        return keys.primary?.every((key) => {
+          return key.column !== name
+        })
+      })
       .map((name) => {
         values[name] = data[name]
         return `$[${name}] = $(${name})`
@@ -440,7 +450,7 @@ export abstract class SqlFormatter {
     const values: Struct = {}
 
     let where: string | undefined = this.joinStrings(') AND (', this.i18n
-      .parse(String(parameters.search ?? ''), locale)
+      .parse(parameters.search ?? '', locale)
       .map((search, index) => {
         return this.joinStrings(') OR (', keys
           .filter((key) => {

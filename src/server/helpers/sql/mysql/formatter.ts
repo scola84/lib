@@ -1,11 +1,31 @@
-import type { SqlQueryParts, SqlSelectAllParameters } from '../query'
-import type { SchemaField } from '../../schema'
+import type { Schema, SchemaField } from '../../schema'
+import type { SqlQuery, SqlQueryKeys, SqlQueryParts, SqlSelectAllParameters } from '../query'
 import { SqlFormatter } from '../formatter'
 import type { Struct } from '../../../../common'
 import { escape } from 'sqlstring'
 import { isStruct } from '../../../../common'
+import { sql } from '../tag'
 
 export class MysqlFormatter extends SqlFormatter {
+  public createInsertQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct): SqlQuery {
+    let {
+      string,
+      values
+    } = super.createInsertQuery(object, keys, schema, data)
+
+    if (keys.primary?.length === 1) {
+      string = sql`
+        ${string};
+        SELECT LAST_INSERT_ID() AS $[${keys.primary[0].column}];
+      `
+    }
+
+    return {
+      string,
+      values
+    }
+  }
+
   public formatDdl (database: string, object: string, fields: Struct<SchemaField>): string {
     const lines = [
       `USE \`${database}\`;`,
@@ -172,7 +192,7 @@ export class MysqlFormatter extends SqlFormatter {
       ddl += ` DEFAULT ${field.default.toString()}`
     }
 
-    if (field.pkey === true) {
+    if (field.serial === true) {
       ddl += ' AUTO_INCREMENT'
     }
 

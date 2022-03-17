@@ -25,13 +25,11 @@ export class MssqlConnection extends SqlConnection {
     this.connection = connection
   }
 
-  public async delete<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined> {
-    await this.execute<Values, IResult<unknown>>({
+  public async delete<Values = Struct>(string: string, values?: Partial<Values>): Promise<void> {
+    await this.query<Values, IResult<unknown>>({
       string,
       values
     })
-
-    return values
   }
 
   public async depopulate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void> {
@@ -58,35 +56,37 @@ export class MssqlConnection extends SqlConnection {
       }))
   }
 
-  public async execute<Values = Struct, Result = Struct>(query: SqlQuery<Partial<Values>>): Promise<IResult<Result>> {
-    return this.connection.query<Result>(this.formatter.formatQuery(query))
-  }
-
-  public async insert<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key = 'id'): Promise<Result> {
-    const { recordset: [object] } = await this.execute<Values, Result>({
-      string: sql`
-        ${string};
-        SELECT SCOPE_IDENTITY() AS ${key};
-      `,
-      values: values
-    })
-
-    return {
-      ...values,
-      ...object
+  public async insert<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key: string | null = 'id'): Promise<Result> {
+    const query = {
+      string,
+      values
     }
+
+    if (key !== null) {
+      query.string = sql`
+        ${query.string};
+        SELECT SCOPE_IDENTITY() AS $[${key}];
+      `
+    }
+
+    const [object] = await this.query<Values, Result>(query)
+    return object
   }
 
-  public async insertAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key = 'id'): Promise<Result[]> {
-    const { recordset } = await this.execute<Values, Result>({
-      string: sql`
-        ${string};
-        SELECT SCOPE_IDENTITY() AS ${key};
-      `,
-      values: values
-    })
+  public async insertAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key: string | null = 'id'): Promise<Result[]> {
+    const query = {
+      string,
+      values
+    }
 
-    return recordset
+    if (key !== null) {
+      query.string = sql`
+        ${query.string};
+        SELECT SCOPE_IDENTITY() AS $[${key}];
+      `
+    }
+
+    return this.query<Values, Result>(query)
   }
 
   public async populate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void> {
@@ -117,12 +117,16 @@ export class MssqlConnection extends SqlConnection {
       }))
   }
 
+  public async query<Values = Struct, Result = Struct>(query: SqlQuery<Partial<Values>>): Promise<Result[]> {
+    return (await this.connection.query<Result>(this.formatter.formatQuery(query))).recordset
+  }
+
   public release (): void {
     this.connection.cancel()
   }
 
   public async select<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result | undefined> {
-    const { recordset: [object] } = await this.execute<Values, Result>({
+    const [object] = await this.query<Values, Result>({
       string,
       values
     })
@@ -131,16 +135,14 @@ export class MssqlConnection extends SqlConnection {
   }
 
   public async selectAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result[]> {
-    const { recordset } = await this.execute<Values, Result>({
+    return this.query<Values, Result>({
       string,
       values
     })
-
-    return recordset
   }
 
   public async selectOne<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>): Promise<Result> {
-    const { recordset: [object] } = await this.execute<Values, Result>({
+    const [object] = await this.query<Values, Result>({
       string,
       values
     })
@@ -173,12 +175,10 @@ export class MssqlConnection extends SqlConnection {
     return transform
   }
 
-  public async update<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined> {
-    await this.execute<Values, IResult<unknown>>({
+  public async update<Values = Struct>(string: string, values?: Partial<Values>): Promise<void> {
+    await this.query<Values, IResult<unknown>>({
       string,
       values
     })
-
-    return values
   }
 }

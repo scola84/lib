@@ -48,8 +48,6 @@ export class ScolaReloaderElement extends HTMLObjectElement implements ScolaElem
     return {}
   }
 
-  public reset (): void {}
-
   public setData (): void {}
 
   public toObject (): Struct {

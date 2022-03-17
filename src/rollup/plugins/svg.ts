@@ -4,7 +4,6 @@ import { optimize } from 'svgo'
 import { readFileSync } from 'fs-extra'
 
 interface Options {
-  minify?: boolean
   options?: OptimizeOptions
 }
 

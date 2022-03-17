@@ -2,9 +2,9 @@ import type { Primitive, Struct } from '../../../common'
 import type { User } from '../../entities'
 import { isStruct } from '../../../common'
 
-type BoundValidator = (data: Struct, errors: Struct, user?: User) => boolean | null
+export type Validator = (data: Struct, errors: Struct, user?: User) => boolean | null
 
-type Validator = (name: string, field: SchemaField, data: Struct, errors: Struct, user?: User) => boolean | null
+export type ValidatorFactory = (name: string, field: SchemaField) => Validator
 
 export interface SchemaField extends Struct {
   accept?: string[]
@@ -24,6 +24,7 @@ export interface SchemaField extends Struct {
   rkey?: SchemaFieldKey
   schema?: Schema
   search?: boolean
+  serial?: boolean
   sort?: boolean
   step?: number
   type: string
@@ -39,18 +40,18 @@ export interface SchemaFieldKey {
 export type Schema = Struct<SchemaField>
 
 export class SchemaValidator {
-  public static validators: Struct<Validator | undefined> = {}
+  public static validators: Struct<ValidatorFactory | undefined> = {}
 
   public schema: Schema
 
-  public validators: BoundValidator[][]
+  public validators: Validator[][]
 
   public constructor (schema: Schema) {
     this.schema = schema
     this.validators = this.compile(schema)
   }
 
-  public static defineValidators (validators: Struct<Validator>): void {
+  public static defineValidators (validators: Struct<ValidatorFactory>): void {
     Object
       .entries(validators)
       .forEach(([name, validator]) => {
@@ -83,7 +84,7 @@ export class SchemaValidator {
     return null
   }
 
-  protected compile (schema: Schema): BoundValidator[][] {
+  protected compile (schema: Schema): Validator[][] {
     return Object
       .entries(schema)
       .map(([name, field]) => {
@@ -91,7 +92,7 @@ export class SchemaValidator {
       })
   }
 
-  protected compileChild (name: string, field: SchemaField): BoundValidator {
+  protected compileChild (name: string, field: SchemaField): Validator {
     const childValidator = new SchemaValidator(field.schema ?? {})
 
     function validator (data: Struct, errors: Struct): boolean {
@@ -114,14 +115,14 @@ export class SchemaValidator {
     return validator
   }
 
-  protected compileField (name: string, field: SchemaField): BoundValidator[] {
+  protected compileField (name: string, field: SchemaField): Validator[] {
     const validators = []
 
-    validators.push(SchemaValidator.validators.required?.bind(null, name, field))
+    validators.push(SchemaValidator.validators.required?.(name, field))
     validators.push(SchemaValidator.validators[field.type]?.bind(null, name, field))
 
     if (field.custom !== undefined) {
-      validators.push(SchemaValidator.validators[field.custom]?.bind(null, name, field))
+      validators.push(SchemaValidator.validators[field.custom]?.(name, field))
     }
 
     if (field.max !== undefined) {
@@ -154,6 +155,6 @@ export class SchemaValidator {
 
     return validators.filter((validator) => {
       return validator !== undefined
-    }) as BoundValidator[]
+    }) as Validator[]
   }
 }

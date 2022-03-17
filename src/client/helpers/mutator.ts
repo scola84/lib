@@ -1,4 +1,4 @@
-import { cast, hyphenize, isStruct } from '../../common'
+import { cast, hyphenize, isPrimitive, isStruct } from '../../common'
 import { Sanitizer } from './sanitizer'
 import type { ScolaElement } from '../elements'
 import type { Struct } from '../../common'
@@ -117,8 +117,8 @@ export class Mutator {
               this.element.removeAttribute(attrName)
             } else if (castValue === true) {
               this.element.setAttribute(attrName, '')
-            } else {
-              const attrValue = String(castValue)
+            } else if (isPrimitive(castValue)) {
+              const attrValue = castValue.toString()
 
               if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
                 this.element.setAttribute(attrName, attrValue)
@@ -140,12 +140,14 @@ export class Mutator {
           const attrName = String(name)
           const castValue = cast(value)
 
-          if (typeof castValue === 'boolean') {
-            this.element.toggleAttribute(attrName)
+          if (castValue === false) {
+            this.element.removeAttribute(attrName)
+          } else if (castValue === true) {
+            this.element.setAttribute(attrName, '')
           } else if (value === this.element.getAttribute(attrName)) {
             this.element.removeAttribute(attrName)
-          } else {
-            const attrValue = String(value)
+          } else if (isPrimitive(castValue)) {
+            const attrValue = castValue.toString()
 
             if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
               this.element.setAttribute(attrName, attrValue)

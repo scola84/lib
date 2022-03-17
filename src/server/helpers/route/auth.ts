@@ -28,7 +28,7 @@ export class RouteAuth {
     let hash = ''
 
     if (data.headers.authorization === undefined) {
-      const cookie = parse(String(data.headers.cookie))
+      const cookie = parse(data.headers.cookie ?? '')
 
       if (typeof cookie.token === 'string') {
         hash = cookie.token

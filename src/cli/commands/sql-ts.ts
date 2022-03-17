@@ -103,7 +103,7 @@ try {
   sqlts
     .toObject({
       client: client,
-      connection: String(url),
+      connection: url.toString(),
       // eslint-disable-next-line no-template-curly-in-string
       interfaceNameFormat: '${table}',
       tableNameCasing: 'pascal',

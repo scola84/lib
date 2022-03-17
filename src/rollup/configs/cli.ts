@@ -2,7 +2,6 @@ import type { RollupOptions } from 'rollup'
 import { chmod } from '../plugins'
 import commonjs from '@rollup/plugin-commonjs'
 import { isExternal } from '../helpers'
-import minify from 'rollup-plugin-minify-html-literals'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
 
@@ -18,6 +17,7 @@ const options: RollupOptions = {
   },
   output: {
     banner: '#!/usr/bin/env node',
+    chunkFileNames: 'dist/cli/[name].js',
     dir: '.',
     entryFileNames: 'dist/cli/[name].js',
     format: 'cjs'
@@ -27,7 +27,6 @@ const options: RollupOptions = {
     chmod({
       include: 'dist/cli/index.js'
     }),
-    minify(),
     resolve()
   ]
 }

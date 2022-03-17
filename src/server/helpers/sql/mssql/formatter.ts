@@ -16,7 +16,7 @@ export class MssqlFormatter extends SqlFormatter {
     if (keys.primary?.length === 1) {
       string = sql`
         ${string};
-        SELECT SCOPE_IDENTITY() AS id;
+        SELECT SCOPE_IDENTITY() AS $[${keys.primary[0].column}];
       `
     }
 
@@ -193,7 +193,7 @@ export class MssqlFormatter extends SqlFormatter {
       ddl += ` DEFAULT ${field.default.toString()}`
     }
 
-    if (field.pkey === true) {
+    if (field.serial === true) {
       ddl += ' IDENTITY(1,1)'
     }
 

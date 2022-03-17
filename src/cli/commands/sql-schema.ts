@@ -41,11 +41,7 @@ try {
     target
   ] = program.args
 
-  const {
-    exclude,
-    include
-  } = program.opts<Options>()
-
+  const options = program.opts<Options>()
   const [context] = container.split('_')
   const url = new URL(source)
   const database = url.pathname.slice(1)
@@ -78,7 +74,7 @@ try {
   })
 
   if (dialect.includes('mysql')) {
-    const excludeFlags = (exclude ?? [])
+    const excludeFlags = (options.exclude ?? [])
       .map((table) => {
         return `--ignore-table ${database}.${table}`
       })
@@ -101,13 +97,13 @@ try {
   }
 
   if (dialect.includes('postgres')) {
-    const excludeFlags = (exclude ?? [])
+    const excludeFlags = (options.exclude ?? [])
       .map((table) => {
         return `--exclude-table ${table}`
       })
       .join(' ')
 
-    const includeFlags = (include ?? [])
+    const includeFlags = (options.include ?? [])
       .map((table) => {
         return `--table ${table}`
       })

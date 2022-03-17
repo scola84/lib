@@ -43,6 +43,8 @@ export class Field {
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
 
+  protected handleResetBound = this.handleReset.bind(this)
+
   protected handleVerifyBound = this.handleVerify.bind(this)
 
   public constructor (element: ScolaFieldElement) {
@@ -52,8 +54,9 @@ export class Field {
   }
 
   public clear (): void {
-    this.clearError()
-    this.clearValid()
+    this.error = undefined
+    this.element.toggleAttribute('sc-field-error', false)
+    this.element.toggleAttribute('sc-field-valid', false)
   }
 
   public connect (): void {
@@ -104,6 +107,10 @@ export class Field {
       } else if (isPrimitive(data.value)) {
         this.setValue(data.value)
       }
+    } else if (data instanceof File) {
+      this.setFile(data)
+    } else {
+      this.setValue('')
     }
   }
 
@@ -131,6 +138,7 @@ export class Field {
     this.element.addEventListener('sc-field-clear', this.handleClearBound)
     this.element.addEventListener('sc-field-falsify', this.handleFalsifyBound)
     this.element.addEventListener('sc-field-focus', this.handleFocusBound)
+    this.element.addEventListener('sc-field-reset', this.handleResetBound)
     this.element.addEventListener('sc-field-verify', this.handleVerifyBound)
   }
 
@@ -138,15 +146,6 @@ export class Field {
     this.handleInputBound.cancel()
     this.removeEventListeners()
     this.addEventListeners()
-  }
-
-  protected clearError (): void {
-    this.error = undefined
-    this.element.toggleAttribute('sc-field-error', false)
-  }
-
-  protected clearValid (): void {
-    this.element.toggleAttribute('sc-field-valid', false)
   }
 
   protected handleClear (): void {
@@ -166,8 +165,8 @@ export class Field {
   }
 
   protected handleInput (event: Event): void {
-    this.clearError()
-    this.clearValid()
+    this.clear()
+    this.element.update()
 
     if (this.element instanceof HTMLInputElement) {
       if (
@@ -214,8 +213,6 @@ export class Field {
   }
 
   protected handleInputValue (event: Event): void {
-    this.element.update()
-
     this.element.propagator.dispatch('value', [{
       [this.element.name]: this.element.value
     }], event)
@@ -259,6 +256,10 @@ export class Field {
     }], event)
   }
 
+  protected handleReset (): void {
+    this.element.reset()
+  }
+
   protected handleVerify (): void {
     const dispatched = this.element.propagator.dispatch('verify', [this.getData()])
 
@@ -272,6 +273,7 @@ export class Field {
     this.element.removeEventListener('sc-field-clear', this.handleClearBound)
     this.element.removeEventListener('sc-field-falsify', this.handleFalsifyBound)
     this.element.removeEventListener('sc-field-focus', this.handleFocusBound)
+    this.element.removeEventListener('sc-field-reset', this.handleResetBound)
     this.element.removeEventListener('sc-field-verify', this.handleVerifyBound)
   }
 
@@ -281,13 +283,19 @@ export class Field {
     this.element.toggleAttribute('sc-field-error', true)
   }
 
-  protected setFile (file: File): void {
+  protected setFile (file?: File): void {
     if (this.element instanceof HTMLInputElement) {
       const transfer = new DataTransfer()
 
-      transfer.items.add(file)
+      if (file !== undefined) {
+        transfer.items.add(file)
+      }
+
       this.element.files = transfer.files
     }
+
+    this.verify()
+    this.element.update()
   }
 
   protected setValid (): void {
@@ -301,6 +309,14 @@ export class Field {
       this.element.type === 'radio'
     ) {
       this.element.toggleAttribute('checked', value.toString() === this.element.value)
+    } else if (
+      this.element.type === 'date' ||
+      this.element.type === 'datetime-local' ||
+      this.element.type === 'time'
+    ) {
+      this.element.value = value
+        .toString()
+        .slice(0, 16)
     } else {
       this.element.value = value.toString()
     }

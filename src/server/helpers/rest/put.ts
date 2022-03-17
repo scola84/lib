@@ -38,7 +38,7 @@ export abstract class RestPutHandler extends RestHandler {
       }))
   }
 
-  protected async handle (data: PutData, response: ServerResponse): Promise<void> {
+  protected async handle (data: PutData, response: ServerResponse): Promise<Struct | undefined> {
     if (
       this.keys.auth !== undefined &&
       data.user === undefined
@@ -61,10 +61,10 @@ export abstract class RestPutHandler extends RestHandler {
       throw new Error(`Object is undefined for "PUT ${this.url}"`)
     }
 
-    await this.deleteFiles(schema, object, data.body)
-
     const updateQuery = this.database.formatter.createUpdateQuery(this.object, this.keys, schema, data.body)
 
+    await this.deleteFiles(schema, object, data.body)
     await this.database.update(updateQuery.string, updateQuery.values)
+    return this.database.select(selectQuery.string, selectQuery.values)
   }
 }

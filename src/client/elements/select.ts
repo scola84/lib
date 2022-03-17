@@ -29,12 +29,6 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     })
   }
 
-  public clear (): void {
-    this.value = this.querySelector<HTMLOptionElement>('option[selected]')?.value ?? ''
-    this.field.clear()
-    this.update()
-  }
-
   public connectedCallback (): void {
     this.field.connect()
     this.mutator.connect()
@@ -78,10 +72,21 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   public getValue (): string {
-    return this.value
+    return Array
+      .from(this.selectedOptions)
+      .map((option) => {
+        return option.value
+      })
+      .join(', ')
   }
 
-  public reset (): void {}
+  public isEmpty (): boolean {
+    return this.value === ''
+  }
+
+  public reset (): void {
+    this.field.setData(this.querySelector<HTMLOptionElement>('option[selected]')?.value ?? '')
+  }
 
   public setData (data: unknown): void {
     this.field.setData(data)
@@ -97,6 +102,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   public updateAttributes (): void {
+    this.toggleAttribute('sc-empty', this.isEmpty())
     this.setAttribute('sc-updated', Date.now().toString())
     this.form?.setAttribute('sc-updated', Date.now().toString())
   }

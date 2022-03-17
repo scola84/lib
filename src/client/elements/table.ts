@@ -432,7 +432,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
           element
             .querySelectorAll('[data-sc-list-sort-order]')
             .forEach((child) => {
-              child.setAttribute('data-sc-list-sort-key', String(key))
+              child.setAttribute('data-sc-list-sort-key', key)
             })
 
           if (element instanceof ScolaTableCellElement) {

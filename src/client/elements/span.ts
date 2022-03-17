@@ -2,7 +2,7 @@ import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 
-export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement {
+export class ScolaSpanElement extends HTMLSpanElement implements ScolaElement {
   public mutator: Mutator
 
   public observer: Observer
@@ -17,8 +17,8 @@ export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement 
   }
 
   public static define (): void {
-    customElements.define('sc-label', ScolaLabelElement, {
-      extends: 'label'
+    customElements.define('sc-span', ScolaSpanElement, {
+      extends: 'span'
     })
   }
 

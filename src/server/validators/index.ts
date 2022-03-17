@@ -8,7 +8,6 @@ import { max } from './max'
 import { maxLength } from './max-length'
 import { min } from './min'
 import { minLength } from './min-length'
-import { now } from './now'
 import { number } from './number'
 import { pattern } from './pattern'
 import { radio } from './radio'
@@ -33,7 +32,6 @@ export const validators = {
   'max-length': maxLength,
   'min': min,
   'min-length': minLength,
-  'now': now,
   'number': number,
   'pattern': pattern,
   'radio': radio,

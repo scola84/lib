@@ -31,7 +31,7 @@
       "    super(options)",
       "  }",
       "",
-      "  public async handle (task: QueueTask<Payload, Options, Result>): Promise<void> {",
+      "  public async handle (task: QueueTask<Payload, Options, Result>): Promise<unknown> {",
       "    $0",
       "  }",
       "}",
@@ -60,7 +60,7 @@
       "    super(options)",
       "  }",
       "",
-      "  protected async handle (data: ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Data, response: ServerResponse, request: IncomingMessage): Promise<void> {",
+      "  protected async handle (data: ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g}Data, response: ServerResponse, request: IncomingMessage): Promise<unknown> {",
       "    $0",
       "  }",
       "}"

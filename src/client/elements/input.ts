@@ -29,20 +29,12 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.initialChecked = this.checked
     this.initialValue = this.value
     this.reset()
-    this.update()
   }
 
   public static define (): void {
     customElements.define('sc-input', ScolaInputElement, {
       extends: 'input'
     })
-  }
-
-  public clear (): void {
-    this.checked = this.initialChecked
-    this.value = this.initialValue
-    this.field.clear()
-    this.update()
   }
 
   public connectedCallback (): void {
@@ -122,6 +114,10 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public getValue (): string | null {
+    if (this.isEmpty()) {
+      return null
+    }
+
     if (
       this.type === 'checkbox' ||
       this.type === 'radio'
@@ -129,18 +125,28 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
       if (!this.checked) {
         return null
       }
-    } else if (
-      this.type === 'date' ||
-      this.type === 'time'
-    ) {
-      return this.valueAsDate?.toISOString() ?? null
+    } else if (this.type === 'file') {
+      return Array
+        .from(this.files ?? [])
+        .map((file) => {
+          return file.name
+        })
+        .join(', ')
     }
 
     return this.value
   }
 
+  public isEmpty (): boolean {
+    return (
+      this.value === '' ||
+      this.files?.length === 0
+    )
+  }
+
   public reset (): void {
     this.field.debounce = Number(this.getAttribute('sc-debounce') ?? 250)
+    this.field.setData(this.initialValue)
   }
 
   public setData (data: unknown): void {
@@ -157,6 +163,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public updateAttributes (): void {
+    this.toggleAttribute('sc-empty', this.isEmpty())
     this.setAttribute('sc-updated', Date.now().toString())
     this.form?.setAttribute('sc-updated', Date.now().toString())
   }

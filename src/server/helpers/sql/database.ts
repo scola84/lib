@@ -110,11 +110,11 @@ export abstract class SqlDatabase {
    * console.log(count) // count = 1 if there is one row with c1 = v1
    * ```
    */
-  public async delete<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined> {
+  public async delete<Values = Struct>(string: string, values?: Partial<Values>): Promise<void> {
     const connection = await this.connect()
 
     try {
-      return await connection.delete<Values>(string, values)
+      await connection.delete<Values>(string, values)
     } finally {
       connection.release()
     }
@@ -149,24 +149,6 @@ export abstract class SqlDatabase {
   }
 
   /**
-   * Executes any query against the database.
-   *
-   * Acquires a connection, executes the query and releases the connection.
-   *
-   * @param query - The query
-   * @returns The query result
-   */
-  public async execute<Values = Struct>(query: SqlQuery<Values>): Promise<unknown> {
-    const connection = await this.connect()
-
-    try {
-      return await connection.execute(query)
-    } finally {
-      connection.release()
-    }
-  }
-
-  /**
    * Inserts one row into the database.
    *
    * Acquires a connection, executes the query and releases the connection.
@@ -188,7 +170,7 @@ export abstract class SqlDatabase {
    * console.log(result) // {"insertId": 1} in MySQL
    * ```
    */
-  public async insert<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string): Promise<Result> {
+  public async insert<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string | null): Promise<Result> {
     const connection = await this.connect()
 
     try {
@@ -237,7 +219,7 @@ export abstract class SqlDatabase {
    * console.log(result) // result = [{ id: 1 }, { id: 2 }]
    * ```
    */
-  public async insertAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string): Promise<Result[]> {
+  public async insertAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string | null): Promise<Result[]> {
     const connection = await this.connect()
 
     try {
@@ -270,6 +252,24 @@ export abstract class SqlDatabase {
 
     try {
       await connection.populate(population)
+    } finally {
+      connection.release()
+    }
+  }
+
+  /**
+   * Executes any query against the database.
+   *
+   * Acquires a connection, executes the query and releases the connection.
+   *
+   * @param query - The query
+   * @returns The query result
+   */
+  public async query<Values = Struct>(query: SqlQuery<Values>): Promise<unknown> {
+    const connection = await this.connect()
+
+    try {
+      return await connection.query(query)
     } finally {
       connection.release()
     }
@@ -435,11 +435,11 @@ export abstract class SqlDatabase {
    * console.log(count) // count = 1
    * ```
    */
-  public async update<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined> {
+  public async update<Values = Struct>(string: string, values?: Partial<Values>): Promise<void> {
     const connection = await this.connect()
 
     try {
-      return await connection.update<Values>(string, values)
+      await connection.update<Values>(string, values)
     } finally {
       connection.release()
     }

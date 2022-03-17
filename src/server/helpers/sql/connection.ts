@@ -37,7 +37,7 @@ export abstract class SqlConnection {
    * console.log(count) // count = 1 if there is one row with c1 = v1
    * ```
    */
-  public abstract delete<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined>
+  public abstract delete<Values = Struct>(string: string, values?: Partial<Values>): Promise<void>
 
   /**
    * Depopulates the database.
@@ -56,14 +56,6 @@ export abstract class SqlConnection {
    * ```
    */
   public abstract depopulate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void>
-
-  /**
-   * Executes any query against the database.
-   *
-   * @param query - The query
-   * @returns The query result
-   */
-  public abstract execute<Values = Struct>(query: SqlQuery<Values>): Promise<unknown>
 
   /**
    * Inserts one row into the database.
@@ -86,7 +78,7 @@ export abstract class SqlConnection {
    * console.log(id) // id = 1
    * ```
    */
-  public abstract insert<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string): Promise<Result>
+  public abstract insert<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string | null): Promise<Result>
 
   /**
    * Inserts zero or more rows into the database.
@@ -125,7 +117,7 @@ export abstract class SqlConnection {
    * console.log(result) // result = [{ id: 1 }, { id: 2 }]
    * ```
    */
-  public abstract insertAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string): Promise<Result[]>
+  public abstract insertAll<Values = Struct, Result = Struct>(string: string, values?: Partial<Values>, key?: string | null): Promise<Result[]>
 
   /**
    * Populates the database.
@@ -144,6 +136,14 @@ export abstract class SqlConnection {
    * ```
    */
   public abstract populate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void>
+
+  /**
+   * Executes any query against the database.
+   *
+   * @param query - The query
+   * @returns The query result
+   */
+  public abstract query<Values = Struct>(query: SqlQuery<Values>): Promise<unknown>
 
   /**
    * Releases the connection.
@@ -267,5 +267,5 @@ export abstract class SqlConnection {
    * console.log(count) // count = 1
    * ```
    */
-  public abstract update<Values = Struct>(string: string, values?: Partial<Values>): Promise<Partial<Values> | undefined>
+  public abstract update<Values = Struct>(string: string, values?: Partial<Values>): Promise<void>
 }

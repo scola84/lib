@@ -75,8 +75,6 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
     return this.serialize()
   }
 
-  public reset (): void {}
-
   public setData (data: unknown): void {
     this.toggleDisabled()
     this.propagator.set(data)

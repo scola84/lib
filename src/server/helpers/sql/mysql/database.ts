@@ -55,6 +55,7 @@ export class MysqlDatabase extends SqlDatabase {
       database: url.pathname.slice(1),
       decimalNumbers: true,
       host: url.hostname,
+      multipleStatements: true,
       port: 3306,
       supportBigNumbers: true,
       user: url.username

@@ -1,15 +1,17 @@
-import type { SchemaField } from '../helpers'
+import type { SchemaField, Validator } from '../helpers'
 import type { Struct } from '../../common'
 
-export function radio (name: string, field: SchemaField, data: Struct, errors: Struct): boolean | null {
-  if (field.values?.includes(data[name]) !== true) {
-    errors[name] = {
-      code: 'err_validator_bad_input_radio',
-      data: { values: field.values }
+export function radio (name: string, field: SchemaField): Validator {
+  return (data: Struct, errors: Struct) => {
+    if (field.values?.includes(data[name]) !== true) {
+      errors[name] = {
+        code: 'err_validator_bad_input_radio',
+        data: { values: field.values }
+      }
+
+      return false
     }
 
-    return false
+    return true
   }
-
-  return true
 }

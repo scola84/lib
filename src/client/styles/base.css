@@ -64,6 +64,12 @@ body {
   transform: translateY(-50%);
 }
 
+[is="sc-audio"]:not([src]):not([srcset]),
+[is="sc-video"]:not([src]):not([srcset]),
+[is="sc-img"]:not([src]) {
+  display: none;
+}
+
 [is="sc-mover"] {
   cursor: grab;
 }

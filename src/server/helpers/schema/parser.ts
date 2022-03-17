@@ -147,6 +147,10 @@ export class SchemaParser {
       field.search = true
     }
 
+    if (attributes['sc-serial'] !== undefined) {
+      field.serial = true
+    }
+
     if (attributes['sc-sort'] !== undefined) {
       field.sort = true
     }

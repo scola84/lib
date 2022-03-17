@@ -5,46 +5,20 @@ interface Search extends Struct {
   value: string
 }
 
-type Factory = Struct<(name: string, locale: string, options: Struct<string>) => Formatter>
+type LocaleStrings = Struct<string | undefined>
 
-type Formatter = (data: Struct) => string
-
-type Strings = Struct<Struct<string | undefined> | undefined>
+type Strings = Struct<LocaleStrings | undefined>
 
 type StringsCache = Struct<Struct<Formatter[] | undefined> | undefined>
+
+export type Formatter = (data: Struct) => string
+
+export type FormatterFactory = (name: string, locale: string, options: Struct<string>) => Formatter
 
 export class I18n {
   public static cache: StringsCache = {}
 
-  public static factory: Factory = {
-    d: (name: string, locale: string, options: Struct<string>) => {
-      const formatter = new Intl.DateTimeFormat(locale, options)
-      return (data: Struct): string => {
-        return formatter.format(new Date(String(data[name] ?? new Date(0))))
-      }
-    },
-    e: (name: string, locale: string, options: Struct<string>) => {
-      const formatter = new I18n()
-      return (data: Struct): string => {
-        if (I18n.strings[locale]?.[`${name}_${String(data[options.counter])}`] === undefined) {
-          return formatter.format(`${name}_d`, data, locale)
-        }
-
-        return formatter.format(`${name}_${String(data[options.counter])}`, data, locale)
-      }
-    },
-    n: (name: string, locale: string, options: Struct<string>) => {
-      const formatter = new Intl.NumberFormat(locale, options)
-      return (data: Struct): string => {
-        return formatter.format(Number(data[name] ?? 0))
-      }
-    },
-    s: (name: string) => {
-      return (data: Struct): string => {
-        return String(data[name] ?? '')
-      }
-    }
-  }
+  public static formatters: Struct<FormatterFactory> = {}
 
   public static locale = 'en'
 
@@ -66,7 +40,7 @@ export class I18n {
           return literal
         }).bind(null, nextString.slice(0, index)))
 
-        compiled.push(I18n.factory[type](
+        compiled.push(I18n.formatters[type](
           name,
           locale,
           optionsString
@@ -90,16 +64,27 @@ export class I18n {
     return compiled
   }
 
-  public static define (locale: string, strings: Struct<string>): void {
-    if (I18n.strings[locale] === undefined) {
-      I18n.strings[locale] = strings
-    } else {
-      Object.assign(I18n.strings[locale], strings)
-    }
+  public static defineFormatters (formatters: Struct<FormatterFactory>): void {
+    Object
+      .entries(formatters)
+      .forEach(([name, formatter]) => {
+        I18n.formatters[name] = formatter
+      })
   }
 
   public static defineStrings (strings: Strings): void {
-    I18n.strings = strings
+    Object
+      .entries(strings)
+      .forEach(([locale, localeStrings]) => {
+        Object
+          .entries(localeStrings ?? {})
+          .forEach(([code, string]) => {
+            I18n.strings[locale] = {
+              ...I18n.strings[locale],
+              [code]: string
+            }
+          })
+      })
   }
 
   public static precompile (locale = I18n.locale): void {

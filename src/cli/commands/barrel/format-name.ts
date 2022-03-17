@@ -1,9 +1,10 @@
+import type { Options } from '../barrel'
 import { formatGroup } from './format-group'
 
-export function formatName (files: string[][], name: string, defaults = false): string {
+export function formatName (files: string[][], options: Options): string {
   const imports = files
     .map(([file, , value]) => {
-      if (defaults) {
+      if (options.defaults) {
         return `import ${value} from './${file}'`
       }
 
@@ -13,11 +14,18 @@ export function formatName (files: string[][], name: string, defaults = false): 
 
   const exports = files
     .map(([file, , value]) => {
-      return `'${file}': ${value}`
+      if (
+        options.prefix !== '' ||
+        !options.shorthand
+      ) {
+        return `'${options.prefix}${file}': ${value}`
+      }
+
+      return value
     })
 
   return [
     imports,
-    `export const ${name} = ${formatGroup(exports, 0)}`
+    `export const ${options.name ?? ''} = ${formatGroup(exports, 0)}`
   ].join('\n\n')
 }

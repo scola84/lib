@@ -7,10 +7,11 @@ import { SchemaParser } from '../../server/helpers/schema'
 import type { SqlDatabase } from '../../server/helpers/sql'
 import type { Struct } from '../../common'
 
-interface Options {
+export interface Options {
   database: string
   dialect: string
   methods: string
+  object: string
   relation?: string[]
   type: string
   url: string
@@ -57,20 +58,10 @@ try {
     objectFile
   ] = source.split('@')
 
-  const {
-    database,
-    dialect,
-    methods,
-    relation,
-    type,
-    url
-  } = program.opts<Options>()
+  const options = program.opts<Options>()
 
-  const options = {
-    methods: methods,
-    object: object,
-    url: url.replace('{object}', object)
-  }
+  options.object = object
+  options.url = options.url.replace('{object}', object)
 
   let targetDir = target
 
@@ -78,9 +69,9 @@ try {
     targetDir = process.cwd()
   }
 
-  if (type === 'sql') {
-    if (typeof databases[dialect] === 'undefined') {
-      throw new Error(`Database for dialect "${dialect}" is undefined`)
+  if (options.type === 'sql') {
+    if (typeof databases[options.dialect] === 'undefined') {
+      throw new Error(`Database for dialect "${options.dialect}" is undefined`)
     }
   }
 
@@ -89,7 +80,7 @@ try {
     .then(async (schema) => {
       const relations: Struct<Schema> = {}
 
-      await Promise.all(relation?.map(async (relationSource) => {
+      await Promise.all(options.relation?.map(async (relationSource) => {
         const [relationObject, relationFile] = relationSource.split('@')
 
         await parser
@@ -103,31 +94,31 @@ try {
         recursive: true
       })
 
-      if (type === 'ts') {
-        if (methods.includes('DELETE')) {
-          writeFileSync(`${targetDir}/delete.ts`, `${formatDelete(options, schema, relations)}\n`)
+      if (options.type === 'ts') {
+        if (options.methods.includes('DELETE')) {
+          writeFileSync(`${targetDir}/delete.ts`, `${formatDelete(schema, relations, options)}\n`)
         }
 
-        if (methods.includes('GET')) {
-          writeFileSync(`${targetDir}/get.ts`, `${formatGet(options, schema, relations)}\n`)
-          writeFileSync(`${targetDir}/get-all.ts`, `${formatGetAll(options, schema, relations)}\n`)
+        if (options.methods.includes('GET')) {
+          writeFileSync(`${targetDir}/get.ts`, `${formatGet(schema, relations, options)}\n`)
+          writeFileSync(`${targetDir}/get-all.ts`, `${formatGetAll(schema, relations, options)}\n`)
         }
 
-        if (methods.includes('PATCH')) {
-          writeFileSync(`${targetDir}/patch.ts`, `${formatPatch(options, schema, relations)}\n`)
+        if (options.methods.includes('PATCH')) {
+          writeFileSync(`${targetDir}/patch.ts`, `${formatPatch(schema, relations, options)}\n`)
         }
 
-        if (methods.includes('POST')) {
-          writeFileSync(`${targetDir}/post.ts`, `${formatPost(options, schema, relations)}\n`)
+        if (options.methods.includes('POST')) {
+          writeFileSync(`${targetDir}/post.ts`, `${formatPost(schema, relations, options)}\n`)
         }
 
-        if (methods.includes('PUT')) {
-          writeFileSync(`${targetDir}/put.ts`, `${formatPut(options, schema, relations)}\n`)
+        if (options.methods.includes('PUT')) {
+          writeFileSync(`${targetDir}/put.ts`, `${formatPut(schema, relations, options)}\n`)
         }
 
         writeFileSync(`${targetDir}/index.ts`, `${formatIndex(options)}\n`)
-      } else if (type === 'sql') {
-        writeFileSync(`${targetDir}/${object}.sql`, databases[dialect].formatter.formatDdl(database, object, schema))
+      } else if (options.type === 'sql') {
+        writeFileSync(`${targetDir}/${object}.sql`, databases[options.dialect].formatter.formatDdl(options.database, object, schema))
       }
     })
     .catch((error) => {

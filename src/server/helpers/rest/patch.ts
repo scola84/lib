@@ -38,7 +38,7 @@ export abstract class RestPatchHandler extends RestHandler {
       }))
   }
 
-  protected async handle (data: PatchData, response: ServerResponse): Promise<void> {
+  protected async handle (data: PatchData, response: ServerResponse): Promise<Struct | undefined> {
     if (
       this.keys.auth !== undefined &&
       data.user === undefined
@@ -61,10 +61,10 @@ export abstract class RestPatchHandler extends RestHandler {
       throw new Error(`Object is undefined for "PATCH ${this.url}"`)
     }
 
-    await this.deleteFiles(schema, object, data.body)
-
     const updatePartialQuery = this.database.formatter.createUpdatePartialQuery(this.object, this.keys, schema, data.body)
 
+    await this.deleteFiles(schema, object, data.body)
     await this.database.update(updatePartialQuery.string, updatePartialQuery.values)
+    return this.database.select(selectQuery.string, selectQuery.values)
   }
 }

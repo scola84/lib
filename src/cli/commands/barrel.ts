@@ -2,9 +2,11 @@ import { formatName, formatWildcard, readers } from './barrel/'
 import { Command } from 'commander'
 import { writeFileSync } from 'fs-extra'
 
-interface Options {
-  defaults?: boolean
+export interface Options {
+  defaults: boolean
   name?: string
+  prefix: string
+  shorthand: boolean
   type: string
 }
 
@@ -21,19 +23,16 @@ Example:
 
 program
   .argument('[target]', 'directory to create the barrel for', process.cwd())
-  .option('-d, --defaults', 'whether to import defaults')
+  .option('-d, --defaults', 'whether to import defaults', false)
   .option('-n, --name <name>', 'output name')
+  .option('-p, --prefix <prefix>', 'prefix of the named export properties', '')
+  .option('-s, --shorthand', 'whether to export shorthand properties', false)
   .option('-t, --type <type>', 'output type', 'ts')
   .parse()
 
 try {
   const [target] = program.args
-
-  const {
-    defaults,
-    name,
-    type
-  } = program.opts<Options>()
+  const options = program.opts<Options>()
 
   let targetDir = target
 
@@ -41,11 +40,11 @@ try {
     targetDir = process.cwd()
   }
 
-  if (readers[type] === undefined) {
-    throw new Error(`Reader for type "${type}" is undefined`)
+  if (readers[options.type] === undefined) {
+    throw new Error(`Reader for type "${options.type}" is undefined`)
   }
 
-  const files = readers[type]?.(targetDir) ?? []
+  const files = readers[options.type]?.(targetDir) ?? []
 
   files.sort(([,leftBase], [,rightBase]) => {
     if (rightBase.includes(leftBase)) {
@@ -61,10 +60,10 @@ try {
 
   let data = ''
 
-  if (name === undefined) {
+  if (options.name === undefined) {
     data = formatWildcard(files)
   } else {
-    data = formatName(files, name, defaults)
+    data = formatName(files, options)
   }
 
   writeFileSync(`${targetDir}/index.ts`, `${data}\n`)

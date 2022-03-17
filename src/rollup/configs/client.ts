@@ -4,7 +4,6 @@ import autoprefixer from 'autoprefixer'
 import commonjs from '@rollup/plugin-commonjs'
 import copy from 'rollup-plugin-copy'
 import gzip from 'rollup-plugin-gzip'
-import minify from 'rollup-plugin-minify-html-literals'
 import { onwarn } from '../helpers'
 import postcss from 'rollup-plugin-postcss'
 import resolve from '@rollup/plugin-node-resolve'
@@ -68,15 +67,12 @@ const options: RollupOptions = {
         'module'
       ]
     }),
-    svg({
-      minify: process.env.ROLLUP_WATCH !== 'true'
-    }),
+    svg(),
     process.env.ROLLUP_WATCH !== 'true' && cordova({
       dest: 'dist/client/media',
       src: 'src/client/media'
     }),
     process.env.ROLLUP_WATCH !== 'true' && gzip(),
-    process.env.ROLLUP_WATCH !== 'true' && minify(),
     process.env.ROLLUP_WATCH !== 'true' && terser()
   ]
 }

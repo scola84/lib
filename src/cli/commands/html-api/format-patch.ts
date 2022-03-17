@@ -1,11 +1,11 @@
-import type { Options } from './options'
+import type { Options } from '../html-api'
 import type { Schema } from '../../../server/helpers/schema'
 import type { Struct } from '../../../common'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
 import { pickField } from './pick-field'
 
-export function formatPatch (options: Options, schema: Schema, relations: Struct<Schema>): string {
+export function formatPatch (schema: Schema, relations: Struct<Schema>, options: Options): string {
   return `
 import { RestPatchHandler } from '@scola/lib'
 

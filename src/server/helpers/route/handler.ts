@@ -149,10 +149,6 @@ export abstract class RouteHandler {
   }
 
   protected async prepareRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
-    if (request.method === 'POST') {
-      response.statusCode = 201
-    }
-
     response.setHeader('content-type', 'application/json')
 
     try {

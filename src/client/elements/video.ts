@@ -82,8 +82,6 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
     return this.media.getData()
   }
 
-  public reset (): void {}
-
   public setData (data: unknown): void {
     this.media.setData(data)
   }

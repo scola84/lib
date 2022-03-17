@@ -24,6 +24,7 @@ import { ScolaReloaderElement } from './reloader'
 import { ScolaRequesterElement } from './requester'
 import { ScolaResizerElement } from './resizer'
 import { ScolaSelectElement } from './select'
+import { ScolaSpanElement } from './span'
 import { ScolaTableCellElement } from './table-cell'
 import { ScolaTableElement } from './table'
 import { ScolaTableRowElement } from './table-row'
@@ -59,6 +60,7 @@ export function defineElements (): void {
   ScolaRequesterElement.define()
   ScolaResizerElement.define()
   ScolaSelectElement.define()
+  ScolaSpanElement.define()
   ScolaTableCellElement.define()
   ScolaTableElement.define()
   ScolaTableRowElement.define()

@@ -107,6 +107,8 @@ export class Field {
       } else if (isPrimitive(data.value)) {
         this.setValue(data.value)
       }
+    } else if (data instanceof Date) {
+      this.setDate(data)
     } else if (data instanceof File) {
       this.setFile(data)
     } else {
@@ -277,6 +279,25 @@ export class Field {
     this.element.removeEventListener('sc-field-verify', this.handleVerifyBound)
   }
 
+  protected setChecked (value: Primitive): void {
+    this.element.toggleAttribute('checked', value.toString() === this.element.value)
+  }
+
+  protected setDate (date: Date): void {
+    this.element.value = [
+      [
+        String(date.getFullYear()),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')
+      ].join('-'),
+      [
+        String(date.getHours()).padStart(2, '0'),
+        String(date.getMinutes()).padStart(2, '0'),
+        String(date.getSeconds()).padStart(2, '0')
+      ].join(':')
+    ].join('T')
+  }
+
   protected setError (error: FieldError): void {
     this.clearDebounce()
     this.error = error
@@ -308,15 +329,13 @@ export class Field {
       this.element.type === 'checkbox' ||
       this.element.type === 'radio'
     ) {
-      this.element.toggleAttribute('checked', value.toString() === this.element.value)
+      this.setChecked(value)
     } else if (
       this.element.type === 'date' ||
       this.element.type === 'datetime-local' ||
       this.element.type === 'time'
     ) {
-      this.element.value = value
-        .toString()
-        .slice(0, 16)
+      this.setDate(new Date(value.toString()))
     } else {
       this.element.value = value.toString()
     }

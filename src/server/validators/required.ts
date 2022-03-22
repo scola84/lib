@@ -12,9 +12,6 @@ export function required (name: string, field: SchemaField): Validator {
       case '$group_id':
         data[name] = user?.group_id
         return true
-      case '$updated':
-        data[name] = new Date()
-        return true
       case '$user_id':
         data[name] = user?.user_id
         return true

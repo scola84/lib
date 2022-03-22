@@ -21,7 +21,7 @@ export function isSame (left: unknown, right: unknown): boolean {
     return Object
       .entries(left)
       .every(([name, value]) => {
-        return cast(value) === cast(right[name])
+        return cast(value)?.toString() === cast(right[name])?.toString()
       })
   }
 

@@ -7,6 +7,7 @@ export function createKeys (object: string, schema: Schema, relations: Struct<Sc
   return {
     auth: createAuthKeys(schema),
     foreign: createForeignKeys(schema),
+    modified: createModifiedKey(object, schema),
     primary: createPrimaryKeys(object, schema),
     related: createRelatedKeys(schema),
     search: createSearchKeys(object, schema, relations),
@@ -49,6 +50,26 @@ function createForeignKeys (schema: Schema): SchemaFieldKey[] | undefined {
   }
 
   return keys
+}
+
+function createModifiedKey (object: string, schema: Schema): SchemaFieldKey | undefined {
+  const keys = Object
+    .entries(schema)
+    .filter(([,field]) => {
+      return field.mkey === true
+    })
+    .map(([name]) => {
+      return {
+        column: name,
+        table: object
+      }
+    })
+
+  if (keys.length === 0) {
+    return undefined
+  }
+
+  return keys[0]
 }
 
 function createPrimaryKeys (object: string, schema: Schema): SchemaFieldKey[] | undefined {

@@ -214,12 +214,12 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
 
       const sizeDiff = target.offsetWidth - targetWidth
 
-      if (
-        sizeDiff !== 0 && (
-          position === 'absolute' ||
-          position === 'fixed'
-        )
-      ) {
+      if ((
+        sizeDiff !== 0
+      ) && (
+        position === 'absolute' ||
+        position === 'fixed'
+      )) {
         target.style.setProperty('left', `${target.offsetLeft - sizeDiff}px`)
       }
     })
@@ -280,12 +280,12 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
 
       const sizeDiff = target.offsetHeight - targetHeight
 
-      if (
-        sizeDiff !== 0 && (
-          position === 'absolute' ||
-          position === 'fixed'
-        )
-      ) {
+      if ((
+        sizeDiff !== 0
+      ) && (
+        position === 'absolute' ||
+        position === 'fixed'
+      )) {
         target.style.setProperty('top', `${target.offsetTop - sizeDiff}px`)
       }
     })

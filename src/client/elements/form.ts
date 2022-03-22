@@ -176,7 +176,6 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
       return
     }
 
-    this.setData({})
     this.propagator.dispatch('submit', [this.getData()], event)
   }
 
@@ -221,26 +220,15 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected setValues (): void {
-    const method = this.getAttribute('sc-method')
-
     this.fieldElements.forEach((fieldElement) => {
       const value = fieldElement.getAttribute('sc-value')
 
       switch (value) {
-        case '$created':
-          if (method === 'POST') {
-            fieldElement.setData(new Date().toISOString())
-          }
-
+        case '$created_local':
+          fieldElement.setData(new Date())
           break
-        case '$updated':
-          if (
-            method === 'PATCH' ||
-            method === 'PUT'
-          ) {
-            fieldElement.setData(new Date().toISOString())
-          }
-
+        case '$updated_local':
+          fieldElement.setData(new Date())
           break
         default:
           break

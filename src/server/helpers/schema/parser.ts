@@ -26,7 +26,10 @@ export class SchemaParser {
       element.nodeName === 'select' ||
       element.nodeName === 'textarea'
     ) {
-      if (typeof attributes.name === 'string') {
+      if (
+        typeof attributes.name === 'string' &&
+        attributes['sc-nofield'] === undefined
+      ) {
         let field = fields[attributes.name]
 
         if (typeof field === 'undefined') {
@@ -137,6 +140,10 @@ export class SchemaParser {
 
     if (attributes['sc-rkey'] !== undefined) {
       field.rkey = this.extractDatabaseKey(attributes['sc-rkey'])
+    }
+
+    if (attributes['sc-mkey'] !== undefined) {
+      field.mkey = true
     }
 
     if (attributes['sc-pkey'] !== undefined) {

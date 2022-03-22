@@ -367,12 +367,12 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleInteractorStart (event: InteractorEvent): boolean {
-    if (
-      !this.hasAttribute('hidden') && (
-        this.interactor.isKey(event.originalEvent, 'Escape') ||
-        !event.originalEvent.composedPath().includes(this)
-      )
-    ) {
+    if ((
+      !this.hasAttribute('hidden')
+    ) && (
+      this.interactor.isKey(event.originalEvent, 'Escape') ||
+      !event.originalEvent.composedPath().includes(this)
+    )) {
       this.toggleAttribute('hidden', true)
     }
 

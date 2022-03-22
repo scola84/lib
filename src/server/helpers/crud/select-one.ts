@@ -1,28 +1,34 @@
-import { isFile, parseStruct } from '../../../common'
+import { cast, isFile, parseStruct } from '../../../common'
+import { CrudHandler } from './crud'
 import type { Readable } from 'stream'
-import { RestHandler } from './rest'
 import type { RouteData } from '../route'
+import type { SchemaField } from '../schema'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../common'
 
-interface GetData extends RouteData {}
+export abstract class CrudSelectOneHandler extends CrudHandler {
+  public method = 'GET'
 
-export abstract class RestGetHandler extends RestHandler {
-  protected async handle (data: GetData, response: ServerResponse): Promise<Struct | null | undefined> {
-    if (
-      this.keys.auth !== undefined &&
-      data.user === undefined
-    ) {
-      response.statusCode = 401
-      throw new Error(`User is undefined for "GET ${this.url}"`)
-    }
+  public abstract schema: {
+    query: SchemaField
+  }
 
+  public async handle (data: RouteData, response: ServerResponse): Promise<unknown> {
     const selectQuery = this.database.formatter.createSelectQuery(this.object, this.keys, this.keys.primary ?? [], data.query, data.user)
     const object = await this.database.select(selectQuery.string, selectQuery.values)
 
     if (object === undefined) {
       response.statusCode = 404
-      throw new Error(`Object is undefined for "GET ${this.url}"`)
+      throw new Error('Object is undefined')
+    }
+
+    if (
+      this.keys.modified !== undefined &&
+      object[this.keys.modified.column] !== null &&
+      data.query[this.keys.modified.column] !== undefined &&
+      cast(object[this.keys.modified.column])?.toString() === cast(data.query[this.keys.modified.column])?.toString()
+    ) {
+      response.statusCode = 304
+      return undefined
     }
 
     if (typeof data.query.file === 'string') {
@@ -30,7 +36,7 @@ export abstract class RestGetHandler extends RestHandler {
 
       if (file === null) {
         response.statusCode = 404
-        throw new Error(`File is null for "GET ${this.url}"`)
+        throw new Error('File is null')
       }
 
       if (isFile(file)) {
@@ -38,7 +44,7 @@ export abstract class RestGetHandler extends RestHandler {
 
         if (stream === undefined) {
           response.statusCode = 404
-          throw new Error(`Stream is undefined for "GET ${this.url}"`)
+          throw new Error('Stream is undefined')
         }
 
         response.setHeader('content-type', file.type)

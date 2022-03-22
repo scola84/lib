@@ -32,17 +32,17 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createInsertQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct): SqlQuery {
+  public createInsertQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct, user?: User): SqlQuery {
     const columns: string[] = []
     const values: Struct = {}
     const valuesKeys: string[] = []
 
     Object
-      .keys(schema)
-      .forEach((name) => {
+      .entries(schema)
+      .forEach(([name, field]) => {
         columns.push(`$[${name}]`)
         valuesKeys.push(`$(${name})`)
-        values[name] = data[name]
+        values[name] = this.resolveValue(field, data[name], user)
       })
 
     const string = sql`
@@ -61,7 +61,7 @@ export abstract class SqlFormatter {
 
   public createSelectAllQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], parameters: SqlSelectAllParameters, user?: User): SqlQuery {
     const auth = this.createAuthParts(keys, authKeys, user)
-    const selectAll = this.createSelectAllParts(object, parameters, keys)
+    const selectAll = this.createSelectAllParts(object, keys, parameters)
 
     const queries = auth.parts.map((authPart) => {
       if (
@@ -99,9 +99,9 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createSelectQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], parameters: Struct, user?: User): SqlQuery {
+  public createSelectManyInQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], data: Struct[], user?: User): SqlQuery {
     const auth = this.createAuthParts(keys, authKeys, user)
-    const select = this.createSelectParts(parameters, keys)
+    const select = this.createSelectManyInParts(keys, data)
 
     if (select.where === undefined) {
       throw new Error(`Where is undefined for "${object}"`)
@@ -135,21 +135,119 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createUpdatePartialQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct): SqlQuery {
+  public createSelectManyModifiedQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], modified: Date, user?: User): SqlQuery {
+    const auth = this.createAuthParts(keys, authKeys, user)
+    const select = this.createSelectManyModifiedParts(keys, modified)
+
+    if (select.where === undefined) {
+      throw new Error(`Where is undefined for "${object}"`)
+    }
+
+    const queries = auth.parts.map((authPart) => {
+      if (
+        keys.auth !== undefined &&
+        authPart.where === undefined
+      ) {
+        throw new Error(`Where is undefined for "${object}"`)
+      }
+
+      return sql`
+        SELECT $[${object}].*
+        FROM $[${object}]
+        ${authPart.join ?? ''}
+        WHERE ${this.joinStrings(' AND ', [
+          select.where,
+          authPart.where
+        ]) ?? '1=1'}
+      `
+    })
+
+    return {
+      string: queries.join(' UNION '),
+      values: {
+        ...select.values,
+        ...auth.values
+      }
+    }
+  }
+
+  public createSelectManyQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], user?: User): SqlQuery {
+    const auth = this.createAuthParts(keys, authKeys, user)
+    const select = this.createSelectManyParts(keys)
+
+    const queries = auth.parts.map((authPart) => {
+      if (
+        keys.auth !== undefined &&
+        authPart.where === undefined
+      ) {
+        throw new Error(`Where is undefined for "${object}"`)
+      }
+
+      return sql`
+        SELECT ${select.select ?? `$[${object}].*`}
+        FROM $[${object}]
+        ${authPart.join ?? ''}
+        WHERE ${authPart.where ?? '1=1'}
+      `
+    })
+
+    return {
+      string: queries.join(' UNION '),
+      values: auth.values
+    }
+  }
+
+  public createSelectQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], parameters: Struct, user?: User): SqlQuery {
+    const auth = this.createAuthParts(keys, authKeys, user)
+    const select = this.createSelectParts(keys, parameters)
+
+    if (select.where === undefined) {
+      throw new Error(`Where is undefined for "${object}"`)
+    }
+
+    const queries = auth.parts.map((authPart) => {
+      if (
+        keys.auth !== undefined &&
+        authPart.where === undefined
+      ) {
+        throw new Error(`Where is undefined for "${object}"`)
+      }
+
+      return sql`
+        SELECT $[${object}].*
+        FROM $[${object}]
+        ${authPart.join ?? ''}
+        WHERE ${this.joinStrings(' AND ', [
+          select.where,
+          authPart.where
+        ]) ?? '1=1'}
+      `
+    })
+
+    return {
+      string: queries.join(' UNION '),
+      values: {
+        ...select.values,
+        ...auth.values
+      }
+    }
+  }
+
+  public createUpdatePartialQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct, user?: User): SqlQuery {
     const values: Struct = {}
 
     const set = Object
-      .keys(schema)
-      .filter((name) => {
+      .entries(schema)
+      .filter(([name]) => {
         return keys.primary?.every((key) => {
           return key.column !== name
         })
       })
-      .filter((name) => {
+      .filter(([name]) => {
         return data[name] !== undefined
       })
-      .map((name) => {
-        values[name] = data[name]
+      .map(([name, field]) => {
+        values[name] = this.resolveValue(field, data[name], user)
         return `$[${name}] = $(${name})`
       })
 
@@ -174,18 +272,18 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createUpdateQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct): SqlQuery {
+  public createUpdateQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct, user?: User): SqlQuery {
     const values: Struct = {}
 
     const set = Object
-      .keys(schema)
-      .filter((name) => {
+      .entries(schema)
+      .filter(([name]) => {
         return keys.primary?.every((key) => {
           return key.column !== name
         })
       })
-      .map((name) => {
-        values[name] = data[name]
+      .map(([name, field]) => {
+        values[name] = this.resolveValue(field, data[name], user)
         return `$[${name}] = $(${name})`
       })
 
@@ -326,7 +424,7 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllParts (object: string, parameters: SqlSelectAllParameters, keys: SqlQueryKeys): SqlQueryParts {
+  protected createSelectAllParts (object: string, keys: SqlQueryKeys, parameters: SqlSelectAllParameters): SqlQueryParts {
     const filterKey = keys.foreign?.find((key) => {
       return parameters[key.column] === undefined
     }) ?? keys.related?.find((key) => {
@@ -347,14 +445,14 @@ export abstract class SqlFormatter {
       )
     })
 
-    return this.createSelectAllPartsByKey(object, parameters, keys, searchKeys, sortKeys)
+    return this.createSelectAllPartsByKey(object, keys, parameters, searchKeys, sortKeys)
   }
 
-  protected createSelectAllPartsByKey (object: string, parameters: SqlSelectAllParameters, keys: SqlQueryKeys, searchKeys?: SchemaFieldKey[], sortKeys?: SchemaFieldKey[]): SqlQueryParts {
-    const foreignParts = this.createSelectAllPartsForeignKeys(object, parameters, keys.foreign ?? [])
-    const relatedParts = this.createSelectAllPartsRelatedKeys(object, parameters, keys.related ?? [])
-    const searchParts = this.createSelectAllPartsSearchKeys(parameters, searchKeys ?? [])
-    const sortParts = this.createSelectAllPartsSortKeys(parameters, sortKeys ?? [])
+  protected createSelectAllPartsByKey (object: string, keys: SqlQueryKeys, parameters: SqlSelectAllParameters, searchKeys?: SchemaFieldKey[], sortKeys?: SchemaFieldKey[]): SqlQueryParts {
+    const foreignParts = this.createSelectAllPartsForeignKeys(object, keys.foreign ?? [], parameters)
+    const relatedParts = this.createSelectAllPartsRelatedKeys(object, keys.related ?? [], parameters)
+    const searchParts = this.createSelectAllPartsSearchKeys(searchKeys ?? [], parameters)
+    const sortParts = this.createSelectAllPartsSortKeys(sortKeys ?? [], parameters)
     const limitParts = this.createSelectAllPartsLimit(parameters)
 
     const join = this.joinStrings(' ', [
@@ -390,7 +488,7 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsForeignKeys (object: string, parameters: SqlSelectAllParameters, keys: SchemaFieldKey[]): SqlQueryParts {
+  protected createSelectAllPartsForeignKeys (object: string, keys: SchemaFieldKey[], parameters: SqlSelectAllParameters): SqlQueryParts {
     const join: string[] = []
     const select: string[] = []
     const values: Struct = {}
@@ -423,7 +521,7 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsRelatedKeys (object: string, parameters: SqlSelectAllParameters, keys: SchemaFieldKey[]): SqlQueryParts {
+  protected createSelectAllPartsRelatedKeys (object: string, keys: SchemaFieldKey[], parameters: SqlSelectAllParameters): SqlQueryParts {
     const values: Struct = {}
 
     let join = null
@@ -446,7 +544,7 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsSearchKeys (parameters: SqlSelectAllParameters, keys: SchemaFieldKey[], locale?: string): SqlQueryParts {
+  protected createSelectAllPartsSearchKeys (keys: SchemaFieldKey[], parameters: SqlSelectAllParameters, locale?: string): SqlQueryParts {
     const values: Struct = {}
 
     let where: string | undefined = this.joinStrings(') AND (', this.i18n
@@ -478,7 +576,7 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsSortKeys (parameters: SqlSelectAllParameters, keys: SchemaFieldKey[]): SqlQueryParts {
+  protected createSelectAllPartsSortKeys (keys: SchemaFieldKey[], parameters: SqlSelectAllParameters): SqlQueryParts {
     let order = null
 
     if (parameters.sortKey !== undefined) {
@@ -496,7 +594,65 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectParts (parameters: Struct, keys: SqlQueryKeys): SqlQueryParts {
+  protected createSelectManyInParts (keys: SqlQueryKeys, data: Struct[]): SqlQueryParts {
+    const values: Struct = {}
+
+    let where = this.joinStrings(') AND (', keys.primary
+      ?.map((key) => {
+        if (data.length === 0) {
+          values[`${key.table}_${key.column}`] = [[0]]
+        } else {
+          values[`${key.table}_${key.column}`] = [data.map((datum) => {
+            return datum[key.column] ?? 0
+          })]
+        }
+
+        return `$[${key.table}.${key.column}] IN $(${key.table}_${key.column})`
+      }) ?? [])
+
+    if (where !== undefined) {
+      where = `(${where})`
+    }
+
+    return {
+      values,
+      where
+    }
+  }
+
+  protected createSelectManyModifiedParts (keys: SqlQueryKeys, modified: Date): SqlQueryParts {
+    const key = keys.modified
+    const values: Struct = {}
+
+    let where = ''
+
+    if (key !== undefined) {
+      values[`${key.table}_${key.column}`] = modified
+      where += `$[${key.table}.${key.column}] >= $(${key.table}_${key.column})`
+    }
+
+    return {
+      values,
+      where
+    }
+  }
+
+  protected createSelectManyParts (keys: SqlQueryKeys): SqlQueryParts {
+    const select = keys.primary
+      ?.map((key) => {
+        return `$[${key.table}.${key.column}]`
+      })
+
+    if (keys.modified !== undefined) {
+      select?.push(`$[${keys.modified.table}.${keys.modified.column}]`)
+    }
+
+    return {
+      select: select?.join(', ')
+    }
+  }
+
+  protected createSelectParts (keys: SqlQueryKeys, parameters: Struct): SqlQueryParts {
     const values: Struct = {}
 
     let where = this.joinStrings(') AND (', keys.primary
@@ -525,6 +681,21 @@ export abstract class SqlFormatter {
     }
 
     return filteredStrings.join(delimiter)
+  }
+
+  protected resolveValue (field: SchemaField, value: unknown, user?: User): unknown {
+    switch (field.default) {
+      case '$created':
+        return new Date()
+      case '$group_id':
+        return user?.group_id ?? 0
+      case '$updated':
+        return new Date()
+      case '$user_id':
+        return user?.user_id ?? 0
+      default:
+        return value
+    }
   }
 
   public abstract formatDdl (database: string, object: string, fields: Struct<SchemaField>): string

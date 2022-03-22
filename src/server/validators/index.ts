@@ -1,3 +1,4 @@
+import { array } from './array'
 import { checkbox } from './checkbox'
 import { color } from './color'
 import { date } from './date'
@@ -16,12 +17,14 @@ import { required } from './required'
 import { select } from './select'
 import { selectMultiple } from './select-multiple'
 import { step } from './step'
+import { struct } from './struct'
 import { text } from './text'
 import { textarea } from './textarea'
 import { time } from './time'
 import { url } from './url'
 
 export const validators = {
+  'array': array,
   'checkbox': checkbox,
   'color': color,
   'date': date,
@@ -40,6 +43,7 @@ export const validators = {
   'select': select,
   'select-multiple': selectMultiple,
   'step': step,
+  'struct': struct,
   'text': text,
   'textarea': textarea,
   'time': time,

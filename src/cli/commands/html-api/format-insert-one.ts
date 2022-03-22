@@ -3,47 +3,49 @@ import type { Schema } from '../../../server/helpers/schema'
 import type { Struct } from '../../../common'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
+import { hyphenize } from '../../../common'
 import { pickField } from './pick-field'
 
-export function formatPost (schema: Schema, relations: Struct<Schema>, options: Options): string {
+export function formatInsertOne (schema: Schema, relations: Struct<Schema>, options: Options): string {
   return `
-import { RestPostHandler } from '@scola/lib'
+import { CrudInsertOneHandler } from '@scola/lib'
 
-export class PostHandler extends RestPostHandler {
+export class InsertOneHandler extends CrudInsertOneHandler {
   public keys = ${formatKeys(options.object, schema, relations, 4)}
-
-  public method = 'POST'
 
   public object = '${options.object}'
 
-  public schema = {
+  public schema: CrudInsertOneHandler['schema'] = {
     body: ${formatBodySchema(schema, 6)}
   }
 
-  public url = '${options.url}'
+  public url = '${options.url}/insert/one/${hyphenize(options.object)}'
 }
 `.trim()
 }
 
 function formatBodySchema (schema: Schema, space: number): string {
   return formatCode(
-    Object
-      .entries(schema)
-      .filter(([,field]) => {
-        return (
-          field.rkey === undefined &&
-          field.default !== '$updated'
-        ) && (
-          field.fkey !== undefined ||
-          field.pkey !== true
-        )
-      })
-      .reduce((result, [name, field]) => {
-        return {
-          ...result,
-          [name]: pickField(field)
-        }
-      }, {}),
+    {
+      required: true,
+      schema: Object
+        .entries(schema)
+        .filter(([,field]) => {
+          return (
+            field.rkey === undefined
+          ) && (
+            field.fkey !== undefined ||
+            field.pkey !== true
+          )
+        })
+        .reduce((result, [name, field]) => {
+          return {
+            ...result,
+            [name]: pickField(field)
+          }
+        }, {}),
+      type: 'struct'
+    },
     space
   ).trimStart()
 }

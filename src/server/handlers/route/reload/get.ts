@@ -29,12 +29,7 @@ export class ReloadGetHandler extends RouteHandler {
     this.file = options.file ?? '/usr/src/app/dist/client/index.js'
   }
 
-  public start (): void {
-    this.startWatcher()
-    super.start()
-  }
-
-  protected handle (data: RouteData, response: ServerResponse): null {
+  public handle (data: RouteData, response: ServerResponse): null {
     this.responses.add(response)
 
     response.once('close', () => {
@@ -44,6 +39,11 @@ export class ReloadGetHandler extends RouteHandler {
     response.setHeader('content-type', 'text/event-stream')
     response.write('\n')
     return null
+  }
+
+  public start (): void {
+    this.startWatcher()
+    super.start()
   }
 
   protected startWatcher (): void {

@@ -13,12 +13,12 @@ export function file (name: string, field: SchemaField): Validator {
 
     if (isArray(values)) {
       const valid = values.every((value) => {
-        return (
-          isFile(value) && (
-            !Array.isArray(field.accept) ||
+        return ((
+          isFile(value)
+        ) && (
+          !Array.isArray(field.accept) ||
           isMatch(value.type, field.accept)
-          )
-        )
+        ))
       })
 
       if (!valid) {

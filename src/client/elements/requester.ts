@@ -1,5 +1,5 @@
-import { Mutator, Observer, Propagator, Transaction } from '../helpers'
-import { absorb, isArray, isNil, isPrimitive, isStruct } from '../../common'
+import { Mutator, Observer, Propagator } from '../helpers'
+import { absorb, isArray, isNil, isPrimitive, isStruct, isTransaction } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaViewElement } from './view'
 import type { Struct } from '../../common'
@@ -12,21 +12,6 @@ declare global {
   }
 }
 
-type Method =
-  | 'CONNECT'
-  | 'DELETE'
-  | 'GET'
-  | 'HEAD'
-  | 'OPTIONS'
-  | 'POST'
-  | 'PUT'
-  | 'TRACE'
-
-type Enctype =
-  | 'application/json'
-  | 'application/x-www-form-urlencoded'
-  | 'multipart/form-data'
-
 interface ScolaRequesterElementData extends Struct {
   loaded: number
   state: number
@@ -35,18 +20,18 @@ interface ScolaRequesterElementData extends Struct {
 
 interface Request {
   body: FormData | URLSearchParams | string | null
-  method: Method
+  method: string
   url: string | null
 }
 
 export class ScolaRequesterElement extends HTMLObjectElement implements ScolaElement {
   public static origin = window.location.origin
 
-  public enctype: Enctype
+  public enctype: string
 
   public exact: boolean
 
-  public method: Method
+  public method: string
 
   public mutator: Mutator
 
@@ -135,21 +120,25 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   }
 
   public reset (): void {
-    this.enctype = (this.getAttribute('sc-enctype') as Enctype | null) ?? 'application/x-www-form-urlencoded'
+    this.enctype = (this.getAttribute('sc-enctype')) ?? 'application/x-www-form-urlencoded'
     this.exact = this.hasAttribute('sc-exact')
-    this.method = (this.getAttribute('sc-method') as Method | null) ?? 'GET'
+    this.method = this.getAttribute('sc-method') ?? 'GET'
     this.url = this.getAttribute('sc-url') ?? ''
     this.wait = this.hasAttribute('sc-wait')
   }
 
   public send (options?: unknown): void {
-    if (window.navigator.onLine) {
-      if (this.xhr === undefined) {
-        this.sendRequest(options)
-      }
-    } else {
-      this.propagator.dispatch('offline', [options])
+    if (this.xhr !== undefined) {
+      this.propagator.dispatch('pending', [options])
+      return
     }
+
+    if (!window.navigator.onLine) {
+      this.propagator.dispatch('offline', [options])
+      return
+    }
+
+    this.sendRequest(options)
   }
 
   public setData (): void {}
@@ -179,34 +168,34 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   protected createRequest (options?: unknown): Request {
     let data = null
+    let { method } = this
 
-    if (options instanceof Transaction) {
+    if (isTransaction(options)) {
       data = options.commit
-    } else if (isStruct(options)) {
+    } else {
       data = options
     }
 
-    const method = String(data?.method ?? this.method) as Method
+    if (isStruct(data)) {
+      if (typeof data.method === 'string') {
+        ({ method } = data)
+      }
+
+      data = {
+        ...this.view?.view?.params,
+        ...data
+      }
+    }
 
     let { url } = this as { url: string | null }
     let body: FormData | URLSearchParams | string | null = null
 
-    if (
-      method === 'DELETE' ||
-      method === 'GET'
-    ) {
-      url = this.createRequestUrl({
-        ...this.view?.view?.params,
-        ...data
-      })
-    } else if (
-      method === 'POST' ||
-      method === 'PUT'
-    ) {
-      body = this.createRequestBody({
-        ...this.view?.view?.params,
-        ...data
-      })
+    if (method === 'GET') {
+      if (isStruct(data)) {
+        url = this.createRequestUrl(data)
+      }
+    } else if (method === 'POST') {
+      body = this.createRequestBody(data)
     }
 
     return {
@@ -216,7 +205,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }
   }
 
-  protected createRequestBody (data: Struct): FormData | URLSearchParams | string | null {
+  protected createRequestBody (data: unknown): FormData | URLSearchParams | string | null {
     switch (this.enctype) {
       case 'application/json':
         return this.createRequestBodyJson(data)
@@ -229,63 +218,75 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }
   }
 
-  protected createRequestBodyFormData (data: Struct): FormData {
+  protected createRequestBodyFormData (data: unknown): FormData {
     const body = new FormData()
 
-    Object
-      .entries(data)
-      .map<[string, unknown[]]>(([key, value]) => {
-      /* eslint-disable @typescript-eslint/indent */
-        if (isArray(value)) {
-          return [key, value]
-        }
-
-        return [key, [value]]
-      })
-      /* eslint-enable @typescript-eslint/indent */
-      .forEach(([key, values]) => {
-        values.forEach((value) => {
-          if (isNil(value)) {
-            body.append(key, '')
-          } else if (isPrimitive(value)) {
-            body.append(key, value.toString())
-          } else if (value instanceof File) {
-            body.append(key, value, value.name)
+    if (isStruct(data)) {
+      Object
+        .entries(data)
+        .map<[string, unknown[]]>(([key, value]) => {
+        /* eslint-disable @typescript-eslint/indent */
+          if (isArray(value)) {
+            return [key, value]
           }
+
+          return [key, [value]]
         })
-      })
+        /* eslint-enable @typescript-eslint/indent */
+        .forEach(([key, values]) => {
+          values.forEach((value) => {
+            if (isNil(value)) {
+              body.append(key, '')
+            } else if (isPrimitive(value)) {
+              body.append(key, value.toString())
+            } else if (value instanceof Date) {
+              body.append(key, value.toISOString())
+            } else if (value instanceof File) {
+              body.append(key, value, value.name)
+            }
+          })
+        })
+    }
 
     return body
   }
 
-  protected createRequestBodyFormUrlencoded (data: Struct): URLSearchParams {
+  protected createRequestBodyFormUrlencoded (data: unknown): URLSearchParams {
     const body = new URLSearchParams()
 
-    Object
-      .entries(data)
-      .map<[string, unknown[]]>(([key, value]) => {
-      /* eslint-disable @typescript-eslint/indent */
-        if (isArray(value)) {
-          return [key, value]
-        }
-
-        return [key, [value]]
-      })
-      /* eslint-enable @typescript-eslint/indent */
-      .forEach(([key, values]) => {
-        values.forEach((value) => {
-          if (isNil(value)) {
-            body.append(key, '')
-          } else if (isPrimitive(value)) {
-            body.append(key, value.toString())
+    if (isStruct(data)) {
+      Object
+        .entries(data)
+        .map<[string, unknown[]]>(([key, value]) => {
+        /* eslint-disable @typescript-eslint/indent */
+          if (isArray(value)) {
+            return [key, value]
           }
+
+          return [key, [value]]
         })
-      })
+        /* eslint-enable @typescript-eslint/indent */
+        .forEach(([key, values]) => {
+          values.forEach((value) => {
+            if (isNil(value)) {
+              body.append(key, '')
+            } else if (isPrimitive(value)) {
+              body.append(key, value.toString())
+            } else if (value instanceof Date) {
+              body.append(key, value.toISOString())
+            }
+          })
+        })
+    }
 
     return body
   }
 
-  protected createRequestBodyJson (data?: Struct): string {
+  protected createRequestBodyJson (data?: unknown): string | null {
+    if (isNil(data)) {
+      return null
+    }
+
     return JSON.stringify(data)
   }
 
@@ -343,11 +344,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       }
 
       if (this.xhr.status < 400) {
-        if (options instanceof Transaction) {
+        this.propagator.dispatch('message', [data], event)
+
+        if (isTransaction(options)) {
           options.result = data
-          this.propagator.dispatch('message', [options], event)
-        } else {
-          this.propagator.dispatch('message', [data], event)
+          this.propagator.dispatch('tmessage', [options], event)
         }
       } else {
         this.propagator.dispatch('error', [{
@@ -356,11 +357,18 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
           message: this.xhr.statusText
         }], event)
 
-        if (options instanceof Transaction) {
-          options.result = data
-          this.propagator.dispatch('errordata', [options], event)
-        } else if (isStruct(data)) {
-          this.propagator.dispatch('errordata', [data], event)
+        if (isStruct(data)) {
+          this.propagator.dispatch('errordata', [
+            data.body ?? data.query ?? data.headers ?? data
+          ], event)
+        }
+
+        if (isTransaction(options)) {
+          if (isStruct(data)) {
+            options.result = data.body ?? data.query ?? data.headers ?? data
+          }
+
+          this.propagator.dispatch('terror', [options], event)
         }
       }
 
@@ -403,7 +411,17 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
       try {
         this.xhr.open(request.method, request.url)
-        this.xhr.send(request.body)
+
+        if (
+          request.body !== null &&
+          this.enctype !== ''
+        ) {
+          this.xhr.setRequestHeader('Content-Type', this.enctype)
+          this.xhr.send(request.body)
+        } else {
+          this.xhr.send()
+        }
+
         this.setAttribute('sc-state', this.xhr.readyState.toString())
       } catch (error: unknown) {
         this.handleError(error)

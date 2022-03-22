@@ -46,7 +46,7 @@ export class RouteCodec {
         break
     }
 
-    return body
+    return body ?? undefined
   }
 
   public async decodeFormData (request: IncomingMessage, schema?: Schema): Promise<Struct> {

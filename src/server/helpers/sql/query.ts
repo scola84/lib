@@ -9,6 +9,7 @@ export interface SqlQuery<Values = Struct> {
 export interface SqlQueryKeys {
   auth?: Struct<SchemaFieldKey[][]>
   foreign?: SchemaFieldKey[]
+  modified?: SchemaFieldKey
   primary?: SchemaFieldKey[]
   related?: SchemaFieldKey[]
   search?: SchemaFieldKey[]

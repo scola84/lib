@@ -1,3 +1,5 @@
+/* eslint-disable complexity */
+/* eslint-disable max-lines-per-function */
 /**
  * Casts a value to
  *
@@ -12,41 +14,75 @@
  * @returns The cast value
  * @see https://stackoverflow.com/a/175787
  */
-export function cast (value: unknown): boolean | number | string | null | undefined {
+export function cast (value: unknown): Date | boolean | number | string | null | undefined {
   if (
-    value === 'null' ||
-    value === null
+    value === null ||
+    value === 'null'
   ) {
     return null
-  } else if (value === '\'null\'') {
+  }
+
+  if (value === '\'null\'') {
     return 'null'
-  } else if (
-    value === 'undefined' ||
-    value === undefined
+  }
+
+  if (
+    value === undefined ||
+    value === 'undefined'
   ) {
     return undefined
-  } else if (value === '\'undefined\'') {
+  }
+
+  if (value === '\'undefined\'') {
     return 'undefined'
-  } else if (
-    value === 'false' ||
-    value === false
+  }
+
+  if (
+    value === false ||
+    value === 'false'
   ) {
     return false
-  } else if (value === '\'false\'') {
+  }
+
+  if (value === '\'false\'') {
     return 'false'
-  } else if (
-    value === 'true' ||
-    value === true
+  }
+
+  if (
+    value === true ||
+    value === 'true'
   ) {
     return true
-  } else if (value === '\'true\'') {
+  }
+
+  if (value === '\'true\'') {
     return 'true'
-  } else if ((
+  }
+
+  if (
+    Number.isFinite(value) &&
+    typeof value === 'number'
+  ) {
+    return value
+  }
+
+  if (
+    !(value instanceof Date) &&
     String(value).trim() !== '' &&
-    !Number.isNaN(Number(value))
-  ) || Number.isFinite(value)) {
+    Number.isFinite(Number(value))
+  ) {
     return Number(value)
-  } else if (typeof value === 'string') {
+  }
+
+  if (value instanceof Date) {
+    return value
+  }
+
+  if (Number.isFinite(Date.parse(String(value)))) {
+    return new Date(Date.parse(String(value)))
+  }
+
+  if (typeof value === 'string') {
     return value
   }
 

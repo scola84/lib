@@ -600,12 +600,12 @@ export class Hider {
     } else {
       const path = event.originalEvent.composedPath()
 
-      if (
-        !path.includes(this.element) && (
-          this.backdrop === null ||
-          !path.includes(this.backdrop)
-        )
-      ) {
+      if ((
+        !path.includes(this.element)
+      ) && (
+        this.backdrop === null ||
+        !path.includes(this.backdrop)
+      )) {
         return false
       }
     }

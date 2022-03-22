@@ -1,5 +1,4 @@
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http'
-import { isNil, isStruct } from '../../../common'
 import type { FileBucket } from '../file'
 import type { Logger } from 'pino'
 import type { RedisClientType } from 'redis'
@@ -12,8 +11,9 @@ import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import type { URL } from 'url'
 import type { User } from '../../entities'
+import { isNil } from '../../../common'
 
-export interface RouteData {
+export interface RouteData extends Struct {
   body?: unknown
   headers: IncomingHttpHeaders
   method: string
@@ -30,7 +30,7 @@ export interface RouteHandlerOptions {
   logger: Logger
   method: string
   router: Router
-  schema: Struct<Schema>
+  schema: Schema
   store: RedisClientType
   url: string
 }
@@ -52,13 +52,13 @@ export abstract class RouteHandler {
 
   public router: Router
 
-  public schema: Struct<Schema | undefined>
+  public schema: Partial<Schema> = {}
 
   public store: RedisClientType
 
   public url: string
 
-  public validators: Struct<SchemaValidator | undefined>
+  public validator: SchemaValidator
 
   public constructor (options?: Partial<RouteHandlerOptions>) {
     const handlerOptions = {
@@ -94,17 +94,6 @@ export abstract class RouteHandler {
     this.url = handlerOptions.url ?? '/'
   }
 
-  public createValidators (): Struct<SchemaValidator> {
-    return Object
-      .entries(this.schema as Struct<Schema>)
-      .reduce((validators, [name, fields]) => {
-        return {
-          ...validators,
-          [name]: new SchemaValidator(fields)
-        }
-      }, {})
-  }
-
   public async handleRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
     await this.prepareRoute(data, response, request)
 
@@ -134,21 +123,7 @@ export abstract class RouteHandler {
     }
   }
 
-  public start (): void {
-    this.logger = this.logger?.child({
-      name: `${this.method} ${this.url}`
-    })
-
-    this.logger?.info({
-      method: this.method,
-      url: this.url
-    }, 'Starting route handler')
-
-    this.validators = this.createValidators()
-    this.router.register(this.method, this.url, this)
-  }
-
-  protected async prepareRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
+  public async prepareRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
     response.setHeader('content-type', 'application/json')
 
     try {
@@ -172,7 +147,7 @@ export abstract class RouteHandler {
     }
 
     try {
-      data.body = await this.codec.decode(request, this.schema.body)
+      data.body = await this.codec.decode(request, this.schema.body?.schema)
     } catch (error: unknown) {
       response.statusCode = 415
       response.removeHeader('content-type')
@@ -181,7 +156,7 @@ export abstract class RouteHandler {
     }
 
     try {
-      this.validateData(data)
+      this.validator.validate(data, data.user)
     } catch (error: unknown) {
       response.statusCode = 400
       response.end(this.codec.encode(error, response))
@@ -189,37 +164,19 @@ export abstract class RouteHandler {
     }
   }
 
-  protected validate<Data extends Struct = Struct>(name: string, data: Data, user?: User): Data {
-    if (this.validators[name] === undefined) {
-      throw new Error(`Schema "${name}" is undefined`)
-    }
+  public start (): void {
+    this.logger = this.logger?.child({
+      name: `${this.method} ${this.url}`
+    })
 
-    const errors = this.validators[name]?.validate(data, user)
+    this.logger?.info({
+      method: this.method,
+      url: this.url
+    }, 'Starting route handler')
 
-    if (!isNil(errors)) {
-      throw errors as unknown as Error
-    }
-
-    return data
+    this.validator = new SchemaValidator(this.schema as Schema)
+    this.router.register(this.method, this.url, this)
   }
 
-  protected validateData (data: RouteData): void {
-    if (this.validators.body !== undefined) {
-      if (isStruct(data.body)) {
-        this.validate('body', data.body, data.user)
-      } else {
-        this.validate('body', {}, data.user)
-      }
-    }
-
-    if (this.validators.headers !== undefined) {
-      this.validate('headers', data.headers, data.user)
-    }
-
-    if (this.validators.query !== undefined) {
-      this.validate('query', data.query, data.user)
-    }
-  }
-
-  protected abstract handle (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<unknown> | unknown
+  public abstract handle (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<unknown> | unknown
 }

@@ -1,6 +1,5 @@
 import type { Primitive, Struct } from '../../../common'
 import type { User } from '../../entities'
-import { isStruct } from '../../../common'
 
 export type Validator = (data: Struct, errors: Struct, user?: User) => boolean | null
 
@@ -18,6 +17,7 @@ export interface SchemaField extends Struct {
   maxLength?: number
   min?: number
   minLength?: number
+  mkey?: boolean
   pattern?: RegExp
   pkey?: boolean
   required?: boolean
@@ -59,7 +59,7 @@ export class SchemaValidator {
       })
   }
 
-  public validate (data: Struct, user?: User): Struct | null {
+  public validate<Data extends Struct = Struct> (data: Data, user?: User): Data {
     let hasErrors = false
     let isValid: boolean | null = false
 
@@ -73,15 +73,16 @@ export class SchemaValidator {
           break
         } else if (!isValid) {
           hasErrors = true
+          break
         }
       }
     }
 
     if (hasErrors) {
-      return errors
+      throw errors as unknown as Error
     }
 
-    return null
+    return data
   }
 
   protected compile (schema: Schema): Validator[][] {
@@ -92,65 +93,38 @@ export class SchemaValidator {
       })
   }
 
-  protected compileChild (name: string, field: SchemaField): Validator {
-    const childValidator = new SchemaValidator(field.schema ?? {})
-
-    function validator (data: Struct, errors: Struct): boolean {
-      let childErrors: Struct | null = null
-
-      const childData = data[name]
-
-      if (isStruct(childData)) {
-        childErrors = childValidator.validate(childData)
-      }
-
-      if (childErrors === null) {
-        return true
-      }
-
-      Object.assign(errors, childErrors)
-      return false
-    }
-
-    return validator
-  }
-
   protected compileField (name: string, field: SchemaField): Validator[] {
     const validators = []
 
     validators.push(SchemaValidator.validators.required?.(name, field))
-    validators.push(SchemaValidator.validators[field.type]?.bind(null, name, field))
+    validators.push(SchemaValidator.validators[field.type]?.(name, field))
 
     if (field.custom !== undefined) {
       validators.push(SchemaValidator.validators[field.custom]?.(name, field))
     }
 
     if (field.max !== undefined) {
-      validators.push(SchemaValidator.validators.max?.bind(null, name, field))
+      validators.push(SchemaValidator.validators.max?.(name, field))
     }
 
     if (field.maxLength !== undefined) {
-      validators.push(SchemaValidator.validators['max-length']?.bind(null, name, field))
+      validators.push(SchemaValidator.validators['max-length']?.(name, field))
     }
 
     if (field.min !== undefined) {
-      validators.push(SchemaValidator.validators.min?.bind(null, name, field))
+      validators.push(SchemaValidator.validators.min?.(name, field))
     }
 
     if (field.minLength !== undefined) {
-      validators.push(SchemaValidator.validators['min-length']?.bind(null, name, field))
+      validators.push(SchemaValidator.validators['min-length']?.(name, field))
     }
 
     if (field.pattern !== undefined) {
-      validators.push(SchemaValidator.validators.pattern?.bind(null, name, field))
+      validators.push(SchemaValidator.validators.pattern?.(name, field))
     }
 
     if (field.step !== undefined) {
-      validators.push(SchemaValidator.validators.step?.bind(null, name, field))
-    }
-
-    if (field.schema !== undefined) {
-      validators.push(this.compileChild(name, field))
+      validators.push(SchemaValidator.validators.step?.(name, field))
     }
 
     return validators.filter((validator) => {

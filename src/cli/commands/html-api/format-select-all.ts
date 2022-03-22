@@ -3,25 +3,24 @@ import type { Schema } from '../../../server/helpers/schema'
 import type { Struct } from '../../../common'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
+import { hyphenize } from '../../../common'
 import { pickField } from './pick-field'
 import { sortKeys } from './sort-keys'
 
-export function formatGetAll (schema: Schema, relations: Struct<Schema>, options: Options): string {
+export function formatSelectAll (schema: Schema, relations: Struct<Schema>, options: Options): string {
   return `
-import { RestGetAllHandler } from '@scola/lib'
+import { CrudSelectAllHandler } from '@scola/lib'
 
-export class GetAllHandler extends RestGetAllHandler {
+export class SelectAllHandler extends CrudSelectAllHandler {
   public keys = ${formatKeys(options.object, schema, relations, 4)}
-
-  public method = 'GET'
 
   public object = '${options.object}'
 
-  public schema = {
+  public schema: CrudSelectAllHandler['schema'] = {
     query: ${formatQuerySchema(schema, 6)}
   }
 
-  public url = '${options.url}/all'
+  public url = '${options.url}/select/all/${hyphenize(options.object)}'
 }
 `.trim()
 }
@@ -55,33 +54,37 @@ function formatKeys (object: string, schema: Schema, relations: Struct<Schema>, 
 
 function formatQuerySchema (schema: Schema, space: number): string {
   return formatCode(
-    sortKeys({
-      ...createQueryKeys(schema),
-      count: {
-        default: 10,
-        required: true,
-        type: 'number'
-      },
-      cursor: {
-        type: 'text'
-      },
-      offset: {
-        type: 'number'
-      },
-      search: {
-        type: 'text'
-      },
-      sortKey: {
-        type: 'text'
-      },
-      sortOrder: {
-        type: 'select',
-        values: [
-          'asc',
-          'desc'
-        ]
-      }
-    }),
+    {
+      required: true,
+      schema: sortKeys({
+        ...createQueryKeys(schema),
+        count: {
+          default: 10,
+          required: true,
+          type: 'number'
+        },
+        cursor: {
+          type: 'text'
+        },
+        offset: {
+          type: 'number'
+        },
+        search: {
+          type: 'text'
+        },
+        sortKey: {
+          type: 'text'
+        },
+        sortOrder: {
+          type: 'select',
+          values: [
+            'asc',
+            'desc'
+          ]
+        }
+      }),
+      type: 'struct'
+    },
     space
   ).trimStart()
 }

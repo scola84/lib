@@ -140,10 +140,8 @@ export class Mutator {
           const attrName = String(name)
           const castValue = cast(value)
 
-          if (castValue === false) {
-            this.element.removeAttribute(attrName)
-          } else if (castValue === true) {
-            this.element.setAttribute(attrName, '')
+          if (typeof castValue === 'boolean') {
+            this.element.toggleAttribute(attrName)
           } else if (value === this.element.getAttribute(attrName)) {
             this.element.removeAttribute(attrName)
           } else if (isPrimitive(castValue)) {

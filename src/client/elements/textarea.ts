@@ -65,25 +65,25 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
     if (this.validity.badInput) {
       error = {
-        code: `err_form_bad_${this.type}`
+        code: `err_validator_bad_${this.type}`
       }
     } else if (this.validity.tooLong) {
       error = {
-        code: 'err_form_too_long',
+        code: 'err_validator_too_long',
         data: { maxLength: this.maxLength }
       }
     } else if (this.validity.tooShort) {
       error = {
-        code: 'err_form_too_short',
+        code: 'err_validator_too_short',
         data: { minLength: this.minLength }
       }
     } else if (this.validity.typeMismatch) {
       error = {
-        code: `err_form_type_mismatch_${this.type}`
+        code: `err_validator_type_mismatch_${this.type}`
       }
     } else if (this.validity.valueMissing) {
       error = {
-        code: 'err_form_value_missing'
+        code: 'err_validator_value_missing'
       }
     }
 

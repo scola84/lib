@@ -6,19 +6,25 @@ export interface ScolaMediaElement extends ScolaElement {
 
   duration: number
 
+  key: string | null
+
   media: Media
 
   muted: boolean
+
+  origin: string
 
   paused: boolean
 
   src: string
 
+  url: string | null
+
   volume: number
 
   canPlayType: (type: string) => CanPlayTypeResult
 
-  getData: () => MediaData | null
+  getData: () => Required<MediaData> | null
 
   pause: () => void
 

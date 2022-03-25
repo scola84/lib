@@ -1,7 +1,7 @@
 import type { Struct } from './is-struct'
 import { isArray } from './is-array'
 
-export function setPush (struct: Struct, name: string, value: unknown): void {
+export function setPush (struct: Struct, name: string, value: unknown): Struct {
   if (struct[name] === undefined) {
     struct[name] = value
   } else {
@@ -16,4 +16,6 @@ export function setPush (struct: Struct, name: string, value: unknown): void {
       structValue.push(value)
     }
   }
+
+  return struct
 }

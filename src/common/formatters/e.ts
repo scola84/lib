@@ -1,17 +1,19 @@
 import type { Formatter, Struct } from '../helpers'
 import { I18n, cast, isNil } from '../helpers'
+import { get } from '../helpers/get'
 
 export function e (name: string, locale: string, options: Struct<string | undefined>): Formatter {
   const i18n = new I18n()
+  const path = name.split('.')
 
   const {
     default: def,
     counter
   } = options
 
-  function formatter (data: Struct): string {
+  function formatter (data: unknown): string {
     if (def !== undefined) {
-      const value = cast(data[name])
+      const value = cast(get(data, path))
 
       if (
         isNil(value) ||
@@ -22,7 +24,7 @@ export function e (name: string, locale: string, options: Struct<string | undefi
 
       return value.toString()
     } else if (counter !== undefined) {
-      const value = cast(data[counter]) ?? ''
+      const value = cast(get(data, [counter])) ?? ''
       const code = `${name}_${value.toString()}`
 
       if (I18n.strings[locale]?.[code] === undefined) {

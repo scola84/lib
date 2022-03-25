@@ -17,13 +17,23 @@ declare global {
 }
 
 export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaElement {
+  public static origin = window.location.origin
+
+  public key: string | null
+
   public media: Media
 
   public mutator: Mutator
 
   public observer: Observer
 
+  public origin = ScolaAudioElement.origin
+
   public propagator: Propagator
+
+  public url: string | null
+
+  protected handleErrorBound = this.handleError.bind(this)
 
   protected handleJumpBound = this.handleJump.bind(this)
 
@@ -71,8 +81,13 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
     this.removeEventListeners()
   }
 
-  public getData (): MediaData | null {
+  public getData (): Required<MediaData> | null {
     return this.media.getData()
+  }
+
+  public reset (): void {
+    this.key = this.getAttribute('sc-key')
+    this.url = this.getAttribute('sc-url')
   }
 
   public setData (data: unknown): void {
@@ -99,6 +114,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   }
 
   protected addEventListeners (): void {
+    this.addEventListener('error', this.handleErrorBound)
     this.addEventListener('sc-audio-jump', this.handleJumpBound)
     this.addEventListener('sc-audio-mute', this.handleMuteBound)
     this.addEventListener('sc-audio-pause', this.handlePauseBound)
@@ -106,6 +122,10 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
     this.addEventListener('sc-audio-time', this.handleTimeBound)
     this.addEventListener('sc-audio-toggle', this.handleToggleBound)
     this.addEventListener('sc-audio-volume', this.handleVolumeBound)
+  }
+
+  protected handleError (): void {
+    this.setData(null)
   }
 
   protected handleJump (event: CustomEvent): void {
@@ -152,6 +172,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   }
 
   protected removeEventListeners (): void {
+    this.removeEventListener('error', this.handleErrorBound)
     this.removeEventListener('sc-audio-jump', this.handleJumpBound)
     this.removeEventListener('sc-audio-mute', this.handleMuteBound)
     this.removeEventListener('sc-audio-pause', this.handlePauseBound)

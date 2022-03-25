@@ -40,14 +40,19 @@ export class Propagator {
     this.removeEventListeners()
   }
 
-  public dispatch (on: string, data?: unknown[], trigger?: Event): boolean {
+  public dispatch<T = unknown>(on: string, data?: T[], trigger?: Event): boolean {
     let dispatched = false
 
     this
       .getEvents(on)
       .forEach((event) => {
-        dispatched = true
-        this.dispatchEvent(event, data, trigger)
+        if (event.selector === 'console') {
+          // eslint-disable-next-line no-console
+          console.log(on, data)
+        } else {
+          dispatched = true
+          this.dispatchEvent(event, data, trigger)
+        }
       })
 
     return dispatched
@@ -58,9 +63,6 @@ export class Propagator {
 
     if (event.selector === '') {
       targets = [this.element]
-    } else if (event.selector === 'console') {
-      // eslint-disable-next-line no-console
-      console.log(data)
     } else {
       targets = document.querySelectorAll(event.selector)
     }

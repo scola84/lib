@@ -1,11 +1,10 @@
+import { cast, set } from '../../../../common'
 import { ConnectionPool } from 'mssql'
 import { MssqlConnection } from './connection'
 import { MssqlFormatter } from './formatter'
 import { SqlDatabase } from '../database'
 import { URL } from 'url'
-import { cast } from '../../../../common'
 import type { config } from 'mssql'
-import { set } from 'lodash'
 
 /**
  * Manages MSSQL connections.
@@ -73,7 +72,7 @@ export class MssqlDatabase extends SqlDatabase {
     Array
       .from(url.searchParams.entries())
       .forEach(([name, value]) => {
-        set(options, name, cast(value))
+        set(options, name.split('.').map(cast), cast(value))
       })
 
     return options

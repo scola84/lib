@@ -11,7 +11,7 @@ type Strings = Struct<LocaleStrings | undefined>
 
 type StringsCache = Struct<Struct<Formatter[] | undefined> | undefined>
 
-export type Formatter = (data: Struct) => string
+export type Formatter = (data: unknown) => string
 
 export type FormatterFactory = (name: string, locale: string, options: Struct<string>) => Formatter
 
@@ -102,7 +102,7 @@ export class I18n {
       })
   }
 
-  public format (code: string, data: Struct, locale = I18n.locale): string {
+  public format (code: string, data: unknown, locale = I18n.locale): string {
     let compiled: Formatter[] | undefined = []
     let string = I18n.strings[locale]?.[code]
 

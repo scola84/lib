@@ -1,10 +1,11 @@
 import { Mutator, Observer, Propagator } from '../helpers'
-import { cast, isPrimitive, setPush } from '../../common'
 import type { ScolaElement } from './element'
+import type { ScolaFieldElement } from './field'
 import { ScolaInputElement } from './input'
 import { ScolaSelectElement } from './select'
 import { ScolaTextAreaElement } from './textarea'
 import type { Struct } from '../../common'
+import { setPush } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -19,6 +20,18 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   public observer: Observer
 
   public propagator: Propagator
+
+  public get fieldElements (): ScolaFieldElement[] {
+    return Array
+      .from(this.elements)
+      .filter((element) => {
+        return (
+          element instanceof ScolaInputElement ||
+          element instanceof ScolaSelectElement ||
+          element instanceof ScolaTextAreaElement
+        )
+      }) as ScolaFieldElement[]
+  }
 
   protected handleFalsifyBound = this.handleFalsify.bind(this)
 
@@ -142,30 +155,18 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   protected serialize (): Struct {
-    return Array
-      .from(this.elements)
-      .reduce((data, element) => {
-        if (
-          element instanceof ScolaInputElement ||
-          element instanceof ScolaSelectElement ||
-          element instanceof ScolaTextAreaElement
-        ) {
-          const {
-            name,
-            value
-          } = element.getData()
+    return this.fieldElements.reduce((data, element) => {
+      const value = element.getValue()
 
-          let castValue: unknown = value
-
-          if (isPrimitive(value)) {
-            castValue = cast(value)
-          }
-
-          setPush(data, name, castValue)
-        }
-
+      if (
+        element.type === 'radio' &&
+        value === null
+      ) {
         return data
-      }, {})
+      }
+
+      return setPush(data, element.name, element.getValue())
+    }, {})
   }
 
   protected toggleDisabled (): void {

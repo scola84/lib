@@ -1,101 +1,87 @@
 import type { Options } from '../html-api'
 import { camelize } from '../../../common/helpers/camelize'
 import { formatGroup } from './format-group'
+import { isMatch } from 'micromatch'
 
 export function formatIndex (options: Options): string {
   return `
-${formatImport(options.actions)}
+${formatImport(options)}
 
 export function ${camelize(options.object)} (): void {
   ${formatHandlers(options, 4)}
 
-  ${formatStart(options.actions, 0)}
+  ${formatStart(options, 0)}
 }
 `.trim()
 }
 
 function formatHandlers (options: Options, space: number): string {
-  const lines = []
-
-  if (options.actions.includes('D')) {
-    lines.push('const deleteManyHandler = new DeleteManyHandler()')
-    lines.push('const deleteOneHandler = new DeleteOneHandler()')
-  }
-
-  if (options.actions.includes('I')) {
-    lines.push('const insertManyHandler = new InsertManyHandler()')
-    lines.push('const insertOneHandler = new InsertOneHandler()')
-  }
-
-  if (options.actions.includes('S')) {
-    lines.push('const selectAllHandler = new SelectAllHandler()')
-    lines.push('const selectManyHandler = new SelectManyHandler()')
-    lines.push('const selectOneHandler = new SelectOneHandler()')
-  }
-
-  if (options.actions.includes('U')) {
-    lines.push('const updateManyHandler = new UpdateManyHandler()')
-    lines.push('const updateOneHandler = new UpdateOneHandler()')
-  }
-
-  return lines
-    .map((line) => {
+  return Object
+    .entries({
+      'da': 'const deleteAllHandler = new DeleteAllHandler()',
+      'dm': 'const deleteManyHandler = new DeleteManyHandler()',
+      'do': 'const deleteOneHandler = new DeleteOneHandler()',
+      'im': 'const insertManyHandler = new InsertManyHandler()',
+      'io': 'const insertOneHandler = new InsertOneHandler()',
+      'sa': 'const selectAllHandler = new SelectAllHandler()',
+      'sm': 'const selectManyHandler = new SelectManyHandler()',
+      'so': 'const selectOneHandler = new SelectOneHandler()',
+      'um': 'const updateManyHandler = new UpdateManyHandler()',
+      'uo': 'const updateOneHandler = new UpdateOneHandler()'
+    })
+    .filter(([key]) => {
+      return isMatch(key, options.actions)
+    })
+    .map(([,line]) => {
       return line.padStart(line.length + space - 2, ' ')
     })
     .join('\n')
     .trimStart()
 }
 
-function formatImport (actions: string): string {
-  const lines = []
-
-  if (actions.includes('D')) {
-    lines.push('import { DeleteManyHandler } from \'./delete-many\'')
-    lines.push('import { DeleteOneHandler } from \'./delete-one\'')
-  }
-
-  if (actions.includes('I')) {
-    lines.push('import { InsertManyHandler } from \'./insert-many\'')
-    lines.push('import { InsertOneHandler } from \'./insert-one\'')
-  }
-
-  if (actions.includes('S')) {
-    lines.push('import { SelectAllHandler } from \'./select-all\'')
-    lines.push('import { SelectManyHandler } from \'./select-many\'')
-    lines.push('import { SelectOneHandler } from \'./select-one\'')
-  }
-
-  if (actions.includes('U')) {
-    lines.push('import { UpdateManyHandler } from \'./update-many\'')
-    lines.push('import { UpdateOneHandler } from \'./update-one\'')
-  }
-
-  return lines.join('\n')
+function formatImport (options: Options): string {
+  return Object
+    .entries({
+      'da': 'import { DeleteAllHandler } from \'./delete-all\'',
+      'dm': 'import { DeleteManyHandler } from \'./delete-many\'',
+      'do': 'import { DeleteOneHandler } from \'./delete-one\'',
+      'im': 'import { InsertManyHandler } from \'./insert-many\'',
+      'io': 'import { InsertOneHandler } from \'./insert-one\'',
+      'sa': 'import { SelectAllHandler } from \'./select-all\'',
+      'sm': 'import { SelectManyHandler } from \'./select-many\'',
+      'so': 'import { SelectOneHandler } from \'./select-one\'',
+      'um': 'import { UpdateManyHandler } from \'./update-many\'',
+      'uo': 'import { UpdateOneHandler } from \'./update-one\''
+    })
+    .filter(([key]) => {
+      return isMatch(key, options.actions)
+    })
+    .map(([,line]) => {
+      return line
+    })
+    .join('\n')
 }
 
-function formatStart (actions: string, space: number): string {
-  const lines = []
-
-  if (actions.includes('D')) {
-    lines.push('deleteManyHandler.start()')
-    lines.push('deleteOneHandler.start()')
-  }
-
-  if (actions.includes('I')) {
-    lines.push('insertManyHandler.start()')
-    lines.push('insertOneHandler.start()')
-  }
-
-  if (actions.includes('S')) {
-    lines.push('selectAllHandler.start()')
-    lines.push('selectManyHandler.start()')
-    lines.push('selectOneHandler.start()')
-  }
-
-  if (actions.includes('U')) {
-    lines.push('updateManyHandler.start()')
-    lines.push('updateOneHandler.start()')
-  }
+function formatStart (options: Options, space: number): string {
+  const lines = Object
+    .entries({
+      'da': 'deleteAllHandler.start()',
+      'dm': 'deleteManyHandler.start()',
+      'do': 'deleteOneHandler.start()',
+      'im': 'insertManyHandler.start()',
+      'io': 'insertOneHandler.start()',
+      'sa': 'selectAllHandler.start()',
+      'sm': 'selectManyHandler.start()',
+      'so': 'selectOneHandler.start()',
+      'um': 'updateManyHandler.start()',
+      'uo': 'updateOneHandler.start()'
+    })
+    .filter(([key]) => {
+      return isMatch(key, options.actions)
+    })
+    .map(([,line]) => {
+      return line
+    })
 
   return formatGroup(lines, space, ['', ''], '').trim()
 }

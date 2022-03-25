@@ -1,5 +1,5 @@
 import type { Primitive, Struct } from '../../common'
-import { isPrimitive, isStruct } from '../../common'
+import { cast, isArray, isPrimitive, isStruct } from '../../common'
 import { Interactor } from './interactor'
 import type { InteractorEvent } from './interactor'
 import type { ScolaFieldElement } from '../elements'
@@ -16,7 +16,7 @@ declare global {
 
 export interface FieldData extends Struct {
   name: string
-  value: string | null
+  value: Date | File | File[] | Primitive | Primitive[] | Struct | Struct[] | null
 }
 
 export interface FieldError extends Struct {
@@ -32,6 +32,8 @@ export class Field {
   public error?: FieldError
 
   public interactor: Interactor
+
+  public value: unknown = ''
 
   protected handleClearBound = this.handleClear.bind(this)
 
@@ -85,6 +87,53 @@ export class Field {
     }
   }
 
+  public getValue (): Date | File | File[] | Primitive | Primitive[] | Struct | Struct[] | null {
+    if (this.element instanceof HTMLInputElement) {
+      if (
+        this.element.type === 'checkbox' ||
+        this.element.type === 'radio'
+      ) {
+        if (!this.element.checked) {
+          return null
+        }
+      } else if (this.element.type === 'file') {
+        const files = Array.from(this.element.files ?? [])
+
+        if (files.length === 0) {
+          if (isArray(this.value)) {
+            return this.value.filter((value) => {
+              return (
+                value instanceof File ||
+                isStruct(value)
+              )
+            }) as File[] | Struct[]
+          } else if (
+            this.value instanceof File ||
+            isStruct(this.value)
+          ) {
+            return this.value
+          }
+
+          return null
+        }
+
+        if (this.element.multiple) {
+          return files
+        }
+
+        return files[0]
+      }
+    } else if (this.element instanceof HTMLSelectElement) {
+      return Array
+        .from(this.element.selectedOptions)
+        .map((option) => {
+          return option.value
+        })
+    }
+
+    return cast(this.element.value) ?? null
+  }
+
   public reset (): void {
     this.interactor.keyboard = this.interactor.hasKeyboard
   }
@@ -93,6 +142,12 @@ export class Field {
     this.clear()
 
     if (isPrimitive(data)) {
+      this.setPrimitive(data)
+    } else if (data instanceof Date) {
+      this.setDate(data)
+    } else if (data instanceof File) {
+      this.setFile(data)
+    } else if (isArray(data)) {
       this.setValue(data)
     } else if (isStruct(data)) {
       if (typeof data.code === 'string') {
@@ -102,15 +157,11 @@ export class Field {
         })
       } else if (data.valid === true) {
         this.setValid()
-      } else if (data.file instanceof File) {
-        this.setFile(data.file)
-      } else if (isPrimitive(data.value)) {
-        this.setValue(data.value)
+      } else if (data.value === undefined) {
+        this.setValue(data)
+      } else {
+        this.setData(data.value)
       }
-    } else if (data instanceof Date) {
-      this.setDate(data)
-    } else if (data instanceof File) {
-      this.setFile(data)
     } else {
       this.setValue('')
     }
@@ -200,18 +251,8 @@ export class Field {
   protected handleInputFiles (fileList: FileList, event?: Event): void {
     const files = Array.from(fileList)
 
-    this.element.propagator.dispatch('file', files.map((file) => {
-      return {
-        file: file,
-        name: file.name,
-        size: file.size,
-        type: file.type
-      }
-    }), event)
-
-    this.element.propagator.dispatch('files', [{
-      files
-    }], event)
+    this.element.propagator.dispatch('file', files, event)
+    this.element.propagator.dispatch('files', [{ files }], event)
   }
 
   protected handleInputValue (event: Event): void {
@@ -281,21 +322,28 @@ export class Field {
 
   protected setChecked (value: Primitive): void {
     this.element.toggleAttribute('checked', value.toString() === this.element.value)
+    this.value = value
+    this.verify()
+    this.element.update()
   }
 
-  protected setDate (date: Date): void {
+  protected setDate (value: Date): void {
     this.element.value = [
       [
-        String(date.getFullYear()),
-        String(date.getMonth() + 1).padStart(2, '0'),
-        String(date.getDate()).padStart(2, '0')
+        String(value.getFullYear()),
+        String(value.getMonth() + 1).padStart(2, '0'),
+        String(value.getDate()).padStart(2, '0')
       ].join('-'),
       [
-        String(date.getHours()).padStart(2, '0'),
-        String(date.getMinutes()).padStart(2, '0'),
-        String(date.getSeconds()).padStart(2, '0')
+        String(value.getHours()).padStart(2, '0'),
+        String(value.getMinutes()).padStart(2, '0'),
+        String(value.getSeconds()).padStart(2, '0')
       ].join(':')
     ].join('T')
+
+    this.value = value
+    this.verify()
+    this.element.update()
   }
 
   protected setError (error: FieldError): void {
@@ -304,27 +352,14 @@ export class Field {
     this.element.toggleAttribute('sc-field-error', true)
   }
 
-  protected setFile (file?: File): void {
-    if (this.element instanceof HTMLInputElement) {
-      const transfer = new DataTransfer()
-
-      if (file !== undefined) {
-        transfer.items.add(file)
-      }
-
-      this.element.files = transfer.files
-    }
-
+  protected setFile (value: File): void {
+    this.element.value = ''
+    this.value = value
     this.verify()
     this.element.update()
   }
 
-  protected setValid (): void {
-    this.clear()
-    this.element.toggleAttribute('sc-field-valid', true)
-  }
-
-  protected setValue (value: Primitive): void {
+  protected setPrimitive (value: Primitive): void {
     if (
       this.element.type === 'checkbox' ||
       this.element.type === 'radio'
@@ -338,9 +373,20 @@ export class Field {
       this.setDate(new Date(value.toString()))
     } else {
       this.element.value = value.toString()
+      this.value = value
+      this.verify()
+      this.element.update()
     }
+  }
 
-    this.verify()
+  protected setValid (): void {
+    this.clear()
+    this.element.toggleAttribute('sc-field-valid', true)
+  }
+
+  protected setValue (value: unknown): void {
+    this.element.value = ''
+    this.value = value
     this.element.update()
   }
 }

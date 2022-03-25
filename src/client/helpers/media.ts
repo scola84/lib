@@ -1,20 +1,22 @@
-import { isArray, isStruct } from '../../common'
+import { I18n, get, isArray, isStruct } from '../../common'
 import type { ScolaMediaElement } from '../elements'
 import type { Struct } from '../../common'
 
 export interface MediaData extends Struct {
-  currentTime: number
-  duration: number
-  length: Date
-  muted: boolean
-  playing: boolean
+  currentTime?: number
+  duration?: number
+  length?: Date
+  muted?: boolean
+  playing?: boolean
   src: string
-  time: Date
-  volume: number
+  time?: Date
+  volume?: number
 }
 
 export class Media {
   public element: ScolaMediaElement
+
+  public i18n: I18n
 
   protected handleCanPlayBound = this.handleCanPlay.bind(this)
 
@@ -30,6 +32,7 @@ export class Media {
 
   public constructor (element: ScolaMediaElement) {
     this.element = element
+    this.i18n = new I18n()
   }
 
   public clear (): void {
@@ -47,7 +50,7 @@ export class Media {
     this.clear()
   }
 
-  public getData (): MediaData | null {
+  public getData (): Required<MediaData> | null {
     if (
       Number.isNaN(this.element.duration) ||
       this.element.duration === Infinity
@@ -67,6 +70,13 @@ export class Media {
     }
   }
 
+  public isMedia (media: unknown): media is MediaData {
+    return (
+      isStruct(media) &&
+      typeof media.src === 'string'
+    )
+  }
+
   public jumpTime (delta: number): void {
     const time = this.element.currentTime + (delta / 1000)
 
@@ -84,18 +94,28 @@ export class Media {
   public setData (data: unknown): void {
     this.clear()
 
-    if (isArray(data)) {
-      this.setSourceFromArray(data)
-    } else if (isStruct(data)) {
-      if (data.file instanceof File) {
-        this.setSourceFromFile(data.file)
-      } else {
-        this.setSourceFromStruct(data)
-      }
-    } else if (typeof data === 'string') {
-      this.setSourceFromStruct({
+    if (typeof data === 'string') {
+      this.setSourceFromMedia({
         src: data
       })
+    } else if (
+      data instanceof Blob &&
+      data.type.startsWith(this.element.nodeName.toLowerCase())
+    ) {
+      this.setSourceFromBlob(data)
+    } else if (isArray(data)) {
+      this.setSourceFromArray(data)
+    } else if (this.isMedia(data)) {
+      this.setSourceFromMedia(data)
+    } else if ((
+      isStruct(data) &&
+      this.element.url !== null
+    ) && (
+      this.element.key === null ||
+      String(get(data, this.element.key.split('.')))
+        .startsWith(this.element.nodeName.toLowerCase())
+    )) {
+      this.setSourceFromStruct(data)
     } else {
       this.element.removeAttribute('src')
     }
@@ -173,11 +193,11 @@ export class Media {
   protected setSourceFromArray (sources: unknown[]): void {
     sources.find((source) => {
       if (
-        isStruct(source) &&
+        this.isMedia(source) &&
         typeof source.type === 'string' &&
         this.element.canPlayType(source.type) !== ''
       ) {
-        this.setSourceFromStruct(source)
+        this.setSourceFromMedia(source)
         return true
       }
 
@@ -185,28 +205,30 @@ export class Media {
     })
   }
 
-  protected setSourceFromFile (file: File): void {
-    const src = URL.createObjectURL(file)
+  protected setSourceFromBlob (blob: Blob): void {
+    const src = URL.createObjectURL(blob)
 
     window.requestAnimationFrame(() => {
-      this.setSourceFromStruct({
+      this.setSourceFromMedia({
         src
       })
     })
   }
 
-  protected setSourceFromStruct (struct: Struct): void {
-    if (typeof struct.src === 'string') {
-      this.element.src = struct.src
-    }
+  protected setSourceFromMedia (media: MediaData): void {
+    this.element.src = media.src
 
     if (
-      typeof struct.poster === 'string' &&
-      this.element instanceof HTMLVideoElement
+      this.element instanceof HTMLVideoElement &&
+      typeof media.poster === 'string'
     ) {
-      this.element.poster = struct.poster
+      this.element.poster = media.poster
     }
 
     this.element.update()
+  }
+
+  protected setSourceFromStruct (struct: Struct): void {
+    this.element.src = this.i18n.format(`${this.element.origin}${this.element.url ?? ''}`, struct)
   }
 }

@@ -491,23 +491,3 @@ export function createAnUpdateQuery (formatter: SqlFormatter, expectations: Stru
   expect(formatter.sanitizeQuery(string)).eq(expectations.formatAnUpdateQuery.string)
   expect(values).eql(expectations.formatAnUpdateQuery.values)
 }
-
-export function createAnUpdatePartialQuery (formatter: SqlFormatter, expectations: Struct<Struct>): void {
-  const {
-    string,
-    values
-  } = formatter.createUpdatePartialQuery('contact', updateKeys, {
-    family_name: {
-      type: 'text'
-    },
-    given_name: {
-      type: 'text'
-    }
-  }, {
-    contact_id: 1,
-    family_name: 'sql'
-  })
-
-  expect(formatter.sanitizeQuery(string)).eq(expectations.formatAnUpdatePartialQuery.string)
-  expect(values).eql(expectations.formatAnUpdatePartialQuery.values)
-}

@@ -337,6 +337,16 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     }
   }
 
+  protected dispatch (blob: Blob): void {
+    const name = blob.type.replace('/', '.')
+
+    const file = new File([blob], name, {
+      type: blob.type
+    })
+
+    this.propagator.dispatch(this.type, [file])
+  }
+
   protected enableAudio (): void {
     const constraints: MediaStreamConstraints = {
       audio: this.createAudioConstraints()
@@ -495,18 +505,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
         imageCapture
           .takePhoto(options)
           .then((blob) => {
-            const name = blob.type.replace('/', '.')
-
-            const file = new File([blob], name, {
-              type: blob.type
-            })
-
-            this.propagator.dispatch('image', [{
-              file: file,
-              filename: file.name,
-              filesize: file.size,
-              filetype: file.type
-            }])
+            this.dispatch(blob)
           })
           .catch((error: unknown) => {
             this.handleError(error)
@@ -545,20 +544,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   protected stopRtc (): void {
     if (this.rtcRecorder !== undefined) {
-      const blob = this.rtcRecorder.getBlob()
-      const name = blob.type.replace('/', '.')
-
-      const file = new File([blob], name, {
-        type: blob.type
-      })
-
-      this.propagator.dispatch(this.type, [{
-        file: file,
-        filename: file.name,
-        filesize: file.size,
-        filetype: file.type
-      }])
-
+      this.dispatch(this.rtcRecorder.getBlob())
       this.clearRtc()
     }
   }

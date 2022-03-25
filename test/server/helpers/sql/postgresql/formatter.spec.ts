@@ -1,4 +1,4 @@
-import { createADeleteQuery, createASelectAllQueryWithForeignKeysWithCursor, createASelectAllQueryWithForeignKeysWithForeignKey, createASelectAllQueryWithForeignKeysWithSearch, createASelectAllQueryWithForeignKeysWithSort, createASelectAllQueryWithForeignKeysWithoutParameters, createASelectAllQueryWithRelatedKeysWithCursor, createASelectAllQueryWithRelatedKeysWithSearch, createASelectAllQueryWithRelatedKeysWithSort, createASelectAllQueryWithRelatedKeysWithoutParameters, createASelectAllQueryWithoutKeysWithCursor, createASelectAllQueryWithoutKeysWithSearch, createASelectAllQueryWithoutKeysWithSort, createASelectAllQueryWithoutKeysWithoutParameters, createASelectQuery, createAnInsertQuery, createAnUpdatePartialQuery, createAnUpdateQuery } from '../formatter.spec'
+import { createADeleteQuery, createASelectAllQueryWithForeignKeysWithCursor, createASelectAllQueryWithForeignKeysWithForeignKey, createASelectAllQueryWithForeignKeysWithSearch, createASelectAllQueryWithForeignKeysWithSort, createASelectAllQueryWithForeignKeysWithoutParameters, createASelectAllQueryWithRelatedKeysWithCursor, createASelectAllQueryWithRelatedKeysWithSearch, createASelectAllQueryWithRelatedKeysWithSort, createASelectAllQueryWithRelatedKeysWithoutParameters, createASelectAllQueryWithoutKeysWithCursor, createASelectAllQueryWithoutKeysWithSearch, createASelectAllQueryWithoutKeysWithSort, createASelectAllQueryWithoutKeysWithoutParameters, createASelectQuery, createAnInsertQuery, createAnUpdateQuery } from '../formatter.spec'
 import { PostgresqlFormatter } from '../../../../../src/server/helpers/sql/postgresql'
 import { expect } from 'chai'
 
@@ -27,13 +27,6 @@ const expectations = {
     values: {
       family_name: 'sql',
       given_name: 'scola'
-    }
-  },
-  formatAnUpdatePartialQuery: {
-    string: 'UPDATE $[contact] SET $[family_name] = $(family_name) WHERE $[contact_id] = $(contact_id)',
-    values: {
-      contact_id: 1,
-      family_name: 'sql'
     }
   },
   formatAnUpdateQuery: {
@@ -288,6 +281,8 @@ describe('PostgresqlFormatter', () => {
   describe('should', () => {
     it('format a query', formatAQuery)
     it('format a query for bulk insert', formatAQueryForBulkInsert)
+    it('format a query with escaped identifiers', formatAQueryWithEscapedIdentifiers)
+    it('format a query with escaped parameters', formatAQueryWithEscapedParameters)
 
     describe('format a select all query', () => {
       describe('with foreign keys', () => {
@@ -317,7 +312,6 @@ describe('PostgresqlFormatter', () => {
     it('format an insert query', createAnInsertQuery.bind(null, formatter, expectations))
     it('format a select query', createASelectQuery.bind(null, formatter, expectations))
     it('format an update query', createAnUpdateQuery.bind(null, formatter, expectations))
-    it('format an update partial query', createAnUpdatePartialQuery.bind(null, formatter, expectations))
   })
 })
 
@@ -408,4 +402,36 @@ function formatAQueryWithAnUndefinedParameter (): void {
   } catch (error: unknown) {
     expect(String(error)).match(/Parameter "test1" is undefined/u)
   }
+}
+
+function formatAQueryWithEscapedIdentifiers (): void {
+  const expectedQuery = `
+    SELECT '$[0]'
+    FROM test
+  `
+
+  const rawString = `
+    SELECT '\\$[0]'
+    FROM test
+  `
+
+  expect(formatter.formatQuery({
+    string: rawString
+  })).equal(expectedQuery)
+}
+
+function formatAQueryWithEscapedParameters (): void {
+  const expectedQuery = `
+    SELECT '$(0)'
+    FROM test
+  `
+
+  const rawString = `
+    SELECT '\\$(0)'
+    FROM test
+  `
+
+  expect(formatter.formatQuery({
+    string: rawString
+  })).equal(expectedQuery)
 }

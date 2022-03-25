@@ -1,5 +1,6 @@
 export * from './crud'
 export * from './delete'
+export * from './delete-all'
 export * from './delete-many'
 export * from './delete-one'
 export * from './insert'

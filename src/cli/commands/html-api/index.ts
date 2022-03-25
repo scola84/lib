@@ -1,3 +1,4 @@
+export * from './format-delete-all'
 export * from './format-delete-many'
 export * from './format-delete-one'
 export * from './format-select-all'

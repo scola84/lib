@@ -3,12 +3,19 @@ import { absorb, isArray, isNil, isPrimitive, isStruct, isTransaction } from '..
 import type { ScolaElement } from './element'
 import type { ScolaViewElement } from './view'
 import type { Struct } from '../../common'
+import type { queue as fastq } from 'fastq'
+import queue from 'fastq'
 
 declare global {
   interface HTMLElementEventMap {
     'sc-requester-abort': CustomEvent
     'sc-requester-send': CustomEvent
-    'sc-requester-toggle': CustomEvent
+  }
+}
+
+declare module 'fastq' {
+  interface queue {
+    running: () => number
   }
 }
 
@@ -21,15 +28,17 @@ interface ScolaRequesterElementData extends Struct {
 interface Request {
   body: FormData | URLSearchParams | string | null
   method: string
-  url: string | null
+  url: string
 }
 
 export class ScolaRequesterElement extends HTMLObjectElement implements ScolaElement {
   public static origin = window.location.origin
 
+  public concurrency: number
+
   public enctype: string
 
-  public exact: boolean
+  public max: number
 
   public method: string
 
@@ -41,13 +50,23 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   public propagator: Propagator
 
+  public queue: fastq
+
   public url: string
 
   public view?: ScolaViewElement
 
   public wait: boolean
 
-  public xhr?: XMLHttpRequest
+  public xhr: Set<XMLHttpRequest> = new Set()
+
+  public get opened (): number {
+    return this.xhr.size
+  }
+
+  public get queued (): number {
+    return this.queue.length() + this.queue.running()
+  }
 
   protected handleAbortBound = this.handleAbort.bind(this)
 
@@ -57,9 +76,9 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   protected handleProgressBound = this.handleProgress.bind(this)
 
-  protected handleSendBound = this.handleSend.bind(this)
+  protected handleQueueBound = this.handleQueue.bind(this)
 
-  protected handleToggleBound = this.handleToggle.bind(this)
+  protected handleSendBound = this.handleSend.bind(this)
 
   public constructor () {
     super()
@@ -77,18 +96,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   }
 
   public abort (): void {
-    this.xhr?.abort()
-    this.clear()
-  }
+    this.xhr.forEach((xhr) => {
+      xhr.abort()
+    })
 
-  public clear (): void {
-    if (this.xhr !== undefined) {
-      this.xhr.upload.onprogress = null
-      this.xhr.onerror = null
-      this.xhr.onloadend = null
-      this.xhr.onprogress = null
-      this.xhr = undefined
-    }
+    this.xhr.clear()
   }
 
   public connectedCallback (): void {
@@ -114,22 +126,29 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   public getData (): ScolaRequesterElementData {
     return {
       loaded: Number(this.getAttribute('sc-loaded')),
+      opened: Number(this.getAttribute('sc-opened')),
+      queued: Number(this.getAttribute('sc-queued')),
       state: Number(this.getAttribute('sc-state')),
       total: Number(this.getAttribute('sc-total'))
     }
   }
 
   public reset (): void {
+    this.concurrency = Number(this.getAttribute('sc-concurrency') ?? 1)
     this.enctype = (this.getAttribute('sc-enctype')) ?? 'application/x-www-form-urlencoded'
-    this.exact = this.hasAttribute('sc-exact')
+    this.max = Number(this.getAttribute('sc-max') ?? 1)
     this.method = this.getAttribute('sc-method') ?? 'GET'
     this.url = this.getAttribute('sc-url') ?? ''
     this.wait = this.hasAttribute('sc-wait')
+    this.queue = queue(this.handleQueueBound, this.concurrency)
   }
 
   public send (options?: unknown): void {
-    if (this.xhr !== undefined) {
-      this.propagator.dispatch('pending', [options])
+    if (
+      this.max > -1 &&
+      this.opened === this.max
+    ) {
+      this.propagator.dispatch('max', [options])
       return
     }
 
@@ -138,7 +157,13 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       return
     }
 
-    this.sendRequest(options)
+    this.queue.push(options, () => {
+      window.requestAnimationFrame(() => {
+        this.setAttribute('sc-queued', this.queued.toString())
+      })
+    })
+
+    this.setAttribute('sc-queued', this.queued.toString())
   }
 
   public setData (): void {}
@@ -150,20 +175,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }
   }
 
-  public toggle (options?: unknown): void {
-    if (this.xhr === undefined) {
-      this.send(options)
-    } else {
-      this.abort()
-    }
-  }
-
   public update (): void {}
 
   protected addEventListeners (): void {
     this.addEventListener('sc-requester-send', this.handleSendBound)
     this.addEventListener('sc-requester-abort', this.handleAbortBound)
-    this.addEventListener('sc-requester-toggle', this.handleToggleBound)
   }
 
   protected createRequest (options?: unknown): Request {
@@ -187,7 +203,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       }
     }
 
-    let { url } = this as { url: string | null }
+    let { url } = this
     let body: FormData | URLSearchParams | string | null = null
 
     if (method === 'GET') {
@@ -290,7 +306,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     return JSON.stringify(data)
   }
 
-  protected createRequestUrl (data?: Struct): string | null {
+  protected createRequestUrl (data?: Struct): string {
     const url = new URL(`${this.origin}${this.url}`)
 
     Object
@@ -302,18 +318,6 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
           url.searchParams.append(key, value.toString())
         }
       })
-
-    if (this.exact) {
-      const exact = Object
-        .keys(this.dataset)
-        .every((key) => {
-          return url.searchParams.has(key)
-        })
-
-      if (!exact) {
-        return null
-      }
-    }
 
     return url.toString()
   }
@@ -329,103 +333,116 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }])
   }
 
-  protected handleLoadend (options: unknown, event: Event): void {
-    if (this.xhr !== undefined) {
-      this.setAttribute('sc-state', this.xhr.readyState.toString())
+  protected handleLoadend (event: ProgressEvent, options: unknown): void {
+    const xhr = event.target as XMLHttpRequest
 
-      let data: Struct | string | null = null
+    if (this.concurrency === 1) {
+      this.setAttribute('sc-state', xhr.readyState.toString())
+    }
 
-      const contentType = this.xhr.getResponseHeader('content-type')
+    let data: Struct | string | null = null
 
-      if (contentType?.startsWith('application/json') === true) {
-        data = JSON.parse(this.xhr.responseText) as Struct
-      } else if (contentType?.startsWith('text/') === true) {
-        data = this.xhr.responseText
+    const contentType = xhr.getResponseHeader('content-type')
+
+    if (contentType?.startsWith('application/json') === true) {
+      data = JSON.parse(xhr.responseText) as Struct
+    } else if (contentType?.startsWith('text/') === true) {
+      data = xhr.responseText
+    }
+
+    if (xhr.status < 400) {
+      this.propagator.dispatch('message', [data], event)
+
+      if (isTransaction(options)) {
+        options.result = data
+        this.propagator.dispatch('tmessage', [options], event)
+      }
+    } else {
+      this.propagator.dispatch('error', [{
+        body: xhr.responseText,
+        code: `err_requester_${xhr.status}`,
+        message: xhr.statusText
+      }], event)
+
+      if (isStruct(data)) {
+        this.propagator.dispatch('errordata', [
+          data.body ?? data.query ?? data.headers ?? data
+        ], event)
       }
 
-      if (this.xhr.status < 400) {
-        this.propagator.dispatch('message', [data], event)
-
-        if (isTransaction(options)) {
-          options.result = data
-          this.propagator.dispatch('tmessage', [options], event)
-        }
-      } else {
-        this.propagator.dispatch('error', [{
-          body: this.xhr.responseText,
-          code: `err_requester_${this.xhr.status}`,
-          message: this.xhr.statusText
-        }], event)
-
+      if (isTransaction(options)) {
         if (isStruct(data)) {
-          this.propagator.dispatch('errordata', [
-            data.body ?? data.query ?? data.headers ?? data
-          ], event)
+          options.result = data.body ?? data.query ?? data.headers ?? data
         }
 
-        if (isTransaction(options)) {
-          if (isStruct(data)) {
-            options.result = data.body ?? data.query ?? data.headers ?? data
-          }
-
-          this.propagator.dispatch('terror', [options], event)
-        }
+        this.propagator.dispatch('terror', [options], event)
       }
-
-      this.clear()
     }
   }
 
   protected handleProgress (event: ProgressEvent): void {
-    this.setAttribute('sc-loaded', event.loaded.toString())
-    this.setAttribute('sc-total', event.total.toString())
+    if (this.concurrency === 1) {
+      this.setAttribute('sc-loaded', event.loaded.toString())
+      this.setAttribute('sc-total', event.total.toString())
+    }
+  }
+
+  protected handleQueue (options: unknown, callback: (error: Error | null) => void): void {
+    const request = this.createRequest(options)
+    const xhr = new window.XMLHttpRequest()
+
+    if (request.method === 'POST') {
+      xhr.upload.onprogress = this.handleProgressBound
+    }
+
+    xhr.onerror = (event) => {
+      this.xhr.delete(event.target as XMLHttpRequest)
+      this.setAttribute('sc-opened', this.opened.toString())
+      this.handleError(event)
+      callback(null)
+    }
+
+    xhr.onloadend = (event) => {
+      this.xhr.delete(event.target as XMLHttpRequest)
+      this.setAttribute('sc-opened', this.opened.toString())
+      this.handleLoadend(event, options)
+      callback(null)
+    }
+
+    xhr.onprogress = this.handleProgressBound
+
+    try {
+      xhr.open(request.method, request.url)
+      this.xhr.add(xhr)
+      this.setAttribute('sc-opened', this.opened.toString())
+
+      if (
+        request.body !== null &&
+        this.enctype !== ''
+      ) {
+        if (this.enctype !== 'multipart/form-data') {
+          xhr.setRequestHeader('Content-Type', this.enctype)
+        }
+
+        xhr.send(request.body)
+      } else {
+        xhr.send()
+      }
+
+      if (this.concurrency === 1) {
+        this.setAttribute('sc-state', xhr.readyState.toString())
+      }
+    } catch (error: unknown) {
+      this.handleError(error)
+    }
   }
 
   protected handleSend (event: CustomEvent): void {
     this.send(event.detail)
   }
 
-  protected handleToggle (event: CustomEvent): void {
-    this.toggle(event.detail)
-  }
-
   protected removeEventListeners (): void {
     this.removeEventListener('sc-requester-abort', this.handleAbortBound)
     this.removeEventListener('sc-requester-send', this.handleSendBound)
-    this.removeEventListener('sc-requester-toggle', this.handleToggleBound)
-  }
-
-  protected sendRequest (options?: unknown): void {
-    const request = this.createRequest(options)
-
-    if (request.url !== null) {
-      this.xhr = new window.XMLHttpRequest()
-
-      if (request.method !== 'GET') {
-        this.xhr.upload.onprogress = this.handleProgressBound
-      }
-
-      this.xhr.onerror = this.handleErrorBound
-      this.xhr.onloadend = this.handleLoadend.bind(this, options)
-      this.xhr.onprogress = this.handleProgressBound
-
-      try {
-        this.xhr.open(request.method, request.url)
-
-        if (
-          request.body !== null &&
-          this.enctype !== ''
-        ) {
-          this.xhr.setRequestHeader('Content-Type', this.enctype)
-          this.xhr.send(request.body)
-        } else {
-          this.xhr.send()
-        }
-
-        this.setAttribute('sc-state', this.xhr.readyState.toString())
-      } catch (error: unknown) {
-        this.handleError(error)
-      }
-    }
   }
 }

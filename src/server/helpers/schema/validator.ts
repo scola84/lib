@@ -59,7 +59,7 @@ export class SchemaValidator {
       })
   }
 
-  public validate<Data extends Struct = Struct> (data: Data, user?: User): Data {
+  public validate<Data extends Struct = Struct>(data: Data, user?: User): Data {
     let hasErrors = false
     let isValid: boolean | null = false
 

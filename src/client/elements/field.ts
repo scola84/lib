@@ -1,4 +1,5 @@
-import type { Field, FieldError } from '../helpers'
+import type { Field, FieldData, FieldError } from '../helpers'
+import type { Primitive, Struct } from '../../common'
 import type { ScolaElement } from './element'
 
 export interface ScolaFieldElement extends ScolaElement {
@@ -16,7 +17,9 @@ export interface ScolaFieldElement extends ScolaElement {
 
   isEmpty: () => boolean
 
-  getValue: () => string | null
+  getData: () => FieldData
+
+  getValue: () => Date | File | File[] | Primitive | Primitive[] | Struct | Struct[] | null
 
   reset: () => void
 

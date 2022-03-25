@@ -22,13 +22,23 @@ declare global {
 }
 
 export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaElement {
+  public static origin = window.location.origin
+
+  public key: string | null
+
   public media: Media
 
   public mutator: Mutator
 
   public observer: Observer
 
+  public origin = ScolaVideoElement.origin
+
   public propagator: Propagator
+
+  public url: string | null
+
+  protected handleErrorBound = this.handleError.bind(this)
 
   protected handleFullscreenBound = this.handleFullscreen.bind(this)
 
@@ -78,8 +88,13 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
     this.removeEventListeners()
   }
 
-  public getData (): MediaData | null {
+  public getData (): Required<MediaData> | null {
     return this.media.getData()
+  }
+
+  public reset (): void {
+    this.key = this.getAttribute('sc-key')
+    this.url = this.getAttribute('sc-url')
   }
 
   public setData (data: unknown): void {
@@ -106,6 +121,7 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
   }
 
   protected addEventListeners (): void {
+    this.addEventListener('error', this.handleErrorBound)
     this.addEventListener('sc-video-fullscreen', this.handleFullscreenBound)
     this.addEventListener('sc-video-jump', this.handleJumpBound)
     this.addEventListener('sc-video-mute', this.handleMuteBound)
@@ -114,6 +130,10 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
     this.addEventListener('sc-video-time', this.handleTimeBound)
     this.addEventListener('sc-video-toggle', this.handleToggleBound)
     this.addEventListener('sc-video-volume', this.handleVolumeBound)
+  }
+
+  protected handleError (): void {
+    this.setData(null)
   }
 
   protected handleFullscreen (): void {
@@ -166,6 +186,7 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
   }
 
   protected removeEventListeners (): void {
+    this.removeEventListener('error', this.handleErrorBound)
     this.removeEventListener('sc-video-fullscreen', this.handleFullscreenBound)
     this.removeEventListener('sc-video-jump', this.handleJumpBound)
     this.removeEventListener('sc-video-mute', this.handleMuteBound)

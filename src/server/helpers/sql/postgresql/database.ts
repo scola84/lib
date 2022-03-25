@@ -1,12 +1,11 @@
 import { Pool, types } from 'pg'
-import { cast, isStruct } from '../../../../common'
+import { cast, isStruct, set } from '../../../../common'
 import type { PoolConfig } from 'pg'
 import { PostgresqlConnection } from './connection'
 import { PostgresqlFormatter } from './formatter'
 import { SqlDatabase } from '../database'
 import { URL } from 'url'
 import { readFileSync } from 'fs-extra'
-import { set } from 'lodash'
 
 types.setTypeParser(types.builtins.INT8, parseInt)
 
@@ -75,7 +74,7 @@ export class PostgresqlDatabase extends SqlDatabase {
     Array
       .from(url.searchParams.entries())
       .forEach(([name, value]) => {
-        set(options, name, cast(value))
+        set(options, name.split('.').map(cast), cast(value))
       })
 
     const sslNames = ['ca', 'cert', 'key']

@@ -8,6 +8,46 @@ import { sql } from './tag'
 export abstract class SqlFormatter {
   public i18n = new I18n()
 
+  public createDeleteAllQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], user?: User): SqlQuery {
+    const auth = this.createAuthParts(keys, authKeys, user)
+    const deleteAll = this.createDeleteAllParts(keys)
+
+    if (deleteAll.where === undefined) {
+      throw new Error('Where is undefined')
+    }
+
+    const queries = auth.parts.map((authPart) => {
+      if (
+        keys.auth !== undefined &&
+        authPart.where === undefined
+      ) {
+        throw new Error('Where is undefined')
+      }
+
+      if (deleteAll.select === undefined) {
+        throw new Error('Select is undefined')
+      }
+
+      return sql`
+        SELECT ${deleteAll.select}
+        FROM $[${object}]
+        ${authPart.join ?? ''}
+        WHERE ${authPart.where ?? '1=1'}
+      `
+    })
+
+    return {
+      string: sql`
+        DELETE
+        FROM $[${object}]
+        WHERE (${deleteAll.where}) IN (
+          ${queries.join(' UNION ')}
+        )
+      `,
+      values: auth.values
+    }
+  }
+
   public createDeleteQuery (object: string, keys: SqlQueryKeys, data: Struct): SqlQuery {
     const values: Struct = {}
 
@@ -17,7 +57,7 @@ export abstract class SqlFormatter {
     })
 
     if (where === undefined) {
-      throw new Error(`Where is undefined for "${object}"`)
+      throw new Error('Where is undefined')
     }
 
     const string = sql`
@@ -68,7 +108,7 @@ export abstract class SqlFormatter {
         keys.auth !== undefined &&
         authPart.where === undefined
       ) {
-        throw new Error(`Where is undefined for "${object}"`)
+        throw new Error('Where is undefined')
       }
 
       return sql`
@@ -104,7 +144,7 @@ export abstract class SqlFormatter {
     const select = this.createSelectManyInParts(keys, data)
 
     if (select.where === undefined) {
-      throw new Error(`Where is undefined for "${object}"`)
+      throw new Error('Where is undefined')
     }
 
     const queries = auth.parts.map((authPart) => {
@@ -112,7 +152,7 @@ export abstract class SqlFormatter {
         keys.auth !== undefined &&
         authPart.where === undefined
       ) {
-        throw new Error(`Where is undefined for "${object}"`)
+        throw new Error('Where is undefined')
       }
 
       return sql`
@@ -140,7 +180,7 @@ export abstract class SqlFormatter {
     const select = this.createSelectManyModifiedParts(keys, modified)
 
     if (select.where === undefined) {
-      throw new Error(`Where is undefined for "${object}"`)
+      throw new Error('Where is undefined')
     }
 
     const queries = auth.parts.map((authPart) => {
@@ -148,7 +188,7 @@ export abstract class SqlFormatter {
         keys.auth !== undefined &&
         authPart.where === undefined
       ) {
-        throw new Error(`Where is undefined for "${object}"`)
+        throw new Error('Where is undefined')
       }
 
       return sql`
@@ -180,7 +220,7 @@ export abstract class SqlFormatter {
         keys.auth !== undefined &&
         authPart.where === undefined
       ) {
-        throw new Error(`Where is undefined for "${object}"`)
+        throw new Error('Where is undefined')
       }
 
       return sql`
@@ -202,7 +242,7 @@ export abstract class SqlFormatter {
     const select = this.createSelectParts(keys, parameters)
 
     if (select.where === undefined) {
-      throw new Error(`Where is undefined for "${object}"`)
+      throw new Error('Where is undefined')
     }
 
     const queries = auth.parts.map((authPart) => {
@@ -210,7 +250,7 @@ export abstract class SqlFormatter {
         keys.auth !== undefined &&
         authPart.where === undefined
       ) {
-        throw new Error(`Where is undefined for "${object}"`)
+        throw new Error('Where is undefined')
       }
 
       return sql`
@@ -233,7 +273,7 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createUpdatePartialQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct, user?: User): SqlQuery {
+  public createUpdateQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct, user?: User): SqlQuery {
     const values: Struct = {}
 
     const set = Object
@@ -257,43 +297,7 @@ export abstract class SqlFormatter {
     })
 
     if (where === undefined) {
-      throw new Error(`Where is undefined for "${object}"`)
-    }
-
-    const string = sql`
-      UPDATE $[${object}]
-      SET ${set.join(',')}
-      WHERE ${where.join(' AND ')}
-    `
-
-    return {
-      string,
-      values
-    }
-  }
-
-  public createUpdateQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct, user?: User): SqlQuery {
-    const values: Struct = {}
-
-    const set = Object
-      .entries(schema)
-      .filter(([name]) => {
-        return keys.primary?.every((key) => {
-          return key.column !== name
-        })
-      })
-      .map(([name, field]) => {
-        values[name] = this.resolveValue(field, data[name], user)
-        return `$[${name}] = $(${name})`
-      })
-
-    const where = keys.primary?.map((key) => {
-      values[key.column] = data[key.column]
-      return `$[${key.column}] = $(${key.column})`
-    })
-
-    if (where === undefined) {
-      throw new Error(`Where is undefined for "${object}"`)
+      throw new Error('Where is undefined')
     }
 
     const string = sql`
@@ -355,10 +359,14 @@ export abstract class SqlFormatter {
    * ```
    */
   public formatQuery (query: SqlQuery): string {
-    return (query.string.match(/\$[([][\w\s.]+[\])]/gu) ?? []).reduce((result, match) => {
+    return (query.string.match(/\\?\$[([][\w\s.]+[\])]/gu) ?? []).reduce((result, match) => {
       const key = match.slice(2, -1)
 
-      if (match[1] === '[') {
+      if (match.startsWith('\\')) {
+        return result.replace(match, match.slice(1))
+      }
+
+      if (match.startsWith('$[')) {
         return result.replace(match, this.formatIdentifier(key))
       }
 
@@ -421,6 +429,21 @@ export abstract class SqlFormatter {
     return {
       parts,
       values
+    }
+  }
+
+  protected createDeleteAllParts (keys: SqlQueryKeys): SqlQueryParts {
+    const select = keys.primary?.map((key) => {
+      return `$[${key.column}]`
+    }) ?? []
+
+    const where = keys.primary?.map((key) => {
+      return `$[${key.column}]`
+    }) ?? []
+
+    return {
+      select: this.joinStrings(', ', select),
+      where: this.joinStrings(', ', where)
     }
   }
 
@@ -638,10 +661,9 @@ export abstract class SqlFormatter {
   }
 
   protected createSelectManyParts (keys: SqlQueryKeys): SqlQueryParts {
-    const select = keys.primary
-      ?.map((key) => {
-        return `$[${key.table}.${key.column}]`
-      })
+    const select = keys.primary?.map((key) => {
+      return `$[${key.table}.${key.column}]`
+    })
 
     if (keys.modified !== undefined) {
       select?.push(`$[${keys.modified.table}.${keys.modified.column}]`)

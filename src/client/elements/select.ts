@@ -1,7 +1,7 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
 import type { FieldData, FieldError } from '../helpers'
+import type { Primitive, Struct } from '../../common'
 import type { ScolaFieldElement } from './field'
-import type { Struct } from '../../common'
 
 export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldElement {
   public error?: Struct
@@ -71,13 +71,8 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     return error
   }
 
-  public getValue (): string {
-    return Array
-      .from(this.selectedOptions)
-      .map((option) => {
-        return option.value
-      })
-      .join(', ')
+  public getValue (): Date | File | File[] | Primitive | Primitive[] | Struct | Struct[] | null {
+    return this.field.getValue()
   }
 
   public isEmpty (): boolean {

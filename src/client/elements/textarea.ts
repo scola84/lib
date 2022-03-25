@@ -1,7 +1,7 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
 import type { FieldData, FieldError } from '../helpers'
+import type { Primitive, Struct } from '../../common'
 import type { ScolaFieldElement } from './field'
-import type { Struct } from '../../common'
 
 export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFieldElement {
   public error?: Struct
@@ -90,8 +90,8 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     return error
   }
 
-  public getValue (): string {
-    return this.value
+  public getValue (): Date | File | File[] | Primitive | Primitive[] | Struct | Struct[] | null {
+    return this.field.getValue()
   }
 
   public isEmpty (): boolean {

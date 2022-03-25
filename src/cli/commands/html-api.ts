@@ -1,11 +1,10 @@
-import { MssqlDatabase, MysqlDatabase, PostgresqlDatabase } from '../../server/helpers/sql'
-import { formatDeleteMany, formatDeleteOne, formatIndex, formatInsertMany, formatInsertOne, formatSelectAll, formatSelectMany, formatSelectOne, formatUpdateMany, formatUpdateOne } from './html-api/'
+import { MssqlDatabase, MysqlDatabase, PostgresqlDatabase, SchemaParser } from '../../server/helpers'
+import type { Schema, SqlDatabase } from '../../server/helpers'
+import { formatDeleteAll, formatDeleteMany, formatDeleteOne, formatIndex, formatInsertMany, formatInsertOne, formatSelectAll, formatSelectMany, formatSelectOne, formatUpdateMany, formatUpdateOne } from './html-api/'
 import { mkdirSync, writeFileSync } from 'fs-extra'
 import { Command } from 'commander'
-import type { Schema } from '../../server/helpers/schema'
-import { SchemaParser } from '../../server/helpers/schema'
-import type { SqlDatabase } from '../../server/helpers/sql'
 import type { Struct } from '../../common'
+import { isMatch } from 'micromatch'
 
 export interface Options {
   actions: string
@@ -31,7 +30,7 @@ Example:
 program
   .argument('<source>', 'name and source file')
   .argument('[target]', 'directory to write the files to', process.cwd())
-  .option('-m, --actions <actions>', 'actions to include in the API', 'DISU')
+  .option('-m, --actions <actions>', 'micromatch pattern to include actions in the API', '{da,dm,do,im,io,sa,sm,so,um,uo}')
   .option('-D, --database <database>', 'database of the SQL file', 'postgres')
   .option('-d, --dialect <dialect>', 'dialect of the SQL file', 'postgres')
   .option('-r, --relation <relation...>', 'name and source file of a related object')
@@ -95,26 +94,26 @@ try {
       })
 
       if (options.type === 'ts') {
-        if (options.actions.includes('D')) {
-          writeFileSync(`${targetDir}/delete-many.ts`, `${formatDeleteMany(schema, relations, options)}\n`)
-          writeFileSync(`${targetDir}/delete-one.ts`, `${formatDeleteOne(schema, relations, options)}\n`)
-        }
+        Object
+          .entries({
+            'da': [`${targetDir}/delete-all.ts`, `${formatDeleteAll(schema, relations, options)}\n`],
+            'dm': [`${targetDir}/delete-many.ts`, `${formatDeleteMany(schema, relations, options)}\n`],
+            'do': [`${targetDir}/delete-one.ts`, `${formatDeleteOne(schema, relations, options)}\n`],
+            'im': [`${targetDir}/insert-many.ts`, `${formatInsertMany(schema, relations, options)}\n`],
+            'io': [`${targetDir}/insert-one.ts`, `${formatInsertOne(schema, relations, options)}\n`],
+            'sa': [`${targetDir}/select-all.ts`, `${formatSelectAll(schema, relations, options)}\n`],
+            'sm': [`${targetDir}/select-many.ts`, `${formatSelectMany(schema, relations, options)}\n`],
+            'so': [`${targetDir}/select-one.ts`, `${formatSelectOne(schema, relations, options)}\n`],
+            'um': [`${targetDir}/update-many.ts`, `${formatUpdateMany(schema, relations, options)}\n`],
+            'uo': [`${targetDir}/update-one.ts`, `${formatUpdateOne(schema, relations, options)}\n`]
 
-        if (options.actions.includes('I')) {
-          writeFileSync(`${targetDir}/insert-many.ts`, `${formatInsertMany(schema, relations, options)}\n`)
-          writeFileSync(`${targetDir}/insert-one.ts`, `${formatInsertOne(schema, relations, options)}\n`)
-        }
-
-        if (options.actions.includes('S')) {
-          writeFileSync(`${targetDir}/select-all.ts`, `${formatSelectAll(schema, relations, options)}\n`)
-          writeFileSync(`${targetDir}/select-many.ts`, `${formatSelectMany(schema, relations, options)}\n`)
-          writeFileSync(`${targetDir}/select-one.ts`, `${formatSelectOne(schema, relations, options)}\n`)
-        }
-
-        if (options.actions.includes('U')) {
-          writeFileSync(`${targetDir}/update-many.ts`, `${formatUpdateMany(schema, relations, options)}\n`)
-          writeFileSync(`${targetDir}/update-one.ts`, `${formatUpdateOne(schema, relations, options)}\n`)
-        }
+          })
+          .filter(([key]) => {
+            return isMatch(key, options.actions)
+          })
+          .forEach(([, [path, content]]) => {
+            writeFileSync(path, content)
+          })
 
         writeFileSync(`${targetDir}/index.ts`, `${formatIndex(options)}\n`)
       } else if (options.type === 'sql') {

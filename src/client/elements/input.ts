@@ -1,7 +1,7 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
 import type { FieldData, FieldError } from '../helpers'
+import type { Primitive, Struct } from '../../common'
 import type { ScolaFieldElement } from './field'
-import type { Struct } from '../../common'
 
 export class ScolaInputElement extends HTMLInputElement implements ScolaFieldElement {
   public error?: Struct
@@ -113,34 +113,14 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     return error
   }
 
-  public getValue (): string | null {
-    if (this.isEmpty()) {
-      return null
-    }
-
-    if (
-      this.type === 'checkbox' ||
-      this.type === 'radio'
-    ) {
-      if (!this.checked) {
-        return null
-      }
-    } else if (this.type === 'file') {
-      return Array
-        .from(this.files ?? [])
-        .map((file) => {
-          return file.name
-        })
-        .join(', ')
-    }
-
-    return this.value
+  public getValue (): Date | File | File[] | Primitive | Primitive[] | Struct | Struct[] | null {
+    return this.field.getValue()
   }
 
   public isEmpty (): boolean {
     return (
-      this.value === '' ||
-      this.files?.length === 0
+      this.value === '' &&
+      this.field.value === ''
     )
   }
 

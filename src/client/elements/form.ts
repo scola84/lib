@@ -1,11 +1,11 @@
 import { Mutator, Observer, Propagator } from '../helpers'
-import { cast, isPrimitive, setPush } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaFieldElement } from './field'
 import { ScolaInputElement } from './input'
 import { ScolaSelectElement } from './select'
 import { ScolaTextAreaElement } from './textarea'
 import type { Struct } from '../../common'
+import { setPush } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -194,29 +194,18 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected serialize (): Struct {
-    return Array
-      .from(new FormData(this).entries())
-      .reduce((data, [name, value]) => {
-        let castValue: unknown = null
+    return this.fieldElements.reduce((data, element) => {
+      const value = element.getValue()
 
-        if (isPrimitive(value)) {
-          if (value === '') {
-            castValue = null
-          } else {
-            castValue = cast(value)
-          }
-        } else if (value instanceof File) {
-          if (
-            value.size === 0 &&
-            value.name === ''
-          ) {
-            castValue = null
-          }
-        }
-
-        setPush(data, name, castValue)
+      if (
+        element.type === 'radio' &&
+        value === null
+      ) {
         return data
-      }, {})
+      }
+
+      return setPush(data, element.name, element.getValue())
+    }, {})
   }
 
   protected setValues (): void {

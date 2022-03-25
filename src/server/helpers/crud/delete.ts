@@ -29,7 +29,7 @@ export abstract class CrudDeleteHandler extends CrudHandler {
 
     if (typeof data.file === 'string') {
       await this.deleteFile(object, data.file, user)
-      return object
+      return this.database.select(selectQuery.string, selectQuery.values)
     }
 
     await this.deleteFiles(schema, object)
@@ -43,33 +43,31 @@ export abstract class CrudDeleteHandler extends CrudHandler {
   protected async deleteFile (object: Struct, name: string, user?: User): Promise<void> {
     const file = parseStruct(object[name])
 
-    if (!isFile(file)) {
-      throw new Error('File is undefined')
-    }
+    if (isFile(file)) {
+      await this.bucket?.delete(file)
 
-    await this.bucket?.delete(file)
-
-    const data: Struct = {
-      [name]: null
-    }
-
-    const schema: Struct<SchemaField> = {
-      [name]: {
-        type: 'file'
+      const data: Struct = {
+        [name]: null
       }
-    }
 
-    this.keys.primary?.forEach((key) => {
-      data[key.column] = object[key.column]
-
-      schema[key.column] = {
-        type: 'number'
+      const schema: Struct<SchemaField> = {
+        [name]: {
+          type: 'file'
+        }
       }
-    })
 
-    const updateQuery = this.database.formatter.createUpdatePartialQuery(this.object, this.keys, schema, data, user)
+      this.keys.primary?.forEach((key) => {
+        data[key.column] = object[key.column]
 
-    await this.database.update(updateQuery.string, updateQuery.values)
+        schema[key.column] = {
+          type: 'number'
+        }
+      })
+
+      const updateQuery = this.database.formatter.createUpdateQuery(this.object, this.keys, schema, data, user)
+
+      await this.database.update(updateQuery.string, updateQuery.values)
+    }
   }
 
   protected async deleteFiles (schema: Schema, object: Struct): Promise<void> {

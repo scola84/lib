@@ -1,12 +1,11 @@
 import type { Pool, PoolOptions } from 'mysql2/promise'
-import { cast, isStruct } from '../../../../common'
+import { cast, isStruct, set } from '../../../../common'
 import { MysqlConnection } from './connection'
 import { MysqlFormatter } from './formatter'
 import { SqlDatabase } from '../database'
 import { URL } from 'url'
 import { createPool } from 'mysql2/promise'
 import { readFileSync } from 'fs-extra'
-import { set } from 'lodash'
 
 /**
  * Manages MySQL connections.
@@ -68,7 +67,7 @@ export class MysqlDatabase extends SqlDatabase {
     Array
       .from(url.searchParams.entries())
       .forEach(([name, value]) => {
-        set(options, name, cast(value))
+        set(options, name.split('.').map(cast), cast(value))
       })
 
     const sslNames = ['ca', 'cert', 'key']

@@ -1,5 +1,5 @@
-import type { Primitive, Struct } from '../../common'
-import { cast, isArray, isPrimitive, isStruct } from '../../common'
+import type { Primitive, ScolaError, Struct } from '../../common'
+import { cast, isArray, isError, isPrimitive, isStruct } from '../../common'
 import { Interactor } from './interactor'
 import type { InteractorEvent } from './interactor'
 import type { ScolaFieldElement } from '../elements'
@@ -19,17 +19,12 @@ export interface FieldData extends Struct {
   value: Date | File | File[] | Primitive | Primitive[] | Struct | Struct[] | null
 }
 
-export interface FieldError extends Struct {
-  code: string
-  data?: unknown
-}
-
 export class Field {
   public debounce = 0
 
   public element: ScolaFieldElement
 
-  public error?: FieldError
+  public error?: ScolaError
 
   public interactor: Interactor
 
@@ -143,6 +138,8 @@ export class Field {
 
     if (isPrimitive(data)) {
       this.setPrimitive(data)
+    } else if (isError(data)) {
+      this.setError(data)
     } else if (data instanceof Date) {
       this.setDate(data)
     } else if (data instanceof File) {
@@ -150,12 +147,7 @@ export class Field {
     } else if (isArray(data)) {
       this.setValue(data)
     } else if (isStruct(data)) {
-      if (typeof data.code === 'string') {
-        this.setError({
-          code: data.code,
-          data: data.data
-        })
-      } else if (data.valid === true) {
+      if (data.valid === true) {
         this.setValid()
       } else if (data.value === undefined) {
         this.setValue(data)
@@ -251,8 +243,8 @@ export class Field {
   protected handleInputFiles (fileList: FileList, event?: Event): void {
     const files = Array.from(fileList)
 
-    this.element.propagator.dispatch('file', files, event)
-    this.element.propagator.dispatch('files', [{ files }], event)
+    this.element.propagator.dispatch<File>('file', files, event)
+    this.element.propagator.dispatch<Struct<File[]>>('files', [{ files }], event)
   }
 
   protected handleInputValue (event: Event): void {
@@ -346,7 +338,7 @@ export class Field {
     this.element.update()
   }
 
-  protected setError (error: FieldError): void {
+  protected setError (error: ScolaError): void {
     this.clearDebounce()
     this.error = error
     this.element.toggleAttribute('sc-field-error', true)

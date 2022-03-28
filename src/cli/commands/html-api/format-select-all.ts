@@ -58,29 +58,29 @@ function formatQuerySchema (schema: Schema, space: number): string {
       required: true,
       schema: sortKeys({
         ...createQueryKeys(schema),
-        count: {
-          default: 10,
-          required: true,
-          type: 'number'
-        },
         cursor: {
           type: 'text'
         },
-        offset: {
-          type: 'number'
-        },
-        search: {
-          type: 'text'
-        },
-        sortKey: {
-          type: 'text'
-        },
-        sortOrder: {
+        direction: {
           type: 'select',
           values: [
             'asc',
             'desc'
           ]
+        },
+        limit: {
+          default: 10,
+          required: true,
+          type: 'number'
+        },
+        offset: {
+          type: 'number'
+        },
+        order: {
+          type: 'text'
+        },
+        search: {
+          type: 'text'
         }
       }),
       type: 'struct'

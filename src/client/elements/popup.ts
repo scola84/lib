@@ -10,9 +10,21 @@ declare global {
   }
 }
 
-type Left = 'center' | 'end-at-start' | 'end' | 'screen-center' | 'start-at-end' | 'start'
+type Left =
+| 'center'
+| 'end-at-start'
+| 'end'
+| 'screen-center'
+| 'start-at-end'
+| 'start'
 
-type Top = 'bottom-at-top' | 'bottom' | 'center' | 'screen-center' | 'top-at-bottom' | 'top'
+type Top =
+| 'bottom-at-top'
+| 'bottom'
+| 'center'
+| 'screen-center'
+| 'top-at-bottom'
+| 'top'
 
 interface Position {
   left: Left

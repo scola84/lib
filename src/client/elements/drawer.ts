@@ -1,6 +1,6 @@
 import { Mutator, Observer, Propagator, Theme } from '../helpers'
+import type { ScolaError, Struct } from '../../common'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Drawer = (data: any, options: Struct) => Promise<SVGElement | undefined> | SVGElement | undefined
@@ -173,7 +173,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatch('error', [{
+    this.propagator.dispatch<ScolaError>('error', [{
       code: 'err_drawer',
       message: this.propagator.extractMessage(error)
     }])

@@ -13,8 +13,6 @@ declare global {
   }
 }
 
-type Mode = 'many' | 'one' | 'toggle'
-
 export class TableSelector {
   public all: boolean
 
@@ -30,7 +28,7 @@ export class TableSelector {
 
   public lastSelectedRow?: ScolaTableRowElement
 
-  public mode: Mode
+  public mode: string
 
   public rows: ScolaTableRowElement[] = []
 
@@ -57,7 +55,7 @@ export class TableSelector {
   }
 
   public add (item: Struct): void {
-    const key = item[this.element.lister.key]
+    const key = item[this.element.lister.pkey]
     const row = this.element.elements.get(key)
 
     if (row !== undefined) {
@@ -108,7 +106,7 @@ export class TableSelector {
 
   public delete (item: Struct): void {
     const index = this.rows.findIndex((findRow) => {
-      return item[this.element.lister.key] === findRow.data[this.element.lister.key]
+      return item[this.element.lister.pkey] === findRow.data[this.element.lister.pkey]
     })
 
     if (index > -1) {
@@ -153,7 +151,7 @@ export class TableSelector {
 
   public getKeysByRow (): unknown[] {
     return this.rows.map((row) => {
-      return row.data[this.element.lister.key]
+      return row.data[this.element.lister.pkey]
     })
   }
 
@@ -163,7 +161,7 @@ export class TableSelector {
     this.interactor.mouse = this.interactor.hasMouse
     this.interactor.touch = this.interactor.hasTouch
     this.keyboardMode = this.element.getAttribute('sc-select-keyboard-mode') ?? 'select'
-    this.mode = (this.element.getAttribute('sc-select-mode') as Mode | null) ?? 'one'
+    this.mode = this.element.getAttribute('sc-select-mode') ?? 'one'
   }
 
   public scrollTo (): void {

@@ -1,7 +1,7 @@
+import type { Query, Struct } from '../../../common'
 import type { Schema, SchemaField, SchemaFieldKey } from '../schema'
-import type { SqlQuery, SqlQueryKeys, SqlQueryParts, SqlSelectAllParameters } from './query'
+import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from './query'
 import { I18n } from '../../../common'
-import type { Struct } from '../../../common'
 import type { User } from '../../entities'
 import { sql } from './tag'
 
@@ -99,9 +99,9 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createSelectAllQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], parameters: SqlSelectAllParameters, user?: User): SqlQuery {
+  public createSelectAllQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], query: Query, user?: User): SqlQuery {
     const auth = this.createAuthParts(keys, authKeys, user)
-    const selectAll = this.createSelectAllParts(object, keys, parameters)
+    const selectAll = this.createSelectAllParts(object, keys, query)
 
     const queries = auth.parts.map((authPart) => {
       if (
@@ -237,9 +237,9 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createSelectQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], parameters: Struct, user?: User): SqlQuery {
+  public createSelectQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], query: Struct, user?: User): SqlQuery {
     const auth = this.createAuthParts(keys, authKeys, user)
-    const select = this.createSelectParts(keys, parameters)
+    const select = this.createSelectParts(keys, query)
 
     if (select.where === undefined) {
       throw new Error('Where is undefined')
@@ -447,11 +447,11 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllParts (object: string, keys: SqlQueryKeys, parameters: SqlSelectAllParameters): SqlQueryParts {
+  protected createSelectAllParts (object: string, keys: SqlQueryKeys, query: Query): SqlQueryParts {
     const filterKey = keys.foreign?.find((key) => {
-      return parameters[key.column] === undefined
+      return query[key.column] === undefined
     }) ?? keys.related?.find((key) => {
-      return parameters[key.column] === undefined
+      return query[key.column] === undefined
     })
 
     const searchKeys = keys.search?.filter((key) => {
@@ -468,15 +468,15 @@ export abstract class SqlFormatter {
       )
     })
 
-    return this.createSelectAllPartsByKey(object, keys, parameters, searchKeys, sortKeys)
+    return this.createSelectAllPartsByKey(object, keys, query, searchKeys, sortKeys)
   }
 
-  protected createSelectAllPartsByKey (object: string, keys: SqlQueryKeys, parameters: SqlSelectAllParameters, searchKeys?: SchemaFieldKey[], sortKeys?: SchemaFieldKey[]): SqlQueryParts {
-    const foreignParts = this.createSelectAllPartsForeignKeys(object, keys.foreign ?? [], parameters)
-    const relatedParts = this.createSelectAllPartsRelatedKeys(object, keys.related ?? [], parameters)
-    const searchParts = this.createSelectAllPartsSearchKeys(searchKeys ?? [], parameters)
-    const sortParts = this.createSelectAllPartsSortKeys(sortKeys ?? [], parameters)
-    const limitParts = this.createSelectAllPartsLimit(parameters)
+  protected createSelectAllPartsByKey (object: string, keys: SqlQueryKeys, query: Query, searchKeys?: SchemaFieldKey[], sortKeys?: SchemaFieldKey[]): SqlQueryParts {
+    const foreignParts = this.createSelectAllPartsForeignKeys(object, keys.foreign ?? [], query)
+    const relatedParts = this.createSelectAllPartsRelatedKeys(object, keys.related ?? [], query)
+    const searchParts = this.createSelectAllPartsSearchKeys(searchKeys ?? [], query)
+    const sortParts = this.createSelectAllPartsSortKeys(sortKeys ?? [], query)
+    const limitParts = this.createSelectAllPartsLimit(query)
 
     const join = this.joinStrings(' ', [
       foreignParts.join,
@@ -511,14 +511,14 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsForeignKeys (object: string, keys: SchemaFieldKey[], parameters: SqlSelectAllParameters): SqlQueryParts {
+  protected createSelectAllPartsForeignKeys (object: string, keys: SchemaFieldKey[], query: Query): SqlQueryParts {
     const join: string[] = []
     const select: string[] = []
     const values: Struct = {}
 
     keys
       .filter((key) => {
-        return parameters[key.column] === undefined
+        return query[key.column] === undefined
       })
       .forEach((key) => {
         join.push(`JOIN $[${key.table}] ON $[${object}.${key.column}] = $[${key.table}.${key.column}]`)
@@ -528,11 +528,11 @@ export abstract class SqlFormatter {
     let where = null
 
     const whereKey = keys.find((key) => {
-      return parameters[key.column] !== undefined
+      return query[key.column] !== undefined
     })
 
     if (whereKey !== undefined) {
-      values[`${object}_${whereKey.column}`] = parameters[whereKey.column]
+      values[`${object}_${whereKey.column}`] = query[whereKey.column]
       where = `$[${object}.${whereKey.column}] = $(${object}_${whereKey.column})`
     }
 
@@ -544,18 +544,18 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsRelatedKeys (object: string, keys: SchemaFieldKey[], parameters: SqlSelectAllParameters): SqlQueryParts {
+  protected createSelectAllPartsRelatedKeys (object: string, keys: SchemaFieldKey[], query: Query): SqlQueryParts {
     const values: Struct = {}
 
     let join = null
     let where = null
 
     const relatedKey = keys.find((key) => {
-      return parameters[key.column] !== undefined
+      return query[key.column] !== undefined
     })
 
     if (relatedKey !== undefined) {
-      values[`${relatedKey.table}_${relatedKey.column}`] = parameters[relatedKey.column]
+      values[`${relatedKey.table}_${relatedKey.column}`] = query[relatedKey.column]
       join = `JOIN $[${relatedKey.table}] ON $[${object}.${relatedKey.column}] = $[${relatedKey.table}.${relatedKey.column}]`
       where = `$[${relatedKey.table}.${relatedKey.column}] = $(${relatedKey.table}_${relatedKey.column})`
     }
@@ -567,11 +567,11 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsSearchKeys (keys: SchemaFieldKey[], parameters: SqlSelectAllParameters, locale?: string): SqlQueryParts {
+  protected createSelectAllPartsSearchKeys (keys: SchemaFieldKey[], query: Query, locale?: string): SqlQueryParts {
     const values: Struct = {}
 
     let where: string | undefined = this.joinStrings(') AND (', this.i18n
-      .parse(parameters.search ?? '', locale)
+      .parse(query.search ?? '', locale)
       .map((search, index) => {
         return this.joinStrings(') OR (', keys
           .filter((key) => {
@@ -599,16 +599,16 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsSortKeys (keys: SchemaFieldKey[], parameters: SqlSelectAllParameters): SqlQueryParts {
+  protected createSelectAllPartsSortKeys (keys: SchemaFieldKey[], query: Query): SqlQueryParts {
     let order = null
 
-    if (parameters.sortKey !== undefined) {
-      const sortKey = keys.find((key) => {
-        return `${key.table}.${key.column}` === parameters.sortKey
+    if (query.order !== undefined) {
+      const orderKey = keys.find((key) => {
+        return `${key.table}.${key.column}` === query.order
       })
 
-      if (sortKey !== undefined) {
-        order = `$[${sortKey.table}.${sortKey.column}] ${parameters.sortOrder?.toUpperCase() ?? 'ASC'}`
+      if (orderKey !== undefined) {
+        order = `$[${orderKey.table}.${orderKey.column}] ${query.direction?.toUpperCase() ?? 'ASC'}`
       }
     }
 
@@ -674,12 +674,12 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectParts (keys: SqlQueryKeys, parameters: Struct): SqlQueryParts {
+  protected createSelectParts (keys: SqlQueryKeys, query: Struct): SqlQueryParts {
     const values: Struct = {}
 
     let where = this.joinStrings(') AND (', keys.primary
       ?.map((key) => {
-        values[`${key.table}_${key.column}`] = parameters[key.column]
+        values[`${key.table}_${key.column}`] = query[key.column]
         return `$[${key.table}.${key.column}] = $(${key.table}_${key.column})`
       }) ?? [])
 
@@ -726,5 +726,5 @@ export abstract class SqlFormatter {
 
   public abstract formatParameter (value: unknown): string
 
-  protected abstract createSelectAllPartsLimit (parameters: SqlSelectAllParameters): SqlQueryParts
+  protected abstract createSelectAllPartsLimit (query: Query): SqlQueryParts
 }

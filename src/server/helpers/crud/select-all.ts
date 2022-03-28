@@ -1,10 +1,10 @@
 import { CrudHandler } from './crud'
+import type { Query } from '../../../common'
 import type { RouteData } from '../route'
 import type { SchemaField } from '../schema'
-import type { SqlSelectAllParameters } from '../sql'
 
 interface CrudSelectAllData extends RouteData {
-  query: SqlSelectAllParameters
+  query: Query
 }
 
 export abstract class CrudSelectAllHandler extends CrudHandler {

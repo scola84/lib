@@ -14,15 +14,13 @@ declare global {
   }
 }
 
-type Axis = 'x' | 'y'
-
 interface ScolaCarouselElementData extends Struct {
   elements: number
   pointer: number
 }
 
 export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement {
-  public axis: Axis
+  public axis: string
 
   public body: HTMLElement
 
@@ -160,7 +158,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   }
 
   public reset (): void {
-    this.axis = (this.getAttribute('sc-axis') as Axis | null) ?? 'x'
+    this.axis = this.getAttribute('sc-axis') ?? 'x'
     this.interactor.keyboard = this.breakpoint.parse('sc-interact-keyboard') === ''
     this.interactor.mouse = this.breakpoint.parse('sc-interact-mouse') === ''
     this.interactor.touch = this.breakpoint.parse('sc-interact-touch') === ''

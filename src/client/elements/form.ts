@@ -1,10 +1,10 @@
 import { Mutator, Observer, Propagator } from '../helpers'
+import type { ScolaError, Struct } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaFieldElement } from './field'
 import { ScolaInputElement } from './input'
 import { ScolaSelectElement } from './select'
 import { ScolaTextAreaElement } from './textarea'
-import type { Struct } from '../../common'
 import { setPush } from '../../common'
 
 declare global {
@@ -78,8 +78,8 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     return this.serialize()
   }
 
-  public getErrors (): Struct {
-    return this.fieldElements.reduce<Struct>((errors, fieldElement) => {
+  public getErrors (): Struct<ScolaError> {
+    return this.fieldElements.reduce<Struct<ScolaError>>((errors, fieldElement) => {
       const error = fieldElement.getError()
 
       if (error !== null) {
@@ -171,7 +171,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     if (!this.checkValidity()) {
       const errors = this.getErrors()
 
-      this.propagator.dispatch('error', [errors], event)
+      this.propagator.dispatch<Struct<ScolaError>>('error', [errors], event)
       this.setData(errors)
       return
     }

@@ -1,4 +1,6 @@
 import type { Struct } from './is-struct'
+import { cast } from './cast'
+import { isStruct } from './is-struct'
 
 interface Search extends Struct {
   key?: string
@@ -102,6 +104,52 @@ export class I18n {
       })
   }
 
+  public filter (items: Struct[], search: Search[]): Struct[] {
+    return items.filter((item) => {
+      if (isStruct(item)) {
+        return search.every(({ key, value }) => {
+          return Object
+            .entries(item)
+            .filter(([itemKey]) => {
+              return (
+                key === undefined ||
+                itemKey === key
+              )
+            })
+            .map(([, itemValue]) => {
+              return String(itemValue).toLowerCase()
+            })
+            .some((itemValue) => {
+              if (
+                value.startsWith('%') &&
+                value.endsWith('%')
+              ) {
+                return itemValue.includes(value.toLowerCase())
+              } else if (value.startsWith('%')) {
+                return itemValue.endsWith(value.slice(1).toLowerCase())
+              } else if (value.endsWith('%')) {
+                return itemValue.startsWith(value.slice(0, -1).toLowerCase())
+              } else if (value.startsWith('>')) {
+                return (cast(itemValue) ?? 0) > (cast(value.slice(1)) ?? 0)
+              } else if (value.startsWith('<')) {
+                return (cast(itemValue) ?? 0) <= (cast(value.slice(1)) ?? 0)
+              } else if (value.startsWith('>=')) {
+                return (cast(itemValue) ?? 0) >= (cast(value.slice(2)) ?? 0)
+              } else if (value.startsWith('<=')) {
+                return (cast(itemValue) ?? 0) < (cast(value.slice(2)) ?? 0)
+              } else if (value.startsWith('<>')) {
+                return cast(itemValue) !== cast(value.slice(2))
+              }
+
+              return cast(itemValue) === cast(value)
+            })
+        })
+      }
+
+      return false
+    })
+  }
+
   public format (code: string, data: unknown, locale = I18n.locale): string {
     let compiled: Formatter[] | undefined = []
     let string = I18n.strings[locale]?.[code]
@@ -167,5 +215,39 @@ export class I18n {
           value: key.replace(/"/gu, '')
         }
       }) ?? []
+  }
+
+  public sort (items: Struct[], order: string[], direction?: string[]): Struct[] {
+    return items.sort((left, right) => {
+      let equivalence = 0
+      let factor = 1
+      let key = ''
+      let lv = ''
+      let rv = ''
+
+      for (let index = 0; index < order.length; index += 1) {
+        key = order[index]
+        lv = String(left[key])
+        rv = String(right[key])
+
+        if (direction?.[index] === 'desc') {
+          factor = -1
+        } else {
+          factor = 1
+        }
+
+        equivalence = factor * lv.localeCompare(rv, undefined, {
+          caseFirst: 'upper',
+          numeric: true,
+          sensitivity: 'variant'
+        })
+
+        if (equivalence !== 0) {
+          return equivalence
+        }
+      }
+
+      return equivalence
+    })
   }
 }

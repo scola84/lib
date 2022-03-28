@@ -1,4 +1,5 @@
 import type { ScolaElement } from '../elements'
+import type { Struct } from '../../common'
 
 export class Paster {
   public element: ScolaElement
@@ -39,18 +40,8 @@ export class Paster {
 
     const files = Array.from(event.clipboardData?.files ?? [])
 
-    this.element.propagator.dispatch('pastefile', files.map((file) => {
-      return {
-        file: file,
-        name: file.name,
-        size: file.size,
-        type: file.type
-      }
-    }), event)
-
-    this.element.propagator.dispatch('pastefiles', [{
-      files
-    }], event)
+    this.element.propagator.dispatch<File>('pastefile', files, event)
+    this.element.propagator.dispatch<Struct<File[]>>('pastefiles', [{ files }], event)
   }
 
   protected removeEventListeners (): void {

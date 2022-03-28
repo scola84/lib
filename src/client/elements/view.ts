@@ -261,7 +261,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     if (snippet === undefined) {
       if (this.requestView === undefined) {
         this.requestView = this.view
-        this.propagator.dispatch('request', [this.view])
+        this.propagator.dispatch<View>('request', [this.view])
         this.update()
       }
     } else {

@@ -117,16 +117,16 @@ try {
       return database
     })
     .then((database) => {
-      for (const table of database.tables) {
+      database.tables.forEach((table) => {
         table.columns.forEach((column) => {
           column.optional = false
         })
-      }
+      })
 
       return database
     })
     .then((database) => {
-      for (const table of database.tables) {
+      database.tables.forEach((table) => {
         table.columns.sort((left, right) => {
           if (left.propertyName > right.propertyName) {
             return 1
@@ -134,12 +134,12 @@ try {
 
           return -1
         })
-      }
+      })
 
       return database
     })
     .then((database) => {
-      for (const table of database.tables) {
+      database.tables.forEach((table) => {
         writeFileSync(
           `${target}/${table.name.replace('_', '-')}.ts`,
           sqlts
@@ -153,7 +153,7 @@ try {
             .replace(/&gt;/gu, '>')
             .replace(/\s\n/gu, '\n')
         )
-      }
+      })
 
       return database
     })

@@ -235,10 +235,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   }
 
   public update (): void {
-    if (
-      this.lister.limit === 0 &&
-      this.lister.mode !== null
-    ) {
+    if (this.lister.limit === 0) {
       this.lister.start()
     } else {
       this.updateElements()
@@ -341,7 +338,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   }
 
   protected appendBodyRow (item: Struct): ScolaTableRowElement | undefined {
-    const key = item[this.lister.key]
+    const key = item[this.lister.pkey]
 
     let element = this.elements.get(key)
 
@@ -393,7 +390,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   protected appendBodyRows (items: unknown[], keys: unknown[], level = 0): unknown[] {
     items.forEach((item) => {
       if (isStruct(item)) {
-        keys.push(item[this.lister.key])
+        keys.push(item[this.lister.pkey])
         this.appendBodyRow(item)
         this.tree?.updateRow(item, level)
 
@@ -457,7 +454,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
       if (isPrimitive(detail)) {
         this.add({
-          [this.lister.key]: detail
+          [this.lister.pkey]: detail
         })
 
         this.update()
@@ -485,7 +482,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
       if (isPrimitive(detail)) {
         this.delete({
-          [this.lister.key]: detail
+          [this.lister.pkey]: detail
         })
 
         this.update()

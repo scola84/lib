@@ -1,11 +1,11 @@
 import { Mutator, Observer, Propagator } from '../helpers'
+import type { ScolaError, Struct } from '../../common'
 import type { Html5Qrcode } from 'html5-qrcode'
 import type { Html5QrcodeCameraScanConfig } from 'html5-qrcode/esm/html5-qrcode'
 import { ImageCapture } from 'image-capture'
 import type { Options } from 'recordrtc'
 import type RtcRecorder from 'recordrtc'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -16,8 +16,6 @@ declare global {
     'sc-recorder-toggle': CustomEvent
   }
 }
-
-type Type = 'audio' | 'code' | 'image' | 'video'
 
 export interface ScolaRecorderElementData extends Struct {
   length: Date
@@ -60,7 +58,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   public stream?: MediaStream
 
-  public type: Type
+  public type: string
 
   public video?: HTMLVideoElement
 
@@ -181,7 +179,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     this.codeOverlay = Number(this.getAttribute('sc-code-overlay') ?? 250)
     this.facingMode = this.getAttribute('sc-facing-mode') ?? 'user'
     this.fillLightMode = this.getAttribute('sc-fill-light-mode') ?? 'off'
-    this.type = (this.getAttribute('sc-type') as Type | null) ?? 'image'
+    this.type = this.getAttribute('sc-type') ?? 'image'
     this.wait = this.hasAttribute('sc-wait')
   }
 
@@ -344,7 +342,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
       type: blob.type
     })
 
-    this.propagator.dispatch(this.type, [file])
+    this.propagator.dispatch<File>(this.type, [file])
   }
 
   protected enableAudio (): void {
@@ -434,7 +432,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatch('error', [{
+    this.propagator.dispatch<ScolaError>('error', [{
       code: 'err_recorder',
       message: this.propagator.extractMessage(error)
     }])

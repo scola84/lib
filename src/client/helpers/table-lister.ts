@@ -1,11 +1,7 @@
 import { I18n, isArray, isStruct } from '../../common'
+import type { Query, Struct } from '../../common'
 import type { ScolaTableElement, ScolaTableRowElement } from '../elements'
 import { Breakpoint } from './breakpoint'
-import type { Struct } from '../../common'
-
-type Axis = 'x' | 'y'
-
-type Mode = 'cursor' | 'offset' | null
 
 export class TableLister {
   public added = new Set()
@@ -16,29 +12,31 @@ export class TableLister {
 
   public deleted = new Set()
 
+  public direction: string | null
+
   public element: ScolaTableElement
 
   public factor: number
-
-  public filter: string
 
   public i18n: I18n
 
   public items: Struct[] = []
 
-  public key: string
-
   public limit: number
 
   public locked: boolean
 
-  public mode: Mode
+  public order: string | null
 
-  public requestData?: Struct
+  public pkey: string
 
-  public sortKey: string[]
+  public query: boolean
 
-  public sortOrder: string[]
+  public requestData?: Query
+
+  public rkey: string | null
+
+  public search: string | null
 
   public threshold: number
 
@@ -54,12 +52,12 @@ export class TableLister {
   }
 
   public add (item: Struct): void {
-    let key = item[this.key]
+    let key = item[this.pkey]
 
     if (key === undefined) {
       key = `${Date.now()}-${this.items.length + 1}`
 
-      Object.defineProperty(item, this.key, {
+      Object.defineProperty(item, this.pkey, {
         enumerable: true,
         value: key,
         writable: false
@@ -88,10 +86,10 @@ export class TableLister {
   }
 
   public delete (item: Struct): void {
-    const key = item[this.key]
+    const key = item[this.pkey]
 
     const index = this.items.findIndex((findItem) => {
-      return key === findItem[this.key]
+      return key === findItem[this.pkey]
     })
 
     if (index > -1) {
@@ -111,7 +109,7 @@ export class TableLister {
 
   public findIndex (key: unknown): number {
     return this.items.findIndex((findItem) => {
-      return key === findItem[this.key]
+      return key === findItem[this.pkey]
     })
   }
 
@@ -125,18 +123,20 @@ export class TableLister {
   public getItems (): Struct[] {
     let { items } = this
 
-    if (
-      this.filter !== '' ||
-      this.sortKey.length > 0
-    ) {
+    if ((
+      this.query
+    ) && (
+      this.search !== null ||
+      this.order !== null
+    )) {
       items = [...items]
 
-      if (this.filter !== '') {
-        items = this.filterItems(items, this.i18n.parse(this.filter))
+      if (this.search !== null) {
+        items = this.i18n.filter(items, this.i18n.parse(this.search))
       }
 
-      if (this.sortKey.length > 0) {
-        items = this.sortItems(items, this.sortKey, this.sortOrder)
+      if (this.order !== null) {
+        items = this.i18n.sort(items, this.order.split(' '), this.direction?.split(' '))
       }
     }
 
@@ -155,12 +155,12 @@ export class TableLister {
     return Array.from(this.element.body
       .querySelectorAll<ScolaTableRowElement>('tr'))
       .map((row) => {
-        return row.data[this.element.lister.key]
+        return row.data[this.pkey]
       })
   }
 
   public put (item: Struct): void {
-    const index = this.findIndex(item[this.key])
+    const index = this.findIndex(item[this.pkey])
 
     if (index > -1) {
       this.items[index] = item
@@ -178,32 +178,45 @@ export class TableLister {
     }
 
     this.requestData = {
-      limit: this.limit
+      limit: this.limit,
+      offset: this.items.length
     }
 
-    switch (this.mode) {
-      case 'cursor':
-        this.requestData.cursor = this.items.slice(-1)[0]?.cursor
-        break
-      case 'offset':
-        this.requestData.offset = this.items.length
-        break
-      default:
-        break
+    const cursor = this.items.slice(-1)[0]?.cursor
+
+    if (typeof cursor === 'string') {
+      this.requestData.cursor = cursor
     }
 
-    this.element.propagator.dispatch('request', [this.requestData])
+    if (this.direction !== null) {
+      this.requestData.direction = this.direction
+    }
+
+    if (this.order !== null) {
+      this.requestData.order = this.order
+    }
+
+    if (this.rkey !== null) {
+      this.requestData[this.rkey] = this.element.dataset[this.rkey]
+    }
+
+    if (this.search !== null) {
+      this.requestData.search = this.search
+    }
+
+    this.element.propagator.dispatch<Query>('request', [this.requestData])
   }
 
   public reset (): void {
-    this.axis = (this.element.getAttribute('sc-list-axis') as Axis | null) ?? 'y'
-    this.factor = Number(this.element.getAttribute('sc-list-item-factor') ?? 2)
-    this.filter = this.element.getAttribute('sc-list-filter') ?? ''
-    this.key = this.element.getAttribute('sc-list-key') ?? 'id'
+    this.axis = this.element.getAttribute('sc-list-axis') ?? 'y'
+    this.direction = this.element.getAttribute('sc-list-direction')
+    this.factor = Number(this.element.getAttribute('sc-list-factor') ?? 2)
     this.locked = this.element.hasAttribute('sc-list-locked')
-    this.mode = this.element.getAttribute('sc-list-mode') as Mode
-    this.sortKey = this.element.getAttribute('sc-list-sort-key')?.split(' ') ?? []
-    this.sortOrder = this.element.getAttribute('sc-list-sort-order')?.split(' ') ?? []
+    this.order = this.element.getAttribute('sc-list-order')
+    this.pkey = this.element.getAttribute('sc-list-pkey') ?? 'id'
+    this.query = this.element.hasAttribute('sc-list-query')
+    this.rkey = this.element.getAttribute('sc-list-rkey')
+    this.search = this.element.getAttribute('sc-list-search') ?? ''
     this.threshold = Number(this.element.getAttribute('sc-list-threshold') ?? 0.75)
   }
 
@@ -268,26 +281,6 @@ export class TableLister {
     return limit
   }
 
-  protected filterItems (items: Struct[], queries: Struct[]): Struct[] {
-    return items.filter((item) => {
-      if (isStruct(item)) {
-        return queries.every(({ name, value }) => {
-          if (typeof name === 'string') {
-            return String(item[name]).includes(String(value))
-          }
-
-          return Object
-            .entries(item)
-            .some(([, itemValue]) => {
-              return String(itemValue).includes(String(value))
-            })
-        })
-      }
-
-      return false
-    })
-  }
-
   protected handleScrollX (): void {
     const {
       clientWidth: bodyWidth,
@@ -324,41 +317,5 @@ export class TableLister {
     } else if (this.axis === 'y') {
       this.element.body.removeEventListener('scroll', this.handleScrollYBound)
     }
-  }
-
-  protected sortItems (items: Struct[], sortKey: string[], sortOrder: string[]): Struct[] {
-    items.sort((left, right) => {
-      let equivalence = 0
-      let key = ''
-      let order = 1
-      let lv = ''
-      let rv = ''
-
-      for (let index = 0; index < sortKey.length; index += 1) {
-        key = sortKey[index]
-        lv = String(left[key])
-        rv = String(right[key])
-
-        if (sortOrder[index] === 'desc') {
-          order = -1
-        } else {
-          order = 1
-        }
-
-        equivalence = order * lv.localeCompare(rv, undefined, {
-          caseFirst: 'upper',
-          numeric: true,
-          sensitivity: 'variant'
-        })
-
-        if (equivalence !== 0) {
-          return equivalence
-        }
-      }
-
-      return equivalence
-    })
-
-    return items
   }
 }

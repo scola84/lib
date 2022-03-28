@@ -14,7 +14,7 @@ export class TableTree {
   }
 
   public add (item: Struct): void {
-    const key = item[this.element.lister.key]
+    const key = item[this.element.lister.pkey]
     const row = this.element.elements.get(key)
 
     if (item.items === null) {
@@ -30,7 +30,7 @@ export class TableTree {
   }
 
   public delete (item: Struct): void {
-    const key = item[this.element.lister.key]
+    const key = item[this.element.lister.pkey]
     const row = this.element.elements.get(key)
 
     this.keys.delete(key)
@@ -39,7 +39,7 @@ export class TableTree {
   }
 
   public isOpen (item: Struct): boolean {
-    return this.keys.has(item[this.element.lister.key])
+    return this.keys.has(item[this.element.lister.pkey])
   }
 
   public setData (data: unknown): void {
@@ -54,7 +54,7 @@ export class TableTree {
   }
 
   public toggle (item: Struct, force?: boolean): void {
-    const key = item[this.element.lister.key]
+    const key = item[this.element.lister.pkey]
 
     if (
       force === false ||
@@ -70,7 +70,7 @@ export class TableTree {
   }
 
   public updateRow (item: Struct, level: number): void {
-    const key = item[this.element.lister.key]
+    const key = item[this.element.lister.pkey]
     const row = this.element.elements.get(key)
 
     row?.toggleAttribute('sc-open', this.isOpen(item))

@@ -1,6 +1,6 @@
 import { Mutator, Observer, Propagator } from '../helpers'
+import type { ScolaError, Struct } from '../../common'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -160,7 +160,7 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatch('error', [{
+    this.propagator.dispatch<ScolaError>('error', [{
       code: 'err_worker',
       message: this.propagator.extractMessage(error)
     }])

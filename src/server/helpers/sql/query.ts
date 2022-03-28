@@ -25,12 +25,3 @@ export interface SqlQueryParts {
   values?: Struct
   where?: string
 }
-
-export interface SqlSelectAllParameters extends Struct {
-  count: number
-  cursor?: string
-  offset?: number
-  search?: string
-  sortKey?: string
-  sortOrder?: string
-}

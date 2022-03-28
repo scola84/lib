@@ -47,6 +47,7 @@ export abstract class CrudSelectOneHandler extends CrudHandler {
           throw new Error('Stream is undefined')
         }
 
+        response.setHeader('content-disposition', `attachment; filename="${file.name}"`)
         response.setHeader('content-type', file.type)
         this.pipeStream(stream, response)
         return null

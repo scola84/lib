@@ -1,6 +1,6 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import type { FieldData, FieldError } from '../helpers'
-import type { Primitive, Struct } from '../../common'
+import type { Primitive, ScolaError, Struct } from '../../common'
+import type { FieldData } from '../helpers'
 import type { ScolaFieldElement } from './field'
 
 export class ScolaInputElement extends HTMLInputElement implements ScolaFieldElement {
@@ -63,8 +63,8 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     return this.field.getData()
   }
 
-  public getError (): FieldError | null {
-    let error: FieldError | null = null
+  public getError (): ScolaError | null {
+    let error: ScolaError | null = null
 
     if (this.validity.badInput) {
       error = {

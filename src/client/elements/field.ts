@@ -1,5 +1,5 @@
-import type { Field, FieldData, FieldError } from '../helpers'
-import type { Primitive, Struct } from '../../common'
+import type { Field, FieldData } from '../helpers'
+import type { Primitive, ScolaError, Struct } from '../../common'
 import type { ScolaElement } from './element'
 
 export interface ScolaFieldElement extends ScolaElement {
@@ -13,7 +13,7 @@ export interface ScolaFieldElement extends ScolaElement {
 
   falsify: () => void
 
-  getError: () => FieldError | null
+  getError: () => ScolaError | null
 
   isEmpty: () => boolean
 

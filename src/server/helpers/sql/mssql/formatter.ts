@@ -1,7 +1,7 @@
+import type { Query, Struct } from '../../../../common'
 import type { Schema, SchemaField } from '../../schema'
-import type { SqlQuery, SqlQueryKeys, SqlQueryParts, SqlSelectAllParameters } from '../query'
+import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from '../query'
 import { SqlFormatter } from '../formatter'
-import type { Struct } from '../../../../common'
 import { escape } from 'sqlstring'
 import { isStruct } from '../../../../common'
 import { sql } from '../tag'
@@ -86,21 +86,21 @@ export class MssqlFormatter extends SqlFormatter {
     return escape(value)
   }
 
-  protected createSelectAllPartsLimit (parameters: SqlSelectAllParameters): SqlQueryParts {
+  protected createSelectAllPartsLimit (query: Query): SqlQueryParts {
     const values: Struct = {}
 
     let limit = null
     let order = null
     let where = null
 
-    if (parameters.cursor === undefined) {
-      values.count = parameters.count
-      values.offset = parameters.offset ?? 0
-      limit = 'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+    if (query.cursor === undefined) {
+      values.limit = query.limit
+      values.offset = query.offset ?? 0
+      limit = 'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     } else {
-      values.count = parameters.count
-      values.cursor = parameters.cursor
-      limit = 'OFFSET 0 ROWS FETCH NEXT $(count) ROWS ONLY'
+      values.limit = query.limit
+      values.cursor = query.cursor
+      limit = 'OFFSET 0 ROWS FETCH NEXT $(limit) ROWS ONLY'
       order = '$[cursor] ASC'
       where = '$[cursor] > $(cursor)'
     }

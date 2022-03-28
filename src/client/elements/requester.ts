@@ -1,10 +1,11 @@
+import { I18n, isArray, isNil, isPrimitive, isStruct, isTransaction } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import { absorb, isArray, isNil, isPrimitive, isStruct, isTransaction } from '../../common'
+import type { ScolaError, ScolaTransaction, Struct } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaViewElement } from './view'
-import type { Struct } from '../../common'
 import type { queue as fastq } from 'fastq'
 import queue from 'fastq'
+import { saveAs } from 'file-saver'
 
 declare global {
   interface HTMLElementEventMap {
@@ -36,7 +37,9 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   public concurrency: number
 
-  public enctype: string
+  public download: boolean
+
+  public i18n: I18n
 
   public max: number
 
@@ -51,6 +54,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   public propagator: Propagator
 
   public queue: fastq
+
+  public requestType: string
+
+  public responseType: string
 
   public url: string
 
@@ -82,6 +89,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   public constructor () {
     super()
+    this.i18n = new I18n()
     this.view = this.closest<ScolaViewElement>('[is="sc-view"]') ?? undefined
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
@@ -135,9 +143,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   public reset (): void {
     this.concurrency = Number(this.getAttribute('sc-concurrency') ?? 1)
-    this.enctype = (this.getAttribute('sc-enctype')) ?? 'application/x-www-form-urlencoded'
+    this.download = this.hasAttribute('sc-download')
     this.max = Number(this.getAttribute('sc-max') ?? 1)
     this.method = this.getAttribute('sc-method') ?? 'GET'
+    this.requestType = (this.getAttribute('sc-request-type')) ?? 'application/x-www-form-urlencoded'
+    this.responseType = this.getAttribute('sc-response-type') ?? ''
     this.url = this.getAttribute('sc-url') ?? ''
     this.wait = this.hasAttribute('sc-wait')
     this.queue = queue(this.handleQueueBound, this.concurrency)
@@ -222,7 +232,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   }
 
   protected createRequestBody (data: unknown): FormData | URLSearchParams | string | null {
-    switch (this.enctype) {
+    switch (this.requestType) {
       case 'application/json':
         return this.createRequestBodyJson(data)
       case 'application/x-www-form-urlencoded':
@@ -307,19 +317,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   }
 
   protected createRequestUrl (data?: Struct): string {
-    const url = new URL(`${this.origin}${this.url}`)
-
-    Object
-      .entries(absorb(this.dataset, data))
-      .forEach(([key, value]) => {
-        if (isNil(value)) {
-          url.searchParams.append(key, '')
-        } else if (isPrimitive(value)) {
-          url.searchParams.append(key, value.toString())
-        }
-      })
-
-    return url.toString()
+    return `${this.origin}${this.i18n.format(this.url, data)}`
   }
 
   protected handleAbort (): void {
@@ -327,7 +325,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatch('error', [{
+    this.propagator.dispatch<ScolaError>('error', [{
       code: 'err_requester',
       message: this.propagator.extractMessage(error)
     }])
@@ -340,7 +338,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       this.setAttribute('sc-state', xhr.readyState.toString())
     }
 
-    let data: Struct | string | null = null
+    let data: unknown = null
 
     const contentType = xhr.getResponseHeader('content-type')
 
@@ -348,35 +346,70 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       data = JSON.parse(xhr.responseText) as Struct
     } else if (contentType?.startsWith('text/') === true) {
       data = xhr.responseText
+    } else {
+      data = xhr.response as unknown
     }
 
     if (xhr.status < 400) {
-      this.propagator.dispatch('message', [data], event)
-
-      if (isTransaction(options)) {
-        options.result = data
-        this.propagator.dispatch('tmessage', [options], event)
-      }
+      this.handleLoadendOk(event, options, data)
     } else {
-      this.propagator.dispatch('error', [{
-        body: xhr.responseText,
-        code: `err_requester_${xhr.status}`,
-        message: xhr.statusText
-      }], event)
+      this.handleLoadendError(event, options, data)
+    }
+  }
 
+  protected handleLoadendError (event: ProgressEvent, options: unknown, data: unknown): void {
+    const xhr = event.target as XMLHttpRequest
+
+    let body: string | null = null
+
+    if (
+      xhr.responseType === '' ||
+      xhr.responseType === 'text'
+    ) {
+      body = xhr.responseText
+    }
+
+    this.propagator.dispatch('error', [{
+      body: body,
+      code: `err_requester_${xhr.status}`,
+      message: xhr.statusText
+    }], event)
+
+    if (isStruct(data)) {
+      this.propagator.dispatch('errordata', [
+        data.body ?? data.query ?? data.headers ?? data
+      ], event)
+    }
+
+    if (isTransaction(options)) {
       if (isStruct(data)) {
-        this.propagator.dispatch('errordata', [
-          data.body ?? data.query ?? data.headers ?? data
-        ], event)
+        options.result = data.body ?? data.query ?? data.headers ?? data
       }
 
-      if (isTransaction(options)) {
-        if (isStruct(data)) {
-          options.result = data.body ?? data.query ?? data.headers ?? data
-        }
+      this.propagator.dispatch<ScolaTransaction>('terror', [options], event)
+    }
+  }
 
-        this.propagator.dispatch('terror', [options], event)
+  protected handleLoadendOk (event: ProgressEvent, options: unknown, data: unknown): void {
+    const xhr = event.target as XMLHttpRequest
+
+    if (this.download) {
+      if (data instanceof Blob) {
+        const { name = 'download' } = xhr
+          .getResponseHeader('content-disposition')
+          ?.match(/filename="(?<name>.+)"/ui)?.groups ?? {}
+
+        saveAs(data, name)
       }
+
+      return
+    }
+
+    this.propagator.dispatch('message', [data], event)
+
+    if (isTransaction(options)) {
+      options.result = data
+      this.propagator.dispatch<ScolaTransaction>('tmessage', [options], event)
     }
   }
 
@@ -409,6 +442,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       callback(null)
     }
 
+    xhr.responseType = this.responseType as XMLHttpRequestResponseType
     xhr.onprogress = this.handleProgressBound
 
     try {
@@ -418,10 +452,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
       if (
         request.body !== null &&
-        this.enctype !== ''
+        this.requestType !== ''
       ) {
-        if (this.enctype !== 'multipart/form-data') {
-          xhr.setRequestHeader('Content-Type', this.enctype)
+        if (this.requestType !== 'multipart/form-data') {
+          xhr.setRequestHeader('Content-Type', this.requestType)
         }
 
         xhr.send(request.body)

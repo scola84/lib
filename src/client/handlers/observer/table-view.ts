@@ -16,7 +16,7 @@ export function tableView (observer: ScolaTableElement, observable: ScolaViewEle
     observer.add(view)
 
     if (view === observable.view) {
-      key = view[observer.lister.key]
+      key = view[observer.lister.pkey]
     }
   })
 

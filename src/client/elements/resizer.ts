@@ -3,8 +3,6 @@ import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 
-type Direction = 'down' | 'end' | 'start' | 'up'
-
 interface Offset {
   height: number
   width: number
@@ -13,7 +11,7 @@ interface Offset {
 export class ScolaResizerElement extends HTMLDivElement implements ScolaElement {
   public contain: boolean
 
-  public direction?: Direction[]
+  public direction?: string[]
 
   public interactor: Interactor
 
@@ -104,7 +102,7 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
 
     this.direction = this.getAttribute('sc-direction')
       ?.trim()
-      .split(/\s+/u) as Direction[]
+      .split(/\s+/u)
 
     this.interactor.mouse = this.interactor.hasMouse
     this.interactor.touch = this.interactor.hasTouch

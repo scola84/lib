@@ -1,5 +1,6 @@
 import type { Struct } from './is-struct'
 import { cast } from './cast'
+import { isNil } from './is-nil'
 import { isStruct } from './is-struct'
 
 interface Search extends Struct {
@@ -249,5 +250,27 @@ export class I18n {
 
       return equivalence
     })
+  }
+
+  public struct (string?: string | null, data: Struct = {}): Struct {
+    if (isNil(string)) {
+      return data
+    }
+
+    return this
+      .format(string, data)
+      .split('&')
+      .reduce((params, kv) => {
+        const [key, value] = kv.split('=')
+
+        if (value === '') {
+          return params
+        }
+
+        return {
+          ...params,
+          [key]: value
+        }
+      }, {})
   }
 }

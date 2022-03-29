@@ -25,7 +25,7 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   public tries = 0
 
-  public url: URL
+  public url: string
 
   protected handleErrorBound = this.handleError.bind(this)
 
@@ -71,7 +71,7 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   public reset (): void {
     this.event = this.getAttribute('sc-event') ?? ''
-    this.url = new URL(`${this.origin}${this.getAttribute('sc-path') ?? ''}`)
+    this.url = this.getAttribute('sc-url') ?? ''
   }
 
   public setData (): void {}
@@ -127,7 +127,7 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
   }
 
   protected open (): EventSource {
-    this.source = new EventSource(this.url.toString())
+    this.source = new EventSource(`${this.origin}${this.url}`)
     this.source.onerror = this.handleErrorBound
     this.source.onopen = this.handleOpenBound
 

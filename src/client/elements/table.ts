@@ -146,10 +146,11 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
   public connectedCallback (): void {
     this.observer.observe(this.handleObserverBound, [
+      'data-direction',
+      'data-order',
+      'data-search',
+      `data-${this.lister.rkey ?? ''}`,
       'sc-drag-handle',
-      'sc-list-filter',
-      'sc-list-sort-key',
-      'sc-list-sort-order',
       'sc-select-all',
       'sc-select-handle'
     ])
@@ -427,9 +428,9 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
           row.appendChild(template)
 
           element
-            .querySelectorAll('[data-sc-list-sort-order]')
+            .querySelectorAll('[data-data-direction]')
             .forEach((child) => {
-              child.setAttribute('data-sc-list-sort-key', key)
+              child.setAttribute('data-data-order', key)
             })
 
           if (element instanceof ScolaTableCellElement) {
@@ -532,14 +533,15 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   protected handleObserver (mutations: MutationRecord[]): void {
     const attributes = this.observer.normalize(mutations)
 
-    if (attributes.includes('sc-drag-handle')) {
-      this.handleObserverDragHandle()
-    } else if (
-      attributes.includes('sc-list-filter') ||
-      attributes.includes('sc-list-sort-key') ||
-      attributes.includes('sc-list-sort-order')
+    if (
+      attributes.includes('data-direction') ||
+      attributes.includes('data-order') ||
+      attributes.includes('data-search') ||
+      attributes.includes(`data-${this.lister.rkey ?? ''}`)
     ) {
       this.handleObserverList()
+    } else if (attributes.includes('sc-drag-handle')) {
+      this.handleObserverDragHandle()
     } else if (attributes.includes('sc-select-all')) {
       this.handleObserverSelectAll()
     } else if (attributes.includes('sc-select-handle')) {
@@ -552,8 +554,12 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   }
 
   protected handleObserverList (): void {
-    this.lister.reset()
-    this.update()
+    if (this.lister.query) {
+      this.update()
+    } else {
+      this.clear()
+      this.lister.request()
+    }
   }
 
   protected handleObserverSelectAll (): void {

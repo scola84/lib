@@ -67,12 +67,12 @@ export class Propagator {
       targets = document.querySelectorAll(event.selector)
     }
 
-    data.forEach((datum) => {
+    data.forEach((dispatchData) => {
       targets.forEach((target) => {
         window.requestAnimationFrame(() => {
           target.dispatchEvent(new ScolaEvent(event.name, {
             bubbles: target === this.element,
-            detail: this.createDetail(event, datum),
+            detail: this.createDetail(event.data, dispatchData),
             element: this.element,
             trigger: trigger
           }))
@@ -94,24 +94,14 @@ export class Propagator {
     return String(error)
   }
 
-  public parseEvents (events: string, base: Struct = {}): PropagatorEvent[] {
+  public parseEvents (events: string): PropagatorEvent[] {
     return events
       .trim()
       .split(' ')
       .map((event) => {
         const [nameAndDataString, selector] = event.split('@')
         const [name, dataString = undefined] = nameAndDataString.split('?')
-
-        const data = dataString
-          ?.split('&')
-          .reduce((params, kv) => {
-            const [key, value] = kv.split('=')
-            return {
-              ...params,
-              [key]: value
-            }
-          }, base) ?? base
-
+        const data = Object.fromEntries(new URLSearchParams(dataString))
         return {
           data,
           name,
@@ -149,7 +139,7 @@ export class Propagator {
     this.element.addEventListener('sc-data-set', this.handleSetBound)
   }
 
-  protected createDetail (event: PropagatorEvent, data: unknown): unknown {
+  protected createDetail (eventData: Struct, data: unknown): unknown {
     let detail = data
 
     if (
@@ -159,7 +149,7 @@ export class Propagator {
       detail = undefined
     }
 
-    return detail ?? event.data
+    return detail ?? eventData
   }
 
   protected getEvents (on: string): PropagatorEvent[] {

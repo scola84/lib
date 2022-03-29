@@ -1,6 +1,5 @@
+import { I18n, isStruct } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import { absorb, isStruct } from '../../common'
-import type { PropagatorEvent } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 
@@ -11,7 +10,7 @@ declare global {
 }
 
 export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaElement {
-  public events: PropagatorEvent[]
+  public i18n: I18n
 
   public mutator: Mutator
 
@@ -25,6 +24,7 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
 
   public constructor () {
     super()
+    this.i18n = new I18n()
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
@@ -45,7 +45,10 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
 
     if (!this.wait) {
       this.wait = true
-      this.dispatch()
+
+      window.requestAnimationFrame(() => {
+        this.dispatch()
+      })
     }
   }
 
@@ -57,9 +60,20 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
   }
 
   public dispatch (data: Struct = {}, trigger?: Event): void {
-    this.events.forEach((event) => {
-      this.propagator.dispatchEvent(event, [absorb(event.data, data)], trigger)
-    })
+    this
+      .querySelectorAll('param')
+      .forEach((param) => {
+        const dispatchData = this.i18n.struct(param.getAttribute('sc-data-string'), {
+          ...param.dataset,
+          ...data
+        })
+
+        this.propagator
+          .parseEvents(param.value)
+          .forEach((event) => {
+            this.propagator.dispatchEvent(event, [dispatchData], trigger)
+          })
+      })
   }
 
   public getData (): Struct {
@@ -67,7 +81,6 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
   }
 
   public reset (): void {
-    this.events = this.parseEvents()
     this.wait = this.hasAttribute('sc-wait')
   }
 
@@ -89,20 +102,6 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     } else {
       this.dispatch(undefined, event)
     }
-  }
-
-  protected parseEvents (): PropagatorEvent[] {
-    const events: PropagatorEvent[] = []
-
-    this
-      .querySelectorAll('param')
-      .forEach((param) => {
-        events.push(...this.propagator.parseEvents(param.value, {
-          ...param.dataset
-        }))
-      })
-
-    return events
   }
 
   protected removeEventListeners (): void {

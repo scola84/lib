@@ -1,4 +1,4 @@
-import { I18n, isArray, isStruct } from '../../common'
+import { I18n, cast, isArray, isStruct } from '../../common'
 import type { Query, Struct } from '../../common'
 import type { ScolaTableElement, ScolaTableRowElement } from '../elements'
 import { Breakpoint } from './breakpoint'
@@ -12,8 +12,6 @@ export class TableLister {
 
   public deleted = new Set()
 
-  public direction: string | null
-
   public element: ScolaTableElement
 
   public factor: number
@@ -26,8 +24,6 @@ export class TableLister {
 
   public locked: boolean
 
-  public order: string | null
-
   public pkey: string
 
   public query: boolean
@@ -35,8 +31,6 @@ export class TableLister {
   public requestData?: Query
 
   public rkey: string | null
-
-  public search: string | null
 
   public threshold: number
 
@@ -126,17 +120,24 @@ export class TableLister {
     if ((
       this.query
     ) && (
-      this.search !== null ||
-      this.order !== null
+      this.element.dataset.order !== undefined ||
+      this.element.dataset.search !== undefined ||
+      this.element.dataset[this.rkey ?? ''] !== undefined
     )) {
       items = [...items]
 
-      if (this.search !== null) {
-        items = this.i18n.filter(items, this.i18n.parse(this.search))
+      if (this.element.dataset[this.rkey ?? ''] !== undefined) {
+        items = items.filter((item) => {
+          return cast(item[this.rkey ?? '']) === cast(this.element.dataset[this.rkey ?? ''])
+        })
       }
 
-      if (this.order !== null) {
-        items = this.i18n.sort(items, this.order.split(' '), this.direction?.split(' '))
+      if (this.element.dataset.search !== undefined) {
+        items = this.i18n.filter(items, this.i18n.parse(this.element.dataset.search))
+      }
+
+      if (this.element.dataset.order !== undefined) {
+        items = this.i18n.sort(items, this.element.dataset.order.split(' '), this.element.dataset.direction?.split(' '))
       }
     }
 
@@ -188,20 +189,23 @@ export class TableLister {
       this.requestData.cursor = cursor
     }
 
-    if (this.direction !== null) {
-      this.requestData.direction = this.direction
+    if (this.element.dataset.direction !== undefined) {
+      this.requestData.direction = this.element.dataset.direction
     }
 
-    if (this.order !== null) {
-      this.requestData.order = this.order
+    if (this.element.dataset.order !== undefined) {
+      this.requestData.order = this.element.dataset.order
     }
 
-    if (this.rkey !== null) {
+    if (
+      this.rkey !== null &&
+      this.element.dataset[this.rkey] !== undefined
+    ) {
       this.requestData[this.rkey] = this.element.dataset[this.rkey]
     }
 
-    if (this.search !== null) {
-      this.requestData.search = this.search
+    if (this.element.dataset.search !== undefined) {
+      this.requestData.search = this.element.dataset.search
     }
 
     this.element.propagator.dispatch<Query>('request', [this.requestData])
@@ -209,14 +213,11 @@ export class TableLister {
 
   public reset (): void {
     this.axis = this.element.getAttribute('sc-list-axis') ?? 'y'
-    this.direction = this.element.getAttribute('sc-list-direction')
     this.factor = Number(this.element.getAttribute('sc-list-factor') ?? 2)
     this.locked = this.element.hasAttribute('sc-list-locked')
-    this.order = this.element.getAttribute('sc-list-order')
     this.pkey = this.element.getAttribute('sc-list-pkey') ?? 'id'
     this.query = this.element.hasAttribute('sc-list-query')
     this.rkey = this.element.getAttribute('sc-list-rkey')
-    this.search = this.element.getAttribute('sc-list-search') ?? ''
     this.threshold = Number(this.element.getAttribute('sc-list-threshold') ?? 0.75)
   }
 

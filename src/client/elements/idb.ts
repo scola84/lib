@@ -229,15 +229,9 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
     let items = await database.getAll(this.nameVersion) as Struct[]
 
-    if (
-      this.rkey !== null &&
-      query?.[this.rkey] !== undefined
-    ) {
+    if (query?.[this.rkey ?? ''] !== undefined) {
       items = items.filter((item) => {
-        return (
-          this.rkey !== null &&
-          cast(item[this.rkey]) === cast(query[this.rkey])
-        )
+        return cast(item[this.rkey ?? '']) === cast(query[this.rkey ?? ''])
       })
     }
 

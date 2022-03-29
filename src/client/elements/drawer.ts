@@ -1,5 +1,6 @@
 import { Mutator, Observer, Propagator, Theme } from '../helpers'
 import type { ScolaError, Struct } from '../../common'
+import { I18n } from '../../common'
 import type { ScolaElement } from './element'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,6 +23,8 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   public data: unknown
 
   public drawer?: Drawer
+
+  public i18n: I18n
 
   public iframe?: HTMLIFrameElement
 
@@ -53,6 +56,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
+    this.i18n = new I18n()
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
@@ -156,11 +160,15 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   protected createIframe (): HTMLIFrameElement {
     const iframe = document.createElement('iframe')
 
-    iframe.src = `${this.origin}${this.url}${this.name}`
     iframe.setAttribute('referrerpolicy', 'no-referrer')
     iframe.setAttribute('sandbox', 'allow-scripts')
     iframe.onerror = this.handleErrorBound
     iframe.onload = this.handleLoadBound
+
+    iframe.src = this.i18n.format(`${this.origin}${this.url}`, {
+      name: this.name
+    })
+
     return iframe
   }
 

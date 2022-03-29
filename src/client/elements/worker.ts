@@ -1,5 +1,6 @@
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaError, Struct } from '../../common'
+import { I18n } from '../../common'
 import type { ScolaElement } from './element'
 
 declare global {
@@ -15,6 +16,8 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   public static handlers: Struct<Handler | undefined> = {}
 
   public static origin = window.location.origin
+
+  public i18n: I18n
 
   public iframe?: HTMLIFrameElement
 
@@ -46,6 +49,7 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
 
   public constructor () {
     super()
+    this.i18n = new I18n()
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
@@ -119,11 +123,15 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   protected createIframe (): HTMLIFrameElement {
     const iframe = document.createElement('iframe')
 
-    iframe.src = `${this.origin}${this.url}${this.name}`
     iframe.setAttribute('referrerpolicy', 'no-referrer')
     iframe.setAttribute('sandbox', 'allow-scripts')
     iframe.onerror = this.handleErrorBound
     iframe.onload = this.handleLoadBound
+
+    iframe.src = this.i18n.format(`${this.origin}${this.url}`, {
+      name: this.name
+    })
+
     return iframe
   }
 

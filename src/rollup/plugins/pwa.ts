@@ -56,7 +56,7 @@ function createIndex (options: Options, base: Base, identity: Result | null = nu
   }
 
   if (options.reload === true) {
-    body.push(`<object is="sc-event-source" sc-event="reload" sc-onmessage="sc-reload@[is='sc-reloader']" sc-path="${options.reloadPath ?? '/api/reload'}"><object is="sc-reloader"></object></object>`)
+    body.push(`<object is="sc-event-source" sc-event="reload" sc-onmessage="sc-reload@[is='sc-reloader']" sc-url="${options.reloadPath ?? '/api/reload'}"><object is="sc-reloader"></object></object>`)
   }
 
   return index
@@ -80,12 +80,12 @@ function createIndexBase (options: Options, base: Base): string {
       '<link href="/index.css" rel="stylesheet" />',
       '<meta charset="utf-8" />',
       '<meta name="mobile-web-app-capable" content="yes" />',
-      '<meta name="referrer" content="no-referrer">',
+      '<meta name="referrer" content="no-referrer" />',
       '<meta name="viewport" content="width=device-width" />',
       `<title>${options.title}</title>`,
       '</head>',
       '<body>',
-      '<script type="text/javascript">',
+      '<script>',
       'document.body.classList.add(localStorage.getItem("sc-theme") ?? "sc-light");',
       '</script>',
       '<script src="/index.js"></script>',

@@ -1,5 +1,5 @@
 import { Hider, Mutator, Observer, Propagator, Sanitizer } from '../helpers'
-import { absorb, isArray, isPrimitive, isSame, isStruct } from '../../common'
+import { I18n, isArray, isPrimitive, isSame, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 
@@ -34,7 +34,11 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     session: window.sessionStorage
   }
 
+  public dataString: string | null
+
   public hider?: Hider
+
+  public i18n: I18n
 
   public mutator: Mutator
 
@@ -44,7 +48,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public origin = ScolaViewElement.origin
 
-  public params: Struct
+  public params: string | null
 
   public pointer = -1
 
@@ -90,6 +94,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
+    this.i18n = new I18n()
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
@@ -271,8 +276,9 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public reset (): void {
+    this.dataString = this.getAttribute('sc-data-string') ?? ''
     this.name = this.getAttribute('sc-name')
-    this.params = Object.fromEntries(new URLSearchParams(this.getAttribute('sc-params') ?? '').entries())
+    this.params = this.getAttribute('sc-params')
     this.regexp = new RegExp(`/(?<name>[^:/]+):?(?<params>[^:/]+)?@${this.id}`, 'u')
     this.save = this.getAttribute('sc-save') ?? ''
     this.saveLimit = Number(this.getAttribute('sc-save-limit') ?? Infinity)
@@ -388,11 +394,11 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       }
 
       if (typeof options.params === 'string') {
-        view.params = Object.fromEntries(new URLSearchParams(options.params).entries())
+        view.params = Object.fromEntries(new URLSearchParams(options.params))
       } else if (isStruct(options.params)) {
         view.params = options.params
       } else {
-        view.params = absorb(this.dataset, options)
+        view.params = this.i18n.struct(this.dataString, options)
       }
 
       if (typeof options.source === 'string') {
@@ -495,7 +501,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     if (element.name !== null) {
       this.views = [{
         name: element.name,
-        params: element.params,
+        params: Object.fromEntries(new URLSearchParams(element.params ?? '')),
         source: 'element'
       }]
 

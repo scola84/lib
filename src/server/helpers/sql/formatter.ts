@@ -570,33 +570,68 @@ export abstract class SqlFormatter {
   protected createSelectAllPartsSearchKeys (keys: SchemaFieldKey[], query: Query, locale?: string): SqlQueryParts {
     const values: Struct = {}
 
-    let where: string | undefined = this.joinStrings(') AND (', this.i18n
+    const where: string | undefined = this.joinStrings(') AND (', this.i18n
       .parse(query.search ?? '', locale)
-      .map((search, index) => {
-        return this.joinStrings(') OR (', keys
+      .map((search, index, allSearch) => {
+        return this.joinStrings(' OR ', keys
           .filter((key) => {
-            return (
-              search.key === undefined ||
-            `${key.table}_${key.column}` === search.key
-            )
+            return ((
+              search.key === undefined &&
+              !allSearch.some((someSearch) => {
+                return `${key.table}.${key.column}` === someSearch.key
+              })
+            ) || (
+              `${key.table}.${key.column}` === search.key
+            ))
           })
           .map((key) => {
-            values[`${key.table}_${key.column}_${index}`] = search.value
-            return `$[${key.table}.${key.column}] LIKE $(${key.table}_${key.column}_${index})`
+            const [
+              operator,
+              value
+            ] = this.createSelectAllPartsSearchKeysOperator(search)
+
+            values[`${key.table}_${key.column}_${index}`] = value
+            return `$[${key.table}.${key.column}] ${operator} $(${key.table}_${key.column}_${index})`
           }))
       })
       .filter((part) => {
         return part !== undefined
       }))
 
-    if (where !== undefined) {
-      where = `(${where})`
-    }
-
     return {
       values,
       where
     }
+  }
+
+  protected createSelectAllPartsSearchKeysOperator (search: Struct): string[] {
+    let value = String(search.value)
+    let operator = '='
+
+    if (
+      value.startsWith('%') ||
+      value.endsWith('%')
+    ) {
+      operator = 'LIKE'
+    } else if (
+      value.startsWith('>') ||
+      value.startsWith('<')
+    ) {
+      operator = value.slice(0, 1)
+      value = value.slice(1)
+    } else if (
+      value.startsWith('>=') ||
+      value.startsWith('<=') ||
+      value.startsWith('<>')
+    ) {
+      operator = value.slice(0, 2)
+      value = value.slice(2)
+    }
+
+    return [
+      operator,
+      value
+    ]
   }
 
   protected createSelectAllPartsSortKeys (keys: SchemaFieldKey[], query: Query): SqlQueryParts {
@@ -620,7 +655,7 @@ export abstract class SqlFormatter {
   protected createSelectManyInParts (keys: SqlQueryKeys, data: Struct[]): SqlQueryParts {
     const values: Struct = {}
 
-    let where = this.joinStrings(') AND (', keys.primary
+    const where = this.joinStrings(') AND (', keys.primary
       ?.map((key) => {
         if (data.length === 0) {
           values[`${key.table}_${key.column}`] = [[0]]
@@ -632,10 +667,6 @@ export abstract class SqlFormatter {
 
         return `$[${key.table}.${key.column}] IN $(${key.table}_${key.column})`
       }) ?? [])
-
-    if (where !== undefined) {
-      where = `(${where})`
-    }
 
     return {
       values,
@@ -677,15 +708,11 @@ export abstract class SqlFormatter {
   protected createSelectParts (keys: SqlQueryKeys, query: Struct): SqlQueryParts {
     const values: Struct = {}
 
-    let where = this.joinStrings(') AND (', keys.primary
+    const where = this.joinStrings(') AND (', keys.primary
       ?.map((key) => {
         values[`${key.table}_${key.column}`] = query[key.column]
         return `$[${key.table}.${key.column}] = $(${key.table}_${key.column})`
       }) ?? [])
-
-    if (where !== undefined) {
-      where = `(${where})`
-    }
 
     return {
       values,
@@ -702,7 +729,16 @@ export abstract class SqlFormatter {
       return undefined
     }
 
-    return filteredStrings.join(delimiter)
+    const joinedString = filteredStrings.join(delimiter)
+
+    if (
+      delimiter.startsWith(')') &&
+      delimiter.endsWith('(')
+    ) {
+      return `(${joinedString})`
+    }
+
+    return joinedString
   }
 
   protected resolveValue (field: SchemaField, value: unknown, user?: User): unknown {

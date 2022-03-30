@@ -78,19 +78,19 @@ const foreignKeysExpectations = {
   withSearch: {
     string: [
       [
-        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_user.user_id] = $(case_user_user_id)',
-        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] LIKE $(contact_address_begin_0)) OR ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE ($[address.address_line1] LIKE $(address_address_line1_0)) AND ($[contact_address.begin] > $(contact_address_begin_1)) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE ($[address.address_line1] LIKE $(address_address_line1_0)) AND ($[contact_address.begin] > $(contact_address_begin_1)) AND $[case_user.user_id] = $(case_user_user_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE ($[address.address_line1] LIKE $(address_address_line1_0)) AND ($[contact_address.begin] > $(contact_address_begin_1)) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].*, $[address].*, $[contact].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[contact] ON $[contact_address.contact_id] = $[contact.contact_id] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE ($[address.address_line1] LIKE $(address_address_line1_0)) AND ($[contact_address.begin] > $(contact_address_begin_1)) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
-      address_address_line1_0: 'scola',
+      address_address_line1_0: 'scola%',
       case_group_group_id: 1,
       case_user_user_id: 1,
-      contact_address_begin_0: 'scola',
+      contact_address_begin_1: '2020-01-01',
       limit: 10,
       offset: 0
     }
@@ -154,14 +154,15 @@ const relatedKeysExpectations = {
   withSearch: {
     string: [
       [
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND ($[address.address_line1] LIKE $(address_address_line1_0)) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND ($[address.address_line1] = $(address_address_line1_0)) AND ($[address.address_line1] = $(address_address_line1_1)) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND ($[address.address_line1] = $(address_address_line1_0)) AND ($[address.address_line1] = $(address_address_line1_1)) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       address_address_line1_0: 'scola',
+      address_address_line1_1: 'lib',
       case_address_case_id: 1,
       case_group_group_id: 1,
       case_user_user_id: 1,
@@ -225,8 +226,8 @@ const withoutKeysExpectations = {
   withSearch: {
     string: [
       [
-        'SELECT $[case].* FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE ($[case.name] LIKE $(case_name_0)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[case].* FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE ($[case.name] LIKE $(case_name_0)) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[case].* FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE ($[case.name] = $(case_name_0)) AND ($[case.name] = $(case_name_1)) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[case].* FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE ($[case.name] = $(case_name_0)) AND ($[case.name] = $(case_name_1)) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
@@ -234,6 +235,7 @@ const withoutKeysExpectations = {
     values: {
       case_group_group_id: 1,
       case_name_0: 'scola',
+      case_name_1: 'lib',
       case_user_user_id: 1,
       limit: 10,
       offset: 0

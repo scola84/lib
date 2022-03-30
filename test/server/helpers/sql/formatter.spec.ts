@@ -289,7 +289,7 @@ export function createASelectAllQueryWithForeignKeysWithSearch (formatter: SqlFo
     values
   } = formatter.createSelectAllQuery('contact_address', withForeignKeys, withForeignKeys.primary ?? [], {
     limit: 10,
-    search: 'scola'
+    search: 'scola% contact_address.begin:>2020-01-01'
   }, user as User)
 
   expect(formatter.sanitizeQuery(string)).eq(expectations.withSearch.string)
@@ -301,9 +301,9 @@ export function createASelectAllQueryWithForeignKeysWithSort (formatter: SqlForm
     string,
     values
   } = formatter.createSelectAllQuery('contact_address', withForeignKeys, withForeignKeys.primary ?? [], {
+    direction: 'desc',
     limit: 10,
-    sortKey: 'case.name',
-    sortOrder: 'desc'
+    order: 'case.name'
   }, user as User)
 
   expect(formatter.sanitizeQuery(string)).eq(expectations.withSort.string)
@@ -343,7 +343,7 @@ export function createASelectAllQueryWithRelatedKeysWithSearch (formatter: SqlFo
   } = formatter.createSelectAllQuery('address', withRelatedKeys, withRelatedKeys.related ?? [], {
     case_id: 1,
     limit: 10,
-    search: 'scola'
+    search: 'scola lib'
   }, user as User)
 
   expect(formatter.sanitizeQuery(string)).eq(expectations.withSearch.string)
@@ -356,9 +356,9 @@ export function createASelectAllQueryWithRelatedKeysWithSort (formatter: SqlForm
     values
   } = formatter.createSelectAllQuery('address', withRelatedKeys, withRelatedKeys.related ?? [], {
     case_id: 1,
+    direction: 'desc',
     limit: 10,
-    sortKey: 'address.address_line1',
-    sortOrder: 'desc'
+    order: 'address.address_line1'
   }, user as User)
 
   expect(formatter.sanitizeQuery(string)).eq(expectations.withSort.string)
@@ -397,7 +397,7 @@ export function createASelectAllQueryWithoutKeysWithSearch (formatter: SqlFormat
     values
   } = formatter.createSelectAllQuery('case', withoutKeys, withoutKeys.primary ?? [], {
     limit: 10,
-    search: 'scola'
+    search: 'scola lib'
   }, user as User)
 
   expect(formatter.sanitizeQuery(string)).eq(expectations.withSearch.string)
@@ -409,9 +409,9 @@ export function createASelectAllQueryWithoutKeysWithSort (formatter: SqlFormatte
     string,
     values
   } = formatter.createSelectAllQuery('case', withoutKeys, withoutKeys.primary ?? [], {
+    direction: 'desc',
     limit: 10,
-    sortKey: 'case.name',
-    sortOrder: 'desc'
+    order: 'case.name'
   }, user as User)
 
   expect(formatter.sanitizeQuery(string)).eq(expectations.withSort.string)

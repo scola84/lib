@@ -1,5 +1,6 @@
 import type { Struct } from './is-struct'
 import { cast } from './cast'
+import { flatten } from './flatten'
 import { isNil } from './is-nil'
 import { isStruct } from './is-struct'
 
@@ -8,9 +9,11 @@ interface Search extends Struct {
   value: string
 }
 
-type LocaleStrings = Struct<string | undefined>
+interface LocaleStrings {
+  [key: string]: LocaleStrings | string | undefined
+}
 
-type Strings = Struct<LocaleStrings | undefined>
+type Strings = Struct<Struct<string | undefined> | undefined>
 
 type StringsCache = Struct<Struct<Formatter[] | undefined> | undefined>
 
@@ -19,8 +22,6 @@ export type Formatter = (data: unknown) => string
 export type FormatterFactory = (name: string, locale: string, options: Struct<string>) => Formatter
 
 export class I18n {
-  public static cache: StringsCache = {}
-
   public static formatters: Struct<FormatterFactory> = {}
 
   public static locale = 'en'
@@ -28,6 +29,8 @@ export class I18n {
   public static matcher = /\$\([^)]+\)[dens]/gu
 
   public static strings: Strings = {}
+
+  public static stringsCache: StringsCache = {}
 
   public static compile (string: string, locale: string): Formatter[] {
     const compiled = []
@@ -75,12 +78,12 @@ export class I18n {
       })
   }
 
-  public static defineStrings (strings: Strings): void {
+  public static defineStrings (strings: Struct<LocaleStrings>): void {
     Object
       .entries(strings)
       .forEach(([locale, localeStrings]) => {
         Object
-          .entries(localeStrings ?? {})
+          .entries(flatten<string>(localeStrings))
           .forEach(([code, string]) => {
             I18n.strings[locale] = {
               ...I18n.strings[locale],
@@ -94,14 +97,14 @@ export class I18n {
     Object
       .entries(I18n.strings[locale] ?? {})
       .forEach(([code, string]) => {
-        let localeCache = I18n.cache[locale]
+        let stringsCache = I18n.stringsCache[locale]
 
-        if (localeCache === undefined) {
-          localeCache = {}
-          I18n.cache[locale] = localeCache
+        if (stringsCache === undefined) {
+          stringsCache = {}
+          I18n.stringsCache[locale] = stringsCache
         }
 
-        localeCache[code] = I18n.compile(string ?? '', locale)
+        stringsCache[code] = I18n.compile(string ?? '', locale)
       })
   }
 
@@ -159,18 +162,18 @@ export class I18n {
       compiled = I18n.compile(code, locale)
       string = code
     } else {
-      let localeCache = I18n.cache[locale]
+      let stringsCache = I18n.stringsCache[locale]
 
-      if (localeCache === undefined) {
-        localeCache = {}
-        I18n.cache[locale] = localeCache
+      if (stringsCache === undefined) {
+        stringsCache = {}
+        I18n.stringsCache[locale] = stringsCache
       }
 
-      compiled = localeCache[code]
+      compiled = stringsCache[code]
 
       if (compiled === undefined) {
         compiled = I18n.compile(string, locale)
-        localeCache[code] = compiled
+        stringsCache[code] = compiled
       }
     }
 

@@ -4,11 +4,7 @@ import { isArray } from '../../common'
 
 export function checkbox (name: string, field: SchemaField): Validator {
   return (data: Struct, errors: Struct) => {
-    let values = data[name]
-
-    if (!isArray(values)) {
-      values = [values]
-    }
+    const values = data[name]
 
     if (isArray(values)) {
       const included = values.every((value) => {
@@ -22,6 +18,10 @@ export function checkbox (name: string, field: SchemaField): Validator {
         }
 
         return false
+      }
+    } else {
+      errors[name] = {
+        code: 'err_validator_bad_input_checkbox'
       }
     }
 

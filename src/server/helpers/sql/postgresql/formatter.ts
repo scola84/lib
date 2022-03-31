@@ -1,7 +1,7 @@
-import type { Query, Struct } from '../../../../common'
 import type { Schema, SchemaField } from '../../schema'
 import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from '../query'
-import { isArray, isDate, isNil, isObject, isPrimitive } from '../../../../common'
+import { Struct, isArray, isDate, isNil, isObject, isPrimitive } from '../../../../common'
+import type { Query } from '../../../../common'
 import { SqlFormatter } from '../formatter'
 import { literal } from 'pg-format'
 import { sql } from '../tag'
@@ -93,7 +93,7 @@ export class PostgresqlFormatter extends SqlFormatter {
   }
 
   protected createSelectAllPartsLimit (query: Query): SqlQueryParts {
-    const values: Struct = {}
+    const values = Struct.create()
 
     let limit = null
     let order = null

@@ -1,7 +1,6 @@
 import type { ChildNode, Element } from 'parse5'
 import type { Schema, SchemaField, SchemaFieldKey } from './validator'
-import { isArray, isStruct } from '../../../common'
-import type { Struct } from '../../../common'
+import { Struct, isArray, isStruct } from '../../../common'
 import { dirname } from 'path'
 import { parseFragment } from 'parse5'
 import { readFile } from 'fs-extra'
@@ -266,16 +265,18 @@ export class SchemaParser {
   }
 
   protected normalizeAttributes (element: Element): SchemaAttributes {
+    const attributes = Struct.create<SchemaAttributes>()
+
     if (isArray(element.attrs)) {
-      return element.attrs.reduce((attributes, attribute) => {
+      return element.attrs.reduce<SchemaAttributes>((result, attribute) => {
         return {
-          ...attributes,
+          ...result,
           [attribute.name]: attribute.value
         }
-      }, {})
+      }, attributes)
     }
 
-    return {}
+    return attributes
   }
 
   protected sortObject (object: Struct): Struct {
@@ -293,7 +294,7 @@ export class SchemaParser {
         }
 
         return result
-      }, {})
+      }, Struct.create())
       /* eslint-disable @typescript-eslint/indent */
   }
 }

@@ -1,9 +1,9 @@
-import type { Query, Struct } from '../../../../common'
 import type { Schema, SchemaField } from '../../schema'
 import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from '../query'
+import { Struct, isStruct } from '../../../../common'
+import type { Query } from '../../../../common'
 import { SqlFormatter } from '../formatter'
 import { escape } from 'sqlstring'
-import { isStruct } from '../../../../common'
 import { sql } from '../tag'
 
 export class MssqlFormatter extends SqlFormatter {
@@ -87,7 +87,7 @@ export class MssqlFormatter extends SqlFormatter {
   }
 
   protected createSelectAllPartsLimit (query: Query): SqlQueryParts {
-    const values: Struct = {}
+    const values = Struct.create()
 
     let limit = null
     let order = null

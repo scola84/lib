@@ -1,7 +1,7 @@
-import { I18n, cast, isArray, isStruct } from '../../common'
-import type { Query, Struct } from '../../common'
+import { I18n, Struct, cast, isArray, isStruct } from '../../common'
 import type { ScolaTableElement, ScolaTableRowElement } from '../elements'
 import { Breakpoint } from './breakpoint'
+import type { Query } from '../../common'
 
 export class TableLister {
   public added = new Set()
@@ -178,10 +178,10 @@ export class TableLister {
       return
     }
 
-    this.requestData = {
+    this.requestData = Struct.create({
       limit: this.limit,
       offset: this.items.length
-    }
+    })
 
     const cursor = this.items.slice(-1)[0]?.cursor
 

@@ -1,11 +1,10 @@
 import { Mutator, Observer, Propagator } from '../helpers'
+import { Struct, setPush } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaFieldElement } from './field'
 import { ScolaInputElement } from './input'
 import { ScolaSelectElement } from './select'
 import { ScolaTextAreaElement } from './textarea'
-import type { Struct } from '../../common'
-import { setPush } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -155,7 +154,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   protected serialize (): Struct {
-    return this.fieldElements.reduce((data, element) => {
+    return this.fieldElements.reduce<Struct>((data, element) => {
       const value = element.getValue()
 
       if (
@@ -166,7 +165,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
       }
 
       return setPush(data, element.name, element.getValue())
-    }, {})
+    }, Struct.create())
   }
 
   protected toggleDisabled (): void {

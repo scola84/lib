@@ -1,7 +1,8 @@
-import { I18n, isStruct } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
+import type { PropagatorEvent } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
+import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -10,7 +11,7 @@ declare global {
 }
 
 export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaElement {
-  public i18n: I18n
+  public events: PropagatorEvent[]
 
   public mutator: Mutator
 
@@ -24,7 +25,6 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
 
   public constructor () {
     super()
-    this.i18n = new I18n()
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
@@ -60,20 +60,9 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
   }
 
   public dispatch (data: Struct = {}, trigger?: Event): void {
-    this
-      .querySelectorAll('param')
-      .forEach((param) => {
-        const dispatchData = this.i18n.struct(param.getAttribute('sc-data-string'), {
-          ...param.dataset,
-          ...data
-        })
-
-        this.propagator
-          .parseEvents(param.value)
-          .forEach((event) => {
-            this.propagator.dispatchEvent(event, [dispatchData], trigger)
-          })
-      })
+    this.events.forEach((event) => {
+      this.propagator.dispatchEvent(event, [data], trigger)
+    })
   }
 
   public getData (): Struct {
@@ -81,6 +70,7 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
   }
 
   public reset (): void {
+    this.events = this.parseEvents()
     this.wait = this.hasAttribute('sc-wait')
   }
 
@@ -102,6 +92,15 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     } else {
       this.dispatch(undefined, event)
     }
+  }
+
+  protected parseEvents (): PropagatorEvent[] {
+    return Array
+      .from(this.querySelectorAll('param'))
+      .map((param) => {
+        return this.propagator.parseEvents(param.value, param.dataset)
+      })
+      .flat()
   }
 
   protected removeEventListeners (): void {

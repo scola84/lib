@@ -4,11 +4,7 @@ import { isArray } from '../../common'
 
 export function selectMultiple (name: string, field: SchemaField): Validator {
   return (data: Struct, errors: Struct) => {
-    let values = data[name]
-
-    if (!isArray(values)) {
-      values = [values]
-    }
+    const values = data[name]
 
     if (isArray(values)) {
       const included = values.every((value) => {
@@ -17,11 +13,15 @@ export function selectMultiple (name: string, field: SchemaField): Validator {
 
       if (!included) {
         errors[name] = {
-          code: 'err_validator_bad_input_selectall',
+          code: 'err_validator_bad_input_selectmultiple',
           data: { values: field.values }
         }
 
         return false
+      }
+    } else {
+      errors[name] = {
+        code: 'err_validator_bad_input_selectmultiple'
       }
     }
 

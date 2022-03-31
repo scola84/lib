@@ -1,19 +1,15 @@
 import { Dragger, Dropper, Interactor, Mutator, Observer, Propagator } from '../helpers'
-import { I18n, isStruct } from '../../common'
 import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
+import { isStruct } from '../../common'
 
 export class ScolaButtonElement extends HTMLButtonElement implements ScolaElement {
   public data: Struct = {}
 
-  public dataString: string | null
-
   public dragger?: Dragger
 
   public dropper?: Dropper
-
-  public i18n: I18n
 
   public interactor: Interactor
 
@@ -29,7 +25,6 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
 
   public constructor () {
     super()
-    this.i18n = new I18n()
     this.interactor = new Interactor(this)
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
@@ -77,14 +72,13 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   }
 
   public getData (): Struct {
-    return this.i18n.struct(this.dataString, {
+    return {
       ...this.dataset,
       ...this.data
-    })
+    }
   }
 
   public reset (): void {
-    this.dataString = this.getAttribute('sc-data-string')
     this.interactor.cancel = this.hasAttribute('sc-cancel')
     this.interactor.keyboard = this.interactor.hasKeyboard
     this.interactor.mouse = this.interactor.hasMouse

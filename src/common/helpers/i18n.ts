@@ -1,8 +1,6 @@
-import type { Struct } from './is-struct'
+import { Struct, isStruct } from './is-struct'
 import { cast } from './cast'
 import { flatten } from './flatten'
-import { isNil } from './is-nil'
-import { isStruct } from './is-struct'
 
 interface Search extends Struct {
   key?: string
@@ -13,9 +11,11 @@ interface LocaleStrings {
   [key: string]: LocaleStrings | string | undefined
 }
 
+type LocaleStringsCache = Struct<Formatter[] | undefined>
+
 type Strings = Struct<Struct<string | undefined> | undefined>
 
-type StringsCache = Struct<Struct<Formatter[] | undefined> | undefined>
+type StringsCache = Struct<LocaleStringsCache | undefined>
 
 export type Formatter = (data: unknown) => string
 
@@ -49,15 +49,7 @@ export class I18n {
         compiled.push(I18n.formatters[type](
           name,
           locale,
-          optionsString
-            ?.split('&')
-            .reduce((params, kv) => {
-              const [key, value] = kv.split('=')
-              return {
-                ...params,
-                [key]: value
-              }
-            }, {}) ?? {}
+          Struct.fromString(optionsString ?? '')
         ))
 
         return nextString.slice(index + match.length)
@@ -100,7 +92,7 @@ export class I18n {
         let stringsCache = I18n.stringsCache[locale]
 
         if (stringsCache === undefined) {
-          stringsCache = {}
+          stringsCache = Struct.create({})
           I18n.stringsCache[locale] = stringsCache
         }
 
@@ -165,7 +157,7 @@ export class I18n {
       let stringsCache = I18n.stringsCache[locale]
 
       if (stringsCache === undefined) {
-        stringsCache = {}
+        stringsCache = Struct.create({})
         I18n.stringsCache[locale] = stringsCache
       }
 
@@ -253,27 +245,5 @@ export class I18n {
 
       return equivalence
     })
-  }
-
-  public struct (string?: string | null, data: Struct = {}): Struct {
-    if (isNil(string)) {
-      return data
-    }
-
-    return this
-      .format(string, data)
-      .split('&')
-      .reduce((params, kv) => {
-        const [key, value] = kv.split('=')
-
-        if (value === '') {
-          return params
-        }
-
-        return {
-          ...params,
-          [key]: value
-        }
-      }, {})
   }
 }

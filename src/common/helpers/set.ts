@@ -1,23 +1,30 @@
 /* eslint-disable max-lines-per-function */
+import { Struct } from './is-struct'
+import { cast } from './cast'
 import { isArray } from './is-array'
 import { isObject } from './is-object'
 
-export function set (base: unknown, path: unknown[], value: unknown): void {
+export function set (base: unknown, path: unknown[] | string, value: unknown): void {
   let parent: unknown = base
   let key: unknown = ''
+  let steps = path
 
-  for (let index = 0; index < path.length - 1; index += 1) {
-    key = path[index]
+  if (typeof steps === 'string') {
+    steps = steps.split('.').map(cast)
+  }
+
+  for (let index = 0; index < steps.length - 1; index += 1) {
+    key = steps[index]
 
     if (
       typeof key === 'number' &&
       isArray(parent)
     ) {
       if (parent[key] === undefined) {
-        if (typeof path[index + 1] === 'number') {
+        if (typeof steps[index + 1] === 'number') {
           parent[key] = []
         } else {
-          parent[key] = {}
+          parent[key] = Struct.create()
         }
       }
 
@@ -27,10 +34,10 @@ export function set (base: unknown, path: unknown[], value: unknown): void {
       isObject(parent)
     ) {
       if (parent[key] === undefined) {
-        if (typeof path[index + 1] === 'number') {
+        if (typeof steps[index + 1] === 'number') {
           parent[key] = []
         } else {
-          parent[key] = {}
+          parent[key] = Struct.create()
         }
       }
 
@@ -40,7 +47,7 @@ export function set (base: unknown, path: unknown[], value: unknown): void {
     }
   }
 
-  const parentKey = path[path.length - 1]
+  const parentKey = steps[steps.length - 1]
 
   if (
     typeof parentKey === 'number' &&

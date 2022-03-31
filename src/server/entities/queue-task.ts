@@ -1,6 +1,6 @@
 import type { QueueRun } from './queue-run'
 import type { QueueTask as QueueTaskBase } from './base'
-import type { Struct } from '../../common'
+import { Struct } from '../../common'
 import { createQueueRun } from './queue-run'
 
 export interface QueueTask<Payload = unknown, Options = unknown, Result = unknown> extends Required<QueueTaskBase> {
@@ -76,9 +76,9 @@ export function createQueueTask<Payload = Struct, Options = Struct, Result = Str
     fkey_queue_run_id: 0,
     host: null,
     id: 0,
-    payload: Object.create(null) as Payload,
+    payload: Struct.create(),
     reason: null,
-    result: Object.create(null) as Result,
+    result: Struct.create(),
     run: task?.run ?? createQueueRun<Options>(),
     status: 'pending',
     ...task

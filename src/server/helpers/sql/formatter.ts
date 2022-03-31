@@ -1,7 +1,7 @@
-import type { Query, Struct } from '../../../common'
+import { I18n, Struct } from '../../../common'
 import type { Schema, SchemaField, SchemaFieldKey } from '../schema'
 import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from './query'
-import { I18n } from '../../../common'
+import type { Query } from '../../../common'
 import type { User } from '../../entities'
 import { sql } from './tag'
 
@@ -49,7 +49,7 @@ export abstract class SqlFormatter {
   }
 
   public createDeleteQuery (object: string, keys: SqlQueryKeys, data: Struct): SqlQuery {
-    const values: Struct = {}
+    const values = Struct.create()
 
     const where = keys.primary?.map((key) => {
       values[key.column] = data[key.column]
@@ -74,7 +74,7 @@ export abstract class SqlFormatter {
 
   public createInsertQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct, user?: User): SqlQuery {
     const columns: string[] = []
-    const values: Struct = {}
+    const values = Struct.create()
     const valuesKeys: string[] = []
 
     Object
@@ -274,7 +274,7 @@ export abstract class SqlFormatter {
   }
 
   public createUpdateQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct, user?: User): SqlQuery {
-    const values: Struct = {}
+    const values = Struct.create()
 
     const set = Object
       .entries(schema)
@@ -387,7 +387,7 @@ export abstract class SqlFormatter {
       throw new Error('Auth keys are undefined')
     }
 
-    const values: Struct = {}
+    const values = Struct.create()
 
     let parts: SqlQueryParts[] = authKeys
       .map((authKey) => {
@@ -514,7 +514,7 @@ export abstract class SqlFormatter {
   protected createSelectAllPartsForeignKeys (object: string, keys: SchemaFieldKey[], query: Query): SqlQueryParts {
     const join: string[] = []
     const select: string[] = []
-    const values: Struct = {}
+    const values = Struct.create()
 
     keys
       .filter((key) => {
@@ -545,7 +545,7 @@ export abstract class SqlFormatter {
   }
 
   protected createSelectAllPartsRelatedKeys (object: string, keys: SchemaFieldKey[], query: Query): SqlQueryParts {
-    const values: Struct = {}
+    const values = Struct.create()
 
     let join = null
     let where = null
@@ -568,7 +568,7 @@ export abstract class SqlFormatter {
   }
 
   protected createSelectAllPartsSearchKeys (keys: SchemaFieldKey[], query: Query, locale?: string): SqlQueryParts {
-    const values: Struct = {}
+    const values = Struct.create()
 
     const where: string | undefined = this.joinStrings(') AND (', this.i18n
       .parse(query.search ?? '', locale)
@@ -653,7 +653,7 @@ export abstract class SqlFormatter {
   }
 
   protected createSelectManyInParts (keys: SqlQueryKeys, data: Struct[]): SqlQueryParts {
-    const values: Struct = {}
+    const values = Struct.create()
 
     const where = this.joinStrings(') AND (', keys.primary
       ?.map((key) => {
@@ -676,7 +676,7 @@ export abstract class SqlFormatter {
 
   protected createSelectManyModifiedParts (keys: SqlQueryKeys, modified: Date): SqlQueryParts {
     const key = keys.modified
-    const values: Struct = {}
+    const values = Struct.create()
 
     let where = ''
 
@@ -706,7 +706,7 @@ export abstract class SqlFormatter {
   }
 
   protected createSelectParts (keys: SqlQueryKeys, query: Struct): SqlQueryParts {
-    const values: Struct = {}
+    const values = Struct.create()
 
     const where = this.joinStrings(') AND (', keys.primary
       ?.map((key) => {

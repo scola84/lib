@@ -4,7 +4,7 @@ import { get } from '../helpers/get'
 
 export function n (name: string, locale: string, options: Struct<string>): Formatter {
   const format = new Intl.NumberFormat(locale, options)
-  const path = name.split('.')
+  const path = name.split('.').map(cast)
 
   function formatter (data: unknown): string {
     const value = cast(get(data, path)) ?? 0

@@ -1,7 +1,6 @@
+import { I18n, Struct, isArray, isNil, isStruct } from '../../common'
 import type { ScolaElement } from '../elements'
 import { ScolaEvent } from './event'
-import type { Struct } from '../../common'
-import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -10,7 +9,8 @@ declare global {
 }
 
 export interface PropagatorEvent {
-  data: Struct
+  data?: Struct
+  filter?: string
   name: string
   selector: string
 }
@@ -24,12 +24,15 @@ export class Propagator {
 
   public events: Struct<PropagatorEvent[] | undefined> = {}
 
+  public i18n: I18n
+
   public keydown: string[][]
 
   protected handleSetBound = this.handleSet.bind(this)
 
   public constructor (element: ScolaElement) {
     this.element = element
+    this.i18n = new I18n()
   }
 
   public connect (): void {
@@ -58,7 +61,7 @@ export class Propagator {
     return dispatched
   }
 
-  public dispatchEvent (event: PropagatorEvent, data: unknown[] = [undefined], trigger?: Event): void {
+  public dispatchEvent<T = unknown> (event: PropagatorEvent, data: T[] = [Struct.create()], trigger?: Event): void {
     let targets: HTMLElement[] | NodeList = []
 
     if (event.selector === '') {
@@ -72,7 +75,7 @@ export class Propagator {
         window.requestAnimationFrame(() => {
           target.dispatchEvent(new ScolaEvent(event.name, {
             bubbles: target === this.element,
-            detail: this.createDetail(event.data, dispatchData),
+            detail: this.createDetail(event, dispatchData),
             element: this.element,
             trigger: trigger
           }))
@@ -94,16 +97,16 @@ export class Propagator {
     return String(error)
   }
 
-  public parseEvents (events: string): PropagatorEvent[] {
+  public parseEvents (events: string, data?: Struct): PropagatorEvent[] {
     return events
       .trim()
       .split(' ')
       .map((event) => {
-        const [nameAndDataString, selector] = event.split('@')
-        const [name, dataString = undefined] = nameAndDataString.split('?')
-        const data = Object.fromEntries(new URLSearchParams(dataString))
+        const [nameFilter, selector] = event.split('@')
+        const [name, filter = undefined] = nameFilter.split('?')
         return {
           data,
+          filter,
           name,
           selector
         }
@@ -139,17 +142,30 @@ export class Propagator {
     this.element.addEventListener('sc-data-set', this.handleSetBound)
   }
 
-  protected createDetail (eventData: Struct, data: unknown): unknown {
-    let detail = data
-
-    if (
-      isStruct(detail) &&
-      Object.keys(detail).length === 0
-    ) {
-      detail = undefined
+  protected createDetail (event: PropagatorEvent, data?: unknown): unknown {
+    if (isArray(data)) {
+      return data
     }
 
-    return detail ?? eventData
+    if (isNil(event.filter)) {
+      if (
+        isStruct(data) &&
+        Object.keys(data).length > 0
+      ) {
+        return data
+      }
+
+      return event.data
+    }
+
+    if (isStruct(data)) {
+      return Struct.fromString(this.i18n.format(event.filter, {
+        ...event.data,
+        ...data
+      }))
+    }
+
+    return Struct.fromString(this.i18n.format(event.filter, event.data))
   }
 
   protected getEvents (on: string): PropagatorEvent[] {

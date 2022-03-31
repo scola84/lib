@@ -1,4 +1,5 @@
-import type { Primitive, Struct } from '../../../common'
+import type { Primitive } from '../../../common'
+import { Struct } from '../../../common'
 import type { User } from '../../entities'
 
 export type Validator = (data: Struct, errors: Struct, user?: User) => boolean | null
@@ -63,7 +64,7 @@ export class SchemaValidator {
     let hasErrors = false
     let isValid: boolean | null = false
 
-    const errors: Struct = {}
+    const errors = Struct.create()
 
     for (const validators of this.validators) {
       for (const validator of validators) {

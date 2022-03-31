@@ -1,8 +1,7 @@
 import type { Schema, SchemaField } from '../schema'
-import { cast, isFile, parseStruct } from '../../../common'
+import { Struct, cast, isFile, parseStruct } from '../../../common'
 import { CrudHandler } from './crud'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../common'
 import type { User } from '../../entities'
 
 export abstract class CrudDeleteHandler extends CrudHandler {
@@ -46,15 +45,15 @@ export abstract class CrudDeleteHandler extends CrudHandler {
     if (isFile(file)) {
       await this.bucket?.delete(file)
 
-      const data: Struct = {
+      const data = Struct.create({
         [name]: null
-      }
+      }) as Struct
 
-      const schema: Struct<SchemaField> = {
+      const schema = Struct.create<Struct<SchemaField>>({
         [name]: {
           type: 'file'
         }
-      }
+      })
 
       this.keys.primary?.forEach((key) => {
         data[key.column] = object[key.column]

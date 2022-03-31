@@ -1,7 +1,6 @@
-import { cast, isPrimitive, isStruct } from '../../common'
+import { Struct, cast, isPrimitive, isStruct } from '../../common'
 import { Sanitizer } from './sanitizer'
 import type { ScolaElement } from '../elements'
-import type { Struct } from '../../common'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Handler = ((observer: any, observable: any, mutations: MutationRecord[]) => void)
@@ -197,12 +196,12 @@ export class Observer {
   }
 
   protected saveState (): void {
-    const states: Struct = this.save.reduce((result, name) => {
+    const states: Struct = this.save.reduce<Struct>((result, name) => {
       return {
         ...result,
         [name]: this.element.getAttribute(name)
       }
-    }, {})
+    }, Struct.create())
 
     this.storage.setItem(`sc-observe-${this.element.id}`, JSON.stringify(states))
   }

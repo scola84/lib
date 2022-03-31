@@ -9,6 +9,7 @@ describe('set', () => {
   })
 
   describe('should not set a value on', () => {
+    it('the prototype', thePrototype)
     it('a wrong path', aWrongPath)
   })
 })
@@ -84,4 +85,13 @@ function anArray (): void {
 
   set(actual, path, value)
   expect(actual).eql(expected)
+}
+
+function thePrototype (): void {
+  const actual = {}
+  const path = ['a', '__proto__', 'illegal']
+
+  set(actual, path, 'value')
+  // eslint-disable-next-line no-prototype-builtins
+  expect(Object.prototype.hasOwnProperty('illegal')).eq(false)
 }

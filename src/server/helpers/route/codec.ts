@@ -1,13 +1,11 @@
 import type { IncomingMessage, ServerResponse } from 'http'
-import { cast, isPrimitive, isStruct, setPush } from '../../../common'
+import { Struct, cast, isPrimitive, isStruct, setPush } from '../../../common'
 import type { FileBucket } from '../file'
 import type { FileInfo } from 'busboy'
 import type { Readable } from 'stream'
 import type { Schema } from '../schema'
-import type { Struct } from '../../../common'
 import { Writable } from 'stream'
 import busboy from 'busboy'
-import { parse } from 'querystring'
 import { randomUUID } from 'crypto'
 
 export interface RouteCodecOptions {
@@ -51,7 +49,7 @@ export class RouteCodec {
 
   public async decodeFormData (request: IncomingMessage, schema?: Schema): Promise<Struct> {
     return new Promise((resolve, reject) => {
-      const body: Struct = {}
+      const body = Struct.create()
 
       const decoder = busboy({
         headers: request.headers
@@ -115,36 +113,7 @@ export class RouteCodec {
   }
 
   public async decodeFormUrlencoded (request: IncomingMessage): Promise<Struct> {
-    return Object
-      .entries({
-        ...parse(await this.decodePlain(request))
-      })
-      .reduce<Struct>((result, [name, value]) => {
-      /* eslint-disable @typescript-eslint/indent */
-        let castValue: unknown = null
-
-        if (isPrimitive(value)) {
-          if (value === '') {
-            castValue = null
-          } else {
-            castValue = cast(value)
-          }
-        } else if (Array.isArray(value)) {
-          castValue = value.map((mapValue) => {
-            if (mapValue === '') {
-              return null
-            }
-
-            return cast(mapValue)
-          })
-        }
-
-        return {
-          [name]: castValue,
-          ...result
-        }
-      }, {})
-      /* eslint-disable @typescript-eslint/indent */
+    return Struct.fromString(decodeURI(await this.decodePlain(request)), true)
   }
 
   public async decodeJson (request: IncomingMessage): Promise<unknown> {

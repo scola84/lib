@@ -1,4 +1,3 @@
-export * from './absorb'
 export * from './camelize'
 export * from './cast'
 export * from './get'

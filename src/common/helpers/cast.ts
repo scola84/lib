@@ -68,7 +68,7 @@ export function cast (value: unknown): Date | boolean | number | string | null |
 
   if (
     !(value instanceof Date) &&
-    String(value).trim() !== '' &&
+    value !== '' &&
     Number.isFinite(Number(value))
   ) {
     return Number(value)
@@ -83,7 +83,7 @@ export function cast (value: unknown): Date | boolean | number | string | null |
   }
 
   if (typeof value === 'string') {
-    return value
+    return value.trim()
   }
 
   return JSON.stringify(value)

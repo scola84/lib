@@ -4,7 +4,7 @@ import { get } from '../helpers/get'
 
 export function e (name: string, locale: string, options: Struct<string | undefined>): Formatter {
   const i18n = new I18n()
-  const path = name.split('.')
+  const path = name.split('.').map(cast)
 
   const {
     default: def,

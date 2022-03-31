@@ -1,7 +1,6 @@
 import { Hider, Mutator, Observer, Propagator, Sanitizer } from '../helpers'
-import { I18n, isArray, isPrimitive, isSame, isStruct } from '../../common'
+import { Struct, isArray, isPrimitive, isSame, isStruct } from '../../common'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -34,11 +33,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     session: window.sessionStorage
   }
 
-  public dataString: string | null
-
   public hider?: Hider
-
-  public i18n: I18n
 
   public mutator: Mutator
 
@@ -94,7 +89,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
-    this.i18n = new I18n()
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
@@ -276,7 +270,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public reset (): void {
-    this.dataString = this.getAttribute('sc-data-string') ?? ''
     this.name = this.getAttribute('sc-name')
     this.params = this.getAttribute('sc-params')
     this.regexp = new RegExp(`/(?<name>[^:/]+):?(?<params>[^:/]+)?@${this.id}`, 'u')
@@ -394,11 +387,11 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       }
 
       if (typeof options.params === 'string') {
-        view.params = Object.fromEntries(new URLSearchParams(options.params))
+        view.params = Struct.fromString(options.params)
       } else if (isStruct(options.params)) {
         view.params = options.params
       } else {
-        view.params = this.i18n.struct(this.dataString, options)
+        view.params = options
       }
 
       if (typeof options.source === 'string') {
@@ -501,7 +494,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     if (element.name !== null) {
       this.views = [{
         name: element.name,
-        params: Object.fromEntries(new URLSearchParams(element.params ?? '')),
+        params: Struct.fromString(element.params ?? ''),
         source: 'element'
       }]
 

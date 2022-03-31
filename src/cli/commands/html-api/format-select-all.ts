@@ -1,6 +1,7 @@
 import type { Options } from '../html-api'
 import type { Schema } from '../../../server/helpers/schema'
 import type { Struct } from '../../../common'
+import { createColumns } from './create-columns'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
 import { hyphenize } from '../../../common'
@@ -17,7 +18,7 @@ export class SelectAllHandler extends CrudSelectAllHandler {
   public object = '${options.object}'
 
   public schema: CrudSelectAllHandler['schema'] = {
-    query: ${formatQuerySchema(schema, 6)}
+    query: ${formatQuerySchema(schema, relations, 6)}
   }
 
   public url = '${options.url}/select/all/${hyphenize(options.object)}'
@@ -52,12 +53,16 @@ function formatKeys (object: string, schema: Schema, relations: Struct<Schema>, 
   ).trimStart()
 }
 
-function formatQuerySchema (schema: Schema, space: number): string {
+function formatQuerySchema (schema: Schema, relations: Struct<Schema>, space: number): string {
   return formatCode(
     {
       required: true,
       schema: sortKeys({
         ...createQueryKeys(schema),
+        column: {
+          type: 'select-multiple',
+          values: createColumns(schema, relations)
+        },
         cursor: {
           type: 'text'
         },

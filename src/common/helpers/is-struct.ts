@@ -1,4 +1,38 @@
-export type Struct<Value = unknown> = Record<string, Value>
+import { cast } from './cast'
+import { setPush } from './set-push'
+
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class Struct<Value = unknown> implements Record<string, Value> {
+  [key: string]: Value
+
+  public static create<T = Struct>(base?: T): T {
+    return Object.assign(Object.create(null), base) as T
+  }
+
+  public static fromString<T = Struct>(string: string, keepEmpty = false): T {
+    return string
+      .split('&')
+      .reduce<T>((struct, keyValue) => {
+      /* eslint-disable @typescript-eslint/indent */
+        const [key, value] = keyValue.split('=')
+
+        if (value === '') {
+          if (keepEmpty) {
+            return setPush(struct, key, null)
+          }
+
+          return struct
+        }
+
+        return setPush(struct, key, cast(value))
+      }, Struct.create())
+      /* eslint-enable @typescript-eslint/indent */
+  }
+
+  public static isStruct (value: unknown): value is Struct {
+    return isStruct(value)
+  }
+}
 
 /**
  * Checks whether a value is a plain object.

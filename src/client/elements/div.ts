@@ -1,5 +1,5 @@
 import { Dragger, Dropper, Focuser, Hider, Interactor, Mutator, Observer, Paster, Propagator } from '../helpers'
-import { I18n, cast, isArray, isStruct } from '../../common'
+import { cast, isArray, isStruct } from '../../common'
 import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
@@ -12,8 +12,6 @@ declare global {
 }
 
 export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
-  public dataString: string | null
-
   public dragger?: Dragger
 
   public dropper?: Dropper
@@ -21,8 +19,6 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   public focuser?: Focuser
 
   public hider?: Hider
-
-  public i18n: I18n
 
   public interactor: Interactor
 
@@ -42,7 +38,6 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
-    this.i18n = new I18n()
     this.interactor = new Interactor(this)
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
@@ -111,13 +106,12 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   public getData (): Struct {
-    return this.i18n.struct(this.dataString, {
+    return {
       ...this.dataset
-    })
+    }
   }
 
   public reset (): void {
-    this.dataString = this.getAttribute('sc-data-string')
     this.interactor.cancel = this.hasAttribute('sc-cancel')
     this.interactor.keyboard = this.interactor.hasKeyboard
     this.interactor.mouse = this.interactor.hasMouse

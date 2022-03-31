@@ -74,7 +74,7 @@ export class PostgresqlDatabase extends SqlDatabase {
     Array
       .from(url.searchParams.entries())
       .forEach(([name, value]) => {
-        set(options, name.split('.').map(cast), cast(value))
+        set(options, name, cast(value))
       })
 
     const sslNames = ['ca', 'cert', 'key']

@@ -24,7 +24,7 @@ export const nl = {
   err_validator_bad_input_radio: 'Voer een geldige waarde in',
   err_validator_bad_input_range: 'Voer een geldig getal in',
   err_validator_bad_input_select: 'Voer een geldige waarde in',
-  err_validator_bad_input_selectall: 'Voer een geldige waarde in',
+  err_validator_bad_input_selectmultiple: 'Voer een geldige waarde in',
   err_validator_bad_input_struct: 'Voer een geldig object in',
   err_validator_bad_input_text: 'Voer een geldige tekst in',
   err_validator_bad_input_time: 'Voer een geldige tijd in',

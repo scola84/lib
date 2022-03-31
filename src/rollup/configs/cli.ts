@@ -1,7 +1,7 @@
+import { isExternal, onwarn } from '../helpers'
 import type { RollupOptions } from 'rollup'
 import { chmod } from '../plugins'
 import commonjs from '@rollup/plugin-commonjs'
-import { isExternal } from '../helpers'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
 
@@ -15,6 +15,7 @@ const options: RollupOptions = {
     'sql-schema': 'src/cli/commands/sql-schema.ts',
     'sql-ts': 'src/cli/commands/sql-ts.ts'
   },
+  onwarn: onwarn,
   output: {
     banner: '#!/usr/bin/env node',
     chunkFileNames: 'dist/cli/[name].js',

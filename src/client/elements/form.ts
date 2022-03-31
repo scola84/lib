@@ -1,11 +1,11 @@
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { ScolaError, Struct } from '../../common'
+import { Struct, setPush } from '../../common'
 import type { ScolaElement } from './element'
+import type { ScolaError } from '../../common'
 import type { ScolaFieldElement } from './field'
 import { ScolaInputElement } from './input'
 import { ScolaSelectElement } from './select'
 import { ScolaTextAreaElement } from './textarea'
-import { setPush } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -87,7 +87,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
       }
 
       return errors
-    }, {})
+    }, Struct.create())
   }
 
   public reset (): void {
@@ -194,7 +194,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected serialize (): Struct {
-    return this.fieldElements.reduce((data, element) => {
+    return this.fieldElements.reduce<Struct>((data, element) => {
       const value = element.getValue()
 
       if (
@@ -205,7 +205,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
       }
 
       return setPush(data, element.name, element.getValue())
-    }, {})
+    }, Struct.create())
   }
 
   protected setValues (): void {

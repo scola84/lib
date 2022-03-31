@@ -1,33 +1,66 @@
+import { Struct, isStruct } from '../../../../src/common/helpers/is-struct'
 import { expect } from 'chai'
-import { isStruct } from '../../../../src'
 
 describe('isStruct', () => {
-  it('should return false for non-objects', returnFalseForNonStructs)
-  it('should return true for objects', returnTrueForStructs)
+  describe('should return', () => {
+    it('false for non-structs', falseForNonStructs)
+    it('true for structs', trueForStructs)
+    it('a struct from a string', aStructFromAString)
+  })
 })
 
 class Foo {
   public bar: string
 }
 
-function returnFalseForNonStructs (): void {
-  expect(isStruct(undefined)).equal(false)
-  expect(isStruct(null)).equal(false)
-  expect(isStruct(BigInt(0))).equal(false)
-  expect(isStruct(true)).equal(false)
-  expect(isStruct(0)).equal(false)
-  expect(isStruct('')).equal(false)
-  expect(isStruct(Symbol(''))).equal(false)
-  expect(isStruct([1, 2, 3])).equal(false)
-  expect(isStruct(() => {})).equal(false)
-  expect(isStruct(Math)).equal(false)
-  expect(isStruct(new Foo())).equal(false)
+function falseForNonStructs (): void {
+  expect(isStruct(undefined)).eq(false)
+  expect(isStruct(null)).eq(false)
+  expect(isStruct(BigInt(0))).eq(false)
+  expect(isStruct(true)).eq(false)
+  expect(isStruct(0)).eq(false)
+  expect(isStruct('')).eq(false)
+  expect(isStruct(Symbol(''))).eq(false)
+  expect(isStruct([1, 2, 3])).eq(false)
+  expect(isStruct(() => {})).eq(false)
+  expect(isStruct(Math)).eq(false)
+  expect(isStruct(new Foo())).eq(false)
+  expect(Struct.isStruct({})).eq(false)
 }
 
-function returnTrueForStructs (): void {
-  expect(isStruct({})).equal(true)
-  expect(isStruct({ 'constructor': {} })).equal(true)
-  expect(isStruct({ 'foo': 'bar' })).equal(true)
-  expect(isStruct(Object.create(null))).equal(true)
-  expect(isStruct(Object.prototype)).equal(true)
+function trueForStructs (): void {
+  expect(isStruct({})).eq(true)
+  expect(isStruct({ 'constructor': {} })).eq(true)
+  expect(isStruct({ 'foo': 'bar' })).eq(true)
+  expect(isStruct(Object.create(null))).eq(true)
+  expect(isStruct(Object.prototype)).eq(true)
+  expect(Struct.isStruct(Struct.create())).eq(true)
+}
+
+function aStructFromAString (): void {
+  const expectedNotNull = {
+    a: {
+      b: {
+        c: 'c'
+      }
+    }
+  }
+
+  const expectedNull = {
+    a: {
+      b: {
+        c: 'c'
+      }
+    },
+    d: {
+      e: {
+        f: null
+      }
+    }
+  }
+
+  const string = 'a.b.c=c&d.e.f='
+
+  expect(Struct.fromString(string)).eql(expectedNotNull)
+  expect(Struct.fromString(string, true)).eql(expectedNull)
 }

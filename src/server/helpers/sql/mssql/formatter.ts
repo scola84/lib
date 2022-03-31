@@ -87,20 +87,22 @@ export class MssqlFormatter extends SqlFormatter {
   }
 
   protected createSelectAllPartsLimit (query: Query): SqlQueryParts {
-    const values = Struct.create()
+    const values = Struct.create<Query['limit']>({
+      count: query.limit.count
+    })
 
     let limit = null
     let order = null
     let where = null
 
-    if (query.cursor === undefined) {
-      values.limit = query.limit
-      values.offset = query.offset ?? 0
-      limit = 'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
+    if (query.limit.cursor === undefined) {
+      values.count = query.limit.count
+      values.offset = query.limit.offset ?? 0
+      limit = 'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
     } else {
-      values.limit = query.limit
-      values.cursor = query.cursor
-      limit = 'OFFSET 0 ROWS FETCH NEXT $(limit) ROWS ONLY'
+      values.count = query.limit.count
+      values.cursor = query.limit.cursor
+      limit = 'OFFSET 0 ROWS FETCH NEXT $(count) ROWS ONLY'
       order = '$[cursor] ASC'
       where = '$[cursor] > $(cursor)'
     }

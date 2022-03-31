@@ -9,7 +9,7 @@ const options: RollupOptions = {
   external: isExternal,
   input: {
     'barrel': 'src/cli/commands/barrel.ts',
-    'html-api': 'src/cli/commands/html-api.ts',
+    'html-crud': 'src/cli/commands/html-crud.ts',
     'index': 'src/cli/index.ts',
     'sql-diff': 'src/cli/commands/sql-diff.ts',
     'sql-schema': 'src/cli/commands/sql-schema.ts',

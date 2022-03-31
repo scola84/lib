@@ -30,15 +30,18 @@ export class Struct<Value = unknown> implements Record<string, Value> {
   }
 
   public static isStruct (value: unknown): value is Struct {
-    return isStruct(value)
+    return (
+      Object.prototype.toString.call(value) === '[object Object]' &&
+      Object.getPrototypeOf(value) === null
+    )
   }
 }
 
 /**
- * Checks whether a value is a plain object.
+ * Checks whether a value is a Struct.
  *
  * @param value - The value
- * @returns Whether the value is a struct
+ * @returns Whether the value is a Struct
  * @see https://github.com/lodash/lodash/blob/2da024c/isPlainObject.js#L30
  */
 export function isStruct (value: unknown): value is Struct {

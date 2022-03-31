@@ -99,7 +99,8 @@ export class MysqlConnection extends SqlConnection {
       `
     }
 
-    return this.query<Values, Result>(query)
+    const [,result] = await this.query<Values, [Result]>(query)
+    return result
   }
 
   public async populate (population: Partial<Struct<Array<Partial<unknown>>>>): Promise<void> {

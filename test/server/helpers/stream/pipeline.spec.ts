@@ -54,11 +54,11 @@ async function aReadableFails (): Promise<void> {
     await pipeline(readable, transform, writable)
   } catch (error: unknown) {
     for (const stream of [readable, transform, writable]) {
-      expect(stream.listeners('data').length).equal(0)
-      expect(stream.listeners('error').length).equal(0)
+      expect(stream.listeners('data').length).eq(0)
+      expect(stream.listeners('error').length).eq(0)
     }
 
-    expect(closeListener.callCount).equal(3)
+    expect(closeListener.callCount).eq(3)
     expect(String(error)).match(/Readable error/u)
   }
 }
@@ -101,11 +101,11 @@ async function aTransformFails (): Promise<void> {
     await pipeline(readable, transform, writable)
   } catch (error: unknown) {
     for (const stream of [readable, transform, writable]) {
-      expect(stream.listeners('data').length).equal(0)
-      expect(stream.listeners('error').length).equal(0)
+      expect(stream.listeners('data').length).eq(0)
+      expect(stream.listeners('error').length).eq(0)
     }
 
-    expect(closeListener.callCount).equal(3)
+    expect(closeListener.callCount).eq(3)
     expect(String(error)).match(/Transform error/u)
   }
 }
@@ -148,11 +148,11 @@ async function aWritableFails (): Promise<void> {
     await pipeline(readable, transform, writable)
   } catch (error: unknown) {
     for (const stream of [readable, transform, writable]) {
-      expect(stream.listeners('data').length).equal(0)
-      expect(stream.listeners('error').length).equal(0)
+      expect(stream.listeners('data').length).eq(0)
+      expect(stream.listeners('error').length).eq(0)
     }
 
-    expect(closeListener.callCount).equal(3)
+    expect(closeListener.callCount).eq(3)
     expect(String(error)).match(/Writable error/u)
   }
 }
@@ -175,9 +175,9 @@ async function lessThanTwoStreamsAreProvided (): Promise<void> {
   } catch (error: unknown) {
     await new Promise<void>((resolve) => {
       process.nextTick(() => {
-        expect(readable.listeners('data').length).equal(0)
-        expect(readable.listeners('error').length).equal(0)
-        expect(closeListener.callCount).equal(1)
+        expect(readable.listeners('data').length).eq(0)
+        expect(readable.listeners('error').length).eq(0)
+        expect(closeListener.callCount).eq(1)
         expect(String(error)).match(/Less than 2 streams provided/u)
         resolve()
       })
@@ -220,11 +220,11 @@ async function streamData (): Promise<void> {
   await pipeline(readable, transform, writable)
 
   for (const stream of [readable, transform, writable]) {
-    expect(stream.listeners('data').length).equal(0)
-    expect(stream.listeners('error').length).equal(0)
+    expect(stream.listeners('data').length).eq(0)
+    expect(stream.listeners('error').length).eq(0)
   }
 
-  expect(closeListener.callCount).equal(2)
+  expect(closeListener.callCount).eq(2)
   expect(chunks).members(['string'])
 }
 
@@ -267,11 +267,11 @@ async function streamsAreProvidedInAWrongOrder (): Promise<void> {
     await new Promise<void>((resolve) => {
       process.nextTick(() => {
         for (const stream of [readable, transform, writable]) {
-          expect(stream.listeners('data').length).equal(0)
-          expect(stream.listeners('error').length).equal(0)
+          expect(stream.listeners('data').length).eq(0)
+          expect(stream.listeners('error').length).eq(0)
         }
 
-        expect(closeListener.callCount).equal(3)
+        expect(closeListener.callCount).eq(3)
         expect(String(error)).match(/Cannot pipe a Writable/u)
         resolve()
       })

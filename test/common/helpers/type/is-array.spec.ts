@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { isArray } from '../../../../src'
+import { isArray } from '../../../../src/common/helpers/is-array'
 
 describe('isArray', () => {
   it('should return false for non-arrays', returnFalseForNonArrays)
@@ -11,23 +11,23 @@ class Foo {
 }
 
 function returnFalseForNonArrays (): void {
-  expect(isArray(undefined)).equal(false)
-  expect(isArray(null)).equal(false)
-  expect(isArray(BigInt(0))).equal(false)
-  expect(isArray(true)).equal(false)
-  expect(isArray(0)).equal(false)
-  expect(isArray('')).equal(false)
-  expect(isArray(Symbol(''))).equal(false)
-  expect(isArray({})).equal(false)
-  expect(isArray({ 'constructor': {} })).equal(false)
-  expect(isArray({ 'foo': 'bar' })).equal(false)
-  expect(isArray(Object.create(null))).equal(false)
-  expect(isArray(Object.prototype)).equal(false)
-  expect(isArray(() => {})).equal(false)
-  expect(isArray(Math)).equal(false)
-  expect(isArray(new Foo())).equal(false)
+  expect(isArray(undefined)).eq(false)
+  expect(isArray(null)).eq(false)
+  expect(isArray(BigInt(0))).eq(false)
+  expect(isArray(true)).eq(false)
+  expect(isArray(0)).eq(false)
+  expect(isArray('')).eq(false)
+  expect(isArray(Symbol(''))).eq(false)
+  expect(isArray({})).eq(false)
+  expect(isArray({ 'constructor': {} })).eq(false)
+  expect(isArray({ 'foo': 'bar' })).eq(false)
+  expect(isArray(Object.create(null))).eq(false)
+  expect(isArray(Object.prototype)).eq(false)
+  expect(isArray(() => {})).eq(false)
+  expect(isArray(Math)).eq(false)
+  expect(isArray(new Foo())).eq(false)
 }
 
 function returnTrueForArrays (): void {
-  expect(isArray([1, 2, 3])).equal(true)
+  expect(isArray([1, 2, 3])).eq(true)
 }

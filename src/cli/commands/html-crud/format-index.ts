@@ -1,4 +1,4 @@
-import type { Options } from '../html-api'
+import type { Options } from '../html-crud'
 import { camelize } from '../../../common/helpers/camelize'
 import { formatGroup } from './format-group'
 import { isMatch } from 'micromatch'

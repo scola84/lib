@@ -97,8 +97,8 @@ async function deleteOneRow (): Promise<void> {
       id
     })
 
-    expect(id).equal(1)
-    expect(data).equal(undefined)
+    expect(id).eq(1)
+    expect(data).eq(undefined)
   } finally {
     connection.release()
   }
@@ -162,7 +162,7 @@ async function insertABulkOfRows (): Promise<void> {
       ]
     })
 
-    expect(id).equal(2)
+    expect(id).eq(2)
 
     const data = await connection.selectAll(sql`
       SELECT *
@@ -219,7 +219,7 @@ async function insertOneRow (): Promise<void> {
       id
     })
 
-    expect(id).equal(1)
+    expect(id).eq(1)
     expect(data).eql(expectedData)
   } finally {
     connection.release()
@@ -310,7 +310,7 @@ async function releaseConnection (): Promise<void> {
   const promise = new Promise<void>((resolve, reject) => {
     try {
       connection.release()
-      expect(pool.available).equal(pool.size)
+      expect(pool.available).eq(pool.size)
       resolve()
     } catch (error: unknown) {
       reject(error)
@@ -363,7 +363,7 @@ async function selectAndResolveUndefined (): Promise<void> {
       id: 1
     })
 
-    expect(object).equal(undefined)
+    expect(object).eq(undefined)
   } finally {
     connection.release()
   }
@@ -461,7 +461,7 @@ async function updateOneRow (): Promise<void> {
       id
     })
 
-    expect(id).equal(1)
+    expect(id).eq(1)
     expect(data).include(expectedData)
   } finally {
     connection.release()

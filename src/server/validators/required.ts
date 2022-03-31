@@ -1,7 +1,7 @@
 import type { SchemaField, Validator } from '../helpers'
-import { cast, isNil } from '../../common'
 import type { Struct } from '../../common'
 import type { User } from '../entities'
+import { isNil } from '../../common'
 
 export function required (name: string, field: SchemaField): Validator {
   return (data: Struct, errors: Struct, user?: User) => {
@@ -19,11 +19,11 @@ export function required (name: string, field: SchemaField): Validator {
         break
     }
 
-    const value = cast(data[name]) ?? ''
+    const value = data[name]
 
     if (
       isNil(value) ||
-      value.toString() === ''
+      value === ''
     ) {
       if (field.required === true) {
         if (field.default === undefined) {

@@ -3,12 +3,13 @@
 /**
  * Casts a value to
  *
+ * * Date — a valid date either as a `Date` or a `string`
+ * * boolean — `false`, `true`, `'false'` or `'true'`
+ * * number — a valid number either as a `number` or a `string`
+ * * string — a single quoted boolean, null or undefined
+ * * string — neither a boolean, date, number, null or undefined
  * * null — `null` or `'null'`
  * * undefined — `undefined` or `'undefined'`
- * * boolean — `false`, `true`,  `'false'` or `'true'`
- * * number — a valid number either as a `number` or a `string`
- * * string — any of the above, quoted, e.g. `'\'false\''` is cast to 'false'
- * * string — neither a boolean, number, null or undefined
  *
  * @param value - The value
  * @returns The cast value

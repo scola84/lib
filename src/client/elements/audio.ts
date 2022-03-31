@@ -1,8 +1,8 @@
 import { Media, Mutator, Observer, Propagator } from '../helpers'
+import { isObject, isStruct } from '../../common'
 import type { MediaData } from '../helpers'
 import type { ScolaMediaElement } from './media'
 import type { Struct } from '../../common'
-import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -130,7 +130,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
 
   protected handleJump (event: CustomEvent): void {
     if (
-      isStruct(event.detail) &&
+      isObject(event.detail) &&
       event.detail.delta !== undefined
     ) {
       this.media.jumpTime(Number(event.detail.delta))

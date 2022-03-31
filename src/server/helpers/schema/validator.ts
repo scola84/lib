@@ -19,18 +19,19 @@ export interface SchemaField extends Struct {
   min?: number
   minLength?: number
   mkey?: boolean
+  order?: boolean
   pattern?: RegExp
   pkey?: boolean
   required?: boolean
   rkey?: SchemaFieldKey
   schema?: Schema
-  search?: boolean
+  select?: boolean
   serial?: boolean
-  sort?: boolean
   step?: number
   type: string
   unique?: string
   values?: unknown[]
+  where?: boolean
 }
 
 export interface SchemaFieldKey {

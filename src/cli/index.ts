@@ -5,8 +5,8 @@ try {
     .command('barrel', 'creates a barrel file', {
       executableFile: 'barrel'
     })
-    .command('html-api', 'creates API files from an HTML file', {
-      executableFile: 'html-api'
+    .command('html-crud', 'creates CRUD files from an HTML file', {
+      executableFile: 'html-crud'
     })
     .command('sql-diff', 'dumps the diff of a SQL database and a DDL file', {
       executableFile: 'sql-diff'

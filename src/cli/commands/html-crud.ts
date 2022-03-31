@@ -1,6 +1,6 @@
 import { MssqlDatabase, MysqlDatabase, PostgresqlDatabase, SchemaParser } from '../../server/helpers'
 import type { Schema, SqlDatabase } from '../../server/helpers'
-import { formatDeleteAll, formatDeleteMany, formatDeleteOne, formatIndex, formatInsertMany, formatInsertOne, formatSelectAll, formatSelectMany, formatSelectOne, formatUpdateMany, formatUpdateOne } from './html-api/'
+import { formatDeleteAll, formatDeleteMany, formatDeleteOne, formatIndex, formatInsertMany, formatInsertOne, formatSelectAll, formatSelectMany, formatSelectOne, formatUpdateMany, formatUpdateOne } from './html-crud/'
 import { mkdirSync, writeFileSync } from 'fs-extra'
 import { Command } from 'commander'
 import type { Struct } from '../../common'
@@ -24,7 +24,7 @@ Description:
   Creates TypeScript route handlers and DDL files from an HTML file.
 
 Example:
-  $ scola html-api contact@contact.html#put ./contact
+  $ scola html-crud contact@contact.html#put ./contact
 `)
 
 program
@@ -96,16 +96,16 @@ try {
       if (options.type === 'ts') {
         Object
           .entries({
-            'da': [`${targetDir}/delete-all.ts`, `${formatDeleteAll(schema, relations, options)}\n`],
-            'dm': [`${targetDir}/delete-many.ts`, `${formatDeleteMany(schema, relations, options)}\n`],
-            'do': [`${targetDir}/delete-one.ts`, `${formatDeleteOne(schema, relations, options)}\n`],
-            'im': [`${targetDir}/insert-many.ts`, `${formatInsertMany(schema, relations, options)}\n`],
-            'io': [`${targetDir}/insert-one.ts`, `${formatInsertOne(schema, relations, options)}\n`],
-            'sa': [`${targetDir}/select-all.ts`, `${formatSelectAll(schema, relations, options)}\n`],
-            'sm': [`${targetDir}/select-many.ts`, `${formatSelectMany(schema, relations, options)}\n`],
-            'so': [`${targetDir}/select-one.ts`, `${formatSelectOne(schema, relations, options)}\n`],
-            'um': [`${targetDir}/update-many.ts`, `${formatUpdateMany(schema, relations, options)}\n`],
-            'uo': [`${targetDir}/update-one.ts`, `${formatUpdateOne(schema, relations, options)}\n`]
+            'da': [`${targetDir}/delete-all.ts`, `${formatDeleteAll(schema, options)}\n`],
+            'dm': [`${targetDir}/delete-many.ts`, `${formatDeleteMany(schema, options)}\n`],
+            'do': [`${targetDir}/delete-one.ts`, `${formatDeleteOne(schema, options)}\n`],
+            'im': [`${targetDir}/insert-many.ts`, `${formatInsertMany(schema, options)}\n`],
+            'io': [`${targetDir}/insert-one.ts`, `${formatInsertOne(schema, options)}\n`],
+            'sa': [`${targetDir}/select-all.ts`, `${formatSelectAll(schema, options, relations)}\n`],
+            'sm': [`${targetDir}/select-many.ts`, `${formatSelectMany(schema, options)}\n`],
+            'so': [`${targetDir}/select-one.ts`, `${formatSelectOne(schema, options)}\n`],
+            'um': [`${targetDir}/update-many.ts`, `${formatUpdateMany(schema, options)}\n`],
+            'uo': [`${targetDir}/update-one.ts`, `${formatUpdateOne(schema, options)}\n`]
 
           })
           .filter(([key]) => {

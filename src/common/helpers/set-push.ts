@@ -5,11 +5,16 @@ import { set } from './set'
 
 export function setPush<T = Struct> (struct: T, name: string, value: unknown): T {
   let asArray = false
-  let realName = name
+  let realName: string[] = []
 
-  if (realName.endsWith('[]')) {
+  if (name.endsWith('[]')) {
     asArray = true
-    realName = realName.slice(0, -2)
+
+    realName = name
+      .slice(0, -2)
+      .split('.')
+  } else {
+    realName = name.split('.')
   }
 
   let structValue = get(struct, realName)

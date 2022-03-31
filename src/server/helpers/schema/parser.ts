@@ -145,24 +145,28 @@ export class SchemaParser {
       field.mkey = true
     }
 
+    if (attributes['sc-order'] !== undefined) {
+      field.order = true
+    }
+
     if (attributes['sc-pkey'] !== undefined) {
       field.pkey = true
     }
 
-    if (attributes['sc-search'] !== undefined) {
-      field.search = true
+    if (attributes['sc-select'] !== undefined) {
+      field.select = true
     }
 
     if (attributes['sc-serial'] !== undefined) {
       field.serial = true
     }
 
-    if (attributes['sc-sort'] !== undefined) {
-      field.sort = true
-    }
-
     if (attributes['sc-unique'] !== undefined) {
       field.unique = attributes['sc-unique']
+    }
+
+    if (attributes['sc-where'] !== undefined) {
+      field.where = true
     }
   }
 

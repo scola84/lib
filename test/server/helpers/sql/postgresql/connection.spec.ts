@@ -81,8 +81,8 @@ async function deleteOneRow (): Promise<void> {
       id
     })
 
-    expect(id).equal(1)
-    expect(data).equal(undefined)
+    expect(id).eq(1)
+    expect(data).eq(undefined)
   } finally {
     connection.release()
   }
@@ -146,7 +146,7 @@ async function insertABulkOfRows (): Promise<void> {
       ]
     })
 
-    expect(id).equal(1)
+    expect(id).eq(1)
 
     const data = await connection.selectAll(sql`
       SELECT *
@@ -202,7 +202,7 @@ async function insertOneRow (): Promise<void> {
       id
     })
 
-    expect(id).equal(1)
+    expect(id).eq(1)
     expect(data).eql(expectedData)
   } finally {
     connection.release()
@@ -288,9 +288,9 @@ async function releaseConnection (): Promise<void> {
   const connection = new PostgresqlConnection(await helpers.pool.connect())
 
   try {
-    expect(helpers.pool.idleCount).equal(0)
+    expect(helpers.pool.idleCount).eq(0)
     connection.release()
-    expect(helpers.pool.idleCount).equal(1)
+    expect(helpers.pool.idleCount).eq(1)
   } finally {
     if (helpers.pool.idleCount === 0) {
       connection.release()
@@ -341,7 +341,7 @@ async function selectAndResolveUndefined (): Promise<void> {
       id: 1
     })
 
-    expect(object).equal(undefined)
+    expect(object).eq(undefined)
   } finally {
     connection.release()
   }
@@ -440,7 +440,7 @@ async function updateOneRow (): Promise<void> {
       id
     })
 
-    expect(id).equal(1)
+    expect(id).eq(1)
     expect(data).include(expectedData)
   } finally {
     connection.release()

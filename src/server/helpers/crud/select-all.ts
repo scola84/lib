@@ -16,9 +16,9 @@ export abstract class CrudSelectAllHandler extends CrudHandler {
 
   public async handle (data: CrudSelectAllData): Promise<unknown[]> {
     const authKeys = this.keys.foreign?.filter((key) => {
-      return data.query[key.column] !== undefined
+      return data.query.join?.[key.table] !== undefined
     }) ?? this.keys.related?.filter((key) => {
-      return data.query[key.column] !== undefined
+      return data.query.join?.[key.column] !== undefined
     }) ?? this.keys.primary ?? []
 
     const selectAllQuery = this.database.formatter.createSelectAllQuery(this.object, this.keys, authKeys, data.query, data.user)

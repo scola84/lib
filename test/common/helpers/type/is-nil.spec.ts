@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { isNil } from '../../../../src'
+import { isNil } from '../../../../src/common/helpers/is-nil'
 
 describe('isNil', () => {
   it('should return false for non-nils', returnFalseForNonNils)
@@ -11,23 +11,23 @@ class Foo {
 }
 
 function returnFalseForNonNils (): void {
-  expect(isNil(BigInt(0))).equal(false)
-  expect(isNil(true)).equal(false)
-  expect(isNil(0)).equal(false)
-  expect(isNil('')).equal(false)
-  expect(isNil(Symbol(''))).equal(false)
-  expect(isNil([1, 2, 3])).equal(false)
-  expect(isNil({})).equal(false)
-  expect(isNil({ 'constructor': {} })).equal(false)
-  expect(isNil({ 'foo': 'bar' })).equal(false)
-  expect(isNil(Object.create(null))).equal(false)
-  expect(isNil(Object.prototype)).equal(false)
-  expect(isNil(() => {})).equal(false)
-  expect(isNil(Math)).equal(false)
-  expect(isNil(new Foo())).equal(false)
+  expect(isNil(BigInt(0))).eq(false)
+  expect(isNil(true)).eq(false)
+  expect(isNil(0)).eq(false)
+  expect(isNil('')).eq(false)
+  expect(isNil(Symbol(''))).eq(false)
+  expect(isNil([1, 2, 3])).eq(false)
+  expect(isNil({})).eq(false)
+  expect(isNil({ 'constructor': {} })).eq(false)
+  expect(isNil({ 'foo': 'bar' })).eq(false)
+  expect(isNil(Object.create(null))).eq(false)
+  expect(isNil(Object.prototype)).eq(false)
+  expect(isNil(() => {})).eq(false)
+  expect(isNil(Math)).eq(false)
+  expect(isNil(new Foo())).eq(false)
 }
 
 function returnTrueForNils (): void {
-  expect(isNil(undefined)).equal(true)
-  expect(isNil(null)).equal(true)
+  expect(isNil(undefined)).eq(true)
+  expect(isNil(null)).eq(true)
 }

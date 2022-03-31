@@ -3,15 +3,13 @@ import type { SqlQueryKeys } from '../../../server/helpers/sql'
 import type { Struct } from '../../../common'
 import { sortKeys } from './sort-keys'
 
-export function createKeys (object: string, schema: Schema, relations: Struct<Schema>): SqlQueryKeys {
+export function createKeys (object: string, schema: Schema): SqlQueryKeys {
   return {
     auth: createAuthKeys(schema),
     foreign: createForeignKeys(schema),
     modified: createModifiedKey(object, schema),
     primary: createPrimaryKeys(object, schema),
-    related: createRelatedKeys(schema),
-    search: createSearchKeys(object, schema, relations),
-    sort: createSortKeys(object, schema, relations)
+    related: createRelatedKeys(schema)
   }
 }
 
@@ -101,62 +99,6 @@ function createRelatedKeys (schema: Schema): SchemaFieldKey[] | undefined {
     .map(([,field]) => {
       return field.rkey
     }) as SchemaFieldKey[]
-
-  if (keys.length === 0) {
-    return undefined
-  }
-
-  return keys
-}
-
-function createSearchKeys (object: string, schema: Schema, relations: Struct<Schema>): SchemaFieldKey[] | undefined {
-  const keys = Object
-    .entries({
-      [object]: schema,
-      ...relations
-    })
-    .map(([table, tableSchema]) => {
-      return Object
-        .entries(tableSchema)
-        .filter(([,field]) => {
-          return field.search === true
-        })
-        .map(([column]) => {
-          return {
-            column,
-            table
-          }
-        })
-    })
-    .flat()
-
-  if (keys.length === 0) {
-    return undefined
-  }
-
-  return keys
-}
-
-function createSortKeys (object: string, schema: Schema, relations: Struct<Schema>): SchemaFieldKey[] | undefined {
-  const keys = Object
-    .entries({
-      [object]: schema,
-      ...relations
-    })
-    .map(([table, tableSchema]) => {
-      return Object
-        .entries(tableSchema)
-        .filter(([,field]) => {
-          return field.sort === true
-        })
-        .map(([column]) => {
-          return {
-            column,
-            table
-          }
-        })
-    })
-    .flat()
 
   if (keys.length === 0) {
     return undefined

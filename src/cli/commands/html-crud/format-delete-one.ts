@@ -1,6 +1,5 @@
-import type { Options } from '../html-api'
+import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
-import type { Struct } from '../../../common'
 import { createFileFields } from './create-file-fields'
 import { createModifiedFields } from './create-modified-fields'
 import { createPrimaryFields } from './create-primary-fields'
@@ -10,20 +9,20 @@ import { hyphenize } from '../../../common'
 import { pickField } from './pick-field'
 import { sortKeys } from './sort-keys'
 
-export function formatDeleteMany (schema: Schema, relations: Struct<Schema>, options: Options): string {
+export function formatDeleteOne (schema: Schema, options: Options): string {
   return `
-import { CrudDeleteManyHandler } from '@scola/lib'
+import { CrudDeleteOneHandler } from '@scola/lib'
 
-export class DeleteManyHandler extends CrudDeleteManyHandler {
-  public keys = ${formatKeys(options.object, schema, relations, 4)}
+export class DeleteOneHandler extends CrudDeleteOneHandler {
+  public keys = ${formatKeys(options.object, schema, 4)}
 
   public object = '${options.object}'
 
-  public schema: CrudDeleteManyHandler['schema'] = {
+  public schema: CrudDeleteOneHandler['schema'] = {
     body: ${formatBodySchema(schema, 6)}
   }
 
-  public url = '${options.url}/delete/many/${hyphenize(options.object)}'
+  public url = '${options.url}/delete/one/${hyphenize(options.object)}'
 }
 `.trim()
 }
@@ -48,7 +47,7 @@ function formatBodySchema (schema: Schema, space: number): string {
             [name]: pickField(field)
           }
         }, {}),
-      type: 'array'
+      type: 'struct'
     },
     space
   ).trimStart()

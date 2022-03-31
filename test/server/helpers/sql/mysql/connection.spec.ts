@@ -33,6 +33,7 @@ const helpers = new Helpers()
 beforeAll(async () => {
   helpers.pool = createPool({
     database: 'scola',
+    multipleStatements: true,
     password: 'root',
     user: 'root'
   })
@@ -82,8 +83,8 @@ async function deleteOneRow (): Promise<void> {
       id
     })
 
-    expect(id).equal(1)
-    expect(data).equal(undefined)
+    expect(id).eq(1)
+    expect(data).eq(undefined)
   } finally {
     connection.release()
   }
@@ -147,7 +148,7 @@ async function insertABulkOfRows (): Promise<void> {
       ]
     })
 
-    expect(id).equal(1)
+    expect(id).eq(1)
 
     const data = await connection.selectAll(sql`
       SELECT *
@@ -204,7 +205,7 @@ async function insertOneRow (): Promise<void> {
       id
     })
 
-    expect(id).equal(1)
+    expect(id).eq(1)
     expect(data).eql(expectedData)
   } finally {
     connection.release()
@@ -294,7 +295,7 @@ async function releaseConnection (): Promise<void> {
   const promise = new Promise<void>((resolve, reject) => {
     helpers.pool.once('release', (releasedConnection: MysqlConnection['connection']) => {
       try {
-        expect(releasedConnection.threadId).equal(connection.connection.threadId)
+        expect(releasedConnection.threadId).eq(connection.connection.threadId)
         resolve()
       } catch (error: unknown) {
         reject(error)
@@ -345,7 +346,7 @@ async function selectAndResolveUndefined (): Promise<void> {
     id: 1
   })
 
-  expect(object).equal(undefined)
+  expect(object).eq(undefined)
 }
 
 async function selectOneAndRejectUndefined (): Promise<void> {
@@ -439,7 +440,7 @@ async function updateOneRow (): Promise<void> {
       id
     })
 
-    expect(id).equal(1)
+    expect(id).eq(1)
     expect(data).include(expectedData)
   } finally {
     connection.release()

@@ -93,20 +93,20 @@ export class PostgresqlFormatter extends SqlFormatter {
   }
 
   protected createSelectAllPartsLimit (query: Query): SqlQueryParts {
-    const values = Struct.create()
+    const values = Struct.create<Query['limit']>({
+      count: query.limit.count
+    })
 
     let limit = null
     let order = null
     let where = null
 
-    if (query.cursor === undefined) {
-      values.limit = query.limit
-      values.offset = query.offset ?? 0
-      limit = 'LIMIT $(limit) OFFSET $(offset)'
+    if (query.limit.cursor === undefined) {
+      values.offset = query.limit.offset ?? 0
+      limit = 'LIMIT $(count) OFFSET $(offset)'
     } else {
-      values.limit = query.limit
-      values.cursor = query.cursor
-      limit = 'LIMIT $(limit) OFFSET 0'
+      values.cursor = query.limit.cursor
+      limit = 'LIMIT $(count) OFFSET 0'
       order = `$[${'cursor'}] ASC`
       where = `$[${'cursor'}] > $(cursor)`
     }

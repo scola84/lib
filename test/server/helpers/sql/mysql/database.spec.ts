@@ -55,6 +55,7 @@ beforeAll(async () => {
 
   helpers.pool = createPool({
     database: 'scola',
+    multipleStatements: true,
     password: 'root',
     user: 'root'
   })
@@ -85,8 +86,8 @@ async function createAPoolWithOptions (): Promise<void> {
 
   const pool = database.pool as unknown as ExtendedPool
 
-  expect(pool.pool.constructor.name).equal('Pool')
-  expect(pool.pool.config.connectionLimit).equal(15)
+  expect(pool.pool.constructor.name).eq('Pool')
+  expect(pool.pool.config.connectionLimit).eq(15)
 }
 
 async function createAPoolWithSslOptions (): Promise<void> {
@@ -104,8 +105,8 @@ async function createAPoolWithSslOptions (): Promise<void> {
 
   const pool = database.pool as unknown as ExtendedPool
 
-  expect(pool.pool.constructor.name).equal('Pool')
-  expect(pool.pool.config.connectionConfig.ssl.ca.toString()).equal('CA certificate')
+  expect(pool.pool.constructor.name).eq('Pool')
+  expect(pool.pool.config.connectionConfig.ssl.ca.toString()).eq('CA certificate')
 }
 
 async function deleteOneRow (): Promise<void> {
@@ -139,7 +140,7 @@ async function deleteOneRow (): Promise<void> {
     })
 
     expect(all.length).gt(0)
-    expect(free.length).equal(all.length)
+    expect(free.length).eq(all.length)
   } finally {
     await database.stop()
   }
@@ -169,7 +170,7 @@ async function depopulate (): Promise<void> {
     })
 
     expect(all.length).gt(0)
-    expect(free.length).equal(all.length)
+    expect(free.length).eq(all.length)
   } finally {
     await database.stop()
   }
@@ -202,7 +203,7 @@ async function insertABulkOfRows (): Promise<void> {
     })
 
     expect(all.length).gt(0)
-    expect(free.length).equal(all.length)
+    expect(free.length).eq(all.length)
   } finally {
     await database.stop()
   }
@@ -232,7 +233,7 @@ async function insertOneRow (): Promise<void> {
     })
 
     expect(all.length).gt(0)
-    expect(free.length).equal(all.length)
+    expect(free.length).eq(all.length)
   } finally {
     await database.stop()
   }
@@ -269,7 +270,7 @@ async function parseABigIntAsANumber (): Promise<void> {
       id
     })
 
-    expect(data.id).equal(id)
+    expect(data.id).eq(id)
   } finally {
     await database.stop()
   }
@@ -299,7 +300,7 @@ async function populate (): Promise<void> {
     })
 
     expect(all.length).gt(0)
-    expect(free.length).equal(all.length)
+    expect(free.length).eq(all.length)
   } finally {
     await database.stop()
   }
@@ -329,7 +330,7 @@ async function query (): Promise<void> {
     })
 
     expect(all.length).gt(0)
-    expect(free.length).equal(all.length)
+    expect(free.length).eq(all.length)
   } finally {
     await database.stop()
   }
@@ -357,7 +358,7 @@ async function selectMultipleRows (): Promise<void> {
     `)
 
     expect(all.length).gt(0)
-    expect(free.length).equal(all.length)
+    expect(free.length).eq(all.length)
   } finally {
     await database.stop()
   }
@@ -388,7 +389,7 @@ async function selectAndResolveUndefined (): Promise<void> {
     })
 
     expect(all.length).gt(0)
-    expect(free.length).equal(all.length)
+    expect(free.length).eq(all.length)
   } finally {
     await database.stop()
   }
@@ -419,7 +420,7 @@ async function selectOneAndRejectUndefined (): Promise<void> {
     })
 
     expect(all.length).gt(0)
-    expect(free.length).equal(all.length)
+    expect(free.length).eq(all.length)
   } catch (error: unknown) {
     expect(String(error)).match(/Object is undefined/u)
   } finally {
@@ -450,7 +451,7 @@ async function startADatabaseWithAPopulation (): Promise<void> {
       id: 1
     })
 
-    expect(data.id).equal(1)
+    expect(data.id).eq(1)
   } finally {
     await database.stop()
   }
@@ -493,7 +494,7 @@ async function streamRows (): Promise<void> {
       stream.on('close', () => {
         try {
           expect(all.length).gt(0)
-          expect(free.length).equal(all.length)
+          expect(free.length).eq(all.length)
           resolve()
         } catch (error: unknown) {
           reject(error)
@@ -538,7 +539,7 @@ async function updateOneRow (): Promise<void> {
     })
 
     expect(all.length).gt(0)
-    expect(free.length).equal(all.length)
+    expect(free.length).eq(all.length)
   } finally {
     await database.stop()
   }

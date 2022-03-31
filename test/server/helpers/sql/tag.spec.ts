@@ -15,7 +15,7 @@ describe('tag', () => {
       VALUES ('${value}')
     `
 
-    expect(string).equal(expectedString)
+    expect(string).eq(expectedString)
   })
 
   it('should return a string when no values are passed', () => {
@@ -29,6 +29,6 @@ describe('tag', () => {
       VALUES ('test')
     `
 
-    expect(string).equal(expectedString)
+    expect(string).eq(expectedString)
   })
 })

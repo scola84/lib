@@ -79,7 +79,7 @@ async function createAPoolWithOptions (): Promise<void> {
   const pool = database.pool as unknown as ExtendedPool
 
   expect(pool).instanceOf(Pool)
-  expect(pool.options.max).equal(15)
+  expect(pool.options.max).eq(15)
 }
 
 async function createAPoolWithSslOptions (): Promise<void> {
@@ -98,7 +98,7 @@ async function createAPoolWithSslOptions (): Promise<void> {
   const pool = database.pool as unknown as ExtendedPool
 
   expect(pool).instanceOf(Pool)
-  expect(pool.options.ssl.ca.toString()).equal('CA certificate')
+  expect(pool.options.ssl.ca.toString()).eq('CA certificate')
 }
 
 async function deleteOneRow (): Promise<void> {
@@ -125,7 +125,7 @@ async function deleteOneRow (): Promise<void> {
     })
 
     expect(database.pool.totalCount).gt(0)
-    expect(database.pool.idleCount).equal(database.pool.totalCount)
+    expect(database.pool.idleCount).eq(database.pool.totalCount)
   } finally {
     await database.stop()
   }
@@ -148,7 +148,7 @@ async function depopulate (): Promise<void> {
     })
 
     expect(database.pool.totalCount).gt(0)
-    expect(database.pool.idleCount).equal(database.pool.totalCount)
+    expect(database.pool.idleCount).eq(database.pool.totalCount)
   } finally {
     await database.stop()
   }
@@ -174,7 +174,7 @@ async function insertABulkOfRows (): Promise<void> {
     })
 
     expect(database.pool.totalCount).gt(0)
-    expect(database.pool.idleCount).equal(database.pool.totalCount)
+    expect(database.pool.idleCount).eq(database.pool.totalCount)
   } finally {
     await database.stop()
   }
@@ -203,7 +203,7 @@ async function insertOneRow (): Promise<void> {
     })
 
     expect(database.pool.totalCount).gt(0)
-    expect(database.pool.idleCount).equal(database.pool.totalCount)
+    expect(database.pool.idleCount).eq(database.pool.totalCount)
   } finally {
     await database.stop()
   }
@@ -240,7 +240,7 @@ async function parseABigIntAsANumber (): Promise<void> {
       id
     })
 
-    expect(data.id).equal(id)
+    expect(data.id).eq(id)
   } finally {
     await database.stop()
   }
@@ -263,7 +263,7 @@ async function populate (): Promise<void> {
     })
 
     expect(database.pool.totalCount).gt(0)
-    expect(database.pool.idleCount).equal(database.pool.totalCount)
+    expect(database.pool.idleCount).eq(database.pool.totalCount)
   } finally {
     await database.stop()
   }
@@ -382,7 +382,7 @@ async function startADatabaseWithAPopulation (): Promise<void> {
       id: 1
     })
 
-    expect(data.id).equal(1)
+    expect(data.id).eq(1)
   } finally {
     await database.stop()
   }
@@ -418,7 +418,7 @@ async function streamRows (): Promise<void> {
       stream.on('close', () => {
         try {
           expect(database.pool.totalCount).gt(0)
-          expect(database.pool.idleCount).equal(database.pool.totalCount)
+          expect(database.pool.idleCount).eq(database.pool.totalCount)
           resolve()
         } catch (error: unknown) {
           reject(error)
@@ -456,7 +456,7 @@ async function updateOneRow (): Promise<void> {
     })
 
     expect(database.pool.totalCount).gt(0)
-    expect(database.pool.idleCount).equal(database.pool.totalCount)
+    expect(database.pool.idleCount).eq(database.pool.totalCount)
   } finally {
     await database.stop()
   }

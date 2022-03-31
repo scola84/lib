@@ -1,17 +1,16 @@
-import type { Options } from '../html-api'
+import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
-import type { Struct } from '../../../common'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
 import { hyphenize } from '../../../common'
 import { pickField } from './pick-field'
 
-export function formatUpdateOne (schema: Schema, relations: Struct<Schema>, options: Options): string {
+export function formatUpdateOne (schema: Schema, options: Options): string {
   return `
 import { CrudUpdateOneHandler } from '@scola/lib'
 
 export class UpdateOneHandler extends CrudUpdateOneHandler {
-  public keys = ${formatKeys(options.object, schema, relations, 4)}
+  public keys = ${formatKeys(options.object, schema, 4)}
 
   public object = '${options.object}'
 

@@ -1,6 +1,5 @@
-import type { Options } from '../html-api'
+import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
-import type { Struct } from '../../../common'
 import { createFileFields } from './create-file-fields'
 import { createModifiedFields } from './create-modified-fields'
 import { createPrimaryFields } from './create-primary-fields'
@@ -10,25 +9,25 @@ import { hyphenize } from '../../../common'
 import { pickField } from './pick-field'
 import { sortKeys } from './sort-keys'
 
-export function formatDeleteOne (schema: Schema, relations: Struct<Schema>, options: Options): string {
+export function formatSelectOne (schema: Schema, options: Options): string {
   return `
-import { CrudDeleteOneHandler } from '@scola/lib'
+import { CrudSelectOneHandler } from '@scola/lib'
 
-export class DeleteOneHandler extends CrudDeleteOneHandler {
-  public keys = ${formatKeys(options.object, schema, relations, 4)}
+export class SelectOneHandler extends CrudSelectOneHandler {
+  public keys = ${formatKeys(options.object, schema, 4)}
 
   public object = '${options.object}'
 
-  public schema: CrudDeleteOneHandler['schema'] = {
-    body: ${formatBodySchema(schema, 6)}
+  public schema: CrudSelectOneHandler['schema'] = {
+    query: ${formatQuerySchema(schema, 6)}
   }
 
-  public url = '${options.url}/delete/one/${hyphenize(options.object)}'
+  public url = '${options.url}/select/one/${hyphenize(options.object)}'
 }
 `.trim()
 }
 
-function createBodyFields (schema: Schema): Schema {
+function createQueryFields (schema: Schema): Schema {
   return sortKeys({
     ...createPrimaryFields(schema),
     ...createModifiedFields(schema),
@@ -36,12 +35,12 @@ function createBodyFields (schema: Schema): Schema {
   })
 }
 
-function formatBodySchema (schema: Schema, space: number): string {
+function formatQuerySchema (schema: Schema, space: number): string {
   return formatCode(
     {
       required: true,
       schema: Object
-        .entries(createBodyFields(schema))
+        .entries(createQueryFields(schema))
         .reduce((result, [name, field]) => {
           return {
             ...result,

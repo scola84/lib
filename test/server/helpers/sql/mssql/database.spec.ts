@@ -86,7 +86,7 @@ async function createAPoolWithOptions (): Promise<void> {
   const pool = database.pool as unknown as ExtendedPool
 
   expect(pool).instanceof(ConnectionPool)
-  expect(pool.config.parseJSON).equal(true)
+  expect(pool.config.parseJSON).eq(true)
 }
 
 async function deleteOneRow (): Promise<void> {
@@ -115,7 +115,7 @@ async function deleteOneRow (): Promise<void> {
     const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
-    expect(pool.available).equal(pool.size)
+    expect(pool.available).eq(pool.size)
   } finally {
     await database.stop()
   }
@@ -140,7 +140,7 @@ async function depopulate (): Promise<void> {
     const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
-    expect(pool.available).equal(pool.size)
+    expect(pool.available).eq(pool.size)
   } finally {
     await database.stop()
   }
@@ -168,7 +168,7 @@ async function insertABulkOfRows (): Promise<void> {
     const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
-    expect(pool.available).equal(pool.size)
+    expect(pool.available).eq(pool.size)
   } finally {
     await database.stop()
   }
@@ -193,7 +193,7 @@ async function insertOneRow (): Promise<void> {
     const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
-    expect(pool.available).equal(pool.size)
+    expect(pool.available).eq(pool.size)
   } finally {
     await database.stop()
   }
@@ -231,7 +231,7 @@ async function parseABigIntAsANumber (): Promise<void> {
     })
 
     // https://github.com/tediousjs/tedious/issues/678
-    expect(data.id).equal(String(id))
+    expect(data.id).eq(String(id))
   } finally {
     await database.stop()
   }
@@ -256,7 +256,7 @@ async function populate (): Promise<void> {
     const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
-    expect(pool.available).equal(pool.size)
+    expect(pool.available).eq(pool.size)
   } finally {
     await database.stop()
   }
@@ -281,7 +281,7 @@ async function query (): Promise<void> {
     const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
-    expect(pool.available).equal(pool.size)
+    expect(pool.available).eq(pool.size)
   } finally {
     await database.stop()
   }
@@ -304,7 +304,7 @@ async function selectMultipleRows (): Promise<void> {
     const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
-    expect(pool.available).equal(pool.size)
+    expect(pool.available).eq(pool.size)
   } finally {
     await database.stop()
   }
@@ -330,7 +330,7 @@ async function selectAndResolveUndefined (): Promise<void> {
     const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
-    expect(pool.available).equal(pool.size)
+    expect(pool.available).eq(pool.size)
   } finally {
     await database.stop()
   }
@@ -356,7 +356,7 @@ async function selectOneAndRejectUndefined (): Promise<void> {
     const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
-    expect(pool.available).equal(pool.size)
+    expect(pool.available).eq(pool.size)
   } catch (error: unknown) {
     expect(String(error)).match(/Object is undefined/u)
   } finally {
@@ -387,7 +387,7 @@ async function startADatabaseWithAPopulation (): Promise<void> {
       id: 1
     })
 
-    expect(data.id).equal('1')
+    expect(data.id).eq('1')
   } finally {
     await database.stop()
   }
@@ -425,7 +425,7 @@ async function streamRows (): Promise<void> {
       stream.on('close', () => {
         try {
           expect(pool.size).gt(0)
-          expect(pool.available).equal(pool.size)
+          expect(pool.available).eq(pool.size)
           resolve()
         } catch (error: unknown) {
           reject(error)
@@ -465,7 +465,7 @@ async function updateOneRow (): Promise<void> {
     const pool = database.pool as unknown as ExtendedPool
 
     expect(pool.size).gt(0)
-    expect(pool.available).equal(pool.size)
+    expect(pool.available).eq(pool.size)
   } finally {
     await database.stop()
   }

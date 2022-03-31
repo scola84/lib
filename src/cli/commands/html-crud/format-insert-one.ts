@@ -1,17 +1,16 @@
-import type { Options } from '../html-api'
+import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
-import type { Struct } from '../../../common'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
 import { hyphenize } from '../../../common'
 import { pickField } from './pick-field'
 
-export function formatInsertOne (schema: Schema, relations: Struct<Schema>, options: Options): string {
+export function formatInsertOne (schema: Schema, options: Options): string {
   return `
 import { CrudInsertOneHandler } from '@scola/lib'
 
 export class InsertOneHandler extends CrudInsertOneHandler {
-  public keys = ${formatKeys(options.object, schema, relations, 4)}
+  public keys = ${formatKeys(options.object, schema, 4)}
 
   public object = '${options.object}'
 
@@ -50,13 +49,13 @@ function formatBodySchema (schema: Schema, space: number): string {
   ).trimStart()
 }
 
-function formatKeys (object: string, schema: Schema, relations: Struct<Schema>, space: number): string {
+function formatKeys (object: string, schema: Schema, space: number): string {
   const {
     auth,
     foreign,
     primary,
     related
-  } = createKeys(object, schema, relations)
+  } = createKeys(object, schema)
 
   return formatCode(
     {

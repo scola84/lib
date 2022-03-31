@@ -1,10 +1,10 @@
-import { cast, isDate } from '../../common'
 import type { Struct } from '../../common'
 import type { Validator } from '../helpers'
+import { isDate } from '../../common'
 
 export function time (name: string): Validator {
   return (data: Struct, errors: Struct) => {
-    const value = cast(data[name]) ?? ''
+    const value = data[name]
 
     if (!isDate(value)) {
       errors[name] = {

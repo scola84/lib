@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { isPrimitive } from '../../../../src'
+import { isPrimitive } from '../../../../src/common/helpers/is-primitive'
 
 describe('isPrimitive', () => {
   it('should return false for non-primitives', returnFalseForNonPrimitives)
@@ -11,23 +11,23 @@ class Foo {
 }
 
 function returnFalseForNonPrimitives (): void {
-  expect(isPrimitive(undefined)).equal(false)
-  expect(isPrimitive(null)).equal(false)
-  expect(isPrimitive([1, 2, 3])).equal(false)
-  expect(isPrimitive({})).equal(false)
-  expect(isPrimitive({ 'constructor': {} })).equal(false)
-  expect(isPrimitive({ 'foo': 'bar' })).equal(false)
-  expect(isPrimitive(Object.create(null))).equal(false)
-  expect(isPrimitive(Object.prototype)).equal(false)
-  expect(isPrimitive(() => {})).equal(false)
-  expect(isPrimitive(Math)).equal(false)
-  expect(isPrimitive(new Foo())).equal(false)
+  expect(isPrimitive(undefined)).eq(false)
+  expect(isPrimitive(null)).eq(false)
+  expect(isPrimitive([1, 2, 3])).eq(false)
+  expect(isPrimitive({})).eq(false)
+  expect(isPrimitive({ 'constructor': {} })).eq(false)
+  expect(isPrimitive({ 'foo': 'bar' })).eq(false)
+  expect(isPrimitive(Object.create(null))).eq(false)
+  expect(isPrimitive(Object.prototype)).eq(false)
+  expect(isPrimitive(() => {})).eq(false)
+  expect(isPrimitive(Math)).eq(false)
+  expect(isPrimitive(new Foo())).eq(false)
 }
 
 function returnTrueForPrimitives (): void {
-  expect(isPrimitive(BigInt(0))).equal(true)
-  expect(isPrimitive(true)).equal(true)
-  expect(isPrimitive(0)).equal(true)
-  expect(isPrimitive('')).equal(true)
-  expect(isPrimitive(Symbol(''))).equal(true)
+  expect(isPrimitive(BigInt(0))).eq(true)
+  expect(isPrimitive(true)).eq(true)
+  expect(isPrimitive(0)).eq(true)
+  expect(isPrimitive('')).eq(true)
+  expect(isPrimitive(Symbol(''))).eq(true)
 }

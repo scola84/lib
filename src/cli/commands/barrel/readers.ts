@@ -1,6 +1,6 @@
 import type { Struct } from '../../../common'
-import { capitalize } from '../../../common'
 import { readdirSync } from 'fs-extra'
+import { toCaps } from '../../../common'
 
 export const readers: Struct<((targetDir: string) => string[][]) | undefined> = {
   html: (targetDir: string) => {
@@ -13,7 +13,7 @@ export const readers: Struct<((targetDir: string) => string[][]) | undefined> = 
         return [
           file,
           base,
-          capitalize(base, true)
+          toCaps(base, true)
         ]
       })
   },
@@ -27,7 +27,7 @@ export const readers: Struct<((targetDir: string) => string[][]) | undefined> = 
         return [
           base,
           base,
-          capitalize(base, true)
+          toCaps(base, true)
         ]
       })
   }

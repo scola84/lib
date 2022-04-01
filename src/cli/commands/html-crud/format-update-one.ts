@@ -3,7 +3,7 @@ import type { Schema } from '../../../server/helpers/schema'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
 import { pickField } from './pick-field'
-import { rejoin } from '../../../common'
+import { toJoint } from '../../../common'
 
 export function formatUpdateOne (schema: Schema, options: Options): string {
   return `
@@ -18,7 +18,7 @@ export class UpdateOneHandler extends CrudUpdateOneHandler {
     body: ${formatBodySchema(schema, 6)}
   }
 
-  public url = '${options.url}/update/one/${rejoin(options.object, '-')}'
+  public url = '${options.url}/update/one/${toJoint(options.object, '-')}'
 }
 `.trim()
 }

@@ -7,6 +7,7 @@ import type { Struct } from '../../../common'
 import { createQueueRun } from '../../entities'
 import { pipeline } from '../stream'
 import { sql } from '../sql'
+import { toString } from '../../../common'
 
 export interface QueueRunnerOptions {
   /**
@@ -118,7 +119,7 @@ export class QueueRunner {
           await this.store.rPush(run.name, (await this.insertQueueTask(run, payload)).id.toString())
           finish()
         } catch (error: unknown) {
-          finish(new Error(String(error)))
+          finish(new Error(toString(error)))
         }
       }
     })
@@ -259,7 +260,7 @@ export class QueueRunner {
       WHERE id = $(id)
     `, {
       id: run.id,
-      reason: String(error)
+      reason: toString(error)
     })
   }
 

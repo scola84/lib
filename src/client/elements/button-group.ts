@@ -111,6 +111,6 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
   }
 
   protected selectButtons (): HTMLElement[] {
-    return Array.from(this.querySelectorAll<HTMLElement>('button[sc-button-group]'))
+    return Array.from(this.querySelectorAll<HTMLButtonElement>('button[sc-button-group]'))
   }
 }

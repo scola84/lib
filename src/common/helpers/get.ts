@@ -1,27 +1,29 @@
+import { cast } from './cast'
 import { isArray } from './is-array'
 import { isObject } from './is-object'
 
 export function get (value: unknown, path: unknown[] | string): unknown {
-  let result: unknown = value
-  let steps = path
+  let keys = path
 
-  if (typeof steps === 'string') {
-    steps = steps.split(/[._-]/u)
+  if (typeof keys === 'string') {
+    keys = keys
+      .split('.')
+      .map(cast)
   }
 
-  for (const key of steps) {
+  return keys.reduce((result, key) => {
     if (
       typeof key === 'number' &&
       isArray(result)
     ) {
-      result = result[key]
+      return result[key]
     } else if (
       typeof key === 'string' &&
       isObject(result)
     ) {
-      result = result[key]
+      return result[key]
     }
-  }
 
-  return result ?? undefined
+    return undefined
+  }, value)
 }

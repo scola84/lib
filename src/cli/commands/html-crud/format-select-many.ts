@@ -6,7 +6,7 @@ import { createPrimaryFields } from './create-primary-fields'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
 import { pickField } from './pick-field'
-import { rejoin } from '../../../common'
+import { toJoint } from '../../../common'
 import { sortKeys } from './sort-keys'
 
 export function formatSelectMany (schema: Schema, options: Options): string {
@@ -23,7 +23,7 @@ export class SelectManyHandler extends CrudSelectManyHandler {
     headers: ${formatHeadersSchema(6)}
   }
 
-  public url = '${options.url}/select/many/${rejoin(options.object, '-')}'
+  public url = '${options.url}/select/many/${toJoint(options.object, '-')}'
 }
 `.trim()
 }

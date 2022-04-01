@@ -1,4 +1,4 @@
-import { cast, rejoin } from '../../../common'
+import { cast, toJoint } from '../../../common'
 import type { ScolaElement } from '../../elements/element'
 
 export function elementsAttrs (observer: ScolaElement, observable: ScolaElement): void {
@@ -9,7 +9,7 @@ export function elementsAttrs (observer: ScolaElement, observable: ScolaElement)
         ?.split(' ')
         .some((someValue) => {
           const castValue = cast(someValue)
-          const observeValue = observable.getAttribute(rejoin(name, '-'))
+          const observeValue = observable.getAttribute(toJoint(name, '-'))
 
           if (castValue === true) {
             return observeValue !== null

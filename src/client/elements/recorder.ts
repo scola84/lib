@@ -6,6 +6,7 @@ import { ImageCapture } from 'image-capture'
 import type { Options } from 'recordrtc'
 import type RtcRecorder from 'recordrtc'
 import type { ScolaElement } from './element'
+import { toString } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -434,7 +435,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   protected handleError (error: unknown): void {
     this.propagator.dispatch<ScolaError>('error', [{
       code: 'err_recorder',
-      message: this.propagator.extractMessage(error)
+      message: toString(error)
     }])
   }
 

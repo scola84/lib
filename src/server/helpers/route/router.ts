@@ -1,7 +1,7 @@
 import type { IncomingMessage, Server, ServerResponse } from 'http'
+import { Struct, toString } from '../../../common'
 import type { Logger } from 'pino'
 import type { RouteHandler } from './handler'
-import { Struct } from '../../../common'
 import { URL } from 'url'
 import { createServer } from 'http'
 
@@ -58,7 +58,7 @@ export class Router {
           .catch((error: unknown) => {
             this.logger?.error({
               context: 'handle-route'
-            }, String(error))
+            }, toString(error))
           })
       })
 
@@ -108,7 +108,7 @@ export class Router {
         await handler.handleRoute({
           headers: request.headers,
           method: request.method ?? 'GET',
-          query: Struct.fromString(decodeURI(url.search), true),
+          query: Struct.fromQuery(url.search, true),
           url: url
         }, response, request)
       }

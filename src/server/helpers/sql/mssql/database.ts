@@ -1,4 +1,4 @@
-import { cast, set } from '../../../../common'
+import { cast, set, toString } from '../../../../common'
 import { ConnectionPool } from 'mssql'
 import { MssqlConnection } from './connection'
 import { MssqlFormatter } from './formatter'
@@ -36,7 +36,7 @@ export class MssqlDatabase extends SqlDatabase {
       this.pool.on('error', (error) => {
         this.logger?.error({
           context: 'pool'
-        }, String(error))
+        }, toString(error))
       })
 
       await this.pool.connect()

@@ -5,7 +5,8 @@ describe('isStruct', () => {
   describe('should return', () => {
     it('false for non-structs', falseForNonStructs)
     it('true for structs', trueForStructs)
-    it('a struct from a string', aStructFromAString)
+    it('a struct from a query', aStructFromAQuery)
+    it('a struct from json', aStructFromJson)
   })
 })
 
@@ -37,7 +38,7 @@ function trueForStructs (): void {
   expect(Struct.isStruct(Struct.create())).eq(true)
 }
 
-function aStructFromAString (): void {
+function aStructFromAQuery (): void {
   const expectedNotNull = {
     a: {
       b: {
@@ -60,7 +61,27 @@ function aStructFromAString (): void {
   }
 
   const string = 'a.b.c=c&d.e.f='
+  const actualNotNull = Struct.fromQuery(string)
+  const actualNull = Struct.fromQuery(string, true)
 
-  expect(Struct.fromString(string)).eql(expectedNotNull)
-  expect(Struct.fromString(string, true)).eql(expectedNull)
+  expect(Struct.isStruct(actualNotNull)).eq(true)
+  expect(actualNotNull).eql(expectedNotNull)
+  expect(Struct.isStruct(actualNull)).eq(true)
+  expect(actualNull).eql(expectedNull)
+}
+
+function aStructFromJson (): void {
+  const expected = Struct.create({
+    a: {
+      b: {
+        c: 'c'
+      }
+    }
+  })
+
+  const string = '{"a":{"b":{"c":"c"}}}'
+  const actual = Struct.fromJson(string)
+
+  expect(Struct.isStruct(actual)).eq(true)
+  expect(actual).eql(expected)
 }

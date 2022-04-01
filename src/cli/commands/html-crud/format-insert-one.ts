@@ -3,7 +3,7 @@ import type { Schema } from '../../../server/helpers/schema'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
 import { pickField } from './pick-field'
-import { rejoin } from '../../../common'
+import { toJoint } from '../../../common'
 
 export function formatInsertOne (schema: Schema, options: Options): string {
   return `
@@ -18,7 +18,7 @@ export class InsertOneHandler extends CrudInsertOneHandler {
     body: ${formatBodySchema(schema, 6)}
   }
 
-  public url = '${options.url}/insert/one/${rejoin(options.object, '-')}'
+  public url = '${options.url}/insert/one/${toJoint(options.object, '-')}'
 }
 `.trim()
 }

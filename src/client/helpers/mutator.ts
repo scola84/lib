@@ -1,4 +1,4 @@
-import { cast, isPrimitive, isStruct, rejoin } from '../../common'
+import { cast, isPrimitive, isStruct, toJoint } from '../../common'
 import { Sanitizer } from './sanitizer'
 import type { ScolaElement } from '../elements'
 import type { Struct } from '../../common'
@@ -63,7 +63,7 @@ export class Mutator {
       Object
         .entries(data)
         .map(([name, value]) => {
-          return [rejoin(name, '-'), value]
+          return [toJoint(name, '-'), value]
         })
         .forEach(([name, value]) => {
           const attrName = String(name)
@@ -102,7 +102,7 @@ export class Mutator {
       Object
         .entries(data)
         .map(([name, value]) => {
-          return [rejoin(name, '-'), value]
+          return [toJoint(name, '-'), value]
         })
         .forEach(([name, value]) => {
           const attrName = String(name)
@@ -134,7 +134,7 @@ export class Mutator {
       Object
         .entries(data)
         .map(([name, value]) => {
-          return [rejoin(name, '-'), value]
+          return [toJoint(name, '-'), value]
         })
         .forEach(([name, value]) => {
           const attrName = String(name)
@@ -160,7 +160,7 @@ export class Mutator {
       Object
         .entries(data)
         .map(([name, value]) => {
-          return [rejoin(name, '-'), value]
+          return [toJoint(name, '-'), value]
         })
         .forEach(([name]) => {
           this.element.removeAttribute(String(name))

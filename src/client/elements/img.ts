@@ -1,4 +1,4 @@
-import { I18n, get, isStruct } from '../../common'
+import { I18n, get, isStruct, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
@@ -103,7 +103,7 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
       this.url !== null
     ) && (
       this.key === null ||
-      String(get(data, this.key.split('.')))
+      toString(get(data, this.key))
         .startsWith('image')
     )) {
       this.setSourceFromStruct(data)

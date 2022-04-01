@@ -1,6 +1,6 @@
+import { I18n, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaError, Struct } from '../../common'
-import { I18n } from '../../common'
 import type { ScolaElement } from './element'
 
 declare global {
@@ -170,7 +170,7 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   protected handleError (error: unknown): void {
     this.propagator.dispatch<ScolaError>('error', [{
       code: 'err_worker',
-      message: this.propagator.extractMessage(error)
+      message: toString(error)
     }])
   }
 

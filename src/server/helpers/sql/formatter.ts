@@ -452,10 +452,10 @@ export abstract class SqlFormatter {
       )
     })
 
-    const foreignParts = this.createSelectAllPartsForeignKeys(object, keys.foreign ?? [], query)
+    const foreignParts = this.createSelectAllPartsForeignKeys(object, keys, query)
     const limitParts = this.createSelectAllPartsLimit(query)
     const orderParts = this.createSelectAllPartsOrderKeys(object, joinKey, query)
-    const relatedParts = this.createSelectAllPartsRelatedKeys(object, keys.related ?? [], query)
+    const relatedParts = this.createSelectAllPartsRelatedKeys(object, keys, query)
     const selectParts = this.createSelectAllPartsSelectKeys(object, joinKey, query)
     const whereParts = this.createSelectAllPartsWhereKeys(object, joinKey, query)
 
@@ -492,12 +492,12 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsForeignKeys (object: string, keys: SchemaFieldKey[], query: Query): SqlQueryParts {
+  protected createSelectAllPartsForeignKeys (object: string, keys: SqlQueryKeys, query: Query): SqlQueryParts {
     const join: string[] = []
     const values = Struct.create()
 
-    keys
-      .filter((key) => {
+    keys.foreign
+      ?.filter((key) => {
         return (
           query.join !== undefined &&
           query.join[key.table] === undefined
@@ -509,13 +509,13 @@ export abstract class SqlFormatter {
 
     let where = null
 
-    const whereKey = keys.find((key) => {
+    const joinKey = keys.foreign?.find((key) => {
       return query.join?.[key.table] !== undefined
     })
 
-    if (whereKey !== undefined) {
-      values[`${object}_${whereKey.column}`] = query.join?.[whereKey.column]
-      where = `$[${object}.${whereKey.column}] = $(${object}_${whereKey.column})`
+    if (joinKey !== undefined) {
+      values[`${object}_${joinKey.column}`] = query.join?.[joinKey.table]?.[joinKey.column]
+      where = `$[${object}.${joinKey.column}] = $(${object}_${joinKey.column})`
     }
 
     return {
@@ -529,8 +529,9 @@ export abstract class SqlFormatter {
     const order = this.joinStrings(', ', query.order
       ?.filter((tableAndColumn) => {
         return (
-          joinKey === undefined ||
-          tableAndColumn.startsWith(object) ||
+          tableAndColumn.startsWith(object)
+        ) || (
+          joinKey !== undefined &&
           tableAndColumn.startsWith(joinKey.table)
         )
       })
@@ -550,24 +551,20 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsRelatedKeys (object: string, keys: SchemaFieldKey[], query: Query): SqlQueryParts {
+  protected createSelectAllPartsRelatedKeys (object: string, keys: SqlQueryKeys, query: Query): SqlQueryParts {
     const values = Struct.create()
 
     let join = null
     let where = null
 
-    const relatedKey = keys.find((key) => {
+    const joinKey = keys.related?.find((key) => {
       return query.join?.[key.table] !== undefined
     })
 
-    if (relatedKey !== undefined) {
-      const queryJoin = query.join?.[relatedKey.table]
-
-      if (isStruct(queryJoin)) {
-        values[`${relatedKey.table}_${relatedKey.column}`] = queryJoin[relatedKey.column]
-        join = `JOIN $[${relatedKey.table}] ON $[${object}.${relatedKey.column}] = $[${relatedKey.table}.${relatedKey.column}]`
-        where = `$[${relatedKey.table}.${relatedKey.column}] = $(${relatedKey.table}_${relatedKey.column})`
-      }
+    if (joinKey !== undefined) {
+      values[`${joinKey.table}_${joinKey.column}`] = query.join?.[joinKey.table]?.[joinKey.column]
+      join = `JOIN $[${joinKey.table}] ON $[${object}.${joinKey.column}] = $[${joinKey.table}.${joinKey.column}]`
+      where = `$[${joinKey.table}.${joinKey.column}] = $(${joinKey.table}_${joinKey.column})`
     }
 
     return {
@@ -578,13 +575,18 @@ export abstract class SqlFormatter {
   }
 
   protected createSelectAllPartsSelectKeys (object: string, joinKey: SchemaFieldKey | undefined, query: Query): SqlQueryParts {
-    const select = this.joinStrings(', ', query.select?.filter((tableAndColumn) => {
-      return (
-        joinKey === undefined ||
-        tableAndColumn.startsWith(object) ||
-        tableAndColumn.startsWith(joinKey.table)
-      )
-    }) ?? [])
+    const select = this.joinStrings(', ', query.select
+      ?.filter((tableAndColumn) => {
+        return (
+          tableAndColumn.startsWith(object)
+        ) || (
+          joinKey !== undefined &&
+          tableAndColumn.startsWith(joinKey.table)
+        )
+      })
+      .map((tableAndColumn) => {
+        return `$[${tableAndColumn}]`
+      }) ?? [])
 
     return {
       select
@@ -598,8 +600,9 @@ export abstract class SqlFormatter {
       .entries(query.where ?? {})
       .filter(([tableOrColumn]) => {
         return (
-          joinKey === undefined ||
-          tableOrColumn === object ||
+          tableOrColumn === object
+        ) || (
+          joinKey !== undefined &&
           tableOrColumn === joinKey.table
         )
       })

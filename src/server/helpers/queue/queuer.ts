@@ -1,3 +1,4 @@
+import { isStruct, toString } from '../../../common'
 import type { Job } from 'node-schedule'
 import type { Logger } from 'pino'
 import type { Queue } from '../../entities'
@@ -7,7 +8,6 @@ import type { QueueTask } from '../../entities/base'
 import type { RedisClientType } from 'redis'
 import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
-import { isStruct } from '../../../common'
 import { parseExpression } from 'cron-parser'
 import { scheduleJob } from 'node-schedule'
 import { sql } from '../sql'
@@ -300,7 +300,7 @@ export class Queuer {
         .catch((error) => {
           this.logger.error({
             context: 'start-listener'
-          }, String(error))
+          }, toString(error))
         })
     })
 
@@ -412,7 +412,7 @@ export class Queuer {
       } catch (error: unknown) {
         this.logger.error({
           context: 'run-queue'
-        }, String(error))
+        }, toString(error))
       } finally {
         this.runners.delete(runner)
       }
@@ -483,7 +483,7 @@ export class Queuer {
         .catch((error: unknown) => {
           this.logger.error({
             context: 'handle-job'
-          }, String(error))
+          }, toString(error))
         })
     })
   }
@@ -502,7 +502,7 @@ export class Queuer {
     this.storeRead.on('error', (error) => {
       this.logger.error({
         context: 'store'
-      }, String(error))
+      }, toString(error))
     })
 
     await this.storeRead.connect()
@@ -513,7 +513,7 @@ export class Queuer {
         .catch((error: unknown) => {
           this.logger.error({
             context: 'handle-listener'
-          }, String(error))
+          }, toString(error))
         })
     })
   }

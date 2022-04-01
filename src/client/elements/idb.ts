@@ -1,4 +1,4 @@
-import { I18n, cast, isArray, isFile, isQuery, isStruct, isTransaction } from '../../common'
+import { I18n, cast, isArray, isFile, isQuery, isStruct, isTransaction, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { Query, ScolaTransaction, Struct } from '../../common'
 import type { IDBPDatabase } from 'idb/with-async-ittr'
@@ -685,7 +685,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
   protected handleError (error: unknown): void {
     this.propagator.dispatch('error', [{
       code: 'err_idb',
-      message: this.propagator.extractMessage(error)
+      message: toString(error)
     }])
   }
 

@@ -1,4 +1,4 @@
-import { I18n, flatten, isArray, isNil, isPrimitive, isStruct, isTransaction } from '../../common'
+import { I18n, flatten, isArray, isNil, isPrimitive, isStruct, isTransaction, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaError, ScolaTransaction, Struct } from '../../common'
 import type { ScolaElement } from './element'
@@ -327,7 +327,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   protected handleError (error: unknown): void {
     this.propagator.dispatch<ScolaError>('error', [{
       code: 'err_requester',
-      message: this.propagator.extractMessage(error)
+      message: toString(error)
     }])
   }
 

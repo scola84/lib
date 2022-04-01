@@ -15,14 +15,16 @@ export function struct (name: string, field: SchemaField, user?: User): Validato
     if (isStruct(values)) {
       try {
         if (field.strict === true) {
-          Object.keys(values).forEach((key) => {
-            if (field.schema?.[key] === undefined) {
-              throw {
-                code: 'err_validator_bad_input_struct',
-                data: { keys: Object.keys(values) }
-              } as unknown as Error
-            }
-          })
+          Object
+            .keys(values)
+            .forEach((key) => {
+              if (field.schema?.[key] === undefined) {
+                throw {
+                  code: 'err_validator_bad_input_struct',
+                  data: { keys: Object.keys(values) }
+                } as unknown as Error
+              }
+            })
         }
 
         schemaValidator.validate(values, user)

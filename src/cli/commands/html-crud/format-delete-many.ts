@@ -6,7 +6,7 @@ import { createPrimaryFields } from './create-primary-fields'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
 import { pickField } from './pick-field'
-import { rejoin } from '../../../common'
+import { toJoint } from '../../../common'
 import { sortKeys } from './sort-keys'
 
 export function formatDeleteMany (schema: Schema, options: Options): string {
@@ -22,7 +22,7 @@ export class DeleteManyHandler extends CrudDeleteManyHandler {
     body: ${formatBodySchema(schema, 6)}
   }
 
-  public url = '${options.url}/delete/many/${rejoin(options.object, '-')}'
+  public url = '${options.url}/delete/many/${toJoint(options.object, '-')}'
 }
 `.trim()
 }

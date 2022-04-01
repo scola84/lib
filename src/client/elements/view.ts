@@ -387,7 +387,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       }
 
       if (typeof options.params === 'string') {
-        view.params = Struct.fromString(options.params)
+        view.params = Struct.fromQuery(options.params)
       } else if (isStruct(options.params)) {
         view.params = options.params
       } else {
@@ -494,7 +494,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     if (element.name !== null) {
       this.views = [{
         name: element.name,
-        params: Struct.fromString(element.params ?? ''),
+        params: Struct.fromQuery(element.params ?? ''),
         source: 'element'
       }]
 

@@ -1,4 +1,4 @@
-export function capitalize (string: string, lower = false): string {
+export function toCaps (string: string, lower = false): string {
   const capsString = string
     .trim()
     .split(/[^a-z0-9]+/gui)

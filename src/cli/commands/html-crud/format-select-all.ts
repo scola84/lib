@@ -4,7 +4,7 @@ import type { Struct } from '../../../common'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
 import { pickField } from './pick-field'
-import { rejoin } from '../../../common'
+import { toJoint } from '../../../common'
 import { sortKeys } from './sort-keys'
 
 export function formatSelectAll (schema: Schema, options: Options, relations: Struct<Schema>): string {
@@ -20,7 +20,7 @@ export class SelectAllHandler extends CrudSelectAllHandler {
     query: ${formatQuerySchema(options.object, schema, relations, 6)}
   }
 
-  public url = '${options.url}/select/all/${rejoin(options.object, '-')}'
+  public url = '${options.url}/select/all/${toJoint(options.object, '-')}'
 }
 `.trim()
 }

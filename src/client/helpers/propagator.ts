@@ -84,19 +84,6 @@ export class Propagator {
     })
   }
 
-  public extractMessage (error: unknown): string {
-    if (
-      error instanceof Error ||
-      error instanceof ErrorEvent
-    ) {
-      return error.message
-        .replace('Error:', '')
-        .trim()
-    }
-
-    return String(error)
-  }
-
   public parseEvents (events: string, data?: Struct): PropagatorEvent[] {
     return events
       .trim()
@@ -160,7 +147,7 @@ export class Propagator {
       return detail
     }
 
-    return Struct.fromString(this.i18n.format(event.filter, event.data))
+    return Struct.fromQuery(this.i18n.format(event.filter, event.data))
   }
 
   protected getEvents (on: string): PropagatorEvent[] {

@@ -1,4 +1,4 @@
-import { cast, isFile, parseStruct } from '../../../common'
+import { cast, isFile, parseStruct, toString } from '../../../common'
 import { CrudHandler } from './crud'
 import type { Readable } from 'stream'
 import type { RouteData } from '../route'
@@ -69,7 +69,7 @@ export abstract class CrudSelectOneHandler extends CrudHandler {
 
       this.logger?.error({
         context: 'pipe-stream'
-      }, String(error))
+      }, toString(error))
     })
 
     stream.once('end', () => {

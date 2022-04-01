@@ -50,7 +50,7 @@ export class I18n {
         compiled.push(I18n.formatters[type](
           name,
           locale,
-          Struct.fromString(optionsString ?? '')
+          Struct.fromQuery(optionsString ?? '')
         ))
 
         return nextString.slice(index + match.length)
@@ -93,7 +93,7 @@ export class I18n {
         let stringsCache = I18n.stringsCache[locale]
 
         if (stringsCache === undefined) {
-          stringsCache = Struct.create({})
+          stringsCache = Struct.create<LocaleStringsCache>({})
           I18n.stringsCache[locale] = stringsCache
         }
 
@@ -159,7 +159,7 @@ export class I18n {
       let stringsCache = I18n.stringsCache[locale]
 
       if (stringsCache === undefined) {
-        stringsCache = Struct.create({})
+        stringsCache = Struct.create<LocaleStringsCache>({})
         I18n.stringsCache[locale] = stringsCache
       }
 
@@ -216,7 +216,10 @@ export class I18n {
   }
 
   public sort (items: Struct[], query: Query): Struct[] {
-    const { order = [] } = query
+    const {
+      order = []
+    } = query
+
     return items.sort((left, right) => {
       let direction = null
       let equivalence = 0
@@ -224,10 +227,11 @@ export class I18n {
       let lv = ''
       let rv = ''
 
-      for (let key of order) {
-        ({ direction = null } = key.match(/(?<direction>[<>])$/u)?.groups ?? {})
+      for (let index = 0, key; index < order.length; index += 1) {
+        key = order[index]
+        direction = key.match(/(?<direction>[<>])$/u)?.groups?.direction
 
-        if (direction !== null) {
+        if (direction !== undefined) {
           key = key.slice(0, -1)
 
           if (direction === '>') {

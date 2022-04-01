@@ -11,6 +11,7 @@ import type { queue as fastq } from 'fastq'
 import { pipeline } from '../stream'
 import { promise } from 'fastq'
 import { sql } from '../sql'
+import { toString } from '../../../common'
 import waitUntil from 'async-wait-until'
 
 declare module 'fastq' {
@@ -312,7 +313,7 @@ export abstract class QueueHandler {
       .catch((error) => {
         this.logger?.error({
           context: 'start-read'
-        }, String(error))
+        }, toString(error))
       })
   }
 
@@ -394,7 +395,7 @@ export abstract class QueueHandler {
             task.result = (await this.handle(task)) ?? task.result
           }
         } catch (error: unknown) {
-          task.reason = String(error)
+          task.reason = toString(error)
           task.status = 'err'
         } finally {
           await this.finishQueueTask(task)
@@ -404,7 +405,7 @@ export abstract class QueueHandler {
     } catch (error: unknown) {
       this.logger?.error({
         context: 'handle-queue-task'
-      }, String(error))
+      }, toString(error))
     }
   }
 
@@ -450,7 +451,7 @@ export abstract class QueueHandler {
         .catch(async (error: unknown) => {
           this.reading = false
 
-          if ((String(error).endsWith('Socket closed unexpectedly'))) {
+          if ((toString(error).endsWith('Socket closed unexpectedly'))) {
             await waitUntil(() => {
               return this.store.isOpen
             }, {
@@ -458,10 +459,10 @@ export abstract class QueueHandler {
             })
 
             this.read()
-          } else if (!String(error).endsWith('Disconnects client')) {
+          } else if (!toString(error).endsWith('Disconnects client')) {
             this.logger?.error({
               context: 'read-queue-task'
-            }, String(error))
+            }, toString(error))
           }
         })
     }
@@ -560,7 +561,7 @@ export abstract class QueueHandler {
     this.storeRead.on('error', (error) => {
       this.logger?.error({
         context: 'store'
-      }, String(error))
+      }, toString(error))
     })
 
     await this.storeRead.connect()

@@ -136,7 +136,7 @@ export class Dropper {
           })
 
         document
-          .querySelectorAll<ScolaElement>(`#${String(drag.origin)}:not([is="sc-table"])`)
+          .querySelectorAll<ScolaTableElement>(`#${String(drag.origin)}:not([is="sc-table"])`)
           .forEach((element) => {
             this.dropItems([element.getData()], on, event)
           })

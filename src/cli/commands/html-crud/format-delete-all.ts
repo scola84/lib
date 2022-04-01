@@ -2,7 +2,7 @@ import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
-import { rejoin } from '../../../common'
+import { toJoint } from '../../../common'
 
 export function formatDeleteAll (schema: Schema, options: Options): string {
   return `
@@ -13,7 +13,7 @@ export class DeleteAllHandler extends CrudDeleteAllHandler {
 
   public object = '${options.object}'
 
-  public url = '${options.url}/delete/all/${rejoin(options.object, '-')}'
+  public url = '${options.url}/delete/all/${toJoint(options.object, '-')}'
 }
 `.trim()
 }

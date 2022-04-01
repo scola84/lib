@@ -1,5 +1,5 @@
 import { Pool, types } from 'pg'
-import { cast, isStruct, set } from '../../../../common'
+import { cast, isStruct, set, toString } from '../../../../common'
 import type { PoolConfig } from 'pg'
 import { PostgresqlConnection } from './connection'
 import { PostgresqlFormatter } from './formatter'
@@ -39,7 +39,7 @@ export class PostgresqlDatabase extends SqlDatabase {
       this.pool.on('error', (error) => {
         this.logger?.error({
           context: 'pool'
-        }, String(error))
+        }, toString(error))
       })
 
       if (this.population !== undefined) {

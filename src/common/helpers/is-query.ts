@@ -3,7 +3,7 @@ import { isStruct } from './is-struct'
 
 export interface Query extends Struct {
   cursor?: string
-  join?: Struct<Struct<number | string> | number | string | undefined>
+  join?: Struct<Struct<number | string | undefined> | undefined>
   limit: number
   offset?: number
   order?: string[]

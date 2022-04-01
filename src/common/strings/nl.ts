@@ -1,69 +1,42 @@
 export const nl = {
-  button: {
-    cancel: 'Annuleren',
-    ok: 'OK'
-  },
-  err: {
-    idb: 'Onbekende fout ($(message)s)',
-    recorder: 'Onbekende fout ($(message)s)',
-    requester: {
-      400: 'De invoer is ongeldig.',
-      401: 'U hebt geen toegang tot deze gegevens.',
-      403: 'U hebt geen toegang tot deze gegevens.',
-      404: 'De gegevens konden niet worden gevonden.',
-      405: 'De aanvraag is ongeldig.',
-      412: 'Er zijn nieuwere gegevens gevonden op de server.',
-      415: 'De aanvraag is ongeldig.',
-      500: 'Er is een fout opgetreden op de server.',
-      502: 'Er is een fout opgetreden op de server.',
-      unknown: 'Onbekende fout ($(message)s)'
-    },
-    svg: 'Onbekende fout (:message)',
-    validator: {
-      bad: {
-        input: {
-          array: 'Voer een geldige rij in',
-          checkbox: 'Voer een geldige waarde in',
-          color: 'Voer een geldige kleur in',
-          date: 'Voer een geldige datum in',
-          email: 'Voer een geldig e-mailadres in',
-          file: 'Voer een geldig bestand in',
-          number: 'Voer een geldig getal in',
-          radio: 'Voer een geldige waarde in',
-          range: 'Voer een geldig getal in',
-          select: 'Voer een geldige waarde in',
-          selectmultiple: 'Voer een geldige waarde in',
-          struct: 'Voer een geldig object in',
-          text: 'Voer een geldige tekst in',
-          time: 'Voer een geldige tijd in',
-          url: 'Voer een geldige URL in'
-        }
-      },
-      pattern: {
-        mismatch: 'Voer een geldige waarde in'
-      },
-      range: {
-        overflow: 'Voer een getal in kleiner dan $(max)n',
-        underflow: 'Voer een getal in groter dan $(min)n'
-      },
-      step: {
-        mismatch: 'Voer een getal in als veelvoud van $(min)n'
-      },
-      too: {
-        long: 'Voer een tekst in korter dan $(maxLength)n tekens',
-        short: 'Voer een tekst in langer dan $(minLength)n tekens'
-      },
-      type: {
-        mismatch: {
-          email: 'Voer een geldig e-mailadres in',
-          url: 'Voer een geldige URL in'
-        }
-      },
-      value: {
-        missing: 'Dit veld is verplicht'
-      }
-    },
-    worker: 'Onbekende fout ($(message)s)'
-  }
-
+  button_cancel: 'Annuleren',
+  button_ok: 'OK',
+  err_idb: 'Onbekende fout ($(message))',
+  err_recorder: 'Onbekende fout ($(message))',
+  err_requester: 'Onbekende fout ($(message))',
+  err_requester_400: 'De invoer is ongeldig.',
+  err_requester_401: 'U hebt geen toegang tot deze gegevens.',
+  err_requester_403: 'U hebt geen toegang tot deze gegevens.',
+  err_requester_404: 'De gegevens konden niet worden gevonden.',
+  err_requester_405: 'De aanvraag is ongeldig.',
+  err_requester_412: 'Er zijn nieuwere gegevens gevonden op de server.',
+  err_requester_415: 'De aanvraag is ongeldig.',
+  err_requester_500: 'Er is een fout opgetreden op de server.',
+  err_requester_502: 'Er is een fout opgetreden op de server.',
+  err_svg: 'Onbekende fout (:message)',
+  err_validator_bad_input_array: 'Voer een geldige rij in',
+  err_validator_bad_input_checkbox: 'Voer een geldige waarde in',
+  err_validator_bad_input_color: 'Voer een geldige kleur in',
+  err_validator_bad_input_date: 'Voer een geldige datum in',
+  err_validator_bad_input_email: 'Voer een geldig e-mailadres in',
+  err_validator_bad_input_file: 'Voer een geldig bestand in',
+  err_validator_bad_input_number: 'Voer een geldig getal in',
+  err_validator_bad_input_radio: 'Voer een geldige waarde in',
+  err_validator_bad_input_range: 'Voer een geldig getal in',
+  err_validator_bad_input_select: 'Voer een geldige waarde in',
+  err_validator_bad_input_selectmultiple: 'Voer een geldige waarde in',
+  err_validator_bad_input_struct: 'Voer een geldig object in',
+  err_validator_bad_input_text: 'Voer een geldige tekst in',
+  err_validator_bad_input_time: 'Voer een geldige tijd in',
+  err_validator_bad_input_url: 'Voer een geldige URL in',
+  err_validator_pattern_mismatch: 'Voer een geldige waarde in',
+  err_validator_range_overflow: 'Voer een getal in kleiner dan $(max)',
+  err_validator_range_underflow: 'Voer een getal in groter dan $(min)',
+  err_validator_step_mismatch: 'Voer een getal in als veelvoud van :min',
+  err_validator_too_long: 'Voer een tekst in korter dan $(maxLength) tekens',
+  err_validator_too_short: 'Voer een tekst in langer dan $(minLength) tekens',
+  err_validator_type_mismatch_email: 'Voer een geldig e-mailadres in',
+  err_validator_type_mismatch_url: 'Voer een geldige URL in',
+  err_validator_value_missing: 'Dit veld is verplicht',
+  err_worker: 'Onbekende fout ($(message))'
 }

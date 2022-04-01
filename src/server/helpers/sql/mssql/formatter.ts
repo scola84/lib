@@ -292,7 +292,7 @@ export class MssqlFormatter extends SqlFormatter {
     if (columns.length > 0) {
       lines.push([
         '[cursor]',
-        `AS (CONCAT(${columns.join(',')})) PERSISTED`
+        `AS (CONCAT(${columns.join(',')}))`
       ].join(' '))
     }
 

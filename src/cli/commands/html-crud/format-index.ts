@@ -1,13 +1,13 @@
 import type { Options } from '../html-crud'
-import { capitalize } from '../../../common'
 import { formatGroup } from './format-group'
 import { isMatch } from 'micromatch'
+import { toCaps } from '../../../common'
 
 export function formatIndex (options: Options): string {
   return `
 ${formatImport(options)}
 
-export function ${capitalize(options.object, true)} (): void {
+export function ${toCaps(options.object, true)} (): void {
   ${formatHandlers(options, 4)}
 
   ${formatStart(options, 0)}

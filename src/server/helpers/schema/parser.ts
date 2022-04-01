@@ -203,10 +203,10 @@ export class SchemaParser {
     }
   }
 
-  protected extractSelect (attributes: SchemaAttributes, childNodes: ChildNode[], field: SchemaField): void {
+  protected extractSelect (attributes: SchemaAttributes, options: ChildNode[], field: SchemaField): void {
     field.values = []
 
-    for (const option of childNodes) {
+    for (const option of options) {
       if (option.nodeName === 'option') {
         const optionAttributes = this.normalizeAttributes(option)
 

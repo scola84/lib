@@ -6,6 +6,7 @@ import type { Router } from '../route'
 import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import { isMatch } from 'micromatch'
+import { toString } from '../../../common'
 
 export interface Services {
   [key: string]: {
@@ -257,7 +258,7 @@ export class ServiceManager {
       .catch((error) => {
         this.logger?.error({
           context: 'start'
-        }, String(error))
+        }, toString(error))
 
         this.process.exit()
       })
@@ -293,7 +294,7 @@ export class ServiceManager {
       .catch((error) => {
         this.logger?.error({
           context: 'stop'
-        }, String(error))
+        }, toString(error))
       })
       .finally(() => {
         this.process.exit()
@@ -347,7 +348,7 @@ export class ServiceManager {
     this.store.on('error', (error) => {
       this.logger?.error({
         context: 'store'
-      }, String(error))
+      }, toString(error))
     })
 
     await this.store.connect()

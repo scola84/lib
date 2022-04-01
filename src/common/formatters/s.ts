@@ -3,8 +3,11 @@ import { cast } from '../helpers'
 import { get } from '../helpers/get'
 
 export function s (name: string, locale: string, options: Struct<string | undefined>): Formatter {
-  const path = name.split(/[._-]/u).map(cast)
   const { slice } = options
+
+  const path = name
+    .split('.')
+    .map(cast)
 
   function formatter (data: unknown): string {
     let value = (cast(get(data, path)) ?? '').toString()

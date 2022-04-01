@@ -1,4 +1,4 @@
-import { createADeleteQuery, createASelectAllQueryWithForeignKeysWithCursor, createASelectAllQueryWithForeignKeysWithForeignKey, createASelectAllQueryWithForeignKeysWithOrder, createASelectAllQueryWithForeignKeysWithWhere, createASelectAllQueryWithForeignKeysWithoutParameters, createASelectAllQueryWithRelatedKeysWithCursor, createASelectAllQueryWithRelatedKeysWithOrder, createASelectAllQueryWithRelatedKeysWithWhere, createASelectAllQueryWithRelatedKeysWithoutParameters, createASelectAllQueryWithoutKeysWithCursor, createASelectAllQueryWithoutKeysWithOrder, createASelectAllQueryWithoutKeysWithWhere, createASelectAllQueryWithoutKeysWithoutParameters, createASelectQuery, createAnInsertQuery, createAnUpdateQuery } from '../formatter'
+import { createADeleteQuery, createASelectAllQueryWithForeignKeysWithCursor, createASelectAllQueryWithForeignKeysWithForeignKey, createASelectAllQueryWithForeignKeysWithOrder, createASelectAllQueryWithForeignKeysWithSelect, createASelectAllQueryWithForeignKeysWithWhere, createASelectAllQueryWithForeignKeysWithoutParameters, createASelectAllQueryWithRelatedKeysWithCursor, createASelectAllQueryWithRelatedKeysWithOrder, createASelectAllQueryWithRelatedKeysWithSelect, createASelectAllQueryWithRelatedKeysWithWhere, createASelectAllQueryWithRelatedKeysWithoutParameters, createASelectAllQueryWithoutKeysWithCursor, createASelectAllQueryWithoutKeysWithOrder, createASelectAllQueryWithoutKeysWithSelect, createASelectAllQueryWithoutKeysWithWhere, createASelectAllQueryWithoutKeysWithoutParameters, createASelectQuery, createAnInsertQuery, createAnUpdateQuery } from '../formatter'
 import { PostgresqlFormatter } from '../../../../../src/server/helpers/sql/postgresql'
 import { expect } from 'chai'
 
@@ -93,6 +93,24 @@ const foreignKeysExpectations = {
       offset: 0
     }
   },
+  withSelect: {
+    string: [
+      [
+        'SELECT $[contact_address.begin] FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address.begin] FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)',
+        'SELECT $[contact_address.begin] FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address.begin] FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
+      ].join(' UNION '),
+      'ORDER BY 1',
+      'LIMIT $(limit) OFFSET $(offset)'
+    ].join(' '),
+    values: {
+      case_group_group_id: 1,
+      case_user_user_id: 1,
+      limit: 10,
+      offset: 0
+    }
+  },
   withWhere: {
     string: [
       [
@@ -157,6 +175,23 @@ const relatedKeysExpectations = {
         'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[address.address_line1] DESC',
+      'LIMIT $(limit) OFFSET $(offset)'
+    ].join(' '),
+    values: {
+      case_address_case_id: 1,
+      case_group_group_id: 1,
+      case_user_user_id: 1,
+      limit: 10,
+      offset: 0
+    }
+  },
+  withSelect: {
+    string: [
+      [
+        'SELECT $[address.address_line1] FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[address.address_line1] FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_user.user_id] = $(case_user_user_id)'
+      ].join(' UNION '),
+      'ORDER BY 1',
       'LIMIT $(limit) OFFSET $(offset)'
     ].join(' '),
     values: {
@@ -237,6 +272,22 @@ const withoutKeysExpectations = {
       offset: 0
     }
   },
+  withSelect: {
+    string: [
+      [
+        'SELECT $[case.name] FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[case.name] FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
+      ].join(' UNION '),
+      'ORDER BY 1',
+      'LIMIT $(limit) OFFSET $(offset)'
+    ].join(' '),
+    values: {
+      case_group_group_id: 1,
+      case_user_user_id: 1,
+      limit: 10,
+      offset: 0
+    }
+  },
   withWhere: {
     string: [
       [
@@ -288,6 +339,7 @@ describe('PostgresqlFormatter', () => {
         it('with cursor', createASelectAllQueryWithForeignKeysWithCursor.bind(null, formatter, foreignKeysExpectations))
         it('with foreign key', createASelectAllQueryWithForeignKeysWithForeignKey.bind(null, formatter, foreignKeysExpectations))
         it('with order', createASelectAllQueryWithForeignKeysWithOrder.bind(null, formatter, foreignKeysExpectations))
+        it('with select', createASelectAllQueryWithForeignKeysWithSelect.bind(null, formatter, foreignKeysExpectations))
         it('with where', createASelectAllQueryWithForeignKeysWithWhere.bind(null, formatter, foreignKeysExpectations))
         it('without parameters', createASelectAllQueryWithForeignKeysWithoutParameters.bind(null, formatter, foreignKeysExpectations))
       })
@@ -295,6 +347,7 @@ describe('PostgresqlFormatter', () => {
       describe('with related keys', () => {
         it('with cursor', createASelectAllQueryWithRelatedKeysWithCursor.bind(null, formatter, relatedKeysExpectations))
         it('with order', createASelectAllQueryWithRelatedKeysWithOrder.bind(null, formatter, relatedKeysExpectations))
+        it('with select', createASelectAllQueryWithRelatedKeysWithSelect.bind(null, formatter, relatedKeysExpectations))
         it('with where', createASelectAllQueryWithRelatedKeysWithWhere.bind(null, formatter, relatedKeysExpectations))
         it('without parameters', createASelectAllQueryWithRelatedKeysWithoutParameters.bind(null, formatter, relatedKeysExpectations))
       })
@@ -302,13 +355,14 @@ describe('PostgresqlFormatter', () => {
       describe('without keys', () => {
         it('with cursor', createASelectAllQueryWithoutKeysWithCursor.bind(null, formatter, withoutKeysExpectations))
         it('with order', createASelectAllQueryWithoutKeysWithOrder.bind(null, formatter, withoutKeysExpectations))
+        it('with select', createASelectAllQueryWithoutKeysWithSelect.bind(null, formatter, withoutKeysExpectations))
         it('with where', createASelectAllQueryWithoutKeysWithWhere.bind(null, formatter, withoutKeysExpectations))
         it('without parameters', createASelectAllQueryWithoutKeysWithoutParameters.bind(null, formatter, withoutKeysExpectations))
       })
     })
 
-    it('format a select query', createASelectQuery.bind(null, formatter, expectations))
     it('format a delete query', createADeleteQuery.bind(null, formatter, expectations))
+    it('format a select query', createASelectQuery.bind(null, formatter, expectations))
     it('format an insert query', createAnInsertQuery.bind(null, formatter, expectations))
     it('format an update query', createAnUpdateQuery.bind(null, formatter, expectations))
   })

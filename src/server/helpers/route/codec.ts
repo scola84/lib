@@ -113,7 +113,7 @@ export class RouteCodec {
   }
 
   public async decodeFormUrlencoded (request: IncomingMessage): Promise<Struct> {
-    return Struct.fromString(decodeURI(await this.decodePlain(request)), true)
+    return Struct.fromQuery(await this.decodePlain(request), true)
   }
 
   public async decodeJson (request: IncomingMessage): Promise<unknown> {

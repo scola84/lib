@@ -1,6 +1,6 @@
+import { I18n, toString } from '../../common'
 import { Mutator, Observer, Propagator, Theme } from '../helpers'
 import type { ScolaError, Struct } from '../../common'
-import { I18n } from '../../common'
 import type { ScolaElement } from './element'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,7 +183,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   protected handleError (error: unknown): void {
     this.propagator.dispatch<ScolaError>('error', [{
       code: 'err_drawer',
-      message: this.propagator.extractMessage(error)
+      message: toString(error)
     }])
   }
 

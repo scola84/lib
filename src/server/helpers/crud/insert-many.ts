@@ -1,10 +1,10 @@
 import type { Schema, SchemaField } from '../schema'
+import { isStruct, toString } from '../../../common'
 import { CrudInsertHandler } from './insert'
 import type { Merge } from 'type-fest'
 import type { RouteData } from '../route'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../common'
-import { isStruct } from '../../../common'
 
 export interface CrudInsertManyData extends RouteData {
   body: Struct[]
@@ -30,7 +30,7 @@ export abstract class CrudInsertManyHandler extends CrudInsertHandler {
       } catch (error: unknown) {
         response.statusCode = 400
         return {
-          message: String(error)
+          message: toString(error)
         }
       }
     }))

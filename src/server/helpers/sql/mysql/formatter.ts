@@ -293,7 +293,7 @@ export class MysqlFormatter extends SqlFormatter {
     if (columns.length > 0) {
       lines.push([
         `\`cursor\` VARCHAR(${length}) GENERATED ALWAYS`,
-        `AS (CONCAT(${columns.join(',')})) STORED`
+        `AS (CONCAT(${columns.join(',')}))`
       ].join(' '))
     }
 

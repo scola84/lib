@@ -5,22 +5,23 @@ import { isObject } from './is-object'
 
 export function set<T = unknown> (base: T, path: unknown[] | string, value: unknown): T {
   let parent: unknown = base
-  let key: unknown = ''
-  let steps = path
+  let keys = path
 
-  if (typeof steps === 'string') {
-    steps = steps.split(/[._-]/u).map(cast)
+  if (typeof keys === 'string') {
+    keys = keys
+      .split('.')
+      .map(cast)
   }
 
-  for (let index = 0; index < steps.length - 1; index += 1) {
-    key = steps[index]
+  for (let index = 0, key; index < keys.length - 1; index += 1) {
+    key = keys[index]
 
     if (
       typeof key === 'number' &&
       isArray(parent)
     ) {
       if (parent[key] === undefined) {
-        if (typeof steps[index + 1] === 'number') {
+        if (typeof keys[index + 1] === 'number') {
           parent[key] = []
         } else {
           parent[key] = Struct.create()
@@ -33,7 +34,7 @@ export function set<T = unknown> (base: T, path: unknown[] | string, value: unkn
       isObject(parent)
     ) {
       if (parent[key] === undefined) {
-        if (typeof steps[index + 1] === 'number') {
+        if (typeof keys[index + 1] === 'number') {
           parent[key] = []
         } else {
           parent[key] = Struct.create()
@@ -46,7 +47,7 @@ export function set<T = unknown> (base: T, path: unknown[] | string, value: unkn
     }
   }
 
-  const parentKey = steps[steps.length - 1]
+  const parentKey = keys[keys.length - 1]
 
   if (
     typeof parentKey === 'number' &&

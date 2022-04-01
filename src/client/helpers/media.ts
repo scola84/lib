@@ -112,7 +112,7 @@ export class Media {
       this.element.url !== null
     ) && (
       this.element.key === null ||
-      String(get(data, this.element.key.split('.')))
+      String(get(data, this.element.key))
         .startsWith(this.element.nodeName.toLowerCase())
     )) {
       this.setSourceFromStruct(data)

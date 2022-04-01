@@ -749,12 +749,10 @@ export class TableSelector {
     const beginIndex = Math.min(firstRowIndex, lastRowIndex)
     const endIndex = Math.max(firstRowIndex, lastRowIndex)
 
-    let row: ScolaTableRowElement | null = null
-
-    for (let index = beginIndex; index <= endIndex; index += 1) {
+    for (let index = beginIndex, row; index <= endIndex; index += 1) {
       row = this.element.body.querySelector(`tr:nth-child(${index + 1})`)
 
-      if (row !== null) {
+      if (row instanceof ScolaTableRowElement) {
         this.rows.push(row)
         this.toggleActive(row, true)
       }

@@ -184,9 +184,30 @@ const withoutKeys: SqlQueryKeys = {
   ]
 }
 
+const updateKeys: SqlQueryKeys = {
+  primary: [
+    {
+      column: 'contact_id',
+      table: 'contact'
+    }
+  ]
+}
+
 const user: Partial<User> = {
   group_id: 1,
   user_id: 1
+}
+
+export function createADeleteQuery (formatter: SqlFormatter, expectations: Struct<Struct>): void {
+  const {
+    string,
+    values
+  } = formatter.createDeleteQuery('contact', updateKeys, {
+    contact_id: 1
+  })
+
+  expect(formatter.sanitizeQuery(string)).eq(expectations.formatADeleteQuery.string)
+  expect(values).eql(expectations.formatADeleteQuery.values)
 }
 
 export function createASelectQuery (formatter: SqlFormatter, expectations: Struct<Struct>): void {
@@ -235,6 +256,36 @@ export function createASelectAllQueryWithForeignKeysWithForeignKey (formatter: S
   expect(values).eql(expectations.withForeignKey.values)
 }
 
+export function createASelectAllQueryWithForeignKeysWithOrder (formatter: SqlFormatter, expectations: Struct<Struct>): void {
+  const {
+    string,
+    values
+  } = formatter.createSelectAllQuery('contact_address', withForeignKeys, withForeignKeys.primary ?? [], {
+    limit: 10,
+    order: [
+      'contact_address.begin>'
+    ]
+  }, user as User)
+
+  expect(formatter.sanitizeQuery(string)).eq(expectations.withOrder.string)
+  expect(values).eql(expectations.withOrder.values)
+}
+
+export function createASelectAllQueryWithForeignKeysWithSelect (formatter: SqlFormatter, expectations: Struct<Struct>): void {
+  const {
+    string,
+    values
+  } = formatter.createSelectAllQuery('contact_address', withForeignKeys, withForeignKeys.primary ?? [], {
+    limit: 10,
+    select: [
+      'contact_address.begin'
+    ]
+  }, user as User)
+
+  expect(formatter.sanitizeQuery(string)).eq(expectations.withSelect.string)
+  expect(values).eql(expectations.withSelect.values)
+}
+
 export function createASelectAllQueryWithForeignKeysWithWhere (formatter: SqlFormatter, expectations: Struct<Struct>): void {
   const {
     string,
@@ -250,21 +301,6 @@ export function createASelectAllQueryWithForeignKeysWithWhere (formatter: SqlFor
 
   expect(formatter.sanitizeQuery(string)).eq(expectations.withWhere.string)
   expect(values).eql(expectations.withWhere.values)
-}
-
-export function createASelectAllQueryWithForeignKeysWithOrder (formatter: SqlFormatter, expectations: Struct<Struct>): void {
-  const {
-    string,
-    values
-  } = formatter.createSelectAllQuery('contact_address', withForeignKeys, withForeignKeys.primary ?? [], {
-    limit: 10,
-    order: [
-      'contact_address.begin>'
-    ]
-  }, user as User)
-
-  expect(formatter.sanitizeQuery(string)).eq(expectations.withOrder.string)
-  expect(values).eql(expectations.withOrder.values)
 }
 
 export function createASelectAllQueryWithForeignKeysWithoutParameters (formatter: SqlFormatter, expectations: Struct<Struct>): void {
@@ -297,6 +333,63 @@ export function createASelectAllQueryWithRelatedKeysWithCursor (formatter: SqlFo
   expect(values).eql(expectations.withCursor.values)
 }
 
+export function createASelectAllQueryWithRelatedKeysWithOrder (formatter: SqlFormatter, expectations: Struct<Struct>): void {
+  const {
+    string,
+    values
+  } = formatter.createSelectAllQuery('address', withRelatedKeys, withRelatedKeys.related ?? [], {
+    join: {
+      case_address: {
+        case_id: 1
+      }
+    },
+    limit: 10,
+    order: [
+      'address.address_line1>'
+    ]
+  }, user as User)
+
+  expect(formatter.sanitizeQuery(string)).eq(expectations.withOrder.string)
+  expect(values).eql(expectations.withOrder.values)
+}
+
+export function createASelectAllQueryWithRelatedKeysWithSelect (formatter: SqlFormatter, expectations: Struct<Struct>): void {
+  const {
+    string,
+    values
+  } = formatter.createSelectAllQuery('address', withRelatedKeys, withRelatedKeys.related ?? [], {
+    join: {
+      case_address: {
+        case_id: 1
+      }
+    },
+    limit: 10,
+    select: [
+      'address.address_line1'
+    ]
+  }, user as User)
+
+  expect(formatter.sanitizeQuery(string)).eq(expectations.withSelect.string)
+  expect(values).eql(expectations.withSelect.values)
+}
+
+export function createASelectAllQueryWithRelatedKeysWithoutParameters (formatter: SqlFormatter, expectations: Struct<Struct>): void {
+  const {
+    string,
+    values
+  } = formatter.createSelectAllQuery('address', withRelatedKeys, withRelatedKeys.related ?? [], {
+    join: {
+      case_address: {
+        case_id: 1
+      }
+    },
+    limit: 10
+  }, user as User)
+
+  expect(formatter.sanitizeQuery(string)).eq(expectations.withoutParameters.string)
+  expect(values).eql(expectations.withoutParameters.values)
+}
+
 export function createASelectAllQueryWithRelatedKeysWithWhere (formatter: SqlFormatter, expectations: Struct<Struct>): void {
   const {
     string,
@@ -319,43 +412,6 @@ export function createASelectAllQueryWithRelatedKeysWithWhere (formatter: SqlFor
   expect(values).eql(expectations.withWhere.values)
 }
 
-export function createASelectAllQueryWithRelatedKeysWithOrder (formatter: SqlFormatter, expectations: Struct<Struct>): void {
-  const {
-    string,
-    values
-  } = formatter.createSelectAllQuery('address', withRelatedKeys, withRelatedKeys.related ?? [], {
-    join: {
-      case_address: {
-        case_id: 1
-      }
-    },
-    limit: 10,
-    order: [
-      'address.address_line1>'
-    ]
-  }, user as User)
-
-  expect(formatter.sanitizeQuery(string)).eq(expectations.withOrder.string)
-  expect(values).eql(expectations.withOrder.values)
-}
-
-export function createASelectAllQueryWithRelatedKeysWithoutParameters (formatter: SqlFormatter, expectations: Struct<Struct>): void {
-  const {
-    string,
-    values
-  } = formatter.createSelectAllQuery('address', withRelatedKeys, withRelatedKeys.related ?? [], {
-    join: {
-      case_address: {
-        case_id: 1
-      }
-    },
-    limit: 10
-  }, user as User)
-
-  expect(formatter.sanitizeQuery(string)).eq(expectations.withoutParameters.string)
-  expect(values).eql(expectations.withoutParameters.values)
-}
-
 export function createASelectAllQueryWithoutKeysWithCursor (formatter: SqlFormatter, expectations: Struct<Struct>): void {
   const {
     string,
@@ -367,23 +423,6 @@ export function createASelectAllQueryWithoutKeysWithCursor (formatter: SqlFormat
 
   expect(formatter.sanitizeQuery(string)).eq(expectations.withCursor.string)
   expect(values).eql(expectations.withCursor.values)
-}
-
-export function createASelectAllQueryWithoutKeysWithWhere (formatter: SqlFormatter, expectations: Struct<Struct>): void {
-  const {
-    string,
-    values
-  } = formatter.createSelectAllQuery('case', withoutKeys, withoutKeys.primary ?? [], {
-    limit: 10,
-    where: {
-      case: {
-        name: '%scola'
-      }
-    }
-  }, user as User)
-
-  expect(formatter.sanitizeQuery(string)).eq(expectations.withWhere.string)
-  expect(values).eql(expectations.withWhere.values)
 }
 
 export function createASelectAllQueryWithoutKeysWithOrder (formatter: SqlFormatter, expectations: Struct<Struct>): void {
@@ -401,6 +440,21 @@ export function createASelectAllQueryWithoutKeysWithOrder (formatter: SqlFormatt
   expect(values).eql(expectations.withOrder.values)
 }
 
+export function createASelectAllQueryWithoutKeysWithSelect (formatter: SqlFormatter, expectations: Struct<Struct>): void {
+  const {
+    string,
+    values
+  } = formatter.createSelectAllQuery('case', withoutKeys, withoutKeys.primary ?? [], {
+    limit: 10,
+    select: [
+      'case.name'
+    ]
+  }, user as User)
+
+  expect(formatter.sanitizeQuery(string)).eq(expectations.withSelect.string)
+  expect(values).eql(expectations.withSelect.values)
+}
+
 export function createASelectAllQueryWithoutKeysWithoutParameters (formatter: SqlFormatter, expectations: Struct<Struct>): void {
   const {
     string,
@@ -413,16 +467,21 @@ export function createASelectAllQueryWithoutKeysWithoutParameters (formatter: Sq
   expect(values).eql(expectations.withoutParameters.values)
 }
 
-export function createADeleteQuery (formatter: SqlFormatter, expectations: Struct<Struct>): void {
+export function createASelectAllQueryWithoutKeysWithWhere (formatter: SqlFormatter, expectations: Struct<Struct>): void {
   const {
     string,
     values
-  } = formatter.createDeleteQuery('contact', updateKeys, {
-    contact_id: 1
-  })
+  } = formatter.createSelectAllQuery('case', withoutKeys, withoutKeys.primary ?? [], {
+    limit: 10,
+    where: {
+      case: {
+        name: '%scola'
+      }
+    }
+  }, user as User)
 
-  expect(formatter.sanitizeQuery(string)).eq(expectations.formatADeleteQuery.string)
-  expect(values).eql(expectations.formatADeleteQuery.values)
+  expect(formatter.sanitizeQuery(string)).eq(expectations.withWhere.string)
+  expect(values).eql(expectations.withWhere.values)
 }
 
 export function createAnInsertQuery (formatter: SqlFormatter, expectations: Struct<Struct>): void {
@@ -443,15 +502,6 @@ export function createAnInsertQuery (formatter: SqlFormatter, expectations: Stru
 
   expect(formatter.sanitizeQuery(string)).eq(expectations.formatAnInsertQuery.string)
   expect(values).eql(expectations.formatAnInsertQuery.values)
-}
-
-const updateKeys: SqlQueryKeys = {
-  primary: [
-    {
-      column: 'contact_id',
-      table: 'contact'
-    }
-  ]
 }
 
 export function createAnUpdateQuery (formatter: SqlFormatter, expectations: Struct<Struct>): void {

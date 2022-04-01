@@ -28,6 +28,7 @@ export interface SchemaField extends Struct {
   select?: boolean
   serial?: boolean
   step?: number
+  strict?: boolean
   type: string
   unique?: string
   values?: unknown[]

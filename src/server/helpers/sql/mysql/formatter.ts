@@ -3,15 +3,16 @@ import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from '../query'
 import { Struct, isStruct } from '../../../../common'
 import type { Query } from '../../../../common'
 import { SqlFormatter } from '../formatter'
+import type { User } from '../../../entities'
 import { escape } from 'sqlstring'
 import { sql } from '../tag'
 
 export class MysqlFormatter extends SqlFormatter {
-  public createInsertQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct): SqlQuery {
+  public createInsertQuery (object: string, schema: Schema, keys: SqlQueryKeys, data: Struct, user?: User): SqlQuery {
     let {
       string,
       values
-    } = super.createInsertQuery(object, keys, schema, data)
+    } = super.createInsertQuery(object, schema, schema, data, user)
 
     if (keys.primary?.length === 1) {
       string = sql`
@@ -84,20 +85,20 @@ export class MysqlFormatter extends SqlFormatter {
   }
 
   protected createSelectAllPartsLimit (query: Query): SqlQueryParts {
-    const values = Struct.create<Query['limit']>({
-      count: query.limit.count
+    const values = Struct.create<Query>({
+      limit: query.limit
     })
 
     let limit = null
     let order = null
     let where = null
 
-    if (query.limit.cursor === undefined) {
-      values.offset = query.limit.offset ?? 0
-      limit = 'LIMIT $(count) OFFSET $(offset)'
+    if (query.cursor === undefined) {
+      values.offset = query.offset ?? 0
+      limit = 'LIMIT $(limit) OFFSET $(offset)'
     } else {
-      values.cursor = query.limit.cursor
-      limit = 'LIMIT $(count) OFFSET 0'
+      values.cursor = query.cursor
+      limit = 'LIMIT $(limit) OFFSET 0'
       order = `$[${'cursor'}] ASC`
       where = `$[${'cursor'}] > $(cursor)`
     }

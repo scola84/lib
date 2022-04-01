@@ -1,5 +1,5 @@
-import type { Primitive, ScolaError, Struct } from '../../common'
-import { cast, isArray, isError, isPrimitive, isStruct } from '../../common'
+import type { Primitive, ScolaError } from '../../common'
+import { Struct, cast, isArray, isError, isPrimitive, isStruct, set } from '../../common'
 import { Interactor } from './interactor'
 import type { InteractorEvent } from './interactor'
 import type { ScolaFieldElement } from '../elements'
@@ -16,8 +16,10 @@ declare global {
 
 export interface FieldData extends Struct {
   name: string
-  value: Date | File | File[] | Primitive | Primitive[] | Struct | Struct[] | null
+  value: FieldValue
 }
+
+export type FieldValue = Array<Date | File | Primitive | Struct | null> | Date | File | File[] | Primitive | Struct | null
 
 export class Field {
   public debounce = 0
@@ -82,7 +84,7 @@ export class Field {
     }
   }
 
-  public getValue (): Date | File | File[] | Primitive | Primitive[] | Struct | Struct[] | null {
+  public getValue (): FieldValue {
     if (this.element instanceof HTMLInputElement) {
       if (
         this.element.type === 'checkbox' ||
@@ -122,7 +124,7 @@ export class Field {
       return Array
         .from(this.element.selectedOptions)
         .map((option) => {
-          return option.value
+          return cast(option.value) ?? null
         })
     }
 
@@ -235,9 +237,9 @@ export class Field {
   protected handleInputChecked (checked: boolean, event?: Event): void {
     this.element.toggleAttribute('checked', checked)
 
-    this.element.propagator.dispatch('checked', [{
-      [this.element.name]: checked
-    }], event)
+    this.element.propagator.dispatch('checked', [
+      set(Struct.create(), this.element.name, checked)
+    ], event)
   }
 
   protected handleInputFiles (fileList: FileList, event?: Event): void {
@@ -248,9 +250,9 @@ export class Field {
   }
 
   protected handleInputValue (event: Event): void {
-    this.element.propagator.dispatch('value', [{
-      [this.element.name]: this.element.value
-    }], event)
+    this.element.propagator.dispatch('value', [
+      set(Struct.create(), this.element.name, this.getValue())
+    ], event)
   }
 
   protected handleInteractor (event: InteractorEvent): boolean {

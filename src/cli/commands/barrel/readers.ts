@@ -1,5 +1,5 @@
 import type { Struct } from '../../../common'
-import { camelize } from '../../../common/helpers/camelize'
+import { capitalize } from '../../../common'
 import { readdirSync } from 'fs-extra'
 
 export const readers: Struct<((targetDir: string) => string[][]) | undefined> = {
@@ -13,7 +13,7 @@ export const readers: Struct<((targetDir: string) => string[][]) | undefined> = 
         return [
           file,
           base,
-          camelize(base)
+          capitalize(base, true)
         ]
       })
   },
@@ -27,7 +27,7 @@ export const readers: Struct<((targetDir: string) => string[][]) | undefined> = 
         return [
           base,
           base,
-          camelize(base)
+          capitalize(base, true)
         ]
       })
   }

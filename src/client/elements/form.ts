@@ -204,7 +204,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
         return data
       }
 
-      return setPush(data, element.name, element.getValue())
+      return setPush(data, element.name, value)
     }, Struct.create())
   }
 

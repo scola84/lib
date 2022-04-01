@@ -2,8 +2,8 @@ import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
-import { hyphenize } from '../../../common'
 import { pickField } from './pick-field'
+import { rejoin } from '../../../common'
 
 export function formatUpdateMany (schema: Schema, options: Options): string {
   return `
@@ -18,7 +18,7 @@ export class UpdateManyHandler extends CrudUpdateManyHandler {
     body: ${formatBodySchema(schema, 6)}
   }
 
-  public url = '${options.url}/update/many/${hyphenize(options.object)}'
+  public url = '${options.url}/update/many/${rejoin(options.object, '-')}'
 }
 `.trim()
 }

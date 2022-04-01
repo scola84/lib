@@ -49,13 +49,13 @@ const foreignKeysExpectations = {
         'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[cursor] ASC',
-      'OFFSET 0 ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET 0 ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_group_group_id: 1,
       case_user_user_id: 1,
-      count: 10,
-      cursor: 'scola'
+      cursor: 'scola',
+      limit: 10
     }
   },
   withForeignKey: {
@@ -65,13 +65,13 @@ const foreignKeysExpectations = {
         'SELECT $[contact_address].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[contact_address.contact_id] = $(contact_address_contact_id) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
-      'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_group_group_id: 1,
       case_user_user_id: 1,
       contact_address_contact_id: 1,
-      count: 10,
+      limit: 10,
       offset: 0
     }
   },
@@ -83,32 +83,32 @@ const foreignKeysExpectations = {
         'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
         'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
-      'ORDER BY 1',
-      'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+      'ORDER BY $[contact_address.begin] DESC',
+      'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_group_group_id: 1,
       case_user_user_id: 1,
-      count: 10,
+      limit: 10,
       offset: 0
     }
   },
   withWhere: {
     string: [
       [
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin)) AND $[case_user.user_id] = $(case_user_user_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin)) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin_0)) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin_0)) AND $[case_user.user_id] = $(case_user_user_id)',
+        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin_0)) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin_0)) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
-      'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_group_group_id: 1,
       case_user_user_id: 1,
-      contact_address_begin: '2020-01-01',
-      count: 10,
+      contact_address_begin_0: '2020-01-01',
+      limit: 10,
       offset: 0
     }
   },
@@ -121,12 +121,12 @@ const foreignKeysExpectations = {
         'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
-      'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_group_group_id: 1,
       case_user_user_id: 1,
-      count: 10,
+      limit: 10,
       offset: 0
     }
   }
@@ -140,14 +140,14 @@ const relatedKeysExpectations = {
         'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[cursor] ASC',
-      'OFFSET 0 ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET 0 ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_address_case_id: 1,
       case_group_group_id: 1,
       case_user_user_id: 1,
-      count: 10,
-      cursor: 'scola'
+      cursor: 'scola',
+      limit: 10
     }
   },
   withOrder: {
@@ -157,31 +157,31 @@ const relatedKeysExpectations = {
         'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[address.address_line1] DESC',
-      'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_address_case_id: 1,
       case_group_group_id: 1,
       case_user_user_id: 1,
-      count: 10,
+      limit: 10,
       offset: 0
     }
   },
   withWhere: {
     string: [
       [
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND ($[address.address_line1] = $(address_address_line1)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND ($[address.address_line1] = $(address_address_line1)) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND ($[address.address_line1] = $(address_address_line1_0)) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND ($[address.address_line1] = $(address_address_line1_0)) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
-      'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
-      address_address_line1: 'scola',
+      address_address_line1_0: 'scola',
       case_address_case_id: 1,
       case_group_group_id: 1,
       case_user_user_id: 1,
-      count: 10,
+      limit: 10,
       offset: 0
     }
   },
@@ -192,13 +192,13 @@ const relatedKeysExpectations = {
         'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
-      'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_address_case_id: 1,
       case_group_group_id: 1,
       case_user_user_id: 1,
-      count: 10,
+      limit: 10,
       offset: 0
     }
   }
@@ -212,13 +212,13 @@ const withoutKeysExpectations = {
         'SELECT $[case].* FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[cursor] ASC',
-      'OFFSET 0 ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET 0 ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_group_group_id: 1,
       case_user_user_id: 1,
-      count: 10,
-      cursor: 'scola'
+      cursor: 'scola',
+      limit: 10
     }
   },
   withOrder: {
@@ -228,29 +228,29 @@ const withoutKeysExpectations = {
         'SELECT $[case].* FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[case.name] DESC',
-      'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_group_group_id: 1,
       case_user_user_id: 1,
-      count: 10,
+      limit: 10,
       offset: 0
     }
   },
   withWhere: {
     string: [
       [
-        'SELECT $[case].* FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE ($[case.name] = $(case_name)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[case].* FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE ($[case.name] = $(case_name)) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[case].* FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE ($[case.name] LIKE $(case_name_0)) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[case].* FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE ($[case.name] LIKE $(case_name_0)) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
-      'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_group_group_id: 1,
-      case_name: 'scola',
+      case_name_0: '%scola',
       case_user_user_id: 1,
-      count: 10,
+      limit: 10,
       offset: 0
     }
   },
@@ -261,12 +261,12 @@ const withoutKeysExpectations = {
         'SELECT $[case].* FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
-      'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+      'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     ].join(' '),
     values: {
       case_group_group_id: 1,
       case_user_user_id: 1,
-      count: 10,
+      limit: 10,
       offset: 0
     }
   }

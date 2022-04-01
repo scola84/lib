@@ -1,4 +1,5 @@
 import { Struct, isStruct } from './is-struct'
+import type { Query } from './is-query'
 import { cast } from './cast'
 import { flatten } from './flatten'
 
@@ -100,22 +101,23 @@ export class I18n {
       })
   }
 
-  public filter (items: Struct[], search: Search[]): Struct[] {
+  public filter (items: Struct[], query: Query): Struct[] {
     return items.filter((item) => {
       if (isStruct(item)) {
-        return search.every(({ key, value }) => {
-          return Object
-            .entries(item)
-            .filter(([itemKey]) => {
-              return (
-                key === undefined ||
-                itemKey === key
-              )
-            })
-            .map(([, itemValue]) => {
-              return String(itemValue).toLowerCase()
-            })
-            .some((itemValue) => {
+        return Object
+          .entries(query.where ?? {})
+          .map(([column, columnValueOrValues]) => {
+            let columnValues = columnValueOrValues
+
+            if (typeof columnValues === 'string') {
+              columnValues = [columnValues]
+            }
+
+            return [column, columnValues] as [string, string[]]
+          })
+          .every(([column, columnValues]) => {
+            const itemValue = String(item[column]).toLowerCase()
+            return columnValues.some((value) => {
               if (
                 value.startsWith('%') &&
                 value.endsWith('%')
@@ -139,7 +141,7 @@ export class I18n {
 
               return cast(itemValue) === cast(value)
             })
-        })
+          })
       }
 
       return false
@@ -213,24 +215,28 @@ export class I18n {
       }) ?? []
   }
 
-  public sort (items: Struct[], order: string[], direction?: string[]): Struct[] {
+  public sort (items: Struct[], query: Query): Struct[] {
+    const { order = [] } = query
     return items.sort((left, right) => {
+      let direction = null
       let equivalence = 0
       let factor = 1
-      let key = ''
       let lv = ''
       let rv = ''
 
-      for (let index = 0; index < order.length; index += 1) {
-        key = order[index]
+      for (let key of order) {
+        ({ direction = null } = key.match(/(?<direction>[<>])$/u)?.groups ?? {})
+
+        if (direction !== null) {
+          key = key.slice(0, -1)
+
+          if (direction === '>') {
+            factor = -1
+          }
+        }
+
         lv = String(left[key])
         rv = String(right[key])
-
-        if (direction?.[index] === 'desc') {
-          factor = -1
-        } else {
-          factor = 1
-        }
 
         equivalence = factor * lv.localeCompare(rv, undefined, {
           caseFirst: 'upper',

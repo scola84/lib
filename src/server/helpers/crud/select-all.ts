@@ -1,7 +1,8 @@
+import type { Schema, SchemaField } from '../schema'
 import { CrudHandler } from './crud'
+import type { Merge } from 'type-fest'
 import type { Query } from '../../../common'
 import type { RouteData } from '../route'
-import type { SchemaField } from '../schema'
 
 interface CrudSelectAllData extends RouteData {
   query: Query
@@ -11,7 +12,11 @@ export abstract class CrudSelectAllHandler extends CrudHandler {
   public method = 'GET'
 
   public abstract schema: {
-    query: SchemaField
+    query: Merge<SchemaField, {
+      required: true
+      schema: Schema
+      type: 'struct'
+    }>
   }
 
   public async handle (data: CrudSelectAllData): Promise<unknown[]> {

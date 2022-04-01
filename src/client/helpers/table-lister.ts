@@ -22,11 +22,13 @@ export class TableLister {
 
   public limit: number
 
+  public local: boolean
+
   public locked: boolean
 
   public pkey: string
 
-  public query: boolean
+  public query?: Query | null
 
   public requestData?: Query
 
@@ -118,26 +120,26 @@ export class TableLister {
     let { items } = this
 
     if ((
-      this.query
+      this.local
     ) && (
-      this.element.dataset.order !== undefined ||
-      this.element.dataset.search !== undefined ||
-      this.element.dataset[this.rkey ?? ''] !== undefined
+      this.query?.join?.[this.rkey ?? ''] !== undefined ||
+      this.query?.order !== undefined ||
+      this.query?.where !== undefined
     )) {
       items = [...items]
 
-      if (this.element.dataset[this.rkey ?? ''] !== undefined) {
+      if (this.query.join?.[this.rkey ?? ''] !== undefined) {
         items = items.filter((item) => {
-          return cast(item[this.rkey ?? '']) === cast(this.element.dataset[this.rkey ?? ''])
+          return cast(item[this.rkey ?? '']) === cast(this.query?.join?.[this.rkey ?? ''])
         })
       }
 
-      if (this.element.dataset.search !== undefined) {
-        items = this.i18n.filter(items, this.i18n.parse(this.element.dataset.search))
+      if (this.query.where !== undefined) {
+        items = this.i18n.filter(items, this.query)
       }
 
-      if (this.element.dataset.order !== undefined) {
-        items = this.i18n.sort(items, this.element.dataset.order.split(' '), this.element.dataset.direction?.split(' '))
+      if (this.query.order !== undefined) {
+        items = this.i18n.sort(items, this.query)
       }
     }
 
@@ -178,7 +180,8 @@ export class TableLister {
       return
     }
 
-    this.requestData = Struct.create({
+    this.requestData = Struct.create<Query>({
+      ...this.query,
       limit: this.limit,
       offset: this.items.length
     })
@@ -189,34 +192,15 @@ export class TableLister {
       this.requestData.cursor = cursor
     }
 
-    if (this.element.dataset.direction !== undefined) {
-      this.requestData.direction = this.element.dataset.direction
-    }
-
-    if (this.element.dataset.order !== undefined) {
-      this.requestData.order = this.element.dataset.order
-    }
-
-    if (
-      this.rkey !== null &&
-      this.element.dataset[this.rkey] !== undefined
-    ) {
-      this.requestData[this.rkey] = this.element.dataset[this.rkey]
-    }
-
-    if (this.element.dataset.search !== undefined) {
-      this.requestData.search = this.element.dataset.search
-    }
-
     this.element.propagator.dispatch<Query>('request', [this.requestData])
   }
 
   public reset (): void {
     this.axis = this.element.getAttribute('sc-list-axis') ?? 'y'
     this.factor = Number(this.element.getAttribute('sc-list-factor') ?? 2)
+    this.local = this.element.hasAttribute('sc-list-local')
     this.locked = this.element.hasAttribute('sc-list-locked')
     this.pkey = this.element.getAttribute('sc-list-pkey') ?? 'id'
-    this.query = this.element.hasAttribute('sc-list-query')
     this.rkey = this.element.getAttribute('sc-list-rkey')
     this.threshold = Number(this.element.getAttribute('sc-list-threshold') ?? 0.75)
   }

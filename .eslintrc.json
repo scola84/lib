@@ -56,33 +56,20 @@
     "@typescript-eslint/object-curly-spacing": "off",
     "@typescript-eslint/prefer-readonly-parameter-types": "off",
     "@typescript-eslint/prefer-regexp-exec": "off",
-    "@typescript-eslint/return-await": [
-      "error",
-      "in-try-catch"
-    ],
-    "array-bracket-newline": [
-      "error",
-      "consistent"
-    ],
-    "array-element-newline": [
-      "error",
-      "consistent"
-    ],
-    "arrow-body-style": [
-      "error",
-      "always"
-    ],
+    "@typescript-eslint/return-await": ["error", "in-try-catch"],
+    "array-bracket-newline": ["error", "consistent"],
+    "array-element-newline": ["error", "consistent"],
+    "arrow-body-style": ["error", "always"],
     "capitalized-comments": "off",
     "class-methods-use-this": "off",
-    "func-style": [
-      "error",
-      "declaration"
-    ],
+    "func-style": ["error", "declaration"],
     "function-call-argument-newline": "off",
     "id-length": "off",
     "lines-around-comment": "off",
+    "max-depth": ["error", 5],
     "max-len": "off",
     "max-lines": "off",
+    "max-lines-per-function": ["error", 75],
     "max-params": "off",
     "max-statements": "off",
     "multiline-comment-style": "off",
@@ -104,10 +91,7 @@
         "vars": "local"
       }
     ],
-    "object-shorthand": [
-      "error",
-      "consistent-as-needed"
-    ],
+    "object-shorthand": ["error", "consistent-as-needed"],
     "padding-line-between-statements": [
       "error",
       {
@@ -123,11 +107,7 @@
       {
         "blankLine": "always",
         "next": "*",
-        "prev": [
-          "const",
-          "expression",
-          "let"
-        ]
+        "prev": ["const", "expression", "let"]
       },
       {
         "blankLine": "never",
@@ -146,16 +126,8 @@
       },
       {
         "blankLine": "never",
-        "next": [
-          "break",
-          "return",
-          "throw"
-        ],
-        "prev": [
-          "const",
-          "expression",
-          "let"
-        ]
+        "next": ["break", "return", "throw"],
+        "prev": ["const", "expression", "let"]
       },
       {
         "blankLine": "always",
@@ -174,27 +146,16 @@
       },
       {
         "blankLine": "always",
-        "next": [
-          "multiline-const",
-          "multiline-expression",
-          "multiline-let"
-        ],
+        "next": ["multiline-const", "multiline-expression", "multiline-let"],
         "prev": "*"
       },
       {
         "blankLine": "always",
         "next": "*",
-        "prev": [
-          "multiline-const",
-          "multiline-expression",
-          "multiline-let"
-        ]
+        "prev": ["multiline-const", "multiline-expression", "multiline-let"]
       }
     ],
-    "quote-props": [
-      "error",
-      "consistent"
-    ],
+    "quote-props": ["error", "consistent"],
     "require-atomic-updates": "off"
   }
 }

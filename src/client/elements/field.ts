@@ -1,6 +1,6 @@
-import type { Field, FieldData } from '../helpers'
-import type { Primitive, ScolaError, Struct } from '../../common'
+import type { Field, FieldData, FieldValue } from '../helpers'
 import type { ScolaElement } from './element'
+import type { ScolaError } from '../../common'
 
 export interface ScolaFieldElement extends ScolaElement {
   field: Field
@@ -19,7 +19,7 @@ export interface ScolaFieldElement extends ScolaElement {
 
   getData: () => FieldData
 
-  getValue: () => Date | File | File[] | Primitive | Primitive[] | Struct | Struct[] | null
+  getValue: () => FieldValue
 
   reset: () => void
 

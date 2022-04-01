@@ -3,7 +3,6 @@ import { checkbox } from './checkbox'
 import { color } from './color'
 import { date } from './date'
 import { datetimeLocal } from './datetime-local'
-import { direction } from './direction'
 import { email } from './email'
 import { file } from './file'
 import { max } from './max'
@@ -11,7 +10,7 @@ import { maxLength } from './max-length'
 import { min } from './min'
 import { minLength } from './min-length'
 import { number } from './number'
-import { operator } from './operator'
+import { order } from './order'
 import { pattern } from './pattern'
 import { radio } from './radio'
 import { range } from './range'
@@ -31,7 +30,6 @@ export const validators = {
   'color': color,
   'date': date,
   'datetime-local': datetimeLocal,
-  'direction': direction,
   'email': email,
   'file': file,
   'max': max,
@@ -39,7 +37,7 @@ export const validators = {
   'min': min,
   'min-length': minLength,
   'number': number,
-  'operator': operator,
+  'order': order,
   'pattern': pattern,
   'radio': radio,
   'range': range,

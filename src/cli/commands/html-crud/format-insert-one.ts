@@ -2,8 +2,8 @@ import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
-import { hyphenize } from '../../../common'
 import { pickField } from './pick-field'
+import { rejoin } from '../../../common'
 
 export function formatInsertOne (schema: Schema, options: Options): string {
   return `
@@ -18,7 +18,7 @@ export class InsertOneHandler extends CrudInsertOneHandler {
     body: ${formatBodySchema(schema, 6)}
   }
 
-  public url = '${options.url}/insert/one/${hyphenize(options.object)}'
+  public url = '${options.url}/insert/one/${rejoin(options.object, '-')}'
 }
 `.trim()
 }

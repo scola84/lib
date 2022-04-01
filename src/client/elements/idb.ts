@@ -229,18 +229,18 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
     let items = await database.getAll(this.nameVersion) as Struct[]
 
-    if (query?.[this.rkey ?? ''] !== undefined) {
+    if (query?.join?.[this.rkey ?? ''] !== undefined) {
       items = items.filter((item) => {
-        return cast(item[this.rkey ?? '']) === cast(query[this.rkey ?? ''])
+        return cast(item[this.rkey ?? '']) === cast(query.join?.[this.rkey ?? ''])
       })
     }
 
     if (query?.search !== undefined) {
-      items = this.i18n.filter(items, this.i18n.parse(query.search))
+      items = this.i18n.filter(items, query)
     }
 
     if (query?.order !== undefined) {
-      items = this.i18n.sort(items, query.order.split(' '), query.direction?.split(' '))
+      items = this.i18n.sort(items, query)
     }
 
     if (query?.limit !== undefined) {

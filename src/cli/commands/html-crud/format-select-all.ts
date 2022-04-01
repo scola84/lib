@@ -1,11 +1,10 @@
-/* eslint-disable max-lines-per-function */
 import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
 import type { Struct } from '../../../common'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
-import { hyphenize } from '../../../common'
 import { pickField } from './pick-field'
+import { rejoin } from '../../../common'
 import { sortKeys } from './sort-keys'
 
 export function formatSelectAll (schema: Schema, options: Options, relations: Struct<Schema>): string {
@@ -21,7 +20,7 @@ export class SelectAllHandler extends CrudSelectAllHandler {
     query: ${formatQuerySchema(options.object, schema, relations, 6)}
   }
 
-  public url = '${options.url}/select/all/${hyphenize(options.object)}'
+  public url = '${options.url}/select/all/${rejoin(options.object, '-')}'
 }
 `.trim()
 }
@@ -65,172 +64,94 @@ function createJoinSchema (object: string, schema: Schema): Schema | undefined {
 
 function createLimitSchema (): Schema {
   return {
+    cursor: {
+      type: 'text'
+    },
     limit: {
+      default: 10,
       required: true,
-      schema: {
-        count: {
-          default: 10,
-          required: true,
-          type: 'number'
-        },
-        cursor: {
-          type: 'text'
-        },
-        offset: {
-          type: 'number'
-        }
-      },
-      type: 'struct'
-    }
-  }
-}
-
-function createOperatorSchema (object: string, schema: Schema, relations: Struct<Schema>): Schema | undefined {
-  const operatorSchema = sortKeys<Schema>(Object
-    .entries({
-      [object]: schema,
-      ...relations
-    })
-    .reduce((tableResult, [tableName, tableSchema]) => {
-      return {
-        ...tableResult,
-        [tableName]: {
-          schema: Object
-            .entries(tableSchema)
-            .filter(([,field]) => {
-              return field.where === true
-            })
-            .reduce((result, [name]) => {
-              return {
-                ...result,
-                [name]: {
-                  type: 'operator'
-                }
-              }
-            }, {}),
-          type: 'struct'
-        }
-      }
-    }, {}))
-
-  const hasFields = Object
-    .values(operatorSchema)
-    .some((tableSchema) => {
-      return Object.keys(tableSchema).length > 0
-    })
-
-  if (!hasFields) {
-    return undefined
-  }
-
-  return {
-    operator: {
-      schema: operatorSchema,
-      type: 'struct'
+      type: 'number'
+    },
+    offset: {
+      type: 'number'
     }
   }
 }
 
 function createOrderSchema (object: string, schema: Schema, relations: Struct<Schema>): Schema | undefined {
-  const orderSchema = sortKeys<Schema>(Object
-    .entries({
-      [object]: schema,
-      ...relations
-    })
-    .reduce((result, [tableName, tableSchema]) => {
-      return {
-        ...result,
-        [tableName]: {
-          type: 'select-multiple',
-          values: Object
+  const qualified = Object
+    .keys(relations)
+    .length > 0
+
+  return {
+    order: {
+      type: 'order',
+      values: Object
+        .entries({
+          [object]: schema,
+          ...relations
+        })
+        .map(([tableName, tableSchema]) => {
+          return Object
             .entries(tableSchema)
             .filter(([,field]) => {
               return field.order
             })
-            .map(([name]) => {
-              return name
+            .map(([columnName]) => {
+              if (qualified) {
+                return `${tableName}.${columnName}`
+              }
+
+              return columnName
             })
-        }
-      }
-    }, {}))
-
-  const hasFields = Object
-    .values(orderSchema)
-    .some((tableSchema) => {
-      return (tableSchema.values ?? []).length > 0
-    })
-
-  if (!hasFields) {
-    return undefined
-  }
-
-  return {
-    order: {
-      schema: {
-        column: {
-          schema: orderSchema,
-          type: 'struct'
-        },
-        direction: {
-          type: 'direction'
-        }
-      },
-      type: 'struct'
+        })
+        .flat()
     }
   }
 }
 
 function createSelectSchema (object: string, schema: Schema, relations: Struct<Schema>): Schema | undefined {
-  const selectSchema = sortKeys<Schema>(Object
-    .entries({
-      [object]: schema,
-      ...relations
-    })
-    .reduce((result, [tableName, tableSchema]) => {
-      return {
-        ...result,
-        [tableName]: {
-          type: 'select-multiple',
-          values: Object
+  const qualified = Object
+    .keys(relations)
+    .length > 0
+
+  return {
+    select: {
+      type: 'select-multiple',
+      values: Object
+        .entries({
+          [object]: schema,
+          ...relations
+        })
+        .map(([tableName, tableSchema]) => {
+          return Object
             .entries(tableSchema)
             .filter(([,field]) => {
               return field.select
             })
-            .map(([name]) => {
-              return name
+            .map(([columnName]) => {
+              if (qualified) {
+                return `${tableName}.${columnName}`
+              }
+
+              return columnName
             })
-        }
-      }
-    }, {}))
-
-  const hasFields = Object
-    .values(selectSchema)
-    .some((tableSchema) => {
-      return (tableSchema.values ?? []).length > 0
-    })
-
-  if (!hasFields) {
-    return undefined
-  }
-
-  return {
-    select: {
-      schema: selectSchema,
-      type: 'struct'
+        })
+        .flat()
     }
   }
 }
 
 function createWhereSchema (object: string, schema: Schema, relations: Struct<Schema>): Schema | undefined {
-  const whereSchema = sortKeys<Schema>({
+  let whereSchema = sortKeys<Schema>({
     [object]: {
       schema: Object
         .entries(schema)
         .filter(([,field]) => {
           return (
             field.fkey !== undefined ||
-          field.rkey !== undefined ||
-          field.where === true
+            field.rkey !== undefined ||
+            field.where === true
           )
         })
         .reduce((result, [name, field]) => {
@@ -242,6 +163,7 @@ function createWhereSchema (object: string, schema: Schema, relations: Struct<Sc
             }
           }
         }, {}),
+      strict: true,
       type: 'struct'
     },
     ...Object
@@ -264,11 +186,16 @@ function createWhereSchema (object: string, schema: Schema, relations: Struct<Sc
                   }
                 }
               }, {}),
+            strict: true,
             type: 'struct'
           }
         }
       }, {})
   })
+
+  if (Object.keys(relations).length === 0) {
+    whereSchema = whereSchema[object].schema ?? {}
+  }
 
   const hasFields = Object
     .values(whereSchema)
@@ -283,6 +210,7 @@ function createWhereSchema (object: string, schema: Schema, relations: Struct<Sc
   return {
     where: {
       schema: whereSchema,
+      strict: true,
       type: 'struct'
     }
   }
@@ -303,7 +231,6 @@ function formatQuerySchema (object: string, schema: Schema, relations: Struct<Sc
         ...createJoinSchema(object, schema),
         ...createLimitSchema(),
         ...createOrderSchema(object, schema, relations),
-        ...createOperatorSchema(object, schema, relations),
         ...createSelectSchema(object, schema, relations),
         ...createWhereSchema(object, schema, relations)
       }),

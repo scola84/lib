@@ -164,7 +164,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
         return data
       }
 
-      return setPush(data, element.name, element.getValue())
+      return setPush(data, element.name, value)
     }, Struct.create())
   }
 

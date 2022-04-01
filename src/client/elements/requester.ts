@@ -1,4 +1,4 @@
-import { I18n, isArray, isNil, isPrimitive, isStruct, isTransaction } from '../../common'
+import { I18n, flatten, isArray, isNil, isPrimitive, isStruct, isTransaction } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaError, ScolaTransaction, Struct } from '../../common'
 import type { ScolaElement } from './element'
@@ -249,7 +249,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
     if (isStruct(data)) {
       Object
-        .entries(data)
+        .entries(flatten(data))
         .map<[string, unknown[]]>(([key, value]) => {
         /* eslint-disable @typescript-eslint/indent */
           if (isArray(value)) {
@@ -282,7 +282,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
     if (isStruct(data)) {
       Object
-        .entries(data)
+        .entries(flatten(data))
         .map<[string, unknown[]]>(([key, value]) => {
         /* eslint-disable @typescript-eslint/indent */
           if (isArray(value)) {

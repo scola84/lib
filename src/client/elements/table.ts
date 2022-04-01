@@ -1,9 +1,8 @@
 import { Dragger, Dropper, Mutator, Observer, Propagator, TableLister, TableSelector, TableSorter, TableTree } from '../helpers'
-import { cast, isArray, isPrimitive, isStruct } from '../../common'
+import { Struct, cast, isArray, isPrimitive, isStruct, merge } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaTableCellElement } from './table-cell'
 import { ScolaTableRowElement } from './table-row'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -15,6 +14,7 @@ declare global {
     'sc-table-dispatch': CustomEvent
     'sc-table-put': CustomEvent
     'sc-table-put-all': CustomEvent
+    'sc-table-query': CustomEvent
     'sc-table-request': CustomEvent
     'sc-table-start': CustomEvent
   }
@@ -73,6 +73,8 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   protected handlePutAllBound = this.handlePutAll.bind(this)
 
   protected handlePutBound = this.handlePut.bind(this)
+
+  protected handleQueryBound = this.handleQuery.bind(this)
 
   protected handleRequestBound = this.handleRequest.bind(this)
 
@@ -146,10 +148,6 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
   public connectedCallback (): void {
     this.observer.observe(this.handleObserverBound, [
-      'data-direction',
-      'data-order',
-      'data-search',
-      `data-${this.lister.rkey ?? ''}`,
       'sc-drag-handle',
       'sc-select-all',
       'sc-select-handle'
@@ -301,6 +299,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.addEventListener('sc-table-dispatch', this.handleDispatchBound)
     this.addEventListener('sc-table-put', this.handlePutBound)
     this.addEventListener('sc-table-put-all', this.handlePutAllBound)
+    this.addEventListener('sc-table-query', this.handleQueryBound)
     this.addEventListener('sc-table-request', this.handleRequestBound)
     this.addEventListener('sc-table-start', this.handleStartBound)
   }
@@ -533,14 +532,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   protected handleObserver (mutations: MutationRecord[]): void {
     const attributes = this.observer.normalize(mutations)
 
-    if (
-      attributes.includes('data-direction') ||
-      attributes.includes('data-order') ||
-      attributes.includes('data-search') ||
-      attributes.includes(`data-${this.lister.rkey ?? ''}`)
-    ) {
-      this.handleObserverList()
-    } else if (attributes.includes('sc-drag-handle')) {
+    if (attributes.includes('sc-drag-handle')) {
       this.handleObserverDragHandle()
     } else if (attributes.includes('sc-select-all')) {
       this.handleObserverSelectAll()
@@ -551,15 +543,6 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
   protected handleObserverDragHandle (): void {
     this.dragger?.reset()
-  }
-
-  protected handleObserverList (): void {
-    if (this.lister.query) {
-      this.update()
-    } else {
-      this.clear()
-      this.lister.request()
-    }
   }
 
   protected handleObserverSelectAll (): void {
@@ -588,6 +571,19 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     }
   }
 
+  protected handleQuery (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      this.lister.query = merge(this.lister.query ?? Struct.create(), event.detail)
+
+      if (this.lister.local) {
+        this.update()
+      } else {
+        this.clear()
+        this.lister.request()
+      }
+    }
+  }
+
   protected handleRequest (): void {
     this.lister.request()
   }
@@ -605,6 +601,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.removeEventListener('sc-table-dispatch', this.handleDispatchBound)
     this.removeEventListener('sc-table-put', this.handlePutBound)
     this.removeEventListener('sc-table-put-all', this.handlePutAllBound)
+    this.removeEventListener('sc-table-query', this.handleQueryBound)
     this.removeEventListener('sc-table-request', this.handleRequestBound)
     this.removeEventListener('sc-table-start', this.handleStartBound)
   }

@@ -1,10 +1,9 @@
-/* eslint-disable max-lines-per-function */
 import { Struct } from './is-struct'
 import { cast } from './cast'
 import { isArray } from './is-array'
 import { isObject } from './is-object'
 
-export function set (base: unknown, path: unknown[] | string, value: unknown): void {
+export function set<T = unknown> (base: T, path: unknown[] | string, value: unknown): T {
   let parent: unknown = base
   let key: unknown = ''
   let steps = path
@@ -43,7 +42,7 @@ export function set (base: unknown, path: unknown[] | string, value: unknown): v
 
       parent = parent[key]
     } else {
-      return
+      return base
     }
   }
 
@@ -60,4 +59,6 @@ export function set (base: unknown, path: unknown[] | string, value: unknown): v
   ) {
     parent[parentKey] = value
   }
+
+  return base
 }

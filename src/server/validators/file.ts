@@ -7,7 +7,10 @@ export function file (name: string, field: SchemaField): Validator {
   return (data: Struct, errors: Struct) => {
     let values = data[name]
 
-    if (!isArray(values)) {
+    if (
+      !isArray(values) &&
+      field.strict !== true
+    ) {
       values = [values]
     }
 

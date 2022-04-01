@@ -8,22 +8,30 @@ export function array (name: string, field: SchemaField): Validator {
 
   function validator (data: Struct, errors: Struct): boolean {
     let childErrors: Struct | null = null
+    let values = data[name]
 
-    const childData = data[name]
+    if (
+      !isArray(values) &&
+      field.strict !== true
+    ) {
+      values = [values]
+    }
 
-    if (isArray(childData)) {
-      for (const childDatum of childData) {
-        try {
-          if (isStruct(childDatum)) {
-            schemaValidator.validate(childDatum)
-          } else {
-            schemaValidator.validate({
-              [name]: childDatum
-            })
+    if (isArray(values)) {
+      if (field.schema !== undefined) {
+        for (const value of values) {
+          try {
+            if (isStruct(value)) {
+              schemaValidator.validate(value)
+            } else {
+              schemaValidator.validate({
+                [name]: value
+              })
+            }
+          } catch (error: unknown) {
+            childErrors = error as Struct
+            break
           }
-        } catch (error: unknown) {
-          childErrors = error as Struct
-          break
         }
       }
     } else {

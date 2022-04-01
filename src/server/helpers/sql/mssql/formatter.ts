@@ -3,15 +3,16 @@ import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from '../query'
 import { Struct, isStruct } from '../../../../common'
 import type { Query } from '../../../../common'
 import { SqlFormatter } from '../formatter'
+import type { User } from '../../../entities'
 import { escape } from 'sqlstring'
 import { sql } from '../tag'
 
 export class MssqlFormatter extends SqlFormatter {
-  public createInsertQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct): SqlQuery {
+  public createInsertQuery (object: string, schema: Schema, keys: SqlQueryKeys, data: Struct, user?: User): SqlQuery {
     let {
       string,
       values
-    } = super.createInsertQuery(object, keys, schema, data)
+    } = super.createInsertQuery(object, schema, keys, data, user)
 
     if (keys.primary?.length === 1) {
       string = sql`
@@ -87,22 +88,20 @@ export class MssqlFormatter extends SqlFormatter {
   }
 
   protected createSelectAllPartsLimit (query: Query): SqlQueryParts {
-    const values = Struct.create<Query['limit']>({
-      count: query.limit.count
+    const values = Struct.create<Query>({
+      limit: query.limit
     })
 
     let limit = null
     let order = null
     let where = null
 
-    if (query.limit.cursor === undefined) {
-      values.count = query.limit.count
-      values.offset = query.limit.offset ?? 0
-      limit = 'OFFSET $(offset) ROWS FETCH NEXT $(count) ROWS ONLY'
+    if (query.cursor === undefined) {
+      values.offset = query.offset ?? 0
+      limit = 'OFFSET $(offset) ROWS FETCH NEXT $(limit) ROWS ONLY'
     } else {
-      values.count = query.limit.count
-      values.cursor = query.limit.cursor
-      limit = 'OFFSET 0 ROWS FETCH NEXT $(count) ROWS ONLY'
+      values.cursor = query.cursor
+      limit = 'OFFSET 0 ROWS FETCH NEXT $(limit) ROWS ONLY'
       order = '$[cursor] ASC'
       where = '$[cursor] > $(cursor)'
     }

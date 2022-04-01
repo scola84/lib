@@ -2,11 +2,11 @@ import type { Struct } from './is-struct'
 import { flatten } from './flatten'
 import { set } from './set'
 
-export function merge (target: Struct, ...sources: Struct[]): Struct {
+export function merge<T = Struct> (target: T, ...sources: Struct[]): T {
   sources
-    .forEach((merger) => {
+    .forEach((source) => {
       Object
-        .entries((flatten(merger)))
+        .entries((flatten(source)))
         .forEach(([key, value]) => {
           set(target, key.split('.'), value)
         })

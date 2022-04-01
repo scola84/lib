@@ -28,7 +28,7 @@ export abstract class CrudInsertHandler extends CrudHandler {
   protected async insert (data: Struct, response: ServerResponse, schema: Schema, user?: User): Promise<Struct | undefined> {
     await this.authorizeLinks(data, response, user)
 
-    const insertQuery = this.database.formatter.createInsertQuery(this.object, this.keys, schema, data, user)
+    const insertQuery = this.database.formatter.createInsertQuery(this.object, schema, this.keys, data, user)
     const object = await this.database.insert(insertQuery.string, insertQuery.values, null)
 
     await this.moveFiles(schema, data)
@@ -48,14 +48,14 @@ export abstract class CrudInsertHandler extends CrudHandler {
 
   protected async insertLinks (data: Struct, object: Struct, primaryKey: SchemaFieldKey): Promise<void> {
     await Promise.all(this.keys.related?.map(async (key) => {
-      const insertQuery = this.database.formatter.createInsertQuery(key.table, this.keys, {
+      const insertQuery = this.database.formatter.createInsertQuery(key.table, {
         [key.column]: {
           type: 'text'
         },
         [primaryKey.column]: {
           type: 'text'
         }
-      }, {
+      }, this.keys, {
         [key.column]: data[key.column],
         [primaryKey.column]: object[primaryKey.column]
       })

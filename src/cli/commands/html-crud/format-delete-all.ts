@@ -2,7 +2,7 @@ import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
-import { hyphenize } from '../../../common'
+import { rejoin } from '../../../common'
 
 export function formatDeleteAll (schema: Schema, options: Options): string {
   return `
@@ -13,7 +13,7 @@ export class DeleteAllHandler extends CrudDeleteAllHandler {
 
   public object = '${options.object}'
 
-  public url = '${options.url}/delete/all/${hyphenize(options.object)}'
+  public url = '${options.url}/delete/all/${rejoin(options.object, '-')}'
 }
 `.trim()
 }

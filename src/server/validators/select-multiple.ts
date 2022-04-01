@@ -4,7 +4,14 @@ import { isArray } from '../../common'
 
 export function selectMultiple (name: string, field: SchemaField): Validator {
   return (data: Struct, errors: Struct) => {
-    const values = data[name]
+    let values = data[name]
+
+    if (
+      !isArray(values) &&
+      field.strict !== true
+    ) {
+      values = [values]
+    }
 
     if (isArray(values)) {
       const included = values.every((value) => {

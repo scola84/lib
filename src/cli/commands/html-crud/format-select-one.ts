@@ -5,8 +5,8 @@ import { createModifiedFields } from './create-modified-fields'
 import { createPrimaryFields } from './create-primary-fields'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
-import { hyphenize } from '../../../common'
 import { pickField } from './pick-field'
+import { rejoin } from '../../../common'
 import { sortKeys } from './sort-keys'
 
 export function formatSelectOne (schema: Schema, options: Options): string {
@@ -22,7 +22,7 @@ export class SelectOneHandler extends CrudSelectOneHandler {
     query: ${formatQuerySchema(schema, 6)}
   }
 
-  public url = '${options.url}/select/one/${hyphenize(options.object)}'
+  public url = '${options.url}/select/one/${rejoin(options.object, '-')}'
 }
 `.trim()
 }

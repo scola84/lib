@@ -1,5 +1,5 @@
 import type { Options } from '../html-crud'
-import { camelize } from '../../../common/helpers/camelize'
+import { capitalize } from '../../../common'
 import { formatGroup } from './format-group'
 import { isMatch } from 'micromatch'
 
@@ -7,7 +7,7 @@ export function formatIndex (options: Options): string {
   return `
 ${formatImport(options)}
 
-export function ${camelize(options.object)} (): void {
+export function ${capitalize(options.object, true)} (): void {
   ${formatHandlers(options, 4)}
 
   ${formatStart(options, 0)}

@@ -28,7 +28,7 @@ export class TableLister {
 
   public pkey: string
 
-  public query?: Query | null
+  public query?: Query
 
   public requestData?: Query
 

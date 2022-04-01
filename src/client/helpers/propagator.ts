@@ -147,22 +147,17 @@ export class Propagator {
       return data
     }
 
-    if (isNil(event.filter)) {
-      if (
-        isStruct(data) &&
-        Object.keys(data).length > 0
-      ) {
-        return data
-      }
-
-      return event.data
-    }
+    let detail = event.data
 
     if (isStruct(data)) {
-      return Struct.fromString(this.i18n.format(event.filter, {
-        ...event.data,
+      detail = {
+        ...detail,
         ...data
-      }))
+      }
+    }
+
+    if (isNil(event.filter)) {
+      return detail
     }
 
     return Struct.fromString(this.i18n.format(event.filter, event.data))

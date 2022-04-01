@@ -1,17 +1,23 @@
 import { Dragger, Dropper, Interactor, Mutator, Observer, Propagator } from '../helpers'
+import { I18n, isStruct } from '../../common'
 import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
-import { isStruct } from '../../common'
 
 export class ScolaButtonElement extends HTMLButtonElement implements ScolaElement {
+  public code: string | null
+
   public data: Struct = {}
 
   public dragger?: Dragger
 
   public dropper?: Dropper
 
+  public i18n: I18n
+
   public interactor: Interactor
+
+  public locale?: string
 
   public mutator: Mutator
 
@@ -25,6 +31,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
 
   public constructor () {
     super()
+    this.i18n = new I18n()
     this.interactor = new Interactor(this)
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
@@ -39,6 +46,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     }
 
     this.reset()
+    this.update()
   }
 
   public static define (): void {
@@ -79,10 +87,12 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   }
 
   public reset (): void {
+    this.code = this.getAttribute('sc-code')
     this.interactor.cancel = this.hasAttribute('sc-cancel')
     this.interactor.keyboard = this.interactor.hasKeyboard
     this.interactor.mouse = this.interactor.hasMouse
     this.interactor.touch = this.interactor.hasTouch
+    this.locale = this.getAttribute('sc-locale') ?? undefined
   }
 
   public setData (data: unknown): void {
@@ -102,7 +112,11 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     }
   }
 
-  public update (): void {}
+  public update (): void {
+    if (this.code !== null) {
+      this.title = this.i18n.format(this.code, this.getData(), this.locale)
+    }
+  }
 
   protected changeFocus (): void {
     if (!this.hasAttribute('hidden')) {

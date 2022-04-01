@@ -9,7 +9,7 @@ export function set<T = unknown> (base: T, path: unknown[] | string, value: unkn
   let steps = path
 
   if (typeof steps === 'string') {
-    steps = steps.split('.').map(cast)
+    steps = steps.split(/[._-]/u).map(cast)
   }
 
   for (let index = 0; index < steps.length - 1; index += 1) {

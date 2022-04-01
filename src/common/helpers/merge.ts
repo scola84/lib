@@ -8,7 +8,7 @@ export function merge<T = Struct> (target: T, ...sources: Struct[]): T {
       Object
         .entries((flatten(source)))
         .forEach(([key, value]) => {
-          set(target, key.split('.'), value)
+          set(target, key, value)
         })
     })
 

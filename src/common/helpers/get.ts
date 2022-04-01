@@ -6,7 +6,7 @@ export function get (value: unknown, path: unknown[] | string): unknown {
   let steps = path
 
   if (typeof steps === 'string') {
-    steps = steps.split('.')
+    steps = steps.split(/[._-]/u)
   }
 
   for (const key of steps) {

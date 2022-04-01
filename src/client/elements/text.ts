@@ -63,7 +63,7 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
 
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
-    this.locale = this.getAttribute('sc-locale') ?? I18n.locale
+    this.locale = this.getAttribute('sc-locale') ?? undefined
     this.trim = this.hasAttribute('sc-trim')
   }
 
@@ -98,8 +98,8 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
 
     if (this.trim) {
       string = string
-        .replace(/\s+/u, ' ')
         .trim()
+        .replace(/\s+/u, ' ')
     }
 
     if (

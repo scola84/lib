@@ -19,18 +19,30 @@ export function array (name: string, field: SchemaField): Validator {
 
     if (isArray(values)) {
       if (field.schema !== undefined) {
-        for (const value of values) {
-          try {
-            if (isStruct(value)) {
-              schemaValidator.validate(value)
-            } else {
-              schemaValidator.validate({
-                [name]: value
-              })
+        if (values.length > (field.maxLength ?? Infinity)) {
+          childErrors = {
+            code: 'err_validator_bad_input_array',
+            data: { maxLength: field.maxLength }
+          }
+        } else if (values.length < (field.minLength ?? -Infinity)) {
+          childErrors = {
+            code: 'err_validator_bad_input_array',
+            data: { minLength: field.minLength }
+          }
+        } else {
+          for (const value of values) {
+            try {
+              if (isStruct(value)) {
+                schemaValidator.validate(value)
+              } else {
+                schemaValidator.validate({
+                  [name]: value
+                })
+              }
+            } catch (error: unknown) {
+              childErrors = error as Struct
+              break
             }
-          } catch (error: unknown) {
-            childErrors = error as Struct
-            break
           }
         }
       }

@@ -1,4 +1,4 @@
-import { I18n, Struct, isArray, isStruct } from '../../../common'
+import { I18n, Struct, flatten, isStruct } from '../../../common'
 import type { Schema, SchemaField, SchemaFieldKey } from '../schema'
 import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from './query'
 import type { Query } from '../../../common'
@@ -32,7 +32,7 @@ export abstract class SqlFormatter {
         SELECT ${deleteAll.select}
         FROM $[${object}]
         ${authPart.join ?? ''}
-        WHERE ${authPart.where ?? '1=1'}
+        WHERE ${authPart.where ?? '1 = 1'}
       `
     })
 
@@ -99,9 +99,9 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createSelectAllQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], query: Query, user?: User): SqlQuery {
+  public createSelectAllQuery (object: string, schema: Schema, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], query: Query, user?: User): SqlQuery {
     const auth = this.createAuthParts(keys, authKeys, user)
-    const selectAll = this.createSelectAllParts(object, keys, query)
+    const selectAll = this.createSelectAllParts(object, schema, keys, query)
 
     const queries = auth.parts.map((authPart) => {
       if (
@@ -112,14 +112,14 @@ export abstract class SqlFormatter {
       }
 
       return sql`
-        SELECT ${selectAll.select ?? `$[${object}].*`}
+        SELECT ${selectAll.select ?? '1 AS $[1]'}
         FROM $[${object}]
         ${selectAll.join ?? ''}
         ${authPart.join ?? ''}
         WHERE ${this.joinStrings(' AND ', [
           selectAll.where,
           authPart.where
-        ]) ?? '1=1'}
+        ]) ?? '1 = 1'}
         `
     })
 
@@ -159,7 +159,7 @@ export abstract class SqlFormatter {
         WHERE ${this.joinStrings(' AND ', [
           select.where,
           authPart.where
-        ]) ?? '1=1'}
+        ]) ?? '1 = 1'}
       `
     })
 
@@ -195,7 +195,7 @@ export abstract class SqlFormatter {
         WHERE ${this.joinStrings(' AND ', [
           select.where,
           authPart.where
-        ]) ?? '1=1'}
+        ]) ?? '1 = 1'}
       `
     })
 
@@ -224,7 +224,7 @@ export abstract class SqlFormatter {
         SELECT ${select.select ?? `$[${object}].*`}
         FROM $[${object}]
         ${authPart.join ?? ''}
-        WHERE ${authPart.where ?? '1=1'}
+        WHERE ${authPart.where ?? '1 = 1'}
       `
     })
 
@@ -257,7 +257,7 @@ export abstract class SqlFormatter {
         WHERE ${this.joinStrings(' AND ', [
           select.where,
           authPart.where
-        ]) ?? '1=1'}
+        ]) ?? '1 = 1'}
       `
     })
 
@@ -270,7 +270,7 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createUpdateQuery (object: string, keys: SqlQueryKeys, schema: Schema, data: Struct, user?: User): SqlQuery {
+  public createUpdateQuery (object: string, schema: Schema, keys: SqlQueryKeys, data: Struct, user?: User): SqlQuery {
     const values = Struct.create()
 
     const set = Object
@@ -444,7 +444,7 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllParts (object: string, keys: SqlQueryKeys, query: Query): SqlQueryParts {
+  protected createSelectAllParts (object: string, schema: Schema, keys: SqlQueryKeys, query: Query): SqlQueryParts {
     const joinKey = (keys.foreign ?? keys.related)?.find((key) => {
       return (
         query.join !== undefined &&
@@ -452,12 +452,12 @@ export abstract class SqlFormatter {
       )
     })
 
-    const foreignParts = this.createSelectAllPartsForeignKeys(object, keys, query)
+    const foreignParts = this.createSelectAllPartsForeign(object, keys, query)
     const limitParts = this.createSelectAllPartsLimit(query)
-    const orderParts = this.createSelectAllPartsOrderKeys(object, joinKey, query)
-    const relatedParts = this.createSelectAllPartsRelatedKeys(object, keys, query)
-    const selectParts = this.createSelectAllPartsSelectKeys(object, joinKey, query)
-    const whereParts = this.createSelectAllPartsWhereKeys(object, joinKey, query)
+    const orderParts = this.createSelectAllPartsOrder(object, joinKey, query)
+    const relatedParts = this.createSelectAllPartsRelated(object, keys, query)
+    const selectParts = this.createSelectAllPartsSelect(object, schema, joinKey, query)
+    const whereParts = this.createSelectAllPartsWhere(object, joinKey, query)
 
     const join = this.joinStrings(' ', [
       foreignParts.join,
@@ -492,7 +492,7 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsForeignKeys (object: string, keys: SqlQueryKeys, query: Query): SqlQueryParts {
+  protected createSelectAllPartsForeign (object: string, keys: SqlQueryKeys, query: Query): SqlQueryParts {
     const join: string[] = []
     const values = Struct.create()
 
@@ -525,33 +525,26 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsOrderKeys (object: string, joinKey: SchemaFieldKey | undefined, query: Query): SqlQueryParts {
-    const order = this.joinStrings(', ', query.order
-      ?.filter((tableAndColumn) => {
+  protected createSelectAllPartsOrder (object: string, joinKey: SchemaFieldKey | undefined, query: Query): SqlQueryParts {
+    const order = this.joinStrings(', ', Object
+      .entries(flatten<string | undefined>(query.order ?? {}))
+      .filter(([tableAndColumn]) => {
         return (
-          tableAndColumn.startsWith(object)
-        ) || (
-          joinKey !== undefined &&
+          joinKey === undefined ||
+          tableAndColumn.startsWith(object) ||
           tableAndColumn.startsWith(joinKey.table)
         )
       })
-      .map((tableAndColumn) => {
-        const { direction = undefined } = tableAndColumn.match(/(?<direction>[<>])$/u)?.groups ?? {}
-        return `$[${
-          tableAndColumn.slice(0, tableAndColumn.length - (direction?.length ?? 0))
-        }] ${
-          direction
-            ?.replace('<', 'ASC')
-            .replace('>', 'DESC') ?? 'ASC'
-        }`
-      }) ?? [])
+      .map(([tableAndColumn, direction]) => {
+        return `$[${tableAndColumn}] ${direction?.toUpperCase() ?? 'ASC'}`
+      }))
 
     return {
       order: order ?? undefined
     }
   }
 
-  protected createSelectAllPartsRelatedKeys (object: string, keys: SqlQueryKeys, query: Query): SqlQueryParts {
+  protected createSelectAllPartsRelated (object: string, keys: SqlQueryKeys, query: Query): SqlQueryParts {
     const values = Struct.create()
 
     let join = null
@@ -574,89 +567,76 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsSelectKeys (object: string, joinKey: SchemaFieldKey | undefined, query: Query): SqlQueryParts {
-    const select = this.joinStrings(', ', query.select
-      ?.filter((tableAndColumn) => {
+  protected createSelectAllPartsSelect (object: string, schema: Schema, joinKey: SchemaFieldKey | undefined, query: Query): SqlQueryParts {
+    const booleans = flatten<boolean | undefined>(query.select ?? {})
+    const negative = Object.values(booleans).includes(false)
+    const positive = Object.values(booleans).includes(true)
+
+    const fields = flatten<SchemaField>(schema.select.schema ?? {}, '', (value) => {
+      if (
+        isStruct(value) &&
+        typeof value.type === 'string'
+      ) {
+        return false
+      }
+
+      return true
+    })
+
+    const select = this.joinStrings(', ', Object
+      .keys(fields)
+      .filter((tableAndColumn) => {
         return (
-          tableAndColumn.startsWith(object)
-        ) || (
-          joinKey !== undefined &&
+          joinKey === undefined ||
+          tableAndColumn.startsWith(object) ||
           tableAndColumn.startsWith(joinKey.table)
         )
       })
       .map((tableAndColumn) => {
-        return `$[${tableAndColumn}]`
-      }) ?? [])
+        if (positive) {
+          if (booleans[tableAndColumn] === true) {
+            return `$[${tableAndColumn}]`
+          }
+        } else if (negative) {
+          if (booleans[tableAndColumn] !== false) {
+            return `$[${tableAndColumn}]`
+          }
+        } else {
+          return `$[${tableAndColumn}]`
+        }
+
+        return undefined
+      }))
 
     return {
       select
     }
   }
 
-  protected createSelectAllPartsWhereKeys (object: string, joinKey: SchemaFieldKey | undefined, query: Query): SqlQueryParts {
+  protected createSelectAllPartsWhere (object: string, joinKey: SchemaFieldKey | undefined, query: Query): SqlQueryParts {
     const values = Struct.create()
+    const operators = flatten<string | undefined>(query.operator ?? {})
 
     const where = this.joinStrings(') AND (', Object
-      .entries(query.where ?? {})
-      .filter(([tableOrColumn]) => {
+      .entries(flatten<unknown>(query.where ?? {}))
+      .filter(([tableAndColumn]) => {
         return (
-          tableOrColumn === object
-        ) || (
-          joinKey !== undefined &&
-          tableOrColumn === joinKey.table
+          joinKey === undefined ||
+          tableAndColumn.startsWith(object) ||
+          tableAndColumn.startsWith(joinKey.table)
         )
       })
-      .map(([tableOrColumn, columnsOrValue]) => {
-        let columns = columnsOrValue
-        let table = tableOrColumn
+      .map(([tableAndColumn, value]) => {
+        const operator = operators[tableAndColumn] ?? '='
 
-        if (!isStruct(columnsOrValue)) {
-          columns = { [tableOrColumn]: columnsOrValue }
-          table = object
+        values[tableAndColumn] = value
+
+        if (operator === 'LIKE') {
+          return `LOWER($[${tableAndColumn}]) ${operator} LOWER($(${tableAndColumn}))`
         }
 
-        return [table, columns] as [string, Struct<string[] | string>]
-      })
-      .map(([table, columns = {}]) => {
-        return Object
-          .entries(columns)
-          .map(([column, columnValueOrValues]) => {
-            let columnValues = columnValueOrValues
-
-            if (!isArray(columnValues)) {
-              columnValues = [columnValues]
-            }
-
-            return [column, columnValues] as [string, string[]]
-          })
-          .map(([column, columnValues]) => {
-            return this.joinStrings(' OR ', columnValues.map((value, index) => {
-              const {
-                after,
-                before = undefined
-              } = value.match(/^(?<before>=|<|>|<=|>=|<>|%)?[^%]+(?<after>%)?$/u)?.groups ?? {}
-
-              let operator = ''
-
-              if (
-                after === '%' ||
-                before === '%'
-              ) {
-                operator = 'LIKE'
-                values[`${table}_${column}_${index}`] = value
-              } else if (before === undefined) {
-                operator = '='
-                values[`${table}_${column}_${index}`] = value
-              } else {
-                operator = before
-                values[`${table}_${column}_${index}`] = value.slice(before.length)
-              }
-
-              return `$[${table}.${column}] ${operator} $(${table}_${column}_${index})`
-            }))
-          })
-      })
-      .flat())
+        return `$[${tableAndColumn}] ${operator} $(${tableAndColumn})`
+      }))
 
     return {
       values,

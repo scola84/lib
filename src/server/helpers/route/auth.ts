@@ -1,12 +1,12 @@
 import type { GroupUserRole, Role, User, UserToken } from '../../entities'
 import type { IncomingHttpHeaders, ServerResponse } from 'http'
+import { isStruct, revive } from '../../../common'
 import { parse, serialize } from 'cookie'
 import { randomBytes, scrypt } from 'crypto'
 import type { RedisClientType } from 'redis'
 import type { RouteData } from './handler'
 import type { SqlDatabase } from '../sql'
 import { createUserToken } from '../../entities'
-import { isStruct } from '../../../common'
 import { sql } from '../sql'
 
 export interface RouteAuthOptions {
@@ -44,7 +44,7 @@ export class RouteAuth {
     const storeUser = await this.store?.hGet('sc-auth', hash)
 
     if (storeUser !== undefined) {
-      return JSON.parse(storeUser) as User
+      return JSON.parse(storeUser, revive) as User
     }
 
     const token = await this.selectUserTokenByHash(hash)

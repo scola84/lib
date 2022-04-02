@@ -21,7 +21,7 @@ export function selectMultiple (name: string, field: SchemaField): Validator {
       if (!included) {
         errors[name] = {
           code: 'err_validator_bad_input_selectmultiple',
-          data: { values: field.values }
+          data: { accept: field.values }
         }
 
         return false

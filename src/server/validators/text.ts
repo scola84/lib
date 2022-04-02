@@ -1,14 +1,13 @@
 import type { Struct } from '../../common'
 import type { Validator } from '../helpers'
+import { isPrimitive } from '../../common'
 
 export function text (name: string): Validator {
-  return (data: Struct, errors: Struct) => {
-    if (typeof data[name] !== 'string') {
-      errors[name] = {
-        code: 'err_validator_bad_input_text'
-      }
+  return (data: Struct) => {
+    const value = data[name]
 
-      return false
+    if (isPrimitive(value)) {
+      data[name] = value.toString()
     }
 
     return true

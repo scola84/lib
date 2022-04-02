@@ -26,7 +26,7 @@ export abstract class CrudSelectAllHandler extends CrudHandler {
       return data.query.join?.[key.column] !== undefined
     }) ?? this.keys.primary ?? []
 
-    const selectAllQuery = this.database.formatter.createSelectAllQuery(this.object, this.keys, authKeys, data.query, data.user)
+    const selectAllQuery = this.database.formatter.createSelectAllQuery(this.object, this.schema.query.schema, this.keys, authKeys, data.query, data.user)
     return this.database.selectAll(selectAllQuery.string, selectAllQuery.values)
   }
 }

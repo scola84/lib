@@ -14,17 +14,27 @@ export function struct (name: string, field: SchemaField, user?: User): Validato
 
     if (isStruct(values)) {
       try {
-        if (field.strict === true) {
-          Object
-            .keys(values)
-            .forEach((key) => {
-              if (field.schema?.[key] === undefined) {
-                throw {
-                  code: 'err_validator_bad_input_struct',
-                  data: { keys: Object.keys(values) }
-                } as unknown as Error
-              }
-            })
+        const keys = Object.keys(values)
+
+        if (keys.length > (field.maxLength ?? Infinity)) {
+          childErrors = {
+            code: 'err_validator_bad_input_struct',
+            data: { maxLength: field.maxLength }
+          }
+        } else if (keys.length < (field.minLength ?? -Infinity)) {
+          childErrors = {
+            code: 'err_validator_bad_input_struct',
+            data: { minLength: field.minLength }
+          }
+        } else if (field.strict === true) {
+          keys.forEach((key) => {
+            if (field.schema?.[key] === undefined) {
+              throw {
+                code: 'err_validator_bad_input_struct',
+                data: { accept: Object.keys(field.schema ?? {}) }
+              } as unknown as Error
+            }
+          })
         }
 
         schemaValidator.validate(values, user)

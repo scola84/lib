@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http'
-import { Struct, cast, isPrimitive, isStruct, setPush } from '../../../common'
+import { Struct, cast, isPrimitive, isStruct, revive, setPush } from '../../../common'
 import type { FileBucket } from '../file'
 import type { FileInfo } from 'busboy'
 import type { Readable } from 'stream'
@@ -117,7 +117,7 @@ export class RouteCodec {
   }
 
   public async decodeJson (request: IncomingMessage): Promise<unknown> {
-    return JSON.parse(await this.decodePlain(request)) as unknown
+    return JSON.parse(await this.decodePlain(request), revive) as unknown
   }
 
   public async decodeOctetStream (request: IncomingMessage): Promise<Buffer> {

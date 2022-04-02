@@ -1,4 +1,5 @@
 import { array } from './array'
+import { boolean } from './boolean'
 import { checkbox } from './checkbox'
 import { color } from './color'
 import { date } from './date'
@@ -10,6 +11,7 @@ import { maxLength } from './max-length'
 import { min } from './min'
 import { minLength } from './min-length'
 import { number } from './number'
+import { operator } from './operator'
 import { order } from './order'
 import { pattern } from './pattern'
 import { radio } from './radio'
@@ -26,6 +28,7 @@ import { url } from './url'
 
 export const validators = {
   'array': array,
+  'boolean': boolean,
   'checkbox': checkbox,
   'color': color,
   'date': date,
@@ -37,6 +40,7 @@ export const validators = {
   'min': min,
   'min-length': minLength,
   'number': number,
+  'operator': operator,
   'order': order,
   'pattern': pattern,
   'radio': radio,

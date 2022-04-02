@@ -235,7 +235,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       })
     }
 
-    if (query?.search !== undefined) {
+    if (query?.where !== undefined) {
       items = this.i18n.filter(items, query)
     }
 

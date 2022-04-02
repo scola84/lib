@@ -4,8 +4,8 @@ import type { Struct } from '../../../common'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
 import { pickField } from './pick-field'
-import { toJoint } from '../../../common'
 import { sortKeys } from './sort-keys'
+import { toJoint } from '../../../common'
 
 export function formatSelectAll (schema: Schema, options: Options, relations: Struct<Schema>): string {
   return `
@@ -78,66 +78,206 @@ function createLimitSchema (): Schema {
   }
 }
 
+function createOperatorSchema (object: string, schema: Schema, relations: Struct<Schema>): Schema | undefined {
+  let operatorSchema = sortKeys<Schema>({
+    [object]: {
+      schema: Object
+        .entries(schema)
+        .filter(([,field]) => {
+          return field.where === true
+        })
+        .reduce((result, [name]) => {
+          return {
+            ...result,
+            [name]: {
+              type: 'operator'
+            }
+          }
+        }, {}),
+      strict: true,
+      type: 'struct'
+    },
+    ...Object
+      .entries(relations)
+      .reduce((tableResult, [tableName, tableSchema]) => {
+        return {
+          ...tableResult,
+          [tableName]: {
+            schema: Object
+              .entries(tableSchema)
+              .filter(([,field]) => {
+                return field.where === true
+              })
+              .reduce((result, [name]) => {
+                return {
+                  ...result,
+                  [name]: {
+                    type: 'operator'
+                  }
+                }
+              }, {}),
+            strict: true,
+            type: 'struct'
+          }
+        }
+      }, {})
+  })
+
+  if (Object.keys(relations).length === 0) {
+    operatorSchema = operatorSchema[object].schema ?? {}
+  }
+
+  const hasFields = Object
+    .values(operatorSchema)
+    .some((tableSchema) => {
+      return Object.keys(tableSchema).length > 0
+    })
+
+  if (!hasFields) {
+    return undefined
+  }
+
+  return {
+    operator: {
+      schema: operatorSchema,
+      strict: true,
+      type: 'struct'
+    }
+  }
+}
+
 function createOrderSchema (object: string, schema: Schema, relations: Struct<Schema>): Schema | undefined {
-  const qualified = Object
-    .keys(relations)
-    .length > 0
+  let orderSchema = sortKeys<Schema>({
+    [object]: {
+      schema: Object
+        .entries(schema)
+        .filter(([,field]) => {
+          return field.order === true
+        })
+        .reduce((result, [name]) => {
+          return {
+            ...result,
+            [name]: {
+              type: 'order'
+            }
+          }
+        }, {}),
+      strict: true,
+      type: 'struct'
+    },
+    ...Object
+      .entries(relations)
+      .reduce((tableResult, [tableName, tableSchema]) => {
+        return {
+          ...tableResult,
+          [tableName]: {
+            schema: Object
+              .entries(tableSchema)
+              .filter(([,field]) => {
+                return field.order === true
+              })
+              .reduce((result, [name]) => {
+                return {
+                  ...result,
+                  [name]: {
+                    type: 'order'
+                  }
+                }
+              }, {}),
+            strict: true,
+            type: 'struct'
+          }
+        }
+      }, {})
+  })
+
+  if (Object.keys(relations).length === 0) {
+    orderSchema = orderSchema[object].schema ?? {}
+  }
+
+  const hasFields = Object
+    .values(orderSchema)
+    .some((tableSchema) => {
+      return Object.keys(tableSchema).length > 0
+    })
+
+  if (!hasFields) {
+    return undefined
+  }
 
   return {
     order: {
-      type: 'order',
-      values: Object
-        .entries({
-          [object]: schema,
-          ...relations
-        })
-        .map(([tableName, tableSchema]) => {
-          return Object
-            .entries(tableSchema)
-            .filter(([,field]) => {
-              return field.order
-            })
-            .map(([columnName]) => {
-              if (qualified) {
-                return `${tableName}.${columnName}`
-              }
-
-              return columnName
-            })
-        })
-        .flat()
+      schema: orderSchema,
+      strict: true,
+      type: 'struct'
     }
   }
 }
 
 function createSelectSchema (object: string, schema: Schema, relations: Struct<Schema>): Schema | undefined {
-  const qualified = Object
-    .keys(relations)
-    .length > 0
+  let selectSchema = sortKeys<Schema>({
+    [object]: {
+      schema: Object
+        .entries(schema)
+        .filter(([,field]) => {
+          return field.select === true
+        })
+        .reduce((result, [name]) => {
+          return {
+            ...result,
+            [name]: {
+              type: 'boolean'
+            }
+          }
+        }, {}),
+      strict: true,
+      type: 'struct'
+    },
+    ...Object
+      .entries(relations)
+      .reduce((tableResult, [tableName, tableSchema]) => {
+        return {
+          ...tableResult,
+          [tableName]: {
+            schema: Object
+              .entries(tableSchema)
+              .filter(([,field]) => {
+                return field.select === true
+              })
+              .reduce((result, [name]) => {
+                return {
+                  ...result,
+                  [name]: {
+                    type: 'boolean'
+                  }
+                }
+              }, {}),
+            strict: true,
+            type: 'struct'
+          }
+        }
+      }, {})
+  })
+
+  if (Object.keys(relations).length === 0) {
+    selectSchema = selectSchema[object].schema ?? {}
+  }
+
+  const hasFields = Object
+    .values(selectSchema)
+    .some((tableSchema) => {
+      return Object.keys(tableSchema).length > 0
+    })
+
+  if (!hasFields) {
+    return undefined
+  }
 
   return {
     select: {
-      type: 'select-multiple',
-      values: Object
-        .entries({
-          [object]: schema,
-          ...relations
-        })
-        .map(([tableName, tableSchema]) => {
-          return Object
-            .entries(tableSchema)
-            .filter(([,field]) => {
-              return field.select
-            })
-            .map(([columnName]) => {
-              if (qualified) {
-                return `${tableName}.${columnName}`
-              }
-
-              return columnName
-            })
-        })
-        .flat()
+      schema: selectSchema,
+      strict: true,
+      type: 'struct'
     }
   }
 }
@@ -230,6 +370,7 @@ function formatQuerySchema (object: string, schema: Schema, relations: Struct<Sc
       schema: sortKeys({
         ...createJoinSchema(object, schema),
         ...createLimitSchema(),
+        ...createOperatorSchema(object, schema, relations),
         ...createOrderSchema(object, schema, relations),
         ...createSelectSchema(object, schema, relations),
         ...createWhereSchema(object, schema, relations)

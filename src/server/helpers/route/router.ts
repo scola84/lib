@@ -56,8 +56,14 @@ export class Router {
         this
           .handleRoute(request, response)
           .catch((error: unknown) => {
+            if (!response.headersSent) {
+              response.statusCode = 500
+              response.end()
+            }
+
             this.logger?.error({
-              context: 'handle-route'
+              context: 'handle-route',
+              status: response.statusCode
             }, toString(error))
           })
       })
@@ -108,7 +114,7 @@ export class Router {
         await handler.handleRoute({
           headers: request.headers,
           method: request.method ?? 'GET',
-          query: Struct.fromQuery(url.search, true),
+          query: Struct.fromQuery(url.searchParams.toString(), true),
           url: url
         }, response, request)
       }

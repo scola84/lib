@@ -1,8 +1,7 @@
-import { cast, isFile, parseStruct } from '../../../common'
+import { Struct, cast, isFile } from '../../../common'
 import { CrudHandler } from './crud'
 import type { Schema } from '../schema'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../common'
 import type { User } from '../../entities'
 
 export abstract class CrudUpdateHandler extends CrudHandler {
@@ -18,7 +17,12 @@ export abstract class CrudUpdateHandler extends CrudHandler {
         )
       })
       .map(async ([name]) => {
-        const oldFile = parseStruct(object[name])
+        let oldFile = object[name]
+
+        if (typeof oldFile === 'string') {
+          oldFile = Struct.fromJson(oldFile)
+        }
+
         const newFile = data[name]
 
         if (isFile(oldFile)) {
@@ -55,7 +59,7 @@ export abstract class CrudUpdateHandler extends CrudHandler {
       throw new Error('Object is modified')
     }
 
-    const updateQuery = this.database.formatter.createUpdateQuery(this.object, this.keys, schema, data, user)
+    const updateQuery = this.database.formatter.createUpdateQuery(this.object, schema, this.keys, data, user)
 
     await this.deleteFiles(schema, object, data)
     await this.database.update(updateQuery.string, updateQuery.values)

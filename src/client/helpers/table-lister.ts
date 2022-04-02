@@ -1,4 +1,4 @@
-import { I18n, Struct, cast, isArray, isStruct } from '../../common'
+import { I18n, Struct, cast, isArray, isStruct, set, toJoint } from '../../common'
 import type { ScolaTableElement, ScolaTableRowElement } from '../elements'
 import { Breakpoint } from './breakpoint'
 import type { Query } from '../../common'
@@ -22,13 +22,11 @@ export class TableLister {
 
   public limit: number
 
-  public local: boolean
-
   public locked: boolean
 
   public pkey: string
 
-  public query?: Query
+  public query: boolean
 
   public requestData?: Query
 
@@ -119,27 +117,23 @@ export class TableLister {
   public getItems (): Struct[] {
     let { items } = this
 
-    if ((
-      this.local
-    ) && (
-      this.query?.join?.[this.rkey ?? ''] !== undefined ||
-      this.query?.order !== undefined ||
-      this.query?.where !== undefined
-    )) {
+    if (this.query) {
       items = [...items]
 
-      if (this.query.join?.[this.rkey ?? ''] !== undefined) {
+      const query = this.createQuery()
+
+      if (query.join?.[this.rkey ?? ''] !== undefined) {
         items = items.filter((item) => {
-          return cast(item[this.rkey ?? '']) === cast(this.query?.join?.[this.rkey ?? ''])
+          return cast(item[this.rkey ?? '']) === cast(query.join?.[this.rkey ?? ''])
         })
       }
 
-      if (this.query.where !== undefined) {
-        items = this.i18n.filter(items, this.query)
+      if (query.where !== undefined) {
+        items = this.i18n.filter(items, query)
       }
 
-      if (this.query.order !== undefined) {
-        items = this.i18n.sort(items, this.query)
+      if (query.order !== undefined) {
+        items = this.i18n.sort(items, query)
       }
     }
 
@@ -180,25 +174,14 @@ export class TableLister {
       return
     }
 
-    this.requestData = Struct.create<Query>({
-      ...this.query,
-      limit: this.limit,
-      offset: this.items.length
-    })
-
-    const cursor = this.items.slice(-1)[0]?.cursor
-
-    if (typeof cursor === 'string') {
-      this.requestData.cursor = cursor
-    }
-
+    this.requestData = this.createQuery()
     this.element.propagator.dispatch<Query>('request', [this.requestData])
   }
 
   public reset (): void {
     this.axis = this.element.getAttribute('sc-list-axis') ?? 'y'
     this.factor = Number(this.element.getAttribute('sc-list-factor') ?? 2)
-    this.local = this.element.hasAttribute('sc-list-local')
+    this.query = this.element.hasAttribute('sc-list-query')
     this.locked = this.element.hasAttribute('sc-list-locked')
     this.pkey = this.element.getAttribute('sc-list-pkey') ?? 'id'
     this.rkey = this.element.getAttribute('sc-list-rkey')
@@ -264,6 +247,27 @@ export class TableLister {
     }
 
     return limit
+  }
+
+  protected createQuery (): Query {
+    const query = Struct.create<Query>({
+      limit: this.limit,
+      offset: this.items.length
+    })
+
+    const cursor = this.items.slice(-1)[0]?.cursor
+
+    if (typeof cursor === 'string') {
+      query.cursor = cursor
+    }
+
+    Object
+      .entries(this.element.dataset)
+      .forEach(([key, value]) => {
+        set(query, toJoint(key, '.', false), cast(value))
+      })
+
+    return query
   }
 
   protected handleScrollX (): void {

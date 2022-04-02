@@ -1,5 +1,5 @@
-import { Struct, isStruct } from './is-struct'
 import type { Query } from './is-query'
+import { Struct } from './is-struct'
 import { cast } from './cast'
 import { flatten } from './flatten'
 
@@ -76,7 +76,7 @@ export class I18n {
       .entries(strings)
       .forEach(([locale, localeStrings]) => {
         Object
-          .entries(flatten<string>(localeStrings))
+          .entries(flatten<string | undefined>(localeStrings))
           .forEach(([code, string]) => {
             I18n.strings[locale] = {
               ...I18n.strings[locale],
@@ -102,49 +102,38 @@ export class I18n {
   }
 
   public filter (items: Struct[], query: Query): Struct[] {
+    const operators = flatten(query.operator ?? {})
+
+    const where = Object
+      .entries(flatten(query.where ?? {}))
+
     return items.filter((item) => {
-      if (isStruct(item)) {
-        return Object
-          .entries(query.where ?? {})
-          .map(([column, columnValueOrValues]) => {
-            let columnValues = columnValueOrValues
+      return where.every(([column, value]) => {
+        const compareValue = cast(value) ?? ''
+        const itemValue = cast(item[column]) ?? ''
 
-            if (typeof columnValues === 'string') {
-              columnValues = [columnValues]
-            }
-
-            return [column, columnValues] as [string, string[]]
-          })
-          .every(([column, columnValues]) => {
-            const itemValue = String(item[column]).toLowerCase()
-            return columnValues.some((value) => {
-              if (
-                value.startsWith('%') &&
-                value.endsWith('%')
-              ) {
-                return itemValue.includes(value.toLowerCase())
-              } else if (value.startsWith('%')) {
-                return itemValue.endsWith(value.slice(1).toLowerCase())
-              } else if (value.endsWith('%')) {
-                return itemValue.startsWith(value.slice(0, -1).toLowerCase())
-              } else if (value.startsWith('>')) {
-                return (cast(itemValue) ?? 0) > (cast(value.slice(1)) ?? 0)
-              } else if (value.startsWith('<')) {
-                return (cast(itemValue) ?? 0) <= (cast(value.slice(1)) ?? 0)
-              } else if (value.startsWith('>=')) {
-                return (cast(itemValue) ?? 0) >= (cast(value.slice(2)) ?? 0)
-              } else if (value.startsWith('<=')) {
-                return (cast(itemValue) ?? 0) < (cast(value.slice(2)) ?? 0)
-              } else if (value.startsWith('<>')) {
-                return cast(itemValue) !== cast(value.slice(2))
-              }
-
-              return cast(itemValue) === cast(value)
-            })
-          })
-      }
-
-      return false
+        switch (operators[column]) {
+          case 'LIKE':
+            return itemValue
+              .toString()
+              .toLowerCase()
+              .includes(compareValue
+                .toString()
+                .toLowerCase())
+          case '>':
+            return itemValue < compareValue
+          case '<':
+            return itemValue > compareValue
+          case '>=':
+            return itemValue >= compareValue
+          case '<=':
+            return itemValue <= compareValue
+          case '<>':
+            return itemValue !== compareValue
+          default:
+            return itemValue === compareValue
+        }
+      })
     })
   }
 
@@ -216,27 +205,22 @@ export class I18n {
   }
 
   public sort (items: Struct[], query: Query): Struct[] {
-    const {
-      order = []
-    } = query
+    const order = Object
+      .entries(flatten(query.order ?? {}))
 
     return items.sort((left, right) => {
-      let direction = null
       let equivalence = 0
       let factor = 1
       let lv = ''
       let rv = ''
 
-      for (let index = 0, key; index < order.length; index += 1) {
-        key = order[index]
-        direction = key.match(/(?<direction>[<>])$/u)?.groups?.direction
+      for (let direction, index = 0, key; index < order.length; index += 1) {
+        [key, direction] = order[index]
 
-        if (direction !== undefined) {
-          key = key.slice(0, -1)
-
-          if (direction === '>') {
-            factor = -1
-          }
+        if (direction === 'DESC') {
+          factor = -1
+        } else {
+          factor = 1
         }
 
         lv = String(left[key])

@@ -1,4 +1,4 @@
-import { cast, isFile, parseStruct, toString } from '../../../common'
+import { Struct, cast, isFile, toString } from '../../../common'
 import { CrudHandler } from './crud'
 import type { Readable } from 'stream'
 import type { RouteData } from '../route'
@@ -32,7 +32,11 @@ export abstract class CrudSelectOneHandler extends CrudHandler {
     }
 
     if (typeof data.query.file === 'string') {
-      const file = parseStruct(object[data.query.file])
+      let file = object[data.query.file]
+
+      if (typeof file === 'string') {
+        file = Struct.fromJson(file)
+      }
 
       if (file === null) {
         response.statusCode = 404

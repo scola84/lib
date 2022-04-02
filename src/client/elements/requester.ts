@@ -1,4 +1,4 @@
-import { I18n, flatten, isArray, isNil, isPrimitive, isStruct, isTransaction, toString } from '../../common'
+import { I18n, flatten, isArray, isNil, isPrimitive, isStruct, isTransaction, revive, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaError, ScolaTransaction, Struct } from '../../common'
 import type { ScolaElement } from './element'
@@ -343,7 +343,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     const contentType = xhr.getResponseHeader('content-type')
 
     if (contentType?.startsWith('application/json') === true) {
-      data = JSON.parse(xhr.responseText) as Struct
+      data = JSON.parse(xhr.responseText, revive) as Struct
     } else if (contentType?.startsWith('text/') === true) {
       data = xhr.responseText
     } else {

@@ -1,5 +1,5 @@
 import type { Schema, SchemaField } from '../schema'
-import { Struct, cast, isFile, parseStruct } from '../../../common'
+import { Struct, cast, isFile } from '../../../common'
 import { CrudHandler } from './crud'
 import type { ServerResponse } from 'http'
 import type { User } from '../../entities'
@@ -40,14 +40,18 @@ export abstract class CrudDeleteHandler extends CrudHandler {
   }
 
   protected async deleteFile (object: Struct, name: string, user?: User): Promise<void> {
-    const file = parseStruct(object[name])
+    let file = object[name]
+
+    if (typeof file === 'string') {
+      file = Struct.fromJson(file)
+    }
 
     if (isFile(file)) {
       await this.bucket?.delete(file)
 
       const data = Struct.create({
         [name]: null
-      }) as Struct
+      })
 
       const schema = Struct.create<Struct<SchemaField>>({
         [name]: {
@@ -63,7 +67,7 @@ export abstract class CrudDeleteHandler extends CrudHandler {
         }
       })
 
-      const updateQuery = this.database.formatter.createUpdateQuery(this.object, this.keys, schema, data, user)
+      const updateQuery = this.database.formatter.createUpdateQuery(this.object, schema, this.keys, data, user)
 
       await this.database.update(updateQuery.string, updateQuery.values)
     }
@@ -76,7 +80,11 @@ export abstract class CrudDeleteHandler extends CrudHandler {
         return field.type === 'file'
       })
       .map(async ([name]) => {
-        const file = parseStruct(object[name])
+        let file = object[name]
+
+        if (typeof file === 'string') {
+          file = Struct.fromJson(file)
+        }
 
         if (isFile(file)) {
           await this.bucket?.delete(file)

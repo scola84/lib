@@ -1,6 +1,7 @@
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
+import { revive } from '../../common'
 
 declare global {
   interface EventSourceEventMap {
@@ -109,7 +110,7 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   protected handleMessage (event: MessageEvent<string>): void {
     try {
-      this.propagator.dispatch('message', [JSON.parse(event.data) as Struct], event)
+      this.propagator.dispatch('message', [JSON.parse(event.data, revive) as Struct], event)
     } catch (error: unknown) {
       this.handleError()
     }

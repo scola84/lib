@@ -6,7 +6,7 @@ export function select (name: string, field: SchemaField): Validator {
     if (field.values?.includes(data[name]) !== true) {
       errors[name] = {
         code: 'err_validator_bad_input_select',
-        data: { values: field.values }
+        data: { accept: field.values }
       }
 
       return false

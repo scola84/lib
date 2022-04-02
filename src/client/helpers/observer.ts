@@ -82,9 +82,9 @@ export class Observer {
     this.observers = []
   }
 
-  public normalize (mutations: MutationRecord[]): Array<string | null> {
+  public normalize (mutations: MutationRecord[]): string[] {
     return mutations.map((mutation) => {
-      return mutation.attributeName
+      return mutation.attributeName ?? ''
     })
   }
 

@@ -1,5 +1,5 @@
 import { cast } from './cast'
-import { isObject } from './is-object'
+import { revive } from './revive'
 import { setPush } from './set-push'
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
@@ -10,32 +10,16 @@ export class Struct<Value = unknown> implements Record<string, Value> {
     return Object.assign(Object.create(null), base) as T
   }
 
-  public static fromJson<T = Struct>(json: unknown): T {
-    if (Struct.isStruct(json)) {
-      return json as unknown as T
+  public static fromJson<T = Struct>(json: string): T {
+    try {
+      return Struct.create(JSON.parse(json.replace(/\\"/gu, '"'), revive) as T)
+    } catch (error: unknown) {
+      return Struct.create()
     }
-
-    if (isObject(json)) {
-      return Struct.create<T>(json)
-    }
-
-    if (typeof json === 'string') {
-      try {
-        return Struct.create(JSON.parse(json.replace(/\\"/gu, '"')) as T)
-      } catch (error: unknown) {
-        //
-      }
-    }
-
-    return Struct.create()
   }
 
-  public static fromQuery<T = Struct>(query: unknown, keepEmpty = false): T {
-    if (Struct.isStruct(query)) {
-      return query as unknown as T
-    }
-
-    return decodeURI(String(query))
+  public static fromQuery<T = Struct>(query: string, keepEmpty = false): T {
+    return query
       .split('&')
       .reduce<T>((struct, keyValue) => {
       /* eslint-disable @typescript-eslint/indent */
@@ -49,7 +33,7 @@ export class Struct<Value = unknown> implements Record<string, Value> {
           return struct
         }
 
-        return setPush(struct, key, cast(value))
+        return setPush(struct, key, cast(decodeURIComponent(value)))
       }, Struct.create())
       /* eslint-enable @typescript-eslint/indent */
   }

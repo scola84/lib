@@ -6,9 +6,10 @@ export interface Query extends Struct {
   join?: Struct<Struct<number | string | undefined> | undefined>
   limit: number
   offset?: number
-  order?: string[]
-  select?: string[]
-  where?: Struct<string[] | Struct<string[] | string | undefined> | string | undefined>
+  operator?: Struct<Struct<string | undefined> | string | undefined>
+  order?: Struct<Struct<string | undefined> | string | undefined>
+  select?: Struct<Struct<boolean | undefined> | boolean | undefined>
+  where?: Struct<Struct<unknown | undefined> | unknown | undefined>
 }
 
 export function isQuery (value: unknown): value is Query {

@@ -1,52 +1,95 @@
-import { createADeleteQuery, createASelectAllQueryWithForeignKeysWithCursor, createASelectAllQueryWithForeignKeysWithForeignKey, createASelectAllQueryWithForeignKeysWithOrder, createASelectAllQueryWithForeignKeysWithSelect, createASelectAllQueryWithForeignKeysWithWhere, createASelectAllQueryWithForeignKeysWithoutParameters, createASelectAllQueryWithRelatedKeysWithCursor, createASelectAllQueryWithRelatedKeysWithOrder, createASelectAllQueryWithRelatedKeysWithSelect, createASelectAllQueryWithRelatedKeysWithWhere, createASelectAllQueryWithRelatedKeysWithoutParameters, createASelectAllQueryWithoutKeysWithCursor, createASelectAllQueryWithoutKeysWithOrder, createASelectAllQueryWithoutKeysWithSelect, createASelectAllQueryWithoutKeysWithWhere, createASelectAllQueryWithoutKeysWithoutParameters, createASelectQuery, createAnInsertQuery, createAnUpdateQuery } from '../formatter'
+import { callCreateADeleteQuery, callCreateASelectAllQueryWithForeignKeysWithCursor, callCreateASelectAllQueryWithForeignKeysWithForeignKey, callCreateASelectAllQueryWithForeignKeysWithOrder, callCreateASelectAllQueryWithForeignKeysWithSelect, callCreateASelectAllQueryWithForeignKeysWithWhere, callCreateASelectAllQueryWithForeignKeysWithoutParameters, callCreateASelectAllQueryWithRelatedKeysWithCursor, callCreateASelectAllQueryWithRelatedKeysWithOrder, callCreateASelectAllQueryWithRelatedKeysWithSelect, callCreateASelectAllQueryWithRelatedKeysWithWhere, callCreateASelectAllQueryWithRelatedKeysWithoutParameters, callCreateASelectAllQueryWithoutKeysWithCursor, callCreateASelectAllQueryWithoutKeysWithOrder, callCreateASelectAllQueryWithoutKeysWithSelect, callCreateASelectAllQueryWithoutKeysWithWhere, callCreateASelectAllQueryWithoutKeysWithoutParameters, callCreateASelectQuery, callCreateAnInsertQuery, callCreateAnUpdateQuery } from '../formatter'
 import { PostgresqlFormatter } from '../../../../../src/server/helpers/sql/postgresql'
 import { expect } from 'chai'
 
+describe('PostgresqlFormatter', () => {
+  describe('should fail to', () => {
+    it('format a query with an undefined parameter', formatAQueryWithAnUndefinedParameter)
+  })
+
+  describe('should', () => {
+    it('format a query', formatAQuery)
+    it('format a query for bulk insert', formatAQueryForBulkInsert)
+    it('format a query with escaped identifiers', formatAQueryWithEscapedIdentifiers)
+    it('format a query with escaped parameters', formatAQueryWithEscapedParameters)
+
+    describe('format a select all query', () => {
+      describe('with foreign keys', () => {
+        it('with cursor', createASelectAllQueryWithForeignKeysWithCursor)
+        it('with foreign key', createASelectAllQueryWithForeignKeysWithForeignKey)
+        it('with order', createASelectAllQueryWithForeignKeysWithOrder)
+        it('with select', createASelectAllQueryWithForeignKeysWithSelect)
+        it('with where', createASelectAllQueryWithForeignKeysWithWhere)
+        it('without parameters', createASelectAllQueryWithForeignKeysWithoutParameters)
+      })
+
+      describe('with related keys', () => {
+        it('with cursor', createASelectAllQueryWithRelatedKeysWithCursor)
+        it('with order', createASelectAllQueryWithRelatedKeysWithOrder)
+        it('with select', createASelectAllQueryWithRelatedKeysWithSelect)
+        it('with where', createASelectAllQueryWithRelatedKeysWithWhere)
+        it('without parameters', createASelectAllQueryWithRelatedKeysWithoutParameters)
+      })
+
+      describe('without keys', () => {
+        it('with cursor', createASelectAllQueryWithoutKeysWithCursor)
+        it('with order', createASelectAllQueryWithoutKeysWithOrder)
+        it('with select', createASelectAllQueryWithoutKeysWithSelect)
+        it('with where', createASelectAllQueryWithoutKeysWithWhere)
+        it('without parameters', createASelectAllQueryWithoutKeysWithoutParameters)
+      })
+    })
+
+    it('format a delete query', createADeleteQuery)
+    it('format a select query', createASelectQuery)
+    it('format an insert query', createAnInsertQuery)
+    it('format an update query', createAnUpdateQuery)
+  })
+})
+
 const formatter = new PostgresqlFormatter()
 
-const expectations = {
-  formatADeleteQuery: {
+function createADeleteQuery (): void {
+  const expectedQuery = {
     string: 'DELETE FROM $[contact] WHERE $[contact_id] = $(contact_id)',
     values: {
       contact_id: 1
     }
-  },
-  formatASelectQuery: {
+  }
+
+  const actualQuery = callCreateADeleteQuery(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectQuery (): void {
+  const expectedQuery = {
     string: [
-      'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE ($[address.address_id] = $(address_address_id)) AND $[case_group.group_id] = $(case_group_group_id)',
-      'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE ($[address.address_id] = $(address_address_id)) AND $[case_user.user_id] = $(case_user_user_id)'
+      'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[address.address_id] = $(address_address_id) AND $[case_group.group_id] = $(case_group_group_id)',
+      'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[address.address_id] = $(address_address_id) AND $[case_user.user_id] = $(case_user_user_id)'
     ].join(' UNION '),
     values: {
       address_address_id: 1,
       case_group_group_id: 1,
       case_user_user_id: 1
     }
-  },
-  formatAnInsertQuery: {
-    string: 'INSERT INTO $[contact] ($[family_name],$[given_name]) VALUES ($(family_name),$(given_name))',
-    values: {
-      family_name: 'sql',
-      given_name: 'scola'
-    }
-  },
-  formatAnUpdateQuery: {
-    string: 'UPDATE $[contact] SET $[family_name] = $(family_name),$[given_name] = $(given_name) WHERE $[contact_id] = $(contact_id)',
-    values: {
-      contact_id: 1,
-      family_name: 'sql',
-      given_name: 'scola'
-    }
   }
+
+  const actualQuery = callCreateASelectQuery(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
 }
 
-const foreignKeysExpectations = {
-  withCursor: {
+function createASelectAllQueryWithForeignKeysWithCursor (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[cursor] ASC',
       'LIMIT $(limit) OFFSET 0'
@@ -57,12 +100,20 @@ const foreignKeysExpectations = {
       cursor: 'scola',
       limit: 10
     }
-  },
-  withForeignKey: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithForeignKeysWithCursor(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithForeignKeysWithForeignKey (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[contact_address.contact_id] = $(contact_address_contact_id) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[contact_address.contact_id] = $(contact_address_contact_id) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[contact_address.contact_id] = $(contact_address_contact_id) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[address] ON $[contact_address.address_id] = $[address.address_id] JOIN $[case_address] ON $[address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[contact_address.contact_id] = $(contact_address_contact_id) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'LIMIT $(limit) OFFSET $(offset)'
@@ -74,14 +125,22 @@ const foreignKeysExpectations = {
       limit: 10,
       offset: 0
     }
-  },
-  withOrder: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithForeignKeysWithForeignKey(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithForeignKeysWithOrder (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[contact_address.begin] DESC',
       'LIMIT $(limit) OFFSET $(offset)'
@@ -92,8 +151,16 @@ const foreignKeysExpectations = {
       limit: 10,
       offset: 0
     }
-  },
-  withSelect: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithForeignKeysWithOrder(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithForeignKeysWithSelect (): void {
+  const expectedQuery = {
     string: [
       [
         'SELECT $[contact_address.begin] FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
@@ -110,14 +177,22 @@ const foreignKeysExpectations = {
       limit: 10,
       offset: 0
     }
-  },
-  withWhere: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithForeignKeysWithSelect(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithForeignKeysWithWhere (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin_0)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin_0)) AND $[case_user.user_id] = $(case_user_user_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin_0)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE ($[contact_address.begin] > $(contact_address_begin_0)) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[contact_address.begin] > $(contact_address_begin) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[contact_address.begin] > $(contact_address_begin) AND $[case_user.user_id] = $(case_user_user_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[contact_address.begin] > $(contact_address_begin) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[contact_address.begin] > $(contact_address_begin) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'LIMIT $(limit) OFFSET $(offset)'
@@ -125,18 +200,26 @@ const foreignKeysExpectations = {
     values: {
       case_group_group_id: 1,
       case_user_user_id: 1,
-      contact_address_begin_0: '2020-01-01',
+      contact_address_begin: '2020-01-01',
       limit: 10,
       offset: 0
     }
-  },
-  withoutParameters: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithForeignKeysWithWhere(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithForeignKeysWithoutParameters (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[contact_address].* FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_address] ON $[contact_address.address_id] = $[case_address.address_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_group] ON $[case_contact.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[contact_address.begin], $[contact_address.contact_id] FROM $[contact_address] JOIN $[case_contact] ON $[contact_address.contact_id] = $[case_contact.contact_id] JOIN $[case_user] ON $[case_contact.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'LIMIT $(limit) OFFSET $(offset)'
@@ -148,14 +231,19 @@ const foreignKeysExpectations = {
       offset: 0
     }
   }
+
+  const actualQuery = callCreateASelectAllQueryWithForeignKeysWithoutParameters(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
 }
 
-const relatedKeysExpectations = {
-  withCursor: {
+function createASelectAllQueryWithRelatedKeysWithCursor (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[address.address_id], $[address.address_line1] FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[address.address_id], $[address.address_line1] FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[cursor] ASC',
       'LIMIT $(limit) OFFSET 0'
@@ -167,12 +255,20 @@ const relatedKeysExpectations = {
       cursor: 'scola',
       limit: 10
     }
-  },
-  withOrder: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithRelatedKeysWithCursor(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithRelatedKeysWithOrder (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[address.address_id], $[address.address_line1] FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[address.address_id], $[address.address_line1] FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[address.address_line1] DESC',
       'LIMIT $(limit) OFFSET $(offset)'
@@ -184,8 +280,16 @@ const relatedKeysExpectations = {
       limit: 10,
       offset: 0
     }
-  },
-  withSelect: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithRelatedKeysWithOrder(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithRelatedKeysWithSelect (): void {
+  const expectedQuery = {
     string: [
       [
         'SELECT $[address.address_line1] FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_group.group_id] = $(case_group_group_id)',
@@ -201,30 +305,46 @@ const relatedKeysExpectations = {
       limit: 10,
       offset: 0
     }
-  },
-  withWhere: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithRelatedKeysWithSelect(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithRelatedKeysWithWhere (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND ($[address.address_line1] = $(address_address_line1_0)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND ($[address.address_line1] = $(address_address_line1_0)) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[address.address_id], $[address.address_line1] FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[address.address_line1] = $(address_address_line1) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[address.address_id], $[address.address_line1] FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[address.address_line1] = $(address_address_line1) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'LIMIT $(limit) OFFSET $(offset)'
     ].join(' '),
     values: {
-      address_address_line1_0: 'scola',
+      address_address_line1: 'scola',
       case_address_case_id: 1,
       case_group_group_id: 1,
       case_user_user_id: 1,
       limit: 10,
       offset: 0
     }
-  },
-  withoutParameters: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithRelatedKeysWithWhere(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithRelatedKeysWithoutParameters (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[address].* FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[address.address_id], $[address.address_line1] FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_group] ON $[case_address.case_id] = $[case_group.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[address.address_id], $[address.address_line1] FROM $[address] JOIN $[case_address] ON $[address.case_id] = $[case_address.case_id] JOIN $[case_user] ON $[case_address.case_id] = $[case_user.case_id] WHERE $[case_address.case_id] = $(case_address_case_id) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'LIMIT $(limit) OFFSET $(offset)'
@@ -237,14 +357,19 @@ const relatedKeysExpectations = {
       offset: 0
     }
   }
+
+  const actualQuery = callCreateASelectAllQueryWithRelatedKeysWithoutParameters(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
 }
 
-const withoutKeysExpectations = {
-  withCursor: {
+function createASelectAllQueryWithoutKeysWithCursor (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[case].* FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[case].* FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[case.case_id], $[case.name] FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE $[cursor] > $(cursor) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[case.case_id], $[case.name] FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE $[cursor] > $(cursor) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[cursor] ASC',
       'LIMIT $(limit) OFFSET 0'
@@ -255,12 +380,20 @@ const withoutKeysExpectations = {
       cursor: 'scola',
       limit: 10
     }
-  },
-  withOrder: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithoutKeysWithCursor(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithoutKeysWithOrder (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[case].* FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[case].* FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[case.case_id], $[case.name] FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[case.case_id], $[case.name] FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY $[case.name] DESC',
       'LIMIT $(limit) OFFSET $(offset)'
@@ -271,8 +404,16 @@ const withoutKeysExpectations = {
       limit: 10,
       offset: 0
     }
-  },
-  withSelect: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithoutKeysWithOrder(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithoutKeysWithSelect (): void {
+  const expectedQuery = {
     string: [
       [
         'SELECT $[case.name] FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
@@ -287,29 +428,45 @@ const withoutKeysExpectations = {
       limit: 10,
       offset: 0
     }
-  },
-  withWhere: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithoutKeysWithSelect(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithoutKeysWithWhere (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[case].* FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE ($[case.name] LIKE $(case_name_0)) AND $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[case].* FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE ($[case.name] LIKE $(case_name_0)) AND $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[case.case_id], $[case.name] FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE LOWER($[case.name]) LIKE LOWER($(case_name)) AND $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[case.case_id], $[case.name] FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE LOWER($[case.name]) LIKE LOWER($(case_name)) AND $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'LIMIT $(limit) OFFSET $(offset)'
     ].join(' '),
     values: {
       case_group_group_id: 1,
-      case_name_0: '%scola',
+      case_name: '%scola',
       case_user_user_id: 1,
       limit: 10,
       offset: 0
     }
-  },
-  withoutParameters: {
+  }
+
+  const actualQuery = callCreateASelectAllQueryWithoutKeysWithWhere(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
+
+function createASelectAllQueryWithoutKeysWithoutParameters (): void {
+  const expectedQuery = {
     string: [
       [
-        'SELECT $[case].* FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
-        'SELECT $[case].* FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
+        'SELECT $[case.case_id], $[case.name] FROM $[case] JOIN $[case_group] ON $[case.case_id] = $[case_group.case_id] WHERE $[case_group.group_id] = $(case_group_group_id)',
+        'SELECT $[case.case_id], $[case.name] FROM $[case] JOIN $[case_user] ON $[case.case_id] = $[case_user.case_id] WHERE $[case_user.user_id] = $(case_user_user_id)'
       ].join(' UNION '),
       'ORDER BY 1',
       'LIMIT $(limit) OFFSET $(offset)'
@@ -321,52 +478,43 @@ const withoutKeysExpectations = {
       offset: 0
     }
   }
+
+  const actualQuery = callCreateASelectAllQueryWithoutKeysWithoutParameters(formatter)
+
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
 }
 
-describe('PostgresqlFormatter', () => {
-  describe('should fail to', () => {
-    it('format a query with an undefined parameter', formatAQueryWithAnUndefinedParameter)
-  })
+function createAnInsertQuery (): void {
+  const expectedQuery = {
+    string: 'INSERT INTO $[contact] ($[family_name],$[given_name]) VALUES ($(family_name),$(given_name))',
+    values: {
+      family_name: 'sql',
+      given_name: 'scola'
+    }
+  }
 
-  describe('should', () => {
-    it('format a query', formatAQuery)
-    it('format a query for bulk insert', formatAQueryForBulkInsert)
-    it('format a query with escaped identifiers', formatAQueryWithEscapedIdentifiers)
-    it('format a query with escaped parameters', formatAQueryWithEscapedParameters)
+  const actualQuery = callCreateAnInsertQuery(formatter)
 
-    describe('format a select all query', () => {
-      describe('with foreign keys', () => {
-        it('with cursor', createASelectAllQueryWithForeignKeysWithCursor.bind(null, formatter, foreignKeysExpectations))
-        it('with foreign key', createASelectAllQueryWithForeignKeysWithForeignKey.bind(null, formatter, foreignKeysExpectations))
-        it('with order', createASelectAllQueryWithForeignKeysWithOrder.bind(null, formatter, foreignKeysExpectations))
-        it('with select', createASelectAllQueryWithForeignKeysWithSelect.bind(null, formatter, foreignKeysExpectations))
-        it('with where', createASelectAllQueryWithForeignKeysWithWhere.bind(null, formatter, foreignKeysExpectations))
-        it('without parameters', createASelectAllQueryWithForeignKeysWithoutParameters.bind(null, formatter, foreignKeysExpectations))
-      })
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
 
-      describe('with related keys', () => {
-        it('with cursor', createASelectAllQueryWithRelatedKeysWithCursor.bind(null, formatter, relatedKeysExpectations))
-        it('with order', createASelectAllQueryWithRelatedKeysWithOrder.bind(null, formatter, relatedKeysExpectations))
-        it('with select', createASelectAllQueryWithRelatedKeysWithSelect.bind(null, formatter, relatedKeysExpectations))
-        it('with where', createASelectAllQueryWithRelatedKeysWithWhere.bind(null, formatter, relatedKeysExpectations))
-        it('without parameters', createASelectAllQueryWithRelatedKeysWithoutParameters.bind(null, formatter, relatedKeysExpectations))
-      })
+function createAnUpdateQuery (): void {
+  const expectedQuery = {
+    string: 'UPDATE $[contact] SET $[family_name] = $(family_name),$[given_name] = $(given_name) WHERE $[contact_id] = $(contact_id)',
+    values: {
+      contact_id: 1,
+      family_name: 'sql',
+      given_name: 'scola'
+    }
+  }
 
-      describe('without keys', () => {
-        it('with cursor', createASelectAllQueryWithoutKeysWithCursor.bind(null, formatter, withoutKeysExpectations))
-        it('with order', createASelectAllQueryWithoutKeysWithOrder.bind(null, formatter, withoutKeysExpectations))
-        it('with select', createASelectAllQueryWithoutKeysWithSelect.bind(null, formatter, withoutKeysExpectations))
-        it('with where', createASelectAllQueryWithoutKeysWithWhere.bind(null, formatter, withoutKeysExpectations))
-        it('without parameters', createASelectAllQueryWithoutKeysWithoutParameters.bind(null, formatter, withoutKeysExpectations))
-      })
-    })
+  const actualQuery = callCreateAnUpdateQuery(formatter)
 
-    it('format a delete query', createADeleteQuery.bind(null, formatter, expectations))
-    it('format a select query', createASelectQuery.bind(null, formatter, expectations))
-    it('format an insert query', createAnInsertQuery.bind(null, formatter, expectations))
-    it('format an update query', createAnUpdateQuery.bind(null, formatter, expectations))
-  })
-})
+  expect(formatter.sanitizeQuery(actualQuery.string)).eq(expectedQuery.string)
+  expect(actualQuery.values).eql(expectedQuery.values)
+}
 
 function formatAQuery (): void {
   const expectedQuery = `

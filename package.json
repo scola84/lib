@@ -50,7 +50,7 @@
     "redis": "^4.0.6",
     "rollup": "^2.70.1",
     "rollup-plugin-copy": "^3.4.0",
-    "rollup-plugin-gzip": "^3.0.0",
+    "rollup-plugin-gzip": "^3.0.1",
     "rollup-plugin-minify-html-literals": "^1.2.6",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-plugin-terser": "^7.0.2",

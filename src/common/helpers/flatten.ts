@@ -1,17 +1,17 @@
 import { Struct, isStruct } from './is-struct'
 
-export function flatten<T> (struct: Struct, prefix = '', evaluate?: (value: unknown) => boolean): Struct<T> {
+export function flatten<T> (struct: Struct, prefix = '', count = Infinity): Struct<T> {
   return Object
     .entries(struct)
     .reduce<Struct<T>>((result, [key, value]) => {
     /* eslint-disable @typescript-eslint/indent */
       if (
         isStruct(value) &&
-        evaluate?.(value) !== false
+        count > 0
       ) {
         return {
           ...result,
-          ...flatten(value, `${prefix}${key}.`)
+          ...flatten(value, `${prefix}${key}.`, count - 1)
         }
       }
 

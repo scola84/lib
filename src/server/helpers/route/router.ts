@@ -42,16 +42,16 @@ export class Router {
   }
 
   public async start (listen = true): Promise<void> {
+    this.logger = this.logger?.child({
+      name: 'router'
+    })
+
+    this.logger?.info({
+      address: this.address,
+      port: this.port
+    }, 'Starting router')
+
     return new Promise((resolve) => {
-      this.logger = this.logger?.child({
-        name: 'router'
-      })
-
-      this.logger?.info({
-        address: this.address,
-        port: this.port
-      }, 'Starting router')
-
       this.server = createServer((request, response) => {
         this
           .handleRoute(request, response)
@@ -77,9 +77,23 @@ export class Router {
   }
 
   public async stop (): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.logger?.info('Stopping server')
+    this.logger?.info({
+      handlers: this.handlers.size,
+      listening: this.server?.listening
+    }, 'Stopping router')
 
+    await Promise.all(Array
+      .from(this.handlers.values())
+      .map((handlers) => {
+        return Array
+          .from(handlers.values())
+          .map((handler) => {
+            return handler.stop()
+          })
+      })
+      .flat())
+
+    await new Promise<void>((resolve, reject) => {
       this.server?.close((error) => {
         if (error === undefined) {
           resolve()
@@ -88,6 +102,8 @@ export class Router {
         }
       })
     })
+
+    this.logger?.info('Stopped router')
   }
 
   protected async handleRoute (request: IncomingMessage, response: ServerResponse): Promise<void> {
@@ -101,23 +117,24 @@ export class Router {
         throw new Error(`Path "${url.pathname}" not found`)
       } else {
         this.fastify(request, response)
-      }
-    } else {
-      const handler = handlers.get(request.method ?? '')
-
-      if (handler === undefined) {
-        response.statusCode = 405
-        response.setHeader('allow', Array.from(handlers.keys()).join(','))
-        response.end()
-        throw new Error(`Method "${request.method ?? ''} ${url.pathname}" not allowed`)
-      } else {
-        await handler.handleRoute({
-          headers: request.headers,
-          method: request.method ?? 'GET',
-          query: Struct.fromQuery(url.searchParams.toString(), true),
-          url: url
-        }, response, request)
+        return
       }
     }
+
+    const handler = handlers.get(request.method ?? '')
+
+    if (handler === undefined) {
+      response.statusCode = 405
+      response.setHeader('allow', Array.from(handlers.keys()).join(','))
+      response.end()
+      throw new Error(`Method "${request.method ?? ''} ${url.pathname}" not allowed`)
+    }
+
+    await handler.handleRoute({
+      headers: request.headers,
+      method: request.method ?? 'GET',
+      query: Struct.fromQuery(url.searchParams.toString(), true),
+      url: url
+    }, response, request)
   }
 }

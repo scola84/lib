@@ -335,6 +335,8 @@ export class Queuer {
     }, {
       timeout: Number.POSITIVE_INFINITY
     })
+
+    this.logger.info('Stopped queuer')
   }
 
   /**

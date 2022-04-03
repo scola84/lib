@@ -46,6 +46,18 @@ export class ReloadGetHandler extends RouteHandler {
     super.start()
   }
 
+  public async stop (): Promise<void> {
+    await super.stop()
+
+    await Promise.all(Array
+      .from(this.responses)
+      .map(async (response) => {
+        return new Promise((resolve) => {
+          response.end(resolve)
+        })
+      }))
+  }
+
   protected startWatcher (): void {
     this.watcher = watch(this.file)
 

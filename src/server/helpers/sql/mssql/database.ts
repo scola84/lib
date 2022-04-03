@@ -49,9 +49,16 @@ export class MssqlDatabase extends SqlDatabase {
 
   public async stop (): Promise<void> {
     if (this.dsn !== undefined) {
-      this.logger?.info({}, 'Stopping database')
+      this.logger?.info({}, 'Stopping database', {
+        connected: this.pool.connected
+      })
+
       this.pool.removeAllListeners()
       await this.pool.close()
+
+      this.logger?.info({}, 'Stopped database', {
+        connected: this.pool.connected
+      })
     }
   }
 

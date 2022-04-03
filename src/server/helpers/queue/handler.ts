@@ -335,6 +335,8 @@ export abstract class QueueHandler {
     }, {
       timeout: Number.POSITIVE_INFINITY
     })
+
+    this.logger?.info('Stopped queue handler')
   }
 
   /**

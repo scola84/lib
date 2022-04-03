@@ -27,6 +27,7 @@ export interface RouteHandlerOptions {
   bucket: FileBucket
   codec: RouteCodec
   database: SqlDatabase
+  description: string
   logger: Logger
   method: string
   router: Router
@@ -45,6 +46,8 @@ export abstract class RouteHandler {
   public codec: RouteCodec
 
   public database: SqlDatabase
+
+  public description?: string
 
   public logger?: Logger
 
@@ -86,6 +89,7 @@ export abstract class RouteHandler {
     this.bucket = handlerOptions.bucket
     this.codec = handlerOptions.codec
     this.database = handlerOptions.database
+    this.description = handlerOptions.description
     this.logger = handlerOptions.logger
     this.method = handlerOptions.method ?? 'GET'
     this.router = handlerOptions.router
@@ -177,6 +181,8 @@ export abstract class RouteHandler {
     this.validator = new SchemaValidator(this.schema as Schema)
     this.router.register(this.method, this.url, this)
   }
+
+  public stop (): Promise<void> | void {}
 
   public abstract handle (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<unknown> | unknown
 }

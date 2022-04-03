@@ -50,9 +50,15 @@ export class PostgresqlDatabase extends SqlDatabase {
 
   public async stop (): Promise<void> {
     if (this.dsn !== undefined) {
-      this.logger?.info({}, 'Stopping database')
+      this.logger?.info({
+        idleCount: this.pool.idleCount,
+        totalCount: this.pool.totalCount,
+        waitingCount: this.pool.waitingCount
+      }, 'Stopping database')
+
       this.pool.removeAllListeners()
       await this.pool.end()
+      this.logger?.info('Stopped database')
     }
   }
 

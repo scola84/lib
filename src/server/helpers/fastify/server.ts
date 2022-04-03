@@ -168,5 +168,6 @@ export class FastifyServer {
   public async stop (): Promise<void> {
     this.logger?.info('Stopping server')
     await this.fastify?.close()
+    this.logger?.info('Stopped server')
   }
 }

@@ -44,6 +44,7 @@ export class MysqlDatabase extends SqlDatabase {
     if (this.dsn !== undefined) {
       this.logger?.info({}, 'Stopping database')
       await this.pool.end()
+      this.logger?.info({}, 'Stopped database')
     }
   }
 

@@ -283,13 +283,18 @@ export class ServiceManager {
 
         if (isMatch('server', this.types)) {
           await this.router?.stop()
-          await this.server?.stop()
+
+          if (this.router?.server?.listening === true) {
+            await this.server?.stop()
+          }
         }
 
         await Promise.all([
           this.stopDatabases(),
           this.stopStore()
         ])
+
+        this.logger?.info('Stopped service manager')
       })
       .catch((error) => {
         this.logger?.error({

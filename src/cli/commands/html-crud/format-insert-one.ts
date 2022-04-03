@@ -1,6 +1,7 @@
 import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
 import { createKeys } from './create-keys'
+import { createSelectSchema } from './create-select-schema'
 import { formatCode } from './format-code'
 import { pickField } from './pick-field'
 import { toJoint } from '../../../common'
@@ -15,7 +16,8 @@ export class InsertOneHandler extends CrudInsertOneHandler {
   public object = '${options.object}'
 
   public schema: CrudInsertOneHandler['schema'] = {
-    body: ${formatBodySchema(schema, 6)}
+    body: ${formatBodySchema(schema, 6)},
+    query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
   public url = '${options.url}/insert/one/${toJoint(options.object, '-')}'
@@ -63,6 +65,19 @@ function formatKeys (object: string, schema: Schema, space: number): string {
       foreign,
       primary,
       related
+    },
+    space
+  ).trimStart()
+}
+
+function formatQuerySchema (object: string, schema: Schema, space: number): string {
+  return formatCode(
+    {
+      required: true,
+      schema: {
+        ...createSelectSchema(object, schema)
+      },
+      type: 'struct'
     },
     space
   ).trimStart()

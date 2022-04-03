@@ -1,12 +1,25 @@
-import type { Schema, SchemaFieldKey } from '../schema'
+import type { Query, Struct } from '../../../common'
+import type { Schema, SchemaField, SchemaFieldKey } from '../schema'
 import { CrudHandler } from './crud'
+import type { Merge } from 'type-fest'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../common'
 import type { User } from '../../entities'
 import { isFile } from '../../../common'
 
 export abstract class CrudInsertHandler extends CrudHandler {
   public method = 'POST'
+
+  public abstract schema: {
+    body: Merge<SchemaField, {
+      required: true
+      schema: Schema
+    }>
+    query: Merge<SchemaField, {
+      required: true
+      schema: Schema
+      type: 'struct'
+    }>
+  }
 
   protected async authorizeLinks (data: Struct, response: ServerResponse, user?: User): Promise<void> {
     const authKeys = [
@@ -25,13 +38,13 @@ export abstract class CrudInsertHandler extends CrudHandler {
     }))
   }
 
-  protected async insert (data: Struct, response: ServerResponse, schema: Schema, user?: User): Promise<Struct | undefined> {
+  protected async insert (query: Query, data: Struct, response: ServerResponse, user?: User): Promise<Struct | undefined> {
     await this.authorizeLinks(data, response, user)
 
-    const insertQuery = this.database.formatter.createInsertQuery(this.object, schema, this.keys, data, user)
+    const insertQuery = this.database.formatter.createInsertQuery(this.object, this.schema.body.schema, this.keys, data, user)
     const object = await this.database.insert(insertQuery.string, insertQuery.values, null)
 
-    await this.moveFiles(schema, data)
+    await this.moveFiles(this.schema.body.schema, data)
 
     if (
       this.keys.primary?.length === 1 &&
@@ -40,10 +53,14 @@ export abstract class CrudInsertHandler extends CrudHandler {
       await this.insertLinks(data, object, this.keys.primary[0])
     }
 
-    const selectQuery = this.database.formatter.createSelectQuery(this.object, this.keys, this.keys.primary ?? [], object, user)
-
     response.statusCode = 201
-    return this.database.select(selectQuery.string, selectQuery.values)
+
+    const selectOneQuery = this.database.formatter.createSelectOneQuery(this.object, this.schema.query.schema, this.keys, this.keys.primary ?? [], {
+      select: query.select,
+      where: object
+    }, user)
+
+    return this.database.select(selectOneQuery.string, selectOneQuery.values)
   }
 
   protected async insertLinks (data: Struct, object: Struct, primaryKey: SchemaFieldKey): Promise<void> {

@@ -1,12 +1,13 @@
+import type { Query, Struct } from '../../../common'
 import type { Schema, SchemaField } from '../schema'
 import { CrudUpdateHandler } from './update'
 import type { Merge } from 'type-fest'
 import type { RouteData } from '../route'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../common'
 
-export interface CrudUpdateOneData extends RouteData {
+interface CrudUpdateOneData extends RouteData {
   body: Struct
+  query: Query
 }
 
 export abstract class CrudUpdateOneHandler extends CrudUpdateHandler {
@@ -16,9 +17,14 @@ export abstract class CrudUpdateOneHandler extends CrudUpdateHandler {
       schema: Schema
       type: 'struct'
     }>
+    query: Merge<SchemaField, {
+      required: true
+      schema: Schema
+      type: 'struct'
+    }>
   }
 
   public async handle (data: CrudUpdateOneData, response: ServerResponse): Promise<unknown> {
-    return this.update(data.body, response, this.schema.body.schema, data.user)
+    return this.update(data.query, data.body, response, data.user)
   }
 }

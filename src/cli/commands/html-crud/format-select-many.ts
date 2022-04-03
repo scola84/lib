@@ -3,11 +3,12 @@ import type { Schema } from '../../../server/helpers/schema'
 import { createFileFields } from './create-file-fields'
 import { createModifiedFields } from './create-modified-fields'
 import { createPrimaryFields } from './create-primary-fields'
+import { createSelectSchema } from './create-select-schema'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
 import { pickField } from './pick-field'
-import { toJoint } from '../../../common'
 import { sortKeys } from './sort-keys'
+import { toJoint } from '../../../common'
 
 export function formatSelectMany (schema: Schema, options: Options): string {
   return `
@@ -20,7 +21,7 @@ export class SelectManyHandler extends CrudSelectManyHandler {
 
   public schema: CrudSelectManyHandler['schema'] = {
     body: ${formatBodySchema(schema, 6)},
-    headers: ${formatHeadersSchema(6)}
+    query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
   public url = '${options.url}/select/many/${toJoint(options.object, '-')}'
@@ -53,13 +54,12 @@ function formatBodySchema (schema: Schema, space: number): string {
   ).trimStart()
 }
 
-function formatHeadersSchema (space: number): string {
+function formatQuerySchema (object: string, schema: Schema, space: number): string {
   return formatCode(
     {
+      required: true,
       schema: {
-        'if-modified-since': {
-          type: 'datetime-local'
-        }
+        ...createSelectSchema(object, schema)
       },
       type: 'struct'
     },

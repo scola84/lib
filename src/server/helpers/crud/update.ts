@@ -1,11 +1,25 @@
+import type { Schema, SchemaField } from '../schema'
 import { Struct, cast, isFile } from '../../../common'
 import { CrudHandler } from './crud'
-import type { Schema } from '../schema'
+import type { Merge } from 'type-fest'
+import type { Query } from '../../../common'
 import type { ServerResponse } from 'http'
 import type { User } from '../../entities'
 
 export abstract class CrudUpdateHandler extends CrudHandler {
   public method = 'POST'
+
+  public abstract schema: {
+    body: Merge<SchemaField, {
+      required: true
+      schema: Schema
+    }>
+    query: Merge<SchemaField, {
+      required: true
+      schema: Schema
+      type: 'struct'
+    }>
+  }
 
   protected async deleteFiles (schema: Schema, object: Struct, data: Struct): Promise<void> {
     await Promise.all(Object
@@ -40,7 +54,7 @@ export abstract class CrudUpdateHandler extends CrudHandler {
       }))
   }
 
-  protected async update (data: Struct, response: ServerResponse, schema: Schema, user?: User): Promise<Struct | undefined> {
+  protected async update (query: Query, data: Struct, response: ServerResponse, user?: User): Promise<Struct | undefined> {
     const selectQuery = this.database.formatter.createSelectQuery(this.object, this.keys, this.keys.primary ?? [], data, user)
     const object = await this.database.select(selectQuery.string, selectQuery.values)
 
@@ -59,10 +73,16 @@ export abstract class CrudUpdateHandler extends CrudHandler {
       throw new Error('Object is modified')
     }
 
-    const updateQuery = this.database.formatter.createUpdateQuery(this.object, schema, this.keys, data, user)
+    const updateQuery = this.database.formatter.createUpdateQuery(this.object, this.schema.body.schema, this.keys, data, user)
 
-    await this.deleteFiles(schema, object, data)
+    await this.deleteFiles(this.schema.body.schema, object, data)
     await this.database.update(updateQuery.string, updateQuery.values)
-    return this.database.select(selectQuery.string, selectQuery.values)
+
+    const selectOneQuery = this.database.formatter.createSelectOneQuery(this.object, this.schema.query.schema, this.keys, this.keys.primary ?? [], {
+      select: query.select,
+      where: object
+    }, user)
+
+    return this.database.select(selectOneQuery.string, selectOneQuery.values)
   }
 }

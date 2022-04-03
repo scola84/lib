@@ -1,13 +1,27 @@
 import type { Schema, SchemaField } from '../schema'
 import { Struct, cast, isFile } from '../../../common'
 import { CrudHandler } from './crud'
+import type { Merge } from 'type-fest'
+import type { Query } from '../../../common'
 import type { ServerResponse } from 'http'
 import type { User } from '../../entities'
 
 export abstract class CrudDeleteHandler extends CrudHandler {
   public method = 'POST'
 
-  protected async delete (data: Struct, response: ServerResponse, schema: Schema, user?: User): Promise<Struct | undefined> {
+  public abstract schema: {
+    body: Merge<SchemaField, {
+      required: true
+      schema: Schema
+    }>
+    query: Merge<SchemaField, {
+      required: true
+      schema: Schema
+      type: 'struct'
+    }>
+  }
+
+  protected async delete (query: Query, data: Struct, response: ServerResponse, user?: User): Promise<Struct | undefined> {
     const selectQuery = this.database.formatter.createSelectQuery(this.object, this.keys, this.keys.primary ?? [], data, user)
     const object = await this.database.select(selectQuery.string, selectQuery.values)
 
@@ -31,12 +45,14 @@ export abstract class CrudDeleteHandler extends CrudHandler {
       return this.database.select(selectQuery.string, selectQuery.values)
     }
 
-    await this.deleteFiles(schema, object)
+    await this.deleteFiles(this.schema.body.schema, object)
 
     const deleteQuery = this.database.formatter.createDeleteQuery(this.object, this.keys, data)
 
     await this.database.delete(deleteQuery.string, deleteQuery.values)
-    return object
+
+    const selectOneQuery = this.database.formatter.createSelectOneQuery(this.object, this.schema.query.schema, this.keys, this.keys.primary ?? [], query, user)
+    return this.database.select(selectOneQuery.string, selectOneQuery.values)
   }
 
   protected async deleteFile (object: Struct, name: string, user?: User): Promise<void> {

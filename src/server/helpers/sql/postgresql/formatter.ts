@@ -95,7 +95,7 @@ export class PostgresqlFormatter extends SqlFormatter {
 
   protected createSelectAllPartsLimit (query: Query): SqlQueryParts {
     const values = Struct.create<Query>({
-      limit: query.limit
+      limit: query.limit ?? 10
     })
 
     let limit = null

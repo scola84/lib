@@ -4,7 +4,7 @@ import { isStruct } from './is-struct'
 export interface Query extends Struct {
   cursor?: string
   join?: Struct<Struct<number | string | undefined> | undefined>
-  limit: number
+  limit?: number
   offset?: number
   operator?: Struct<Struct<string | undefined> | string | undefined>
   order?: Struct<Struct<string | undefined> | string | undefined>

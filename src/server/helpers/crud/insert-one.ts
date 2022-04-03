@@ -1,12 +1,13 @@
+import type { Query, Struct } from '../../../common'
 import type { Schema, SchemaField } from '../schema'
 import { CrudInsertHandler } from './insert'
 import type { Merge } from 'type-fest'
 import type { RouteData } from '../route'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../common'
 
 interface CrudInsertOneData extends RouteData {
   body: Struct
+  query: Query
 }
 
 export abstract class CrudInsertOneHandler extends CrudInsertHandler {
@@ -16,9 +17,14 @@ export abstract class CrudInsertOneHandler extends CrudInsertHandler {
       schema: Schema
       type: 'struct'
     }>
+    query: Merge<SchemaField, {
+      required: true
+      schema: Schema
+      type: 'struct'
+    }>
   }
 
   public async handle (data: CrudInsertOneData, response: ServerResponse): Promise<unknown> {
-    return this.insert(data.body, response, this.schema.body.schema, data.user)
+    return this.insert(data.query, data.body, response, data.user)
   }
 }

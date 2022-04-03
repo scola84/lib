@@ -102,6 +102,7 @@ export abstract class SqlFormatter {
   public createSelectAllQuery (object: string, schema: Schema, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], query: Query, user?: User): SqlQuery {
     const auth = this.createAuthParts(keys, authKeys, user)
     const selectAll = this.createSelectAllParts(object, schema, keys, query)
+    const selectors = this.createSelectors(object, schema, query)
 
     const queries = auth.parts.map((authPart) => {
       if (
@@ -112,7 +113,7 @@ export abstract class SqlFormatter {
       }
 
       return sql`
-        SELECT ${selectAll.select ?? '1 AS $[1]'}
+        SELECT ${selectors}
         FROM $[${object}]
         ${selectAll.join ?? ''}
         ${authPart.join ?? ''}
@@ -136,9 +137,10 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createSelectManyInQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], data: Struct[], user?: User): SqlQuery {
+  public createSelectManyInQuery (object: string, schema: Schema, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], data: Struct[], query: Query, user?: User): SqlQuery {
     const auth = this.createAuthParts(keys, authKeys, user)
     const select = this.createSelectManyInParts(keys, data)
+    const selectors = this.createSelectors(object, schema, query)
 
     if (select.where === undefined) {
       throw new Error('Where is undefined')
@@ -153,7 +155,7 @@ export abstract class SqlFormatter {
       }
 
       return sql`
-        SELECT $[${object}].*
+        SELECT ${selectors}
         FROM $[${object}]
         ${authPart.join ?? ''}
         WHERE ${this.joinStrings(' AND ', [
@@ -172,9 +174,10 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createSelectManyModifiedQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], modified: Date, user?: User): SqlQuery {
+  public createSelectManyModifiedQuery (object: string, schema: Schema, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], query: Query, user?: User): SqlQuery {
     const auth = this.createAuthParts(keys, authKeys, user)
-    const select = this.createSelectManyModifiedParts(keys, modified)
+    const select = this.createSelectManyModifiedParts(keys, query)
+    const selectors = this.createSelectors(object, schema, query)
 
     if (select.where === undefined) {
       throw new Error('Where is undefined')
@@ -189,7 +192,7 @@ export abstract class SqlFormatter {
       }
 
       return sql`
-        SELECT $[${object}].*
+        SELECT ${selectors}
         FROM $[${object}]
         ${authPart.join ?? ''}
         WHERE ${this.joinStrings(' AND ', [
@@ -208,9 +211,10 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createSelectManyQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], user?: User): SqlQuery {
+  public createSelectManyQuery (object: string, schema: Schema, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], query: Query, user?: User): SqlQuery {
     const auth = this.createAuthParts(keys, authKeys, user)
     const select = this.createSelectManyParts(keys)
+    const selectors = this.createSelectors(object, schema, query)
 
     const queries = auth.parts.map((authPart) => {
       if (
@@ -221,7 +225,7 @@ export abstract class SqlFormatter {
       }
 
       return sql`
-        SELECT ${select.select ?? `$[${object}].*`}
+        SELECT ${select.select ?? selectors}
         FROM $[${object}]
         ${authPart.join ?? ''}
         WHERE ${authPart.where ?? '1 = 1'}
@@ -234,7 +238,44 @@ export abstract class SqlFormatter {
     }
   }
 
-  public createSelectQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], query: Struct, user?: User): SqlQuery {
+  public createSelectOneQuery (object: string, schema: Schema, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], query: Query, user?: User): SqlQuery {
+    const auth = this.createAuthParts(keys, authKeys, user)
+    const select = this.createSelectParts(keys, query)
+    const selectors = this.createSelectors(object, schema, query)
+
+    if (select.where === undefined) {
+      throw new Error('Where is undefined')
+    }
+
+    const queries = auth.parts.map((authPart) => {
+      if (
+        keys.auth !== undefined &&
+        authPart.where === undefined
+      ) {
+        throw new Error('Where is undefined')
+      }
+
+      return sql`
+        SELECT ${selectors}
+        FROM $[${object}]
+        ${authPart.join ?? ''}
+        WHERE ${this.joinStrings(' AND ', [
+          select.where,
+          authPart.where
+        ]) ?? '1 = 1'}
+      `
+    })
+
+    return {
+      string: queries.join(' UNION '),
+      values: {
+        ...select.values,
+        ...auth.values
+      }
+    }
+  }
+
+  public createSelectQuery (object: string, keys: SqlQueryKeys, authKeys: SchemaFieldKey[], query: Query, user?: User): SqlQuery {
     const auth = this.createAuthParts(keys, authKeys, user)
     const select = this.createSelectParts(keys, query)
 
@@ -449,7 +490,6 @@ export abstract class SqlFormatter {
     const limitParts = this.createSelectAllPartsLimit(query)
     const orderParts = this.createSelectAllPartsOrder(object, schema, query)
     const relatedParts = this.createSelectAllPartsRelated(object, keys, query)
-    const selectParts = this.createSelectAllPartsSelect(object, schema, query)
     const whereParts = this.createSelectAllPartsWhere(object, schema, query)
 
     const join = this.joinStrings(' ', [
@@ -466,7 +506,6 @@ export abstract class SqlFormatter {
 
     const { limit } = limitParts
     const order = limitParts.order ?? orderParts.order ?? '1'
-    const { select } = selectParts
 
     const values = {
       ...foreignParts.values,
@@ -479,7 +518,6 @@ export abstract class SqlFormatter {
       join,
       limit,
       order,
-      select,
       values,
       where
     }
@@ -559,60 +597,13 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectAllPartsSelect (object: string, schema: Schema, query: Query): SqlQueryParts {
-    const booleans = flatten<boolean | undefined>(query.select ?? {})
-    const hasNegatives = Object.values(booleans).includes(false)
-    const hasPositives = Object.values(booleans).includes(true)
-
-    let fields: string[] = []
-    let prefix = ''
-
-    if (schema.select.schema?.[object] === undefined) {
-      fields = Object.keys(schema.select.schema ?? {})
-      prefix = `${object}.`
-    } else {
-      fields = Object
-        .entries(schema.select.schema)
-        .map(([table, field]) => {
-          return Object
-            .keys(field.schema ?? {})
-            .map((column) => {
-              return `${table}.${column}`
-            })
-        })
-        .flat()
-    }
-
-    const select = this.joinStrings(', ', fields.map((name) => {
-      const identifier = `${prefix}${name}`
-
-      if (hasPositives) {
-        if (booleans[name] === true) {
-          return `$[${identifier}]`
-        }
-      } else if (hasNegatives) {
-        if (booleans[name] !== false) {
-          return `$[${identifier}]`
-        }
-      } else {
-        return `$[${identifier}]`
-      }
-
-      return undefined
-    }))
-
-    return {
-      select
-    }
-  }
-
-  protected createSelectAllPartsWhere (object: string, schema: Schema, query: Query): SqlQueryParts {
+  protected createSelectAllPartsWhere (object: string, schema: Partial<Schema>, query: Query): SqlQueryParts {
     const values = Struct.create()
     const operators = flatten<string | undefined>(query.operator ?? {})
 
     let prefix = ''
 
-    if (schema.select.schema?.[object] === undefined) {
+    if (schema.select?.schema?.[object] === undefined) {
       prefix = `${object}.`
     }
 
@@ -659,15 +650,17 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectManyModifiedParts (keys: SqlQueryKeys, modified: Date): SqlQueryParts {
-    const key = keys.modified
+  protected createSelectManyModifiedParts (keys: SqlQueryKeys, query: Query): SqlQueryParts {
     const values = Struct.create()
 
     let where = ''
 
-    if (key !== undefined) {
-      values[`${key.table}_${key.column}`] = modified
-      where += `$[${key.table}.${key.column}] >= $(${key.table}_${key.column})`
+    if (keys.modified !== undefined) {
+      const identifier = `${keys.modified.table}.${keys.modified.column}`
+      const key = `${keys.modified.table}_${keys.modified.column}`
+
+      values[key] = query.where?.[keys.modified.column]
+      where += `$[${identifier}] >= $(${key})`
     }
 
     return {
@@ -690,11 +683,11 @@ export abstract class SqlFormatter {
     }
   }
 
-  protected createSelectParts (keys: SqlQueryKeys, query: Struct): SqlQueryParts {
+  protected createSelectParts (keys: SqlQueryKeys, query: Query): SqlQueryParts {
     const values = Struct.create()
 
     const where = this.joinStrings(' AND ', keys.primary?.map((key) => {
-      values[`${key.table}_${key.column}`] = query[key.column]
+      values[`${key.table}_${key.column}`] = query.where?.[key.column]
       return `$[${key.table}.${key.column}] = $(${key.table}_${key.column})`
     }) ?? [])
 
@@ -702,6 +695,49 @@ export abstract class SqlFormatter {
       values,
       where
     }
+  }
+
+  protected createSelectors (object: string, schema: Partial<Schema>, query: Query): string {
+    const booleans = flatten<boolean | undefined>(query.select ?? {})
+    const hasNegatives = Object.values(booleans).includes(false)
+    const hasPositives = Object.values(booleans).includes(true)
+
+    let fields: string[] = []
+    let prefix = ''
+
+    if (schema.select?.schema?.[object] === undefined) {
+      fields = Object.keys(schema.select?.schema ?? {})
+      prefix = `${object}.`
+    } else {
+      fields = Object
+        .entries(schema.select.schema)
+        .map(([table, field]) => {
+          return Object
+            .keys(field.schema ?? {})
+            .map((column) => {
+              return `${table}.${column}`
+            })
+        })
+        .flat()
+    }
+
+    return this.joinStrings(', ', fields.map((name) => {
+      const identifier = `${prefix}${name}`
+
+      if (hasPositives) {
+        if (booleans[name] === true) {
+          return `$[${identifier}]`
+        }
+      } else if (hasNegatives) {
+        if (booleans[name] !== false) {
+          return `$[${identifier}]`
+        }
+      } else {
+        return `$[${identifier}]`
+      }
+
+      return undefined
+    })) ?? '1 AS $[1]'
   }
 
   protected joinStrings (delimiter: string, strings: Array<string | undefined>): string | undefined {

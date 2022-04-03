@@ -3,11 +3,12 @@ import type { Schema } from '../../../server/helpers/schema'
 import { createFileFields } from './create-file-fields'
 import { createModifiedFields } from './create-modified-fields'
 import { createPrimaryFields } from './create-primary-fields'
+import { createSelectSchema } from './create-select-schema'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
 import { pickField } from './pick-field'
-import { toJoint } from '../../../common'
 import { sortKeys } from './sort-keys'
+import { toJoint } from '../../../common'
 
 export function formatSelectOne (schema: Schema, options: Options): string {
   return `
@@ -19,7 +20,7 @@ export class SelectOneHandler extends CrudSelectOneHandler {
   public object = '${options.object}'
 
   public schema: CrudSelectOneHandler['schema'] = {
-    query: ${formatQuerySchema(schema, 6)}
+    query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
   public url = '${options.url}/select/one/${toJoint(options.object, '-')}'
@@ -27,7 +28,7 @@ export class SelectOneHandler extends CrudSelectOneHandler {
 `.trim()
 }
 
-function createQueryFields (schema: Schema): Schema {
+function createWhereFields (schema: Schema): Schema {
   return sortKeys({
     ...createPrimaryFields(schema),
     ...createModifiedFields(schema),
@@ -35,18 +36,30 @@ function createQueryFields (schema: Schema): Schema {
   })
 }
 
-function formatQuerySchema (schema: Schema, space: number): string {
-  return formatCode(
-    {
-      required: true,
+function createWhereSchema (schema: Schema): Schema {
+  return {
+    where: {
       schema: Object
-        .entries(createQueryFields(schema))
+        .entries(createWhereFields(schema))
         .reduce((result, [name, field]) => {
           return {
             ...result,
             [name]: pickField(field)
           }
         }, {}),
+      type: 'struct'
+    }
+  }
+}
+
+function formatQuerySchema (object: string, schema: Schema, space: number): string {
+  return formatCode(
+    {
+      required: true,
+      schema: {
+        ...createSelectSchema(object, schema),
+        ...createWhereSchema(schema)
+      },
       type: 'struct'
     },
     space

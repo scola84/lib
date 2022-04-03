@@ -3,11 +3,12 @@ import type { Schema } from '../../../server/helpers/schema'
 import { createFileFields } from './create-file-fields'
 import { createModifiedFields } from './create-modified-fields'
 import { createPrimaryFields } from './create-primary-fields'
+import { createSelectSchema } from './create-select-schema'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
 import { pickField } from './pick-field'
-import { toJoint } from '../../../common'
 import { sortKeys } from './sort-keys'
+import { toJoint } from '../../../common'
 
 export function formatDeleteOne (schema: Schema, options: Options): string {
   return `
@@ -19,7 +20,8 @@ export class DeleteOneHandler extends CrudDeleteOneHandler {
   public object = '${options.object}'
 
   public schema: CrudDeleteOneHandler['schema'] = {
-    body: ${formatBodySchema(schema, 6)}
+    body: ${formatBodySchema(schema, 6)},
+    query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
   public url = '${options.url}/delete/one/${toJoint(options.object, '-')}'
@@ -47,6 +49,19 @@ function formatBodySchema (schema: Schema, space: number): string {
             [name]: pickField(field)
           }
         }, {}),
+      type: 'struct'
+    },
+    space
+  ).trimStart()
+}
+
+function formatQuerySchema (object: string, schema: Schema, space: number): string {
+  return formatCode(
+    {
+      required: true,
+      schema: {
+        ...createSelectSchema(object, schema)
+      },
       type: 'struct'
     },
     space

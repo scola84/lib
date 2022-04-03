@@ -1,4 +1,4 @@
-import { I18n, Struct, flatten } from '../../../common'
+import { I18n, Struct, flatten, toJoint } from '../../../common'
 import type { Schema, SchemaField, SchemaFieldKey } from '../schema'
 import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from './query'
 import type { Query } from '../../../common'
@@ -314,15 +314,20 @@ export abstract class SqlFormatter {
   public createUpdateQuery (object: string, schema: Schema, keys: SqlQueryKeys, data: Struct, user?: User): SqlQuery {
     const values = Struct.create()
 
+    const primaryKeys = keys.primary?.map((key) => {
+      return key.column
+    })
+
     const set = Object
       .entries(schema)
       .filter(([name]) => {
-        return keys.primary?.every((key) => {
-          return key.column !== name
-        })
+        return primaryKeys?.includes(name) !== true
       })
-      .filter(([name]) => {
-        return data[name] !== undefined
+      .filter(([name, field]) => {
+        return (
+          data[name] !== undefined ||
+          field.default === '$updated'
+        )
       })
       .map(([name, field]) => {
         values[name] = this.resolveValue(field, data[name], user)
@@ -527,27 +532,18 @@ export abstract class SqlFormatter {
     const join: string[] = []
     const values = Struct.create()
 
-    keys.foreign
-      ?.filter((key) => {
-        return (
-          query.join !== undefined &&
-          query.join[key.table] === undefined
-        )
-      })
-      .forEach((key) => {
-        join.push(`JOIN $[${key.table}] ON $[${object}.${key.column}] = $[${key.table}.${key.column}]`)
-      })
+    let where = null as string | null
 
-    let where = null
-
-    const joinKey = keys.foreign?.find((key) => {
-      return query.join?.[key.table] !== undefined
+    keys.foreign?.forEach((key) => {
+      if (query.join !== undefined) {
+        if (query.join[key.table] === undefined) {
+          join.push(`JOIN $[${key.table}] ON $[${object}.${key.column}] = $[${key.table}.${key.column}]`)
+        } else {
+          values[`${object}_${key.column}`] = query.join[key.table]?.[key.column]
+          where = `$[${object}.${key.column}] = $(${object}_${key.column})`
+        }
+      }
     })
-
-    if (joinKey !== undefined) {
-      values[`${object}_${joinKey.column}`] = query.join?.[joinKey.table]?.[joinKey.column]
-      where = `$[${object}.${joinKey.column}] = $(${object}_${joinKey.column})`
-    }
 
     return {
       join: this.joinStrings(' ', join) ?? undefined,
@@ -575,31 +571,28 @@ export abstract class SqlFormatter {
   }
 
   protected createSelectAllPartsRelated (object: string, keys: SqlQueryKeys, query: Query): SqlQueryParts {
-    const joinKey = keys.related?.find((key) => {
-      return query.join?.[key.table] !== undefined
+    const join: string[] = []
+    const values = Struct.create()
+    const where: string[] = []
+
+    keys.related?.forEach((key) => {
+      if (query.join?.[key.table] !== undefined) {
+        values[`${key.table}_${key.column}`] = query.join[key.table]?.[key.column]
+        join.push(`JOIN $[${key.table}] ON $[${object}.${key.column}] = $[${key.table}.${key.column}]`)
+        where.push(`$[${key.table}.${key.column}] = $(${key.table}_${key.column})`)
+      }
     })
 
-    const values = Struct.create()
-
-    let join = null
-    let where = null
-
-    if (joinKey !== undefined) {
-      values[`${joinKey.table}_${joinKey.column}`] = query.join?.[joinKey.table]?.[joinKey.column]
-      join = `JOIN $[${joinKey.table}] ON $[${object}.${joinKey.column}] = $[${joinKey.table}.${joinKey.column}]`
-      where = `$[${joinKey.table}.${joinKey.column}] = $(${joinKey.table}_${joinKey.column})`
-    }
-
     return {
-      join: join ?? undefined,
+      join: this.joinStrings(' ', join) ?? undefined,
       values: values,
-      where: where ?? undefined
+      where: this.joinStrings(' AND ', where) ?? undefined
     }
   }
 
   protected createSelectAllPartsWhere (object: string, schema: Partial<Schema>, query: Query): SqlQueryParts {
-    const values = Struct.create()
     const operators = flatten<string | undefined>(query.operator ?? {})
+    const values = Struct.create()
 
     let prefix = ''
 
@@ -610,17 +603,16 @@ export abstract class SqlFormatter {
     const where = this.joinStrings(' AND ', Object
       .entries(flatten<unknown>(query.where ?? {}))
       .map(([name, value]) => {
-        const identifier = `${prefix}${name}`
-        const key = identifier.replace('.', '_')
         const operator = operators[name] ?? '='
+        const valueKey = toJoint(`${prefix}${name}`, '_')
 
-        values[key] = value
+        values[valueKey] = value
 
         if (operator === 'LIKE') {
-          return `LOWER($[${identifier}]) ${operator} LOWER($(${key}))`
+          return `LOWER($[${prefix}${name}]) ${operator} LOWER($(${valueKey}))`
         }
 
-        return `$[${identifier}] ${operator} $(${key})`
+        return `$[${prefix}${name}] ${operator} $(${valueKey})`
       }))
 
     return {
@@ -656,11 +648,8 @@ export abstract class SqlFormatter {
     let where = ''
 
     if (keys.modified !== undefined) {
-      const identifier = `${keys.modified.table}.${keys.modified.column}`
-      const key = `${keys.modified.table}_${keys.modified.column}`
-
-      values[key] = query.where?.[keys.modified.column]
-      where += `$[${identifier}] >= $(${key})`
+      values[`${keys.modified.table}_${keys.modified.column}`] = query.where?.[keys.modified.column]
+      where += `$[${keys.modified.table}.${keys.modified.column}] >= $(${keys.modified.table}_${keys.modified.column})`
     }
 
     return {
@@ -702,14 +691,14 @@ export abstract class SqlFormatter {
     const hasNegatives = Object.values(booleans).includes(false)
     const hasPositives = Object.values(booleans).includes(true)
 
-    let fields: string[] = []
+    let names: string[] = []
     let prefix = ''
 
     if (schema.select?.schema?.[object] === undefined) {
-      fields = Object.keys(schema.select?.schema ?? {})
+      names = Object.keys(schema.select?.schema ?? {})
       prefix = `${object}.`
     } else {
-      fields = Object
+      names = Object
         .entries(schema.select.schema)
         .map(([table, field]) => {
           return Object
@@ -721,19 +710,17 @@ export abstract class SqlFormatter {
         .flat()
     }
 
-    return this.joinStrings(', ', fields.map((name) => {
-      const identifier = `${prefix}${name}`
-
+    return this.joinStrings(', ', names.map((name) => {
       if (hasPositives) {
         if (booleans[name] === true) {
-          return `$[${identifier}]`
+          return `$[${prefix}${name}]`
         }
       } else if (hasNegatives) {
         if (booleans[name] !== false) {
-          return `$[${identifier}]`
+          return `$[${prefix}${name}]`
         }
       } else {
-        return `$[${identifier}]`
+        return `$[${prefix}${name}]`
       }
 
       return undefined

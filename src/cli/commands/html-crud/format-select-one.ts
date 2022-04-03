@@ -39,6 +39,7 @@ function createWhereFields (schema: Schema): Schema {
 function createWhereSchema (schema: Schema): Schema {
   return {
     where: {
+      required: true,
       schema: Object
         .entries(createWhereFields(schema))
         .reduce((result, [name, field]) => {

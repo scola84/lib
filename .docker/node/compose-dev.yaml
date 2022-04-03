@@ -3,3 +3,4 @@ services:
   node:
     volumes:
       - $PWD/../lib:/usr/src/node_modules/@scola/lib
+      - $PWD/../lib/node_modules:/usr/node_modules

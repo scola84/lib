@@ -27,7 +27,9 @@ const options: RollupOptions = {
         src: 'src/index.ts'
       }]
     }),
-    resolve()
+    resolve({
+      exportConditions: ['node']
+    })
   ]
 }
 

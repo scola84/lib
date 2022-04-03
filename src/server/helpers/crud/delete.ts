@@ -22,7 +22,10 @@ export abstract class CrudDeleteHandler extends CrudHandler {
   }
 
   protected async delete (query: Query, data: Struct, response: ServerResponse, user?: User): Promise<Struct | undefined> {
-    const selectQuery = this.database.formatter.createSelectQuery(this.object, this.keys, this.keys.primary ?? [], data, user)
+    const selectQuery = this.database.formatter.createSelectQuery(this.object, this.keys, this.keys.primary ?? [], {
+      where: data
+    }, user)
+
     const object = await this.database.select(selectQuery.string, selectQuery.values)
 
     if (object === undefined) {

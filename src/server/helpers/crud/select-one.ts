@@ -34,8 +34,8 @@ export abstract class CrudSelectOneHandler extends CrudHandler {
     if (
       this.keys.modified !== undefined &&
       object[this.keys.modified.column] !== null &&
-      data.query[this.keys.modified.column] !== undefined &&
-      cast(object[this.keys.modified.column])?.toString() === cast(data.query.where?.[this.keys.modified.column])?.toString()
+      data.query.where?.[this.keys.modified.column] !== undefined &&
+      cast(object[this.keys.modified.column])?.toString() === cast(data.query.where[this.keys.modified.column])?.toString()
     ) {
       response.statusCode = 304
       return undefined

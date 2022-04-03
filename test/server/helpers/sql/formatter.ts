@@ -274,7 +274,9 @@ export function callCreateADeleteQuery (formatter: SqlFormatter): SqlQuery {
 
 export function callCreateASelectQuery (formatter: SqlFormatter): SqlQuery {
   return formatter.createSelectQuery('address', keys.select, keys.select.primary ?? [], {
-    address_id: 1
+    where: {
+      address_id: 1
+    }
   }, user)
 }
 

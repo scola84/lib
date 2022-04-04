@@ -1,7 +1,7 @@
 import type { ScolaButtonElement } from '../../elements/button'
 import type { ScolaCarouselElement } from '../../elements/carousel'
 
-export function buttonCarouselHider (observer: ScolaButtonElement, observable: ScolaCarouselElement): void {
+export function buttonStateCarouselHider (observer: ScolaButtonElement, observable: ScolaCarouselElement): void {
   const hasState = (
     observer.dataset.pointer === observable.getAttribute('sc-pointer') &&
     observable.parentElement?.hasAttribute('hidden') === false

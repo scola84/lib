@@ -15,12 +15,12 @@ if (existsSync('src/worker/index.ts')) {
   configs.push(worker())
 }
 
-if (existsSync('src/cli/index.ts')) {
-  configs.push(cli())
-}
-
 if (existsSync('src/rollup/index.ts')) {
   configs.push(rollup())
+}
+
+if (existsSync('src/cli/index.ts')) {
+  configs.push(cli())
 }
 
 export default configs

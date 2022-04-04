@@ -1,6 +1,6 @@
 import type { ScolaElement } from '../../elements/element'
 
-export function elementsData (observer: ScolaElement, observable: ScolaElement): void {
+export function elementDataElementData (observer: ScolaElement, observable: ScolaElement): void {
   window.requestAnimationFrame(() => {
     const data = observable.getData()
 

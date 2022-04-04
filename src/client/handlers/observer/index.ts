@@ -1,29 +1,33 @@
-import { buttonCarouselHider } from './button-carousel-hider'
-import { carouselSelect } from './carousel-select'
-import { elementFieldError } from './element-field-error'
-import { elementsAttrs } from './elements-attrs'
-import { elementsAttrsInv } from './elements-attrs-inv'
-import { elementsData } from './elements-data'
-import { elementsSame } from './elements-same'
-import { fieldElementAttr } from './field-element-attr'
-import { inputMediaTime } from './input-media-time'
-import { inputMediaVolume } from './input-media-volume'
-import { inputRequester } from './input-requester'
-import { tableRowTable } from './table-row-table'
-import { tableView } from './table-view'
+import { buttonStateCarouselHider } from './button-state-carousel-hider'
+import { carouselSelectValue } from './carousel-select-value'
+import { elementDataElementData } from './element-data-element-data'
+import { elementDataFieldError } from './element-data-field-error'
+import { elementStateElementAttrs } from './element-state-element-attrs'
+import { elementStateElementAttrsInv } from './element-state-element-attrs-inv'
+import { elementStateElementData } from './element-state-element-data'
+import { elementStateElementDataInv } from './element-state-element-data-inv'
+import { elementStateElementSame } from './element-state-element-same'
+import { fieldDataElementAttr } from './field-data-element-attr'
+import { inputDataMediaTime } from './input-data-media-time'
+import { inputDataMediaVolume } from './input-data-media-volume'
+import { inputDataRequesterData } from './input-data-requester-data'
+import { tableRowsView } from './table-rows-view'
+import { tableSelectorRowTableLister } from './table-selector-row-table-lister'
 
 export const observerHandlers = {
-  'sc-button-carousel-hider': buttonCarouselHider,
-  'sc-carousel-select': carouselSelect,
-  'sc-element-field-error': elementFieldError,
-  'sc-elements-attrs': elementsAttrs,
-  'sc-elements-attrs-inv': elementsAttrsInv,
-  'sc-elements-data': elementsData,
-  'sc-elements-same': elementsSame,
-  'sc-field-element-attr': fieldElementAttr,
-  'sc-input-media-time': inputMediaTime,
-  'sc-input-media-volume': inputMediaVolume,
-  'sc-input-requester': inputRequester,
-  'sc-table-row-table': tableRowTable,
-  'sc-table-view': tableView
+  'sc-button-state-carousel-hider': buttonStateCarouselHider,
+  'sc-carousel-select-value': carouselSelectValue,
+  'sc-element-data-element-data': elementDataElementData,
+  'sc-element-data-field-error': elementDataFieldError,
+  'sc-element-state-element-attrs': elementStateElementAttrs,
+  'sc-element-state-element-attrs-inv': elementStateElementAttrsInv,
+  'sc-element-state-element-data': elementStateElementData,
+  'sc-element-state-element-data-inv': elementStateElementDataInv,
+  'sc-element-state-element-same': elementStateElementSame,
+  'sc-field-data-element-attr': fieldDataElementAttr,
+  'sc-input-data-media-time': inputDataMediaTime,
+  'sc-input-data-media-volume': inputDataMediaVolume,
+  'sc-input-data-requester-data': inputDataRequesterData,
+  'sc-table-rows-view': tableRowsView,
+  'sc-table-selector-row-table-lister': tableSelectorRowTableLister
 }

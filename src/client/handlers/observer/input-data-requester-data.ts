@@ -1,7 +1,7 @@
 import type { ScolaInputElement } from '../../elements/input'
 import type { ScolaRequesterElement } from '../../elements/requester'
 
-export function inputRequester (observer: ScolaInputElement, observable: ScolaRequesterElement, mutations: MutationRecord[]): void {
+export function inputDataRequesterData (observer: ScolaInputElement, observable: ScolaRequesterElement, mutations: MutationRecord[]): void {
   if (mutations.length > 0) {
     const data = observable.getData()
 

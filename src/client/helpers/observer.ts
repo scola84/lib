@@ -19,6 +19,8 @@ export class Observer {
 
   public observers: MutationObserver[] = []
 
+  public parent: Document | Element = document
+
   public sanitizer: Sanitizer
 
   public save: string[]
@@ -93,6 +95,8 @@ export class Observer {
   }
 
   public reset (): void {
+    this.parent = this.getParent(this.element.getAttribute('sc-observe-parent'))
+
     this.save = this.element
       .getAttribute('sc-observe-save')
       ?.trim()
@@ -100,7 +104,7 @@ export class Observer {
 
     this.state = this.element
       .getAttribute('sc-observe-state')
-      ?.split(' ') ?? []
+      ?.split(/\s+/u) ?? []
 
     this.storage = Observer.storage[this.element.getAttribute('sc-observe-storage') ?? 'session'] ?? window.sessionStorage
 
@@ -140,7 +144,7 @@ export class Observer {
         handler !== undefined &&
         selector !== ''
       ) {
-        document
+        this.parent
           .querySelectorAll<ScolaElement>(selector)
           .forEach((element) => {
             const observerHandler = handler.bind(null, this.element, element)
@@ -159,6 +163,14 @@ export class Observer {
           })
       }
     })
+  }
+
+  protected getParent (selector: string | null): Document | Element {
+    if (selector === null) {
+      return document
+    }
+
+    return this.element.closest(selector) ?? document
   }
 
   protected handleHidden (): void {

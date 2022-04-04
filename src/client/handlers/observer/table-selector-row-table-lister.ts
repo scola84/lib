@@ -1,7 +1,7 @@
 import type { ScolaTableElement } from '../../elements/table'
 import type { ScolaTableRowElement } from '../../elements/table-row'
 
-export function tableRowTable (observer: ScolaTableRowElement, observable: ScolaTableElement): void {
+export function tableSelectorRowTableLister (observer: ScolaTableRowElement, observable: ScolaTableElement): void {
   window.requestAnimationFrame(() => {
     const parent = observer.closest<ScolaTableElement>('[is="sc-table"]')
 

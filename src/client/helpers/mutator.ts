@@ -52,7 +52,7 @@ export class Mutator {
   public preset (): void {
     this.element
       .getAttribute('sc-preset')
-      ?.split(' ')
+      ?.split(/\s+/u)
       .forEach((name) => {
         this.setAttributes(Mutator.presets[name], false)
       })

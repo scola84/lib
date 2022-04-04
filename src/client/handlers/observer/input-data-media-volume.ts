@@ -1,7 +1,7 @@
 import type { ScolaInputElement } from '../../elements/input'
 import type { ScolaMediaElement } from '../../elements/media'
 
-export function inputMediaVolume (observer: ScolaInputElement, observable: ScolaMediaElement): void {
+export function inputDataMediaVolume (observer: ScolaInputElement, observable: ScolaMediaElement): void {
   const data = observable.getData()
 
   if (data !== null) {

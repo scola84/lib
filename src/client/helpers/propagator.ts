@@ -87,7 +87,7 @@ export class Propagator {
   public parseEvents (events: string, data?: Struct): PropagatorEvent[] {
     return events
       .trim()
-      .split(' ')
+      .split(/\s+/u)
       .map((event) => {
         const [nameFilter, selector] = event.split('@')
         const [name, filter = undefined] = nameFilter.split('?')
@@ -147,7 +147,7 @@ export class Propagator {
       return detail
     }
 
-    return Struct.fromQuery(this.i18n.format(event.filter, event.data))
+    return Struct.fromQuery(this.i18n.format(event.filter, detail))
   }
 
   protected getEvents (on: string): PropagatorEvent[] {

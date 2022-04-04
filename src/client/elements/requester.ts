@@ -147,7 +147,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     this.max = Number(this.getAttribute('sc-max') ?? 1)
     this.method = this.getAttribute('sc-method') ?? 'GET'
     this.requestType = (this.getAttribute('sc-request-type')) ?? 'application/x-www-form-urlencoded'
-    this.responseType = this.getAttribute('sc-response-type') ?? ''
+    this.responseType = this.getAttribute('sc-response-type') ?? 'text'
     this.url = this.getAttribute('sc-url') ?? ''
     this.wait = this.hasAttribute('sc-wait')
     this.queue = queue(this.handleQueueBound, this.concurrency)
@@ -213,15 +213,12 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       }
     }
 
-    let { url } = this
+    const url = `${this.origin}${this.i18n.format(this.url, data)}`
+
     let body: FormData | URLSearchParams | string | null = null
 
-    if (method === 'GET') {
-      if (isStruct(data)) {
-        url = this.createRequestUrl(data)
-      }
-    } else if (method === 'POST') {
-      body = this.createRequestBody(data)
+    if (method === 'POST') {
+      body = this.encode(data)
     }
 
     return {
@@ -231,20 +228,57 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }
   }
 
-  protected createRequestBody (data: unknown): FormData | URLSearchParams | string | null {
+  protected async decode (xhr: XMLHttpRequest): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      const contentType = xhr.getResponseHeader('content-type')
+
+      if (
+        contentType?.startsWith('application/json') === true ||
+        contentType?.startsWith('text/') === true
+      ) {
+        if (xhr.responseType === 'text') {
+          if (contentType.startsWith('application/json')) {
+            resolve(JSON.parse(xhr.responseText, revive) as Struct)
+          } else {
+            resolve(xhr.responseText)
+          }
+        } else if (xhr.response instanceof Blob) {
+          const reader = new FileReader()
+
+          reader.onloadend = () => {
+            if (
+              contentType.startsWith('application/json') &&
+              typeof reader.result === 'string'
+            ) {
+              resolve(JSON.parse(reader.result, revive) as Struct)
+            } else {
+              resolve(reader.result)
+            }
+          }
+
+          reader.onerror = reject
+          reader.readAsText(xhr.response)
+        }
+      } else {
+        resolve(xhr.response)
+      }
+    })
+  }
+
+  protected encode (data: unknown): FormData | URLSearchParams | string | null {
     switch (this.requestType) {
       case 'application/json':
-        return this.createRequestBodyJson(data)
+        return this.encodeJson(data)
       case 'application/x-www-form-urlencoded':
-        return this.createRequestBodyFormUrlencoded(data)
+        return this.encodeFormUrlencoded(data)
       case 'multipart/form-data':
-        return this.createRequestBodyFormData(data)
+        return this.encodeFormData(data)
       default:
         return null
     }
   }
 
-  protected createRequestBodyFormData (data: unknown): FormData {
+  protected encodeFormData (data: unknown): FormData {
     const body = new FormData()
 
     if (isStruct(data)) {
@@ -277,7 +311,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     return body
   }
 
-  protected createRequestBodyFormUrlencoded (data: unknown): URLSearchParams {
+  protected encodeFormUrlencoded (data: unknown): URLSearchParams {
     const body = new URLSearchParams()
 
     if (isStruct(data)) {
@@ -308,16 +342,12 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     return body
   }
 
-  protected createRequestBodyJson (data?: unknown): string | null {
+  protected encodeJson (data?: unknown): string | null {
     if (isNil(data)) {
       return null
     }
 
     return JSON.stringify(data)
-  }
-
-  protected createRequestUrl (data?: Struct): string {
-    return `${this.origin}${this.i18n.format(this.url, data)}`
   }
 
   protected handleAbort (): void {
@@ -338,39 +368,24 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       this.setAttribute('sc-state', xhr.readyState.toString())
     }
 
-    let data: unknown = null
-
-    const contentType = xhr.getResponseHeader('content-type')
-
-    if (contentType?.startsWith('application/json') === true) {
-      data = JSON.parse(xhr.responseText, revive) as Struct
-    } else if (contentType?.startsWith('text/') === true) {
-      data = xhr.responseText
-    } else {
-      data = xhr.response as unknown
-    }
-
-    if (xhr.status < 400) {
-      this.handleLoadendOk(event, options, data)
-    } else {
-      this.handleLoadendError(event, options, data)
-    }
+    this
+      .decode(xhr)
+      .then((data) => {
+        if (xhr.status < 400) {
+          this.handleLoadendOk(event, options, data)
+        } else {
+          this.handleLoadendError(event, options, data)
+        }
+      })
+      .catch((error) => {
+        this.handleError(error)
+      })
   }
 
   protected handleLoadendError (event: ProgressEvent, options: unknown, data: unknown): void {
     const xhr = event.target as XMLHttpRequest
 
-    let body: string | null = null
-
-    if (
-      xhr.responseType === '' ||
-      xhr.responseType === 'text'
-    ) {
-      body = xhr.responseText
-    }
-
     this.propagator.dispatch('error', [{
-      body: body,
       code: `err_requester_${xhr.status}`,
       message: xhr.statusText
     }], event)

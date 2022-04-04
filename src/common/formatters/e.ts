@@ -1,6 +1,5 @@
 import type { Formatter, Struct } from '../helpers'
-import { I18n, cast, isNil } from '../helpers'
-import { get } from '../helpers/get'
+import { I18n, cast, get, isNil } from '../helpers'
 
 export function e (name: string, locale: string, options: Struct<string | undefined>): Formatter {
   const i18n = new I18n()
@@ -8,14 +7,15 @@ export function e (name: string, locale: string, options: Struct<string | undefi
   const path = name
     .split('.')
     .map(cast)
+    .filter((key) => {
+      return key !== ''
+    })
 
-  const {
-    default: def,
-    counter
-  } = options
+  const def = cast(options.default)
+  const counter = cast(options.counter)
 
   function formatter (data: unknown): string {
-    if (def !== undefined) {
+    if (typeof def === 'string') {
       const value = cast(get(data, path))
 
       if (
@@ -26,7 +26,7 @@ export function e (name: string, locale: string, options: Struct<string | undefi
       }
 
       return value.toString()
-    } else if (counter !== undefined) {
+    } else if (typeof counter === 'string') {
       const value = cast(get(data, [counter])) ?? ''
       const code = `${name}_${value.toString()}`
 

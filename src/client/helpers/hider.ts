@@ -61,7 +61,7 @@ export class Hider {
     this.indexer = new Indexer()
     this.interactor = new Interactor(element)
 
-    if (this.breakpoint.parse('sc-hide-initial') === '') {
+    if (this.breakpoint.parseAttribute('sc-hide-initial') === '') {
       this.element.toggleAttribute('hidden', true)
     }
 
@@ -93,20 +93,20 @@ export class Hider {
   }
 
   public reset (): void {
-    this.direction = this.breakpoint.parse('sc-hide-direction')
+    this.direction = this.breakpoint.parseAttribute('sc-hide-direction')
       ?.trim()
       .split(/\s+/u) as Direction[]
 
-    this.transition = this.breakpoint.parse('sc-transition') === ''
+    this.transition = this.breakpoint.parseAttribute('sc-transition') === ''
     this.indexer.index = this.element.getAttribute('sc-hide-index')
     this.interactor.cancel = true
-    this.interactor.edgeThreshold = Number(this.breakpoint.parse('sc-hide-interact-edge-threshold') ?? Interactor.edgeThreshold)
-    this.interactor.keyboard = this.breakpoint.parse('sc-hide-interact-keyboard') === ''
-    this.interactor.mouse = this.breakpoint.parse('sc-hide-interact-mouse') === ''
+    this.interactor.edgeThreshold = Number(this.breakpoint.parseAttribute('sc-hide-interact-edge-threshold') ?? Interactor.edgeThreshold)
+    this.interactor.keyboard = this.breakpoint.parseAttribute('sc-hide-interact-keyboard') === ''
+    this.interactor.mouse = this.breakpoint.parseAttribute('sc-hide-interact-mouse') === ''
     this.interactor.target = 'window'
-    this.interactor.touch = this.breakpoint.parse('sc-hide-interact-touch') === ''
-    this.mode = this.breakpoint.parse('sc-hide-mode') as Mode
-    this.distanceThreshold = Number(this.breakpoint.parse('sc-hide-distance-threshold') ?? Hider.distanceThreshold)
+    this.interactor.touch = this.breakpoint.parseAttribute('sc-hide-interact-touch') === ''
+    this.mode = this.breakpoint.parseAttribute('sc-hide-mode') as Mode
+    this.distanceThreshold = Number(this.breakpoint.parseAttribute('sc-hide-distance-threshold') ?? Hider.distanceThreshold)
   }
 
   public toggle (): void {

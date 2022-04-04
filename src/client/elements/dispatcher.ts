@@ -59,10 +59,8 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     this.removeEventListeners()
   }
 
-  public dispatch (data: Struct = {}, trigger?: Event): void {
-    this.events.forEach((event) => {
-      this.propagator.dispatchEvent(event, [data], trigger)
-    })
+  public dispatch (data: Struct = {}, event?: Event): void {
+    this.propagator.dispatch('dispatch', [data], event)
   }
 
   public getData (): Struct {
@@ -70,7 +68,7 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
   }
 
   public reset (): void {
-    this.events = this.parseEvents()
+    this.propagator.events.dispatch = this.parseEvents()
     this.wait = this.hasAttribute('sc-wait')
   }
 

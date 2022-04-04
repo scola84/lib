@@ -9,6 +9,13 @@ export function get (value: unknown, path: unknown[] | string): unknown {
     keys = keys
       .split('.')
       .map(cast)
+      .filter((key) => {
+        return key !== ''
+      })
+  }
+
+  if (keys.length === 0) {
+    return value
   }
 
   return keys.reduce((result, key) => {

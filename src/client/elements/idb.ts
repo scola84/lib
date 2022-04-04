@@ -1,6 +1,6 @@
-import { I18n, cast, isArray, isFile, isQuery, isStruct, isTransaction, toString } from '../../common'
+import { I18n, Transaction, cast, isArray, isFile, isQuery, isStruct, isTransaction, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { Query, ScolaTransaction, Struct } from '../../common'
+import type { Query, Struct } from '../../common'
 import type { IDBPDatabase } from 'idb/with-async-ittr'
 import type { ScolaElement } from './element'
 import { openDB } from 'idb/with-async-ittr'
@@ -343,7 +343,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     }
   }
 
-  protected async commit (transaction: ScolaTransaction): Promise<void> {
+  protected async commit (transaction: Transaction): Promise<void> {
     switch (transaction.type) {
       case 'tadd':
         await this.commitAdd(transaction)
@@ -380,7 +380,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     }
   }
 
-  protected async commitAdd (transaction: ScolaTransaction): Promise<void> {
+  protected async commitAdd (transaction: Transaction): Promise<void> {
     if (
       isStruct(transaction.commit) &&
       isStruct(transaction.result)
@@ -392,7 +392,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     }
   }
 
-  protected async commitAddAll (transaction: ScolaTransaction): Promise<void> {
+  protected async commitAddAll (transaction: Transaction): Promise<void> {
     if (
       isArray(transaction.commit) &&
       isArray(transaction.result)
@@ -404,26 +404,26 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     }
   }
 
-  protected commitDelete (transaction: ScolaTransaction): void {
+  protected commitDelete (transaction: Transaction): void {
     if (isStruct(transaction.result)) {
       this.propagator.dispatch('delete', [transaction.result])
     }
   }
 
-  protected commitDeleteAll (transaction: ScolaTransaction): void {
+  protected commitDeleteAll (transaction: Transaction): void {
     if (isArray(transaction.result)) {
       this.propagator.dispatch('deleteall', [transaction.result])
     }
   }
 
-  protected async commitGet (transaction: ScolaTransaction): Promise<void> {
+  protected async commitGet (transaction: Transaction): Promise<void> {
     if (isStruct(transaction.result)) {
       await this.put(transaction.result)
       this.propagator.dispatch('get', [transaction.result])
     }
   }
 
-  protected async commitGetFile (transaction: ScolaTransaction): Promise<void> {
+  protected async commitGetFile (transaction: Transaction): Promise<void> {
     if (
       isStruct(transaction.commit) &&
       transaction.result instanceof Blob
@@ -448,21 +448,21 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     }
   }
 
-  protected async commitPut (transaction: ScolaTransaction): Promise<void> {
+  protected async commitPut (transaction: Transaction): Promise<void> {
     if (isStruct(transaction.result)) {
       await this.put(transaction.result)
       this.propagator.dispatch('put', [transaction.result])
     }
   }
 
-  protected async commitPutAll (transaction: ScolaTransaction): Promise<void> {
+  protected async commitPutAll (transaction: Transaction): Promise<void> {
     if (isArray(transaction.result)) {
       await this.putAll(transaction.result)
       this.propagator.dispatch('putall', [transaction.result])
     }
   }
 
-  protected async commitSyncLocal (transaction: ScolaTransaction): Promise<void> {
+  protected async commitSyncLocal (transaction: Transaction): Promise<void> {
     if (
       isStruct(transaction.commit) &&
       isArray(transaction.result)
@@ -479,22 +479,22 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
       Object
         .entries(diff)
-        .forEach(([name, items]: [string, Struct[]]) => {
+        .forEach(([type, items]: [string, Struct[]]) => {
           if (
-            cast(options[name]) === true &&
+            cast(options[type]) === true &&
             items.length > 0
           ) {
-            const dispatched = this.propagator.dispatch(`tsynclocal${name}items`, [items])
+            const dispatched = this.propagator.dispatch(`tsynclocal${type}items`, [items])
 
             if (!dispatched) {
-              this.propagator.dispatch(`tsynclocal${name}item`, items)
+              this.propagator.dispatch(`tsynclocal${type}item`, items)
             }
           }
         })
     }
   }
 
-  protected async commitSyncRemote (transaction: ScolaTransaction): Promise<void> {
+  protected async commitSyncRemote (transaction: Transaction): Promise<void> {
     if (
       isStruct(transaction.commit) &&
       isArray(transaction.result)
@@ -511,21 +511,21 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
       Object
         .entries(diff)
-        .forEach(([name, items]: [string, Struct[]]) => {
+        .forEach(([type, items]: [string, Struct[]]) => {
           if (
-            cast(options[name]) === true &&
+            cast(options[type]) === true &&
             items.length > 0
           ) {
-            const dispatched = this.propagator.dispatch<ScolaTransaction>(`tsyncremote${name}items`, [{
+            const dispatched = this.propagator.dispatch<Transaction>(`tsyncremote${type}items`, [{
               commit: items,
-              type: `t${name}-all`
+              type: `t${type}-all`
             }])
 
             if (!dispatched) {
-              this.propagator.dispatch<ScolaTransaction>(`tsyncremote${name}item`, items.map((item) => {
+              this.propagator.dispatch<Transaction>(`tsyncremote${type}item`, items.map((item) => {
                 return {
                   commit: item,
-                  type: `t${name}`
+                  type: `t${type}`
                 }
               }))
             }
@@ -708,7 +708,10 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     }
 
     if (isQuery(event.detail)) {
-      query = event.detail
+      query = {
+        ...query,
+        ...event.detail
+      }
     }
 
     this
@@ -753,11 +756,11 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
         .add(event.detail)
         .then((item) => {
           if (isStruct(item)) {
-            const transaction: ScolaTransaction = {
+            const transaction = new Transaction({
               commit: item,
               rollback: item,
               type: 'tadd'
-            }
+            })
 
             this.propagator.dispatch('add', [item], event)
             this.propagator.dispatch('tadd', [transaction], event)
@@ -785,11 +788,11 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
         .delete(event.detail)
         .then((item) => {
           if (isStruct(item)) {
-            const transaction: ScolaTransaction = {
+            const transaction = new Transaction({
               commit: item,
               rollback: item,
               type: 'tdelete'
-            }
+            })
 
             this.propagator.dispatch('delete', [item], event)
             this.propagator.dispatch('tdelete', [transaction], event)
@@ -807,10 +810,10 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
         .get(event.detail)
         .then((item) => {
           if (isStruct(item)) {
-            const transaction: ScolaTransaction = {
+            const transaction = new Transaction({
               commit: event.detail,
               type: 'tget'
-            }
+            })
 
             this.propagator.dispatch('get', [item], event)
             this.propagator.dispatch('tget', [transaction], event)
@@ -823,10 +826,10 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
   }
 
   protected handleTGetFile (event: CustomEvent): void {
-    const transaction: ScolaTransaction = {
+    const transaction = new Transaction({
       commit: event.detail,
       type: 'tget-file'
-    }
+    })
 
     this.propagator.dispatch('tgetfile', [transaction], event)
   }
@@ -843,11 +846,11 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
             isStruct(newItem) &&
             isStruct(oldItem)
           ) {
-            const transaction: ScolaTransaction = {
+            const transaction = new Transaction({
               commit: newItem,
               rollback: oldItem,
               type: 'tput'
-            }
+            })
 
             this.propagator.dispatch('put', [newItem], event)
             this.propagator.dispatch('tput', [transaction], event)
@@ -870,19 +873,19 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
   }
 
   protected handleTSyncLocal (event: CustomEvent): void {
-    const transaction: ScolaTransaction = {
+    const transaction = new Transaction({
       commit: event.detail,
       type: 'tsync-local'
-    }
+    })
 
     this.propagator.dispatch('tsynclocal', [transaction], event)
   }
 
   protected handleTSyncRemote (event: CustomEvent): void {
-    const transaction: ScolaTransaction = {
+    const transaction = new Transaction({
       commit: event.detail,
       type: 'tsync-remote'
-    }
+    })
 
     this.propagator.dispatch('tsyncremote', [transaction], event)
   }
@@ -940,7 +943,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     this.removeEventListener('sc-idb-tsync-remote', this.handleTSyncRemoteBound)
   }
 
-  protected async rollback (transaction: ScolaTransaction): Promise<void> {
+  protected async rollback (transaction: Transaction): Promise<void> {
     switch (transaction.type) {
       case 'tadd':
         await this.rollbackAdd(transaction)
@@ -965,42 +968,42 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     }
   }
 
-  protected async rollbackAdd (transaction: ScolaTransaction): Promise<void> {
+  protected async rollbackAdd (transaction: Transaction): Promise<void> {
     if (isStruct(transaction.rollback)) {
       await this.delete(transaction.rollback)
       this.propagator.dispatch('delete', [transaction.rollback])
     }
   }
 
-  protected async rollbackAddAll (transaction: ScolaTransaction): Promise<void> {
+  protected async rollbackAddAll (transaction: Transaction): Promise<void> {
     if (isArray(transaction.rollback)) {
       await this.deleteAll(transaction.rollback)
       this.propagator.dispatch('deleteall', [transaction.rollback])
     }
   }
 
-  protected async rollbackDelete (transaction: ScolaTransaction): Promise<void> {
+  protected async rollbackDelete (transaction: Transaction): Promise<void> {
     if (isStruct(transaction.rollback)) {
       await this.add(transaction.rollback)
       this.propagator.dispatch('add', [transaction.rollback])
     }
   }
 
-  protected async rollbackDeleteAll (transaction: ScolaTransaction): Promise<void> {
+  protected async rollbackDeleteAll (transaction: Transaction): Promise<void> {
     if (isArray(transaction.rollback)) {
       await this.addAll(transaction.rollback)
       this.propagator.dispatch('addall', [transaction.rollback])
     }
   }
 
-  protected async rollbackPut (transaction: ScolaTransaction): Promise<void> {
+  protected async rollbackPut (transaction: Transaction): Promise<void> {
     if (isStruct(transaction.rollback)) {
       await this.put(transaction.rollback)
       this.propagator.dispatch('put', [transaction.rollback])
     }
   }
 
-  protected async rollbackPutAll (transaction: ScolaTransaction): Promise<void> {
+  protected async rollbackPutAll (transaction: Transaction): Promise<void> {
     if (isArray(transaction.rollback)) {
       await this.putAll(transaction.rollback)
       this.propagator.dispatch('putall', [transaction.rollback])

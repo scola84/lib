@@ -1,5 +1,5 @@
 import { Mutator, Observer, Propagator } from '../helpers'
-import { Struct, setPush } from '../../common'
+import { Struct, isStruct, setPush } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaError } from '../../common'
 import type { ScolaFieldElement } from './field'
@@ -9,19 +9,20 @@ import { ScolaTextAreaElement } from './textarea'
 
 declare global {
   interface HTMLElementEventMap {
+    'sc-form-error': CustomEvent
     'sc-form-reset': CustomEvent
     'sc-form-focus': CustomEvent
   }
 }
 
 export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
-  [key: string]: unknown
-
   public mutator: Mutator
 
   public observer: Observer
 
   public propagator: Propagator
+
+  public valid = true
 
   public get fieldElements (): ScolaFieldElement[] {
     return Array
@@ -34,6 +35,8 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
         )
       }) as ScolaFieldElement[]
   }
+
+  protected handleErrorBound = this.handleError.bind(this)
 
   protected handleFocusBound = this.handleFocus.bind(this)
 
@@ -91,14 +94,23 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   public reset (): void {
+    this.valid = true
+
     this.fieldElements.forEach((fieldElement) => {
       fieldElement.reset()
     })
   }
 
   public setData (data: unknown): void {
+    this.valid = true
     this.toggleDisabled()
     this.changeFocus()
+    this.propagator.set(data)
+    this.update()
+  }
+
+  public setErrors (data: unknown): void {
+    this.valid = false
     this.propagator.set(data)
     this.update()
   }
@@ -108,7 +120,6 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   public update (): void {
-    this.updateElements()
     this.updateAttributes()
     this.propagator.dispatch('update')
   }
@@ -117,23 +128,26 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     this.setAttribute('sc-updated', Date.now().toString())
   }
 
-  public updateElements (): void {
-    this.focusErrorElement()
-  }
-
   protected addEventListeners (): void {
+    this.addEventListener('sc-form-error', this.handleErrorBound)
     this.addEventListener('sc-form-focus', this.handleFocusBound)
     this.addEventListener('sc-form-reset', this.handleResetBound)
     this.addEventListener('submit', this.handleSubmitBound)
   }
 
   protected changeFocus (): void {
-    if (!this.hasAttribute('hidden')) {
-      const element = this.querySelector('[sc-focus~="form"]')
+    if (!this.valid) {
+      this.focusErrorElement()
+    } else if (!this.hasAttribute('hidden')) {
+      this.focusElement()
+    }
+  }
 
-      if (element instanceof HTMLElement) {
-        element.focus()
-      }
+  protected focusElement (): void {
+    const element = this.querySelector('[sc-focus~="form"]')
+
+    if (element instanceof HTMLElement) {
+      element.focus()
     }
   }
 
@@ -148,6 +162,12 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
       }
 
       element.focus()
+    }
+  }
+
+  protected handleError (event: CustomEvent): void {
+    if (isStruct(event.detail)) {
+      this.setErrors(event.detail)
     }
   }
 
@@ -171,11 +191,12 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     if (!this.checkValidity()) {
       const errors = this.getErrors()
 
+      this.setErrors(errors)
       this.propagator.dispatch<Struct<ScolaError>>('error', [errors], event)
-      this.setData(errors)
       return
     }
 
+    this.valid = true
     this.propagator.dispatch('submit', [this.getData()], event)
   }
 
@@ -188,23 +209,33 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected removeEventListeners (): void {
+    this.removeEventListener('sc-form-error', this.handleErrorBound)
     this.removeEventListener('sc-form-focus', this.handleFocusBound)
     this.removeEventListener('sc-form-reset', this.handleResetBound)
     this.removeEventListener('submit', this.handleSubmitBound)
   }
 
   protected serialize (): Struct {
-    return this.fieldElements.reduce<Struct>((data, element) => {
-      const value = element.getValue()
-
+    return this.fieldElements.reduce<Struct>((result, element) => {
       if (
-        element.type === 'radio' &&
-        value === null
+        element.disabled ||
+        element.name === ''
       ) {
-        return data
+        return result
       }
 
-      return setPush(data, element.name, value)
+      const value = element.getValue()
+
+      if ((
+        element.type === 'checkbox' ||
+        element.type === 'radio'
+      ) && (
+        value === null
+      )) {
+        return result
+      }
+
+      return setPush(result, element.name, value)
     }, Struct.create())
   }
 

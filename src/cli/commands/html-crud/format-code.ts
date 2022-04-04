@@ -1,7 +1,7 @@
 export function formatCode (value: unknown, space: number): string {
   return JSON
     .stringify(value, null, 2)
-    .replace(/"(?<key>[0-9a-z_]+)":/giu, '$1:')
+    .replace(/"(?<key>[0-9a-z_]+)":/giu, '$<key>:')
     .replace(/"/giu, '\'')
     .split('\n')
     .map((line) => {

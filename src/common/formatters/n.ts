@@ -1,6 +1,5 @@
 import type { Formatter, Struct } from '../helpers'
-import { cast } from '../helpers'
-import { get } from '../helpers/get'
+import { cast, get, isNumber } from '../helpers'
 
 export function n (name: string, locale: string, options: Struct<string>): Formatter {
   const format = new Intl.NumberFormat(locale, options)
@@ -8,10 +7,18 @@ export function n (name: string, locale: string, options: Struct<string>): Forma
   const path = name
     .split('.')
     .map(cast)
+    .filter((key) => {
+      return key !== ''
+    })
 
   function formatter (data: unknown): string {
-    const value = cast(get(data, path)) ?? 0
-    return format.format(Number(value))
+    const value = cast(get(data, path))
+
+    if (isNumber(value)) {
+      return format.format(value)
+    }
+
+    return ''
   }
 
   return formatter

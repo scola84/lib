@@ -1,5 +1,5 @@
 import { Media, Mutator, Observer, Propagator } from '../helpers'
-import { isObject, isStruct } from '../../common'
+import { isStruct, toString } from '../../common'
 import type { MediaData } from '../helpers'
 import type { ScolaMediaElement } from './media'
 import type { Struct } from '../../common'
@@ -19,7 +19,7 @@ declare global {
 export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaElement {
   public static origin = window.location.origin
 
-  public key: string | null
+  public key: string
 
   public media: Media
 
@@ -86,7 +86,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   }
 
   public reset (): void {
-    this.key = this.getAttribute('sc-key')
+    this.key = this.getAttribute('sc-key') ?? ''
     this.url = this.getAttribute('sc-url')
   }
 
@@ -124,13 +124,18 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
     this.addEventListener('sc-audio-volume', this.handleVolumeBound)
   }
 
-  protected handleError (): void {
+  protected handleError (error: unknown): void {
     this.setData(null)
+
+    this.propagator.dispatch('error', [{
+      code: 'err_audio',
+      message: toString(error)
+    }])
   }
 
   protected handleJump (event: CustomEvent): void {
     if (
-      isObject(event.detail) &&
+      isStruct(event.detail) &&
       event.detail.delta !== undefined
     ) {
       this.media.jumpTime(Number(event.detail.delta))

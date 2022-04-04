@@ -1,4 +1,4 @@
-import { I18n, Struct, isArray, isNil, isStruct } from '../../common'
+import { I18n, Struct, isArray, isNil, isObject, isStruct } from '../../common'
 import type { ScolaElement } from '../elements'
 import { ScolaEvent } from './event'
 
@@ -89,8 +89,16 @@ export class Propagator {
       .trim()
       .split(/\s+/u)
       .map((event) => {
-        const [nameFilter, selector] = event.split('@')
-        const [name, filter = undefined] = nameFilter.split('?')
+        const [
+          nameAndFilter,
+          selector
+        ] = event.split('@')
+
+        const [
+          name,
+          filter = undefined
+        ] = nameAndFilter.split(/\?(?<filter>.+)/u)
+
         return {
           data,
           filter,
@@ -141,6 +149,8 @@ export class Propagator {
         ...detail,
         ...data
       }
+    } else if (isObject(data)) {
+      detail = data
     }
 
     if (isNil(event.filter)) {

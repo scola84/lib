@@ -1,4 +1,4 @@
-import { I18n, isStruct } from '../../common'
+import { I18n, isError, isStruct } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
@@ -6,7 +6,7 @@ import type { Struct } from '../../common'
 export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
   public code: string
 
-  public data: Struct = {}
+  public data: unknown
 
   public i18n: I18n
 
@@ -27,11 +27,11 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
   public constructor () {
     super()
     this.i18n = new I18n()
+    this.initialCode = this.getAttribute('sc-code')
+    this.initialText = this.textContent?.trim() ?? ''
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
-    this.initialCode = this.getAttribute('sc-code')
-    this.initialText = this.textContent?.trim() ?? ''
     this.reset()
   }
 
@@ -55,10 +55,21 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
   }
 
   public getData (): Struct {
-    return {
-      ...this.dataset,
-      ...this.data
+    let data: Struct = this.dataset
+
+    if (isStruct(this.data)) {
+      data = {
+        ...data,
+        ...this.data
+      }
+    } else {
+      data = {
+        ...data,
+        data: this.data
+      }
     }
+
+    return data
   }
 
   public reset (): void {
@@ -68,29 +79,21 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
   }
 
   public setData (data: unknown): void {
-    if (isStruct(data)) {
-      if (isStruct(data.data)) {
-        this.data = data.data
-      } else {
-        this.data = data
-      }
+    if (isError(data)) {
+      this.data = data.data
 
-      if (
-        this.initialCode === null &&
-        typeof data.code === 'string'
-      ) {
+      if (this.initialCode === null) {
         this.code = data.code
       }
-
-      this.update()
+    } else {
+      this.data = data
     }
+
+    this.update()
   }
 
   public toObject (): Struct {
-    return {
-      ...this.dataset,
-      ...this.data
-    }
+    return this.getData()
   }
 
   public update (): void {

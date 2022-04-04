@@ -1,5 +1,5 @@
 import { Hider, Mutator, Observer, Propagator, Sanitizer } from '../helpers'
-import { Struct, isArray, isPrimitive, isSame, isStruct } from '../../common'
+import { Struct, flatten, isArray, isSame, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 
 declare global {
@@ -120,7 +120,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
     if (this.unique) {
       const index = this.views.findIndex((findView) => {
-        return this.isSame(view, findView)
+        return isSame(view, findView)
       })
 
       if (index > -1) {
@@ -134,7 +134,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
       this.views.push(view)
     } else {
-      if (this.isSame(view, this.view)) {
+      if (isSame(view, this.view)) {
         this.update()
         return
       }
@@ -195,7 +195,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     const view = this.createView(options)
 
     const index = this.views.findIndex((findView) => {
-      return this.isSame(view, findView)
+      return isSame(view, findView)
     })
 
     const isPointer = index === this.pointer
@@ -299,16 +299,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   public toObject (): Struct<string> {
     return {
       name: this.view?.name ?? '',
-      params: Object
-        .entries(this.view?.params ?? {})
-        .map(([name, value]) => {
-          if (isPrimitive(value)) {
-            return `${name}=${value.toString()}`
-          }
-
-          return name
-        })
-        .join('&')
+      params: new URLSearchParams(flatten(this.view?.params ?? {})).toString()
     }
   }
 
@@ -379,23 +370,27 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       params: {}
     }
 
-    if (isStruct(options)) {
-      if (typeof options.name === 'string') {
-        view.name = options.name
-      } else if (this.name !== null) {
-        view.name = this.name
-      }
+    if (this.name === null) {
+      if (isStruct(options)) {
+        if (typeof options.name === 'string') {
+          view.name = options.name
+        }
 
-      if (typeof options.params === 'string') {
-        view.params = Struct.fromQuery(options.params)
-      } else if (isStruct(options.params)) {
-        view.params = options.params
-      } else {
+        if (typeof options.params === 'string') {
+          view.params = Struct.fromQuery(options.params)
+        } else if (isStruct(options.params)) {
+          view.params = options.params
+        }
+
+        if (typeof options.source === 'string') {
+          view.source = options.source
+        }
+      }
+    } else {
+      view.name = this.name
+
+      if (isStruct(options)) {
         view.params = options
-      }
-
-      if (typeof options.source === 'string') {
-        view.source = options.source
       }
     }
 
@@ -427,7 +422,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleObserver (mutations: MutationRecord[]): void {
-    const attributes = this.observer.normalize(mutations)
+    const attributes = this.observer.normalizeMutations(mutations)
 
     if (attributes.includes('hidden')) {
       this.hider?.toggle()
@@ -450,9 +445,9 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       if (isArray(items)) {
         this.views.sort((left, right) => {
           return items.findIndex((findView) => {
-            return this.isSame(left, findView)
+            return isSame(left, findView)
           }) - items.findIndex((findView) => {
-            return this.isSame(right, findView)
+            return isSame(right, findView)
           })
         })
       }
@@ -465,10 +460,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
         this.saveState()
       }
     }
-  }
-
-  protected isSame (data: unknown, view: unknown = this.view): boolean {
-    return isSame(this.createView(data), this.createView(view))
   }
 
   protected loadState (): void {
@@ -511,13 +502,13 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
         params
       } = result.groups ?? {}
 
-      const view = this.createView({
+      const view = {
         name: name,
-        params: params,
+        params: Struct.fromQuery(params),
         source: 'location'
-      })
+      }
 
-      if (!this.isSame(view, this.views[this.pointer])) {
+      if (!isSame(view, this.views[this.pointer])) {
         this.views.push(view)
         this.pointer = this.views.length - 1
       }
@@ -529,9 +520,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       isArray(struct.views) &&
       struct.views.length > 0
     ) {
-      this.views = struct.views.map((view) => {
-        return this.createView(view)
-      })
+      this.views = struct.views as View[]
 
       if (
         typeof struct.pointer === 'number' &&

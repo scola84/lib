@@ -68,22 +68,25 @@ export function cast (value: unknown): Date | boolean | number | string | null |
   }
 
   if (
-    !(value instanceof Date) &&
-    value !== '' &&
-    Number.isFinite(Number(value))
+    typeof value === 'string' &&
+    value !== ''
   ) {
-    return Number(value)
+    const number = Number(value)
+
+    if (Number.isFinite(number)) {
+      return number
+    }
   }
 
   if (value instanceof Date) {
     return value
   }
 
-  if (Number.isFinite(Date.parse(String(value)))) {
-    return new Date(Date.parse(String(value)))
-  }
-
   if (typeof value === 'string') {
+    if ((/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z)?$/ui).test(value)) {
+      return new Date(value)
+    }
+
     return value.trim()
   }
 

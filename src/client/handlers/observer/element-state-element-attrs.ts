@@ -2,7 +2,7 @@ import { cast, toJoint } from '../../../common'
 import type { ScolaElement } from '../../elements/element'
 
 export function elementStateElementAttrs (observer: ScolaElement, observable: ScolaElement): void {
-  observer.observer.toggle(Object
+  observer.observer.toggleState(Object
     .entries(observer.dataset)
     .every(([name, value]) => {
       return value

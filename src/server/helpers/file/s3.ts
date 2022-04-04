@@ -1,7 +1,7 @@
-import type { File } from '../../../common'
 import type { FileBucket } from './bucket'
 import type { Readable } from 'stream'
 import type { S3 } from '@aws-sdk/client-s3'
+import type { ScolaFile } from '../../../common'
 
 export interface S3FileBucketOptions {
   acl?: string
@@ -22,14 +22,14 @@ export class S3FileBucket implements FileBucket {
     this.s3 = options.s3
   }
 
-  public async delete (file: File): Promise<unknown> {
+  public async delete (file: ScolaFile): Promise<unknown> {
     return this.s3.deleteObject({
       Bucket: this.name,
       Key: file.id
     })
   }
 
-  public async get (file: File): Promise<Readable | undefined> {
+  public async get (file: ScolaFile): Promise<Readable | undefined> {
     const object = await this.s3.getObject({
       Bucket: this.name,
       Key: file.id
@@ -38,7 +38,7 @@ export class S3FileBucket implements FileBucket {
     return object.Body as Readable
   }
 
-  public async put (file: File, stream: Readable): Promise<unknown> {
+  public async put (file: ScolaFile, stream: Readable): Promise<unknown> {
     return this.s3.putObject({
       ACL: this.acl,
       Body: stream,

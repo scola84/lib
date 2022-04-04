@@ -27,7 +27,7 @@ export class I18n {
 
   public static locale = 'en'
 
-  public static matcher = /\$\([^)]+\)[dens]/gu
+  public static matcher = /\$\([^)]+\)[dejnqs]/gu
 
   public static strings: Strings = {}
 
@@ -40,7 +40,14 @@ export class I18n {
       .match(I18n.matcher)
       ?.reduce((nextString, match) => {
         const index = nextString.indexOf(match)
-        const [name, optionsString = undefined] = match.slice(2, -2).split('?')
+
+        const [
+          name,
+          options = undefined
+        ] = match
+          .slice(2, -2)
+          .split(/\?(?<options>.+)/u)
+
         const type = match.slice(-1)
 
         compiled.push(((literal: string): string => {
@@ -50,7 +57,7 @@ export class I18n {
         compiled.push(I18n.formatters[type](
           name,
           locale,
-          Struct.fromQuery(optionsString ?? '')
+          Struct.fromQuery(options ?? '')
         ))
 
         return nextString.slice(index + match.length)
@@ -137,7 +144,7 @@ export class I18n {
     })
   }
 
-  public format (code: string, data: unknown, locale = I18n.locale): string {
+  public format (code: string, data: unknown = {}, locale = I18n.locale): string {
     let compiled: Formatter[] | undefined = []
     let string = I18n.strings[locale]?.[code]
 

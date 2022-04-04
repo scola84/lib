@@ -1,18 +1,38 @@
-import { isStruct } from './is-struct'
+import type { Struct } from './is-struct'
+import { isNumber } from './is-number'
+import { isObject } from './is-object'
 
-export interface File {
+export interface ScolaFileProperties extends Struct {
   id: string
   name: string
   size: number
   type: string
 }
 
-export function isFile (value: unknown): value is File {
+export class ScolaFile {
+  public id: string
+
+  public name: string
+
+  public size: number
+
+  public type: string
+
+  public constructor (properties: ScolaFileProperties) {
+    this.id = properties.id
+    this.name = properties.name
+    this.size = properties.size
+    this.type = properties.type
+  }
+}
+
+export function isFile (value: unknown): value is ScolaFileProperties {
   return (
-    isStruct(value) &&
+    isObject(value)
+  ) && (
     typeof value.id === 'string' &&
     typeof value.name === 'string' &&
-    Number.isFinite(value.size) &&
+    isNumber(value.size) &&
     typeof value.type === 'string'
   )
 }

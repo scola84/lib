@@ -84,7 +84,7 @@ export class Observer {
     this.observers = []
   }
 
-  public normalize (mutations: MutationRecord[]): string[] {
+  public normalizeMutations (mutations: MutationRecord[]): string[] {
     return mutations.map((mutation) => {
       return mutation.attributeName ?? ''
     })
@@ -116,7 +116,7 @@ export class Observer {
     this.wait = this.element.hasAttribute('sc-observe-wait')
   }
 
-  public toggle (force: boolean): void {
+  public toggleState (force: boolean): void {
     this.state.forEach((state) => {
       this.element.toggleAttribute(state, force)
     })
@@ -135,9 +135,17 @@ export class Observer {
 
   protected connectTargets (): void {
     this.target.forEach((target) => {
-      const [nameAndFilterString, selector] = target.split('@')
-      const [name, filterString = undefined] = nameAndFilterString.split('?')
-      const filter = filterString?.split('&')
+      const [
+        nameAndFilter,
+        selector
+      ] = target.split('@')
+
+      const [
+        name,
+        filter = undefined
+      ] = nameAndFilter.split(/\?(?<filter>.+)/u)
+
+      const filters = filter?.split('&')
       const handler = Observer.handlers[name]
 
       if (
@@ -151,7 +159,7 @@ export class Observer {
             const observer = new MutationObserver(observerHandler)
 
             observer.observe(element, {
-              attributeFilter: filter,
+              attributeFilter: filters,
               attributes: true
             })
 

@@ -83,8 +83,8 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     super()
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
-    this.resizer = new ResizeObserver(this.handleResizerBound)
     this.propagator = new Propagator(this)
+    this.resizer = new ResizeObserver(this.handleResizerBound)
     this.reset()
   }
 

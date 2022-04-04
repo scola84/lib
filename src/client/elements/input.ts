@@ -1,14 +1,24 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
 import type { FieldData, FieldValue } from '../helpers'
-import type { ScolaError, Struct } from '../../common'
+import { I18n, Struct, cast, isArray, isDate, isError, isPrimitive, isStruct, set } from '../../common'
+import type { Primitive, ScolaError } from '../../common'
 import type { ScolaFieldElement } from './field'
+import { debounce } from 'throttle-debounce'
 
 export class ScolaInputElement extends HTMLInputElement implements ScolaFieldElement {
+  public debounce = 0
+
   public error?: Struct
 
   public field: Field
 
+  public file: unknown
+
+  public i18n: I18n
+
   public initialChecked: boolean
+
+  public initialCode: string | null
 
   public initialValue: string
 
@@ -18,16 +28,20 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   public propagator: Propagator
 
+  protected handleInputBound = debounce(0, this.handleInput.bind(this))
+
   protected handleObserverBound = this.handleObserver.bind(this)
 
   public constructor () {
     super()
     this.field = new Field(this)
+    this.i18n = new I18n()
+    this.initialChecked = this.checked
+    this.initialCode = this.getAttribute('sc-code')
+    this.initialValue = this.value
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
-    this.initialChecked = this.checked
-    this.initialValue = this.value
     this.reset()
   }
 
@@ -46,6 +60,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
+    this.addEventListeners()
   }
 
   public disconnectedCallback (): void {
@@ -53,6 +68,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
+    this.removeEventListeners()
   }
 
   public falsify (): void {
@@ -114,7 +130,22 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public getValue (): FieldValue {
-    return this.field.getValue()
+    if (
+      this.type === 'checkbox' ||
+      this.type === 'radio'
+    ) {
+      return this.getChecked()
+    } else if (
+      this.type === 'date' ||
+      this.type === 'datetime-local' ||
+      this.type === 'time'
+    ) {
+      return this.getDate()
+    } else if (this.type === 'file') {
+      return this.getFile()
+    }
+
+    return this.getPrimitive()
   }
 
   public isEmpty (): boolean {
@@ -125,12 +156,68 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public reset (): void {
-    this.field.debounce = Number(this.getAttribute('sc-debounce') ?? 250)
-    this.field.setData(this.initialValue)
+    this.debounce = Number(this.getAttribute('sc-debounce') ?? 250)
+
+    if (
+      this.type === 'checkbox' ||
+      this.type === 'radio'
+    ) {
+      this.setData(this.initialChecked)
+    } else {
+      this.setData(this.initialValue)
+    }
   }
 
   public setData (data: unknown): void {
-    this.field.setData(data)
+    this.field.clear()
+    this.field.setValue(data)
+  }
+
+  public setError (error: ScolaError): void {
+    this.clearDebounce()
+    this.field.setError(error)
+  }
+
+  public setValue (value: unknown): void {
+    if (this.form?.valid === false) {
+      if (isError(value)) {
+        this.setError(value)
+      }
+
+      return
+    }
+
+    if (
+      isStruct(value) &&
+      value.valid === true
+    ) {
+      this.field.setValid()
+    } else if (
+      isStruct(value) &&
+      isPrimitive(value.value)
+    ) {
+      this.setPrimitive(value.value)
+    } else if (
+      this.type === 'checkbox' ||
+      this.type === 'radio'
+    ) {
+      this.setChecked(value)
+    } else if (
+      this.type === 'date' ||
+      this.type === 'datetime-local' ||
+      this.type === 'time'
+    ) {
+      this.setDate(value)
+    } else if (this.type === 'file') {
+      this.setFile(value)
+    } else if (isPrimitive(value)) {
+      this.setPrimitive(value)
+    } else {
+      this.setPrimitive('')
+    }
+
+    this.verify()
+    this.update()
   }
 
   public toObject (): Struct {
@@ -139,6 +226,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   public update (): void {
     this.updateAttributes()
+    this.updatePlaceholder()
     this.updateStyle()
   }
 
@@ -146,6 +234,12 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.toggleAttribute('sc-empty', this.isEmpty())
     this.setAttribute('sc-updated', Date.now().toString())
     this.form?.setAttribute('sc-updated', Date.now().toString())
+  }
+
+  public updatePlaceholder (): void {
+    if (this.initialCode !== null) {
+      this.placeholder = this.i18n.format(this.initialCode)
+    }
   }
 
   public updateStyle (): void {
@@ -160,7 +254,167 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.field.verify()
   }
 
+  protected addEventListeners (): void {
+    if (this.debounce > 0) {
+      this.handleInputBound = debounce(this.debounce, this.handleInput.bind(this))
+    }
+
+    this.addEventListener('input', this.handleInputBound)
+  }
+
+  protected clearDebounce (): void {
+    this.handleInputBound.cancel()
+    this.removeEventListeners()
+    this.addEventListeners()
+  }
+
+  protected getChecked (): FieldValue {
+    if (!this.checked) {
+      return null
+    }
+
+    return cast(this.value) ?? null
+  }
+
+  protected getDate (): FieldValue {
+    if (this.value === '') {
+      return null
+    }
+
+    if (this.type === 'time') {
+      return new Date(`1970-01-01T${this.value}`)
+    }
+
+    return new Date(this.value)
+  }
+
+  protected getFile (): FieldValue {
+    if (this.files?.length === 0) {
+      if (isArray(this.file)) {
+        return this.file.filter((file) => {
+          return (
+            file instanceof File ||
+            isStruct(file)
+          )
+        }) as File[] | Struct[]
+      } else if (
+        this.file instanceof File ||
+        isStruct(this.file)
+      ) {
+        return this.file
+      }
+
+      return null
+    }
+
+    if (this.multiple) {
+      return Array.from(this.files ?? [])
+    }
+
+    return this.files?.item(0) ?? null
+  }
+
+  protected getPrimitive (): FieldValue {
+    return cast(this.value) ?? null
+  }
+
+  protected handleInput (event: Event): void {
+    this.field.clear()
+    this.update()
+
+    if (
+      this.files instanceof FileList &&
+      this.files.length > 0
+    ) {
+      this.handleInputFiles(this.files, event)
+    } else if (
+      this.type === 'checkbox' ||
+      this.type === 'radio'
+    ) {
+      this.handleInputChecked(this.checked, event)
+    } else {
+      this.handleInputValue(event)
+    }
+  }
+
+  protected handleInputChecked (checked: boolean, event?: Event): void {
+    this.propagator.dispatch('checked', [
+      set(Struct.create(), this.name, checked)
+    ], event)
+  }
+
+  protected handleInputFiles (fileList: FileList, event?: Event): void {
+    const files = Array.from(fileList)
+
+    this.propagator.dispatch<File>('file', files, event)
+    this.propagator.dispatch<Struct<File[]>>('files', [{ files }], event)
+  }
+
+  protected handleInputValue (event: Event): void {
+    this.propagator.dispatch('value', [
+      set(Struct.create(), this.name, this.getValue())
+    ], event)
+  }
+
   protected handleObserver (): void {
     this.updateStyle()
+  }
+
+  protected removeEventListeners (): void {
+    this.removeEventListener('input', this.handleInputBound)
+  }
+
+  protected setChecked (value: unknown): void {
+    if (typeof value === 'boolean') {
+      this.checked = value
+    } else if (isArray(value)) {
+      this.checked = value.includes(this.value)
+    } else if (isPrimitive(value)) {
+      this.checked = value.toString() === this.value
+    } else if (
+      isStruct(value) &&
+      isPrimitive(value.value)
+    ) {
+      this.value = value.value.toString()
+    } else {
+      this.checked = false
+    }
+  }
+
+  protected setDate (value: unknown): void {
+    const dateTime = cast(value)
+
+    if (isDate(dateTime)) {
+      const date = [
+        String(dateTime.getFullYear()),
+        String(dateTime.getMonth() + 1).padStart(2, '0'),
+        String(dateTime.getDate()).padStart(2, '0')
+      ].join('-')
+
+      const time = [
+        String(dateTime.getHours()).padStart(2, '0'),
+        String(dateTime.getMinutes()).padStart(2, '0'),
+        String(dateTime.getSeconds()).padStart(2, '0')
+      ].join(':')
+
+      if (this.type === 'date') {
+        this.value = date
+      } else if (this.type === 'datetime-local') {
+        this.value = `${date}T${time}`
+      } else if (this.type === 'time') {
+        this.value = time
+      }
+    } else {
+      this.value = ''
+    }
+  }
+
+  protected setFile (value: unknown): void {
+    this.value = ''
+    this.file = value
+  }
+
+  protected setPrimitive (value: Primitive): void {
+    this.value = value.toString()
   }
 }

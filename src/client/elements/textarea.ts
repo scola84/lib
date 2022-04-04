@@ -1,6 +1,7 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
 import type { FieldData, FieldValue } from '../helpers'
-import type { ScolaError, Struct } from '../../common'
+import { I18n, Struct, cast, isError, isPrimitive, isStruct, set } from '../../common'
+import type { Primitive, ScolaError } from '../../common'
 import type { ScolaFieldElement } from './field'
 
 export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFieldElement {
@@ -8,7 +9,11 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   public field: Field
 
-  public initialValue: string
+  public i18n: I18n
+
+  public initialCode: string | null
+
+  public initialInnerHtml: string
 
   public mutator: Mutator
 
@@ -18,13 +23,17 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   public resize: boolean
 
+  protected handleInputBound = this.handleInput.bind(this)
+
   public constructor () {
     super()
     this.field = new Field(this)
+    this.i18n = new I18n()
+    this.initialCode = this.getAttribute('sc-code')
+    this.initialInnerHtml = this.value
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
-    this.initialValue = this.value
     this.reset()
   }
 
@@ -39,6 +48,7 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
+    this.addEventListeners()
 
     window.requestAnimationFrame(() => {
       this.update()
@@ -50,6 +60,7 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
+    this.removeEventListeners()
   }
 
   public falsify (): void {
@@ -91,7 +102,7 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
   }
 
   public getValue (): FieldValue {
-    return this.field.getValue()
+    return cast(this.value) ?? null
   }
 
   public isEmpty (): boolean {
@@ -100,11 +111,40 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   public reset (): void {
     this.resize = this.hasAttribute('sc-resize')
-    this.field.setData(this.initialValue)
+    this.setData(this.initialInnerHtml)
   }
 
   public setData (data: unknown): void {
-    this.field.setData(data)
+    this.field.clear()
+    this.field.setValue(data)
+  }
+
+  public setError (error: ScolaError): void {
+    this.field.setError(error)
+  }
+
+  public setValue (value: unknown): void {
+    if (this.form?.valid === false) {
+      if (isError(value)) {
+        this.setError(value)
+      }
+
+      return
+    }
+
+    if (
+      isStruct(value) &&
+      value.valid === true
+    ) {
+      this.field.setValid()
+    } else if (isPrimitive(value)) {
+      this.setPrimitive(value)
+    } else {
+      this.setPrimitive('')
+    }
+
+    this.verify()
+    this.update()
   }
 
   public toObject (): Struct {
@@ -113,6 +153,7 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   public update (): void {
     this.updateAttributes()
+    this.updatePlaceholder()
 
     if (this.resize) {
       this.updateStyle()
@@ -125,6 +166,12 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     this.form?.setAttribute('sc-updated', Date.now().toString())
   }
 
+  public updatePlaceholder (): void {
+    if (this.initialCode !== null) {
+      this.placeholder = this.i18n.format(this.initialCode)
+    }
+  }
+
   public updateStyle (): void {
     if (this.scrollHeight > 0) {
       this.style.setProperty('height', '0px')
@@ -134,5 +181,26 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   public verify (): void {
     this.field.verify()
+  }
+
+  protected addEventListeners (): void {
+    this.addEventListener('input', this.handleInputBound)
+  }
+
+  protected handleInput (event: Event): void {
+    this.field.clear()
+    this.update()
+
+    this.propagator.dispatch('value', [
+      set(Struct.create(), this.name, this.getValue())
+    ], event)
+  }
+
+  protected removeEventListeners (): void {
+    this.removeEventListener('input', this.handleInputBound)
+  }
+
+  protected setPrimitive (value: Primitive): void {
+    this.innerHTML = value.toString()
   }
 }

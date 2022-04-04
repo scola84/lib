@@ -80,12 +80,12 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
 
   public constructor () {
     super()
+    this.body = this.selectBody()
+    this.head = this.selectHead()
     this.lister = new TableLister(this)
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
-    this.body = this.selectBody()
-    this.head = this.selectHead()
     this.templates = this.mutator.selectTemplates()
 
     if (this.hasAttribute('sc-drag')) {
@@ -227,7 +227,10 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   }
 
   public update (): void {
-    if (this.lister.limit === 0) {
+    if (
+      this.lister.limit === 0 &&
+      this.lister.mode !== null
+    ) {
       this.lister.start()
     } else {
       this.updateElements()
@@ -419,9 +422,15 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
           row.appendChild(template)
 
           element
-            .querySelectorAll('[data-data-direction]')
+            .querySelectorAll('[sc-data-order]')
             .forEach((child) => {
-              child.setAttribute('data-data-order', key)
+              child.setAttribute(`data-data-order-${key}`, child.getAttribute('sc-data-order') ?? '')
+            })
+
+          element
+            .querySelectorAll('[sc-order]')
+            .forEach((child) => {
+              child.setAttribute(`data-order-${key}`, child.getAttribute('sc-order') ?? '')
             })
 
           if (element instanceof ScolaTableCellElement) {
@@ -493,7 +502,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     if (
       isStruct(event.detail) &&
       typeof event.detail.data === 'string' &&
-      typeof event.detail.on === 'string'
+      typeof event.detail.event === 'string'
     ) {
       let data: unknown = null
 
@@ -517,13 +526,13 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
           break
       }
 
-      this.propagator.dispatch(event.detail.on, [data], event)
+      this.propagator.dispatch(event.detail.event, [data], event)
     }
   }
 
   protected handleObserver (mutations: MutationRecord[]): void {
     this.observer
-      .normalize(mutations)
+      .normalizeMutations(mutations)
       .forEach((attribute) => {
         if (attribute === 'sc-drag-handle') {
           this.handleObserverDragHandle()

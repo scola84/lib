@@ -7,7 +7,7 @@ export function buttonStateCarouselHider (observer: ScolaButtonElement, observab
     observable.parentElement?.hasAttribute('hidden') === false
   )
 
-  observer.observer.toggle(hasState)
+  observer.observer.toggleState(hasState)
 
   if (hasState) {
     observer.dataset.hidden = 'true'

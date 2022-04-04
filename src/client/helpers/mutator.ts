@@ -58,29 +58,39 @@ export class Mutator {
       })
   }
 
+  public rotateAttribute (name: string, value: unknown): void {
+    const attrName = name
+
+    const attrValues = String(value)
+      .trim()
+      .split(/\s+/u)
+
+    const index = attrValues.findIndex((attrValue) => {
+      return this.element.getAttribute(attrName)?.includes(attrValue)
+    })
+
+    const castValue = cast(attrValues[index + 1] ?? attrValues[0])
+
+    if (typeof castValue === 'boolean') {
+      this.element.toggleAttribute(attrName, castValue)
+    } else if (isPrimitive(castValue)) {
+      const attrValue = castValue.toString()
+
+      if (this.sanitizer.checkAttribute(this.element.nodeName, name, attrValue)) {
+        this.element.setAttribute(name, attrValue)
+      }
+    }
+  }
+
   public rotateAttributes (data: unknown): void {
     if (isStruct(data)) {
       Object
         .entries(data)
-        .map(([name, value]) => {
-          return [toJoint(name, '-'), value]
-        })
+        .map<[string, unknown]>(([name, value]) => {
+        return [toJoint(name, '-'), value]
+      })
         .forEach(([name, value]) => {
-          const attrName = String(name)
-
-          const attrValues = String(value)
-            .trim()
-            .split(/\s+/u)
-
-          const index = attrValues.findIndex((attrValue) => {
-            return this.element.getAttribute(attrName)?.includes(attrValue)
-          })
-
-          const attrValue = attrValues[index + 1] ?? attrValues[0]
-
-          if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
-            this.element.setAttribute(attrName, attrValue)
-          }
+          this.rotateAttribute(name, value)
         })
     }
   }
@@ -97,35 +107,55 @@ export class Mutator {
     return map
   }
 
+  public setAttribute (name: string, value: unknown, overwrite = true): void {
+    if (
+      overwrite ||
+      !this.element.hasAttribute(name)
+    ) {
+      const castValue = cast(value)
+
+      if (castValue === false) {
+        this.element.removeAttribute(name)
+      } else if (castValue === true) {
+        this.element.setAttribute(name, '')
+      } else if (isPrimitive(castValue)) {
+        const attrValue = castValue.toString()
+
+        if (this.sanitizer.checkAttribute(this.element.nodeName, name, attrValue)) {
+          this.element.setAttribute(name, attrValue)
+        }
+      }
+    }
+  }
+
   public setAttributes (data: unknown, overwrite = true): void {
     if (isStruct(data)) {
       Object
         .entries(data)
-        .map(([name, value]) => {
+        .map<[string, unknown]>(([name, value]) => {
+        /* eslint-disable @typescript-eslint/indent */
           return [toJoint(name, '-'), value]
         })
+        /* eslint-enable @typescript-eslint/indent */
         .forEach(([name, value]) => {
-          const attrName = String(name)
-
-          if (
-            overwrite ||
-            !this.element.hasAttribute(attrName)
-          ) {
-            const castValue = cast(value)
-
-            if (castValue === false) {
-              this.element.removeAttribute(attrName)
-            } else if (castValue === true) {
-              this.element.setAttribute(attrName, '')
-            } else if (isPrimitive(castValue)) {
-              const attrValue = castValue.toString()
-
-              if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
-                this.element.setAttribute(attrName, attrValue)
-              }
-            }
-          }
+          this.setAttribute(name, value, overwrite)
         })
+    }
+  }
+
+  public toggleAttribute (name: string, value: unknown): void {
+    const castValue = cast(value)
+
+    if (typeof castValue === 'boolean') {
+      this.element.toggleAttribute(name)
+    } else if (value === this.element.getAttribute(name)) {
+      this.element.removeAttribute(name)
+    } else if (isPrimitive(castValue)) {
+      const attrValue = castValue.toString()
+
+      if (this.sanitizer.checkAttribute(this.element.nodeName, name, attrValue)) {
+        this.element.setAttribute(name, attrValue)
+      }
     }
   }
 
@@ -133,24 +163,13 @@ export class Mutator {
     if (isStruct(data)) {
       Object
         .entries(data)
-        .map(([name, value]) => {
+        .map<[string, unknown]>(([name, value]) => {
+        /* eslint-disable @typescript-eslint/indent */
           return [toJoint(name, '-'), value]
         })
+        /* eslint-enable @typescript-eslint/indent */
         .forEach(([name, value]) => {
-          const attrName = String(name)
-          const castValue = cast(value)
-
-          if (typeof castValue === 'boolean') {
-            this.element.toggleAttribute(attrName)
-          } else if (value === this.element.getAttribute(attrName)) {
-            this.element.removeAttribute(attrName)
-          } else if (isPrimitive(castValue)) {
-            const attrValue = castValue.toString()
-
-            if (this.sanitizer.checkAttribute(this.element.nodeName, attrName, attrValue)) {
-              this.element.setAttribute(attrName, attrValue)
-            }
-          }
+          this.toggleAttribute(name, value)
         })
     }
   }
@@ -158,12 +177,12 @@ export class Mutator {
   public unsetAttributes (data: unknown): void {
     if (isStruct(data)) {
       Object
-        .entries(data)
-        .map(([name, value]) => {
-          return [toJoint(name, '-'), value]
+        .keys(data)
+        .map((name) => {
+          return toJoint(name, '-')
         })
-        .forEach(([name]) => {
-          this.element.removeAttribute(String(name))
+        .forEach((name) => {
+          this.element.removeAttribute(name)
         })
     }
   }

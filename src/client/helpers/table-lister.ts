@@ -24,6 +24,8 @@ export class TableLister {
 
   public locked: boolean
 
+  public mode: string | null
+
   public pkey: string
 
   public query: boolean
@@ -183,6 +185,7 @@ export class TableLister {
     this.factor = Number(this.element.getAttribute('sc-list-factor') ?? 2)
     this.query = this.element.hasAttribute('sc-list-query')
     this.locked = this.element.hasAttribute('sc-list-locked')
+    this.mode = this.element.getAttribute('sc-list-mode')
     this.pkey = this.element.getAttribute('sc-list-pkey') ?? 'id'
     this.rkey = this.element.getAttribute('sc-list-rkey')
     this.threshold = Number(this.element.getAttribute('sc-list-threshold') ?? 0.75)
@@ -240,10 +243,10 @@ export class TableLister {
     }
 
     const fontSize = parseFloat(window.getComputedStyle(this.element).getPropertyValue('font-size'))
-    const itemSize = Number(this.breakpoint.parse('sc-list-item-size') ?? 2)
+    const itemSize = Number(this.breakpoint.parseAttribute('sc-list-item-size') ?? 2)
 
     if (bodySize !== null) {
-      limit = Math.floor(bodySize / (itemSize * fontSize)) * this.factor
+      limit = Math.floor(bodySize / (itemSize * fontSize) * this.factor)
     }
 
     return limit
@@ -251,14 +254,20 @@ export class TableLister {
 
   protected createQuery (): Query {
     const query = Struct.create<Query>({
-      limit: this.limit,
-      offset: this.items.length
+      limit: this.limit
     })
 
-    const cursor = this.items.slice(-1)[0]?.cursor
+    if (this.mode === 'cursor') {
+      const cursor = this.items.slice(-1)[0]?.cursor
 
-    if (typeof cursor === 'string') {
-      query.cursor = cursor
+      if (
+        typeof cursor === 'number' ||
+        typeof cursor === 'string'
+      ) {
+        query.cursor = cursor
+      }
+    } else if (this.mode === 'offset') {
+      query.offset = this.items.length
     }
 
     Object

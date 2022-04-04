@@ -68,13 +68,13 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   public constructor () {
     super()
+    this.body = this.selectBody()
     this.breakpoint = new Breakpoint(this)
     this.interactor = new Interactor(this)
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
     this.resizer = new ResizeObserver(this.handleResizerBound)
-    this.body = this.selectBody()
     this.templates = this.mutator.selectTemplates()
     this.reset()
 
@@ -159,13 +159,13 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   public reset (): void {
     this.axis = this.getAttribute('sc-axis') ?? 'x'
-    this.interactor.keyboard = this.breakpoint.parse('sc-interact-keyboard') === ''
-    this.interactor.mouse = this.breakpoint.parse('sc-interact-mouse') === ''
-    this.interactor.touch = this.breakpoint.parse('sc-interact-touch') === ''
-    this.interactor.wheel = this.breakpoint.parse('sc-interact-wheel') === ''
+    this.interactor.keyboard = this.breakpoint.parseAttribute('sc-interact-keyboard') === ''
+    this.interactor.mouse = this.breakpoint.parseAttribute('sc-interact-mouse') === ''
+    this.interactor.touch = this.breakpoint.parseAttribute('sc-interact-touch') === ''
+    this.interactor.wheel = this.breakpoint.parseAttribute('sc-interact-wheel') === ''
     this.pointer = Number(this.getAttribute('sc-pointer') ?? -1)
     this.threshold = Number(this.getAttribute('sc-threshold') ?? 0.1)
-    this.transition = this.breakpoint.parse('sc-transition', this.body) === ''
+    this.transition = this.breakpoint.parseAttribute('sc-transition', this.body) === ''
   }
 
   public setData (data: unknown): void {

@@ -32,6 +32,11 @@ body {
   outline-offset: -2px;
 }
 
+::placeholder {
+  color: inherit;
+  opacity: 0.25;
+}
+
 ::selection {
   background-color: var(--tc1);
   color: #fff;
@@ -249,6 +254,22 @@ body {
 
 [sc-focused] [sc-bg-color-active-focus="theme"][sc-active] {
   background-color: var(--tc1);
+  color: #fff;
+  fill: #fff;
+}
+
+[sc-bg-color-checked="contrast"]:checked {
+  background: linear-gradient(var(--gc3), var(--gc3));
+  color: var(--fc1);
+}
+
+[sc-bg-color-checked="normal"]:checked {
+  background: linear-gradient(var(--gc2), var(--gc2));
+  color: var(--fc1);
+}
+
+[sc-bg-color-checked="theme"]:checked {
+  background: linear-gradient(var(--tc1), var(--tc1));
   color: #fff;
   fill: #fff;
 }

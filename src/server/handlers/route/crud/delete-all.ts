@@ -1,5 +1,5 @@
 import { CrudHandler } from './crud'
-import type { RouteData } from '../route'
+import type { RouteData } from '../../../helpers/route'
 
 export abstract class CrudDeleteAllHandler extends CrudHandler {
   public method = 'POST'

@@ -1,6 +1,6 @@
 import { I18n, flatten, isArray, isNil, isPrimitive, isStruct, isTransaction, revive, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { ScolaError, ScolaTransaction, Struct } from '../../common'
+import type { ScolaError, Struct, Transaction } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaViewElement } from './view'
 import type { queue as fastq } from 'fastq'
@@ -90,10 +90,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   public constructor () {
     super()
     this.i18n = new I18n()
-    this.view = this.closest<ScolaViewElement>('[is="sc-view"]') ?? undefined
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
+    this.view = this.closest<ScolaViewElement>('[is="sc-view"]') ?? undefined
     this.reset()
   }
 
@@ -211,6 +211,8 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
         ...this.view?.view?.params,
         ...data
       }
+    } else {
+      data = this.view?.view?.params
     }
 
     const url = `${this.origin}${this.i18n.format(this.url, data)}`
@@ -401,7 +403,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
         options.result = data.body ?? data.query ?? data.headers ?? data
       }
 
-      this.propagator.dispatch<ScolaTransaction>('terror', [options], event)
+      this.propagator.dispatch<Transaction>('terror', [options], event)
     }
   }
 
@@ -424,7 +426,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
     if (isTransaction(options)) {
       options.result = data
-      this.propagator.dispatch<ScolaTransaction>('tmessage', [options], event)
+      this.propagator.dispatch<Transaction>('tmessage', [options], event)
     }
   }
 

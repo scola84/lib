@@ -1,6 +1,7 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
 import type { FieldData, FieldValue } from '../helpers'
-import type { ScolaError, Struct } from '../../common'
+import { Struct, cast, isArray, isError, isPrimitive, isStruct, set } from '../../common'
+import type { ScolaError } from '../../common'
 import type { ScolaFieldElement } from './field'
 
 export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldElement {
@@ -13,6 +14,8 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   public observer: Observer
 
   public propagator: Propagator
+
+  protected handleInputBound = this.handleInput.bind(this)
 
   public constructor () {
     super()
@@ -34,6 +37,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
+    this.addEventListeners()
   }
 
   public disconnectedCallback (): void {
@@ -41,6 +45,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
+    this.removeEventListeners()
   }
 
   public falsify (): void {
@@ -72,7 +77,11 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   public getValue (): FieldValue {
-    return this.field.getValue()
+    return Array
+      .from(this.selectedOptions)
+      .map((option) => {
+        return cast(option.value) ?? null
+      })
   }
 
   public isEmpty (): boolean {
@@ -80,12 +89,30 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   public reset (): void {
-    this.field.setData(this.querySelector<HTMLOptionElement>('option[selected]')?.value ?? '')
+    this.setData(Array
+      .from(this.querySelectorAll<HTMLOptionElement>('option[selected]'))
+      .map((option) => {
+        return option.value
+      }))
   }
 
   public setData (data: unknown): void {
-    this.field.setData(data)
+    if (isError(data)) {
+      this.setError(data)
+    } else if (
+      isStruct(data) &&
+      data.valid === true
+    ) {
+      this.field.setValid()
+    } else {
+      this.setValue(data)
+    }
+
     this.propagator.set(data)
+  }
+
+  public setError (error: ScolaError): void {
+    this.field.setError(error)
   }
 
   public toObject (): Struct {
@@ -104,5 +131,45 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
 
   public verify (): void {
     this.field.verify()
+  }
+
+  protected addEventListeners (): void {
+    this.addEventListener('input', this.handleInputBound)
+  }
+
+  protected handleInput (event: Event): void {
+    this.field.clear()
+    this.update()
+
+    this.propagator.dispatch('value', [
+      set(Struct.create(), this.name, this.getValue())
+    ], event)
+  }
+
+  protected removeEventListeners (): void {
+    this.removeEventListener('input', this.handleInputBound)
+  }
+
+  protected setValue (value: unknown): void {
+    if (isPrimitive(value)) {
+      this
+        .querySelectorAll<HTMLOptionElement>('option')
+        .forEach((option) => {
+          option.selected = option.value === value.toString()
+        })
+    } else if (isArray(value)) {
+      this
+        .querySelectorAll<HTMLOptionElement>('option')
+        .forEach((option) => {
+          if (value.includes(option.value)) {
+            option.selected = true
+          }
+        })
+    } else {
+      this.value = ''
+    }
+
+    this.verify()
+    this.update()
   }
 }

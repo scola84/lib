@@ -1,7 +1,7 @@
-import { I18n, get, isStruct, toString } from '../../common'
+import { I18n, isFile, isStruct, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
+import type { ScolaFileProperties, Struct } from '../../common'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 export interface ImgData extends Struct {
   sizes?: string
@@ -14,7 +14,7 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
 
   public i18n: I18n
 
-  public key: string | null
+  public key: string
 
   public mutator: Mutator
 
@@ -72,40 +72,50 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
     }
   }
 
-  public isImg (value: unknown): value is ImgData {
+  public isBlob (value: unknown): value is Blob {
+    return (
+      value instanceof Blob &&
+      value.type.startsWith('image/')
+    )
+  }
+
+  public isData (value: unknown): value is ImgData {
     return (
       isStruct(value) &&
       typeof value.src === 'string'
     )
   }
 
+  public isFile (value: unknown): value is ScolaFileProperties {
+    return (
+      isFile(value) &&
+      value.type.startsWith('image/')
+    )
+  }
+
   public reset (): void {
-    this.key = this.getAttribute('sc-key')
+    this.key = this.getAttribute('sc-key') ?? ''
     this.url = this.getAttribute('sc-url')
   }
 
   public setData (data: unknown): void {
     this.clear()
 
-    if (typeof data === 'string') {
-      this.setSourceFromImg({
-        src: data
-      })
-    } else if (
-      data instanceof Blob &&
-      data.type.startsWith('image')
-    ) {
+    if (this.isData(data)) {
+      this.setSourceFromData(data)
+    } else if (this.isBlob(data)) {
       this.setSourceFromBlob(data)
-    } else if (this.isImg(data)) {
-      this.setSourceFromImg(data)
-    } else if ((
+    } else if (
       isStruct(data) &&
-      this.url !== null
-    ) && (
-      this.key === null ||
-      toString(get(data, this.key))
-        .startsWith('image')
-    )) {
+      this.isBlob(data[this.key])
+    ) {
+      this.setSourceFromBlob(data[this.key] as Blob)
+    } else if (this.isFile(data)) {
+      this.setSourceFromStruct(data)
+    } else if (
+      isStruct(data) &&
+      this.isFile(data[this.key])
+    ) {
       this.setSourceFromStruct(data)
     } else {
       this.removeAttribute('src')
@@ -134,8 +144,13 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
     this.addEventListener('error', this.handleErrorBound)
   }
 
-  protected handleError (): void {
+  protected handleError (error: unknown): void {
     this.setData(null)
+
+    this.propagator.dispatch('error', [{
+      code: 'err_img',
+      message: toString(error)
+    }])
   }
 
   protected removeEventListeners (): void {
@@ -146,16 +161,16 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
     const src = URL.createObjectURL(blob)
 
     window.requestAnimationFrame(() => {
-      this.setSourceFromImg({
+      this.setSourceFromData({
         src
       })
     })
   }
 
-  protected setSourceFromImg (img: ImgData): void {
-    this.src = img.src
-    this.srcset = img.srcset ?? ''
-    this.sizes = img.sizes ?? ''
+  protected setSourceFromData (data: ImgData): void {
+    this.src = data.src
+    this.srcset = data.srcset ?? ''
+    this.sizes = data.sizes ?? ''
   }
 
   protected setSourceFromStruct (struct: Struct): void {

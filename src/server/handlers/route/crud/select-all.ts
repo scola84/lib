@@ -1,8 +1,8 @@
-import type { Schema, SchemaField } from '../schema'
+import type { Schema, SchemaField } from '../../../helpers/schema'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
-import type { Query } from '../../../common'
-import type { RouteData } from '../route'
+import type { Query } from '../../../../common'
+import type { RouteData } from '../../../helpers/route'
 
 interface CrudSelectAllData extends RouteData {
   query: Query

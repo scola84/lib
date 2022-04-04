@@ -137,7 +137,7 @@ export class I18n {
     })
   }
 
-  public format (code: string, data: unknown, locale = I18n.locale): string {
+  public format (code: string, data: unknown = {}, locale = I18n.locale): string {
     let compiled: Formatter[] | undefined = []
     let string = I18n.strings[locale]?.[code]
 

@@ -1,10 +1,10 @@
-import type { Schema, SchemaField } from '../schema'
-import { Struct, cast, isFile } from '../../../common'
+import type { Schema, SchemaField } from '../../../helpers/schema'
+import { Struct, cast, isFile } from '../../../../common'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
-import type { Query } from '../../../common'
+import type { Query } from '../../../../common'
 import type { ServerResponse } from 'http'
-import type { User } from '../../entities'
+import type { User } from '../../../entities'
 
 export abstract class CrudDeleteHandler extends CrudHandler {
   public method = 'POST'
@@ -48,7 +48,11 @@ export abstract class CrudDeleteHandler extends CrudHandler {
       return this.database.select(selectQuery.string, selectQuery.values)
     }
 
-    await this.deleteFiles(this.schema.body.schema, object)
+    try {
+      await this.deleteFiles(this.schema.body.schema, object)
+    } catch (error: unknown) {
+      //
+    }
 
     const deleteQuery = this.database.formatter.createDeleteQuery(this.object, this.keys, data)
 

@@ -6,7 +6,7 @@ export interface ScolaMediaElement extends ScolaElement {
 
   duration: number
 
-  key: string | null
+  key: string
 
   media: Media
 

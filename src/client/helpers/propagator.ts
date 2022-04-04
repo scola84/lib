@@ -1,4 +1,4 @@
-import { I18n, Struct, isArray, isNil, isStruct } from '../../common'
+import { I18n, Struct, isArray, isNil, isObject, isStruct } from '../../common'
 import type { ScolaElement } from '../elements'
 import { ScolaEvent } from './event'
 
@@ -141,6 +141,8 @@ export class Propagator {
         ...detail,
         ...data
       }
+    } else if (isObject(data)) {
+      detail = data
     }
 
     if (isNil(event.filter)) {

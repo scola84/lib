@@ -1,10 +1,10 @@
-import type { Schema, SchemaField } from '../schema'
-import { Struct, cast, isFile, toString } from '../../../common'
+import type { Schema, SchemaField } from '../../../helpers/schema'
+import { Struct, cast, isFile, toString } from '../../../../common'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
-import type { Query } from '../../../common'
+import type { Query } from '../../../../common'
 import type { Readable } from 'stream'
-import type { RouteData } from '../route'
+import type { RouteData } from '../../../helpers/route'
 import type { ServerResponse } from 'http'
 
 interface CrudSelectOneData extends RouteData {
@@ -61,7 +61,10 @@ export abstract class CrudSelectOneHandler extends CrudHandler {
           throw new Error('Stream is undefined')
         }
 
-        response.setHeader('content-disposition', `attachment; filename="${file.name}"`)
+        if (data.query.disposition === 'attachment') {
+          response.setHeader('content-disposition', `attachment; filename="${file.name}"`)
+        }
+
         response.setHeader('content-type', file.type)
         this.pipeStream(stream, response)
         return null

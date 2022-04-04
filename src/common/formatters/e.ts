@@ -1,6 +1,5 @@
 import type { Formatter, Struct } from '../helpers'
-import { I18n, cast, isNil } from '../helpers'
-import { get } from '../helpers/get'
+import { I18n, cast, get, isNil } from '../helpers'
 
 export function e (name: string, locale: string, options: Struct<string | undefined>): Formatter {
   const i18n = new I18n()

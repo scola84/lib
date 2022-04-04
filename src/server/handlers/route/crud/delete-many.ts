@@ -1,9 +1,9 @@
-import type { Query, Struct } from '../../../common'
-import type { Schema, SchemaField } from '../schema'
-import { isStruct, toString } from '../../../common'
+import type { Query, Struct } from '../../../../common'
+import type { Schema, SchemaField } from '../../../helpers/schema'
+import { isStruct, toString } from '../../../../common'
 import { CrudDeleteHandler } from './delete'
 import type { Merge } from 'type-fest'
-import type { RouteData } from '../route'
+import type { RouteData } from '../../../helpers/route'
 import type { ServerResponse } from 'http'
 
 export interface CrudDeleteManyData extends RouteData {

@@ -194,17 +194,26 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected serialize (): Struct {
-    return this.fieldElements.reduce<Struct>((data, element) => {
-      const value = element.getValue()
-
+    return this.fieldElements.reduce<Struct>((result, element) => {
       if (
-        element.type === 'radio' &&
-        value === null
+        element.disabled ||
+        element.name === ''
       ) {
-        return data
+        return result
       }
 
-      return setPush(data, element.name, value)
+      const value = element.getValue()
+
+      if ((
+        element.type === 'checkbox' ||
+        element.type === 'radio'
+      ) && (
+        value === null
+      )) {
+        return result
+      }
+
+      return setPush(result, element.name, value)
     }, Struct.create())
   }
 

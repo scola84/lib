@@ -5,7 +5,7 @@ export function elementStateElementDataInv (observer: ScolaElement, observable: 
   window.requestAnimationFrame(() => {
     const data = observable.getData()
 
-    observer.observer.toggle(!Object
+    observer.observer.toggleState(!Object
       .entries(observer.dataset)
       .every(([name, value]) => {
         return value

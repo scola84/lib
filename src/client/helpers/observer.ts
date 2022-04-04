@@ -84,7 +84,7 @@ export class Observer {
     this.observers = []
   }
 
-  public normalize (mutations: MutationRecord[]): string[] {
+  public normalizeMutations (mutations: MutationRecord[]): string[] {
     return mutations.map((mutation) => {
       return mutation.attributeName ?? ''
     })
@@ -116,7 +116,7 @@ export class Observer {
     this.wait = this.element.hasAttribute('sc-observe-wait')
   }
 
-  public toggle (force: boolean): void {
+  public toggleState (force: boolean): void {
     this.state.forEach((state) => {
       this.element.toggleAttribute(state, force)
     })

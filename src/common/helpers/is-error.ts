@@ -1,14 +1,33 @@
-import { isStruct } from './is-struct'
+import { isObject } from './is-object'
 
-export interface ScolaError {
+export interface ScolaErrorProperties {
   code: string
   data?: unknown
   message?: string
 }
 
-export function isError (value: unknown): value is ScolaError {
+export class ScolaError {
+  public code: string
+
+  public data?: unknown
+
+  public message?: string
+
+  public constructor (properties: ScolaErrorProperties) {
+    this.code = properties.code
+    this.data = properties.data
+    this.message = properties.message
+  }
+}
+
+export function isError (value: unknown): value is ScolaErrorProperties {
   return (
-    isStruct(value) &&
-    typeof value.code === 'string'
+    isObject(value)
+  ) && (
+    typeof value.code === 'string' &&
+    value.code.startsWith('err_')
+  ) && (
+    value.message === undefined ||
+    typeof value.message === 'string'
   )
 }

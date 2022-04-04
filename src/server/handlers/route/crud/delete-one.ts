@@ -1,8 +1,8 @@
-import type { Query, Struct } from '../../../common'
-import type { Schema, SchemaField } from '../schema'
+import type { Query, Struct } from '../../../../common'
+import type { Schema, SchemaField } from '../../../helpers/schema'
 import { CrudDeleteHandler } from './delete'
 import type { Merge } from 'type-fest'
-import type { RouteData } from '../route'
+import type { RouteData } from '../../../helpers/route'
 import type { ServerResponse } from 'http'
 
 interface CrudDeleteOneData extends RouteData {

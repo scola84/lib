@@ -1,6 +1,6 @@
-import { I18n, get, isArray, isStruct } from '../../common'
+import { I18n, isArray, isFile, isStruct } from '../../common'
+import type { ScolaFileProperties, Struct } from '../../common'
 import type { ScolaMediaElement } from '../elements'
-import type { Struct } from '../../common'
 
 export interface MediaData extends Struct {
   currentTime?: number
@@ -70,10 +70,24 @@ export class Media {
     }
   }
 
-  public isMedia (media: unknown): media is MediaData {
+  public isBlob (value: unknown): value is Blob {
     return (
-      isStruct(media) &&
-      typeof media.src === 'string'
+      value instanceof Blob &&
+      value.type.startsWith('image/')
+    )
+  }
+
+  public isData (value: unknown): value is MediaData {
+    return (
+      isStruct(value) &&
+      typeof value.src === 'string'
+    )
+  }
+
+  public isFile (value: unknown): value is ScolaFileProperties {
+    return (
+      isFile(value) &&
+      value.type.startsWith('image/')
     )
   }
 
@@ -94,27 +108,23 @@ export class Media {
   public setData (data: unknown): void {
     this.clear()
 
-    if (typeof data === 'string') {
-      this.setSourceFromMedia({
-        src: data
-      })
-    } else if (
-      data instanceof Blob &&
-      data.type.startsWith(this.element.nodeName.toLowerCase())
-    ) {
-      this.setSourceFromBlob(data)
-    } else if (isArray(data)) {
+    if (isArray(data)) {
       this.setSourceFromArray(data)
-    } else if (this.isMedia(data)) {
-      this.setSourceFromMedia(data)
-    } else if ((
+    } else if (this.isData(data)) {
+      this.setSourceFromData(data)
+    } else if (this.isBlob(data)) {
+      this.setSourceFromBlob(data)
+    } else if (
       isStruct(data) &&
-      this.element.url !== null
-    ) && (
-      this.element.key === null ||
-      String(get(data, this.element.key))
-        .startsWith(this.element.nodeName.toLowerCase())
-    )) {
+      this.isBlob(data[this.element.key])
+    ) {
+      this.setSourceFromBlob(data[this.element.key] as Blob)
+    } else if (this.isFile(data)) {
+      this.setSourceFromStruct(data)
+    } else if (
+      isStruct(data) &&
+      this.isFile(data[this.element.key])
+    ) {
       this.setSourceFromStruct(data)
     } else {
       this.element.removeAttribute('src')
@@ -190,14 +200,14 @@ export class Media {
     this.element.removeEventListener('volumechange', this.handleVolumechangeBound)
   }
 
-  protected setSourceFromArray (sources: unknown[]): void {
-    sources.find((source) => {
+  protected setSourceFromArray (data: unknown[]): void {
+    data.find((datum) => {
       if (
-        this.isMedia(source) &&
-        typeof source.type === 'string' &&
-        this.element.canPlayType(source.type) !== ''
+        this.isData(datum) &&
+        typeof datum.type === 'string' &&
+        this.element.canPlayType(datum.type) !== ''
       ) {
-        this.setSourceFromMedia(source)
+        this.setSourceFromData(datum)
         return true
       }
 
@@ -209,20 +219,20 @@ export class Media {
     const src = URL.createObjectURL(blob)
 
     window.requestAnimationFrame(() => {
-      this.setSourceFromMedia({
+      this.setSourceFromData({
         src
       })
     })
   }
 
-  protected setSourceFromMedia (media: MediaData): void {
-    this.element.src = media.src
+  protected setSourceFromData (data: MediaData): void {
+    this.element.src = data.src
 
     if (
       this.element instanceof HTMLVideoElement &&
-      typeof media.poster === 'string'
+      typeof data.poster === 'string'
     ) {
-      this.element.poster = media.poster
+      this.element.poster = data.poster
     }
 
     this.element.update()

@@ -427,7 +427,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleObserver (mutations: MutationRecord[]): void {
-    const attributes = this.observer.normalize(mutations)
+    const attributes = this.observer.normalizeMutations(mutations)
 
     if (attributes.includes('hidden')) {
       this.hider?.toggle()

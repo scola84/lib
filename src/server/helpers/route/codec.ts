@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http'
-import { Struct, cast, isPrimitive, isStruct, revive, setPush } from '../../../common'
+import { ScolaFile, Struct, cast, isPrimitive, isStruct, revive, setPush } from '../../../common'
 import type { FileBucket } from '../file'
 import type { FileInfo } from 'busboy'
 import type { Readable } from 'stream'
@@ -95,12 +95,12 @@ export class RouteCodec {
       return
     }
 
-    const file = {
+    const file = new ScolaFile({
       id: randomUUID(),
       name: info.filename,
       size: 0,
       type: info.mimeType
-    }
+    })
 
     stream.on('data', (data) => {
       if (Buffer.isBuffer(data)) {

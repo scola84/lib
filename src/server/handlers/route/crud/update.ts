@@ -1,10 +1,10 @@
-import type { Schema, SchemaField } from '../schema'
-import { Struct, cast, isFile } from '../../../common'
+import type { Schema, SchemaField } from '../../../helpers/schema'
+import { ScolaFile, Struct, cast, isFile } from '../../../../common'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
-import type { Query } from '../../../common'
+import type { Query } from '../../../../common'
 import type { ServerResponse } from 'http'
-import type { User } from '../../entities'
+import type { User } from '../../../entities'
 
 export abstract class CrudUpdateHandler extends CrudHandler {
   public method = 'POST'
@@ -21,7 +21,7 @@ export abstract class CrudUpdateHandler extends CrudHandler {
     }>
   }
 
-  protected async deleteFiles (schema: Schema, object: Struct, data: Struct): Promise<void> {
+  protected async moveFiles (schema: Schema, object: Struct, data: Struct): Promise<void> {
     await Promise.all(Object
       .entries(schema)
       .filter(([name, field]) => {
@@ -31,24 +31,24 @@ export abstract class CrudUpdateHandler extends CrudHandler {
         )
       })
       .map(async ([name]) => {
-        let oldFile = object[name]
-
-        if (typeof oldFile === 'string') {
-          oldFile = Struct.fromJson(oldFile)
-        }
-
         const newFile = data[name]
 
-        if (isFile(oldFile)) {
-          await this.bucket?.delete(oldFile)
-        }
-
-        if (isFile(newFile)) {
+        if (newFile instanceof ScolaFile) {
           const stream = await this.codec.bucket?.get(newFile)
 
           if (stream !== undefined) {
             await this.bucket?.put(newFile, stream)
             await this.codec.bucket?.delete(newFile)
+
+            let oldFile = object[name]
+
+            if (typeof oldFile === 'string') {
+              oldFile = Struct.fromJson(oldFile)
+            }
+
+            if (isFile(oldFile)) {
+              await this.bucket?.delete(oldFile)
+            }
           }
         }
       }))
@@ -78,7 +78,12 @@ export abstract class CrudUpdateHandler extends CrudHandler {
 
     const updateQuery = this.database.formatter.createUpdateQuery(this.object, this.schema.body.schema, this.keys, data, user)
 
-    await this.deleteFiles(this.schema.body.schema, object, data)
+    try {
+      await this.moveFiles(this.schema.body.schema, object, data)
+    } catch (error: unknown) {
+      //
+    }
+
     await this.database.update(updateQuery.string, updateQuery.values)
 
     const selectOneQuery = this.database.formatter.createSelectOneQuery(this.object, this.schema.query.schema, this.keys, this.keys.primary ?? [], {

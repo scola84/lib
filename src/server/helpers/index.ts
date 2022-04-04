@@ -1,8 +1,6 @@
-export * from './crud'
 export * from './fastify'
 export * from './file'
 export * from './queue'
-// export * from './rest'
 export * from './route'
 export * from './schema'
 export * from './service'

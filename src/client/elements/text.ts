@@ -27,11 +27,11 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
   public constructor () {
     super()
     this.i18n = new I18n()
+    this.initialCode = this.getAttribute('sc-code')
+    this.initialText = this.textContent?.trim() ?? ''
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
-    this.initialCode = this.getAttribute('sc-code')
-    this.initialText = this.textContent?.trim() ?? ''
     this.reset()
   }
 

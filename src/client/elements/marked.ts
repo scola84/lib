@@ -30,12 +30,12 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
   public constructor () {
     super()
     this.i18n = new I18n()
+    this.initialCode = this.getAttribute('sc-code')
+    this.initialInnerHtml = this.innerHTML
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
     this.sanitizer = new Sanitizer()
-    this.initialCode = this.getAttribute('sc-code')
-    this.initialInnerHtml = this.innerHTML
     this.reset()
   }
 

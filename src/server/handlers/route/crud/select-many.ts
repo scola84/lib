@@ -1,9 +1,9 @@
-import type { Query, Struct } from '../../../common'
-import type { Schema, SchemaField } from '../schema'
+import type { Query, Struct } from '../../../../common'
+import type { Schema, SchemaField } from '../../../helpers/schema'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
-import type { RouteData } from '../route'
-import { isNil } from '../../../common'
+import type { RouteData } from '../../../helpers/route'
+import { isNil } from '../../../../common'
 
 export interface CrudSelectManyData extends RouteData {
   body?: Struct[]

@@ -1,8 +1,8 @@
 import { Media, Mutator, Observer, Propagator } from '../helpers'
+import { isStruct, toString } from '../../common'
 import type { MediaData } from '../helpers'
 import type { ScolaMediaElement } from './media'
 import type { Struct } from '../../common'
-import { isStruct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -24,7 +24,7 @@ declare global {
 export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaElement {
   public static origin = window.location.origin
 
-  public key: string | null
+  public key: string
 
   public media: Media
 
@@ -93,7 +93,7 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
   }
 
   public reset (): void {
-    this.key = this.getAttribute('sc-key')
+    this.key = this.getAttribute('sc-key') ?? ''
     this.url = this.getAttribute('sc-url')
   }
 
@@ -132,8 +132,13 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
     this.addEventListener('sc-video-volume', this.handleVolumeBound)
   }
 
-  protected handleError (): void {
+  protected handleError (error: unknown): void {
     this.setData(null)
+
+    this.propagator.dispatch('error', [{
+      code: 'err_video',
+      message: toString(error)
+    }])
   }
 
   protected handleFullscreen (): void {

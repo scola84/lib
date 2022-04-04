@@ -161,9 +161,9 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.interactor.mouse = this.interactor.hasMouse
     this.interactor.target = 'window'
     this.interactor.touch = this.interactor.hasTouch
-    this.left = (this.breakpoint.parse('sc-left') as Left | null) ?? 'center'
-    this.top = (this.breakpoint.parse('sc-top') as Top | null) ?? 'center'
-    this.transition = this.breakpoint.parse('sc-transition') === ''
+    this.left = (this.breakpoint.parseAttribute('sc-left') as Left | null) ?? 'center'
+    this.top = (this.breakpoint.parseAttribute('sc-top') as Top | null) ?? 'center'
+    this.transition = this.breakpoint.parseAttribute('sc-transition') === ''
   }
 
   public setData (data: unknown): void {

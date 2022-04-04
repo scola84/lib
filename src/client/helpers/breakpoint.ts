@@ -35,7 +35,7 @@ export class Breakpoint {
     this.callback = callback
   }
 
-  public parse (name: string, element = this.element): string | undefined {
+  public parseAttribute (name: string, element = this.element): string | undefined {
     return element.getAttribute(name)?.match(this.parser)?.[1]
   }
 

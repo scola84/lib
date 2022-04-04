@@ -1,10 +1,10 @@
-import type { Query, Struct } from '../../../common'
-import type { Schema, SchemaField, SchemaFieldKey } from '../schema'
+import type { Query, Struct } from '../../../../common'
+import type { Schema, SchemaField, SchemaFieldKey } from '../../../helpers/schema'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
+import { ScolaFile } from '../../../../common'
 import type { ServerResponse } from 'http'
-import type { User } from '../../entities'
-import { isFile } from '../../../common'
+import type { User } from '../../../entities'
 
 export abstract class CrudInsertHandler extends CrudHandler {
   public method = 'POST'
@@ -93,7 +93,7 @@ export abstract class CrudInsertHandler extends CrudHandler {
       .map(async ([name]) => {
         const newFile = data[name]
 
-        if (isFile(newFile)) {
+        if (newFile instanceof ScolaFile) {
           const stream = await this.codec.bucket?.get(newFile)
 
           if (stream !== undefined) {

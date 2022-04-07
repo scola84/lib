@@ -7,12 +7,19 @@ export function formatIndex (options: Options): string {
   return `
 ${formatImport(options)}
 
-export function ${toCaps(options.object, true)} (): void {
+export function ${formatFunctionName(options)} (): void {
   ${formatHandlers(options, 4)}
 
   ${formatStart(options, 0)}
 }
 `.trim()
+}
+
+function formatFunctionName (options: Options): string {
+  return toCaps(options.object, {
+    chars: /[^a-z0-9]+/iu,
+    lcfirst: true
+  })
 }
 
 function formatHandlers (options: Options, space: number): string {

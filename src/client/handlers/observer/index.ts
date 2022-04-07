@@ -1,49 +1,39 @@
 import { buttonStateCarouselHider } from './button-state-carousel-hider'
-import { carouselSelectValue } from './carousel-select-value'
-import { dataAttrs } from './data-attrs'
-import { dataProps } from './data-props'
-import { elementDataElementData } from './element-data-element-data'
-import { elementDataFieldError } from './element-data-field-error'
-import { elementStateElementAttrs } from './element-state-element-attrs'
-import { elementStateElementAttrsInv } from './element-state-element-attrs-inv'
-import { elementStateElementData } from './element-state-element-data'
-import { elementStateElementDataInv } from './element-state-element-data-inv'
-import { elementStateElementDataset } from './element-state-element-dataset'
-import { elementStateElementDatasetInv } from './element-state-element-dataset-inv'
-import { elementStateElementSame } from './element-state-element-same'
-import { fieldDataElementAttr } from './field-data-element-attr'
+import { carouselPointerSelectValue } from './carousel-pointer-select-value'
+import { elementDataElementGetAttrs } from './element-data-element-get-attrs'
+import { elementDataElementGetProps } from './element-data-element-get-props'
+import { elementPropsElementGetAttrs } from './element-props-element-get-attrs'
+import { elementPropsElementGetProps } from './element-props-element-get-props'
+import { elementStateElementGetAttrs } from './element-state-element-get-attrs'
+import { elementStateElementGetProps } from './element-state-element-get-props'
+import { elementStateElementHasAttrs } from './element-state-element-has-attrs'
+import { elementStateElementHasProps } from './element-state-element-has-props'
+import { elementStateElementIsSame } from './element-state-element-is-same'
 import { formDataTableSelector } from './form-data-table-selector'
 import { inputDataMediaTime } from './input-data-media-time'
 import { inputDataMediaVolume } from './input-data-media-volume'
-import { inputDataRequesterData } from './input-data-requester-data'
-import { propsProps } from './props-props'
-import { stateAttrs } from './state-attrs'
-import { stateProps } from './state-props'
-import { tableRowsView } from './table-rows-view'
-import { tableSelectorRowTableLister } from './table-selector-row-table-lister'
+import { inputDataRequesterProps } from './input-data-requester-props'
+import { log } from './log'
+import { tableRowsViewViews } from './table-rows-view-views'
+import { tableSelectorTableLister } from './table-selector-table-lister'
 
 export const observerHandlers = {
   'sc-button-state-carousel-hider': buttonStateCarouselHider,
-  'sc-carousel-select-value': carouselSelectValue,
-  'sc-data-attrs': dataAttrs,
-  'sc-data-props': dataProps,
-  'sc-element-data-element-data': elementDataElementData,
-  'sc-element-data-field-error': elementDataFieldError,
-  'sc-element-state-element-attrs': elementStateElementAttrs,
-  'sc-element-state-element-attrs-inv': elementStateElementAttrsInv,
-  'sc-element-state-element-data': elementStateElementData,
-  'sc-element-state-element-data-inv': elementStateElementDataInv,
-  'sc-element-state-element-dataset': elementStateElementDataset,
-  'sc-element-state-element-dataset-inv': elementStateElementDatasetInv,
-  'sc-element-state-element-same': elementStateElementSame,
-  'sc-field-data-element-attr': fieldDataElementAttr,
+  'sc-carousel-pointer-select-value': carouselPointerSelectValue,
+  'sc-element-data-element-get-attrs': elementDataElementGetAttrs,
+  'sc-element-data-element-get-props': elementDataElementGetProps,
+  'sc-element-props-element-get-attrs': elementPropsElementGetAttrs,
+  'sc-element-props-element-get-props': elementPropsElementGetProps,
+  'sc-element-state-element-get-attrs': elementStateElementGetAttrs,
+  'sc-element-state-element-get-props': elementStateElementGetProps,
+  'sc-element-state-element-has-attrs': elementStateElementHasAttrs,
+  'sc-element-state-element-has-props': elementStateElementHasProps,
+  'sc-element-state-element-is-same': elementStateElementIsSame,
   'sc-form-data-table-selector': formDataTableSelector,
   'sc-input-data-media-time': inputDataMediaTime,
   'sc-input-data-media-volume': inputDataMediaVolume,
-  'sc-input-data-requester-data': inputDataRequesterData,
-  'sc-props-props': propsProps,
-  'sc-state-attrs': stateAttrs,
-  'sc-state-props': stateProps,
-  'sc-table-rows-view': tableRowsView,
-  'sc-table-selector-row-table-lister': tableSelectorRowTableLister
+  'sc-input-data-requester-props': inputDataRequesterProps,
+  'sc-log': log,
+  'sc-table-rows-view-views': tableRowsViewViews,
+  'sc-table-selector-table-lister': tableSelectorTableLister
 }

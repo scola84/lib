@@ -1,7 +1,7 @@
-import { cast, toJoint } from '../../../common'
+import { cast, isNil, toJoint } from '../../../common'
 import type { ScolaElement } from '../../elements/element'
 
-export function stateAttrs (observer: ScolaElement, observable: ScolaElement): void {
+export function elementStateElementHasAttrs (observer: ScolaElement, observable: ScolaElement): void {
   observer.observer.toggleState(Object
     .entries(observer.dataset)
     .every(([name, value]) => {
@@ -15,12 +15,10 @@ export function stateAttrs (observer: ScolaElement, observable: ScolaElement): v
           const castValue = cast(someValue)
 
           if (castValue === true) {
-            return observeValue !== null
-          } else if (castValue === false) {
-            return observeValue === null
+            return !isNil(observeValue)
           }
 
-          return someValue === observeValue
+          return isNil(observeValue)
         })
     }))
 }

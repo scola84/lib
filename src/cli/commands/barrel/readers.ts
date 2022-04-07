@@ -13,7 +13,9 @@ export const readers: Struct<((targetDir: string) => string[][]) | undefined> = 
         return [
           file,
           base,
-          toCaps(base, true)
+          toCaps(base, {
+            lcfirst: true
+          })
         ]
       })
   },
@@ -27,7 +29,9 @@ export const readers: Struct<((targetDir: string) => string[][]) | undefined> = 
         return [
           base,
           base,
-          toCaps(base, true)
+          toCaps(base, {
+            lcfirst: true
+          })
         ]
       })
   }

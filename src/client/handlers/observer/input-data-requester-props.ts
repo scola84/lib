@@ -1,7 +1,7 @@
 import type { ScolaInputElement } from '../../elements/input'
 import type { ScolaRequesterElement } from '../../elements/requester'
 
-export function inputDataRequesterData (observer: ScolaInputElement, observable: ScolaRequesterElement): void {
+export function inputDataRequesterProps (observer: ScolaInputElement, observable: ScolaRequesterElement): void {
   if (observable.state > 0) {
     if (observable.total === 0) {
       observer.setAttribute('max', '100')

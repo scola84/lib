@@ -1,6 +1,16 @@
 import { Struct, isStruct } from './is-struct'
 
-export function flatten<T> (struct: Struct, prefix = '', count = Infinity): Struct<T> {
+export interface FlattenOptions {
+  count?: number
+  prefix?: string
+}
+
+export function flatten<T> (struct: Struct, options: FlattenOptions = {}): Struct<T> {
+  const {
+    count = Infinity,
+    prefix = ''
+  } = options
+
   return Object
     .entries(struct)
     .reduce<Struct<T>>((result, [key, value]) => {
@@ -11,7 +21,10 @@ export function flatten<T> (struct: Struct, prefix = '', count = Infinity): Stru
       ) {
         return {
           ...result,
-          ...flatten(value, `${prefix}${key}.`, count - 1)
+          ...flatten(value, {
+            count: count - 1,
+            prefix: `${prefix}${key}.`
+          })
         }
       }
 

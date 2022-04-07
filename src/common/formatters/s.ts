@@ -15,14 +15,16 @@ export function s (name: string, locale: string, options: Struct<string | undefi
   let regexp: RegExp | null = null
 
   if (typeof match === 'string') {
-    regexp = new RegExp(match, 'u')
+    regexp = new RegExp(match, 'gu')
   }
 
   function formatter (data: unknown): string {
     let value = (cast(get(data, path)) ?? '').toString()
 
     if (regexp !== null) {
-      [,value = ''] = value.match(regexp) ?? []
+      value = value
+        .match(regexp)
+        ?.join('') ?? ''
     }
 
     if (encodeuri === true) {

@@ -407,7 +407,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       if (data instanceof Blob) {
         const { name = 'download' } = xhr
           .getResponseHeader('content-disposition')
-          ?.match(/filename="(?<name>.+)"/ui)?.groups ?? {}
+          ?.match(/filename="(?<name>.+)"/iu)?.groups ?? {}
 
         saveAs(data, name)
       }

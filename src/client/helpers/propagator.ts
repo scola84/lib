@@ -137,7 +137,7 @@ export class Propagator {
     this.element.addEventListener('sc-data-set', this.handleSetBound)
   }
 
-  protected createDetail (event: PropagatorEvent, data?: unknown): unknown {
+  protected createDetail (event: PropagatorEvent, data?: unknown): Struct | unknown[] | undefined {
     if (isArray(data)) {
       return data
     }

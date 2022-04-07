@@ -1,3 +1,5 @@
+export type CastValue = Date | boolean | number | string | null | undefined
+
 /* eslint-disable complexity */
 /* eslint-disable max-lines-per-function */
 /**
@@ -15,7 +17,7 @@
  * @returns The cast value
  * @see https://stackoverflow.com/a/175787
  */
-export function cast (value: unknown): Date | boolean | number | string | null | undefined {
+export function cast (value: unknown): CastValue {
   if (
     value === null ||
     value === 'null'
@@ -83,7 +85,7 @@ export function cast (value: unknown): Date | boolean | number | string | null |
   }
 
   if (typeof value === 'string') {
-    if ((/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z)?$/ui).test(value)) {
+    if ((/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z)?$/iu).test(value)) {
       return new Date(value)
     }
 

@@ -1,13 +1,31 @@
-export function toCaps (string: string, lower = false): string {
+export interface ToCapsOptions {
+  chars?: RegExp
+  lcfirst?: boolean
+}
+
+export function toCaps (string: string, options: ToCapsOptions = {}): string {
+  const {
+    chars = /[^a-z0-9_]+/iu,
+    lcfirst = false
+  } = options
+
   const capsString = string
     .trim()
-    .split(/[^a-z0-9]+/gui)
+    .split(chars)
     .map((part) => {
+      if (part === '') {
+        return part
+      }
+
       return part[0].toUpperCase() + part.slice(1)
     })
     .join('')
 
-  if (lower) {
+  if (capsString === '') {
+    return ''
+  }
+
+  if (lcfirst) {
     return capsString[0].toLowerCase() + capsString.slice(1)
   }
 

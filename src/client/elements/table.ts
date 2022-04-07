@@ -247,6 +247,14 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   public updateAttributes (): void {
     this.setAttribute('sc-elements', this.elements.size.toString())
 
+    if (this.selector !== undefined) {
+      if (this.selector.rows.length > 0) {
+        this.setAttribute('sc-selected', this.selector.rows.length.toString())
+      } else {
+        this.removeAttribute('sc-selected')
+      }
+    }
+
     if (this.body.hasAttribute('tabindex')) {
       if (this.selector?.focusedRow === undefined) {
         this.body.setAttribute('tabindex', '0')
@@ -415,13 +423,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
           element
             .querySelectorAll('[sc-data-order]')
             .forEach((child) => {
-              child.setAttribute(`data-data-order-${key}`, child.getAttribute('sc-data-order') ?? '')
-            })
-
-          element
-            .querySelectorAll('[sc-order]')
-            .forEach((child) => {
-              child.setAttribute(`data-order-${key}`, child.getAttribute('sc-order') ?? '')
+              child.setAttribute(`data-data.order-${key}`, child.getAttribute('sc-data-order') ?? '')
             })
 
           if (element instanceof ScolaTableCellElement) {

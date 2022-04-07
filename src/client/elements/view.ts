@@ -94,6 +94,10 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     return this.pointer > 0
   }
 
+  public get pointerFromOne (): number {
+    return this.pointer + 1
+  }
+
   public get view (): View | null {
     return this.views[this.pointer] ?? null
   }

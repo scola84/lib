@@ -1,6 +1,6 @@
+import type { CastValue, Primitive, ScolaError, ScolaFile } from '../../common'
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import { I18n, Struct, cast, isArray, isDate, isError, isPrimitive, isStruct, set } from '../../common'
-import type { Primitive, ScolaError } from '../../common'
+import { I18n, Struct, cast, isArray, isDate, isError, isFile, isPrimitive, isStruct, set } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 import { debounce } from 'throttle-debounce'
@@ -10,7 +10,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   public field: Field
 
-  public file: unknown
+  public filesAsCast?: Array<File | ScolaFile> | File | ScolaFile | null
 
   public i18n: I18n
 
@@ -18,7 +18,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   public initialCode: string | null
 
-  public initialValue: string
+  public initialValue: unknown
 
   public mutator: Mutator
 
@@ -97,7 +97,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   public get isEmpty (): boolean {
     return (
       this.value === '' &&
-      this.field.value === ''
+      this.filesAsCast === null
     )
   }
 
@@ -106,7 +106,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
       this.type === 'checkbox' ||
       this.type === 'radio'
     ) {
-      return this.getChecked()
+      return this.getChecked() ?? null
     } else if (
       this.type === 'date' ||
       this.type === 'datetime-local' ||
@@ -114,10 +114,10 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     ) {
       return this.getDate()
     } else if (this.type === 'file') {
-      return this.getFile()
+      return this.filesAsCast ?? null
     }
 
-    return this.getPrimitive()
+    return cast(this.value) ?? null
   }
 
   public set valueAsCast (value: unknown) {
@@ -151,7 +151,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     ) {
       this.setDate(value)
     } else if (this.type === 'file') {
-      this.setFile(value)
+      this.setFiles(value)
     } else if (isPrimitive(value)) {
       this.setPrimitive(value)
     } else {
@@ -268,15 +268,15 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.addEventListeners()
   }
 
-  protected getChecked (): FieldValue {
+  protected getChecked (): CastValue {
     if (!this.checked) {
       return null
     }
 
-    return cast(this.value) ?? null
+    return cast(this.value)
   }
 
-  protected getDate (): FieldValue {
+  protected getDate (): Date | null {
     if (this.value === '') {
       return null
     }
@@ -286,36 +286,6 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     }
 
     return new Date(this.value)
-  }
-
-  protected getFile (): FieldValue {
-    if (this.files?.length === 0) {
-      if (isArray(this.file)) {
-        return this.file.filter((file) => {
-          return (
-            file instanceof File ||
-            isStruct(file)
-          )
-        }) as File[] | Struct[]
-      } else if (
-        this.file instanceof File ||
-        isStruct(this.file)
-      ) {
-        return this.file
-      }
-
-      return null
-    }
-
-    if (this.multiple) {
-      return Array.from(this.files ?? [])
-    }
-
-    return this.files?.item(0) ?? null
-  }
-
-  protected getPrimitive (): FieldValue {
-    return cast(this.value) ?? null
   }
 
   protected handleInput (event: Event): void {
@@ -346,8 +316,14 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   protected handleInputFiles (fileList: FileList, event?: Event): void {
     const files = Array.from(fileList)
 
-    this.propagator.dispatch<File>('file', files, event)
-    this.propagator.dispatch<Struct<File[]>>('files', [{ files }], event)
+    if (this.multiple) {
+      this.setFiles(files)
+    } else {
+      this.setFiles(files[0])
+    }
+
+    this.propagator.dispatch<File | ScolaFile>('file', files, event)
+    this.propagator.dispatch<Struct<Array<File | ScolaFile>>>('files', [{ files }], event)
   }
 
   protected handleInputValue (event: Event): void {
@@ -409,9 +385,27 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     }
   }
 
-  protected setFile (value: unknown): void {
+  protected setFiles (value: unknown): void {
     this.value = ''
-    this.file = value
+
+    if (
+      this.multiple &&
+      isArray(value)
+    ) {
+      this.filesAsCast = value.filter((file) => {
+        return (
+          file instanceof File ||
+          isFile(file)
+        )
+      }) as Array<File | ScolaFile>
+    } else if (
+      value instanceof File ||
+      isFile(value)
+    ) {
+      this.filesAsCast = value
+    } else {
+      this.filesAsCast = null
+    }
   }
 
   protected setPrimitive (value: Primitive): void {

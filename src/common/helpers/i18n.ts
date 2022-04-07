@@ -3,11 +3,6 @@ import { Struct } from './is-struct'
 import { cast } from './cast'
 import { flatten } from './flatten'
 
-interface Search extends Struct {
-  key?: string
-  value: string
-}
-
 interface LocaleStrings {
   [key: string]: LocaleStrings | string | undefined
 }
@@ -172,43 +167,6 @@ export class I18n {
         return formatter(data)
       })
       .join('')
-  }
-
-  public lookup (string: string, locale = I18n.locale): string | undefined {
-    const localeStrings = I18n.strings[locale]
-
-    if (localeStrings === undefined) {
-      return undefined
-    }
-
-    return Object
-      .entries(localeStrings)
-      .find(([, value]) => {
-        return value === string.toLowerCase()
-      })
-      ?.shift()
-  }
-
-  public parse (string: string, locale = I18n.locale): Search[] {
-    return string
-      .match(/(?:[^\s"]+|"[^"]*")+/gu)
-      ?.map((match) => {
-        const [
-          key,
-          value
-        ] = match.match(/(?:[^:"]+|"[^"]*")+/gu) ?? []
-
-        if (typeof value === 'string') {
-          return {
-            key: this.lookup(key.replace(/"/gu, ''), locale) ?? key,
-            value: value.replace(/"/gu, '')
-          }
-        }
-
-        return {
-          value: key.replace(/"/gu, '')
-        }
-      }) ?? []
   }
 
   public sort (items: Struct[], query: Query): Struct[] {

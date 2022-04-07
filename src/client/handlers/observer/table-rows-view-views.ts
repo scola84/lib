@@ -1,7 +1,7 @@
 import type { ScolaTableElement } from '../../elements/table'
 import type { ScolaViewElement } from '../../elements/view'
 
-export function tableRowsView (observer: ScolaTableElement, observable: ScolaViewElement): void {
+export function tableRowsViewViews (observer: ScolaTableElement, observable: ScolaViewElement): void {
   const focus = (
     document.activeElement !== document.body &&
     document.activeElement !== null

@@ -2,7 +2,7 @@ import type { ScolaTableElement } from '../../elements/table'
 import type { ScolaTableRowElement } from '../../elements/table-row'
 import { isStruct } from '../../../common'
 
-export function tableSelectorRowTableLister (observer: ScolaTableRowElement, observable: ScolaTableElement): void {
+export function tableSelectorTableLister (observer: ScolaTableRowElement, observable: ScolaTableElement): void {
   window.requestAnimationFrame(() => {
     if (isStruct(observer.data)) {
       const parent = observer.closest<ScolaTableElement>('[is="sc-table"]')

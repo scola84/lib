@@ -1,4 +1,4 @@
-import type { Primitive, ScolaError, Struct } from '../../common'
+import type { Primitive, ScolaError, ScolaFile } from '../../common'
 import { Interactor } from './interactor'
 import type { InteractorEvent } from './interactor'
 import type { ScolaFieldElement } from '../elements'
@@ -12,12 +12,7 @@ declare global {
   }
 }
 
-export interface FieldData extends Struct {
-  name: string
-  value: FieldValue
-}
-
-export type FieldValue = Array<Date | File | Primitive | Struct | null> | Date | File | File[] | Primitive | Struct | null
+export type FieldValue = Array<Date | File | Primitive | ScolaFile | null> | Date | File | Primitive | ScolaFile | null
 
 export class Field {
   public element: ScolaFieldElement
@@ -25,8 +20,6 @@ export class Field {
   public error?: ScolaError
 
   public interactor: Interactor
-
-  public value: unknown = ''
 
   protected handleClearBound = this.handleClear.bind(this)
 

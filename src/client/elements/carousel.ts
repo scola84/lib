@@ -74,6 +74,10 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     return this.pointer > 0
   }
 
+  public get pointerFromOne (): number {
+    return this.pointer + 1
+  }
+
   protected handleBackBound = this.handleBack.bind(this)
 
   protected handleBreakpointBound = this.handleBreakpoint.bind(this)

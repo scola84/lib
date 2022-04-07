@@ -282,7 +282,7 @@ export class TableLister {
       .entries(this.element.dataset)
       .forEach(([key, value]) => {
         const path = toJoint(key, {
-          chars: false,
+          chars: null,
           separator: '.'
         })
 

@@ -2,7 +2,6 @@ import { Dragger, Dropper, Focuser, Hider, Interactor, Mutator, Observer, Paster
 import { cast, isArray, isStruct } from '../../common'
 import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -29,6 +28,17 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   public paster?: Paster
 
   public propagator: Propagator
+
+  public get data (): unknown {
+    return {
+      ...this.dataset
+    }
+  }
+
+  public set data (data: unknown) {
+    this.dragger?.setData(data)
+    this.propagator.set(data)
+  }
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
 
@@ -105,31 +115,12 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     this.removeEventListeners()
   }
 
-  public getData (): Struct {
-    return {
-      ...this.dataset
-    }
-  }
-
   public reset (): void {
     this.interactor.cancel = this.hasAttribute('sc-cancel')
     this.interactor.keyboard = this.interactor.hasKeyboard
     this.interactor.mouse = this.interactor.hasMouse
     this.interactor.touch = this.interactor.hasTouch
   }
-
-  public setData (data: unknown): void {
-    this.dragger?.setData(data)
-    this.propagator.set(data)
-  }
-
-  public toObject (): Struct {
-    return {
-      ...this.dataset
-    }
-  }
-
-  public update (): void {}
 
   protected addEventListeners (): void {
     if (this.hasAttribute('sc-drop')) {
@@ -153,15 +144,15 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleInteractorClick (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('click', [this.getData()], event.originalEvent)
+    return this.propagator.dispatch('click', [this.data], event.originalEvent)
   }
 
   protected handleInteractorContextmenu (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('contextmenu', [this.getData()], event.originalEvent)
+    return this.propagator.dispatch('contextmenu', [this.data], event.originalEvent)
   }
 
   protected handleInteractorDblclick (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
+    return this.propagator.dispatch('dblclick', [this.data], event.originalEvent)
   }
 
   protected handleInteractorStart (event: InteractorEvent): boolean {

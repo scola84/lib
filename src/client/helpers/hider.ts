@@ -172,9 +172,9 @@ export class Hider {
       this.element.style.setProperty('display', 'none', 'important')
       this.backdrop?.style.setProperty('display', 'none', 'important')
       this.indexer.remove(this.element, this.backdrop)
-      this.element.propagator.dispatch('afterhide', [this.element.getData()])
+      this.element.propagator.dispatch('afterhide', [this.element.data])
     } else {
-      this.element.propagator.dispatch('aftershow', [this.element.getData()])
+      this.element.propagator.dispatch('aftershow', [this.element.data])
     }
 
     this.changeFocus()

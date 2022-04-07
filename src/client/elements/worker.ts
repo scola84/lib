@@ -90,10 +90,6 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
     }
   }
 
-  public getData (): Struct {
-    return {}
-  }
-
   public postMessage (data: unknown): void {
     if (this.worker === undefined) {
       this.postIframe(data)
@@ -106,14 +102,6 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
     this.name = this.getAttribute('sc-name') ?? ''
     this.url = this.getAttribute('sc-url') ?? ''
   }
-
-  public setData (): void {}
-
-  public toObject (): Struct {
-    return {}
-  }
-
-  public update (): void {}
 
   protected addEventListeners (): void {
     this.addEventListener('sc-work', this.handleWorkBound)

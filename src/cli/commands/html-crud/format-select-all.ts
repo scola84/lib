@@ -21,7 +21,9 @@ export class SelectAllHandler extends CrudSelectAllHandler {
     query: ${formatQuerySchema(options.object, schema, relations, 6)}
   }
 
-  public url = '${options.url}/select/all/${toJoint(options.object, '-')}'
+  public url = '${options.url}/select/all/${toJoint(options.object, {
+    separator: '-'
+  })}'
 }
 `.trim()
 }

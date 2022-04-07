@@ -25,7 +25,9 @@ export class Observer {
 
   public save: string[]
 
-  public state: string[]
+  public states: string[]
+
+  public statesInverse: string[]
 
   public storage: Storage
 
@@ -102,8 +104,12 @@ export class Observer {
       ?.trim()
       .split(/\s+/u) ?? []
 
-    this.state = this.element
+    this.states = this.element
       .getAttribute('sc-observe-state')
+      ?.split(/\s+/u) ?? []
+
+    this.statesInverse = this.element
+      .getAttribute('sc-observe-state-inv')
       ?.split(/\s+/u) ?? []
 
     this.storage = Observer.storage[this.element.getAttribute('sc-observe-storage') ?? 'session'] ?? window.sessionStorage
@@ -117,8 +123,12 @@ export class Observer {
   }
 
   public toggleState (force: boolean): void {
-    this.state.forEach((state) => {
+    this.states.forEach((state) => {
       this.element.toggleAttribute(state, force)
+    })
+
+    this.statesInverse.forEach((state) => {
+      this.element.toggleAttribute(state, !force)
     })
   }
 
@@ -183,9 +193,9 @@ export class Observer {
 
   protected handleHidden (): void {
     if (this.element.hasAttribute('hidden')) {
-      this.element.propagator.dispatch('hide', [this.element.getData()])
+      this.element.propagator.dispatch('hide', [this.element.data])
     } else {
-      this.element.propagator.dispatch('show', [this.element.getData()])
+      this.element.propagator.dispatch('show', [this.element.data])
     }
   }
 

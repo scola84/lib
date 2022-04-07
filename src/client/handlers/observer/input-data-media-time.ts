@@ -2,13 +2,9 @@ import type { ScolaInputElement } from '../../elements/input'
 import type { ScolaMediaElement } from '../../elements/media'
 
 export function inputDataMediaTime (observer: ScolaInputElement, observable: ScolaMediaElement): void {
-  const data = observable.getData()
+  observer.setAttribute('max', observable.duration.toString())
 
-  if (data !== null) {
-    observer.setAttribute('max', data.duration.toString())
-
-    observer.setData({
-      value: data.currentTime
-    })
+  observer.data = {
+    value: observable.currentTime
   }
 }

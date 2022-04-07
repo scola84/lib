@@ -127,9 +127,9 @@ export class Propagator {
       isStruct(data) &&
       data[name] !== undefined
     ) {
-      target.setData(data[name])
+      target.data = data[name]
     } else {
-      target.setData(data)
+      target.data = data
     }
   }
 
@@ -179,7 +179,7 @@ export class Propagator {
   }
 
   protected handleSet (event: CustomEvent): void {
-    this.element.setData(event.detail)
+    this.element.data = event.detail
   }
 
   protected removeEventListeners (): void {

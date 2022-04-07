@@ -1,7 +1,6 @@
 import { Interactor, Mutator, Observer, Propagator } from '../helpers'
 import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 interface Offset {
   left: number
@@ -24,6 +23,12 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
   public target: string
 
   public targetOffsets = new Map<HTMLElement, Offset>()
+
+  public get data (): unknown {
+    return {
+      ...this.dataset
+    }
+  }
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
 
@@ -57,10 +62,6 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
     this.propagator.disconnect()
   }
 
-  public getData (): Struct {
-    return {}
-  }
-
   public reset (): void {
     this.contain = this.hasAttribute('sc-contain')
     this.interactor.mouse = this.interactor.hasMouse
@@ -68,14 +69,6 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
     this.snap = Number(this.getAttribute('sc-snap') ?? 1)
     this.target = this.getAttribute('sc-target') ?? ''
   }
-
-  public setData (): void {}
-
-  public toObject (): Struct {
-    return {}
-  }
-
-  public update (): void {}
 
   protected calculatePosition (position: number, distance: number): number {
     return Math.round((position + distance) / this.snap) * this.snap

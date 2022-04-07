@@ -24,6 +24,18 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
 
   public valid = true
 
+  public get data (): unknown {
+    return this.serialize()
+  }
+
+  public set data (data: unknown) {
+    this.valid = true
+    this.toggleDisabled()
+    this.changeFocus()
+    this.propagator.set(data)
+    this.notify()
+  }
+
   public get fieldElements (): ScolaFieldElement[] {
     return Array
       .from(this.elements)
@@ -77,20 +89,22 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     this.removeEventListeners()
   }
 
-  public getData (): Struct {
-    return this.serialize()
-  }
-
   public getErrors (): Struct<ScolaError> {
     return this.fieldElements.reduce<Struct<ScolaError>>((errors, fieldElement) => {
-      const error = fieldElement.getError()
+      const { error } = fieldElement
 
-      if (error !== null) {
+      if (error !== undefined) {
         errors[fieldElement.name] = error
       }
 
       return errors
     }, Struct.create())
+  }
+
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
   }
 
   public reset (): void {
@@ -101,31 +115,10 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     })
   }
 
-  public setData (data: unknown): void {
-    this.valid = true
-    this.toggleDisabled()
-    this.changeFocus()
-    this.propagator.set(data)
-    this.update()
-  }
-
   public setErrors (data: unknown): void {
     this.valid = false
     this.propagator.set(data)
-    this.update()
-  }
-
-  public toObject (): Struct {
-    return this.serialize()
-  }
-
-  public update (): void {
-    this.updateAttributes()
-    this.propagator.dispatch('update')
-  }
-
-  public updateAttributes (): void {
-    this.setAttribute('sc-updated', Date.now().toString())
+    this.notify()
   }
 
   protected addEventListeners (): void {
@@ -197,7 +190,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     }
 
     this.valid = true
-    this.propagator.dispatch('submit', [this.getData()], event)
+    this.propagator.dispatch('submit', [this.data], event)
   }
 
   protected isFieldElement (element: Element): element is ScolaFieldElement {
@@ -224,7 +217,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
         return result
       }
 
-      const value = element.getValue()
+      const value = element.valueAsCast
 
       if ((
         element.type === 'checkbox' ||
@@ -245,10 +238,10 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
 
       switch (value) {
         case '$created_local':
-          fieldElement.setData(new Date())
+          fieldElement.data = new Date()
           break
         case '$updated_local':
-          fieldElement.setData(new Date())
+          fieldElement.data = new Date()
           break
         default:
           break

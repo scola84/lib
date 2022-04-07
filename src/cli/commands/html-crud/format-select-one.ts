@@ -23,7 +23,9 @@ export class SelectOneHandler extends CrudSelectOneHandler {
     query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
-  public url = '${options.url}/select/one/${toJoint(options.object, '-')}'
+  public url = '${options.url}/select/one/${toJoint(options.object, {
+    separator: '-'
+  })}'
 }
 `.trim()
 }

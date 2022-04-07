@@ -27,7 +27,7 @@ export class I18n {
 
   public static locale = 'en'
 
-  public static matcher = /\$\([^)]+\)[dejnqs]/gu
+  public static matcher = /\$\(.+?\)[dejnqs]/gu
 
   public static strings: Strings = {}
 

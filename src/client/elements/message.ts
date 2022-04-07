@@ -31,6 +31,12 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
 
   public timeoutId?: number
 
+  public get data (): unknown {
+    return {
+      ...this.dataset
+    }
+  }
+
   protected handleAddBound = this.handleAdd.bind(this)
 
   protected handleClearBound = this.handleClear.bind(this)
@@ -79,28 +85,19 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
     this.removeEventListeners()
   }
 
-  public getData (): Struct {
-    return {}
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
   }
 
   public reset (): void {
     this.timeout = Number(this.getAttribute('sc-timeout') ?? -1)
   }
 
-  public setData (): void {}
-
-  public toObject (): Struct {
-    return {}
-  }
-
   public update (): void {
     this.updateElements()
-    this.updateAttributes()
-    this.propagator.dispatch('update')
-  }
-
-  public updateAttributes (): void {
-    this.setAttribute('sc-updated', Date.now().toString())
+    this.notify()
   }
 
   public updateElements (): void {
@@ -143,11 +140,11 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
       this.appendChild(template)
 
       if (element instanceof ScolaDivElement) {
-        element.setData(item)
+        element.data = item
       } else {
         window.requestAnimationFrame(() => {
           if (element instanceof ScolaDivElement) {
-            element.setData(item)
+            element.data = item
           }
         })
       }

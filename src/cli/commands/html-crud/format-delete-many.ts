@@ -24,7 +24,9 @@ export class DeleteManyHandler extends CrudDeleteManyHandler {
     query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
-  public url = '${options.url}/delete/many/${toJoint(options.object, '-')}'
+  public url = '${options.url}/delete/many/${toJoint(options.object, {
+    separator: '-'
+  })}'
 }
 `.trim()
 }

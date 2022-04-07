@@ -1,6 +1,5 @@
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -43,18 +42,6 @@ export class ScolaReloaderElement extends HTMLObjectElement implements ScolaElem
     this.propagator.disconnect()
     this.removeEventListeners()
   }
-
-  public getData (): Struct {
-    return {}
-  }
-
-  public setData (): void {}
-
-  public toObject (): Struct {
-    return {}
-  }
-
-  public update (): void {}
 
   protected addEventListeners (): void {
     this.addEventListener('sc-reload', this.handleReloadBound)

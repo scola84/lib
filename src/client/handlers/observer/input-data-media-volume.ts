@@ -2,17 +2,13 @@ import type { ScolaInputElement } from '../../elements/input'
 import type { ScolaMediaElement } from '../../elements/media'
 
 export function inputDataMediaVolume (observer: ScolaInputElement, observable: ScolaMediaElement): void {
-  const data = observable.getData()
-
-  if (data !== null) {
-    if (data.muted) {
-      observer.setData({
-        value: '0'
-      })
-    } else {
-      observer.setData({
-        value: data.volume
-      })
+  if (observable.muted) {
+    observer.data = {
+      value: 0
+    }
+  } else {
+    observer.data = {
+      value: observable.volume
     }
   }
 }

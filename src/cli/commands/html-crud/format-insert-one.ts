@@ -20,7 +20,9 @@ export class InsertOneHandler extends CrudInsertOneHandler {
     query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
-  public url = '${options.url}/insert/one/${toJoint(options.object, '-')}'
+  public url = '${options.url}/insert/one/${toJoint(options.object, {
+    separator: '-'
+  })}'
 }
 `.trim()
 }

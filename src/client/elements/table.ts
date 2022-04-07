@@ -20,7 +20,7 @@ declare global {
   }
 }
 
-export interface ScolaTableElementData extends Struct {
+export interface ScolaTableElementState extends Struct {
   added: number
   deleted: number
   elements: number
@@ -55,6 +55,22 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   public tree?: TableTree
 
   public wait: boolean
+
+  public get data (): unknown {
+    return {
+      ...this.dataset
+    }
+  }
+
+  public set data (data: unknown) {
+    if (this.tree?.requestItem === undefined) {
+      this.lister.setData(data)
+    } else {
+      this.tree.setData(data)
+    }
+
+    this.update()
+  }
 
   protected handleAddAllBound = this.handleAddAll.bind(this)
 
@@ -189,12 +205,13 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.removeEventListeners()
   }
 
-  public getData (): ScolaTableElementData {
-    return {
-      added: this.lister.added.size,
-      deleted: this.lister.deleted.size,
-      elements: this.elements.size,
-      selected: this.selector?.rows.length ?? 0
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
+
+    if (this.elements.size === 0) {
+      this.propagator.dispatch('empty')
     }
   }
 
@@ -214,18 +231,6 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.wait = this.hasAttribute('sc-wait')
   }
 
-  public setData (data: unknown): void {
-    if (this.tree?.requestItem === undefined) {
-      this.lister.setData(data)
-    } else {
-      this.tree.setData(data)
-    }
-  }
-
-  public toObject (): Struct {
-    return {}
-  }
-
   public update (): void {
     if (
       this.lister.limit === 0 &&
@@ -235,26 +240,12 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     } else {
       this.updateElements()
       this.updateAttributes()
-      this.propagator.dispatch('update')
-
-      if (this.elements.size === 0) {
-        this.propagator.dispatch('empty')
-      }
+      this.notify()
     }
   }
 
   public updateAttributes (): void {
     this.setAttribute('sc-elements', this.elements.size.toString())
-    this.setAttribute('sc-updated', Date.now().toString())
-
-    if (
-      this.selector === undefined ||
-      this.selector.rows.length === 0
-    ) {
-      this.removeAttribute('sc-selected')
-    } else {
-      this.setAttribute('sc-selected', this.selector.rows.length.toString())
-    }
 
     if (this.body.hasAttribute('tabindex')) {
       if (this.selector?.focusedRow === undefined) {
@@ -316,15 +307,15 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
           row.appendChild(template)
 
           if (element instanceof ScolaTableCellElement) {
-            element.setData({
+            element.data = {
               value
-            })
+            }
           } else {
             window.requestAnimationFrame(() => {
               if (element instanceof ScolaTableCellElement) {
-                element.setData({
+                element.data = {
                   value
-                })
+                }
               }
             })
           }
@@ -352,11 +343,11 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
         this.body.appendChild(template)
 
         if (element instanceof ScolaTableRowElement) {
-          element.setData(item)
+          element.data = item
         } else {
           window.requestAnimationFrame(() => {
             if (element instanceof ScolaTableRowElement) {
-              element.setData(item)
+              element.data = item
             }
           })
         }
@@ -367,7 +358,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
       }
     } else {
       if (!this.templates.has('body-cell')) {
-        element.setData(item)
+        element.data = item
       }
 
       this.body.appendChild(element)
@@ -434,11 +425,11 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
             })
 
           if (element instanceof ScolaTableCellElement) {
-            element.setData({ key })
+            element.data = { key }
           } else {
             window.requestAnimationFrame(() => {
               if (element instanceof ScolaTableCellElement) {
-                element.setData({ key })
+                element.data = { key }
               }
             })
           }

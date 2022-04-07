@@ -146,7 +146,11 @@ export class TableLister {
     return Array.from(this.element.body
       .querySelectorAll<ScolaTableRowElement>('tr'))
       .map((row) => {
-        return row.data
+        if (isStruct(row.data)) {
+          return row.data
+        }
+
+        return {}
       })
   }
 
@@ -154,7 +158,11 @@ export class TableLister {
     return Array.from(this.element.body
       .querySelectorAll<ScolaTableRowElement>('tr'))
       .map((row) => {
-        return row.data[this.pkey]
+        if (isStruct(row.data)) {
+          return row.data[this.pkey]
+        }
+
+        return null
       })
   }
 
@@ -273,7 +281,12 @@ export class TableLister {
     Object
       .entries(this.element.dataset)
       .forEach(([key, value]) => {
-        set(query, toJoint(key, '.', false), cast(value))
+        const path = toJoint(key, {
+          chars: false,
+          separator: '.'
+        })
+
+        set(query, path, cast(value))
       })
 
     return query

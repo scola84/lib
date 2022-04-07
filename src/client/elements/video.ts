@@ -1,8 +1,6 @@
 import { Media, Mutator, Observer, Propagator } from '../helpers'
 import { isStruct, toString } from '../../common'
-import type { MediaData } from '../helpers'
 import type { ScolaMediaElement } from './media'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -24,6 +22,10 @@ declare global {
 export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaElement {
   public static origin = window.location.origin
 
+  public currentTimeAsString = '00:00:00'
+
+  public durationAsString = '00:00:00'
+
   public key: string
 
   public media: Media
@@ -37,6 +39,17 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
   public propagator: Propagator
 
   public url: string | null
+
+  public get data (): unknown {
+    return {
+      ...this.dataset
+    }
+  }
+
+  public set data (data: unknown) {
+    this.media.setData(data)
+    this.notify()
+  }
 
   protected handleErrorBound = this.handleError.bind(this)
 
@@ -62,7 +75,7 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
-    this.update()
+    this.notify()
   }
 
   public static define (): void {
@@ -88,8 +101,10 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
     this.removeEventListeners()
   }
 
-  public getData (): Required<MediaData> | null {
-    return this.media.getData()
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
   }
 
   public reset (): void {
@@ -97,27 +112,8 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
     this.url = this.getAttribute('sc-url')
   }
 
-  public setData (data: unknown): void {
-    this.media.setData(data)
-  }
-
-  public toObject (): Struct {
-    return this.media.toObject()
-  }
-
   public toggle (): void {
     this.media.toggle()
-  }
-
-  public update (): void {
-    this.updateAttributes()
-    this.propagator.dispatch('update')
-  }
-
-  public updateAttributes (): void {
-    this.toggleAttribute('sc-muted', this.muted)
-    this.toggleAttribute('sc-playing', !this.paused)
-    this.setAttribute('sc-updated', Date.now().toString())
   }
 
   protected addEventListeners (): void {
@@ -133,7 +129,7 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
   }
 
   protected handleError (error: unknown): void {
-    this.setData(null)
+    this.data = null
 
     this.propagator.dispatch('error', [{
       code: 'err_video',
@@ -173,7 +169,7 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
       isStruct(event.detail) &&
       event.detail.time !== undefined
     ) {
-      this.media.setTime(Number(event.detail.time))
+      this.media.setCurrentTime(Number(event.detail.time))
     }
   }
 

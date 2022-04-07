@@ -1,9 +1,9 @@
 import type { Formatter, Struct } from '../helpers'
-import { cast, get, isNumber } from '../helpers'
+import { cast, get } from '../helpers'
 
 export function s (name: string, locale: string, options: Struct<string | undefined>): Formatter {
   const encodeuri = cast(options.encodeuri)
-  const slice = cast(options.slice)
+  const match = cast(options.match)
 
   const path = name
     .split('.')
@@ -12,15 +12,21 @@ export function s (name: string, locale: string, options: Struct<string | undefi
       return key !== ''
     })
 
+  let regexp: RegExp | null = null
+
+  if (typeof match === 'string') {
+    regexp = new RegExp(match, 'u')
+  }
+
   function formatter (data: unknown): string {
     let value = (cast(get(data, path)) ?? '').toString()
 
-    if (encodeuri === true) {
-      value = encodeURIComponent(value)
+    if (regexp !== null) {
+      [,value = ''] = value.match(regexp) ?? []
     }
 
-    if (isNumber(slice)) {
-      value = value.slice(0, Number(slice))
+    if (encodeuri === true) {
+      value = encodeURIComponent(value)
     }
 
     return value

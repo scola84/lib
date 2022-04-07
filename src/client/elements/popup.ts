@@ -1,7 +1,6 @@
 import { Breakpoint, Indexer, Interactor, Mutator, Observer, Propagator } from '../helpers'
 import type { InteractorEvent, ScolaEvent } from '../helpers'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -79,6 +78,16 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public trigger?: MouseEvent
 
+  public get data (): unknown {
+    return {
+      ...this.dataset
+    }
+  }
+
+  public set data (data: unknown) {
+    this.propagator.set(data)
+  }
+
   protected handleBreakpointBound = this.handleBreakpoint.bind(this)
 
   protected handleHideBound = this.handleHide.bind(this)
@@ -138,10 +147,6 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.removeEventListeners()
   }
 
-  public getData (): Struct {
-    return {}
-  }
-
   public hide (): void {
     if (this.immediate) {
       this.style.setProperty('opacity', '0')
@@ -165,10 +170,6 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.left = (this.breakpoint.parseAttribute('sc-left') as Left | null) ?? 'center'
     this.top = (this.breakpoint.parseAttribute('sc-top') as Top | null) ?? 'center'
     this.transition = this.breakpoint.parseAttribute('sc-transition') === ''
-  }
-
-  public setData (data: unknown): void {
-    this.propagator.set(data)
   }
 
   public show (): void {
@@ -212,12 +213,6 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
       }
     })
   }
-
-  public toObject (): Struct {
-    return {}
-  }
-
-  public update (): void {}
 
   protected addEventListeners (): void {
     this.addEventListener('sc-popup-hide', this.handleHideBound)

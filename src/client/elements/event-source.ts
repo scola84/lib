@@ -66,22 +66,10 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
     this.close()
   }
 
-  public getData (): Struct {
-    return {}
-  }
-
   public reset (): void {
     this.event = this.getAttribute('sc-event') ?? ''
     this.url = this.getAttribute('sc-url') ?? ''
   }
-
-  public setData (): void {}
-
-  public toObject (): Struct {
-    return {}
-  }
-
-  public update (): void {}
 
   protected addEventListeners (): void {
     document.addEventListener('visibilitychange', this.handleVisibilityChangeBound)

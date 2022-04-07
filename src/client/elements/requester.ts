@@ -20,12 +20,6 @@ declare module 'fastq' {
   }
 }
 
-interface ScolaRequesterElementData extends Struct {
-  loaded: number
-  state: number
-  total: number
-}
-
 interface Request {
   body: FormData | URLSearchParams | string | null
   method: string
@@ -40,6 +34,8 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   public download: boolean
 
   public i18n: I18n
+
+  public loaded = 0
 
   public max: number
 
@@ -59,7 +55,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   public responseType: string
 
+  public state = 0
+
   public strict: boolean
+
+  public total = 0
 
   public url: string
 
@@ -75,6 +75,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   public get queued (): number {
     return this.queue.length() + this.queue.running()
+  }
+
+  public get running (): number {
+    return this.queue.running()
   }
 
   protected handleAbortBound = this.handleAbort.bind(this)
@@ -133,14 +137,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     this.removeEventListeners()
   }
 
-  public getData (): ScolaRequesterElementData {
-    return {
-      loaded: Number(this.getAttribute('sc-loaded')),
-      opened: Number(this.getAttribute('sc-opened')),
-      queued: Number(this.getAttribute('sc-queued')),
-      state: Number(this.getAttribute('sc-state')),
-      total: Number(this.getAttribute('sc-total'))
-    }
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
   }
 
   public reset (): void {
@@ -172,23 +172,12 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
     this.queue.push(options, () => {
       window.requestAnimationFrame(() => {
-        this.setAttribute('sc-queued', this.queued.toString())
+        this.notify()
       })
     })
 
-    this.setAttribute('sc-queued', this.queued.toString())
+    this.notify()
   }
-
-  public setData (): void {}
-
-  public toObject (): Struct {
-    return {
-      method: this.method,
-      url: this.url
-    }
-  }
-
-  public update (): void {}
 
   protected addEventListeners (): void {
     this.addEventListener('sc-requester-send', this.handleSendBound)
@@ -370,7 +359,8 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     const xhr = event.target as XMLHttpRequest
 
     if (this.concurrency === 1) {
-      this.setAttribute('sc-state', xhr.readyState.toString())
+      this.state = xhr.readyState
+      this.notify()
     }
 
     this
@@ -435,8 +425,9 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   protected handleProgress (event: ProgressEvent): void {
     if (this.concurrency === 1) {
-      this.setAttribute('sc-loaded', event.loaded.toString())
-      this.setAttribute('sc-total', event.total.toString())
+      this.loaded = event.loaded
+      this.total = event.total
+      this.notify()
     }
   }
 
@@ -457,14 +448,14 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
     xhr.onerror = (event) => {
       this.xhr.delete(event.target as XMLHttpRequest)
-      this.setAttribute('sc-opened', this.opened.toString())
+      this.notify()
       this.handleError(event)
       callback(null)
     }
 
     xhr.onloadend = (event) => {
       this.xhr.delete(event.target as XMLHttpRequest)
-      this.setAttribute('sc-opened', this.opened.toString())
+      this.notify()
       this.handleLoadend(event, options)
       callback(null)
     }
@@ -475,7 +466,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     try {
       xhr.open(request.method, request.url)
       this.xhr.add(xhr)
-      this.setAttribute('sc-opened', this.opened.toString())
+      this.notify()
 
       if (
         request.body !== null &&
@@ -491,7 +482,8 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       }
 
       if (this.concurrency === 1) {
-        this.setAttribute('sc-state', xhr.readyState.toString())
+        this.state = xhr.readyState
+        this.notify()
       }
     } catch (error: unknown) {
       this.handleError(error)

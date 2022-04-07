@@ -20,6 +20,15 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
 
   public propagator: Propagator
 
+  public get data (): unknown {
+    return this.serialize()
+  }
+
+  public set data (data: unknown) {
+    this.toggleDisabled()
+    this.propagator.set(data)
+  }
+
   public get fieldElements (): ScolaFieldElement[] {
     return Array
       .from(this.elements)
@@ -83,21 +92,6 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
       })
   }
 
-  public getData (): Struct {
-    return this.serialize()
-  }
-
-  public setData (data: unknown): void {
-    this.toggleDisabled()
-    this.propagator.set(data)
-  }
-
-  public toObject (): Struct {
-    return this.serialize()
-  }
-
-  public update (): void {}
-
   public verify (): void {
     Array
       .from(this.elements)
@@ -128,7 +122,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   protected handleFalsify (): void {
-    const dispatched = this.propagator.dispatch('falsify', [this.getData()])
+    const dispatched = this.propagator.dispatch('falsify', [this.data])
 
     if (!dispatched) {
       this.falsify()
@@ -141,7 +135,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   protected handleVerify (): void {
-    const dispatched = this.propagator.dispatch('verify', [this.getData()])
+    const dispatched = this.propagator.dispatch('verify', [this.data])
 
     if (!dispatched) {
       this.verify()
@@ -155,7 +149,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
 
   protected serialize (): Struct {
     return this.fieldElements.reduce<Struct>((data, element) => {
-      const value = element.getValue()
+      const value = element.valueAsCast
 
       if (
         element.type === 'radio' &&

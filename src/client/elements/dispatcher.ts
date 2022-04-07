@@ -63,22 +63,10 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     this.propagator.dispatch('dispatch', [data], event)
   }
 
-  public getData (): Struct {
-    return {}
-  }
-
   public reset (): void {
     this.propagator.events.dispatch = this.parseEvents()
     this.wait = this.hasAttribute('sc-wait')
   }
-
-  public setData (): void {}
-
-  public toObject (): Struct {
-    return {}
-  }
-
-  public update (): void {}
 
   protected addEventListeners (): void {
     this.addEventListener('sc-dispatch', this.handleDispatchBound)

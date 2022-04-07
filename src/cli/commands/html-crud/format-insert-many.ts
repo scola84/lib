@@ -20,7 +20,9 @@ export class InsertManyHandler extends CrudInsertManyHandler {
     query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
-  public url = '${options.url}/insert/many/${toJoint(options.object, '-')}'
+  public url = '${options.url}/insert/many/${toJoint(options.object, {
+    separator: '-'
+  })}'
 }
 `.trim()
 }

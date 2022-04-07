@@ -1,52 +1,48 @@
 import type { ScolaInputElement } from '../../elements/input'
 import type { ScolaRequesterElement } from '../../elements/requester'
 
-export function inputDataRequesterData (observer: ScolaInputElement, observable: ScolaRequesterElement, mutations: MutationRecord[]): void {
-  if (mutations.length > 0) {
-    const data = observable.getData()
+export function inputDataRequesterData (observer: ScolaInputElement, observable: ScolaRequesterElement): void {
+  if (observable.state > 0) {
+    if (observable.total === 0) {
+      observer.setAttribute('max', '100')
 
-    if (data.state > 0) {
-      if (data.total === 0) {
-        observer.setAttribute('max', '100')
-
-        if (data.state === 4) {
-          observer.setData(({
-            value: '100'
-          }))
-        } else {
-          observer.setData(({
-            value: '10'
-          }))
+      if (observable.state === 4) {
+        observer.data = {
+          value: '100'
         }
       } else {
-        observer.setAttribute('max', data.total.toString())
+        observer.data = {
+          value: '10'
+        }
+      }
+    } else {
+      observer.setAttribute('max', observable.total.toString())
 
-        if (
-          data.total === data.loaded &&
-          data.state === 1 &&
+      if (
+        observable.total === observable.loaded &&
+        observable.state === 1 &&
           observer.value === '0'
-        ) {
-          observer.setData(({
-            value: (data.total / 10).toString()
-          }))
-        } else {
-          observer.setData(({
-            value: data.loaded.toString()
-          }))
+      ) {
+        observer.data = {
+          value: (observable.total / 10).toString()
+        }
+      } else {
+        observer.data = {
+          value: observable.loaded.toString()
         }
       }
+    }
 
-      if (data.state === 4) {
-        window.setTimeout(() => {
-          observer.hidden = true
+    if (observable.state === 4) {
+      window.setTimeout(() => {
+        observer.hidden = true
 
-          observer.setData(({
-            value: '0'
-          }))
-        })
-      } else {
-        observer.hidden = false
-      }
+        observer.data = {
+          value: '0'
+        }
+      })
+    } else {
+      observer.hidden = false
     }
   }
 }

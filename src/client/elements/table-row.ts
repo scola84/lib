@@ -1,16 +1,23 @@
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
-import { isStruct } from '../../common'
 
 export class ScolaTableRowElement extends HTMLTableRowElement implements ScolaElement {
-  public data: Struct = {}
+  public datamap: unknown
 
   public mutator: Mutator
 
   public observer: Observer
 
   public propagator: Propagator
+
+  public get data (): unknown {
+    return this.datamap
+  }
+
+  public set data (data: unknown) {
+    this.datamap = data
+    this.propagator.set(data)
+  }
 
   public constructor () {
     super()
@@ -36,23 +43,4 @@ export class ScolaTableRowElement extends HTMLTableRowElement implements ScolaEl
     this.observer.disconnect()
     this.propagator.disconnect()
   }
-
-  public getData (): Struct {
-    return this.data
-  }
-
-  public setData (data: unknown): void {
-    if (isStruct(data)) {
-      this.data = data
-    }
-
-    this.propagator.set(data)
-    this.update()
-  }
-
-  public toObject (): Struct {
-    return this.data
-  }
-
-  public update (): void {}
 }

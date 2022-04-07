@@ -106,7 +106,10 @@ export class TableSelector {
 
   public delete (item: Struct): void {
     const index = this.rows.findIndex((findRow) => {
-      return item[this.element.lister.pkey] === findRow.data[this.element.lister.pkey]
+      return (
+        isStruct(findRow.data) &&
+        item[this.element.lister.pkey] === findRow.data[this.element.lister.pkey]
+      )
     })
 
     if (index > -1) {
@@ -145,13 +148,21 @@ export class TableSelector {
 
   public getItemsByRow (): Struct[] {
     return this.rows.map((row) => {
-      return row.data
+      if (isStruct(row.data)) {
+        return row.data
+      }
+
+      return {}
     })
   }
 
   public getKeysByRow (): unknown[] {
     return this.rows.map((row) => {
-      return row.data[this.element.lister.pkey]
+      if (isStruct(row.data)) {
+        return row.data[this.element.lister.pkey]
+      }
+
+      return null
     })
   }
 
@@ -414,7 +425,10 @@ export class TableSelector {
           !event.ctrlKey &&
           !event.shiftKey
         ) {
-          if (row.data.type === 'node') {
+          if (
+            isStruct(row.data) &&
+            row.data.type === 'node'
+          ) {
             this.element.tree?.toggle(row.data)
           }
 
@@ -442,7 +456,10 @@ export class TableSelector {
         this.mode === 'many' ||
         this.mode === 'one'
       ) {
-        if (row.data.type === 'node') {
+        if (
+          isStruct(row.data) &&
+          row.data.type === 'node'
+        ) {
           this.element.tree?.toggle(row.data)
         }
 
@@ -538,7 +555,10 @@ export class TableSelector {
       }
     }
 
-    if (this.firstSelectedRow?.data.type === 'node') {
+    if (
+      isStruct(this.firstSelectedRow?.data) &&
+      this.firstSelectedRow?.data.type === 'node'
+    ) {
       this.element.tree?.toggle(this.firstSelectedRow.data)
     }
 
@@ -558,7 +578,10 @@ export class TableSelector {
       }
     }
 
-    if (this.firstSelectedRow?.data.type === 'node') {
+    if (
+      isStruct(this.firstSelectedRow?.data) &&
+      this.firstSelectedRow?.data.type === 'node'
+    ) {
       this.element.tree?.toggle(this.firstSelectedRow.data)
     }
 
@@ -793,10 +816,12 @@ export class TableSelector {
   }
 
   protected update (): void {
-    this.element.dragger?.setData({
-      selected: this.rows.length,
-      ...this.firstRow?.data
-    })
+    if (isStruct(this.firstRow?.data)) {
+      this.element.dragger?.setData({
+        selected: this.rows.length,
+        ...this.firstRow?.data
+      })
+    }
 
     this.element.updateAttributes()
   }

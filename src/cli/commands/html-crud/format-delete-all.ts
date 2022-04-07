@@ -13,7 +13,9 @@ export class DeleteAllHandler extends CrudDeleteAllHandler {
 
   public object = '${options.object}'
 
-  public url = '${options.url}/delete/all/${toJoint(options.object, '-')}'
+  public url = '${options.url}/delete/all/${toJoint(options.object, {
+    separator: '-'
+  })}'
 }
 `.trim()
 }

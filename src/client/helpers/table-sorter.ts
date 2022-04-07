@@ -126,7 +126,7 @@ export class TableSorter {
               target.parentElement?.insertBefore(row, target)
             }
 
-            this.element.propagator.dispatch('sort', [row.getData()], event)
+            this.element.propagator.dispatch('sort', [row.data], event)
           }
         }
       }
@@ -176,7 +176,7 @@ export class TableSorter {
     if (this.element.selector?.firstRow?.previousElementSibling !== null) {
       this.element.selector?.rows.forEach((row) => {
         row.parentElement?.insertBefore(row, row.previousElementSibling)
-        this.element.propagator.dispatch('sort', [row.getData()], event)
+        this.element.propagator.dispatch('sort', [row.data], event)
       })
 
       return true
@@ -192,7 +192,7 @@ export class TableSorter {
         .reverse()
         .forEach((row) => {
           row.parentElement?.insertBefore(row, row.nextElementSibling?.nextElementSibling ?? null)
-          this.element.propagator.dispatch('sort', [row.getData()], event)
+          this.element.propagator.dispatch('sort', [row.data], event)
         })
 
       return true

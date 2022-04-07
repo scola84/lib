@@ -18,8 +18,10 @@ declare global {
   }
 }
 
-export interface ScolaRecorderElementData extends Struct {
+export interface ScolaRecorderElementState extends Struct {
   length: Date
+  started: boolean
+  type: string
 }
 
 export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement {
@@ -38,6 +40,8 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   public codeOverlay: number
 
   public codeScanner?: Html5Qrcode
+
+  public durationAsString = '00:00:00'
 
   public facingMode: string
 
@@ -64,6 +68,28 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   public video?: HTMLVideoElement
 
   public wait: boolean
+
+  public get data (): unknown {
+    return {
+      ...this.dataset
+    }
+  }
+
+  public get enabled (): boolean {
+    return this.hasAttribute('sc-enabled')
+  }
+
+  public set enabled (value: boolean) {
+    this.toggleAttribute('sc-enabled', value)
+  }
+
+  public get started (): boolean {
+    return this.hasAttribute('sc-started')
+  }
+
+  public set started (value: boolean) {
+    this.toggleAttribute('sc-started', value)
+  }
 
   protected handleDisableBound = this.handleDisable.bind(this)
 
@@ -117,14 +143,15 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   }
 
   public disable (): void {
-    if (this.hasAttribute('sc-enabled')) {
+    if (this.enabled) {
       this.clearCode()
       this.clearRtc()
       this.clearStream()
       this.clearAudio()
       this.clearVideo()
-      this.toggleAttribute('sc-enabled', false)
-      this.toggleAttribute('sc-started', false)
+      this.enabled = false
+      this.started = false
+      this.notify()
     }
   }
 
@@ -138,7 +165,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   }
 
   public enable (): void {
-    if (!this.hasAttribute('sc-enabled')) {
+    if (!this.enabled) {
       switch (this.type) {
         case 'audio':
           this.enableAudio()
@@ -156,23 +183,15 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
           break
       }
 
-      this.toggleAttribute('sc-enabled', true)
+      this.enabled = true
+      this.notify()
     }
   }
 
-  public getData (): ScolaRecorderElementData | null {
-    if (
-      !(
-        this.type === 'audio' ||
-        this.type === 'video'
-      ) || !this.hasAttribute('sc-started')
-    ) {
-      return null
-    }
-
-    return {
-      length: new Date(Number(this.getAttribute('sc-duration') ?? 0))
-    }
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
   }
 
   public reset (): void {
@@ -184,12 +203,8 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     this.wait = this.hasAttribute('sc-wait')
   }
 
-  public setData (): void {}
-
   public start (): void {
-    if (!this.hasAttribute('sc-started')) {
-      this.toggleAttribute('sc-started', true)
-
+    if (!this.started) {
       switch (this.type) {
         case 'audio':
           this.startAudio()
@@ -203,11 +218,14 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
         default:
           break
       }
+
+      this.started = true
+      this.notify()
     }
   }
 
   public stop (): void {
-    if (this.hasAttribute('sc-started')) {
+    if (this.started) {
       switch (this.type) {
         case 'audio':
           this.stopAudio()
@@ -219,16 +237,13 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
           break
       }
 
-      this.toggleAttribute('sc-started', false)
+      this.started = false
+      this.notify()
     }
   }
 
-  public toObject (): Struct {
-    return {}
-  }
-
   public toggle (): void {
-    if (this.hasAttribute('sc-started')) {
+    if (this.started) {
       this.stop()
     } else {
       this.start()
@@ -238,7 +253,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   public update (): void {
     this.disable()
     this.enable()
-    this.propagator.dispatch('update')
+    this.notify()
   }
 
   public updateStyle (): void {
@@ -278,6 +293,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   protected clearCode (): void {
     if (this.codeScanner !== undefined) {
+      this.toggleAttribute('sc-has-code', false)
       this.codeScanner.stop().catch(() => {})
       this.codeScanner = undefined
     }
@@ -292,8 +308,8 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     if (this.rtcRecorder !== undefined) {
       this.rtcRecorder.destroy()
       this.rtcRecorder = undefined
+      this.durationAsString = '00:00:00'
       this.startTime = 0
-      this.removeAttribute('sc-duration')
     }
   }
 
@@ -373,7 +389,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
     this.codeScanner
       .start(videoConstraints, scannerOptions, (code) => {
-        if (this.hasAttribute('sc-started')) {
+        if (this.started) {
           this.toggleAttribute('sc-has-code', true)
 
           this.propagator.dispatch('code', [{
@@ -510,7 +526,8 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
             this.handleError(error)
           })
           .finally(() => {
-            this.toggleAttribute('sc-started', false)
+            this.started = false
+            this.notify()
           })
       })
   }
@@ -518,7 +535,15 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   protected startRtc (type: 'audio' | 'video'): void {
     if (this.stream !== undefined) {
       this.intervalId = window.setInterval(() => {
-        this.setAttribute('sc-duration', `${Date.now() - this.startTime}`)
+        const duration = (Date.now() - this.startTime) / 1000
+
+        this.durationAsString = [
+          String(Math.floor(duration / 3600)).padStart(2, '0'),
+          String(Math.floor(duration % 3600 / 60)).padStart(2, '0'),
+          String(Math.floor(duration % 3600 % 60)).padStart(2, '0')
+        ].join(':')
+
+        this.notify()
       }, 1000)
 
       this.rtcRecorder = new ScolaRecorderElement.RtcRecorder(this.stream, {

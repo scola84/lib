@@ -7,7 +7,7 @@ import type { Struct } from '../../common'
 export class ScolaButtonElement extends HTMLButtonElement implements ScolaElement {
   public code: string | null
 
-  public data: Struct = {}
+  public datamap: unknown
 
   public dragger?: Dragger
 
@@ -24,6 +24,33 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   public observer: Observer
 
   public propagator: Propagator
+
+  public get data (): unknown {
+    let data: Struct = {
+      ...this.dataset
+    }
+
+    if (isStruct(this.datamap)) {
+      data = {
+        ...data,
+        ...this.datamap
+      }
+    } else if (this.datamap !== undefined) {
+      data = {
+        ...data,
+        data: this.datamap
+      }
+    }
+
+    return data
+  }
+
+  public set data (data: unknown) {
+    this.datamap = data
+    this.dragger?.setData(data)
+    this.propagator.set(data)
+    this.update()
+  }
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
 
@@ -79,13 +106,6 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     this.propagator.disconnect()
   }
 
-  public getData (): Struct {
-    return {
-      ...this.dataset,
-      ...this.data
-    }
-  }
-
   public reset (): void {
     this.code = this.getAttribute('sc-code')
     this.interactor.cancel = this.hasAttribute('sc-cancel')
@@ -95,26 +115,9 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     this.locale = this.getAttribute('sc-locale') ?? undefined
   }
 
-  public setData (data: unknown): void {
-    if (isStruct(data)) {
-      this.data = data
-    }
-
-    this.dragger?.setData(data)
-    this.propagator.set(data)
-    this.update()
-  }
-
-  public toObject (): Struct {
-    return {
-      ...this.dataset,
-      ...this.data
-    }
-  }
-
   public update (): void {
     if (this.code !== null) {
-      this.title = this.i18n.format(this.code, this.getData(), this.locale)
+      this.title = this.i18n.format(this.code, this.data, this.locale)
     }
   }
 
@@ -142,15 +145,15 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   }
 
   protected handleInteractorClick (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('click', [this.getData()], event.originalEvent)
+    return this.propagator.dispatch('click', [this.data], event.originalEvent)
   }
 
   protected handleInteractorContextmenu (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('contextmenu', [this.getData()], event.originalEvent)
+    return this.propagator.dispatch('contextmenu', [this.data], event.originalEvent)
   }
 
   protected handleInteractorDblclick (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('dblclick', [this.getData()], event.originalEvent)
+    return this.propagator.dispatch('dblclick', [this.data], event.originalEvent)
   }
 
   protected handleInteractorStart (event: InteractorEvent): boolean {

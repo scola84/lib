@@ -3,7 +3,7 @@ import type { ScolaElement } from '../../elements/element'
 
 export function elementStateElementData (observer: ScolaElement, observable: ScolaElement): void {
   window.requestAnimationFrame(() => {
-    const data = observable.getData()
+    const { data } = observable
 
     observer.observer.toggleState(Object
       .entries(observer.dataset)
@@ -12,7 +12,10 @@ export function elementStateElementData (observer: ScolaElement, observable: Sco
           ?.split(/\s+/u)
           .some((someValue) => {
             const castValue = cast(someValue)
-            const observeValue = get(data, toJoint(name, '.'))
+
+            const observeValue = get(data, toJoint(name, {
+              separator: '.'
+            }))
 
             if (castValue === true) {
               return !isNil(observeValue)

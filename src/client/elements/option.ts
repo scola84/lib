@@ -1,12 +1,11 @@
-import { I18n, isStruct } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
+import { I18n } from '../../common'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 export class ScolaOptionElement extends HTMLOptionElement implements ScolaElement {
   public code: string
 
-  public data: Struct = {}
+  public datamap: unknown
 
   public i18n: I18n
 
@@ -24,6 +23,15 @@ export class ScolaOptionElement extends HTMLOptionElement implements ScolaElemen
 
   public trim: boolean
 
+  public get data (): unknown {
+    return this.datamap
+  }
+
+  public set data (data: unknown) {
+    this.datamap = data
+    this.update()
+  }
+
   public constructor () {
     super()
     this.i18n = new I18n()
@@ -33,6 +41,7 @@ export class ScolaOptionElement extends HTMLOptionElement implements ScolaElemen
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
     this.reset()
+    this.update()
   }
 
   public static define (): void {
@@ -45,7 +54,6 @@ export class ScolaOptionElement extends HTMLOptionElement implements ScolaElemen
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
-    this.update()
   }
 
   public disconnectedCallback (): void {
@@ -54,52 +62,19 @@ export class ScolaOptionElement extends HTMLOptionElement implements ScolaElemen
     this.propagator.disconnect()
   }
 
-  public getData (): Struct {
-    return {
-      ...this.dataset,
-      ...this.data
-    }
-  }
-
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
     this.locale = this.getAttribute('sc-locale') ?? I18n.locale
     this.trim = this.hasAttribute('sc-trim')
   }
 
-  public setData (data: unknown): void {
-    if (isStruct(data)) {
-      if (isStruct(data.data)) {
-        this.data = data.data
-      } else {
-        this.data = data
-      }
-
-      if (
-        this.initialCode === null &&
-        typeof data.code === 'string'
-      ) {
-        this.code = data.code
-      }
-
-      this.update()
-    }
-  }
-
-  public toObject (): Struct {
-    return {
-      ...this.dataset,
-      ...this.data
-    }
-  }
-
   public update (): void {
-    let string = this.i18n.format(this.code, this.getData(), this.locale)
+    let string = this.i18n.format(this.code, this.data, this.locale)
 
     if (this.trim) {
       string = string
-        .replace(/\s+/u, ' ')
         .trim()
+        .replace(/\s+/u, ' ')
     }
 
     if (

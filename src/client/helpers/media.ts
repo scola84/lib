@@ -1,16 +1,9 @@
-import { I18n, isArray, isFile, isStruct } from '../../common'
+import { I18n, isArray, isFile, isNumber, isStruct } from '../../common'
 import type { ScolaFileProperties, Struct } from '../../common'
 import type { ScolaMediaElement } from '../elements'
 
 export interface MediaData extends Struct {
-  currentTime?: number
-  duration?: number
-  length?: Date
-  muted?: boolean
-  playing?: boolean
   src: string
-  time?: Date
-  volume?: number
 }
 
 export class Media {
@@ -42,32 +35,13 @@ export class Media {
   }
 
   public connect (): void {
+    this.setDurationAsString()
     this.addEventListeners()
   }
 
   public disconnect (): void {
     this.removeEventListeners()
     this.clear()
-  }
-
-  public getData (): Required<MediaData> | null {
-    if (
-      Number.isNaN(this.element.duration) ||
-      this.element.duration === Infinity
-    ) {
-      return null
-    }
-
-    return {
-      currentTime: Math.round(this.element.currentTime * 1000),
-      duration: Math.round(this.element.duration * 1000),
-      length: new Date(this.element.duration * 1000),
-      muted: this.element.muted,
-      playing: !this.element.paused,
-      src: this.element.src,
-      time: new Date(this.element.currentTime * 1000),
-      volume: this.element.volume
-    }
   }
 
   public isBlob (value: unknown): value is Blob {
@@ -102,7 +76,11 @@ export class Media {
       this.element.currentTime = time
     }
 
-    this.element.update()
+    this.element.notify()
+  }
+
+  public setCurrentTime (time: number): void {
+    this.element.currentTime = time / 1000
   }
 
   public setData (data: unknown): void {
@@ -135,19 +113,9 @@ export class Media {
     this.element.muted = mute
   }
 
-  public setTime (time: number): void {
-    this.element.currentTime = time / 1000
-  }
-
   public setVolume (volume: number): void {
     this.element.muted = false
     this.element.volume = volume
-  }
-
-  public toObject (): Struct {
-    return {
-      src: this.element.src
-    }
   }
 
   public toggle (): void {
@@ -160,7 +128,7 @@ export class Media {
 
   protected addEventListeners (): void {
     this.element.addEventListener('canplay', this.handleCanPlayBound)
-    this.element.addEventListener('duration', this.handleDurationChangeBound)
+    this.element.addEventListener('durationchange', this.handleDurationChangeBound)
     this.element.addEventListener('pause', this.handlePauseBound)
     this.element.addEventListener('play', this.handlePlayBound)
     this.element.addEventListener('timeupdate', this.handleTimeupdateBound)
@@ -168,36 +136,61 @@ export class Media {
   }
 
   protected handleCanPlay (): void {
-    this.element.update()
+    this.element.notify()
   }
 
   protected handleDurationchange (): void {
-    this.element.update()
+    this.setDurationAsString()
+    this.element.notify()
   }
 
   protected handlePause (): void {
-    this.element.update()
+    this.element.notify()
   }
 
   protected handlePlay (): void {
-    this.element.update()
+    this.element.notify()
   }
 
   protected handleTimeupdate (): void {
-    this.element.update()
+    this.setCurrentTimeAsString()
+    this.element.notify()
   }
 
   protected handleVolumechange (): void {
-    this.element.update()
+    this.element.notify()
   }
 
   protected removeEventListeners (): void {
     this.element.removeEventListener('canplay', this.handleCanPlayBound)
-    this.element.removeEventListener('duration', this.handleDurationChangeBound)
+    this.element.removeEventListener('durationchange', this.handleDurationChangeBound)
     this.element.removeEventListener('pause', this.handlePauseBound)
     this.element.removeEventListener('play', this.handlePlayBound)
     this.element.removeEventListener('timeupdate', this.handleTimeupdateBound)
     this.element.removeEventListener('volumechange', this.handleVolumechangeBound)
+  }
+
+  protected setCurrentTimeAsString (): void {
+    if (isNumber(this.element.currentTime)) {
+      this.element.currentTimeAsString = [
+        String(Math.floor(this.element.currentTime / 3600)).padStart(2, '0'),
+        String(Math.floor(this.element.currentTime % 3600 / 60)).padStart(2, '0'),
+        String(Math.floor(this.element.currentTime % 3600 % 60)).padStart(2, '0')
+      ].join(':')
+    }
+  }
+
+  protected setDurationAsString (): void {
+    if (
+      isNumber(this.element.duration) &&
+      this.element.duration !== Infinity
+    ) {
+      this.element.durationAsString = [
+        String(Math.floor(this.element.duration / 3600)).padStart(2, '0'),
+        String(Math.floor(this.element.duration % 3600 / 60)).padStart(2, '0'),
+        String(Math.floor(this.element.duration % 3600 % 60)).padStart(2, '0')
+      ].join(':')
+    }
   }
 
   protected setSourceFromArray (data: unknown[]): void {
@@ -234,8 +227,6 @@ export class Media {
     ) {
       this.element.poster = data.poster
     }
-
-    this.element.update()
   }
 
   protected setSourceFromStruct (struct: Struct): void {

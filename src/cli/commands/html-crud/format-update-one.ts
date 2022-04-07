@@ -20,7 +20,9 @@ export class UpdateOneHandler extends CrudUpdateOneHandler {
     query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
-  public url = '${options.url}/update/one/${toJoint(options.object, '-')}'
+  public url = '${options.url}/update/one/${toJoint(options.object, {
+    separator: '-'
+  })}'
 }
 `.trim()
 }

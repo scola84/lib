@@ -1,12 +1,10 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import type { FieldData, FieldValue } from '../helpers'
 import type { Primitive, ScolaError } from '../../common'
 import { Struct, cast, isArray, isError, isPrimitive, isStruct, set } from '../../common'
+import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 
 export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldElement {
-  public error?: Struct
-
   public field: Field
 
   public mutator: Mutator
@@ -14,6 +12,83 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   public observer: Observer
 
   public propagator: Propagator
+
+  public get data (): unknown {
+    return {
+      name: this.name,
+      value: this.valueAsCast
+    }
+  }
+
+  public set data (data: unknown) {
+    this.field.clear()
+    this.valueAsCast = data
+  }
+
+  public get error (): ScolaError | undefined {
+    let error: ScolaError | null = null
+
+    if (this.validity.badInput) {
+      error = {
+        code: `err_validator_bad_${this.type}`
+      }
+    } else if (this.validity.typeMismatch) {
+      error = {
+        code: `err_validator_type_mismatch_${this.type}`
+      }
+    } else if (this.validity.valueMissing) {
+      error = {
+        code: 'err_validator_value_missing'
+      }
+    }
+
+    return error ?? undefined
+  }
+
+  public set error (error: ScolaError | undefined) {
+    if (error !== undefined) {
+      this.field.setError(error)
+    }
+  }
+
+  public get isEmpty (): boolean {
+    return this.value === ''
+  }
+
+  public get valueAsCast (): FieldValue {
+    return Array
+      .from(this.selectedOptions)
+      .map((option) => {
+        return cast(option.value) ?? null
+      })
+  }
+
+  public set valueAsCast (value: unknown) {
+    if (this.form?.valid === false) {
+      if (isError(value)) {
+        this.error = value
+      }
+
+      return
+    }
+
+    if (
+      isStruct(value) &&
+      value.valid === true
+    ) {
+      this.field.setValid()
+    } else if (isArray(value)) {
+      this.setArray(value)
+    } else if (isPrimitive(value)) {
+      this.setPrimitive(value)
+    } else {
+      this.setPrimitive('')
+    }
+
+    this.verify()
+    this.update()
+    this.propagator.set(value)
+  }
 
   protected handleInputBound = this.handleInput.bind(this)
 
@@ -52,98 +127,24 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     this.field.falsify()
   }
 
-  public getData (): FieldData {
-    return this.field.getData()
-  }
-
-  public getError (): ScolaError | null {
-    let error: ScolaError | null = null
-
-    if (this.validity.badInput) {
-      error = {
-        code: `err_validator_bad_${this.type}`
-      }
-    } else if (this.validity.typeMismatch) {
-      error = {
-        code: `err_validator_type_mismatch_${this.type}`
-      }
-    } else if (this.validity.valueMissing) {
-      error = {
-        code: 'err_validator_value_missing'
-      }
-    }
-
-    return error
-  }
-
-  public getValue (): FieldValue {
-    return Array
-      .from(this.selectedOptions)
-      .map((option) => {
-        return cast(option.value) ?? null
-      })
-  }
-
-  public isEmpty (): boolean {
-    return this.value === ''
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.form?.toggleAttribute('sc-updated', true)
+    this.form?.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
   }
 
   public reset (): void {
-    this.setData(Array
+    this.data = Array
       .from(this.querySelectorAll<HTMLOptionElement>('option[selected]'))
       .map((option) => {
         return option.value
-      }))
-  }
-
-  public setData (data: unknown): void {
-    this.field.clear()
-    this.field.setValue(data)
-  }
-
-  public setError (error: ScolaError): void {
-    this.field.setError(error)
-  }
-
-  public setValue (value: unknown): void {
-    if (this.form?.valid === false) {
-      if (isError(value)) {
-        this.setError(value)
-      }
-
-      return
-    }
-
-    if (
-      isStruct(value) &&
-      value.valid === true
-    ) {
-      this.field.setValid()
-    } else if (isArray(value)) {
-      this.setArray(value)
-    } else if (isPrimitive(value)) {
-      this.setPrimitive(value)
-    } else {
-      this.setPrimitive('')
-    }
-
-    this.verify()
-    this.update()
-    this.propagator.set(value)
-  }
-
-  public toObject (): Struct {
-    return this.field.toObject()
+      })
   }
 
   public update (): void {
-    this.updateAttributes()
-  }
-
-  public updateAttributes (): void {
-    this.toggleAttribute('sc-empty', this.isEmpty())
-    this.setAttribute('sc-updated', Date.now().toString())
-    this.form?.setAttribute('sc-updated', Date.now().toString())
+    this.notify()
   }
 
   public verify (): void {
@@ -159,7 +160,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     this.update()
 
     this.propagator.dispatch('value', [
-      set(Struct.create(), this.name, this.getValue())
+      set(Struct.create(), this.name, this.value)
     ], event)
   }
 

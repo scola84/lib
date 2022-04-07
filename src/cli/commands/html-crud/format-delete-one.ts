@@ -24,7 +24,9 @@ export class DeleteOneHandler extends CrudDeleteOneHandler {
     query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
-  public url = '${options.url}/delete/one/${toJoint(options.object, '-')}'
+  public url = '${options.url}/delete/one/${toJoint(options.object, {
+    separator: '-'
+  })}'
 }
 `.trim()
 }

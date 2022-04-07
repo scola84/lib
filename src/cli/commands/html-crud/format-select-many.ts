@@ -24,7 +24,9 @@ export class SelectManyHandler extends CrudSelectManyHandler {
     query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
-  public url = '${options.url}/select/many/${toJoint(options.object, '-')}'
+  public url = '${options.url}/select/many/${toJoint(options.object, {
+    separator: '-'
+  })}'
 }
 `.trim()
 }

@@ -1,14 +1,12 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import type { FieldData, FieldValue } from '../helpers'
 import { I18n, Struct, cast, isArray, isDate, isError, isPrimitive, isStruct, set } from '../../common'
 import type { Primitive, ScolaError } from '../../common'
+import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 import { debounce } from 'throttle-debounce'
 
 export class ScolaInputElement extends HTMLInputElement implements ScolaFieldElement {
   public debounce = 0
-
-  public error?: Struct
 
   public field: Field
 
@@ -27,6 +25,142 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   public observer: Observer
 
   public propagator: Propagator
+
+  public get data (): unknown {
+    return {
+      name: this.name,
+      value: this.valueAsCast
+    }
+  }
+
+  public set data (data: unknown) {
+    this.field.clear()
+    this.valueAsCast = data
+  }
+
+  public get error (): ScolaError | undefined {
+    let error: ScolaError | null = null
+
+    if (this.validity.badInput) {
+      error = {
+        code: `err_validator_bad_input_${this.type}`
+      }
+    } else if (this.validity.patternMismatch) {
+      error = {
+        code: 'err_validator_pattern_mismatch',
+        data: { pattern: this.pattern }
+      }
+    } else if (this.validity.rangeOverflow) {
+      error = {
+        code: 'err_validator_range_overflow',
+        data: { max: this.max }
+      }
+    } else if (this.validity.rangeUnderflow) {
+      error = {
+        code: 'err_validator_range_underflow',
+        data: { min: this.min }
+      }
+    } else if (this.validity.stepMismatch) {
+      error = {
+        code: 'err_validator_step_mismatch',
+        data: { step: this.step }
+      }
+    } else if (this.validity.tooLong) {
+      error = {
+        code: 'err_validator_too_long',
+        data: { maxLength: this.maxLength }
+      }
+    } else if (this.validity.tooShort) {
+      error = {
+        code: 'err_validator_too_short',
+        data: { minLength: this.minLength }
+      }
+    } else if (this.validity.typeMismatch) {
+      error = {
+        code: `err_validator_type_mismatch_${this.type}`
+      }
+    } else if (this.validity.valueMissing) {
+      error = {
+        code: 'err_validator_value_missing'
+      }
+    }
+
+    return error ?? undefined
+  }
+
+  public set error (error: ScolaError | undefined) {
+    if (error !== undefined) {
+      this.field.setError(error)
+    }
+  }
+
+  public get isEmpty (): boolean {
+    return (
+      this.value === '' &&
+      this.field.value === ''
+    )
+  }
+
+  public get valueAsCast (): FieldValue {
+    if (
+      this.type === 'checkbox' ||
+      this.type === 'radio'
+    ) {
+      return this.getChecked()
+    } else if (
+      this.type === 'date' ||
+      this.type === 'datetime-local' ||
+      this.type === 'time'
+    ) {
+      return this.getDate()
+    } else if (this.type === 'file') {
+      return this.getFile()
+    }
+
+    return this.getPrimitive()
+  }
+
+  public set valueAsCast (value: unknown) {
+    if (this.form?.valid === false) {
+      if (isError(value)) {
+        this.error = value
+      }
+
+      return
+    }
+
+    if (
+      isStruct(value) &&
+      value.valid === true
+    ) {
+      this.field.setValid()
+    } else if (
+      isStruct(value) &&
+      isPrimitive(value.value)
+    ) {
+      this.setPrimitive(value.value)
+    } else if (
+      this.type === 'checkbox' ||
+      this.type === 'radio'
+    ) {
+      this.setChecked(value)
+    } else if (
+      this.type === 'date' ||
+      this.type === 'datetime-local' ||
+      this.type === 'time'
+    ) {
+      this.setDate(value)
+    } else if (this.type === 'file') {
+      this.setFile(value)
+    } else if (isPrimitive(value)) {
+      this.setPrimitive(value)
+    } else {
+      this.setPrimitive('')
+    }
+
+    this.verify()
+    this.update()
+  }
 
   protected handleInputBound = debounce(0, this.handleInput.bind(this))
 
@@ -75,84 +209,12 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.field.falsify()
   }
 
-  public getData (): FieldData {
-    return this.field.getData()
-  }
-
-  public getError (): ScolaError | null {
-    let error: ScolaError | null = null
-
-    if (this.validity.badInput) {
-      error = {
-        code: `err_validator_bad_input_${this.type}`
-      }
-    } else if (this.validity.patternMismatch) {
-      error = {
-        code: 'err_validator_pattern_mismatch',
-        data: { pattern: this.pattern }
-      }
-    } else if (this.validity.rangeOverflow) {
-      error = {
-        code: 'err_validator_range_overflow',
-        data: { max: this.max }
-      }
-    } else if (this.validity.rangeUnderflow) {
-      error = {
-        code: 'err_validator_range_underflow',
-        data: { min: this.min }
-      }
-    } else if (this.validity.stepMismatch) {
-      error = {
-        code: 'err_validator_step_mismatch',
-        data: { step: this.step }
-      }
-    } else if (this.validity.tooLong) {
-      error = {
-        code: 'err_validator_too_long',
-        data: { maxLength: this.maxLength }
-      }
-    } else if (this.validity.tooShort) {
-      error = {
-        code: 'err_validator_too_short',
-        data: { minLength: this.minLength }
-      }
-    } else if (this.validity.typeMismatch) {
-      error = {
-        code: `err_validator_type_mismatch_${this.type}`
-      }
-    } else if (this.validity.valueMissing) {
-      error = {
-        code: 'err_validator_value_missing'
-      }
-    }
-
-    return error
-  }
-
-  public getValue (): FieldValue {
-    if (
-      this.type === 'checkbox' ||
-      this.type === 'radio'
-    ) {
-      return this.getChecked()
-    } else if (
-      this.type === 'date' ||
-      this.type === 'datetime-local' ||
-      this.type === 'time'
-    ) {
-      return this.getDate()
-    } else if (this.type === 'file') {
-      return this.getFile()
-    }
-
-    return this.getPrimitive()
-  }
-
-  public isEmpty (): boolean {
-    return (
-      this.value === '' &&
-      this.field.value === ''
-    )
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.form?.toggleAttribute('sc-updated', true)
+    this.form?.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
   }
 
   public reset (): void {
@@ -162,78 +224,16 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
       this.type === 'checkbox' ||
       this.type === 'radio'
     ) {
-      this.setData(this.initialChecked)
+      this.data = this.initialChecked
     } else {
-      this.setData(this.initialValue)
+      this.data = this.initialValue
     }
-  }
-
-  public setData (data: unknown): void {
-    this.field.clear()
-    this.field.setValue(data)
-  }
-
-  public setError (error: ScolaError): void {
-    this.clearDebounce()
-    this.field.setError(error)
-  }
-
-  public setValue (value: unknown): void {
-    if (this.form?.valid === false) {
-      if (isError(value)) {
-        this.setError(value)
-      }
-
-      return
-    }
-
-    if (
-      isStruct(value) &&
-      value.valid === true
-    ) {
-      this.field.setValid()
-    } else if (
-      isStruct(value) &&
-      isPrimitive(value.value)
-    ) {
-      this.setPrimitive(value.value)
-    } else if (
-      this.type === 'checkbox' ||
-      this.type === 'radio'
-    ) {
-      this.setChecked(value)
-    } else if (
-      this.type === 'date' ||
-      this.type === 'datetime-local' ||
-      this.type === 'time'
-    ) {
-      this.setDate(value)
-    } else if (this.type === 'file') {
-      this.setFile(value)
-    } else if (isPrimitive(value)) {
-      this.setPrimitive(value)
-    } else {
-      this.setPrimitive('')
-    }
-
-    this.verify()
-    this.update()
-  }
-
-  public toObject (): Struct {
-    return this.field.toObject()
   }
 
   public update (): void {
-    this.updateAttributes()
     this.updatePlaceholder()
     this.updateStyle()
-  }
-
-  public updateAttributes (): void {
-    this.toggleAttribute('sc-empty', this.isEmpty())
-    this.setAttribute('sc-updated', Date.now().toString())
-    this.form?.setAttribute('sc-updated', Date.now().toString())
+    this.notify()
   }
 
   public updatePlaceholder (): void {
@@ -352,7 +352,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   protected handleInputValue (event: Event): void {
     this.propagator.dispatch('value', [
-      set(Struct.create(), this.name, this.getValue())
+      set(Struct.create(), this.name, this.valueAsCast)
     ], event)
   }
 

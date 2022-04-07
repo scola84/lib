@@ -1,6 +1,5 @@
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement {
   public mutator: Mutator
@@ -8,6 +7,16 @@ export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement 
   public observer: Observer
 
   public propagator: Propagator
+
+  public get data (): unknown {
+    return {
+      ...this.dataset
+    }
+  }
+
+  public set data (data: unknown) {
+    this.propagator.set(data)
+  }
 
   public constructor () {
     super()
@@ -33,18 +42,4 @@ export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement 
     this.observer.disconnect()
     this.propagator.disconnect()
   }
-
-  public getData (): Struct {
-    return {}
-  }
-
-  public setData (data: unknown): void {
-    this.propagator.set(data)
-  }
-
-  public toObject (): Struct {
-    return {}
-  }
-
-  public update (): void {}
 }

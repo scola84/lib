@@ -604,7 +604,10 @@ export abstract class SqlFormatter {
       .entries(flatten<unknown>(query.where ?? {}))
       .map(([name, value]) => {
         const operator = operators[name] ?? '='
-        const valueKey = toJoint(`${prefix}${name}`, '_')
+
+        const valueKey = toJoint(`${prefix}${name}`, {
+          separator: '_'
+        })
 
         values[valueKey] = value
 

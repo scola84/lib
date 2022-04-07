@@ -64,17 +64,10 @@ export class Field {
   }
 
   public falsify (): void {
-    const error = this.element.getError()
+    const { error } = this.element
 
-    if (error !== null) {
-      this.element.setData(error)
-    }
-  }
-
-  public getData (): FieldData {
-    return {
-      name: this.element.name,
-      value: this.element.getValue()
+    if (error !== undefined) {
+      this.element.data = error
     }
   }
 
@@ -92,21 +85,10 @@ export class Field {
     this.element.toggleAttribute('sc-field-valid', true)
   }
 
-  public setValue (value: unknown): void {
-    this.element.setValue(value)
-  }
-
-  public toObject (): Struct {
-    return {
-      name: this.element.name,
-      value: this.element.getValue()
-    }
-  }
-
   public verify (): void {
-    const error = this.element.getError()
+    const { error } = this.element
 
-    if (error === null) {
+    if (error === undefined) {
       this.setValid()
     }
   }
@@ -124,7 +106,7 @@ export class Field {
   }
 
   protected handleFalsify (): void {
-    const dispatched = this.element.propagator.dispatch('falsify', [this.getData()])
+    const dispatched = this.element.propagator.dispatch('falsify', [this.element.data])
 
     if (!dispatched) {
       this.falsify()
@@ -178,7 +160,7 @@ export class Field {
   }
 
   protected handleVerify (): void {
-    const dispatched = this.element.propagator.dispatch('verify', [this.getData()])
+    const dispatched = this.element.propagator.dispatch('verify', [this.element.data])
 
     if (!dispatched) {
       this.verify()

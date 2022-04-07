@@ -1,12 +1,10 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import type { FieldData, FieldValue } from '../helpers'
 import { I18n, Struct, cast, isError, isPrimitive, isStruct, set } from '../../common'
 import type { Primitive, ScolaError } from '../../common'
+import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 
 export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFieldElement {
-  public error?: Struct
-
   public field: Field
 
   public i18n: I18n
@@ -23,55 +21,19 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   public resize: boolean
 
-  protected handleInputBound = this.handleInput.bind(this)
-
-  public constructor () {
-    super()
-    this.field = new Field(this)
-    this.i18n = new I18n()
-    this.initialCode = this.getAttribute('sc-code')
-    this.initialInnerHtml = this.value
-    this.mutator = new Mutator(this)
-    this.observer = new Observer(this)
-    this.propagator = new Propagator(this)
-    this.reset()
+  public get data (): unknown {
+    return {
+      name: this.name,
+      value: this.valueAsCast
+    }
   }
 
-  public static define (): void {
-    customElements.define('sc-textarea', ScolaTextAreaElement, {
-      extends: 'textarea'
-    })
+  public set data (data: unknown) {
+    this.field.clear()
+    this.valueAsCast = data
   }
 
-  public connectedCallback (): void {
-    this.field.connect()
-    this.mutator.connect()
-    this.observer.connect()
-    this.propagator.connect()
-    this.addEventListeners()
-
-    window.requestAnimationFrame(() => {
-      this.update()
-    })
-  }
-
-  public disconnectedCallback (): void {
-    this.field.disconnect()
-    this.mutator.disconnect()
-    this.observer.disconnect()
-    this.propagator.disconnect()
-    this.removeEventListeners()
-  }
-
-  public falsify (): void {
-    this.field.falsify()
-  }
-
-  public getData (): FieldData {
-    return this.field.getData()
-  }
-
-  public getError (): ScolaError | null {
+  public get error (): ScolaError | undefined {
     let error: ScolaError | null = null
 
     if (this.validity.badInput) {
@@ -98,35 +60,27 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
       }
     }
 
-    return error
+    return error ?? undefined
   }
 
-  public getValue (): FieldValue {
-    return cast(this.value) ?? null
+  public set error (error: ScolaError | undefined) {
+    if (error !== undefined) {
+      this.field.setError(error)
+    }
   }
 
-  public isEmpty (): boolean {
+  public get isEmpty (): boolean {
     return this.innerHTML === ''
   }
 
-  public reset (): void {
-    this.resize = this.hasAttribute('sc-resize')
-    this.setData(this.initialInnerHtml)
+  public get valueAsCast (): FieldValue {
+    return cast(this.value) ?? null
   }
 
-  public setData (data: unknown): void {
-    this.field.clear()
-    this.field.setValue(data)
-  }
-
-  public setError (error: ScolaError): void {
-    this.field.setError(error)
-  }
-
-  public setValue (value: unknown): void {
+  public set valueAsCast (value: unknown) {
     if (this.form?.valid === false) {
       if (isError(value)) {
-        this.setError(value)
+        this.error = value
       }
 
       return
@@ -147,23 +101,72 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     this.update()
   }
 
-  public toObject (): Struct {
-    return this.field.toObject()
+  protected handleInputBound = this.handleInput.bind(this)
+
+  public constructor () {
+    super()
+    this.field = new Field(this)
+    this.i18n = new I18n()
+    this.initialCode = this.getAttribute('sc-code')
+    this.initialInnerHtml = this.value
+    this.mutator = new Mutator(this)
+    this.observer = new Observer(this)
+    this.propagator = new Propagator(this)
+    this.reset()
+    this.update()
+  }
+
+  public static define (): void {
+    customElements.define('sc-textarea', ScolaTextAreaElement, {
+      extends: 'textarea'
+    })
+  }
+
+  public connectedCallback (): void {
+    this.field.connect()
+    this.mutator.connect()
+    this.observer.connect()
+    this.propagator.connect()
+    this.addEventListeners()
+
+    window.requestAnimationFrame(() => {
+      this.updateStyle()
+    })
+  }
+
+  public disconnectedCallback (): void {
+    this.field.disconnect()
+    this.mutator.disconnect()
+    this.observer.disconnect()
+    this.propagator.disconnect()
+    this.removeEventListeners()
+  }
+
+  public falsify (): void {
+    this.field.falsify()
+  }
+
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.form?.toggleAttribute('sc-updated', true)
+    this.form?.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
+  }
+
+  public reset (): void {
+    this.resize = this.hasAttribute('sc-resize')
+    this.data = this.initialInnerHtml
   }
 
   public update (): void {
-    this.updateAttributes()
     this.updatePlaceholder()
 
     if (this.resize) {
       this.updateStyle()
     }
-  }
 
-  public updateAttributes (): void {
-    this.toggleAttribute('sc-empty', this.isEmpty())
-    this.setAttribute('sc-updated', Date.now().toString())
-    this.form?.setAttribute('sc-updated', Date.now().toString())
+    this.notify()
   }
 
   public updatePlaceholder (): void {
@@ -192,7 +195,7 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     this.update()
 
     this.propagator.dispatch('value', [
-      set(Struct.create(), this.name, this.getValue())
+      set(Struct.create(), this.name, this.value)
     ], event)
   }
 

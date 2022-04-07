@@ -87,8 +87,10 @@ export class Mutator {
       Object
         .entries(data)
         .map<[string, unknown]>(([name, value]) => {
-        return [toJoint(name, '-'), value]
-      })
+        /* eslint-disable @typescript-eslint/indent */
+          return [toJoint(name, { separator: '-' }), value]
+        })
+        /* eslint-enable @typescript-eslint/indent */
         .forEach(([name, value]) => {
           this.rotateAttribute(name, value)
         })
@@ -134,7 +136,7 @@ export class Mutator {
         .entries(data)
         .map<[string, unknown]>(([name, value]) => {
         /* eslint-disable @typescript-eslint/indent */
-          return [toJoint(name, '-'), value]
+          return [toJoint(name, { separator: '-' }), value]
         })
         /* eslint-enable @typescript-eslint/indent */
         .forEach(([name, value]) => {
@@ -165,7 +167,7 @@ export class Mutator {
         .entries(data)
         .map<[string, unknown]>(([name, value]) => {
         /* eslint-disable @typescript-eslint/indent */
-          return [toJoint(name, '-'), value]
+          return [toJoint(name, { separator: '-' }), value]
         })
         /* eslint-enable @typescript-eslint/indent */
         .forEach(([name, value]) => {
@@ -179,7 +181,7 @@ export class Mutator {
       Object
         .keys(data)
         .map((name) => {
-          return toJoint(name, '-')
+          return toJoint(name, { separator: '-' })
         })
         .forEach((name) => {
           this.element.removeAttribute(name)

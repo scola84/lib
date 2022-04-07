@@ -67,6 +67,33 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public wait: boolean
 
+  public get data (): unknown {
+    return {
+      name: this.view?.name ?? '',
+      params: new URLSearchParams(flatten(this.view?.params ?? {})).toString()
+    }
+  }
+
+  public set data (data: unknown) {
+    if (typeof data === 'string') {
+      if (this.requestView !== undefined) {
+        this.requestView.snippet = data
+        this.update()
+        this.requestView = undefined
+      }
+    } else {
+      this.propagator.set(data)
+    }
+  }
+
+  public get hasNext (): boolean {
+    return this.pointer < this.views.length - 1
+  }
+
+  public get hasPrevious (): boolean {
+    return this.pointer > 0
+  }
+
   public get view (): View | null {
     return this.views[this.pointer] ?? null
   }
@@ -159,7 +186,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   public connectedCallback (): void {
     this.observer.observe(this.handleObserverBound, [
       'hidden',
-      'sc-views'
+      'sc-updated'
     ])
 
     this.hider?.connect()
@@ -215,6 +242,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       this.go(this.pointer)
     } else {
       this.updateAttributes()
+      this.notify()
     }
   }
 
@@ -232,10 +260,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public forward (): void {
     this.go(this.pointer + 1)
-  }
-
-  public getData (): View | null {
-    return this.view
   }
 
   public go (pointer: number): void {
@@ -269,6 +293,12 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
+  }
+
   public reset (): void {
     this.name = this.getAttribute('sc-name')
     this.params = this.getAttribute('sc-params')
@@ -284,55 +314,39 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.go(0)
   }
 
-  public setData (data: unknown): void {
-    if (typeof data === 'string') {
-      if (this.requestView !== undefined) {
-        this.requestView.snippet = data
-        this.update()
-        this.requestView = undefined
-      }
-    } else {
-      this.propagator.set(data)
-    }
-  }
-
-  public toObject (): Struct<string> {
-    return {
-      name: this.view?.name ?? '',
-      params: new URLSearchParams(flatten(this.view?.params ?? {})).toString()
-    }
-  }
-
   public toString (): string {
     if (this.view === null) {
       return ''
     }
 
-    let {
-      name,
-      params
-    } = this.toObject()
+    if (
+      isStruct(this.data) &&
+      typeof this.data.name === 'string' &&
+      typeof this.data.params === 'string'
+    ) {
+      let {
+        name,
+        params
+      } = this.data
 
-    if (params.length > 0) {
-      params = `:${params}`
+      if (params.length > 0) {
+        params = `:${params}`
+      }
+
+      return `/${name}${params}@${this.id}`
     }
 
-    return `/${name}${params}@${this.id}`
+    return ''
   }
 
   public update (): void {
     this.updateElements()
     this.updateAttributes()
-    this.propagator.dispatch('update', [this.getData()])
+    this.notify()
   }
 
   public updateAttributes (): void {
     this.toggleAttribute('hidden', false)
-    this.toggleAttribute('sc-has-next', this.pointer < this.views.length - 1)
-    this.toggleAttribute('sc-has-previous', this.pointer > 0)
-    this.setAttribute('sc-views', this.views.length.toString())
-    this.setAttribute('sc-pointer', this.pointer.toString())
-    this.setAttribute('sc-updated', Date.now().toString())
   }
 
   public updateElements (): void {

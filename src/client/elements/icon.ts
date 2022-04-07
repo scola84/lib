@@ -1,4 +1,4 @@
-import { I18n, isStruct } from '../../common'
+import { I18n, isError, isStruct } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
@@ -8,7 +8,7 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
 
   public code: string
 
-  public data: Struct = {}
+  public datamap: unknown
 
   public i18n: I18n
 
@@ -20,6 +20,40 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
 
   public propagator: Propagator
 
+  public get data (): unknown {
+    let data: Struct = {
+      ...this.dataset
+    }
+
+    if (isStruct(this.datamap)) {
+      data = {
+        ...data,
+        ...this.datamap
+      }
+    } else if (this.datamap !== undefined) {
+      data = {
+        ...data,
+        data: this.datamap
+      }
+    }
+
+    return data
+  }
+
+  public set data (data: unknown) {
+    if (isError(data)) {
+      this.datamap = data.data
+
+      if (this.initialCode === null) {
+        this.code = data.code
+      }
+    } else {
+      this.datamap = data
+    }
+
+    this.update()
+  }
+
   public constructor () {
     super()
     this.i18n = new I18n()
@@ -28,6 +62,7 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
     this.reset()
+    this.update()
   }
 
   public static define (): void {
@@ -48,7 +83,6 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
-    this.update()
   }
 
   public disconnectedCallback (): void {
@@ -57,45 +91,12 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
     this.propagator.disconnect()
   }
 
-  public getData (): Struct {
-    return {
-      ...this.dataset,
-      ...this.data
-    }
-  }
-
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
   }
 
-  public setData (data: unknown): void {
-    if (isStruct(data)) {
-      if (isStruct(data.data)) {
-        this.data = data.data
-      } else {
-        this.data = data
-      }
-
-      if (
-        this.initialCode === null &&
-        typeof data.code === 'string'
-      ) {
-        this.code = data.code
-      }
-
-      this.update()
-    }
-  }
-
-  public toObject (): Struct {
-    return {
-      ...this.dataset,
-      ...this.data
-    }
-  }
-
   public update (): void {
-    const code = this.i18n.format(this.code, this.getData())
+    const code = this.i18n.format(this.code, this.data)
     const snippet = ScolaIconElement.snippets[code]
 
     if (snippet !== undefined) {

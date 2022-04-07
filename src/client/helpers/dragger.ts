@@ -85,12 +85,9 @@ export class Dragger {
         const element = template.firstElementChild as ScolaElement
 
         document.body.appendChild(template)
-
-        if (typeof element.setData === 'function') {
-          this.indexer.set(element)
-          element.setData(this.data)
-          event.dataTransfer.setDragImage(element, 0, 0)
-        }
+        this.indexer.set(element)
+        element.data = this.data
+        event.dataTransfer.setDragImage(element, 0, 0)
 
         window.requestAnimationFrame(() => {
           this.indexer.remove(element)

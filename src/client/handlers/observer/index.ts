@@ -1,5 +1,7 @@
 import { buttonStateCarouselHider } from './button-state-carousel-hider'
 import { carouselSelectValue } from './carousel-select-value'
+import { dataAttrs } from './data-attrs'
+import { dataProps } from './data-props'
 import { elementDataElementData } from './element-data-element-data'
 import { elementDataFieldError } from './element-data-field-error'
 import { elementStateElementAttrs } from './element-state-element-attrs'
@@ -14,12 +16,17 @@ import { formDataTableSelector } from './form-data-table-selector'
 import { inputDataMediaTime } from './input-data-media-time'
 import { inputDataMediaVolume } from './input-data-media-volume'
 import { inputDataRequesterData } from './input-data-requester-data'
+import { propsProps } from './props-props'
+import { stateAttrs } from './state-attrs'
+import { stateProps } from './state-props'
 import { tableRowsView } from './table-rows-view'
 import { tableSelectorRowTableLister } from './table-selector-row-table-lister'
 
 export const observerHandlers = {
   'sc-button-state-carousel-hider': buttonStateCarouselHider,
   'sc-carousel-select-value': carouselSelectValue,
+  'sc-data-attrs': dataAttrs,
+  'sc-data-props': dataProps,
   'sc-element-data-element-data': elementDataElementData,
   'sc-element-data-field-error': elementDataFieldError,
   'sc-element-state-element-attrs': elementStateElementAttrs,
@@ -34,6 +41,9 @@ export const observerHandlers = {
   'sc-input-data-media-time': inputDataMediaTime,
   'sc-input-data-media-volume': inputDataMediaVolume,
   'sc-input-data-requester-data': inputDataRequesterData,
+  'sc-props-props': propsProps,
+  'sc-state-attrs': stateAttrs,
+  'sc-state-props': stateProps,
   'sc-table-rows-view': tableRowsView,
   'sc-table-selector-row-table-lister': tableSelectorRowTableLister
 }

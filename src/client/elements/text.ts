@@ -6,7 +6,7 @@ import type { Struct } from '../../common'
 export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
   public code: string
 
-  public data: unknown
+  public datamap: unknown
 
   public i18n: I18n
 
@@ -24,6 +24,40 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
 
   public trim: boolean
 
+  public get data (): unknown {
+    let data: Struct = {
+      ...this.dataset
+    }
+
+    if (isStruct(this.datamap)) {
+      data = {
+        ...data,
+        ...this.datamap
+      }
+    } else if (this.datamap !== undefined) {
+      data = {
+        ...data,
+        data: this.datamap
+      }
+    }
+
+    return data
+  }
+
+  public set data (data: unknown) {
+    if (isError(data)) {
+      this.datamap = data.data
+
+      if (this.initialCode === null) {
+        this.code = data.code
+      }
+    } else {
+      this.datamap = data
+    }
+
+    this.update()
+  }
+
   public constructor () {
     super()
     this.i18n = new I18n()
@@ -33,6 +67,7 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
     this.reset()
+    this.update()
   }
 
   public static define (): void {
@@ -45,7 +80,6 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
-    this.update()
   }
 
   public disconnectedCallback (): void {
@@ -54,50 +88,14 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
     this.propagator.disconnect()
   }
 
-  public getData (): Struct {
-    let data: Struct = this.dataset
-
-    if (isStruct(this.data)) {
-      data = {
-        ...data,
-        ...this.data
-      }
-    } else {
-      data = {
-        ...data,
-        data: this.data
-      }
-    }
-
-    return data
-  }
-
   public reset (): void {
     this.code = this.getAttribute('sc-code') ?? ''
     this.locale = this.getAttribute('sc-locale') ?? undefined
     this.trim = this.hasAttribute('sc-trim')
   }
 
-  public setData (data: unknown): void {
-    if (isError(data)) {
-      this.data = data.data
-
-      if (this.initialCode === null) {
-        this.code = data.code
-      }
-    } else {
-      this.data = data
-    }
-
-    this.update()
-  }
-
-  public toObject (): Struct {
-    return this.getData()
-  }
-
   public update (): void {
-    let string = this.i18n.format(this.code, this.getData(), this.locale)
+    let string = this.i18n.format(this.code, this.data, this.locale)
 
     if (this.trim) {
       string = string

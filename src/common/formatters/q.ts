@@ -10,10 +10,15 @@ export function q (name: string): Formatter {
     })
 
   return (data: unknown): string => {
-    const value = get(data, path)
+    const values = get(data, path)
 
-    if (isStruct(value)) {
-      return new URLSearchParams(flatten(value)).toString()
+    if (isStruct(values)) {
+      return Object
+        .entries(flatten(values))
+        .map(([key, value]) => {
+          return `${key}=${cast(value)?.toString() ?? ''}`
+        })
+        .join('&')
     }
 
     return ''

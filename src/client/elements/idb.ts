@@ -132,7 +132,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     const database = await this.getDatabase()
     const key = await database.add(this.nameVersion, item)
 
-    this.update()
+    this.notify()
     return database.get(this.nameVersion, key) as Promise<Struct | undefined>
   }
 
@@ -148,7 +148,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       return undefined
     }))
 
-    this.update()
+    this.notify()
     return newItems
   }
 
@@ -156,7 +156,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     const database = await this.getDatabase()
 
     await database.clear(this.nameVersion)
-    this.update()
+    this.notify()
   }
 
   public connectedCallback (): void {
@@ -177,7 +177,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     const oldItem = await database.get(this.nameVersion, key) as Struct | undefined
 
     await database.delete(this.nameVersion, key)
-    this.update()
+    this.notify()
     return oldItem
   }
 
@@ -201,7 +201,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       return undefined
     }))
 
-    this.update()
+    this.notify()
     return oldItems
   }
 
@@ -250,8 +250,10 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     return items
   }
 
-  public getData (): Struct {
-    return {}
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
   }
 
   public async put (item: Struct): Promise<Struct | undefined> {
@@ -264,7 +266,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     const database = await this.getDatabase()
 
     await database.put(this.nameVersion, item)
-    this.update()
+    this.notify()
     return database.get(this.nameVersion, key) as Promise<Struct | undefined>
   }
 
@@ -286,7 +288,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       return undefined
     }))
 
-    this.update()
+    this.notify()
     return newItems
   }
 
@@ -296,21 +298,6 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     this.pkey = this.getAttribute('sc-pkey') ?? 'id'
     this.rkey = this.getAttribute('sc-rkey')
     this.version = Number(this.getAttribute('sc-version') ?? 1)
-  }
-
-  public setData (): void {}
-
-  public toObject (): Struct {
-    return {}
-  }
-
-  public update (): void {
-    this.updateAttributes()
-    this.propagator.dispatch('update')
-  }
-
-  public updateAttributes (): void {
-    this.setAttribute('sc-updated', Date.now().toString())
   }
 
   protected addEventListeners (): void {

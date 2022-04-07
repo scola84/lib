@@ -26,6 +26,38 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
 
   public url: string | null
 
+  public get data (): unknown {
+    return {
+      ...this.dataset
+    }
+  }
+
+  public set data (data: unknown) {
+    this.clear()
+
+    if (this.isData(data)) {
+      this.setSourceFromData(data)
+    } else if (this.isBlob(data)) {
+      this.setSourceFromBlob(data)
+    } else if (
+      isStruct(data) &&
+      this.isBlob(data[this.key])
+    ) {
+      this.setSourceFromBlob(data[this.key] as Blob)
+    } else if (this.isFile(data)) {
+      this.setSourceFromStruct(data)
+    } else if (
+      isStruct(data) &&
+      this.isFile(data[this.key])
+    ) {
+      this.setSourceFromStruct(data)
+    } else {
+      this.removeAttribute('src')
+    }
+
+    this.notify()
+  }
+
   protected handleErrorBound = this.handleError.bind(this)
 
   public constructor () {
@@ -64,33 +96,10 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
     this.clear()
   }
 
-  public getData (): Required<ImgData> {
-    return {
-      sizes: this.sizes,
-      src: this.src,
-      srcset: this.srcset
-    }
-  }
-
-  public isBlob (value: unknown): value is Blob {
-    return (
-      value instanceof Blob &&
-      value.type.startsWith('image/')
-    )
-  }
-
-  public isData (value: unknown): value is ImgData {
-    return (
-      isStruct(value) &&
-      typeof value.src === 'string'
-    )
-  }
-
-  public isFile (value: unknown): value is ScolaFileProperties {
-    return (
-      isFile(value) &&
-      value.type.startsWith('image/')
-    )
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
   }
 
   public reset (): void {
@@ -98,59 +107,38 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
     this.url = this.getAttribute('sc-url')
   }
 
-  public setData (data: unknown): void {
-    this.clear()
-
-    if (this.isData(data)) {
-      this.setSourceFromData(data)
-    } else if (this.isBlob(data)) {
-      this.setSourceFromBlob(data)
-    } else if (
-      isStruct(data) &&
-      this.isBlob(data[this.key])
-    ) {
-      this.setSourceFromBlob(data[this.key] as Blob)
-    } else if (this.isFile(data)) {
-      this.setSourceFromStruct(data)
-    } else if (
-      isStruct(data) &&
-      this.isFile(data[this.key])
-    ) {
-      this.setSourceFromStruct(data)
-    } else {
-      this.removeAttribute('src')
-    }
-
-    this.update()
-  }
-
-  public toObject (): Struct {
-    return {
-      src: this.src,
-      srcset: this.srcset
-    }
-  }
-
-  public update (): void {
-    this.updateAttributes()
-    this.propagator.dispatch('update')
-  }
-
-  public updateAttributes (): void {
-    this.setAttribute('sc-updated', Date.now().toString())
-  }
-
   protected addEventListeners (): void {
     this.addEventListener('error', this.handleErrorBound)
   }
 
   protected handleError (error: unknown): void {
-    this.setData(null)
+    this.data = null
 
     this.propagator.dispatch('error', [{
       code: 'err_img',
       message: toString(error)
     }])
+  }
+
+  protected isBlob (value: unknown): value is Blob {
+    return (
+      value instanceof Blob &&
+      value.type.startsWith('image/')
+    )
+  }
+
+  protected isData (value: unknown): value is ImgData {
+    return (
+      isStruct(value) &&
+      typeof value.src === 'string'
+    )
+  }
+
+  protected isFile (value: unknown): value is ScolaFileProperties {
+    return (
+      isFile(value) &&
+      value.type.startsWith('image/')
+    )
   }
 
   protected removeEventListeners (): void {

@@ -1,4 +1,4 @@
-import { I18n, toString } from '../../common'
+import { I18n, isStruct, toString } from '../../common'
 import { Mutator, Observer, Propagator, Theme } from '../helpers'
 import type { ScolaError, Struct } from '../../common'
 import type { ScolaElement } from './element'
@@ -20,7 +20,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   public static origin = window.location.origin
 
-  public data: unknown
+  public datamap: unknown
 
   public drawer?: Drawer
 
@@ -43,6 +43,31 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   public scale: number
 
   public url: string
+
+  public get data (): unknown {
+    let data: Struct = {
+      ...this.dataset
+    }
+
+    if (isStruct(this.datamap)) {
+      data = {
+        ...data,
+        ...this.datamap
+      }
+    } else if (this.datamap !== undefined) {
+      data = {
+        ...data,
+        data: this.datamap
+      }
+    }
+
+    return data
+  }
+
+  public set data (data: unknown) {
+    this.datamap = data
+    this.update()
+  }
 
   protected handleErrorBound = this.handleError.bind(this)
 
@@ -96,8 +121,10 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     this.removeEventListeners()
   }
 
-  public getData (): Struct {
-    return {}
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
   }
 
   public postMessage (data: unknown): void {
@@ -114,23 +141,9 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     this.url = this.getAttribute('sc-url') ?? ''
   }
 
-  public setData (data: unknown): void {
-    this.data = data
-    this.update()
-  }
-
-  public toObject (): Struct {
-    return {}
-  }
-
   public update (): void {
     this.postMessage(this.data)
-    this.updateAttributes()
-    this.propagator.dispatch('update')
-  }
-
-  public updateAttributes (): void {
-    this.setAttribute('sc-updated', Date.now().toString())
+    this.notify()
   }
 
   protected addEventListeners (): void {

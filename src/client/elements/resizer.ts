@@ -1,7 +1,6 @@
 import { Interactor, Mutator, Observer, Propagator } from '../helpers'
 import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 interface Offset {
   height: number
@@ -28,6 +27,12 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
   public targetOffsets = new Map<HTMLElement, Offset>()
 
   public targetStyles = new Map<HTMLElement, string>()
+
+  public get data (): unknown {
+    return {
+      ...this.dataset
+    }
+  }
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
 
@@ -68,10 +73,6 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     this.propagator.disconnect()
   }
 
-  public getData (): Struct {
-    return {}
-  }
-
   public maximize (): void {
     this.targetStyles.clear()
 
@@ -109,14 +110,6 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     this.snap = Number(this.getAttribute('sc-snap') ?? 1)
     this.target = this.getAttribute('sc-target') ?? ''
   }
-
-  public setData (): void {}
-
-  public toObject (): Struct {
-    return {}
-  }
-
-  public update (): void {}
 
   protected calculateSize (size: number, distance: number): number {
     return Math.round((size + distance) / this.snap) * this.snap

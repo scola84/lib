@@ -9,7 +9,10 @@ export function elementStateElementAttrsInv (observer: ScolaElement, observable:
         ?.split(/\s+/u)
         .some((someValue) => {
           const castValue = cast(someValue)
-          const observeValue = observable.getAttribute(toJoint(name, '-'))
+
+          const observeValue = observable.getAttribute(toJoint(name, {
+            separator: '-'
+          }))
 
           if (castValue === true) {
             return observeValue !== null

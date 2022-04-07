@@ -14,11 +14,6 @@ declare global {
   }
 }
 
-interface ScolaCarouselElementData extends Struct {
-  elements: number
-  pointer: number
-}
-
 export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement {
   public axis: string
 
@@ -50,6 +45,35 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
   public transition: boolean
 
+  public get data (): unknown {
+    return {
+      ...this.dataset
+    }
+  }
+
+  public set data (data: unknown) {
+    if (isArray(data)) {
+      data.forEach((item) => {
+        if (isStruct(item)) {
+          this.items.push(item)
+        }
+      })
+
+      this.pointer = 0
+      this.update()
+    } else {
+      this.propagator.set(data)
+    }
+  }
+
+  public get hasNext (): boolean {
+    return this.pointer < this.body.children.length - 1
+  }
+
+  public get hasPrevious (): boolean {
+    return this.pointer > 0
+  }
+
   protected handleBackBound = this.handleBack.bind(this)
 
   protected handleBreakpointBound = this.handleBreakpoint.bind(this)
@@ -77,10 +101,6 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     this.resizer = new ResizeObserver(this.handleResizerBound)
     this.templates = this.mutator.selectTemplates()
     this.reset()
-
-    if (!this.templates.has('item')) {
-      this.updateAttributes()
-    }
   }
 
   public static define (): void {
@@ -139,13 +159,6 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     this.go(this.pointer + 1)
   }
 
-  public getData (): ScolaCarouselElementData {
-    return {
-      elements: this.body.children.length,
-      pointer: this.pointer + 1
-    }
-  }
-
   public go (pointer: number): void {
     if (
       pointer >= 0 &&
@@ -155,6 +168,12 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     }
 
     this.moveToPointer()
+  }
+
+  public notify (): void {
+    this.toggleAttribute('sc-updated', true)
+    this.toggleAttribute('sc-updated', false)
+    this.propagator.dispatch('update')
   }
 
   public reset (): void {
@@ -168,40 +187,10 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     this.transition = this.breakpoint.parseAttribute('sc-transition', this.body) === ''
   }
 
-  public setData (data: unknown): void {
-    if (isArray(data)) {
-      data.forEach((item) => {
-        if (isStruct(item)) {
-          this.items.push(item)
-        }
-      })
-
-      this.pointer = 0
-      this.update()
-    } else {
-      this.propagator.set(data)
-    }
-  }
-
-  public toObject (): Struct {
-    return {
-      pointer: this.pointer
-    }
-  }
-
   public update (): void {
     this.updateElements()
-    this.updateAttributes()
     this.moveToPointer()
-    this.propagator.dispatch('update')
-  }
-
-  public updateAttributes (): void {
-    this.setAttribute('sc-elements', this.body.children.length.toString())
-    this.toggleAttribute('sc-has-next', this.pointer < this.body.children.length - 1)
-    this.toggleAttribute('sc-has-previous', this.pointer > 0)
-    this.setAttribute('sc-pointer', this.pointer.toString())
-    this.setAttribute('sc-updated', Date.now().toString())
+    this.notify()
   }
 
   public updateElements (): void {
@@ -231,7 +220,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
       window.requestAnimationFrame(() => {
         if (element instanceof ScolaDivElement) {
-          element.setData(item)
+          element.data = item
         }
       })
     }
@@ -254,7 +243,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
           const hidden = !(
             itemBox.right <= elementBox.right &&
-          itemBox.left >= elementBox.left
+            itemBox.left >= elementBox.left
           )
 
           if (hidden) {
@@ -361,7 +350,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
         this.pointer = 0
       }
 
-      this.updateAttributes()
+      this.notify()
     })
 
     return true
@@ -397,7 +386,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
         this.pointer = 0
       }
 
-      this.updateAttributes()
+      this.notify()
     })
 
     return true
@@ -433,7 +422,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
         this.pointer = 0
       }
 
-      this.updateAttributes()
+      this.notify()
     })
 
     return true
@@ -680,7 +669,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
         break
     }
 
-    this.updateAttributes()
+    this.notify()
   }
 
   protected moveToPointerX (): void {

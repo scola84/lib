@@ -9,9 +9,9 @@ interface LocaleStrings {
 
 type LocaleStringsCache = Struct<Formatter[] | undefined>
 
-type Strings = Struct<Struct<string | undefined> | undefined>
+type Strings = Struct<Partial<Struct<string>> | undefined>
 
-type StringsCache = Struct<LocaleStringsCache | undefined>
+type StringsCache = Partial<Struct<LocaleStringsCache>>
 
 export type Formatter = (data: unknown) => string
 

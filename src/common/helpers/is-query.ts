@@ -1,4 +1,5 @@
 import type { Struct } from './is-struct'
+import { isNumber } from './is-number'
 import { isStruct } from './is-struct'
 
 export interface Query extends Struct {
@@ -6,10 +7,10 @@ export interface Query extends Struct {
   join?: Struct<Struct<number | string | undefined> | undefined>
   limit?: number
   offset?: number
-  operator?: Struct<Struct<string | undefined> | string | undefined>
-  order?: Struct<Struct<string | undefined> | string | undefined>
-  select?: Struct<Struct<boolean | undefined> | boolean | undefined>
-  where?: Struct<Struct<unknown | undefined> | unknown | undefined>
+  operator?: Struct<Partial<Struct<string>> | string | undefined>
+  order?: Struct<Partial<Struct<string>> | string | undefined>
+  select?: Struct<Partial<Struct<boolean>> | boolean | undefined>
+  where?: Struct<Partial<Struct> | unknown | undefined>
 }
 
 export function isQuery (value: unknown): value is Query {
@@ -23,10 +24,10 @@ export function isQuery (value: unknown): value is Query {
     isStruct(value.join)
   ) && (
     value.limit === undefined ||
-    typeof value.limit === 'number'
+    isNumber(value.limit)
   ) && (
     value.offset === undefined ||
-    typeof value.offset === 'number'
+    isNumber(value.offset)
   ) && (
     value.operator === undefined ||
     isStruct(value.operator)

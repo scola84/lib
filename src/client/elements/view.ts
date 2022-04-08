@@ -1,5 +1,5 @@
 import { Hider, Mutator, Observer, Propagator, Sanitizer } from '../helpers'
-import { Struct, flatten, isArray, isSame, isStruct } from '../../common'
+import { Struct, flatten, isArray, isNumber, isSame, isStruct } from '../../common'
 import type { ScolaElement } from './element'
 
 declare global {
@@ -26,9 +26,9 @@ export interface View extends Struct {
 export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   public static origin = window.location.origin
 
-  public static snippets: Struct<string | undefined> = {}
+  public static snippets: Partial<Struct<string>> = {}
 
-  public static storage: Struct<Storage | undefined> = {
+  public static storage: Partial<Struct<Storage>> = {
     local: window.localStorage,
     session: window.sessionStorage
   }
@@ -541,7 +541,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       this.views = struct.views as View[]
 
       if (
-        typeof struct.pointer === 'number' &&
+        isNumber(struct.pointer) &&
         struct.pointer > -1
       ) {
         this.pointer = struct.pointer

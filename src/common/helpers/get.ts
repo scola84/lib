@@ -1,5 +1,6 @@
 import { cast } from './cast'
 import { isArray } from './is-array'
+import { isNumber } from './is-number'
 import { isObject } from './is-object'
 
 export function get (value: unknown, path: unknown[] | string): unknown {
@@ -20,7 +21,7 @@ export function get (value: unknown, path: unknown[] | string): unknown {
 
   return keys.reduce((result, key) => {
     if (
-      typeof key === 'number' &&
+      isNumber(key) &&
       isArray(result)
     ) {
       return result[key]

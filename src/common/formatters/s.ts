@@ -1,7 +1,7 @@
 import type { Formatter, Struct } from '../helpers'
 import { cast, get } from '../helpers'
 
-export function s (name: string, locale: string, options: Struct<string | undefined>): Formatter {
+export function s (name: string, locale: string, options: Partial<Struct<string>>): Formatter {
   const encodeuri = cast(options.encodeuri)
   const match = cast(options.match)
 

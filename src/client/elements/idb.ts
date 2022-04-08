@@ -1,4 +1,4 @@
-import { I18n, Transaction, cast, isArray, isFile, isQuery, isStruct, isTransaction, toString } from '../../common'
+import { I18n, Transaction, cast, isArray, isFile, isNumber, isQuery, isStruct, isTransaction, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { Query, Struct } from '../../common'
 import type { IDBPDatabase } from 'idb/with-async-ittr'
@@ -39,7 +39,7 @@ interface Diff {
 type Migration = (database: IDBPDatabase) => Promise<void>
 
 export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
-  public static migrations: Struct<Migration | undefined> = {}
+  public static migrations: Partial<Struct<Migration>> = {}
 
   public database?: IDBPDatabase
 
@@ -879,7 +879,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
 
   protected isKey (key: unknown): key is IDBValidKey {
     return (
-      typeof key === 'number' ||
+      isNumber(key) ||
       typeof key === 'string'
     )
   }

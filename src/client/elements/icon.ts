@@ -4,7 +4,7 @@ import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
 
 export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
-  public static snippets: Struct<string | undefined> = {}
+  public static snippets: Partial<Struct<string>> = {}
 
   public code: string
 

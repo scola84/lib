@@ -6,9 +6,9 @@ import type { ScolaElement } from '../elements'
 type Handler = ((observer: any, observable: any, mutations: MutationRecord[]) => void)
 
 export class Observer {
-  public static handlers: Struct<Handler | undefined> = {}
+  public static handlers: Partial<Struct<Handler>> = {}
 
-  public static storage: Struct<Storage | undefined> = {
+  public static storage: Partial<Struct<Storage>> = {
     local: window.localStorage,
     session: window.sessionStorage
   }

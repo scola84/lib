@@ -1,7 +1,7 @@
 import type { Formatter, Struct } from '../helpers'
 import { I18n, cast, get, isNil } from '../helpers'
 
-export function e (name: string, locale: string, options: Struct<string | undefined>): Formatter {
+export function e (name: string, locale: string, options: Partial<Struct<string>>): Formatter {
   const i18n = new I18n()
 
   const path = name

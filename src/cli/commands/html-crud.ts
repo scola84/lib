@@ -41,7 +41,7 @@ program
 try {
   const parser = new SchemaParser()
 
-  const databases: Struct<SqlDatabase> = {
+  const databases: Partial<Struct<SqlDatabase>> = {
     mssql: new MssqlDatabase(),
     mysql: new MysqlDatabase(),
     postgres: new PostgresqlDatabase()
@@ -69,7 +69,7 @@ try {
   }
 
   if (options.type === 'sql') {
-    if (typeof databases[options.dialect] === 'undefined') {
+    if (databases[options.dialect] === undefined) {
       throw new Error(`Database for dialect "${options.dialect}" is undefined`)
     }
   }
@@ -117,7 +117,7 @@ try {
 
         writeFileSync(`${targetDir}/index.ts`, `${formatIndex(options)}\n`)
       } else if (options.type === 'sql') {
-        writeFileSync(`${targetDir}/${object}.sql`, databases[options.dialect].formatter.formatDdl(options.database, object, schema))
+        writeFileSync(`${targetDir}/${object}.sql`, databases[options.dialect]?.formatter.formatDdl(options.database, object, schema) ?? '')
       }
     })
     .catch((error) => {

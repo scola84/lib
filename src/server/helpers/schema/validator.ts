@@ -43,7 +43,7 @@ export interface SchemaFieldKey {
 export type Schema = Struct<SchemaField>
 
 export class SchemaValidator {
-  public static validators: Struct<ValidatorFactory | undefined> = {}
+  public static validators: Partial<Struct<ValidatorFactory>> = {}
 
   public schema: Schema
 

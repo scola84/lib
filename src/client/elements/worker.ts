@@ -13,7 +13,7 @@ declare global {
 type Handler = (data: any) => Promise<unknown> | unknown
 
 export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElement {
-  public static handlers: Struct<Handler | undefined> = {}
+  public static handlers: Partial<Struct<Handler>> = {}
 
   public static origin = window.location.origin
 

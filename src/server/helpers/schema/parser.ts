@@ -5,7 +5,7 @@ import { dirname } from 'path'
 import { parseFragment } from 'parse5'
 import { readFile } from 'fs-extra'
 
-export type SchemaAttributes = Struct<string | undefined>
+export type SchemaAttributes = Partial<Struct<string>>
 
 export class SchemaParser {
   public async parse (url: string, fields: Schema = {}): Promise<Schema> {
@@ -17,7 +17,7 @@ export class SchemaParser {
     return this.extract(root as Element, fields, dir)
   }
 
-  protected async extract (element: Element, fields: Schema, dir: string): Promise<Schema> {
+  protected async extract (element: Element, fields: Partial<Schema>, dir: string): Promise<Schema> {
     const attributes = this.normalizeAttributes(element)
 
     if (
@@ -31,7 +31,7 @@ export class SchemaParser {
       ) {
         let field = fields[attributes.name]
 
-        if (typeof field === 'undefined') {
+        if (field === undefined) {
           field = {
             type: ''
           }
@@ -57,7 +57,7 @@ export class SchemaParser {
       }
     }
 
-    await this.extractView(attributes, fields, dir)
+    await this.extractView(attributes, fields as Schema, dir)
 
     if (Array.isArray(element.childNodes)) {
       await Promise.all(element.childNodes.map(async (child) => {

@@ -5,11 +5,11 @@ import { isStruct } from './is-struct'
 
 export function isSame (left: unknown, right: unknown): boolean {
   if ((
-    isPrimitive(left) &&
-    isPrimitive(right)
-  ) || (
     isNil(left) &&
     isNil(right)
+  ) || (
+    isPrimitive(left) &&
+    isPrimitive(right)
   )) {
     return left === right
   }

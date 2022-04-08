@@ -1,4 +1,4 @@
-import { I18n, Struct, cast, isArray, isStruct, set, toJoint } from '../../common'
+import { I18n, Struct, cast, isArray, isNumber, isStruct, set, toJoint } from '../../common'
 import type { ScolaTableElement, ScolaTableRowElement } from '../elements'
 import { Breakpoint } from './breakpoint'
 import type { Query } from '../../common'
@@ -269,7 +269,7 @@ export class TableLister {
       const cursor = this.items.slice(-1)[0]?.cursor
 
       if (
-        typeof cursor === 'number' ||
+        isNumber(cursor) ||
         typeof cursor === 'string'
       ) {
         query.cursor = cursor

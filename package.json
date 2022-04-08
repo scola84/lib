@@ -33,7 +33,7 @@
     "html-minifier-terser": "^6.1.0",
     "idb": "^7.0.1",
     "image-capture": "^0.4.0",
-    "marked": "^4.0.12",
+    "marked": "^4.0.13",
     "micromatch": "^4.0.5",
     "mssql": "^8.1.0",
     "mysql2": "^2.3.3",
@@ -64,7 +64,7 @@
   },
   "description": "The Scola Library",
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.58.0",
+    "@aws-sdk/client-s3": "^3.66.0",
     "@semantic-release/changelog": "^6.0.1",
     "@semantic-release/git": "^10.0.1",
     "@types/busboy": "^1.5.0",

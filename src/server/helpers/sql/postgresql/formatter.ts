@@ -1,6 +1,6 @@
 import type { Schema, SchemaField } from '../../schema'
 import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from '../query'
-import { Struct, isArray, isDate, isNil, isObject, isPrimitive } from '../../../../common'
+import { Struct, isArray, isNil, isObject, isPrimitive } from '../../../../common'
 import type { Query } from '../../../../common'
 import { SqlFormatter } from '../formatter'
 import type { User } from '../../../entities'
@@ -79,10 +79,10 @@ export class PostgresqlFormatter extends SqlFormatter {
   public formatParameter (value: unknown): string {
     if ((
       isArray(value) ||
-      isDate(value) ||
       isNil(value) ||
       isObject(value) ||
-      isPrimitive(value)
+      isPrimitive(value) ||
+      value instanceof Date
     ) && (
       typeof value !== 'symbol' &&
       !Number.isFinite(value)

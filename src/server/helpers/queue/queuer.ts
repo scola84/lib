@@ -1,4 +1,4 @@
-import { isStruct, toString } from '../../../common'
+import { isNumber, isStruct, toString } from '../../../common'
 import type { Job } from 'node-schedule'
 import type { Logger } from 'pino'
 import type { Queue } from '../../entities'
@@ -81,12 +81,12 @@ export class Queuer {
       queuer.resume()
     },
     run: async (queuer: Queuer, message: Struct) => {
-      if (typeof message.id === 'number') {
+      if (isNumber(message.id)) {
         await queuer.run(message.id, message.parameters)
       }
     },
     skip: async (queuer: Queuer, message: Struct) => {
-      if (typeof message.id === 'number') {
+      if (isNumber(message.id)) {
         await queuer.skip(message.id)
       }
     },

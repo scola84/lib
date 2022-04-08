@@ -1,6 +1,7 @@
 import { Struct } from './is-struct'
 import { cast } from './cast'
 import { isArray } from './is-array'
+import { isNumber } from './is-number'
 import { isObject } from './is-object'
 
 export function set<T = unknown> (base: T, path: unknown[] | string, value: unknown): T {
@@ -17,11 +18,11 @@ export function set<T = unknown> (base: T, path: unknown[] | string, value: unkn
     key = keys[index]
 
     if (
-      typeof key === 'number' &&
+      isNumber(key) &&
       isArray(parent)
     ) {
       if (parent[key] === undefined) {
-        if (typeof keys[index + 1] === 'number') {
+        if (isNumber(keys[index + 1])) {
           parent[key] = []
         } else {
           parent[key] = Struct.create()
@@ -34,7 +35,7 @@ export function set<T = unknown> (base: T, path: unknown[] | string, value: unkn
       isObject(parent)
     ) {
       if (parent[key] === undefined) {
-        if (typeof keys[index + 1] === 'number') {
+        if (isNumber(keys[index + 1])) {
           parent[key] = []
         } else {
           parent[key] = Struct.create()
@@ -50,7 +51,7 @@ export function set<T = unknown> (base: T, path: unknown[] | string, value: unkn
   const parentKey = keys[keys.length - 1]
 
   if (
-    typeof parentKey === 'number' &&
+    isNumber(parentKey) &&
     isArray(parent)
   ) {
     parent[parentKey] = value

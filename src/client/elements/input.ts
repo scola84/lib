@@ -1,6 +1,6 @@
 import type { CastValue, Primitive, ScolaError, ScolaFile } from '../../common'
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import { I18n, Struct, cast, isArray, isDate, isError, isFile, isPrimitive, isStruct, set } from '../../common'
+import { I18n, Struct, cast, isArray, isError, isFile, isPrimitive, isStruct, set } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 import { debounce } from 'throttle-debounce'
@@ -360,7 +360,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   protected setDate (value: unknown): void {
     const dateTime = cast(value)
 
-    if (isDate(dateTime)) {
+    if (dateTime instanceof Date) {
       const date = [
         String(dateTime.getFullYear()),
         String(dateTime.getMonth() + 1).padStart(2, '0'),

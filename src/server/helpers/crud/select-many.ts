@@ -7,7 +7,7 @@ import { isNil } from '../../../common'
 
 export interface CrudSelectManyData extends RouteData {
   body?: Struct[]
-  headers: Struct<string | undefined>
+  headers: Partial<Struct<string>>
   query: Query
 }
 

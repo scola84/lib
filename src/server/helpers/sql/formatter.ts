@@ -402,7 +402,7 @@ export abstract class SqlFormatter {
    * ```
    */
   public formatQuery (query: SqlQuery): string {
-    return (query.string.match(/\\?\$[([][\w\s.]+[\])]/gu) ?? []).reduce((result, match) => {
+    return (query.string.match(/\\?\$[([].+?[\])]/gu) ?? []).reduce((result, match) => {
       const key = match.slice(2, -1)
 
       if (match.startsWith('\\')) {

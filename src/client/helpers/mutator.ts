@@ -13,7 +13,7 @@ declare global {
 }
 
 export class Mutator {
-  public static presets: Struct<Struct | undefined> = {}
+  public static presets: Partial<Struct<Struct>> = {}
 
   public element: ScolaElement
 

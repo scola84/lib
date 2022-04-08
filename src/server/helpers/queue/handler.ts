@@ -69,7 +69,7 @@ export interface QueueHandlerOptions {
    * @defaultValue `{}`
    * @see https://www.npmjs.com/package/fluent-json-schema
    */
-  schema: Struct<ObjectSchema | undefined>
+  schema: Partial<Struct<ObjectSchema>>
 
   /**
    * The store.
@@ -155,7 +155,7 @@ export abstract class QueueHandler {
    * @defaultValue `{}`
    * @see https://www.npmjs.com/package/fluent-json-schema
    */
-  public schema: Struct<ObjectSchema | undefined>
+  public schema: Partial<Struct<ObjectSchema>>
 
   /**
    * The store to write.

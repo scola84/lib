@@ -290,7 +290,6 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   protected handleInput (event: Event): void {
     this.field.clear()
-    this.update()
 
     if (
       this.files instanceof FileList &&
@@ -305,6 +304,8 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     } else {
       this.handleInputValue(event)
     }
+
+    this.update()
   }
 
   protected handleInputChecked (checked: boolean, event?: Event): void {
@@ -327,9 +328,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   protected handleInputValue (event: Event): void {
-    this.propagator.dispatch('value', [
-      set(Struct.create(), this.name, this.valueAsCast)
-    ], event)
+    this.propagator.dispatch('value', [this.valueAsCast], event)
   }
 
   protected handleObserver (): void {

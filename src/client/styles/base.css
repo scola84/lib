@@ -11,7 +11,7 @@
   margin: 0;
   padding: 0;
   text-align: start;
-  user-select: none;
+  /* user-select: none; */
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -582,36 +582,43 @@ body {
 }
 
 [sc-text-color="black"] {
+  caret-color: #000;
   color: #000;
   fill: #000;
 }
 
 [sc-text-color="contrast"] {
+  caret-color: var(--fc2);
   color: var(--fc2);
   fill: var(--fc2);
 }
 
 [sc-text-color="green"] {
+  caret-color: green;
   color: green;
   fill: green;
 }
 
 [sc-text-color="normal"] {
+  caret-color: var(--fc1);
   color: var(--fc1);
   fill: var(--fc1);
 }
 
 [sc-text-color="red"] {
+  caret-color: firebrick;
   color: firebrick;
   fill: firebrick;
 }
 
 [sc-text-color="theme"] {
+  caret-color: var(--tc1);
   color: var(--tc1);
   fill: var(--tc1);
 }
 
 [sc-text-color="white"] {
+  caret-color: #fff;
   color: #fff;
   fill: #fff;
 }
@@ -693,6 +700,21 @@ body {
 
 .sc-hidden[hidden] {
   display: none;
+}
+
+.sc-prism {
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+textarea.sc-prism {
+  background-color: transparent;
+  color: transparent;
+  resize: none;
+}
+
+textarea.sc-prism:focus-visible {
+  outline: none;
 }
 
 .sc-recorder video {

@@ -19,6 +19,7 @@ import { ScolaMessageElement } from './message'
 import { ScolaMoverElement } from './mover'
 import { ScolaOptionElement } from './option'
 import { ScolaPopupElement } from './popup'
+import { ScolaPrismElement } from './prism'
 import { ScolaRecorderElement } from './recorder'
 import { ScolaReloaderElement } from './reloader'
 import { ScolaRequesterElement } from './requester'
@@ -55,6 +56,7 @@ export function defineElements (): void {
   ScolaMoverElement.define()
   ScolaOptionElement.define()
   ScolaPopupElement.define()
+  ScolaPrismElement.define()
   ScolaRecorderElement.define()
   ScolaReloaderElement.define()
   ScolaRequesterElement.define()

@@ -1,6 +1,6 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
 import type { Primitive, ScolaError } from '../../common'
-import { Struct, cast, isArray, isError, isPrimitive, isStruct, set } from '../../common'
+import { cast, isArray, isError, isPrimitive, isStruct } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 
@@ -157,11 +157,8 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
 
   protected handleInput (event: Event): void {
     this.field.clear()
+    this.propagator.dispatch('value', [this.valueAsCast], event)
     this.update()
-
-    this.propagator.dispatch('value', [
-      set(Struct.create(), this.name, this.value)
-    ], event)
   }
 
   protected removeEventListeners (): void {

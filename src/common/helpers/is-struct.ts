@@ -25,7 +25,9 @@ export class Struct<Value = unknown> implements Record<string, Value> {
       /* eslint-disable @typescript-eslint/indent */
         const [key, value] = keyValue.split('=')
 
-        if (value === '') {
+        if (key === '') {
+          return struct
+        } else if (value === '') {
           if (keepEmpty) {
             return setPush(struct, key, null)
           }

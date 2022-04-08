@@ -1,5 +1,5 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import { I18n, Struct, cast, isError, isPrimitive, isStruct, set } from '../../common'
+import { I18n, cast, isError, isPrimitive, isStruct } from '../../common'
 import type { Primitive, ScolaError } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
@@ -130,7 +130,9 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     this.addEventListeners()
 
     window.requestAnimationFrame(() => {
-      this.updateStyle()
+      if (this.resize) {
+        this.updateStyle()
+      }
     })
   }
 
@@ -192,11 +194,8 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   protected handleInput (event: Event): void {
     this.field.clear()
+    this.propagator.dispatch('value', [this.valueAsCast], event)
     this.update()
-
-    this.propagator.dispatch('value', [
-      set(Struct.create(), this.name, this.value)
-    ], event)
   }
 
   protected removeEventListeners (): void {

@@ -13,12 +13,12 @@ export function formatName (files: string[][], options: Options): string {
     .join('\n')
 
   const exports = files
-    .map(([file, , value]) => {
+    .map(([, base, value]) => {
       if (
         options.prefix !== '' ||
         !options.shorthand
       ) {
-        return `'${options.prefix}${file}': ${value}`
+        return `'${options.prefix}${base}': ${value}`
       }
 
       return value

@@ -1,4 +1,4 @@
-import { I18n, Transaction, cast, isArray, isFile, isNumber, isQuery, isStruct, isTransaction, toString } from '../../common'
+import { I18n, Transaction, cast, isArray, isFile, isNumber, isQuery, isSame, isStruct, isTransaction, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { Query, Struct } from '../../common'
 import type { IDBPDatabase } from 'idb/with-async-ittr'
@@ -473,7 +473,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       const diff = this.diff(localItems, transaction.result, (left, right) => {
         return (
           left[`${this.mkey}_local`] !== undefined ||
-          left[this.mkey] !== right[this.mkey]
+          !isSame(left[this.mkey], right[this.mkey])
         )
       })
 
@@ -505,7 +505,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       const diff = this.diff(transaction.result, localItems, (left, right) => {
         return (
           right[`${this.mkey}_local`] !== undefined ||
-          right[this.mkey] !== left[this.mkey]
+          !isSame(left[this.mkey], right[this.mkey])
         )
       })
 

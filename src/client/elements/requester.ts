@@ -29,6 +29,8 @@ interface Request {
 export class ScolaRequesterElement extends HTMLObjectElement implements ScolaElement {
   public static origin = window.location.origin
 
+  public static timeout = 60000
+
   public concurrency: number
 
   public download: boolean
@@ -58,6 +60,8 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   public state = 0
 
   public strict: boolean
+
+  public timeout: number
 
   public total = 0
 
@@ -152,6 +156,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     this.requestType = (this.getAttribute('sc-request-type')) ?? 'application/x-www-form-urlencoded'
     this.responseType = this.getAttribute('sc-response-type') ?? 'text'
     this.strict = this.hasAttribute('sc-strict')
+    this.timeout = Number(this.getAttribute('sc-timeout') ?? ScolaRequesterElement.timeout)
     this.url = this.getAttribute('sc-url') ?? ''
     this.wait = this.hasAttribute('sc-wait')
   }
@@ -185,6 +190,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       download: this.download,
       id: this.id,
       is: this.getAttribute('is'),
+      loaded: this.loaded,
       max: this.max,
       method: this.method,
       nodeName: this.nodeName,
@@ -193,7 +199,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       queued: this.queued,
       requestType: this.requestType,
       running: this.running,
+      state: this.state,
       strict: this.strict,
+      timeout: this.timeout,
+      total: this.total,
       url: this.url,
       wait: this.wait
     }
@@ -208,21 +217,19 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     let data = null
     let { method } = this
 
-    if (isTransaction(options)) {
-      data = options.commit
-    } else {
+    if (isArray(options)) {
       data = options
-    }
-
-    if (isStruct(data)) {
-      if (typeof data.method === 'string') {
-        ({ method } = data)
+    } else if (isStruct(options)) {
+      if (typeof options.method === 'string') {
+        ({ method } = options)
       }
 
       data = {
         ...this.view?.view?.params,
-        ...data
+        ...options
       }
+    } else if (isTransaction(options)) {
+      data = options.commit
     } else {
       data = this.view?.view?.params
     }
@@ -480,7 +487,15 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       callback(null)
     }
 
+    xhr.ontimeout = (event) => {
+      this.xhr.delete(event.target as XMLHttpRequest)
+      this.notify()
+      this.handleTimeout(event, options)
+      callback(null)
+    }
+
     xhr.responseType = this.responseType as XMLHttpRequestResponseType
+    xhr.timeout = this.timeout
     xhr.onprogress = this.handleProgressBound
 
     try {
@@ -512,6 +527,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   protected handleSend (event: CustomEvent): void {
     this.send(event.detail)
+  }
+
+  protected handleTimeout (event: ProgressEvent, options: unknown): void {
+    this.propagator.dispatch('timeout', [options], event)
   }
 
   protected isValid (url: string): boolean {

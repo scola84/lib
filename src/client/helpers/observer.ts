@@ -109,7 +109,7 @@ export class Observer {
       ?.split(/\s+/u) ?? []
 
     this.statesInverse = this.element
-      .getAttribute('sc-observe-state-inv')
+      .getAttribute('sc-observe-state-inverse')
       ?.split(/\s+/u) ?? []
 
     this.storage = Observer.storage[this.element.getAttribute('sc-observe-storage') ?? 'session'] ?? window.sessionStorage

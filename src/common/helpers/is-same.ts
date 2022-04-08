@@ -15,6 +15,13 @@ export function isSame (left: unknown, right: unknown): boolean {
   }
 
   if (
+    left instanceof Date &&
+    right instanceof Date
+  ) {
+    return left.toString() === right.toString()
+  }
+
+  if (
     isStruct(left) &&
     isStruct(right)
   ) {

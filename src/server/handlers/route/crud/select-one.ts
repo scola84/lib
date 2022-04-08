@@ -1,5 +1,5 @@
 import type { Schema, SchemaField } from '../../../helpers/schema'
-import { Struct, cast, isFile, toString } from '../../../../common'
+import { Struct, cast, isFile, isSame, toString } from '../../../../common'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
 import type { Query } from '../../../../common'
@@ -35,7 +35,7 @@ export abstract class CrudSelectOneHandler extends CrudHandler {
       this.keys.modified !== undefined &&
       object[this.keys.modified.column] !== null &&
       data.query.where?.[this.keys.modified.column] !== undefined &&
-      cast(object[this.keys.modified.column])?.toString() === cast(data.query.where[this.keys.modified.column])?.toString()
+      isSame(cast(object[this.keys.modified.column]), cast(data.query.where[this.keys.modified.column]))
     ) {
       response.statusCode = 304
       return undefined

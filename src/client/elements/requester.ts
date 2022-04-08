@@ -148,12 +148,12 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     this.download = this.hasAttribute('sc-download')
     this.max = Number(this.getAttribute('sc-max') ?? 1)
     this.method = this.getAttribute('sc-method') ?? 'GET'
+    this.queue = queue(this.handleQueueBound, this.concurrency)
     this.requestType = (this.getAttribute('sc-request-type')) ?? 'application/x-www-form-urlencoded'
     this.responseType = this.getAttribute('sc-response-type') ?? 'text'
     this.strict = this.hasAttribute('sc-strict')
     this.url = this.getAttribute('sc-url') ?? ''
     this.wait = this.hasAttribute('sc-wait')
-    this.queue = queue(this.handleQueueBound, this.concurrency)
   }
 
   public send (options?: unknown): void {
@@ -177,6 +177,26 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     })
 
     this.notify()
+  }
+
+  public toJSON (): unknown {
+    return {
+      concurrency: this.concurrency,
+      download: this.download,
+      id: this.id,
+      is: this.getAttribute('is'),
+      max: this.max,
+      method: this.method,
+      nodeName: this.nodeName,
+      opened: this.opened,
+      queue: this.queue,
+      queued: this.queued,
+      requestType: this.requestType,
+      running: this.running,
+      strict: this.strict,
+      url: this.url,
+      wait: this.wait
+    }
   }
 
   protected addEventListeners (): void {

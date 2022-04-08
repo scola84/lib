@@ -191,6 +191,23 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
     this.transition = this.breakpoint.parseAttribute('sc-transition', this.body) === ''
   }
 
+  public toJSON (): unknown {
+    return {
+      axis: this.axis,
+      children: this.body.children.length,
+      hasNext: this.hasNext,
+      hasPrevious: this.hasPrevious,
+      id: this.id,
+      immediate: this.immediate,
+      is: this.getAttribute('is'),
+      locked: this.locked,
+      nodeName: this.nodeName,
+      pointer: this.pointer,
+      threshold: this.threshold,
+      transition: this.transition
+    }
+  }
+
   public update (): void {
     this.updateElements()
     this.moveToPointer()

@@ -95,6 +95,16 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
     this.timeout = Number(this.getAttribute('sc-timeout') ?? -1)
   }
 
+  public toJSON (): unknown {
+    return {
+      id: this.id,
+      is: this.getAttribute('is'),
+      items: this.items.length,
+      nodeName: this.nodeName,
+      timeout: this.timeout
+    }
+  }
+
   public update (): void {
     this.updateElements()
     this.notify()

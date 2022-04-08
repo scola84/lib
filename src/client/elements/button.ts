@@ -115,6 +115,17 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     this.locale = this.getAttribute('sc-locale') ?? undefined
   }
 
+  public toJSON (): unknown {
+    return {
+      code: this.code,
+      data: this.data,
+      id: this.id,
+      is: this.getAttribute('is'),
+      locale: this.locale,
+      nodeName: this.nodeName
+    }
+  }
+
   public update (): void {
     if (this.code !== null) {
       this.title = this.i18n.format(this.code, this.data, this.locale)

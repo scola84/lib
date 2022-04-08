@@ -79,31 +79,24 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   public falsify (): void {
-    Array
-      .from(this.elements)
-      .forEach((element) => {
-        if (
-          element instanceof ScolaInputElement ||
-          element instanceof ScolaSelectElement ||
-          element instanceof ScolaTextAreaElement
-        ) {
-          element.falsify()
-        }
-      })
+    this.fieldElements.forEach((element) => {
+      element.falsify()
+    })
+  }
+
+  public toJSON (): unknown {
+    return {
+      elements: this.fieldElements.length,
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName
+    }
   }
 
   public verify (): void {
-    Array
-      .from(this.elements)
-      .forEach((element) => {
-        if (
-          element instanceof ScolaInputElement ||
-          element instanceof ScolaSelectElement ||
-          element instanceof ScolaTextAreaElement
-        ) {
-          element.verify()
-        }
-      })
+    this.fieldElements.forEach((element) => {
+      element.verify()
+    })
   }
 
   protected addEventListeners (): void {

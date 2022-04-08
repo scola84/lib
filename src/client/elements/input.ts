@@ -230,6 +230,19 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     }
   }
 
+  public toJSON (): unknown {
+    return {
+      error: this.error,
+      files: this.filesAsCast,
+      id: this.id,
+      is: this.getAttribute('is'),
+      name: this.name,
+      nodeName: this.nodeName,
+      type: this.type,
+      value: this.valueAsCast
+    }
+  }
+
   public update (): void {
     this.updatePlaceholder()
     this.updateStyle()

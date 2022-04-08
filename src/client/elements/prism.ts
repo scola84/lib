@@ -70,6 +70,15 @@ export class ScolaPrismElement extends HTMLDivElement implements ScolaElement {
     this.tab = this.getAttribute('sc-tab')
   }
 
+  public toJSON (): unknown {
+    return {
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName,
+      tab: this.tab
+    }
+  }
+
   protected addEventListeners (): void {
     if (this.editor !== null) {
       this.editor.addEventListener('input', this.handleInputBound)

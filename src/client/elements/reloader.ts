@@ -43,6 +43,14 @@ export class ScolaReloaderElement extends HTMLObjectElement implements ScolaElem
     this.removeEventListeners()
   }
 
+  public toJSON (): unknown {
+    return {
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName
+    }
+  }
+
   protected addEventListeners (): void {
     this.addEventListener('sc-reload', this.handleReloadBound)
   }

@@ -111,6 +111,18 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
     this.target = this.getAttribute('sc-target') ?? ''
   }
 
+  public toJSON (): unknown {
+    return {
+      contain: this.contain,
+      direction: this.direction,
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName,
+      snap: this.snap,
+      target: this.target
+    }
+  }
+
   protected calculateSize (size: number, distance: number): number {
     return Math.round((size + distance) / this.snap) * this.snap
   }

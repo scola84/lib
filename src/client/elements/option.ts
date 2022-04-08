@@ -68,6 +68,18 @@ export class ScolaOptionElement extends HTMLOptionElement implements ScolaElemen
     this.trim = this.hasAttribute('sc-trim')
   }
 
+  public toJSON (): unknown {
+    return {
+      code: this.code,
+      data: this.data,
+      id: this.id,
+      is: this.getAttribute('is'),
+      locale: this.locale,
+      nodeName: this.nodeName,
+      trim: this.trim
+    }
+  }
+
   public update (): void {
     let string = this.i18n.format(this.code, this.data, this.locale)
 

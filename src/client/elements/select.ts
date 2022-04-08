@@ -55,6 +55,10 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     return this.value === ''
   }
 
+  public get optionElements (): HTMLOptionElement[] {
+    return Array.from(this.querySelectorAll<HTMLOptionElement>('option'))
+  }
+
   public get valueAsCast (): FieldValue {
     return Array
       .from(this.selectedOptions)
@@ -136,11 +140,26 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   public reset (): void {
-    this.data = Array
-      .from(this.querySelectorAll<HTMLOptionElement>('option[selected]'))
+    this.data = this.optionElements
+      .filter((option) => {
+        return option.hasAttribute('selected')
+      })
       .map((option) => {
         return option.value
       })
+  }
+
+  public toJSON (): unknown {
+    return {
+      error: this.error,
+      id: this.id,
+      is: this.getAttribute('is'),
+      name: this.name,
+      nodeName: this.nodeName,
+      options: this.optionElements.length,
+      type: this.type,
+      value: this.valueAsCast
+    }
   }
 
   public update (): void {
@@ -166,18 +185,14 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   protected setArray (value: unknown[]): void {
-    this
-      .querySelectorAll<HTMLOptionElement>('option')
-      .forEach((option) => {
-        option.selected = value.includes(option.value)
-      })
+    this.optionElements.forEach((option) => {
+      option.selected = value.includes(option.value)
+    })
   }
 
   protected setPrimitive (value: Primitive): void {
-    this
-      .querySelectorAll<HTMLOptionElement>('option')
-      .forEach((option) => {
-        option.selected = option.value === value.toString()
-      })
+    this.optionElements.forEach((option) => {
+      option.selected = option.value === value.toString()
+    })
   }
 }

@@ -68,6 +68,15 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
     this.interactor.keyboard = this.interactor.hasKeyboard
   }
 
+  public toJSON (): unknown {
+    return {
+      buttons: this.buttons.length,
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName
+    }
+  }
+
   protected handleInteractor (event: InteractorEvent): boolean {
     switch (event.type) {
       case 'start':

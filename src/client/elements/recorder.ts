@@ -242,6 +242,23 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     }
   }
 
+  public toJSON (): unknown {
+    return {
+      codeFps: this.codeFps,
+      codeOverlay: this.codeOverlay,
+      durationAsString: this.durationAsString,
+      enabled: this.enabled,
+      facingMode: this.facingMode,
+      fillLightMode: this.fillLightMode,
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName,
+      started: this.started,
+      type: this.type,
+      wait: this.wait
+    }
+  }
+
   public toggle (): void {
     if (this.started) {
       this.stop()

@@ -318,6 +318,21 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.go(0)
   }
 
+  public toJSON (): unknown {
+    return {
+      id: this.id,
+      is: this.getAttribute('is'),
+      name: this.name,
+      nodeName: this.nodeName,
+      params: this.params,
+      regexp: this.regexp,
+      save: this.save,
+      saveLimit: this.saveLimit,
+      unique: this.unique,
+      wait: this.wait
+    }
+  }
+
   public toString (): string {
     if (this.view === null) {
       return ''

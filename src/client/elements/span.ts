@@ -42,4 +42,12 @@ export class ScolaSpanElement extends HTMLSpanElement implements ScolaElement {
     this.observer.disconnect()
     this.propagator.disconnect()
   }
+
+  public toJSON (): unknown {
+    return {
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName
+    }
+  }
 }

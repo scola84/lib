@@ -112,6 +112,22 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
     this.url = this.getAttribute('sc-url')
   }
 
+  public toJSON (): unknown {
+    return {
+      currentTimeAsString: this.currentTimeAsString,
+      durationAsString: this.durationAsString,
+      id: this.id,
+      is: this.getAttribute('is'),
+      key: this.key,
+      muted: this.muted,
+      nodeName: this.nodeName,
+      paused: this.paused,
+      src: this.src,
+      url: this.url,
+      volume: this.volume
+    }
+  }
+
   public toggle (): void {
     this.media.toggle()
   }

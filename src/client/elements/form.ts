@@ -121,6 +121,16 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     this.notify()
   }
 
+  public toJSON (): unknown {
+    return {
+      elements: this.fieldElements.length,
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName,
+      valid: this.valid
+    }
+  }
+
   protected addEventListeners (): void {
     this.addEventListener('sc-form-error', this.handleErrorBound)
     this.addEventListener('sc-form-focus', this.handleFocusBound)

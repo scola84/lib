@@ -71,6 +71,17 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
     this.url = this.getAttribute('sc-url') ?? ''
   }
 
+  public toJSON (): unknown {
+    return {
+      event: this.event,
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName,
+      tries: this.tries,
+      url: this.url
+    }
+  }
+
   protected addEventListeners (): void {
     document.addEventListener('visibilitychange', this.handleVisibilityChangeBound)
   }

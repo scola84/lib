@@ -70,6 +70,17 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
     this.target = this.getAttribute('sc-target') ?? ''
   }
 
+  public toJSON (): unknown {
+    return {
+      contain: this.contain,
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName,
+      snap: this.snap,
+      target: this.target
+    }
+  }
+
   protected calculatePosition (position: number, distance: number): number {
     return Math.round((position + distance) / this.snap) * this.snap
   }

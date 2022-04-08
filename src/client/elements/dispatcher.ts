@@ -68,6 +68,16 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     this.wait = this.hasAttribute('sc-wait')
   }
 
+  public toJSON (): unknown {
+    return {
+      events: this.events,
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName,
+      wait: this.wait
+    }
+  }
+
   protected addEventListeners (): void {
     this.addEventListener('sc-dispatch', this.handleDispatchBound)
   }

@@ -43,4 +43,13 @@ export class ScolaTableCellElement extends HTMLTableCellElement implements Scola
     this.observer.disconnect()
     this.propagator.disconnect()
   }
+
+  public toJSON (): unknown {
+    return {
+      data: this.data,
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName
+    }
+  }
 }

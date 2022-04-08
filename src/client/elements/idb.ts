@@ -300,6 +300,19 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     this.version = Number(this.getAttribute('sc-version') ?? 1)
   }
 
+  public toJSON (): unknown {
+    return {
+      id: this.id,
+      is: this.getAttribute('is'),
+      mkey: this.mkey,
+      name: this.name,
+      nodeName: this.nodeName,
+      pkey: this.pkey,
+      rkey: this.rkey,
+      version: this.version
+    }
+  }
+
   protected addEventListeners (): void {
     this.addEventListener('sc-idb-add', this.handleAddBound)
     this.addEventListener('sc-idb-add-all', this.handleAddAllBound)

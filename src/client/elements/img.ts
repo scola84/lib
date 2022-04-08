@@ -107,6 +107,18 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
     this.url = this.getAttribute('sc-url')
   }
 
+  public toJSON (): unknown {
+    return {
+      id: this.id,
+      is: this.getAttribute('is'),
+      key: this.key,
+      nodeName: this.nodeName,
+      src: this.src,
+      srcset: this.srcset,
+      url: this.url
+    }
+  }
+
   protected addEventListeners (): void {
     this.addEventListener('error', this.handleErrorBound)
   }

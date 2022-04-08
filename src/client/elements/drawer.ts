@@ -141,6 +141,18 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     this.url = this.getAttribute('sc-url') ?? ''
   }
 
+  public toJSON (): unknown {
+    return {
+      data: this.data,
+      id: this.id,
+      is: this.getAttribute('is'),
+      name: this.name,
+      nodeName: this.nodeName,
+      scale: this.scale,
+      url: this.url
+    }
+  }
+
   public update (): void {
     this.postMessage(this.data)
     this.notify()

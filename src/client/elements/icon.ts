@@ -95,6 +95,16 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
     this.code = this.getAttribute('sc-code') ?? ''
   }
 
+  public toJSON (): unknown {
+    return {
+      code: this.code,
+      data: this.data,
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName
+    }
+  }
+
   public update (): void {
     const code = this.i18n.format(this.code, this.data)
     const snippet = ScolaIconElement.snippets[code]

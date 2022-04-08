@@ -8,4 +8,6 @@ export interface ScolaElement extends HTMLElement {
   observer: Observer
 
   propagator: Propagator
+
+  toJSON: () => unknown
 }

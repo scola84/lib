@@ -122,6 +122,14 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     this.interactor.touch = this.interactor.hasTouch
   }
 
+  public toJSON (): unknown {
+    return {
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName
+    }
+  }
+
   protected addEventListeners (): void {
     if (this.hasAttribute('sc-drop')) {
       this.addEventListener('sc-drop-transfer', this.handleTransferBound)

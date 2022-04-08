@@ -161,6 +161,18 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     this.data = this.initialInnerHtml
   }
 
+  public toJSON (): unknown {
+    return {
+      error: this.error,
+      id: this.id,
+      is: this.getAttribute('is'),
+      name: this.name,
+      nodeName: this.nodeName,
+      type: this.type,
+      value: this.valueAsCast
+    }
+  }
+
   public update (): void {
     this.updatePlaceholder()
 

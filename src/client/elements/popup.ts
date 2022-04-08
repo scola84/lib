@@ -214,6 +214,18 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     })
   }
 
+  public toJSON (): unknown {
+    return {
+      id: this.id,
+      immediate: this.immediate,
+      is: this.getAttribute('is'),
+      left: this.left,
+      nodeName: this.nodeName,
+      top: this.top,
+      transition: this.transition
+    }
+  }
+
   protected addEventListeners (): void {
     this.addEventListener('sc-popup-hide', this.handleHideBound)
     this.addEventListener('sc-popup-show', this.handleShowBound)

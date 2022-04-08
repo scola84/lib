@@ -43,4 +43,13 @@ export class ScolaTableRowElement extends HTMLTableRowElement implements ScolaEl
     this.observer.disconnect()
     this.propagator.disconnect()
   }
+
+  public toJSON (): unknown {
+    return {
+      data: this.data,
+      id: this.id,
+      is: this.getAttribute('is'),
+      nodeName: this.nodeName
+    }
+  }
 }

@@ -103,6 +103,16 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
     this.url = this.getAttribute('sc-url') ?? ''
   }
 
+  public toJSON (): unknown {
+    return {
+      id: this.id,
+      is: this.getAttribute('is'),
+      name: this.name,
+      nodeName: this.nodeName,
+      url: this.url
+    }
+  }
+
   protected addEventListeners (): void {
     this.addEventListener('sc-work', this.handleWorkBound)
     window.addEventListener('message', this.handleMessageBound)

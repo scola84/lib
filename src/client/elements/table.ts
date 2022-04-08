@@ -231,6 +231,19 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
     this.wait = this.hasAttribute('sc-wait')
   }
 
+  public toJSON (): unknown {
+    return {
+      added: this.lister.added.size,
+      deleted: this.lister.deleted.size,
+      id: this.id,
+      is: this.getAttribute('is'),
+      items: this.lister.items.length,
+      nodeName: this.nodeName,
+      selected: this.selector?.rows.length,
+      wait: this.wait
+    }
+  }
+
   public update (): void {
     if (
       this.lister.limit === 0 &&

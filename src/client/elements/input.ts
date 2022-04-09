@@ -236,6 +236,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
       files: this.filesAsCast,
       id: this.id,
       is: this.getAttribute('is'),
+      isEmpty: this.isEmpty,
       name: this.name,
       nodeName: this.nodeName,
       type: this.type,

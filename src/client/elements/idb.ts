@@ -1,6 +1,6 @@
-import { I18n, Transaction, cast, isArray, isFile, isNumber, isQuery, isSame, isStruct, isTransaction, toString } from '../../common'
+import { I18n, cast, isArray, isFile, isNumber, isQuery, isSame, isStruct, isTransaction, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { Query, Struct } from '../../common'
+import type { Query, Struct, Transaction } from '../../common'
 import type { IDBPDatabase } from 'idb/with-async-ittr'
 import type { ScolaElement } from './element'
 import { openDB } from 'idb/with-async-ittr'
@@ -756,11 +756,11 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
         .add(event.detail)
         .then((item) => {
           if (isStruct(item)) {
-            const transaction = new Transaction({
+            const transaction = {
               commit: item,
               rollback: item,
               type: 'tadd'
-            })
+            }
 
             this.propagator.dispatch('add', [item], event)
             this.propagator.dispatch('tadd', [transaction], event)
@@ -788,11 +788,11 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
         .delete(event.detail)
         .then((item) => {
           if (isStruct(item)) {
-            const transaction = new Transaction({
+            const transaction = {
               commit: item,
               rollback: item,
               type: 'tdelete'
-            })
+            }
 
             this.propagator.dispatch('delete', [item], event)
             this.propagator.dispatch('tdelete', [transaction], event)
@@ -804,16 +804,16 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     }
   }
 
-  protected handleTGet (event: CustomEvent): void {
+  protected handleTGet (event: CustomEvent<unknown>): void {
     if (isStruct(event.detail)) {
       this
         .get(event.detail)
         .then((item) => {
           if (isStruct(item)) {
-            const transaction = new Transaction({
+            const transaction = {
               commit: event.detail,
               type: 'tget'
-            })
+            }
 
             this.propagator.dispatch('get', [item], event)
             this.propagator.dispatch('tget', [transaction], event)
@@ -825,11 +825,11 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     }
   }
 
-  protected handleTGetFile (event: CustomEvent): void {
-    const transaction = new Transaction({
+  protected handleTGetFile (event: CustomEvent<unknown>): void {
+    const transaction = {
       commit: event.detail,
       type: 'tget-file'
-    })
+    }
 
     this.propagator.dispatch('tgetfile', [transaction], event)
   }
@@ -846,11 +846,11 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
             isStruct(newItem) &&
             isStruct(oldItem)
           ) {
-            const transaction = new Transaction({
+            const transaction = {
               commit: newItem,
               rollback: oldItem,
               type: 'tput'
-            })
+            }
 
             this.propagator.dispatch('put', [newItem], event)
             this.propagator.dispatch('tput', [transaction], event)
@@ -872,28 +872,28 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     }
   }
 
-  protected handleTSyncLocal (event: CustomEvent): void {
-    const transaction = new Transaction({
+  protected handleTSyncLocal (event: CustomEvent<unknown>): void {
+    const transaction = {
       commit: event.detail,
       type: 'tsync-local'
-    })
+    }
 
     this.propagator.dispatch('tsynclocal', [transaction], event)
   }
 
-  protected handleTSyncRemote (event: CustomEvent): void {
-    const transaction = new Transaction({
+  protected handleTSyncRemote (event: CustomEvent<unknown>): void {
+    const transaction = {
       commit: event.detail,
       type: 'tsync-remote'
-    })
+    }
 
     this.propagator.dispatch('tsyncremote', [transaction], event)
   }
 
-  protected isKey (key: unknown): key is IDBValidKey {
+  protected isKey (value: unknown): value is IDBValidKey {
     return (
-      isNumber(key) ||
-      typeof key === 'string'
+      isNumber(value) ||
+      typeof value === 'string'
     )
   }
 

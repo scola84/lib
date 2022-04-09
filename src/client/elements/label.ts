@@ -9,9 +9,7 @@ export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement 
   public propagator: Propagator
 
   public get data (): unknown {
-    return {
-      ...this.dataset
-    }
+    return { ...this.dataset }
   }
 
   public set data (data: unknown) {

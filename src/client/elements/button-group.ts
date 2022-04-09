@@ -14,9 +14,7 @@ export class ScolaButtonGroupElement extends HTMLDivElement implements ScolaElem
   public propagator: Propagator
 
   public get data (): unknown {
-    return {
-      ...this.dataset
-    }
+    return { ...this.dataset }
   }
 
   public set data (data: unknown) {

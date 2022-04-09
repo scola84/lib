@@ -29,9 +29,7 @@ export class ScolaResizerElement extends HTMLDivElement implements ScolaElement 
   public targetStyles = new Map<HTMLElement, string>()
 
   public get data (): unknown {
-    return {
-      ...this.dataset
-    }
+    return { ...this.dataset }
   }
 
   protected handleInteractorBound = this.handleInteractor.bind(this)

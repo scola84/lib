@@ -1,13 +1,11 @@
+import type { Struct, Transaction } from '../../common'
+import { isArray, isStruct, isTransaction } from '../../common'
 import type { ScolaTableElement } from '../elements'
-import type { Struct } from '../../common'
-import { isArray } from '../../common'
 
 export class TableTree {
   public element: ScolaTableElement
 
   public keys = new Set<unknown>()
-
-  public requestItem?: Struct
 
   public constructor (element: ScolaTableElement) {
     this.element = element
@@ -18,10 +16,10 @@ export class TableTree {
     const row = this.element.elements.get(key)
 
     if (item.items === null) {
-      if (this.requestItem === undefined) {
-        this.requestItem = item
-        this.element.propagator.dispatch('request', [item])
-      }
+      this.element.propagator.dispatch<Transaction>('request', [{
+        commit: item,
+        type: 'table-tree'
+      }])
     } else {
       this.keys.add(key)
       this.element.update()
@@ -43,14 +41,21 @@ export class TableTree {
   }
 
   public setData (data: unknown): void {
-    if (isArray(data)) {
-      if (this.requestItem !== undefined) {
-        this.requestItem.items = data
-        this.add(this.requestItem)
+    if (isTransaction(data)) {
+      if (
+        isStruct(data.commit) &&
+        isArray(data.result)
+      ) {
+        const key = data.commit[this.element.lister.pkey]
+        const row = this.element.elements.get(key)
+        const item = row?.data
+
+        if (isStruct(item)) {
+          item.items = data.result
+          this.add(item)
+        }
       }
     }
-
-    this.requestItem = undefined
   }
 
   public toggle (item: Struct, force?: boolean): void {

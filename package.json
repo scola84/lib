@@ -45,7 +45,7 @@
     "pg": "^8.7.3",
     "pg-format": "^1.0.4",
     "pg-query-stream": "^4.2.3",
-    "pino": "^7.9.2",
+    "pino": "^7.10.0",
     "postcss": "^8.4.12",
     "prismjs": "^1.27.0",
     "pwa-asset-generator": "^6.0.8",
@@ -66,7 +66,7 @@
   },
   "description": "The Scola Library",
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.66.0",
+    "@aws-sdk/client-s3": "^3.67.0",
     "@semantic-release/changelog": "^6.0.1",
     "@semantic-release/git": "^10.0.1",
     "@types/busboy": "^1.5.0",

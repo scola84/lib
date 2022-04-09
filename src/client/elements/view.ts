@@ -1,6 +1,7 @@
 import { Hider, Mutator, Observer, Propagator, Sanitizer } from '../helpers'
-import { Struct, flatten, isArray, isNumber, isSame, isStruct } from '../../common'
+import { Struct, flatten, isArray, isNumber, isSame, isStruct, isTransaction } from '../../common'
 import type { ScolaElement } from './element'
+import type { Transaction } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -51,8 +52,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public regexp: RegExp
 
-  public requestView?: View
-
   public sanitizer: Sanitizer
 
   public save: string
@@ -75,12 +74,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   public set data (data: unknown) {
-    if (typeof data === 'string') {
-      if (this.requestView !== undefined) {
-        this.requestView.snippet = data
-        this.update()
-        this.requestView = undefined
-      }
+    if (isTransaction(data)) {
+      this.commit(data)
     } else {
       this.propagator.set(data)
     }
@@ -286,11 +281,13 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     const snippet = ScolaViewElement.snippets[this.view.name]
 
     if (snippet === undefined) {
-      if (this.requestView === undefined) {
-        this.requestView = this.view
-        this.propagator.dispatch<View>('request', [this.view])
-        this.update()
+      const transaction = {
+        commit: this.view,
+        type: 'view'
       }
+
+      this.propagator.dispatch<Transaction>('request', [transaction])
+      this.update()
     } else {
       this.view.snippet = snippet
       this.update()
@@ -320,15 +317,19 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public toJSON (): unknown {
     return {
+      hasNext: this.hasNext,
+      hasPrevious: this.hasPrevious,
       id: this.id,
       is: this.getAttribute('is'),
       name: this.name,
       nodeName: this.nodeName,
       params: this.params,
+      pointer: this.pointer,
       regexp: this.regexp,
       save: this.save,
       saveLimit: this.saveLimit,
       unique: this.unique,
+      views: this.views.length,
       wait: this.wait
     }
   }
@@ -395,6 +396,19 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.addEventListener('sc-view-forward', this.handleForwardBound)
     this.addEventListener('sc-view-rewind', this.handleRewindBound)
     this.addEventListener('sc-view-sort', this.handleSortBound)
+  }
+
+  protected commit (transaction: Transaction): void {
+    if (
+      this.isView(transaction.commit) &&
+      typeof transaction.result === 'string'
+    ) {
+      transaction.commit.snippet = transaction.result
+
+      if (transaction.commit === this.view) {
+        this.update()
+      }
+    }
   }
 
   protected createView (options?: unknown): View {
@@ -493,6 +507,16 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
         this.saveState()
       }
     }
+  }
+
+  protected isView (value: unknown): value is View {
+    return (
+      isStruct(value) &&
+      typeof value.name === 'string'
+    ) && (
+      value.params === undefined ||
+      isStruct(value.params)
+    )
   }
 
   protected loadState (): void {

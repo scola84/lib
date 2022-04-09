@@ -41,9 +41,7 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
   public url: string | null
 
   public get data (): unknown {
-    return {
-      ...this.dataset
-    }
+    return { ...this.dataset }
   }
 
   public set data (data: unknown) {

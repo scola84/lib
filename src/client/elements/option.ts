@@ -24,7 +24,7 @@ export class ScolaOptionElement extends HTMLOptionElement implements ScolaElemen
   public trim: boolean
 
   public get data (): unknown {
-    return this.datamap
+    return this.datamap ?? { ...this.dataset }
   }
 
   public set data (data: unknown) {

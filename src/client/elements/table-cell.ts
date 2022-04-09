@@ -11,7 +11,7 @@ export class ScolaTableCellElement extends HTMLTableCellElement implements Scola
   public propagator: Propagator
 
   public get data (): unknown {
-    return this.datamap
+    return this.datamap ?? { ...this.dataset }
   }
 
   public set data (data: unknown) {

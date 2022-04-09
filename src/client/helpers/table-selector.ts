@@ -521,6 +521,10 @@ export class TableSelector {
       }
     }
 
+    if (handled) {
+      event.preventDefault()
+    }
+
     return handled
   }
 

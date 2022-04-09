@@ -46,9 +46,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   public transition: boolean
 
   public get data (): unknown {
-    return {
-      ...this.dataset
-    }
+    return { ...this.dataset }
   }
 
   public set data (data: unknown) {

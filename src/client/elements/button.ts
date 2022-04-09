@@ -1,8 +1,7 @@
 import { Dragger, Dropper, Interactor, Mutator, Observer, Propagator } from '../helpers'
-import { I18n, isStruct } from '../../common'
+import { I18n } from '../../common'
 import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 export class ScolaButtonElement extends HTMLButtonElement implements ScolaElement {
   public code: string | null
@@ -26,23 +25,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   public propagator: Propagator
 
   public get data (): unknown {
-    let data: Struct = {
-      ...this.dataset
-    }
-
-    if (isStruct(this.datamap)) {
-      data = {
-        ...data,
-        ...this.datamap
-      }
-    } else if (this.datamap !== undefined) {
-      data = {
-        ...data,
-        data: this.datamap
-      }
-    }
-
-    return data
+    return this.datamap ?? { ...this.dataset }
   }
 
   public set data (data: unknown) {

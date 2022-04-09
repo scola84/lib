@@ -1,9 +1,9 @@
 import { Dragger, Dropper, Mutator, Observer, Propagator, TableLister, TableSelector, TableSorter, TableTree } from '../helpers'
-import { cast, isArray, isPrimitive, isStruct } from '../../common'
+import type { Struct, Transaction } from '../../common'
+import { cast, isArray, isPrimitive, isStruct, isTransaction } from '../../common'
 import type { ScolaElement } from './element'
 import { ScolaTableCellElement } from './table-cell'
 import { ScolaTableRowElement } from './table-row'
-import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -57,19 +57,16 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   public wait: boolean
 
   public get data (): unknown {
-    return {
-      ...this.dataset
-    }
+    return { ...this.dataset }
   }
 
   public set data (data: unknown) {
-    if (this.tree?.requestItem === undefined) {
-      this.lister.setData(data)
+    if (isTransaction(data)) {
+      this.commit(data)
     } else {
-      this.tree.setData(data)
+      this.lister.setData(data)
+      this.update()
     }
-
-    this.update()
   }
 
   protected handleAddAllBound = this.handleAddAll.bind(this)
@@ -450,6 +447,19 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
           }
         }
       })
+  }
+
+  protected commit (transaction: Transaction): void {
+    switch (transaction.type) {
+      case 'table-lister':
+        this.lister.setData(transaction)
+        break
+      case 'table-tree':
+        this.tree?.setData(transaction)
+        break
+      default:
+        break
+    }
   }
 
   protected handleAdd (event: CustomEvent): void {

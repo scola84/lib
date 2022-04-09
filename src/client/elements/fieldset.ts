@@ -86,7 +86,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
 
   public toJSON (): unknown {
     return {
-      elements: this.fieldElements.length,
+      fieldElements: this.fieldElements.length,
       id: this.id,
       is: this.getAttribute('is'),
       nodeName: this.nodeName

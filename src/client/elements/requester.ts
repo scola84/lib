@@ -217,7 +217,9 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     let data = null
     let { method } = this
 
-    if (isArray(options)) {
+    if (isTransaction(options)) {
+      data = options.commit
+    } else if (isArray(options)) {
       data = options
     } else if (isStruct(options)) {
       if (typeof options.method === 'string') {
@@ -228,8 +230,6 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
         ...this.view?.view?.params,
         ...options
       }
-    } else if (isTransaction(options)) {
-      data = options.commit
     } else {
       data = this.view?.view?.params
     }

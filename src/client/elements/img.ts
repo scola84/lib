@@ -27,9 +27,7 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
   public url: string | null
 
   public get data (): unknown {
-    return {
-      ...this.dataset
-    }
+    return { ...this.dataset }
   }
 
   public set data (data: unknown) {

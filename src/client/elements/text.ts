@@ -1,7 +1,6 @@
-import { I18n, isError, isStruct } from '../../common'
+import { I18n, isError } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 
 export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
   public code: string
@@ -25,23 +24,7 @@ export class ScolaTextElement extends HTMLSpanElement implements ScolaElement {
   public trim: boolean
 
   public get data (): unknown {
-    let data: Struct = {
-      ...this.dataset
-    }
-
-    if (isStruct(this.datamap)) {
-      data = {
-        ...data,
-        ...this.datamap
-      }
-    } else if (this.datamap !== undefined) {
-      data = {
-        ...data,
-        data: this.datamap
-      }
-    }
-
-    return data
+    return this.datamap ?? { ...this.dataset }
   }
 
   public set data (data: unknown) {

@@ -1,7 +1,7 @@
-import { I18n, Struct, cast, isArray, isNumber, isStruct, set, toJoint } from '../../common'
+import { I18n, Struct, cast, isArray, isNumber, isStruct, isTransaction, set, toJoint } from '../../common'
+import type { Query, Transaction } from '../../common'
 import type { ScolaTableElement, ScolaTableRowElement } from '../elements'
 import { Breakpoint } from './breakpoint'
-import type { Query } from '../../common'
 
 export class TableLister {
   public added = new Set()
@@ -29,8 +29,6 @@ export class TableLister {
   public pkey: string
 
   public query: boolean
-
-  public requestData?: Query
 
   public rkey: string | null
 
@@ -178,14 +176,17 @@ export class TableLister {
     if (
       this.limit === 0 ||
       this.locked ||
-      (this.items.length % this.limit) > 0 ||
-      this.requestData !== undefined
+      (this.items.length % this.limit) > 0
     ) {
       return
     }
 
-    this.requestData = this.createQuery()
-    this.element.propagator.dispatch<Query>('request', [this.requestData])
+    const transaction = {
+      commit: this.createQuery(),
+      type: 'table-lister'
+    }
+
+    this.element.propagator.dispatch<Transaction>('request', [transaction])
   }
 
   public reset (): void {
@@ -200,15 +201,17 @@ export class TableLister {
   }
 
   public setData (data: unknown): void {
-    if (isArray(data)) {
+    if (isTransaction(data)) {
+      if (isArray(data.result)) {
+        this.addItems(data.result)
+      }
+    } else if (isArray(data)) {
       this.addItems(data)
     } else if (isStruct(data)) {
       if (isArray(data.items)) {
         this.addItems(data.items)
       }
     }
-
-    this.requestData = undefined
   }
 
   public start (): void {

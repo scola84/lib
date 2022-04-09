@@ -70,9 +70,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   public wait: boolean
 
   public get data (): unknown {
-    return {
-      ...this.dataset
-    }
+    return { ...this.dataset }
   }
 
   public get enabled (): boolean {

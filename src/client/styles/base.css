@@ -11,7 +11,6 @@
   margin: 0;
   padding: 0;
   text-align: start;
-  /* user-select: none; */
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -21,6 +20,7 @@ body {
   font-size: 16px;
   line-height: 1.25;
   overflow: hidden;
+  user-select: none;
 }
 
 :focus {
@@ -680,6 +680,21 @@ body {
   rotate: 90deg;
 }
 
+.sc-code {
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+textarea.sc-code {
+  background-color: transparent;
+  color: transparent;
+  resize: none;
+}
+
+textarea.sc-code:focus-visible {
+  outline: none;
+}
+
 .sc-drawer line,
 .sc-drawer path {
   stroke: var(--fc2);
@@ -700,21 +715,6 @@ body {
 
 .sc-hidden[hidden] {
   display: none;
-}
-
-.sc-prism {
-  font-family: monospace;
-  white-space: pre-wrap;
-}
-
-textarea.sc-prism {
-  background-color: transparent;
-  color: transparent;
-  resize: none;
-}
-
-textarea.sc-prism:focus-visible {
-  outline: none;
 }
 
 .sc-recorder video {

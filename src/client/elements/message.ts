@@ -32,9 +32,7 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
   public timeoutId?: number
 
   public get data (): unknown {
-    return {
-      ...this.dataset
-    }
+    return { ...this.dataset }
   }
 
   protected handleAddBound = this.handleAdd.bind(this)

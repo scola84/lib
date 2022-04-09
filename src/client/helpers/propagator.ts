@@ -97,7 +97,7 @@ export class Propagator {
         const [
           name,
           filter = undefined
-        ] = nameAndFilter.split(/\?(?<filter>.+)/u)
+        ] = nameAndFilter.split('?')
 
         return {
           data,

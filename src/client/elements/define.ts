@@ -3,6 +3,7 @@ import { ScolaAudioElement } from './audio'
 import { ScolaButtonElement } from './button'
 import { ScolaButtonGroupElement } from './button-group'
 import { ScolaCarouselElement } from './carousel'
+import { ScolaCodeElement } from './code'
 import { ScolaDispatcherElement } from './dispatcher'
 import { ScolaDivElement } from './div'
 import { ScolaDrawerElement } from './drawer'
@@ -19,7 +20,6 @@ import { ScolaMessageElement } from './message'
 import { ScolaMoverElement } from './mover'
 import { ScolaOptionElement } from './option'
 import { ScolaPopupElement } from './popup'
-import { ScolaPrismElement } from './prism'
 import { ScolaRecorderElement } from './recorder'
 import { ScolaReloaderElement } from './reloader'
 import { ScolaRequesterElement } from './requester'
@@ -56,7 +56,7 @@ export function defineElements (): void {
   ScolaMoverElement.define()
   ScolaOptionElement.define()
   ScolaPopupElement.define()
-  ScolaPrismElement.define()
+  ScolaCodeElement.define()
   ScolaRecorderElement.define()
   ScolaReloaderElement.define()
   ScolaRequesterElement.define()

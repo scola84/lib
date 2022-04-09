@@ -6,7 +6,7 @@ import { highlightElement } from 'prismjs'
 /**
  * Many thanks to https://css-tricks.com/creating-an-editable-textarea-that-supports-syntax-highlighted-code/
  */
-export class ScolaPrismElement extends HTMLDivElement implements ScolaElement {
+export class ScolaCodeElement extends HTMLDivElement implements ScolaElement {
   public editor: HTMLTextAreaElement | null
 
   public mutator: Mutator
@@ -41,7 +41,7 @@ export class ScolaPrismElement extends HTMLDivElement implements ScolaElement {
   }
 
   public static define (): void {
-    customElements.define('sc-prism', ScolaPrismElement, {
+    customElements.define('sc-code', ScolaCodeElement, {
       extends: 'div'
     })
   }

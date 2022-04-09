@@ -153,7 +153,7 @@ export class Observer {
       const [
         name,
         filter = undefined
-      ] = nameAndFilter.split(/\?(?<filter>.+)/u)
+      ] = nameAndFilter.split('?')
 
       const filters = filter?.split('&')
       const handler = Observer.handlers[name]

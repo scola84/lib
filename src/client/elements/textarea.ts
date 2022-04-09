@@ -166,6 +166,7 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
       error: this.error,
       id: this.id,
       is: this.getAttribute('is'),
+      isEmpty: this.isEmpty,
       name: this.name,
       nodeName: this.nodeName,
       type: this.type,

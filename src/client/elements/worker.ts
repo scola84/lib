@@ -136,13 +136,38 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   protected createWorker (): Worker | undefined {
     const workerHandler = `
       function workerHandler(event) {
+        const eventData = event.data
+
+        let data = null
+
+        if (
+          typeof eventData === 'object' &&
+          typeof eventData?.data === 'object' &&
+          eventData.data?.commit !== undefined &&
+          typeof eventData.data.type === 'string'
+        ) {
+          data = eventData.data.commit
+        } else {
+          data = eventData.data
+        }
+
         Promise
           .resolve()
           .then(() => {
-            return ${ScolaWorkerElement.handlers[this.name]?.toString() ?? ''}(event.data.data)
+            return ${ScolaWorkerElement.handlers[this.name]?.toString() ?? ''}(data)
           })
-          .then((data) => {
-            self.postMessage(data)
+          .then((result) => {
+            if (
+              typeof eventData === 'object' &&
+              typeof eventData?.data === 'object' &&
+              eventData.data?.commit !== undefined &&
+              typeof eventData.data.type === 'string'
+            ) {
+              eventData.data.result = result
+              self.postMessage(eventData.data)
+            } else {
+              self.postMessage(result)
+            }
           })
           .catch((error) => {
             setTimeout(() => {

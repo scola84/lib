@@ -79,9 +79,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   public trigger?: MouseEvent
 
   public get data (): unknown {
-    return {
-      ...this.dataset
-    }
+    return { ...this.dataset }
   }
 
   public set data (data: unknown) {

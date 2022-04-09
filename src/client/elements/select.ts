@@ -154,9 +154,10 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
       error: this.error,
       id: this.id,
       is: this.getAttribute('is'),
+      isEmpty: this.isEmpty,
       name: this.name,
       nodeName: this.nodeName,
-      options: this.optionElements.length,
+      optionElements: this.optionElements.length,
       type: this.type,
       value: this.valueAsCast
     }

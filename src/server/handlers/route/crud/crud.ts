@@ -1,22 +1,24 @@
-import type { IncomingMessage, ServerResponse } from 'http'
-import type { RouteData } from '../../../helpers/route'
+import type { SqlDatabase, SqlQueryKeys } from '../../../helpers/sql'
 import { RouteHandler } from '../../../helpers/route'
-import type { SqlQueryKeys } from '../../../helpers/sql'
+import type { RouteHandlerOptions } from '../../../helpers/route'
 
 export abstract class CrudHandler extends RouteHandler {
+  public database: SqlDatabase
+
   public abstract keys: SqlQueryKeys
 
   public abstract object: string
 
-  public async prepareRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
-    await super.prepareRoute(data, response, request)
-
-    if (
-      this.keys.auth !== undefined &&
-      data.user === undefined
-    ) {
-      response.statusCode = 401
-      throw new Error('User is undefined')
+  public constructor (options?: Partial<RouteHandlerOptions>) {
+    const handlerOptions = {
+      ...RouteHandler.options,
+      ...options
     }
+
+    if (handlerOptions.database === undefined) {
+      throw new Error('Option "database" is undefined')
+    }
+
+    super(handlerOptions)
   }
 }

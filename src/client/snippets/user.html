@@ -1,0 +1,29 @@
+<form>
+  <input type="checkbox" name="active" value="1" sc-select />
+  <textarea name="backup_codes" readonly hidden></textarea>
+  <input type="datetime-local" name="created" readonly required sc-select />
+  <input type="email" name="email" sc-unique="email" sc-select />
+  <input type="text" name="hotp_secret" readonly hidden />
+  <input type="checkbox" name="mfa" value="1" sc-select />
+  <input type="text" name="name" sc-select />
+  <input type="text" name="oauth_provider" readonly hidden />
+  <select name="locale" sc-select>
+    <option value="en_GB" sc-code="en_GB">en-GB</option>
+    <option value="nl_NL" sc-code="nl_NL">nl-NL</option>
+  </select>
+  <input type="password" name="password" />
+  <input type="tel" name="tel" sc-unique="tel" sc-select />
+  <input type="text" name="totp_secret" readonly hidden />
+  <input type="datetime-local" name="updated" readonly required sc-select />
+  <input
+    type="number"
+    name="user_id"
+    required
+    readonly
+    hidden
+    sc-select
+    sc-pkey
+  />
+  <input type="text" name="username" sc-unique="username" sc-select />
+  <input type="text" name="webauthn_credentials" />
+</form>

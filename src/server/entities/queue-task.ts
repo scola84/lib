@@ -67,12 +67,12 @@ export interface QueueTask<Payload = unknown, Options = unknown, Result = unknow
   status: 'err' | 'ok' | 'pending'
 }
 
-export function createQueueTask<Payload = Struct, Options = Struct, Result = Struct> (task?: Partial<QueueTask<Payload, Options, Result>>): QueueTask<Payload, Options, Result> {
+export function createQueueTask<Payload = Struct, Options = Struct, Result = Struct> (task?: Partial<QueueTask<Payload, Options, Result>>, date = new Date()): QueueTask<Payload, Options, Result> {
   return {
-    date_created: new Date(),
+    date_created: date,
     date_queued: null,
     date_started: null,
-    date_updated: new Date(),
+    date_updated: date,
     fkey_queue_run_id: 0,
     host: null,
     id: 0,

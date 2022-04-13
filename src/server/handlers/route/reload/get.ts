@@ -29,7 +29,7 @@ export class ReloadGetHandler extends RouteHandler {
     this.file = options.file ?? '/usr/src/app/dist/client/index.js'
   }
 
-  public handle (data: RouteData, response: ServerResponse): null {
+  public handle (data: RouteData, response: ServerResponse): void {
     this.responses.add(response)
 
     response.once('close', () => {
@@ -38,7 +38,6 @@ export class ReloadGetHandler extends RouteHandler {
 
     response.setHeader('content-type', 'text/event-stream')
     response.write('\n')
-    return null
   }
 
   public start (): void {
@@ -58,19 +57,27 @@ export class ReloadGetHandler extends RouteHandler {
       }))
   }
 
+  protected notifyClient (response: ServerResponse): void {
+    response.write(this.codec.encode({
+      data: JSON.stringify({
+        reload: true
+      }),
+      event: this.event
+    }, response))
+  }
+
+  protected notifyClients (): void {
+    this.responses.forEach((response) => {
+      this.notifyClient(response)
+    })
+  }
+
   protected startWatcher (): void {
     this.watcher = watch(this.file)
 
     this.watcher.on('change', debounce(this.debounce, false, () => {
       if (readFileSync(this.file).length > 0) {
-        this.responses.forEach((response) => {
-          response.write(this.codec.encode({
-            data: JSON.stringify({
-              reload: true
-            }),
-            event: this.event
-          }, response))
-        })
+        this.notifyClients()
       }
     }))
   }

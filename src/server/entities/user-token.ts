@@ -5,35 +5,32 @@ export interface UserToken {
 
   expires: Date
 
-  group_id: number | string
+  group_id: number | string | null
 
   hash: string
 
-  ip?: string
+  permissions: Struct | null
 
-  permissions: Struct
+  role_id: number | string | null
 
   token_id: number | string
-
-  type: string
 
   updated: Date
 
   user_id: number | string
 }
 
-export function createUserToken (token: Partial<UserToken>): UserToken {
-  const date = new Date()
+export function createUserToken (token: Partial<UserToken>, date = new Date()): UserToken {
   return {
     created: date,
-    expires: token.expires ?? date,
-    group_id: token.group_id ?? 0,
-    hash: token.hash ?? '',
-    ip: token.ip,
-    permissions: token.permissions ?? {},
+    expires: date,
+    group_id: null,
+    hash: '',
+    permissions: null,
+    role_id: null,
     token_id: 0,
-    type: token.type ?? '',
     updated: date,
-    user_id: token.user_id ?? 0
+    user_id: 0,
+    ...token
   }
 }

@@ -144,7 +144,9 @@ export class Interactor {
 
   protected handleTouchstartBound = this.handleTouchstart.bind(this)
 
-  protected handleWheelBound = throttle(250, true, this.handleWheel.bind(this))
+  protected handleWheelBound = throttle(250, this.handleWheel.bind(this), {
+    noTrailing: true
+  })
 
   protected handleWheelPreventBound = this.handleWheelPrevent.bind(this)
 

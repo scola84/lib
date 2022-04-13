@@ -53,23 +53,23 @@ export class MysqlFormatter extends SqlFormatter {
             return line.padStart(line.length + 2, ' ')
           })
       ].join(',\n'),
-      ');',
+      ')',
       this
         .formatDdlIndex(object, fields)
-        .join(',\n'),
+        .join(';\n'),
       this
         .formatDdlIndexCursor(object, fields)
-        .join(',\n'),
+        .join(';\n'),
       this
         .formatDdlIndexUnique(object, fields)
-        .join(',\n')
+        .join(';\n')
     ]
 
-    return lines
+    return `${lines
       .filter((line) => {
         return line !== ''
       })
-      .join('\n')
+      .join(';\n')};\n`
   }
 
   public formatIdentifier (value: string): string {
@@ -113,6 +113,8 @@ export class MysqlFormatter extends SqlFormatter {
 
   protected formatDdlColumn (name: string, field: SchemaField): string {
     switch (field.type) {
+      case 'checkbox':
+        return this.formatDdlColumnCheckbox(name, field)
       case 'date':
         return this.formatDdlColumnDate(name, field)
       case 'datetime-local':
@@ -128,6 +130,23 @@ export class MysqlFormatter extends SqlFormatter {
       default:
         return this.formatDdlColumnDefault(name, field)
     }
+  }
+
+  protected formatDdlColumnCheckbox (name: string, field: SchemaField): string {
+    if (
+      field.values?.length !== 1 ||
+      field.values[0] !== '1'
+    ) {
+      return this.formatDdlColumnDefault(name, field)
+    }
+
+    let ddl = `\`${name}\` BOOLEAN`
+
+    if (field.required === true) {
+      ddl += ' NOT NULL'
+    }
+
+    return ddl
   }
 
   protected formatDdlColumnDate (name: string, field: SchemaField): string {
@@ -309,7 +328,7 @@ export class MysqlFormatter extends SqlFormatter {
         field.index
           ?.split(' ')
           .forEach((index) => {
-            const [indexName, indexIndex] = index.split(':')
+            const [indexName, indexIndex = 0] = index.split(':')
 
             let columns = indexes[indexName]
 
@@ -344,7 +363,7 @@ export class MysqlFormatter extends SqlFormatter {
     if (hasCursor) {
       lines.push([
         `CREATE INDEX \`index_${object}_cursor\``,
-        `ON \`${object}\` (\`cursor\`);`
+        `ON \`${object}\` (\`cursor\`)`
       ].join(' '))
     }
 
@@ -360,7 +379,7 @@ export class MysqlFormatter extends SqlFormatter {
         field.unique
           ?.split(' ')
           .forEach((unique) => {
-            const [indexName, indexIndex] = unique.split(':')
+            const [indexName, indexIndex = 0] = unique.split(':')
 
             let columns = indexes[indexName]
 
@@ -378,7 +397,7 @@ export class MysqlFormatter extends SqlFormatter {
       .map(([name, columns = []]) => {
         return [
           `CREATE UNIQUE INDEX \`index_${object}_${name}\``,
-          `ON \`${object}\` (${columns.join(',')});`
+          `ON \`${object}\` (${columns.join(',')})`
         ].join(' ')
       })
   }

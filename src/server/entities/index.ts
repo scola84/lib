@@ -6,6 +6,7 @@ import type { QueueRun } from './queue-run'
 import type { QueueTask } from './queue-task'
 import type { Role } from './role'
 import type { User } from './user'
+import type { UserRole } from './user-role'
 import type { UserToken } from './user-token'
 
 export * from './group'
@@ -15,6 +16,7 @@ export * from './queue-run'
 export * from './queue-task'
 export * from './role'
 export * from './user'
+export * from './user-role'
 export * from './user-token'
 
 export interface Entities extends EntitiesBase {
@@ -25,5 +27,6 @@ export interface Entities extends EntitiesBase {
   queue_task: Array<Partial<QueueTask>>
   role: Array<Partial<Role>>
   user: Array<Partial<User>>
+  user_role: Array<Partial<UserRole>>
   user_token: Array<Partial<UserToken>>
 }

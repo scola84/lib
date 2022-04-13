@@ -16,6 +16,7 @@ import { isNil } from '../../../common'
 export interface RouteData extends Struct {
   body?: unknown
   headers: IncomingHttpHeaders
+  ip: string
   method: string
   query: Struct
   url: URL
@@ -26,6 +27,7 @@ export interface RouteHandlerOptions {
   auth: RouteAuth
   bucket: FileBucket
   codec: RouteCodec
+  compromised: boolean
   database: SqlDatabase
   description: string
   logger: Logger
@@ -45,7 +47,9 @@ export abstract class RouteHandler {
 
   public codec: RouteCodec
 
-  public database: SqlDatabase
+  public compromised: boolean
+
+  public database?: SqlDatabase
 
   public description?: string
 
@@ -57,7 +61,7 @@ export abstract class RouteHandler {
 
   public schema: Partial<Schema> = {}
 
-  public store: RedisClientType
+  public store?: RedisClientType
 
   public url: string
 
@@ -73,21 +77,14 @@ export abstract class RouteHandler {
       throw new Error('Option "codec" is undefined')
     }
 
-    if (handlerOptions.database === undefined) {
-      throw new Error('Option "database" is undefined')
-    }
-
     if (handlerOptions.router === undefined) {
       throw new Error('Option "router" is undefined')
-    }
-
-    if (handlerOptions.store === undefined) {
-      throw new Error('Option "store" is undefined')
     }
 
     this.auth = handlerOptions.auth
     this.bucket = handlerOptions.bucket
     this.codec = handlerOptions.codec
+    this.compromised = handlerOptions.compromised ?? true
     this.database = handlerOptions.database
     this.description = handlerOptions.description
     this.logger = handlerOptions.logger
@@ -99,71 +96,43 @@ export abstract class RouteHandler {
   }
 
   public async handleRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
-    await this.prepareRoute(data, response, request)
-
     try {
+      await this.prepareAuth(data, response)
+      await this.prepareData(data, response, request)
+
       const result = await Promise
         .resolve()
         .then(() => {
           return this.handle(data, response, request)
         })
 
-      if (isNil(result)) {
-        if (result === undefined) {
+      if (!response.headersSent) {
+        if (isNil(result)) {
+          if (result === undefined) {
+            response.removeHeader('content-type')
+            response.end()
+          }
+        } else {
+          response.end(this.codec.encode(result, response))
+        }
+      }
+    } catch (error: unknown) {
+      if (!response.headersSent) {
+        if (
+          response.statusCode === 401 ||
+          response.statusCode === 403
+        ) {
+          this.auth?.setBackoff(data, response)
+        } else {
+          if (response.statusCode < 300) {
+            response.statusCode = 500
+          }
+
           response.removeHeader('content-type')
           response.end()
         }
-      } else {
-        response.end(this.codec.encode(result, response))
-      }
-    } catch (error: unknown) {
-      if (response.statusCode < 300) {
-        response.statusCode = 500
       }
 
-      response.removeHeader('content-type')
-      response.end()
-      throw error
-    }
-  }
-
-  public async prepareRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
-    response.setHeader('content-type', 'application/json')
-
-    try {
-      data.user = await this.auth?.authenticate(data)
-    } catch (error: unknown) {
-      await this.auth?.logout(data, response)
-      response.statusCode = 401
-      response.removeHeader('content-type')
-      response.end()
-      throw error
-    }
-
-    try {
-      this.auth?.authorize(data)
-    } catch (error: unknown) {
-      await this.auth?.logout(data, response)
-      response.statusCode = 403
-      response.removeHeader('content-type')
-      response.end()
-      throw error
-    }
-
-    try {
-      data.body = await this.codec.decode(request, this.schema.body?.schema)
-    } catch (error: unknown) {
-      response.statusCode = 415
-      response.removeHeader('content-type')
-      response.end()
-      throw error
-    }
-
-    try {
-      this.validator.validate(data, data.user)
-    } catch (error: unknown) {
-      response.statusCode = 400
-      response.end(this.codec.encode(error, response))
       throw error
     }
   }
@@ -183,6 +152,49 @@ export abstract class RouteHandler {
   }
 
   public stop (): Promise<void> | void {}
+
+  protected async prepareAuth (data: RouteData, response: ServerResponse): Promise<void> {
+    try {
+      data.user = await this.auth?.authenticate(data)
+    } catch (error: unknown) {
+      response.statusCode = 401
+      throw error
+    }
+
+    try {
+      this.auth?.authorize(data)
+    } catch (error: unknown) {
+      response.statusCode = 403
+      throw error
+    }
+
+    if (
+      data.user?.compromised === true &&
+      !this.compromised
+    ) {
+      response.statusCode = 403
+      throw new Error('User is compromised')
+    }
+  }
+
+  protected async prepareData (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
+    try {
+      data.body = await this.codec.decode(request, this.schema.body?.schema)
+    } catch (error: unknown) {
+      response.statusCode = 415
+      throw error
+    }
+
+    response.setHeader('content-type', 'application/json')
+
+    try {
+      this.validator.validate(data, data.user)
+    } catch (error: unknown) {
+      response.statusCode = 400
+      response.end(this.codec.encode(error, response))
+      throw error
+    }
+  }
 
   public abstract handle (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<unknown> | unknown
 }

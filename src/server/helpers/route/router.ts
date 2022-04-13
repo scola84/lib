@@ -114,7 +114,7 @@ export class Router {
       if (this.fastify === undefined) {
         response.statusCode = 404
         response.end()
-        throw new Error(`Path "${url.pathname}" not found`)
+        throw new Error('Path not found')
       } else {
         this.fastify(request, response)
         return
@@ -127,14 +127,23 @@ export class Router {
       response.statusCode = 405
       response.setHeader('allow', Array.from(handlers.keys()).join(','))
       response.end()
-      throw new Error(`Method "${request.method ?? ''} ${url.pathname}" not allowed`)
+      throw new Error('Method not allowed')
     }
 
-    await handler.handleRoute({
+    const ip = request.headers['x-real-ip']?.toString() ?? request.socket.remoteAddress
+
+    if (ip === undefined) {
+      throw new Error('IP is undefined')
+    }
+
+    const data = {
       headers: request.headers,
+      ip: ip,
       method: request.method ?? 'GET',
       query: Struct.fromQuery(url.searchParams.toString(), true),
       url: url
-    }, response, request)
+    }
+
+    await handler.handleRoute(data, response, request)
   }
 }

@@ -1,7 +1,9 @@
 import type { Query } from './is-query'
 import { Struct } from './is-struct'
+import type { User } from '../../server'
 import { cast } from './cast'
 import { flatten } from './flatten'
+import { isNil } from './is-nil'
 
 interface LocaleStrings {
   [key: string]: LocaleStrings | string | undefined
@@ -167,6 +169,18 @@ export class I18n {
         return formatter(data)
       })
       .join('')
+  }
+
+  public formatMailName (user: Partial<User>): string {
+    if (isNil(user.email)) {
+      throw new Error('Email is undefined')
+    }
+
+    if (isNil(user.name)) {
+      return user.email
+    }
+
+    return `${user.name} <${user.email}>`
   }
 
   public sort (items: Struct[], query: Query): Struct[] {

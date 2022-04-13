@@ -72,13 +72,13 @@ export interface QueueRun<Options = unknown> extends Required<QueueRunBase> {
   status: 'err' | 'ok' | 'pending'
 }
 
-export function createQueueRun<Options = Struct> (run?: Partial<QueueRun<Options>>): QueueRun<Options> {
+export function createQueueRun<Options = Struct> (run?: Partial<QueueRun<Options>>, date = new Date()): QueueRun<Options> {
   return {
     aggr_err: 0,
     aggr_ok: 0,
     aggr_total: 0,
-    date_created: new Date(),
-    date_updated: new Date(),
+    date_created: date,
+    date_updated: date,
     fkey_queue_id: run?.queue?.id ?? 0,
     fkey_queue_task_id: null,
     id: 0,

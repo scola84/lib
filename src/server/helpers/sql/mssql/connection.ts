@@ -148,7 +148,7 @@ export class MssqlConnection extends SqlConnection {
     })
 
     if (object === undefined) {
-      throw new Error(`Object is undefined (${JSON.stringify(values)})`)
+      throw new Error('Object is undefined')
     }
 
     return object

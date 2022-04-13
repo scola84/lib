@@ -53,8 +53,6 @@ export abstract class CrudInsertHandler extends CrudHandler {
       await this.insertLinks(data, object, this.keys.primary[0])
     }
 
-    response.statusCode = 201
-
     const selectOneQuery = this.database.formatter.createSelectOneQuery(this.object, this.schema.query.schema, this.keys, this.keys.primary ?? [], {
       select: query.select,
       where: object

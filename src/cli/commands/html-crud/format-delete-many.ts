@@ -64,7 +64,7 @@ function formatQuerySchema (object: string, schema: Schema, space: number): stri
       schema: {
         ...createSelectSchema(object, schema)
       },
-      type: 'struct'
+      type: 'fieldset'
     },
     space
   ).trimStart()

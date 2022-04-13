@@ -1,15 +1,18 @@
 import { MssqlDatabase, MysqlDatabase, PostgresqlDatabase, SchemaParser } from '../../server/helpers'
 import type { Schema, SqlDatabase } from '../../server/helpers'
-import { formatDeleteAll, formatDeleteMany, formatDeleteOne, formatIndex, formatInsertMany, formatInsertOne, formatSelectAll, formatSelectMany, formatSelectOne, formatUpdateMany, formatUpdateOne } from './html-crud/'
-import { mkdirSync, writeFileSync } from 'fs-extra'
+import { lstatSync, mkdirSync, readdirSync } from 'fs-extra'
 import { Command } from 'commander'
 import type { Struct } from '../../common'
-import { isMatch } from 'micromatch'
+import { parse } from 'path'
+import { toJoint } from '../../common'
+import { writeSql } from './html-crud/write-sql'
+import { writeTs } from './html-crud/write-ts'
 
 export interface Options {
   actions: string
   database: string
   dialect: string
+  name: string
   object: string
   relation?: string[]
   type: string
@@ -30,7 +33,7 @@ Example:
 program
   .argument('<source>', 'name and source file')
   .argument('[target]', 'directory to write the files to', process.cwd())
-  .option('-m, --actions <actions>', 'micromatch pattern to include actions in the API', '{da,dm,do,im,io,sa,sm,so,um,uo}')
+  .option('-a, --actions <actions>', 'micromatch pattern to include actions in the API', '{da,dm,do,im,io,sa,sm,so,um,uo}')
   .option('-D, --database <database>', 'database of the SQL file', 'postgres')
   .option('-d, --dialect <dialect>', 'dialect of the SQL file', 'postgres')
   .option('-r, --relation <relation...>', 'name and source file of a related object')
@@ -52,15 +55,7 @@ try {
     target
   ] = program.args
 
-  const [
-    object,
-    objectFile
-  ] = source.split('@')
-
   const options = program.opts<Options>()
-
-  options.object = object
-  options.url = options.url.replace('{object}', object)
 
   let targetDir = target
 
@@ -74,51 +69,58 @@ try {
     }
   }
 
-  parser
-    .parse(objectFile)
-    .then(async (schema) => {
-      const relations: Struct<Schema> = {}
+  Promise
+    .resolve()
+    .then(async () => {
+      let files = []
 
-      await Promise.all(options.relation?.map(async (relationSource) => {
-        const [relationObject, relationFile] = relationSource.split('@')
-
-        await parser
-          .parse(relationFile)
-          .then((relationSchema) => {
-            relations[relationObject] = relationSchema
+      if (lstatSync(source).isDirectory()) {
+        files = readdirSync(source)
+          .map((file) => {
+            return `${source}${file}`
           })
-      }) ?? [])
-
-      mkdirSync(targetDir, {
-        recursive: true
-      })
-
-      if (options.type === 'ts') {
-        Object
-          .entries({
-            'da': [`${targetDir}/delete-all.ts`, `${formatDeleteAll(schema, options)}\n`],
-            'dm': [`${targetDir}/delete-many.ts`, `${formatDeleteMany(schema, options)}\n`],
-            'do': [`${targetDir}/delete-one.ts`, `${formatDeleteOne(schema, options)}\n`],
-            'im': [`${targetDir}/insert-many.ts`, `${formatInsertMany(schema, options)}\n`],
-            'io': [`${targetDir}/insert-one.ts`, `${formatInsertOne(schema, options)}\n`],
-            'sa': [`${targetDir}/select-all.ts`, `${formatSelectAll(schema, options, relations)}\n`],
-            'sm': [`${targetDir}/select-many.ts`, `${formatSelectMany(schema, options)}\n`],
-            'so': [`${targetDir}/select-one.ts`, `${formatSelectOne(schema, options)}\n`],
-            'um': [`${targetDir}/update-many.ts`, `${formatUpdateMany(schema, options)}\n`],
-            'uo': [`${targetDir}/update-one.ts`, `${formatUpdateOne(schema, options)}\n`]
-
-          })
-          .filter(([key]) => {
-            return isMatch(key, options.actions)
-          })
-          .forEach(([, [path, content]]) => {
-            writeFileSync(path, content)
-          })
-
-        writeFileSync(`${targetDir}/index.ts`, `${formatIndex(options)}\n`)
-      } else if (options.type === 'sql') {
-        writeFileSync(`${targetDir}/${object}.sql`, databases[options.dialect]?.formatter.formatDdl(options.database, object, schema) ?? '')
+      } else {
+        files = [source]
       }
+
+      await Promise.all(files.map(async (file) => {
+        const fileOptions = {
+          ...options
+        }
+
+        fileOptions.name = parse(file).name
+
+        fileOptions.object = toJoint(fileOptions.name, {
+          separator: '_'
+        })
+
+        fileOptions.url = fileOptions.url.replace('{object}', fileOptions.name)
+
+        const schema = await parser.parse(file)
+        const relations: Struct<Schema> = {}
+
+        await Promise.all(fileOptions.relation?.map(async (relationFile) => {
+          const relationObject = toJoint(parse(relationFile).name, {
+            separator: '_'
+          })
+
+          await parser
+            .parse(relationFile)
+            .then((relationSchema) => {
+              relations[relationObject] = relationSchema
+            })
+        }) ?? [])
+
+        mkdirSync(targetDir, {
+          recursive: true
+        })
+
+        if (fileOptions.type === 'sql') {
+          writeSql(targetDir, schema, fileOptions, databases)
+        } else if (fileOptions.type === 'ts') {
+          writeTs(targetDir, schema, fileOptions, relations)
+        }
+      }))
     })
     .catch((error) => {
       logger.error(String(error).toLowerCase())

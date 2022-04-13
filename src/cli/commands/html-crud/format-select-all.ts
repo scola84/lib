@@ -60,7 +60,7 @@ function createJoinSchema (object: string, schema: Schema): Schema | undefined {
   return {
     where: {
       schema: joinSchema,
-      type: 'struct'
+      type: 'fieldset'
     }
   }
 }
@@ -98,7 +98,7 @@ function createOperatorSchema (object: string, schema: Schema, relations: Struct
           }
         }, {}),
       strict: true,
-      type: 'struct'
+      type: 'fieldset'
     },
     ...Object
       .entries(relations)
@@ -120,7 +120,7 @@ function createOperatorSchema (object: string, schema: Schema, relations: Struct
                 }
               }, {}),
             strict: true,
-            type: 'struct'
+            type: 'fieldset'
           }
         }
       }, {})
@@ -144,7 +144,7 @@ function createOperatorSchema (object: string, schema: Schema, relations: Struct
     operator: {
       schema: operatorSchema,
       strict: true,
-      type: 'struct'
+      type: 'fieldset'
     }
   }
 }
@@ -166,7 +166,7 @@ function createOrderSchema (object: string, schema: Schema, relations: Struct<Sc
           }
         }, {}),
       strict: true,
-      type: 'struct'
+      type: 'fieldset'
     },
     ...Object
       .entries(relations)
@@ -188,7 +188,7 @@ function createOrderSchema (object: string, schema: Schema, relations: Struct<Sc
                 }
               }, {}),
             strict: true,
-            type: 'struct'
+            type: 'fieldset'
           }
         }
       }, {})
@@ -212,7 +212,7 @@ function createOrderSchema (object: string, schema: Schema, relations: Struct<Sc
     order: {
       schema: orderSchema,
       strict: true,
-      type: 'struct'
+      type: 'fieldset'
     }
   }
 }
@@ -239,7 +239,7 @@ function createWhereSchema (object: string, schema: Schema, relations: Struct<Sc
           }
         }, {}),
       strict: true,
-      type: 'struct'
+      type: 'fieldset'
     },
     ...Object
       .entries(relations)
@@ -262,7 +262,7 @@ function createWhereSchema (object: string, schema: Schema, relations: Struct<Sc
                 }
               }, {}),
             strict: true,
-            type: 'struct'
+            type: 'fieldset'
           }
         }
       }, {})
@@ -286,7 +286,7 @@ function createWhereSchema (object: string, schema: Schema, relations: Struct<Sc
     where: {
       schema: whereSchema,
       strict: true,
-      type: 'struct'
+      type: 'fieldset'
     }
   }
 }
@@ -310,7 +310,7 @@ function formatQuerySchema (object: string, schema: Schema, relations: Struct<Sc
         ...createSelectSchema(object, schema, relations),
         ...createWhereSchema(object, schema, relations)
       },
-      type: 'struct'
+      type: 'fieldset'
     },
     space
   ).trimStart()

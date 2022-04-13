@@ -1,10 +1,11 @@
 import { Mutator, Observer, Propagator } from '../helpers'
-import { Struct, setPush } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaFieldElement } from './field'
 import { ScolaInputElement } from './input'
 import { ScolaSelectElement } from './select'
 import { ScolaTextAreaElement } from './textarea'
+import type { Struct } from '../../common'
+import { setPush } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -30,15 +31,19 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   public get fieldElements (): ScolaFieldElement[] {
-    return Array
-      .from(this.elements)
-      .filter((element) => {
-        return (
-          element instanceof ScolaInputElement ||
-          element instanceof ScolaSelectElement ||
-          element instanceof ScolaTextAreaElement
-        )
-      }) as ScolaFieldElement[]
+    const elements: ScolaFieldElement[] = []
+
+    for (const element of Array.from(this.elements)) {
+      if (
+        element instanceof ScolaInputElement ||
+        element instanceof ScolaSelectElement ||
+        element instanceof ScolaTextAreaElement
+      ) {
+        elements.push(element)
+      }
+    }
+
+    return elements
   }
 
   protected handleFalsifyBound = this.handleFalsify.bind(this)
@@ -141,18 +146,18 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   protected serialize (): Struct {
-    return this.fieldElements.reduce<Struct>((data, element) => {
-      const value = element.valueAsCast
+    const data = {}
 
-      if (
-        element.type === 'radio' &&
-        value === null
-      ) {
-        return data
+    for (const element of this.fieldElements) {
+      if (!(
+        element.disabled ||
+        element.name === ''
+      )) {
+        setPush(data, element.qualifiedName, element.valueAsCast)
       }
+    }
 
-      return setPush(data, element.name, value)
-    }, Struct.create())
+    return data
   }
 
   protected toggleDisabled (): void {

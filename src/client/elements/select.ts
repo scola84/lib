@@ -1,5 +1,5 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import type { Primitive, ScolaError } from '../../common'
+import type { Primitive, ScolaError, Struct } from '../../common'
 import { cast, isArray, isError, isPrimitive, isStruct } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
@@ -51,12 +51,20 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     }
   }
 
-  public get isEmpty (): boolean {
-    return this.value === ''
-  }
-
   public get optionElements (): HTMLOptionElement[] {
     return Array.from(this.querySelectorAll<HTMLOptionElement>('option'))
+  }
+
+  public get qualifiedName (): string {
+    let name = this.name
+    let fieldset = this.closest<HTMLFieldSetElement>('fieldset[name]')
+
+    while (fieldset !== null) {
+      name = `${fieldset.name}.${name}`
+      fieldset = fieldset.closest<HTMLFieldSetElement>('fieldset[name]')
+    }
+
+    return name
   }
 
   public get valueAsCast (): FieldValue {
@@ -81,6 +89,11 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
       value.valid === true
     ) {
       this.field.setValid()
+    } else if (
+      isStruct(value) &&
+      isPrimitive(value.value)
+    ) {
+      this.setStruct(value)
     } else if (isArray(value)) {
       this.setArray(value)
     } else if (isPrimitive(value)) {
@@ -154,7 +167,6 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
       error: this.error,
       id: this.id,
       is: this.getAttribute('is'),
-      isEmpty: this.isEmpty,
       name: this.name,
       nodeName: this.nodeName,
       optionElements: this.optionElements.length,
@@ -195,5 +207,15 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     this.optionElements.forEach((option) => {
       option.selected = option.value === value.toString()
     })
+  }
+
+  protected setStruct (value: Struct): void {
+    if (typeof value.name === 'string') {
+      this.name = value.name
+    }
+
+    if (isPrimitive(value.value)) {
+      this.setPrimitive(value.value)
+    }
   }
 }

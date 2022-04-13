@@ -53,23 +53,23 @@ export class PostgresqlFormatter extends SqlFormatter {
             return line.padStart(line.length + 2, ' ')
           })
       ].join(',\n'),
-      ')',
+      ');',
       this
         .formatDdlIndex(object, fields)
-        .join(';\n'),
+        .join('\n'),
       this
         .formatDdlIndexCursor(object, fields)
-        .join(';\n'),
+        .join('\n'),
       this
         .formatDdlIndexUnique(object, fields)
-        .join(';\n')
+        .join('\n')
     ]
 
     return `${lines
       .filter((line) => {
         return line !== ''
       })
-      .join(';\n')};\n`
+      .join('\n')}\n`
   }
 
   public formatIdentifier (value: string): string {
@@ -128,6 +128,8 @@ export class PostgresqlFormatter extends SqlFormatter {
         return this.formatDdlColumnDate(name, field)
       case 'datetime-local':
         return this.formatDdlColumnDatetimeLocal(name, field)
+      case 'fieldset':
+        return this.formatDdlColumnFieldset(name, field)
       case 'file':
         return this.formatDdlColumnFile(name, field)
       case 'number':
@@ -142,10 +144,11 @@ export class PostgresqlFormatter extends SqlFormatter {
   }
 
   protected formatDdlColumnCheckbox (name: string, field: SchemaField): string {
-    if (
-      field.values?.length !== 1 ||
-      field.values[0] !== '1'
-    ) {
+    if (!(
+      field.values?.length === 2 &&
+      field.values[0] === true &&
+      field.values[1] === false
+    )) {
       return this.formatDdlColumnDefault(name, field)
     }
 
@@ -185,8 +188,18 @@ export class PostgresqlFormatter extends SqlFormatter {
       ddl += ' NOT NULL'
     }
 
-    if (field.default !== undefined) {
-      ddl += ` DEFAULT '${field.default.toString()}'::CHARACTER`
+    if (field.value !== undefined) {
+      ddl += ` DEFAULT '${field.value.toString()}'::CHARACTER`
+    }
+
+    return ddl
+  }
+
+  protected formatDdlColumnFieldset (name: string, field: SchemaField): string {
+    let ddl = `"${name}" JSON`
+
+    if (field.required === true) {
+      ddl += ' NOT NULL'
     }
 
     return ddl
@@ -218,8 +231,8 @@ export class PostgresqlFormatter extends SqlFormatter {
         ddl += ' NOT NULL'
       }
 
-      if (field.default !== undefined) {
-        ddl += ` DEFAULT ${field.default.toString()}`
+      if (field.value !== undefined) {
+        ddl += ` DEFAULT ${field.value.toString()}`
       }
     }
 
@@ -351,7 +364,7 @@ export class PostgresqlFormatter extends SqlFormatter {
       .map(([name, columns = []]) => {
         return [
           `CREATE INDEX "index_${object}_${name}"`,
-          `ON "${object}" (${columns.join(',')})`
+          `ON "${object}" (${columns.join(',')});`
         ].join(' ')
       })
   }
@@ -368,7 +381,7 @@ export class PostgresqlFormatter extends SqlFormatter {
     if (hasCursor) {
       lines.push([
         `CREATE INDEX "index_${object}_cursor"`,
-        `ON "${object}" ("cursor")`
+        `ON "${object}" ("cursor");`
       ].join(' '))
     }
 
@@ -402,7 +415,7 @@ export class PostgresqlFormatter extends SqlFormatter {
       .map(([name, columns = []]) => {
         return [
           `CREATE UNIQUE INDEX "index_${object}_${name}"`,
-          `ON "${object}" (${columns.join(',')})`
+          `ON "${object}" (${columns.join(',')});`
         ].join(' ')
       })
   }

@@ -1,19 +1,19 @@
 export interface Group {
-  created: Date
+  date_created: Date
+
+  date_updated: Date
 
   group_id: number | string
 
   name: string
-
-  updated: Date
 }
 
 export function createGroup (group?: Partial<Group>, date = new Date()): Group {
   return {
-    created: date,
+    date_created: date,
+    date_updated: date,
     group_id: 0,
-    name: 'group',
-    updated: date,
+    name: 'name',
     ...group
   }
 }

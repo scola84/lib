@@ -320,13 +320,16 @@ export abstract class SqlFormatter {
 
     const set = Object
       .entries(schema)
-      .filter(([name]) => {
-        return primaryKeys?.includes(name) !== true
+      .filter(([name, field]) => {
+        return (
+          primaryKeys?.includes(name) !== true &&
+          field.value !== '$created'
+        )
       })
       .filter(([name, field]) => {
         return (
           data[name] !== undefined ||
-          field.default === '$updated'
+          field.value === '$updated'
         )
       })
       .map(([name, field]) => {
@@ -752,7 +755,7 @@ export abstract class SqlFormatter {
   }
 
   protected resolveValue (field: SchemaField, value: unknown, user?: User): unknown {
-    switch (field.default) {
+    switch (field.value) {
       case '$created':
         return new Date()
       case '$group_id':

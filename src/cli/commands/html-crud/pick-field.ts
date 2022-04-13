@@ -4,6 +4,7 @@ import type { Struct } from '../../../common'
 export function pickField (field: SchemaField): Struct {
   return {
     accept: field.accept,
+    custom: field.custom,
     default: field.default,
     max: field.max,
     maxLength: field.maxLength,

@@ -1,4 +1,4 @@
-import type { Field, FieldValue } from '../helpers'
+import type { FieldValue } from '../helpers'
 import type { ScolaElement } from './element'
 import type { ScolaError } from '../../common'
 
@@ -7,13 +7,9 @@ export interface ScolaFieldElement extends ScolaElement {
 
   error?: ScolaError
 
-  field: Field
-
-  isEmpty: boolean
-
   name: string
 
-  required: boolean
+  qualifiedName: string
 
   type: string
 

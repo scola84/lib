@@ -11,7 +11,7 @@ export interface SchemaField extends Struct {
   auth?: SchemaFieldKey[][]
   cursor?: number
   custom?: string
-  default?: Primitive
+  hidden?: boolean
   index?: string
   fkey?: SchemaFieldKey
   max?: number
@@ -22,16 +22,17 @@ export interface SchemaField extends Struct {
   order?: boolean
   pattern?: RegExp
   pkey?: boolean
+  readonly?: boolean
   required?: boolean
   rkey?: SchemaFieldKey
   schema?: Schema
-  select?: boolean
   serial?: boolean
   step?: number
   strict?: boolean
   type: string
   unique?: string
   values?: unknown[]
+  value?: Date | Primitive
   where?: boolean
 }
 

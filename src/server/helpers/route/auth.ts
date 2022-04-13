@@ -7,6 +7,7 @@ import type { RedisClientType } from 'redis'
 import type { RouteData } from './handler'
 import type { ServerResponse } from 'http'
 import type { SqlDatabase } from '../sql'
+import type { Struct } from '../../../common'
 import { createUserToken } from '../../entities'
 import { sql } from '../sql'
 
@@ -33,33 +34,33 @@ export class RouteAuth {
     this.store = options.store
   }
 
-  public async authenticate (data: RouteData): Promise<User> {
+  public async authenticate (data: RouteData, response: ServerResponse): Promise<User> {
     const hash = this.extractTokenHash(data)
 
     if (hash === undefined) {
+      response.statusCode = 401
       throw new Error('Hash is undefined')
     }
 
     const userToken = await this.selectUserTokenByHashFromStore(hash)
 
     if (isNil(userToken)) {
+      response.statusCode = 401
       throw new Error('Token is undefined')
     }
 
     userToken.hash = hash
 
-    if (userToken.expires < new Date()) {
+    if (userToken.date_expires < new Date()) {
+      response.statusCode = 401
       throw new Error('Token is expired')
     }
 
     const user = await this.selectUserFromStore(userToken.user_id)
 
     if (user === undefined) {
+      response.statusCode = 401
       throw new Error('User is undefined')
-    }
-
-    if (!user.active) {
-      throw new Error('User is not active')
     }
 
     user.token = userToken
@@ -77,19 +78,44 @@ export class RouteAuth {
     return user
   }
 
-  public authorize (data: RouteData): void {
+  public authorize (data: RouteData, response: ServerResponse, permit?: Struct): void {
     if (data.user === undefined) {
+      response.statusCode = 401
       throw new Error('User is undefined')
     }
 
-    const methods = data.user.token?.permissions?.[data.url.pathname] ?? data.user.role?.permissions[data.url.pathname]
-
-    if (typeof methods !== 'string') {
-      throw new Error('Path is not permitted')
+    if (
+      !data.user.state_active &&
+      permit?.inactive === false
+    ) {
+      response.statusCode = 403
+      throw new Error('User is not active')
     }
 
-    if (!methods.includes(data.method)) {
-      throw new Error('Method is not permitted')
+    if (
+      data.user.state_compromised &&
+      permit?.compromised === false
+    ) {
+      response.statusCode = 403
+      throw new Error('User is compromised')
+    }
+
+    if (
+      !data.user.state_confirmed &&
+      permit?.unconfirmed === false
+    ) {
+      response.statusCode = 403
+      throw new Error('User is not confirmed')
+    }
+
+    const name = `${data.method}${data.url.pathname}`
+
+    if (
+      data.user.role?.permissions[name] !== true &&
+      data.user.token?.permissions?.[name] !== true
+    ) {
+      response.statusCode = 403
+      throw new Error('User is not permitted')
     }
   }
 
@@ -99,7 +125,7 @@ export class RouteAuth {
 
   public createCookie (userToken?: UserToken): string {
     return serialize('authorization', userToken?.hash ?? '', {
-      expires: userToken?.expires ?? new Date(0),
+      expires: userToken?.date_expires ?? new Date(0),
       httpOnly: true,
       path: '/',
       sameSite: true,
@@ -109,7 +135,7 @@ export class RouteAuth {
 
   public createUserToken (user: User, expires = user.role?.expires ?? 0): UserToken {
     return createUserToken({
-      expires: new Date(Date.now() + expires),
+      date_expires: new Date(Date.now() + expires),
       group_id: user.group?.group_id ?? null,
       hash: randomBytes(64).toString('hex'),
       role_id: user.role?.role_id ?? null,
@@ -174,6 +200,7 @@ export class RouteAuth {
   public async login (response: ServerResponse, user: User): Promise<void> {
     if (user.group === undefined) {
       user.group = await this.selectGroupByUser(user.user_id)
+      user.group_id = user.group?.group_id
     }
 
     if (user.role === undefined) {
@@ -182,6 +209,8 @@ export class RouteAuth {
       } else {
         user.role = await this.selectRoleByUserGroup(user.user_id, user.group.group_id)
       }
+
+      user.role_id = user.role?.role_id
     }
 
     user.token = this.createUserToken(user)
@@ -297,16 +326,18 @@ export class RouteAuth {
     })
   }
 
-  public async selectUserByUsername (username: string): Promise<User | undefined> {
+  public async selectUserByUsername (identity: string): Promise<User | undefined> {
     return this.database.select<User, User>(sql`
       SELECT *,
       FROM $[user]
       WHERE
-        $[email] = $(username) OR
-        $[tel] = $(username) OR
+        $[email] = $(email) OR
+        $[tel] = $(tel) OR
         $[username] = $(username)
     `, {
-      username
+      email: identity,
+      tel: identity,
+      username: identity
     })
   }
 
@@ -319,13 +350,12 @@ export class RouteAuth {
 
     const user = await this.database.select<User, User>(sql`
       SELECT
-        $[active],
-        $[confirmed],
+        $[auth_mfa],
         $[email],
-        $[email_prefs],
-        $[locale],
-        $[mfa],
         $[name],
+        $[preferences],
+        $[state_active],
+        $[state_confirmed],
         $[tel],
         $[user_id],
         $[username]
@@ -369,7 +399,7 @@ export class RouteAuth {
       userToken.hash = hash
 
       await this.store.set(`sc-auth-token-${hash}`, JSON.stringify(userToken), {
-        PXAT: userToken.expires.valueOf()
+        PXAT: userToken.date_expires.valueOf()
       })
     }
 
@@ -393,20 +423,20 @@ export class RouteAuth {
   public async updateUserCodes (user: User): Promise<void> {
     await this.database.update<User>(sql`
       UPDATE $[user]
-      SET $[codes] = $(codes)
+      SET $[auth_codes] = $(auth_codes)
       WHERE $[user_id] = $(user_id)
     `, {
-      codes: user.codes,
+      auth_codes: user.auth_codes,
       user_id: user.user_id
     })
   }
 
   public validateCode (user: User, code: string): boolean {
-    const codes = user.codes?.split(/\n+/u)
+    const codes = user.auth_codes?.split(/\n+/u)
     const index = codes?.indexOf(code) ?? -1
 
     if (index !== -1) {
-      user.codes = codes
+      user.auth_codes = codes
         ?.splice(index, 1)
         .join('\n') ?? null
 
@@ -417,13 +447,13 @@ export class RouteAuth {
   }
 
   public validateHotp (user: User, otp: string): boolean {
-    const [secret = '', counter = 0] = user.hotp_secret?.split(':') ?? []
+    const [secret = '', counter = 0] = user.auth_hotp?.split(':') ?? []
     return hotp.check(otp, secret, Number(counter))
   }
 
   public async validatePassword (user: User, password: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      const [salt, key] = user.password?.split(':') ?? []
+      const [salt, key] = user.auth_password?.split(':') ?? []
 
       scrypt(password, salt, 64, (error, derivedKey) => {
         if (error === null) {
@@ -436,6 +466,6 @@ export class RouteAuth {
   }
 
   public validateTotp (user: User, otp: string): boolean {
-    return totp.check(otp, user.totp_secret ?? '')
+    return totp.check(otp, user.auth_totp ?? '')
   }
 }

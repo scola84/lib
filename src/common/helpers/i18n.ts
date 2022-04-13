@@ -171,7 +171,7 @@ export class I18n {
       .join('')
   }
 
-  public formatMailName (user: Partial<User>): string {
+  public formatEmailAddress (user: Partial<User>): string {
     if (isNil(user.email)) {
       throw new Error('Email is undefined')
     }

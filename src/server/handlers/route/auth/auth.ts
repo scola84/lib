@@ -23,6 +23,10 @@ export abstract class AuthHandler extends RouteHandler {
 
   public auth: RouteAuth
 
+  public authenticate = false
+
+  public authorize = false
+
   public database: SqlDatabase
 
   public from?: string
@@ -67,8 +71,6 @@ export abstract class AuthHandler extends RouteHandler {
     this.smtp = handlerOptions.smtp
   }
 
-  protected async prepareAuth (): Promise<void> {}
-
   protected async sendEmail (user: Partial<User>, code: string, data: Struct): Promise<void> {
     if (this.from === undefined) {
       throw new Error('From is undefined')
@@ -80,9 +82,9 @@ export abstract class AuthHandler extends RouteHandler {
 
     await this.smtp.sendMail({
       from: this.from,
-      subject: this.i18n.format(`${code}_subject`, data, user.locale ?? undefined),
-      text: this.i18n.format(`${code}_text`, data, user.locale ?? undefined),
-      to: this.i18n.formatMailName(user)
+      subject: this.i18n.format(`${code}_subject`, data, user.preferences?.locale ?? undefined),
+      text: this.i18n.format(`${code}_text`, data, user.preferences?.locale ?? undefined),
+      to: this.i18n.formatEmailAddress(user)
     })
   }
 
@@ -101,7 +103,7 @@ export abstract class AuthHandler extends RouteHandler {
       }
 
       this.sms.messages.create({
-        body: this.i18n.format(`${code}_body`, data, user.locale ?? undefined),
+        body: this.i18n.format(`${code}_body`, data, user.preferences?.locale ?? undefined),
         originator: this.originator,
         recipients: [user.tel]
       }, (error) => {

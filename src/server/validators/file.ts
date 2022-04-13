@@ -9,7 +9,7 @@ export function file (name: string, field: SchemaField): Validator {
 
     if (
       !isArray(values) &&
-      field.strict !== true
+      field.strict === false
     ) {
       values = [values]
     }

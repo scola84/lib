@@ -48,12 +48,7 @@ export class AuthLoginHotpHandler extends AuthHandler {
       throw new Error('User is undefined')
     }
 
-    if (!user.active) {
-      response.statusCode = 401
-      throw new Error('User is not active')
-    }
-
-    if (isNil(parsedUser.hotp_secret)) {
+    if (isNil(parsedUser.auth_hotp)) {
       response.statusCode = 401
       throw new Error('HOTP secret is null')
     }
@@ -66,7 +61,7 @@ export class AuthLoginHotpHandler extends AuthHandler {
     await this.auth.login(response, user)
     await this.auth.clearBackoff(data)
 
-    if (user.email_prefs?.after_login === true) {
+    if (user.preferences.auth_login_email === true) {
       await this.sendEmail(user, 'auth_login_email', {
         user
       })

@@ -5,6 +5,7 @@ import { color } from './color'
 import { date } from './date'
 import { datetimeLocal } from './datetime-local'
 import { email } from './email'
+import { fieldset } from './fieldset'
 import { file } from './file'
 import { max } from './max'
 import { maxLength } from './max-length'
@@ -20,7 +21,6 @@ import { required } from './required'
 import { select } from './select'
 import { selectMultiple } from './select-multiple'
 import { step } from './step'
-import { struct } from './struct'
 import { text } from './text'
 import { textarea } from './textarea'
 import { time } from './time'
@@ -34,6 +34,7 @@ export const validators = {
   'date': date,
   'datetime-local': datetimeLocal,
   'email': email,
+  'fieldset': fieldset,
   'file': file,
   'max': max,
   'max-length': maxLength,
@@ -49,7 +50,6 @@ export const validators = {
   'select': select,
   'select-multiple': selectMultiple,
   'step': step,
-  'struct': struct,
   'text': text,
   'textarea': textarea,
   'time': time,

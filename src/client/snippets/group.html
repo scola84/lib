@@ -1,3 +1,25 @@
 <form>
-  
+  <fieldset hidden>
+    <input
+      name="date_created"
+      type="datetime-local"
+      step="1"
+      value="$created"
+      readonly
+      required
+    />
+    <input
+      name="date_updated"
+      step="1"
+      type="datetime-local"
+      value="$updated"
+      readonly
+      required
+    />
+    <input name="group_id" type="number" readonly required sc-pkey />
+  </fieldset>
+  <fieldset>
+    <legend>General</legend>
+    <input name="name" type="text" required />
+  </fieldset>
 </form>

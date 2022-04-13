@@ -47,12 +47,7 @@ export class AuthLoginTotpHandler extends AuthHandler {
       throw new Error('User is undefined')
     }
 
-    if (!user.active) {
-      response.statusCode = 401
-      throw new Error('User is not active')
-    }
-
-    if (user.totp_secret === null) {
+    if (user.auth_totp === null) {
       response.statusCode = 401
       throw new Error('TOTP secret is null')
     }
@@ -65,7 +60,7 @@ export class AuthLoginTotpHandler extends AuthHandler {
     await this.auth.login(response, user)
     await this.auth.clearBackoff(data)
 
-    if (user.email_prefs?.after_login === true) {
+    if (user.preferences.auth_login_email === true) {
       await this.sendEmail(user, 'auth_login_email', {
         user
       })

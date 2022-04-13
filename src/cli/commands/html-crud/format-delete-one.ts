@@ -51,7 +51,7 @@ function formatBodySchema (schema: Schema, space: number): string {
             [name]: pickField(field)
           }
         }, {}),
-      type: 'struct'
+      type: 'fieldset'
     },
     space
   ).trimStart()
@@ -64,7 +64,7 @@ function formatQuerySchema (object: string, schema: Schema, space: number): stri
       schema: {
         ...createSelectSchema(object, schema)
       },
-      type: 'struct'
+      type: 'fieldset'
     },
     space
   ).trimStart()

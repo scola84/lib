@@ -31,16 +31,14 @@ export class AuthLoginPostUsernameHandler extends AuthHandler {
       throw new Error('User is undefined')
     }
 
-    if (!user.active) {
-      response.statusCode = 401
-      throw new Error('User is not active')
-    }
-
     let type: string | null = null
 
-    if (user.password !== null) {
+    if (user.auth_password !== null) {
       type = 'password'
-    } else if (user.webauthn_credentials !== null) {
+    } else if (
+      user.auth_webauthn !== null &&
+      user.auth_webauthn_confirmed
+    ) {
       type = 'webauthn'
     }
 

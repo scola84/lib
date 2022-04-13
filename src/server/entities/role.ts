@@ -1,7 +1,9 @@
 import type { Struct } from '../../common'
 
 export interface Role {
-  created: Date
+  date_created: Date
+
+  date_updated: Date
 
   expires: number
 
@@ -10,18 +12,16 @@ export interface Role {
   permissions: Struct
 
   role_id: number | string
-
-  updated: Date
 }
 
-export function createRole (role?: Partial<Role>): Role {
+export function createRole (role?: Partial<Role>, date = new Date()): Role {
   return {
-    created: new Date(),
-    expires: 24 * 60 * 60 * 1000,
-    name: 'role',
+    date_created: date,
+    date_updated: date,
+    expires: 0,
+    name: 'name',
     permissions: {},
     role_id: 0,
-    updated: new Date(),
     ...role
   }
 }

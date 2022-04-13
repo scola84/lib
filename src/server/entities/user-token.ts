@@ -1,9 +1,11 @@
 import type { Struct } from '../../common'
 
 export interface UserToken {
-  created: Date
+  date_created: Date
 
-  expires: Date
+  date_expires: Date
+
+  date_updated: Date
 
   group_id: number | string | null
 
@@ -15,21 +17,19 @@ export interface UserToken {
 
   token_id: number | string
 
-  updated: Date
-
   user_id: number | string
 }
 
 export function createUserToken (token: Partial<UserToken>, date = new Date()): UserToken {
   return {
-    created: date,
-    expires: date,
+    date_created: date,
+    date_expires: date,
+    date_updated: date,
     group_id: null,
-    hash: '',
+    hash: 'hash',
     permissions: null,
     role_id: null,
     token_id: 0,
-    updated: date,
     user_id: 0,
     ...token
   }

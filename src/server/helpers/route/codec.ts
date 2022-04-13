@@ -1,3 +1,4 @@
+import { Builder, Parser } from 'xml2js'
 import type { IncomingMessage, ServerResponse } from 'http'
 import { ScolaFile, Struct, cast, isPrimitive, isStruct, revive, setPush } from '../../../common'
 import type { FileBucket } from '../file'
@@ -5,7 +6,9 @@ import type { FileInfo } from 'busboy'
 import type { Readable } from 'stream'
 import type { Schema } from '../schema'
 import { Writable } from 'stream'
+import accepts from 'accepts'
 import busboy from 'busboy'
+import { parse } from 'content-type'
 import { randomUUID } from 'crypto'
 
 export interface RouteCodecOptions {
@@ -22,7 +25,7 @@ export class RouteCodec {
   public async decode (request: IncomingMessage, schema?: Schema): Promise<unknown> {
     let body: unknown = null
 
-    const [contentType] = request.headers['content-type']?.split(';') ?? []
+    const contentType = parse(request).type
 
     switch (contentType) {
       case 'application/json':
@@ -34,14 +37,20 @@ export class RouteCodec {
       case 'application/x-www-form-urlencoded':
         body = await this.decodeFormUrlencoded(request)
         break
+      case 'application/xml':
+        body = await this.decodeXml(request)
+        break
       case 'multipart/form-data':
         body = await this.decodeFormData(request, schema)
         break
       case 'text/plain':
         body = await this.decodePlain(request)
         break
-      default:
+      case 'text/xml':
+        body = await this.decodeXml(request)
         break
+      default:
+        throw new Error('Content unsupported')
     }
 
     return body ?? undefined
@@ -142,29 +151,50 @@ export class RouteCodec {
     return body
   }
 
-  public encode (data: unknown, response?: ServerResponse): string {
-    let body = ''
+  public async decodeXml (request: IncomingMessage): Promise<string> {
+    return new Parser().parseStringPromise(await this.decodePlain(request)) as Promise<string>
+  }
 
-    const [contentType] = response
-      ?.getHeader('content-type')
-      ?.toString()
-      .split(';') ?? []
+  public encode (data: unknown, response: ServerResponse, request?: IncomingMessage): string {
+    let body = ''
+    let contentType: unknown = null
+
+    if (response.hasHeader('content-type')) {
+      contentType = response.getHeader('content-type')
+    } else if (request !== undefined) {
+      contentType = accepts(request).type([
+        'application/json',
+        'application/xml',
+        'text/xml',
+        'text/html',
+        'text/plain'
+      ])
+    }
 
     switch (contentType) {
       case 'application/json':
         body = this.encodeJson(data)
         break
+      case 'application/xml':
+        body = this.encodeXml(data)
+        break
       case 'text/event-stream':
         body = this.encodeEventStream(data)
         break
       case 'text/html':
-        body = String(data)
+        body = this.encodeHtml(data)
+        break
+      case 'text/plain':
+        body = this.encodePlain(data)
+        break
+      case 'text/xml':
+        body = this.encodeXml(data)
         break
       default:
-        break
+        throw new Error('Content is not acceptable')
     }
 
-    if (response?.headersSent === false) {
+    if (!response.headersSent) {
       response.setHeader('content-length', body.length.toString())
     }
 
@@ -199,8 +229,20 @@ export class RouteCodec {
     return `${body}\n`
   }
 
+  public encodeHtml (data: unknown): string {
+    return String(data)
+  }
+
   public encodeJson (data: unknown): string {
     return JSON.stringify(data)
+  }
+
+  public encodePlain (data: unknown): string {
+    return String(data)
+  }
+
+  public encodeXml (data: unknown): string {
+    return new Builder().buildObject(data)
   }
 
   protected discardStream (stream: Readable): void {

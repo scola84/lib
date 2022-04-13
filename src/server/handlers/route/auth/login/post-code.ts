@@ -47,12 +47,7 @@ export class AuthLoginCodeHandler extends AuthHandler {
       throw new Error('User is undefined')
     }
 
-    if (!user.active) {
-      response.statusCode = 401
-      throw new Error('User is not active')
-    }
-
-    if (user.codes === null) {
+    if (user.auth_codes === null) {
       response.statusCode = 401
       throw new Error('Codes is null')
     }
@@ -66,7 +61,7 @@ export class AuthLoginCodeHandler extends AuthHandler {
     await this.auth.login(response, user)
     await this.auth.clearBackoff(data)
 
-    if (user.email_prefs?.after_login === true) {
+    if (user.preferences.auth_login_email === true) {
       await this.sendEmail(user, 'auth_login_email', {
         user
       })

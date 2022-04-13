@@ -1,0 +1,30 @@
+<form>
+  <fieldset hidden>
+    <input
+      name="date_created"
+      type="datetime-local"
+      step="1"
+      value="$created"
+      readonly
+      required
+    />
+    <input
+      name="date_updated"
+      step="1"
+      type="datetime-local"
+      value="$updated"
+      readonly
+      required
+    />
+    <input name="role_id" type="number" readonly required sc-pkey />
+  </fieldset>
+  <fieldset>
+    <legend>General</legend>
+    <input name="expires" type="number" required />
+    <input name="name" type="text" required />
+  </fieldset>
+  <fieldset name="permissions" required sc-custom="sc-permissions">
+    <legend>Permissions</legend>
+    <input type="checkbox" value="true" required />
+  </fieldset>
+</form>

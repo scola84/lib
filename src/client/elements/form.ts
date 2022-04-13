@@ -37,15 +37,19 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   public get fieldElements (): ScolaFieldElement[] {
-    return Array
-      .from(this.elements)
-      .filter((element) => {
-        return (
-          element instanceof ScolaInputElement ||
-          element instanceof ScolaSelectElement ||
-          element instanceof ScolaTextAreaElement
-        )
-      }) as ScolaFieldElement[]
+    const elements: ScolaFieldElement[] = []
+
+    for (const element of Array.from(this.elements)) {
+      if (
+        element instanceof ScolaInputElement ||
+        element instanceof ScolaSelectElement ||
+        element instanceof ScolaTextAreaElement
+      ) {
+        elements.push(element)
+      }
+    }
+
+    return elements
   }
 
   protected handleErrorBound = this.handleError.bind(this)
@@ -219,27 +223,18 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected serialize (): Struct {
-    return this.fieldElements.reduce<Struct>((result, element) => {
-      if (
+    const data = {}
+
+    for (const element of this.fieldElements) {
+      if (!(
         element.disabled ||
         element.name === ''
-      ) {
-        return result
-      }
-
-      const value = element.valueAsCast
-
-      if ((
-        element.type === 'checkbox' ||
-        element.type === 'radio'
-      ) && (
-        value === null
       )) {
-        return result
+        setPush(data, element.qualifiedName, element.valueAsCast)
       }
+    }
 
-      return setPush(result, element.name, value)
-    }, Struct.create())
+    return data
   }
 
   protected setValues (): void {

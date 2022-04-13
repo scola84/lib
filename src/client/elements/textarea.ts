@@ -1,6 +1,6 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
 import { I18n, cast, isError, isPrimitive, isStruct } from '../../common'
-import type { Primitive, ScolaError } from '../../common'
+import type { Primitive, ScolaError, Struct } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 
@@ -69,8 +69,16 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     }
   }
 
-  public get isEmpty (): boolean {
-    return this.innerHTML === ''
+  public get qualifiedName (): string {
+    let name = this.name
+    let fieldset = this.closest<HTMLFieldSetElement>('fieldset[name]')
+
+    while (fieldset !== null) {
+      name = `${fieldset.name}.${name}`
+      fieldset = fieldset.closest<HTMLFieldSetElement>('fieldset[name]')
+    }
+
+    return name
   }
 
   public get valueAsCast (): FieldValue {
@@ -91,6 +99,11 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
       value.valid === true
     ) {
       this.field.setValid()
+    } else if (
+      isStruct(value) &&
+      isPrimitive(value.value)
+    ) {
+      this.setStruct(value)
     } else if (isPrimitive(value)) {
       this.setPrimitive(value)
     } else {
@@ -166,7 +179,6 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
       error: this.error,
       id: this.id,
       is: this.getAttribute('is'),
-      isEmpty: this.isEmpty,
       name: this.name,
       nodeName: this.nodeName,
       type: this.type,
@@ -217,5 +229,15 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   protected setPrimitive (value: Primitive): void {
     this.innerHTML = value.toString()
+  }
+
+  protected setStruct (value: Struct): void {
+    if (typeof value.name === 'string') {
+      this.name = value.name
+    }
+
+    if (isPrimitive(value.value)) {
+      this.setPrimitive(value.value)
+    }
   }
 }

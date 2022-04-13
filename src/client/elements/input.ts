@@ -94,11 +94,16 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     }
   }
 
-  public get isEmpty (): boolean {
-    return (
-      this.value === '' &&
-      this.filesAsCast === null
-    )
+  public get qualifiedName (): string {
+    let name = this.name
+    let fieldset = this.closest<HTMLFieldSetElement>('fieldset[name]')
+
+    while (fieldset !== null) {
+      name = `${fieldset.name}.${name}`
+      fieldset = fieldset.closest<HTMLFieldSetElement>('fieldset[name]')
+    }
+
+    return name
   }
 
   public get valueAsCast (): FieldValue {
@@ -138,7 +143,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
       isStruct(value) &&
       isPrimitive(value.value)
     ) {
-      this.setPrimitive(value.value)
+      this.setStruct(value)
     } else if (
       this.type === 'checkbox' ||
       this.type === 'radio'
@@ -236,7 +241,6 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
       files: this.filesAsCast,
       id: this.id,
       is: this.getAttribute('is'),
-      isEmpty: this.isEmpty,
       name: this.name,
       nodeName: this.nodeName,
       type: this.type,
@@ -284,6 +288,10 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   protected getChecked (): CastValue {
     if (!this.checked) {
+      if (this.value === 'true') {
+        return false
+      }
+
       return null
     }
 
@@ -423,5 +431,15 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   protected setPrimitive (value: Primitive): void {
     this.value = value.toString()
+  }
+
+  protected setStruct (value: Struct): void {
+    if (typeof value.name === 'string') {
+      this.name = value.name
+    }
+
+    if (isPrimitive(value.value)) {
+      this.setPrimitive(value.value)
+    }
   }
 }

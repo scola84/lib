@@ -1,6 +1,6 @@
 import type { ChildNode, Element } from 'parse5'
 import type { Schema, SchemaField, SchemaFieldKey } from './validator'
-import { Struct, isArray, isStruct } from '../../../common'
+import { Struct, cast, isArray, isStruct } from '../../../common'
 import { dirname } from 'path'
 import { parseFragment } from 'parse5'
 import { readFile } from 'fs-extra'
@@ -21,6 +21,7 @@ export class SchemaParser {
     const attributes = this.normalizeAttributes(element)
 
     if (
+      element.nodeName === 'fieldset' ||
       element.nodeName === 'input' ||
       element.nodeName === 'select' ||
       element.nodeName === 'textarea'
@@ -41,19 +42,25 @@ export class SchemaParser {
           this.extractNumber(attributes, field)
           this.extractString(attributes, field)
 
-          if (element.nodeName === 'select') {
-            this.extractSelect(attributes, element.childNodes, field)
+          if (element.nodeName === 'fieldset') {
+            await this.extractFieldset(field, element, dir)
+          } else if (element.nodeName === 'select') {
+            this.extractSelect(field, element)
+          } else if (element.nodeName === 'textarea') {
+            this.extractTextarea(field)
           }
 
           this.extractDatabaseAuth(attributes, field)
           this.extractDatabaseOptions(attributes, field)
           fields[attributes.name] = field
         } else if (field.type === 'checkbox') {
-          field.values?.push(attributes.value)
+          field.values?.push(cast(attributes.value))
         } else if (field.type === 'radio') {
-          field.values?.push(attributes.value)
+          field.values?.push(cast(attributes.value))
           this.extractRadio(attributes, field)
         }
+
+        return this.sortObject(fields) as Schema
       }
     }
 
@@ -73,20 +80,25 @@ export class SchemaParser {
       field.type = attributes.type
 
       if (field.type === 'checkbox') {
-        field.values = [attributes.value]
+        field.values = [cast(attributes.value)]
+
+        if (field.values[0] === true) {
+          field.values[1] = false
+        }
       } else if (field.type === 'radio') {
-        field.values = [attributes.value]
+        field.values = [cast(attributes.value)]
         this.extractRadio(attributes, field)
       } else if (attributes.value !== undefined) {
-        field.default = attributes.value
+        field.value = cast(attributes.value) ?? undefined
       } else if (attributes['sc-value'] !== undefined) {
-        field.default = attributes['sc-value']
+        field.value = cast(attributes['sc-value']) ?? undefined
       }
     }
 
-    if (attributes.required !== undefined) {
-      field.required = true
-    }
+    field.hidden = attributes.hidden !== undefined
+    field.readonly = attributes.readonly !== undefined
+    field.required = attributes.required !== undefined
+    field.strict = attributes['sc-strict'] !== undefined
 
     if (attributes['sc-custom'] !== undefined) {
       field.custom = attributes['sc-custom']
@@ -133,40 +145,30 @@ export class SchemaParser {
       field.fkey = this.extractDatabaseKey(attributes['sc-fkey'])
     }
 
-    if (attributes['sc-index'] !== undefined) {
-      field.index = attributes['sc-index']
-    }
-
     if (attributes['sc-rkey'] !== undefined) {
       field.rkey = this.extractDatabaseKey(attributes['sc-rkey'])
     }
 
-    if (attributes['sc-mkey'] !== undefined) {
-      field.mkey = true
-    }
+    field.index = attributes['sc-index']
+    field.unique = attributes['sc-unique']
+    field.mkey = attributes['sc-mkey'] !== undefined
+    field.order = attributes['sc-order'] !== undefined
+    field.pkey = attributes['sc-pkey'] !== undefined
+    field.serial = attributes['sc-serial'] !== undefined
+    field.where = attributes['sc-where'] !== undefined
+  }
 
-    if (attributes['sc-order'] !== undefined) {
-      field.order = true
-    }
+  protected async extractFieldset (field: SchemaField, element: Element, dir: string): Promise<void> {
+    field.type = 'fieldset'
 
-    if (attributes['sc-pkey'] !== undefined) {
-      field.pkey = true
-    }
+    const schema = {}
 
-    if (attributes['sc-select'] !== undefined) {
-      field.select = true
-    }
+    await Promise.all(element.childNodes.map(async (child) => {
+      return this.extract(child as Element, schema, dir)
+    }))
 
-    if (attributes['sc-serial'] !== undefined) {
-      field.serial = true
-    }
-
-    if (attributes['sc-unique'] !== undefined) {
-      field.unique = attributes['sc-unique']
-    }
-
-    if (attributes['sc-where'] !== undefined) {
-      field.where = true
+    if (Object.keys(schema).length > 0) {
+      field.schema = schema
     }
   }
 
@@ -199,21 +201,22 @@ export class SchemaParser {
       attributes.checked === '' &&
       attributes.value !== undefined
     ) {
-      field.default = attributes.value
+      field.value = attributes.value
     }
   }
 
-  protected extractSelect (attributes: SchemaAttributes, options: ChildNode[], field: SchemaField): void {
+  protected extractSelect (field: SchemaField, element: Element): void {
+    field.type = 'select'
     field.values = []
 
-    for (const option of options) {
+    for (const option of element.childNodes) {
       if (option.nodeName === 'option') {
         const optionAttributes = this.normalizeAttributes(option)
 
         field.values.push(optionAttributes.value)
 
         if (optionAttributes.selected === '') {
-          field.default = optionAttributes.value
+          field.value = optionAttributes.value
         }
       }
     }
@@ -233,6 +236,10 @@ export class SchemaParser {
     }
   }
 
+  protected extractTextarea (field: SchemaField): void {
+    field.type = 'textarea'
+  }
+
   protected async extractView (attributes: SchemaAttributes, fields: Schema, dir: string): Promise<void> {
     if (
       attributes.is === 'sc-view' &&
@@ -241,6 +248,18 @@ export class SchemaParser {
     ) {
       await this.parse(`${dir}/${attributes['sc-name']}.html`, fields)
     }
+  }
+
+  protected findAll (element: Element, filter: (childNode: ChildNode) => boolean, found: Element[] = []): Element[] {
+    element.childNodes.forEach((childNode) => {
+      if (filter(childNode)) {
+        found.push(childNode as Element)
+      }
+
+      this.findAll(childNode as Element, filter, found)
+    })
+
+    return found
   }
 
   protected findRoot (element: Element, id?: string): Element | null {

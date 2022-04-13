@@ -3,6 +3,7 @@ import type { Schema } from '../../../../src/server/helpers/schema'
 import type { SqlFormatter } from '../../../../src/server/helpers/sql/formatter'
 import type { Struct } from '../../../../src/common'
 import type { User } from '../../../../src/server/entities'
+import { createUser } from '../../../../src/server/entities'
 
 const keys: Struct<SqlQueryKeys> = {
   select: {
@@ -250,21 +251,7 @@ const updateKeys: SqlQueryKeys = {
   ]
 }
 
-const user: User = {
-  active: true,
-  created: new Date(),
-  group_id: 1,
-  hash: '',
-  role: {
-    ip: true,
-    permissions: {},
-    role_id: 1,
-    validity: 0
-  },
-  updated: new Date(),
-  user_id: 1,
-  username: ''
-}
+const user: User = createUser()
 
 export function callCreateADeleteQuery (formatter: SqlFormatter): SqlQuery {
   return formatter.createDeleteQuery('contact', updateKeys, {

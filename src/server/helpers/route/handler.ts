@@ -25,10 +25,13 @@ export interface RouteData extends Struct {
 
 export interface RouteHandlerOptions {
   auth: RouteAuth
+  authenticate: boolean
+  authorize: boolean
   bucket: FileBucket
   codec: RouteCodec
   compromised: boolean
   database: SqlDatabase
+  decode: boolean
   description: string
   logger: Logger
   method: string
@@ -36,12 +39,17 @@ export interface RouteHandlerOptions {
   schema: Schema
   store: RedisClientType
   url: string
+  validate: boolean
 }
 
 export abstract class RouteHandler {
   public static options?: Partial<RouteHandlerOptions>
 
   public auth?: RouteAuth
+
+  public authenticate: boolean
+
+  public authorize: boolean
 
   public bucket?: FileBucket
 
@@ -51,11 +59,15 @@ export abstract class RouteHandler {
 
   public database?: SqlDatabase
 
+  public decode: boolean
+
   public description?: string
 
   public logger?: Logger
 
   public method = 'GET'
+
+  public permit?: Struct
 
   public router: Router
 
@@ -64,6 +76,8 @@ export abstract class RouteHandler {
   public store?: RedisClientType
 
   public url: string
+
+  public validate: boolean
 
   public validator: SchemaValidator
 
@@ -82,10 +96,13 @@ export abstract class RouteHandler {
     }
 
     this.auth = handlerOptions.auth
+    this.authenticate = handlerOptions.authenticate ?? true
+    this.authorize = handlerOptions.authorize ?? true
     this.bucket = handlerOptions.bucket
     this.codec = handlerOptions.codec
     this.compromised = handlerOptions.compromised ?? true
     this.database = handlerOptions.database
+    this.decode = handlerOptions.decode ?? true
     this.description = handlerOptions.description
     this.logger = handlerOptions.logger
     this.method = handlerOptions.method ?? 'GET'
@@ -93,12 +110,37 @@ export abstract class RouteHandler {
     this.schema = handlerOptions.schema ?? {}
     this.store = handlerOptions.store
     this.url = handlerOptions.url ?? '/'
+    this.validate = handlerOptions.validate ?? true
   }
 
   public async handleRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
     try {
-      await this.prepareAuth(data, response)
-      await this.prepareData(data, response, request)
+      if (this.authenticate) {
+        data.user = await this.auth?.authenticate(data, response)
+      }
+
+      if (this.authorize) {
+        this.auth?.authorize(data, response, this.permit)
+      }
+
+      if (this.decode) {
+        try {
+          data.body = await this.codec.decode(request, this.schema.body?.schema)
+        } catch (error: unknown) {
+          response.statusCode = 415
+          throw error
+        }
+      }
+
+      if (this.validate) {
+        try {
+          this.validator.validate(data, data.user)
+        } catch (error: unknown) {
+          response.statusCode = 400
+          response.end(this.codec.encode(error, response, request))
+          throw error
+        }
+      }
 
       const result = await Promise
         .resolve()
@@ -113,7 +155,7 @@ export abstract class RouteHandler {
             response.end()
           }
         } else {
-          response.end(this.codec.encode(result, response))
+          response.end(this.codec.encode(result, response, request))
         }
       }
     } catch (error: unknown) {
@@ -152,49 +194,6 @@ export abstract class RouteHandler {
   }
 
   public stop (): Promise<void> | void {}
-
-  protected async prepareAuth (data: RouteData, response: ServerResponse): Promise<void> {
-    try {
-      data.user = await this.auth?.authenticate(data)
-    } catch (error: unknown) {
-      response.statusCode = 401
-      throw error
-    }
-
-    try {
-      this.auth?.authorize(data)
-    } catch (error: unknown) {
-      response.statusCode = 403
-      throw error
-    }
-
-    if (
-      data.user?.compromised === true &&
-      !this.compromised
-    ) {
-      response.statusCode = 403
-      throw new Error('User is compromised')
-    }
-  }
-
-  protected async prepareData (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
-    try {
-      data.body = await this.codec.decode(request, this.schema.body?.schema)
-    } catch (error: unknown) {
-      response.statusCode = 415
-      throw error
-    }
-
-    response.setHeader('content-type', 'application/json')
-
-    try {
-      this.validator.validate(data, data.user)
-    } catch (error: unknown) {
-      response.statusCode = 400
-      response.end(this.codec.encode(error, response))
-      throw error
-    }
-  }
 
   public abstract handle (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<unknown> | unknown
 }

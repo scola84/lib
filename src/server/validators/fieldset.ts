@@ -4,7 +4,7 @@ import type { Struct } from '../../common'
 import type { User } from '../entities'
 import { isStruct } from '../../common'
 
-export function struct (name: string, field: SchemaField, user?: User): Validator {
+export function fieldset (name: string, field: SchemaField, user?: User): Validator {
   const schemaValidator = new SchemaValidator(field.schema ?? {})
 
   function validator (data: Struct, errors: Struct): boolean {
@@ -14,27 +14,15 @@ export function struct (name: string, field: SchemaField, user?: User): Validato
 
     if (isStruct(values)) {
       try {
-        const keys = Object.keys(values)
-
-        if (keys.length > (field.maxLength ?? Infinity)) {
-          childErrors = {
-            code: 'err_validator_bad_input_struct',
-            data: { maxLength: field.maxLength }
-          }
-        } else if (keys.length < (field.minLength ?? -Infinity)) {
-          childErrors = {
-            code: 'err_validator_bad_input_struct',
-            data: { minLength: field.minLength }
-          }
-        } else if (field.strict === true) {
-          keys.forEach((key) => {
+        if (field.strict === true) {
+          for (const key of Object.keys(values)) {
             if (field.schema?.[key] === undefined) {
               throw {
-                code: 'err_validator_bad_input_struct',
+                code: 'err_validator_bad_input_fieldset',
                 data: { accept: Object.keys(field.schema ?? {}) }
-              } as unknown as Error
+              } as unknown
             }
-          })
+          }
         }
 
         schemaValidator.validate(values, user)
@@ -43,7 +31,7 @@ export function struct (name: string, field: SchemaField, user?: User): Validato
       }
     } else {
       childErrors = {
-        code: 'err_validator_bad_input_struct'
+        code: 'err_validator_bad_input_fieldset'
       }
     }
 

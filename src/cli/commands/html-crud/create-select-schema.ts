@@ -8,7 +8,7 @@ export function createSelectSchema (object: string, schema: Schema, relations: S
       schema: Object
         .entries(schema)
         .filter(([,field]) => {
-          return field.select === true
+          return field.hidden === false
         })
         .reduce((result, [name]) => {
           return {
@@ -19,7 +19,7 @@ export function createSelectSchema (object: string, schema: Schema, relations: S
           }
         }, {}),
       strict: true,
-      type: 'struct'
+      type: 'fieldset'
     },
     ...Object
       .entries(relations)
@@ -30,7 +30,7 @@ export function createSelectSchema (object: string, schema: Schema, relations: S
             schema: Object
               .entries(tableSchema)
               .filter(([,field]) => {
-                return field.select === true
+                return field.hidden === false
               })
               .reduce((result, [name]) => {
                 return {
@@ -41,7 +41,7 @@ export function createSelectSchema (object: string, schema: Schema, relations: S
                 }
               }, {}),
             strict: true,
-            type: 'struct'
+            type: 'fieldset'
           }
         }
       }, {})
@@ -65,7 +65,7 @@ export function createSelectSchema (object: string, schema: Schema, relations: S
     select: {
       schema: selectSchema,
       strict: true,
-      type: 'struct'
+      type: 'fieldset'
     }
   }
 }

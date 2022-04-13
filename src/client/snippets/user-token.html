@@ -1,0 +1,55 @@
+<form>
+  <fieldset hidden>
+    <input
+      name="date_created"
+      type="datetime-local"
+      step="1"
+      value="$created"
+      readonly
+      required
+    />
+    <input
+      name="date_updated"
+      step="1"
+      type="datetime-local"
+      value="$updated"
+      readonly
+      required
+    />
+
+    <input
+      name="group_id"
+      type="number"
+      readonly
+      sc-fkey="group.group_id"
+    />
+    <input
+      name="role_id"
+      type="number"
+      readonly
+      sc-fkey="role.role_id"
+    />
+    <input
+      name="user_id"
+      type="number"
+      readonly
+      sc-fkey="user.user_id"
+    />
+    <input name="hash" type="text" sc-unique="hash" readonly />
+    <input name="token_id" type="number" readonly required sc-pkey />
+  </fieldset>
+  <fieldset>
+    <legend>General</legend>
+    <input
+      name="date_expires"
+      step="1"
+      type="datetime-local"
+      readonly
+      required
+    />
+  </fieldset>
+  <fieldset name="permissions" sc-custom="sc-permissions">
+    <legend>Permissions</legend>
+    <input type="checkbox" value="true" />
+  </fieldset>
+</form>

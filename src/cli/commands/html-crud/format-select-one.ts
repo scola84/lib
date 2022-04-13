@@ -50,7 +50,7 @@ function createWhereSchema (schema: Schema): Schema {
             [name]: pickField(field)
           }
         }, {}),
-      type: 'struct'
+      type: 'fieldset'
     }
   }
 }
@@ -63,7 +63,7 @@ function formatQuerySchema (object: string, schema: Schema, space: number): stri
         ...createSelectSchema(object, schema),
         ...createWhereSchema(schema)
       },
-      type: 'struct'
+      type: 'fieldset'
     },
     space
   ).trimStart()

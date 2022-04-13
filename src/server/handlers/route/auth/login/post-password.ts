@@ -48,12 +48,7 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
       throw new Error('User is undefined')
     }
 
-    if (!user.active) {
-      response.statusCode = 401
-      throw new Error('User is not active')
-    }
-
-    if (user.password === null) {
+    if (user.auth_password === null) {
       response.statusCode = 401
       throw new Error('Password is null')
     }
@@ -63,9 +58,9 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
       throw new Error('Password is not valid')
     }
 
-    if (user.mfa) {
-      if (user.totp_secret === null) {
-        if (user.hotp_tel === null) {
+    if (user.auth_mfa) {
+      if (user.auth_totp === null) {
+        if (user.auth_hotp_tel === null) {
           return this.handleHotpEmail(response, user)
         }
 
@@ -78,7 +73,7 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
     await this.auth.login(response, user)
     await this.auth.clearBackoff(data)
 
-    if (user.email_prefs?.after_login === true) {
+    if (user.preferences.auth_login_email === true) {
       await this.sendEmail(user, 'auth_login_email', {
         user
       })
@@ -88,9 +83,14 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
   }
 
   protected async handleHotpEmail (response: ServerResponse, user: User): Promise<Struct> {
-    if (user.hotp_email === null) {
+    if (user.auth_hotp_email === null) {
       response.statusCode = 401
       throw new Error('HOTP email is null')
+    }
+
+    if (!user.auth_hotp_email_confirmed) {
+      response.statusCode = 401
+      throw new Error('HOTP email is not confirmed')
     }
 
     const secret = authenticator.generateSecret()
@@ -98,11 +98,12 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
     const otp = hotp.generate(secret, counter)
     const token = this.auth.createUserToken(user, this.px)
 
-    user.hotp_secret = `${secret}:${counter}`
+    user.auth_hotp = `${secret}:${counter}`
 
     await this.sendEmail({
-      email: user.hotp_email,
-      name: user.name
+      email: user.auth_hotp_email,
+      name: user.name,
+      user_id: user.user_id
     }, 'auth_hotp_email', {
       otp,
       token,
@@ -110,7 +111,7 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
     })
 
     await this.store.set(`sc-auth-mfa-${token.hash}`, JSON.stringify({
-      hotp_secret: user.hotp_secret,
+      hotp: user.auth_hotp,
       user_id: user.user_id
     }), {
       PX: this.px
@@ -119,14 +120,20 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
 
     return {
-      email: user.hotp_email,
+      email: user.auth_hotp_email,
       type: 'hotp'
     }
   }
 
   protected async handleHotpTel (response: ServerResponse, user: User): Promise<Struct> {
-    if (user.hotp_tel === null) {
+    if (user.auth_hotp_tel === null) {
+      response.statusCode = 401
       throw new Error('HOTP tel is null')
+    }
+
+    if (!user.auth_hotp_tel_confirmed) {
+      response.statusCode = 401
+      throw new Error('HOTP tel is not confirmed')
     }
 
     const secret = authenticator.generateSecret()
@@ -134,10 +141,12 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
     const otp = hotp.generate(secret, counter)
     const token = this.auth.createUserToken(user, this.px)
 
-    user.hotp_secret = `${secret}:${counter}`
+    user.auth_hotp = `${secret}:${counter}`
 
     await this.sendSms({
-      tel: user.hotp_tel
+      name: user.name,
+      tel: user.auth_hotp_tel,
+      user_id: user.user_id
     }, 'auth_hotp_sms', {
       otp,
       token,
@@ -145,7 +154,7 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
     })
 
     await this.store.set(`sc-auth-mfa-${token.hash}`, JSON.stringify({
-      hotp_secret: user.hotp_secret,
+      auth_hotp: user.auth_hotp,
       user_id: user.user_id
     }), {
       PX: this.px
@@ -154,12 +163,22 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
 
     return {
-      tel: user.hotp_tel,
+      tel: user.auth_hotp_tel,
       type: 'hotp'
     }
   }
 
   protected async handleTotp (response: ServerResponse, user: User): Promise<Struct> {
+    if (user.auth_totp === null) {
+      response.statusCode = 401
+      throw new Error('TOTP is null')
+    }
+
+    if (!user.auth_totp_confirmed) {
+      response.statusCode = 401
+      throw new Error('TOTP is not confirmed')
+    }
+
     const token = this.auth.createUserToken(user, this.px)
 
     await this.store.set(`sc-auth-mfa-${token.hash}`, JSON.stringify({

@@ -1,85 +1,92 @@
 import type { Group } from './group'
 import type { Role } from './role'
-import type { Struct } from '../../common'
 import type { UserToken } from './user-token'
 
 export interface User {
-  active: boolean
+  auth_codes: string | null
 
-  codes: string | null
+  auth_hotp?: string
 
-  compromised: boolean
+  auth_hotp_email: string | null
 
-  confirmed: boolean
+  auth_hotp_email_confirmed: boolean
 
-  created: Date
+  auth_hotp_tel: string | null
+
+  auth_hotp_tel_confirmed: boolean
+
+  auth_mfa: boolean
+
+  auth_password: string | null
+
+  auth_totp: string | null
+
+  auth_totp_confirmed: boolean
+
+  auth_webauthn: string | null
+
+  auth_webauthn_confirmed: boolean
+
+  date_created: Date
+
+  date_updated: Date
 
   email: string | null
 
-  email_prefs: Struct | null
+  name: string | null
 
   group?: Group
 
   group_id?: number | string
 
-  hotp_email: string | null
-
-  hotp_secret: string | null
-
-  hotp_tel: string | null
-
-  locale: string | null
-
-  mfa: boolean
-
-  name: string | null
-
-  oauth_provider: string | null
-
-  password: string | null
+  preferences: {
+    auth_login_email?: boolean
+    locale?: string
+  }
 
   role?: Role
 
   role_id?: number | string
 
+  state_active: boolean
+
+  state_compromised: boolean
+
+  state_confirmed: boolean
+
   tel: string | null
 
   token?: UserToken
 
-  totp_secret: string | null
-
-  updated: Date
-
   user_id: number | string
 
   username: string | null
-
-  webauthn_credentials: string | null
 }
 
 export function createUser (user?: Partial<User>, date = new Date()): User {
   return {
-    active: true,
-    codes: null,
-    compromised: false,
-    confirmed: false,
-    created: date,
+    auth_codes: null,
+    auth_hotp_email: null,
+    auth_hotp_email_confirmed: false,
+    auth_hotp_tel: null,
+    auth_hotp_tel_confirmed: false,
+    auth_mfa: false,
+    auth_password: null,
+    auth_totp: null,
+    auth_totp_confirmed: false,
+    auth_webauthn: null,
+    auth_webauthn_confirmed: false,
+    date_created: date,
+    date_updated: date,
     email: null,
-    email_prefs: null,
-    hotp_email: null,
-    hotp_secret: null,
-    hotp_tel: null,
-    locale: null,
-    mfa: false,
     name: null,
-    oauth_provider: null,
-    password: null,
+    preferences: {},
+    state_active: false,
+    state_compromised: false,
+    state_confirmed: false,
     tel: null,
-    totp_secret: null,
-    updated: date,
     user_id: 0,
     username: null,
-    webauthn_credentials: null,
     ...user
   }
 }

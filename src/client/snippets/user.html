@@ -1,29 +1,93 @@
 <form>
-  <input type="checkbox" name="active" value="1" sc-select />
-  <textarea name="backup_codes" readonly hidden></textarea>
-  <input type="datetime-local" name="created" readonly required sc-select />
-  <input type="email" name="email" sc-unique="email" sc-select />
-  <input type="text" name="hotp_secret" readonly hidden />
-  <input type="checkbox" name="mfa" value="1" sc-select />
-  <input type="text" name="name" sc-select />
-  <input type="text" name="oauth_provider" readonly hidden />
-  <select name="locale" sc-select>
-    <option value="en_GB" sc-code="en_GB">en-GB</option>
-    <option value="nl_NL" sc-code="nl_NL">nl-NL</option>
-  </select>
-  <input type="password" name="password" />
-  <input type="tel" name="tel" sc-unique="tel" sc-select />
-  <input type="text" name="totp_secret" readonly hidden />
-  <input type="datetime-local" name="updated" readonly required sc-select />
-  <input
-    type="number"
-    name="user_id"
-    required
-    readonly
-    hidden
-    sc-select
-    sc-pkey
-  />
-  <input type="text" name="username" sc-unique="username" sc-select />
-  <input type="text" name="webauthn_credentials" />
+  <fieldset hidden>
+    <textarea name="auth_codes" hidden></textarea>
+    <input name="auth_totp" type="text" hidden />
+    <textarea name="auth_webauthn" type="text" hidden></textarea>
+    <input
+      name="date_created"
+      type="datetime-local"
+      step="1"
+      value="$created"
+      readonly
+      required
+    />
+    <input
+      name="date_updated"
+      step="1"
+      type="datetime-local"
+      value="$updated"
+      readonly
+      required
+    />
+    <input name="user_id" type="number" readonly required sc-pkey />
+  </fieldset>
+  <fieldset>
+    <legend>Identity</legend>
+    <input name="name" type="text" />
+    <input name="email" type="email" sc-unique="email" />
+    <input name="tel" type="tel" sc-unique="tel" />
+    <input name="username" pattern="\w+" type="text" sc-unique="username" />
+  </fieldset>
+  <fieldset name="preferences">
+    <legend>Preferences</legend>
+    <select name="locale">
+      <option value="en_GB" sc-code="en-GB">en-GB</option>
+      <option value="nl_NL" sc-code="nl-NL">nl-NL</option>
+    </select>
+    <input name="auth_login_email" type="checkbox" value="true" />
+  </fieldset>
+  <fieldset>
+    <legend>State</legend>
+    <input name="state_active" type="checkbox" value="true" />
+    <input name="state_compromised" type="checkbox" value="true" />
+    <input name="state_confirmed" type="checkbox" value="true" readonly />
+  </fieldset>
+  <fieldset>
+    <legend>Password</legend>
+    <input name="auth_password" type="password" />
+    <input name="auth_mfa" type="checkbox" value="true" />
+    <fieldset>
+      <legend>MFA</legend>
+      <input
+        name="auth_codes_confirmed"
+        type="checkbox"
+        value="true"
+        readonly
+        required
+      />
+      <input name="auth_hotp_email" type="email" readonly />
+      <input
+        name="auth_hotp_email_confirmed"
+        type="checkbox"
+        value="true"
+        readonly
+        required
+      />
+      <input name="auth_hotp_tel" type="tel" readonly />
+      <input
+        name="auth_hotp_tel_confirmed"
+        type="checkbox"
+        value="true"
+        readonly
+        required
+      />
+      <input
+        name="auth_totp_confirmed"
+        type="checkbox"
+        value="true"
+        readonly
+        required
+      />
+    </fieldset>
+  </fieldset>
+  <fieldset>
+    <legend>WebAuthn</legend>
+    <input
+      name="auth_webauthn_confirmed"
+      type="checkbox"
+      value="true"
+      readonly
+      required
+    />
+  </fieldset>
 </form>

@@ -1,36 +1,35 @@
-import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
+import type { WriteOptions } from '../html-ts'
 import { createFileFields } from './create-file-fields'
 import { createModifiedFields } from './create-modified-fields'
 import { createPrimaryFields } from './create-primary-fields'
 import { createSelectSchema } from './create-select-schema'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
+import { formatUrl } from './format-url'
 import { pickField } from './pick-field'
 import { sortKeys } from './sort-keys'
-import { toJoint } from '../../../common'
 
-export function formatSelectOne (schema: Schema, options: Options): string {
+export function formatDeleteMany (schema: Schema, options: WriteOptions): string {
   return `
-import { CrudSelectOneHandler } from '@scola/lib'
+import { CrudDeleteManyHandler } from '@scola/lib'
 
-export class SelectOneHandler extends CrudSelectOneHandler {
+export class DeleteManyHandler extends CrudDeleteManyHandler {
   public keys = ${formatKeys(options.object, schema, 4)}
 
   public object = '${options.object}'
 
-  public schema: CrudSelectOneHandler['schema'] = {
+  public schema: CrudDeleteManyHandler['schema'] = {
+    body: ${formatBodySchema(schema, 6)},
     query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
-  public url = '${options.url}/select/one/${toJoint(options.object, {
-    separator: '-'
-  })}'
+  public url = '${formatUrl(options.url, options.name, 'delete/many', 'dm')}'
 }
 `.trim()
 }
 
-function createWhereFields (schema: Schema): Schema {
+function createBodyFields (schema: Schema): Schema {
   return sortKeys({
     ...createPrimaryFields(schema),
     ...createModifiedFields(schema),
@@ -38,21 +37,22 @@ function createWhereFields (schema: Schema): Schema {
   })
 }
 
-function createWhereSchema (schema: Schema): Schema {
-  return {
-    where: {
+function formatBodySchema (schema: Schema, space: number): string {
+  return formatCode(
+    {
       required: true,
       schema: Object
-        .entries(createWhereFields(schema))
+        .entries(createBodyFields(schema))
         .reduce((result, [name, field]) => {
           return {
             ...result,
             [name]: pickField(field)
           }
         }, {}),
-      type: 'fieldset'
-    }
-  }
+      type: 'array'
+    },
+    space
+  ).trimStart()
 }
 
 function formatQuerySchema (object: string, schema: Schema, space: number): string {
@@ -60,8 +60,7 @@ function formatQuerySchema (object: string, schema: Schema, space: number): stri
     {
       required: true,
       schema: {
-        ...createSelectSchema(object, schema),
-        ...createWhereSchema(schema)
+        ...createSelectSchema(object, schema)
       },
       type: 'fieldset'
     },

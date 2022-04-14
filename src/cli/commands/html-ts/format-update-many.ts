@@ -1,28 +1,26 @@
-import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
+import type { WriteOptions } from '../html-ts'
 import { createSelectSchema } from './create-select-schema'
 import { createUpdateSchema } from './create-update-schema'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
-import { toJoint } from '../../../common'
+import { formatUrl } from './format-url'
 
-export function formatUpdateOne (schema: Schema, options: Options): string {
+export function formatUpdateMany (schema: Schema, options: WriteOptions): string {
   return `
-import { CrudUpdateOneHandler } from '@scola/lib'
+import { CrudUpdateManyHandler } from '@scola/lib'
 
-export class UpdateOneHandler extends CrudUpdateOneHandler {
+export class UpdateManyHandler extends CrudUpdateManyHandler {
   public keys = ${formatKeys(options.object, schema, 4)}
 
   public object = '${options.object}'
 
-  public schema: CrudUpdateOneHandler['schema'] = {
+  public schema: CrudUpdateManyHandler['schema'] = {
     body: ${formatBodySchema(schema, 6)},
     query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
-  public url = '${options.url}/update/one/${toJoint(options.object, {
-    separator: '-'
-  })}'
+  public url = '${formatUrl(options.url, options.name, 'update/many', 'um')}'
 }
 `.trim()
 }
@@ -32,7 +30,7 @@ function formatBodySchema (schema: Schema, space: number): string {
     {
       required: true,
       schema: createUpdateSchema(schema),
-      type: 'fieldset'
+      type: 'array'
     },
     space
   ).trimStart()

@@ -1,9 +1,9 @@
-import type { Options } from '../html-crud'
+import type { WriteOptions } from '../html-ts'
 import { formatGroup } from './format-group'
 import { isMatch } from 'micromatch'
 import { toCaps } from '../../../common'
 
-export function formatIndex (options: Options): string {
+export function formatIndex (options: WriteOptions): string {
   return `
 ${formatImport(options)}
 
@@ -15,14 +15,14 @@ export function ${formatFunctionName(options)} (): void {
 `.trim()
 }
 
-function formatFunctionName (options: Options): string {
+function formatFunctionName (options: WriteOptions): string {
   return toCaps(options.object, {
     chars: /[^a-z0-9]+/iu,
     lcfirst: true
   })
 }
 
-function formatHandlers (options: Options, space: number): string {
+function formatHandlers (options: WriteOptions, space: number): string {
   return Object
     .entries({
       'da': 'const deleteAllHandler = new DeleteAllHandler()',
@@ -46,7 +46,7 @@ function formatHandlers (options: Options, space: number): string {
     .trimStart()
 }
 
-function formatImport (options: Options): string {
+function formatImport (options: WriteOptions): string {
   return Object
     .entries({
       'da': 'import { DeleteAllHandler } from \'./delete-all\'',
@@ -69,7 +69,7 @@ function formatImport (options: Options): string {
     .join('\n')
 }
 
-function formatStart (options: Options, space: number): string {
+function formatStart (options: WriteOptions, space: number): string {
   const lines = Object
     .entries({
       'da': 'deleteAllHandler.start()',

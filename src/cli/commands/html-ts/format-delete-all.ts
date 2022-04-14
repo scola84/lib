@@ -1,10 +1,10 @@
-import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
+import type { WriteOptions } from '../html-ts'
 import { createKeys } from './create-keys'
 import { formatCode } from './format-code'
-import { toJoint } from '../../../common'
+import { formatUrl } from './format-url'
 
-export function formatDeleteAll (schema: Schema, options: Options): string {
+export function formatDeleteAll (schema: Schema, options: WriteOptions): string {
   return `
 import { CrudDeleteAllHandler } from '@scola/lib'
 
@@ -13,9 +13,7 @@ export class DeleteAllHandler extends CrudDeleteAllHandler {
 
   public object = '${options.object}'
 
-  public url = '${options.url}/delete/all/${toJoint(options.object, {
-    separator: '-'
-  })}'
+  public url = '${formatUrl(options.url, options.name, 'delete/all', 'da')}'
 }
 `.trim()
 }

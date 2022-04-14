@@ -1,16 +1,16 @@
-import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
+import type { WriteOptions } from '../html-ts'
 import { createFileFields } from './create-file-fields'
 import { createModifiedFields } from './create-modified-fields'
 import { createPrimaryFields } from './create-primary-fields'
 import { createSelectSchema } from './create-select-schema'
 import { formatCode } from './format-code'
 import { formatKeys } from './format-keys'
+import { formatUrl } from './format-url'
 import { pickField } from './pick-field'
 import { sortKeys } from './sort-keys'
-import { toJoint } from '../../../common'
 
-export function formatDeleteOne (schema: Schema, options: Options): string {
+export function formatDeleteOne (schema: Schema, options: WriteOptions): string {
   return `
 import { CrudDeleteOneHandler } from '@scola/lib'
 
@@ -24,9 +24,7 @@ export class DeleteOneHandler extends CrudDeleteOneHandler {
     query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
-  public url = '${options.url}/delete/one/${toJoint(options.object, {
-    separator: '-'
-  })}'
+  public url = '${formatUrl(options.url, options.name, 'delete/one', 'do')}'
 }
 `.trim()
 }

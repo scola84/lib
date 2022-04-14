@@ -1,28 +1,26 @@
-import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
+import type { WriteOptions } from '../html-ts'
 import { createInsertSchema } from './create-insert-schema'
 import { createKeys } from './create-keys'
 import { createSelectSchema } from './create-select-schema'
 import { formatCode } from './format-code'
-import { toJoint } from '../../../common'
+import { formatUrl } from './format-url'
 
-export function formatInsertMany (schema: Schema, options: Options): string {
+export function formatInsertOne (schema: Schema, options: WriteOptions): string {
   return `
-import { CrudInsertManyHandler } from '@scola/lib'
+import { CrudInsertOneHandler } from '@scola/lib'
 
-export class InsertManyHandler extends CrudInsertManyHandler {
+export class InsertOneHandler extends CrudInsertOneHandler {
   public keys = ${formatKeys(options.object, schema, 4)}
 
   public object = '${options.object}'
 
-  public schema: CrudInsertManyHandler['schema'] = {
+  public schema: CrudInsertOneHandler['schema'] = {
     body: ${formatBodySchema(schema, 6)},
     query: ${formatQuerySchema(options.object, schema, 6)}
   }
 
-  public url = '${options.url}/insert/many/${toJoint(options.object, {
-    separator: '-'
-  })}'
+  public url = '${formatUrl(options.url, options.name, 'insert/one', 'io')}'
 }
 `.trim()
 }
@@ -32,7 +30,7 @@ function formatBodySchema (schema: Schema, space: number): string {
     {
       required: true,
       schema: createInsertSchema(schema),
-      type: 'array'
+      type: 'fieldset'
     },
     space
   ).trimStart()

@@ -1,14 +1,14 @@
-import type { Options } from '../html-crud'
 import type { Schema } from '../../../server/helpers/schema'
 import type { Struct } from '../../../common'
+import type { WriteOptions } from '../html-ts'
 import { createKeys } from './create-keys'
 import { createSelectSchema } from './create-select-schema'
 import { formatCode } from './format-code'
+import { formatUrl } from './format-url'
 import { pickField } from './pick-field'
 import { sortKeys } from './sort-keys'
-import { toJoint } from '../../../common'
 
-export function formatSelectAll (schema: Schema, options: Options, relations: Struct<Schema>): string {
+export function formatSelectAll (schema: Schema, options: WriteOptions, relations: Struct<Schema>): string {
   return `
 import { CrudSelectAllHandler } from '@scola/lib'
 
@@ -21,9 +21,7 @@ export class SelectAllHandler extends CrudSelectAllHandler {
     query: ${formatQuerySchema(options.object, schema, relations, 6)}
   }
 
-  public url = '${options.url}/select/all/${toJoint(options.object, {
-    separator: '-'
-  })}'
+  public url = '${formatUrl(options.url, options.name, 'select/all', 'sa')}'
 }
 `.trim()
 }

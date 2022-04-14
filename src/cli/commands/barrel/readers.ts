@@ -1,35 +1,47 @@
+import { toCaps, toJoint } from '../../../common'
 import type { Struct } from '../../../common'
-import { readdirSync } from 'fs-extra'
-import { toCaps } from '../../../common'
+import { sync as glob } from 'glob'
 
 export const readers: Struct<((targetDir: string) => string[][]) | undefined> = {
   html: (targetDir: string) => {
-    return readdirSync(targetDir)
+    return glob(`${targetDir}/**/*.html`)
       .filter((file) => {
         return file !== 'index.ts'
       })
       .map((file) => {
-        const [base] = file.split('.')
+        const path = file.replace(targetDir, '')
+
+        const name = toJoint(path.split('.')[0], {
+          separator: '-'
+        })
+
         return [
-          file,
-          base,
-          toCaps(base, {
+          path,
+          name,
+          toCaps(name, {
             lcfirst: true
           })
         ]
       })
   },
   ts: (targetDir: string) => {
-    return readdirSync(targetDir)
+    return glob(`${targetDir}/**/*.ts`)
       .filter((file) => {
         return file !== 'index.ts'
       })
       .map((file) => {
-        const [base] = file.split('.')
+        const path = file
+          .replace(targetDir, '')
+          .replace('.ts', '')
+
+        const name = toJoint(path, {
+          separator: '-'
+        })
+
         return [
-          base,
-          base,
-          toCaps(base, {
+          path,
+          name,
+          toCaps(name, {
             lcfirst: true
           })
         ]

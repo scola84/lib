@@ -21,6 +21,7 @@ import { required } from './required'
 import { select } from './select'
 import { selectMultiple } from './select-multiple'
 import { step } from './step'
+import { tel } from './tel'
 import { text } from './text'
 import { textarea } from './textarea'
 import { time } from './time'
@@ -50,6 +51,7 @@ export const validators = {
   'select': select,
   'select-multiple': selectMultiple,
   'step': step,
+  'tel': tel,
   'text': text,
   'textarea': textarea,
   'time': time,

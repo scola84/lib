@@ -2,7 +2,7 @@ import type { Schema } from '../../../server'
 import { pickField } from './pick-field'
 
 export function createUpdateSchema (schema: Schema): Schema | undefined {
-  return Object
+  const updateSchema = Object
     .entries(schema)
     .filter(([,field]) => {
       return field.hidden === false
@@ -10,7 +10,7 @@ export function createUpdateSchema (schema: Schema): Schema | undefined {
     .filter(([,field]) => {
       return (
         field.readonly === false ||
-        field.required === true
+        field.var !== undefined
       )
     })
     .reduce((result, [name, field]) => {
@@ -19,4 +19,10 @@ export function createUpdateSchema (schema: Schema): Schema | undefined {
         [name]: pickField(field)
       }
     }, {})
+
+  if (Object.keys(updateSchema).length === 0) {
+    throw new Error('Schema is empty')
+  }
+
+  return updateSchema
 }

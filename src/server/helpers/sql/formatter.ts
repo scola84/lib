@@ -5,6 +5,13 @@ import type { Query } from '../../../common'
 import type { User } from '../../entities'
 import { sql } from './tag'
 
+export interface SqlDdl {
+  connect: string
+  create: string
+  fkeys: string
+  indexes: string
+}
+
 export abstract class SqlFormatter {
   public i18n = new I18n()
 
@@ -84,6 +91,10 @@ export abstract class SqlFormatter {
         valuesKeys.push(`$(${name})`)
         values[name] = this.resolveValue(field, data[name], user)
       })
+
+    if (columns.length === 0) {
+      throw new Error('Columns length is zero')
+    }
 
     const string = sql`
       INSERT INTO $[${object}] (
@@ -323,19 +334,23 @@ export abstract class SqlFormatter {
       .filter(([name, field]) => {
         return (
           primaryKeys?.includes(name) !== true &&
-          field.value !== '$created'
+          field.var !== '$created'
         )
       })
       .filter(([name, field]) => {
         return (
           data[name] !== undefined ||
-          field.value === '$updated'
+          field.var === '$updated'
         )
       })
       .map(([name, field]) => {
         values[name] = this.resolveValue(field, data[name], user)
         return `$[${name}] = $(${name})`
       })
+
+    if (set.length === 0) {
+      throw new Error('Set length is zero')
+    }
 
     const where = keys.primary?.map((key) => {
       values[key.column] = data[key.column]
@@ -755,7 +770,7 @@ export abstract class SqlFormatter {
   }
 
   protected resolveValue (field: SchemaField, value: unknown, user?: User): unknown {
-    switch (field.value) {
+    switch (field.var) {
       case '$created':
         return new Date()
       case '$group_id':
@@ -769,7 +784,7 @@ export abstract class SqlFormatter {
     }
   }
 
-  public abstract formatDdl (database: string, object: string, fields: Struct<SchemaField>): string
+  public abstract formatDdl (database: string, object: string, fields: Struct<SchemaField>): SqlDdl
 
   public abstract formatIdentifier (value: string): string
 

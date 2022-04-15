@@ -1,54 +1,87 @@
 <form name="user_token">
   <fieldset hidden>
-    <input
-      name="date_created"
-      type="datetime-local"
-      step="1"
-      value="$created"
-      readonly
-      required
-    />
-    <input
-      name="date_updated"
-      step="1"
-      type="datetime-local"
-      value="$updated"
-      readonly
-      required
-    />
-    <input
-      name="group_id"
-      type="number"
-      readonly
-      sc-fkey="group.group_id"
-    />
-    <input
-      name="role_id"
-      type="number"
-      readonly
-      sc-fkey="role.role_id"
-    />
-    <input
-      name="user_id"
-      type="number"
-      readonly
-      sc-fkey="user.user_id"
-    />
     <input name="hash" type="text" sc-unique="hash" readonly />
-    <input name="token_id" type="number" readonly required sc-pkey />
+    <input name="token_id" type="number" readonly required sc-pkey sc-serial />
   </fieldset>
   <fieldset>
     <legend>General</legend>
-    <input
-      name="date_expires"
-      step="1"
-      type="datetime-local"
-      readonly
-      required
-    />
+    <div>
+      <label for="date-created">Created</label>
+      <input
+        id="date-created"
+        name="date_created"
+        type="datetime-local"
+        step="1"
+        readonly
+        required
+        sc-var="$created"
+      />
+    </div>
+    <div>
+      <label for="date-updated">Updated</label>
+      <input
+        id="date-updated"
+        name="date_updated"
+        step="1"
+        type="datetime-local"
+        readonly
+        required
+        sc-var="$updated"
+      />
+    </div>
+    <div>
+      <label for="date-expires">Expires</label>
+      <input
+        id="date-expires"
+        name="date_expires"
+        step="1"
+        type="datetime-local"
+        readonly
+        required
+      />
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Relations</legend>
+    <div>
+      <label for="queue-id">Group</label>
+      <input
+        id="group-id"
+        name="group_id"
+        type="number"
+        readonly
+        sc-fkey="group.group_id"
+        sc-fkey-delete="set null"
+        sc-index="group"
+      />
+    </div>
+    <div>
+      <label for="user-id">User</label>
+      <input
+        id="user-id"
+        name="user_id"
+        type="number"
+        readonly
+        required
+        sc-fkey="user.user_id"
+        sc-fkey-delete="cascade"
+        sc-index="user"
+      />
+    </div>
+    <div>
+      <label for="queue-id">Role</label>
+      <input
+        id="role-id"
+        name="role_id"
+        type="number"
+        readonly
+        sc-fkey="role.role_id"
+        sc-fkey-delete="set null"
+        sc-index="role"
+      />
+    </div>
   </fieldset>
   <fieldset name="permissions" sc-custom="sc-permissions">
     <legend>Permissions</legend>
-    <input type="checkbox" value="true" />
   </fieldset>
 </form>

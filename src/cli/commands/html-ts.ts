@@ -1,6 +1,8 @@
 import { mkdirSync, writeFileSync } from 'fs-extra'
 import { Command } from 'commander'
+import type { Schema } from '../../server/helpers'
 import { SchemaParser } from '../../server/helpers'
+import type { Struct } from '../../common'
 import { formatDeleteAll } from './html-ts/format-delete-all'
 import { formatDeleteMany } from './html-ts/format-delete-many'
 import { formatDeleteOne } from './html-ts/format-delete-one'
@@ -28,6 +30,8 @@ export interface WriteOptions extends Options {
   name: string
   object: string
 }
+
+export type Formatter = (schema: Schema, options: WriteOptions, relations: Struct<Schema>) => string
 
 const logger = console
 const program = new Command()
@@ -63,6 +67,7 @@ try {
   if (options.silent) {
     logger.error = () => {}
     logger.log = () => {}
+    logger.warn = () => {}
   }
 
   Promise
@@ -107,30 +112,34 @@ try {
         object: parsedSource.name
       }
 
-      Object
-        .entries({
-          'da': [`${targetDir}/delete-all.ts`, `${formatDeleteAll(parsedSource.schema, writeOptions)}\n`],
-          'dm': [`${targetDir}/delete-many.ts`, `${formatDeleteMany(parsedSource.schema, writeOptions)}\n`],
-          'do': [`${targetDir}/delete-one.ts`, `${formatDeleteOne(parsedSource.schema, writeOptions)}\n`],
-          'im': [`${targetDir}/insert-many.ts`, `${formatInsertMany(parsedSource.schema, writeOptions)}\n`],
-          'io': [`${targetDir}/insert-one.ts`, `${formatInsertOne(parsedSource.schema, writeOptions)}\n`],
-          'sa': [`${targetDir}/select-all.ts`, `${formatSelectAll(parsedSource.schema, writeOptions, relations)}\n`],
-          'sm': [`${targetDir}/select-many.ts`, `${formatSelectMany(parsedSource.schema, writeOptions)}\n`],
-          'so': [`${targetDir}/select-one.ts`, `${formatSelectOne(parsedSource.schema, writeOptions)}\n`],
-          'um': [`${targetDir}/update-many.ts`, `${formatUpdateMany(parsedSource.schema, writeOptions)}\n`],
-          'uo': [`${targetDir}/update-one.ts`, `${formatUpdateOne(parsedSource.schema, writeOptions)}\n`]
+      const handlers: Array<[string, string, Formatter]> = [
+        ['da', `${targetDir}/delete-all.ts`, formatDeleteAll],
+        ['dm', `${targetDir}/delete-many.ts`, formatDeleteMany],
+        ['do', `${targetDir}/delete-one.ts`, formatDeleteOne],
+        ['im', `${targetDir}/insert-many.ts`, formatInsertMany],
+        ['io', `${targetDir}/insert-one.ts`, formatInsertOne],
+        ['sa', `${targetDir}/select-all.ts`, formatSelectAll],
+        ['sm', `${targetDir}/select-many.ts`, formatSelectMany],
+        ['so', `${targetDir}/select-one.ts`, formatSelectOne],
+        ['um', `${targetDir}/update-many.ts`, formatUpdateMany],
+        ['uo', `${targetDir}/update-one.ts`, formatUpdateOne]
+      ]
 
-        })
+      handlers
         .filter(([key]) => {
           return isMatch(key, options.actions)
         })
-        .forEach(([, [targetFile, data]]) => {
-          writeFileSync(targetFile, data)
-          logger.log(`Created "${targetFile}"`)
+        .forEach(([, targetFile, formatter]) => {
+          try {
+            writeFileSync(targetFile, formatter(parsedSource.schema, writeOptions, relations))
+            logger.log(`Created ${targetFile}`)
+          } catch (error: unknown) {
+            logger.warn(`Skipped ${targetFile}`)
+          }
         })
 
       writeFileSync(`${targetDir}/index.ts`, `${formatIndex(writeOptions)}\n`)
-      logger.log(`Created "${targetDir}/index.ts"`)
+      logger.log(`Created ${targetDir}/index.ts`)
     }))
     .catch((error) => {
       logger.error(String(error).toLowerCase())

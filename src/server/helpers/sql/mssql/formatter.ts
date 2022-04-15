@@ -2,6 +2,7 @@ import type { Schema, SchemaField } from '../../schema'
 import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from '../query'
 import { Struct, isStruct } from '../../../../common'
 import type { Query } from '../../../../common'
+import type { SqlDdl } from '../formatter'
 import { SqlFormatter } from '../formatter'
 import type { User } from '../../../entities'
 import { escape } from 'sqlstring'
@@ -27,9 +28,10 @@ export class MssqlFormatter extends SqlFormatter {
     }
   }
 
-  public formatDdl (database: string, object: string, fields: Struct<SchemaField>): string {
-    const lines = [
-      `USE [${database}];`,
+  public formatDdl (database: string, object: string, fields: Struct<SchemaField>): SqlDdl {
+    const connect = `USE [${database}];`
+
+    const create = [
       `CREATE TABLE [${object}] (`,
       [
         ...this
@@ -46,14 +48,17 @@ export class MssqlFormatter extends SqlFormatter {
           .formatDdlConstraintPrimaryKey(object, fields)
           .map((line) => {
             return line.padStart(line.length + 2, ' ')
-          }),
-        ...this
-          .formatDdlConstraintForeignKeys(object, fields)
-          .map((line) => {
-            return line.padStart(line.length + 2, ' ')
           })
       ].join(',\n'),
-      ');',
+      ');'
+    ].join('\n')
+
+    const fkeys = this
+      .formatDdlConstraintForeignKeys(object, fields)
+      .join('\n')
+      .trim()
+
+    const indexes = ([
       this
         .formatDdlIndex(object, fields)
         .join('\n'),
@@ -63,13 +68,17 @@ export class MssqlFormatter extends SqlFormatter {
       this
         .formatDdlIndexUnique(object, fields)
         .join('\n')
-    ]
+    ]).filter((line) => {
+      return line !== ''
+    }).join('\n')
+      .trim()
 
-    return `${lines
-      .filter((line) => {
-        return line !== ''
-      })
-      .join('\n')}\n`
+    return {
+      connect,
+      create,
+      fkeys,
+      indexes
+    }
   }
 
   public formatIdentifier (value: string): string {
@@ -160,6 +169,14 @@ export class MssqlFormatter extends SqlFormatter {
 
     if (field.required === true) {
       ddl += ' NOT NULL'
+
+      if (field.value === undefined) {
+        ddl += ' DEFAULT CURRENT_TIMESTAMP'
+      }
+    }
+
+    if (field.value !== undefined) {
+      ddl += ` DEFAULT ${field.value.toString()}`
     }
 
     return ddl
@@ -170,6 +187,14 @@ export class MssqlFormatter extends SqlFormatter {
 
     if (field.required === true) {
       ddl += ' NOT NULL'
+
+      if (field.value === undefined) {
+        ddl += ' DEFAULT CURRENT_TIMESTAMP'
+      }
+    }
+
+    if (field.value !== undefined) {
+      ddl += ` DEFAULT ${field.value.toString()}`
     }
 
     return ddl
@@ -194,6 +219,14 @@ export class MssqlFormatter extends SqlFormatter {
 
     if (field.required === true) {
       ddl += ' NOT NULL'
+
+      if (field.value === undefined) {
+        ddl += ' DEFAULT \'{}\''
+      }
+    }
+
+    if (field.value !== undefined) {
+      ddl += ` DEFAULT '${field.value.toString()}'`
     }
 
     return ddl
@@ -248,6 +281,14 @@ export class MssqlFormatter extends SqlFormatter {
 
     if (field.required === true) {
       ddl += ' NOT NULL'
+
+      if (field.value === undefined) {
+        ddl += ' DEFAULT CURRENT_TIMESTAMP'
+      }
+    }
+
+    if (field.value !== undefined) {
+      ddl += ` DEFAULT ${field.value.toString()}`
     }
 
     return ddl
@@ -272,10 +313,11 @@ export class MssqlFormatter extends SqlFormatter {
       })
       .map(([name, field]) => {
         return [
-          `CONSTRAINT [fkey_${object}_${name}]`,
+          `ALTER TABLE [${object}]`,
+          `ADD CONSTRAINT [fkey_${object}_${name}]`,
           `FOREIGN KEY ([${name}])`,
           `REFERENCES [${field.fkey?.table ?? ''}] ([${field.fkey?.column ?? ''}])`,
-          'ON DELETE SET NULL'
+          `ON DELETE ${field.fkeyDelete?.toUpperCase() ?? 'NO ACTION'};`
         ].join(' ')
       })
   }

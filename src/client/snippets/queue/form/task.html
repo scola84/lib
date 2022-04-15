@@ -1,6 +1,6 @@
 <form name="task">
   <fieldset hidden>
-    <input name="task_id" type="number" readonly required sc-pkey />
+    <input name="task_id" type="number" readonly required sc-pkey sc-serial />
   </fieldset>
   <fieldset>
     <legend>General</legend>
@@ -11,7 +11,6 @@
         name="date_created"
         type="datetime-local"
         step="1"
-        value="$created"
         readonly
         required
       />
@@ -23,7 +22,6 @@
         name="date_updated"
         step="1"
         type="datetime-local"
-        value="$updated"
         readonly
         required
       />
@@ -36,7 +34,6 @@
         step="1"
         type="datetime-local"
         readonly
-        required
       />
     </div>
     <div>
@@ -47,7 +44,6 @@
         step="1"
         type="datetime-local"
         readonly
-        required
       />
     </div>
   </fieldset>
@@ -64,7 +60,10 @@
         name="run_id"
         type="number"
         readonly
+        required
         sc-fkey="run.run_id"
+        sc-fkey-delete="cascade"
+        sc-index="run"
       />
     </div>
   </fieldset>
@@ -86,10 +85,10 @@
       <textarea id="reason" name="reason" readonly></textarea>
     </div>
   </fieldset>
-  <fieldset name="options" readonly>
+  <fieldset name="payload" readonly required>
     <legend>Payload</legend>
   </fieldset>
-  <fieldset name="options" readonly>
+  <fieldset name="result" readonly required>
     <legend>Result</legend>
   </fieldset>
 </form>

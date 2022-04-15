@@ -176,10 +176,12 @@ export class SchemaParser {
 
     field.index = attributes['sc-index']
     field.unique = attributes['sc-unique']
+    field.fkeyDelete = attributes['sc-fkey-delete']
     field.mkey = attributes['sc-mkey'] !== undefined
     field.order = attributes['sc-order'] !== undefined
     field.pkey = attributes['sc-pkey'] !== undefined
     field.serial = attributes['sc-serial'] !== undefined
+    field.var = attributes['sc-var']
     field.where = attributes['sc-where'] !== undefined
   }
 

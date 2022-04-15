@@ -5,7 +5,7 @@ import { isNil } from '../../common'
 
 export function required (name: string, field: SchemaField): Validator {
   return (data: Struct, errors: Struct, user?: User) => {
-    switch (field.value) {
+    switch (field.var) {
       case '$created':
         data[name] = new Date()
         return true

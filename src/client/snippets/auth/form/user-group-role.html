@@ -1,25 +1,44 @@
 <form name="user_group_role">
   <fieldset hidden>
-    <input
-      name="group_id"
-      type="number"
-      readonly
-      required
-      sc-fkey="group.group_id"
-    />
-    <input
-      name="role_id"
-      type="number"
-      readonly
-      required
-      sc-fkey="role.role_id"
-    />
-    <input
-      name="user_id"
-      type="number"
-      readonly
-      required
-      sc-fkey="user.user_id"
-    />
+    <legend>Relations</legend>
+    <div>
+      <label for="group-id">Group</label>
+      <input
+        id="group-id"
+        name="group_id"
+        type="number"
+        readonly
+        required
+        sc-fkey="group.group_id"
+        sc-fkey-delete="cascade"
+        sc-index="group"
+      />
+    </div>
+    <div>
+      <label for="user-id">User</label>
+      <input
+        id="user-id"
+        name="user_id"
+        type="number"
+        readonly
+        required
+        sc-fkey="user.user_id"
+        sc-fkey-delete="cascade"
+        sc-index="user"
+      />
+    </div>
+    <div>
+      <label for="role-id">Role</label>
+      <input
+        id="role-id"
+        name="role_id"
+        type="number"
+        readonly
+        required
+        sc-fkey="role.role_id"
+        sc-fkey-delete="cascade"
+        sc-index="role"
+      />
+    </div>
   </fieldset>
 </form>

@@ -2,7 +2,7 @@ import type { Schema } from '../../../server'
 import { pickField } from './pick-field'
 
 export function createInsertSchema (schema: Schema): Schema | undefined {
-  return Object
+  const insertSchema = Object
     .entries(schema)
     .filter(([,field]) => {
       return field.hidden === false
@@ -10,7 +10,7 @@ export function createInsertSchema (schema: Schema): Schema | undefined {
     .filter(([,field]) => {
       return (
         field.readonly === false ||
-        field.required === true
+        field.var !== undefined
       )
     })
     .filter(([,field]) => {
@@ -22,4 +22,10 @@ export function createInsertSchema (schema: Schema): Schema | undefined {
         [name]: pickField(field)
       }
     }, {})
+
+  if (Object.keys(insertSchema).length === 0) {
+    throw new Error('Schema is empty')
+  }
+
+  return insertSchema
 }

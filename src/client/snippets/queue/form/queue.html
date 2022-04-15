@@ -1,13 +1,9 @@
 <form name="queue">
   <fieldset hidden>
-    <input name="queue_id" type="number" readonly required sc-pkey />
+    <input name="queue_id" type="number" readonly required sc-pkey sc-serial />
   </fieldset>
   <fieldset>
     <legend>General</legend>
-    <div>
-      <label for="name">Name</label>
-      <input id="name" name="name" type="text" required />
-    </div>
     <div>
       <label for="date-created">Created</label>
       <input
@@ -15,9 +11,9 @@
         name="date_created"
         type="datetime-local"
         step="1"
-        value="$created"
         readonly
         required
+        sc-var="$created"
       />
     </div>
     <div>
@@ -27,17 +23,28 @@
         name="date_updated"
         step="1"
         type="datetime-local"
-        value="$updated"
         readonly
         required
+        sc-var="$updated"
       />
+    </div>
+    <div>
+      <label for="name">Name</label>
+      <input id="name" name="name" type="text" required />
     </div>
   </fieldset>
   <fieldset>
     <legend>Relations</legend>
     <div>
       <label for="parent-id">Parent</label>
-      <input id="parent-id" name="parent_id" type="number" />
+      <input
+        id="parent-id"
+        name="parent_id"
+        type="number"
+        sc-fkey="queue.queue_id"
+        sc-fkey-delete="set null"
+        sc-index="queue"
+      />
     </div>
   </fieldset>
   <fieldset>
@@ -70,7 +77,7 @@
       <textarea id="database-query" name="database_query"></textarea>
     </div>
   </fieldset>
-  <fieldset name="options">
+  <fieldset name="options" required>
     <legend>Options</legend>
   </fieldset>
 </form>

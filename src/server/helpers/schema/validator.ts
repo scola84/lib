@@ -14,6 +14,7 @@ export interface SchemaField extends Struct {
   hidden?: boolean
   index?: string
   fkey?: SchemaFieldKey
+  fkeyDelete?: string
   max?: number
   maxLength?: number
   min?: number
@@ -33,6 +34,7 @@ export interface SchemaField extends Struct {
   unique?: string
   values?: unknown[]
   value?: Date | Primitive
+  var?: string
   where?: boolean
 }
 

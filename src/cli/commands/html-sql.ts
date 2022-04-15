@@ -67,14 +67,14 @@ try {
       const parsedSource = await parser.parse(sourceFile, {}, options.id)
 
       if (parsedSource === undefined) {
-        return ''
+        return undefined
       }
 
-      const data = databases[options.dialect]?.formatter.formatDdl(
+      const ddl = databases[options.dialect]?.formatter.formatDdl(
         options.database,
         parsedSource.name,
         parsedSource.schema
-      ) ?? ''
+      )
 
       const targetFile = target
         .replace(/\[index\]/gu, String(index).padStart(2, '0'))
@@ -86,11 +86,19 @@ try {
           recursive: true
         })
 
-        writeFileSync(targetFile, data)
+        writeFileSync(targetFile, [
+          ddl?.connect,
+          ddl?.create,
+          ddl?.indexes,
+          ddl?.fkeys
+        ].filter((line) => {
+          return line !== ''
+        }).join('\n'))
+
         logger.log(`Created ${targetFile}`)
       }
 
-      return data
+      return ddl
     }))
     .then((data) => {
       if (parsedTarget.ext !== '') {
@@ -98,7 +106,37 @@ try {
           recursive: true
         })
 
-        writeFileSync(target, data.join('\n'))
+        writeFileSync(target, [
+          data
+            .reduce((result, ddl) => {
+              return ddl?.connect ?? ''
+            }, ''),
+          data
+            .map((ddl) => {
+              return ddl?.create
+            })
+            .filter((line) => {
+              return line !== ''
+            })
+            .join('\n'),
+          data
+            .map((ddl) => {
+              return ddl?.indexes
+            })
+            .filter((line) => {
+              return line !== ''
+            })
+            .join('\n'),
+          data
+            .map((ddl) => {
+              return ddl?.fkeys
+            })
+            .filter((line) => {
+              return line !== ''
+            })
+            .join('\n')
+        ].join('\n'))
+
         logger.log(`Created ${target}`)
       }
     })

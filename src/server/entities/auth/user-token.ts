@@ -1,4 +1,4 @@
-import type { Struct } from '../../common'
+import type { Struct } from '../../../common'
 
 export interface UserToken {
   date_created: Date

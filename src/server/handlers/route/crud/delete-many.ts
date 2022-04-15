@@ -35,6 +35,7 @@ export abstract class CrudDeleteManyHandler extends CrudDeleteHandler {
         return undefined
       } catch (error: unknown) {
         response.statusCode = 400
+
         return {
           message: toString(error)
         }

@@ -1,4 +1,4 @@
-import type { Group, GroupUserRole, Role, User, UserRole, UserToken } from '../../entities'
+import type { Group, Role, User, UserRole, UserRoleGroup, UserToken } from '../../entities'
 import { hotp, totp } from 'otplib'
 import { isNil, revive } from '../../../common'
 import { parse, serialize } from 'cookie'
@@ -278,13 +278,13 @@ export class RouteAuth {
   }
 
   public async selectRoleByUserGroup (userId: number | string, groupId: number | string): Promise<Role | undefined> {
-    return this.database.select<GroupUserRole, Role>(sql`
+    return this.database.select<UserRoleGroup, Role>(sql`
       SELECT $[role].*,
-      FROM $[group_user_role]
+      FROM $[user_role_group]
       JOIN $[role] USING ($[role_id])
       WHERE (
-        $[group_user_role.group_id] = $(group_id) AND
-        $[group_user_role.user_id] = $(user_id)
+        $[user_role_group.group_id] = $(group_id) AND
+        $[user_role_group.user_id] = $(user_id)
       )
     `, {
       group_id: groupId,

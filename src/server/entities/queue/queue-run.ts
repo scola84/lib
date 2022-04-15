@@ -1,6 +1,6 @@
 import type { Queue } from './queue'
-import type { QueueRun as QueueRunBase } from './base'
-import type { Struct } from '../../common'
+import type { QueueRun as QueueRunBase } from './base/queue-run'
+import type { Struct } from '../../../common'
 import { createQueue } from './queue'
 
 export interface QueueRun<Options = unknown> extends Required<QueueRunBase> {

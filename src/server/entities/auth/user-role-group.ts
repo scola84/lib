@@ -1,4 +1,4 @@
-export interface GroupUserRole {
+export interface UserRoleGroup {
   group_id: number | string
 
   role_id: number | string

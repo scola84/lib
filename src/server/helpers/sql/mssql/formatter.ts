@@ -275,7 +275,7 @@ export class MssqlFormatter extends SqlFormatter {
           `CONSTRAINT [fkey_${object}_${name}]`,
           `FOREIGN KEY ([${name}])`,
           `REFERENCES [${field.fkey?.table ?? ''}] ([${field.fkey?.column ?? ''}])`,
-          'ON DELETE CASCADE'
+          'ON DELETE SET NULL'
         ].join(' ')
       })
   }

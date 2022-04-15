@@ -1,6 +1,6 @@
 import type { QueueRun } from './queue-run'
-import type { QueueTask as QueueTaskBase } from './base'
-import { Struct } from '../../common'
+import type { QueueTask as QueueTaskBase } from './base/queue-task'
+import { Struct } from '../../../common'
 import { createQueueRun } from './queue-run'
 
 export interface QueueTask<Payload = unknown, Options = unknown, Result = unknown> extends Required<QueueTaskBase> {

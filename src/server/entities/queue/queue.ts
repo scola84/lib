@@ -1,5 +1,5 @@
-import type { Queue as QueueBase } from './base'
-import type { Struct } from '../../common'
+import type { Queue as QueueBase } from './base/queue'
+import type { Struct } from '../../../common'
 
 export interface Queue<Options = unknown> extends Required<QueueBase> {
   /**

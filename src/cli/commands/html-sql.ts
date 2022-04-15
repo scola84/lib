@@ -5,12 +5,12 @@ import type { SqlDatabase } from '../../server/helpers'
 import type { Struct } from '../../common'
 import { sync as glob } from 'glob'
 import { parse } from 'path'
-import { toJoint } from '../../common'
 
 export interface Options {
   database: string
   dialect: string
   id: string
+  silent: boolean
 }
 
 const logger = console
@@ -30,6 +30,7 @@ program
   .option('-D, --database <database>', 'database of the SQL file', 'postgres')
   .option('-d, --dialect <dialect>', 'dialect of the SQL file', 'postgres')
   .option('-i, --id <id>', 'id of the element to parse', '')
+  .option('-s, --silent', 'whether not to log')
   .parse()
 
 try {
@@ -47,13 +48,13 @@ try {
   ] = program.args
 
   const options = program.opts<Options>()
-  const parsedTarget = parse(target)
 
-  let id = options.id
-
-  if (id !== '') {
-    id = `#${id}`
+  if (options.silent) {
+    logger.error = () => {}
+    logger.log = () => {}
   }
+
+  const parsedTarget = parse(target)
 
   if (databases[options.dialect] === undefined) {
     throw new Error(`Database for dialect "${options.dialect}" is undefined`)
@@ -63,24 +64,22 @@ try {
     .all(glob(source, {
       nosort: true
     }).map(async (sourceFile, index) => {
-      const name = parse(sourceFile).name
+      const parsedSource = await parser.parse(sourceFile, {}, options.id)
 
-      const object = toJoint(name, {
-        separator: '_'
-      })
-
-      const targetFile = target
-        .replace(/\[index\]/gu, String(index + 1))
-        .replace(/\[name\]/gu, name)
-        .replace(/\[ext\]/gu, '.sql')
-
-      const schema = await parser.parse(`${sourceFile}${id}`)
+      if (parsedSource === undefined) {
+        return ''
+      }
 
       const data = databases[options.dialect]?.formatter.formatDdl(
         options.database,
-        object,
-        schema
+        parsedSource.name,
+        parsedSource.schema
       ) ?? ''
+
+      const targetFile = target
+        .replace(/\[index\]/gu, String(index).padStart(2, '0'))
+        .replace(/\[name\]/gu, parsedSource.name)
+        .replace(/\[ext\]/gu, '.sql')
 
       if (parsedTarget.ext === '') {
         mkdirSync(parsedTarget.dir, {
@@ -88,6 +87,7 @@ try {
         })
 
         writeFileSync(targetFile, data)
+        logger.log(`Created ${targetFile}`)
       }
 
       return data
@@ -99,11 +99,14 @@ try {
         })
 
         writeFileSync(target, data.join('\n'))
+        logger.log(`Created ${target}`)
       }
     })
     .catch((error) => {
       logger.error(String(error).toLowerCase())
+      process.exit(1)
     })
 } catch (error: unknown) {
   logger.error(String(error).toLowerCase())
+  process.exit(1)
 }

@@ -1,0 +1,76 @@
+<form name="queue">
+  <fieldset hidden>
+    <input name="queue_id" type="number" readonly required sc-pkey />
+  </fieldset>
+  <fieldset>
+    <legend>General</legend>
+    <div>
+      <label for="name">Name</label>
+      <input id="name" name="name" type="text" required />
+    </div>
+    <div>
+      <label for="date-created">Created</label>
+      <input
+        id="date-created"
+        name="date_created"
+        type="datetime-local"
+        step="1"
+        value="$created"
+        readonly
+        required
+      />
+    </div>
+    <div>
+      <label for="date-updated">Updated</label>
+      <input
+        id="date-updated"
+        name="date_updated"
+        step="1"
+        type="datetime-local"
+        value="$updated"
+        readonly
+        required
+      />
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Relations</legend>
+    <div>
+      <label for="parent-id">Parent</label>
+      <input id="parent-id" name="parent_id" type="number" />
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Schedule</legend>
+    <div>
+      <label for="schedule-cron">Cron</label>
+      <input id="schedule-cron" name="schedule_cron" type="text" />
+    </div>
+    <div>
+      <label for="schedule-begin">Begin date</label>
+      <input id="schedule-begin" name="schedule_begin" type="date" />
+    </div>
+    <div>
+      <label for="schedule-end">End date</label>
+      <input id="schedule-end" name="schedule_end" type="date" />
+    </div>
+    <div>
+      <label for="schedule-next">Next run</label>
+      <input id="schedule-next" name="schedule_next" type="date" />
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Database</legend>
+    <div>
+      <label for="database-name">Name</label>
+      <input id="database-name" name="database_name" type="text" />
+    </div>
+    <div>
+      <label for="database-query">Query</label>
+      <textarea id="database-query" name="database_query"></textarea>
+    </div>
+  </fieldset>
+  <fieldset name="options">
+    <legend>Options</legend>
+  </fieldset>
+</form>

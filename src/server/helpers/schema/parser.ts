@@ -1,23 +1,44 @@
 import type { ChildNode, Element } from 'parse5'
 import type { Schema, SchemaField, SchemaFieldKey } from './validator'
-import { Struct, cast, isArray, isStruct } from '../../../common'
-import { dirname } from 'path'
+import { Struct, cast, isArray, isObject, isStruct, toJoint } from '../../../common'
+import { parse } from 'path'
 import { parseFragment } from 'parse5'
 import { readFile } from 'fs-extra'
+
+export interface SchemaParserResult {
+  name: string
+  schema: Schema
+}
 
 export type SchemaAttributes = Partial<Struct<string>>
 
 export class SchemaParser {
-  public async parse (url: string, fields: Schema = {}): Promise<Schema> {
-    const dir = dirname(url)
-    const [file, id] = url.split('#')
+  public async parse (file: string, schema: Partial<Schema> = {}, id?: string): Promise<SchemaParserResult | undefined> {
+    const {
+      dir,
+      name
+    } = parse(file)
+
     const html = (await readFile(file)).toString()
-    const node = parseFragment(html)
-    const root = this.findRoot(node as Element, id) ?? node
-    return this.extract(root as Element, fields, dir)
+    const node = parseFragment(html).childNodes[0]
+
+    if (this.isElement(node)) {
+      const root = this.findRoot(node, id) ?? node
+
+      if (this.isElement(root)) {
+        return {
+          name: this.normalizeAttributes(root).name ?? toJoint(name, {
+            separator: '_'
+          }),
+          schema: await this.extract(root, schema, dir)
+        }
+      }
+    }
+
+    return undefined
   }
 
-  protected async extract (element: Element, fields: Partial<Schema>, dir: string): Promise<Schema> {
+  protected async extract (element: Element, schema: Partial<Schema>, dir: string): Promise<Schema> {
     const attributes = this.normalizeAttributes(element)
 
     if (
@@ -30,7 +51,7 @@ export class SchemaParser {
         typeof attributes.name === 'string' &&
         attributes['sc-nofield'] === undefined
       ) {
-        let field = fields[attributes.name]
+        let field = schema[attributes.name]
 
         if (field === undefined) {
           field = {
@@ -52,7 +73,7 @@ export class SchemaParser {
 
           this.extractDatabaseAuth(attributes, field)
           this.extractDatabaseOptions(attributes, field)
-          fields[attributes.name] = field
+          schema[attributes.name] = field
         } else if (field.type === 'checkbox') {
           field.values?.push(cast(attributes.value))
         } else if (field.type === 'radio') {
@@ -60,19 +81,23 @@ export class SchemaParser {
           this.extractRadio(attributes, field)
         }
 
-        return this.sortObject(fields) as Schema
+        return this.sortObject(schema) as Schema
       }
     }
 
-    await this.extractView(attributes, fields as Schema, dir)
+    await this.extractView(attributes, schema, dir)
 
     if (Array.isArray(element.childNodes)) {
       await Promise.all(element.childNodes.map(async (child) => {
-        await this.extract(child as Element, fields, dir)
+        if (this.isElement(child)) {
+          return this.extract(child, schema, dir)
+        }
+
+        return Promise.resolve()
       }))
     }
 
-    return this.sortObject(fields) as Schema
+    return this.sortObject(schema) as Schema
   }
 
   protected extractBase (attributes: SchemaAttributes, field: SchemaField): void {
@@ -164,7 +189,11 @@ export class SchemaParser {
     const schema = {}
 
     await Promise.all(element.childNodes.map(async (child) => {
-      return this.extract(child as Element, schema, dir)
+      if (this.isElement(child)) {
+        return this.extract(child, schema, dir)
+      }
+
+      return Promise.resolve()
     }))
 
     if (Object.keys(schema).length > 0) {
@@ -240,24 +269,26 @@ export class SchemaParser {
     field.type = 'textarea'
   }
 
-  protected async extractView (attributes: SchemaAttributes, fields: Schema, dir: string): Promise<void> {
+  protected async extractView (attributes: SchemaAttributes, schema: Partial<Schema>, dir: string): Promise<void> {
     if (
       attributes.is === 'sc-view' &&
       typeof attributes['sc-name'] === 'string' &&
       attributes['sc-noparse'] === undefined
     ) {
-      await this.parse(`${dir}/${attributes['sc-name']}.html`, fields)
+      await this.parse(`${dir}/${attributes['sc-name']}.html`, schema)
     }
   }
 
   protected findAll (element: Element, filter: (childNode: ChildNode) => boolean, found: Element[] = []): Element[] {
-    element.childNodes.forEach((childNode) => {
-      if (filter(childNode)) {
-        found.push(childNode as Element)
-      }
+    for (const childNode of element.childNodes) {
+      if (this.isElement(childNode)) {
+        if (filter(childNode)) {
+          found.push(childNode)
+        }
 
-      this.findAll(childNode as Element, filter, found)
-    })
+        this.findAll(childNode, filter, found)
+      }
+    }
 
     return found
   }
@@ -271,12 +302,9 @@ export class SchemaParser {
 
     let found = null
 
-    for (const child of element.childNodes) {
-      if (
-        child.nodeName !== '#comment' &&
-        child.nodeName !== '#text'
-      ) {
-        found = this.findRoot(child as Element, id)
+    for (const childNode of element.childNodes) {
+      if (this.isElement(childNode)) {
+        found = this.findRoot(childNode, id)
 
         if (found !== null) {
           return found
@@ -285,6 +313,13 @@ export class SchemaParser {
     }
 
     return found
+  }
+
+  protected isElement (value: unknown): value is Element {
+    return (
+      isObject(value) &&
+      value.attrs !== undefined
+    )
   }
 
   protected normalizeAttributes (element: Element): SchemaAttributes {

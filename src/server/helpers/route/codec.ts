@@ -24,8 +24,11 @@ export class RouteCodec {
 
   public async decode (request: IncomingMessage, schema?: Schema): Promise<unknown> {
     let body: unknown = null
+    let contentType = null
 
-    const contentType = parse(request).type
+    if (request.headers['content-type'] !== undefined) {
+      contentType = parse(request).type
+    }
 
     switch (contentType) {
       case 'application/json':
@@ -50,7 +53,7 @@ export class RouteCodec {
         body = await this.decodeXml(request)
         break
       default:
-        throw new Error('Content unsupported')
+        break
     }
 
     return body ?? undefined

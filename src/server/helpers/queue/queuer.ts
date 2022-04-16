@@ -81,13 +81,13 @@ export class Queuer {
       queuer.resume()
     },
     run: async (queuer: Queuer, message: Struct) => {
-      if (isNumber(message.id)) {
-        await queuer.run(message.id, message.parameters)
+      if (isNumber(message.queue_id)) {
+        await queuer.run(message.queue_id, message.parameters)
       }
     },
     skip: async (queuer: Queuer, message: Struct) => {
-      if (isNumber(message.id)) {
-        await queuer.skip(message.id)
+      if (isNumber(message.run_id)) {
+        await queuer.skip(message.run_id)
       }
     },
     suspend: (queuer: Queuer) => {

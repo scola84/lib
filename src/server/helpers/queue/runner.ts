@@ -231,7 +231,7 @@ export class QueueRunner {
    */
   protected async selectQueues (run: Run): Promise<Array<Pick<Queue, 'queue_id'>>> {
     return this.database.selectAll<Run, Pick<Queue, 'queue_id'>>(sql`
-      SELECT queue.id
+      SELECT queue.queue_id
       FROM queue
       JOIN run ON queue.parent_id = run.queue_id
       WHERE

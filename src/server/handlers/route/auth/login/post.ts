@@ -18,14 +18,14 @@ export class AuthLoginPostHandler extends AuthHandler {
       schema: {
         password: {
           required: true,
-          type: 'text'
+          type: 'password'
         },
         username: {
           required: true,
           type: 'text'
         }
       },
-      type: 'struct'
+      type: 'fieldset'
     }
   }
 
@@ -34,12 +34,12 @@ export class AuthLoginPostHandler extends AuthHandler {
 
     if (user === undefined) {
       response.statusCode = 401
-      throw new Error('User is undefined')
+      throw new Error('User in database is undefined')
     }
 
     if (user.auth_password === null) {
       response.statusCode = 401
-      throw new Error('Password is null')
+      throw new Error('Password in database is null')
     }
 
     if (!(await this.auth.validatePassword(user, data.body.password))) {

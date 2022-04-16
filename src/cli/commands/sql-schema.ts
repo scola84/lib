@@ -130,4 +130,5 @@ try {
   }
 } catch (error: unknown) {
   logger.error(String(error).toLowerCase())
+  process.exit(1)
 }

@@ -14,6 +14,7 @@ import { minLength } from './min-length'
 import { number } from './number'
 import { operator } from './operator'
 import { order } from './order'
+import { password } from './password'
 import { pattern } from './pattern'
 import { radio } from './radio'
 import { range } from './range'
@@ -44,6 +45,7 @@ export const validators = {
   'number': number,
   'operator': operator,
   'order': order,
+  'password': password,
   'pattern': pattern,
   'radio': radio,
   'range': range,

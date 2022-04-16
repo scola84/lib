@@ -217,7 +217,9 @@ try {
     })
     .catch((error) => {
       logger.error(String(error).toLowerCase())
+      process.exit(1)
     })
 } catch (error: unknown) {
   logger.error(String(error).toLowerCase())
+  process.exit(1)
 }

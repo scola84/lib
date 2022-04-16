@@ -23,7 +23,7 @@ export class AuthLoginPostHotpHandler extends AuthHandler {
           type: 'text'
         }
       },
-      type: 'struct'
+      type: 'fieldset'
     }
   }
 
@@ -32,14 +32,14 @@ export class AuthLoginPostHotpHandler extends AuthHandler {
 
     if (hash === undefined) {
       response.statusCode = 401
-      throw new Error('Hash is undefined')
+      throw new Error('Hash in request headers is undefined')
     }
 
     const storedUser = await this.store.getDel(`sc-auth-mfa-${hash}`)
 
     if (storedUser === null) {
       response.statusCode = 401
-      throw new Error('Stored user is null')
+      throw new Error('User in store is null')
     }
 
     const parsedUser = JSON.parse(storedUser) as User
@@ -47,12 +47,12 @@ export class AuthLoginPostHotpHandler extends AuthHandler {
 
     if (user === undefined) {
       response.statusCode = 401
-      throw new Error('User is undefined')
+      throw new Error('User in database is undefined')
     }
 
     if (isNil(parsedUser.auth_hotp)) {
       response.statusCode = 401
-      throw new Error('HOTP secret is null')
+      throw new Error('HOTP secret in database is null')
     }
 
     if (!this.auth.validateHotp(parsedUser, data.body.hotp)) {

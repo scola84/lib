@@ -20,10 +20,10 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
       schema: {
         password: {
           required: true,
-          type: 'text'
+          type: 'password'
         }
       },
-      type: 'struct'
+      type: 'fieldset'
     }
   }
 
@@ -32,14 +32,14 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
 
     if (hash === undefined) {
       response.statusCode = 401
-      throw new Error('Hash is undefined')
+      throw new Error('Hash in request headers is undefined')
     }
 
     const storedUser = await this.store.getDel(`sc-auth-mfa-${hash}`)
 
     if (storedUser === null) {
       response.statusCode = 401
-      throw new Error('Stored user is null')
+      throw new Error('User in store is null')
     }
 
     const parsedUser = JSON.parse(storedUser) as User
@@ -47,12 +47,12 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
 
     if (user === undefined) {
       response.statusCode = 401
-      throw new Error('User is undefined')
+      throw new Error('User in database is undefined')
     }
 
     if (user.auth_password === null) {
       response.statusCode = 401
-      throw new Error('Password is null')
+      throw new Error('Password in database is null')
     }
 
     if (!(await this.auth.validatePassword(user, data.body.password))) {
@@ -60,7 +60,7 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
       throw new Error('Password is not valid')
     }
 
-    if (user.auth_mfa) {
+    if (user.auth_mfa === true) {
       if (user.auth_totp === null) {
         if (user.auth_hotp_tel === null) {
           return this.handleHotpEmail(response, user)
@@ -87,10 +87,10 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
   protected async handleHotpEmail (response: ServerResponse, user: User): Promise<Struct> {
     if (user.auth_hotp_email === null) {
       response.statusCode = 401
-      throw new Error('HOTP email is null')
+      throw new Error('HOTP email in database is null')
     }
 
-    if (!user.auth_hotp_email_confirmed) {
+    if (user.auth_hotp_email_confirmed !== true) {
       response.statusCode = 401
       throw new Error('HOTP email is not confirmed')
     }
@@ -130,10 +130,10 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
   protected async handleHotpTel (response: ServerResponse, user: User): Promise<Struct> {
     if (user.auth_hotp_tel === null) {
       response.statusCode = 401
-      throw new Error('HOTP tel is null')
+      throw new Error('HOTP tel in database is null')
     }
 
-    if (!user.auth_hotp_tel_confirmed) {
+    if (user.auth_hotp_tel_confirmed !== true) {
       response.statusCode = 401
       throw new Error('HOTP tel is not confirmed')
     }
@@ -173,10 +173,10 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
   protected async handleTotp (response: ServerResponse, user: User): Promise<Struct> {
     if (user.auth_totp === null) {
       response.statusCode = 401
-      throw new Error('TOTP is null')
+      throw new Error('TOTP secret in database is null')
     }
 
-    if (!user.auth_totp_confirmed) {
+    if (user.auth_totp_confirmed !== true) {
       response.statusCode = 401
       throw new Error('TOTP is not confirmed')
     }

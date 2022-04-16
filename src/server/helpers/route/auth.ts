@@ -1,8 +1,8 @@
-import type { Group, Role, User, UserRole, UserRoleGroup, UserToken } from '../../entities'
+import type { Group, Role, User, UserGroupRole, UserRole, UserToken } from '../../entities'
 import { hotp, totp } from 'otplib'
 import { isNil, revive } from '../../../common'
 import { parse, serialize } from 'cookie'
-import { randomBytes, scrypt } from 'crypto'
+import { randomBytes, scrypt, timingSafeEqual } from 'crypto'
 import type { RedisClientType } from 'redis'
 import type { RouteData } from './handler'
 import type { ServerResponse } from 'http'
@@ -12,25 +12,45 @@ import { createUserToken } from '../../entities'
 import { sql } from '../sql'
 
 export interface RouteAuthOptions {
+  backoffExpires?: number
+  backoffFactor?: number
   database: SqlDatabase
-  pxBackoff?: number
-  pxEntity?: number
+  entityExpires?: number
+  passwordLength?: number
+  saltLength?: number
+  tokenExpires?: number
+  tokenLength?: number
   store: RedisClientType
 }
 
 export class RouteAuth {
+  public backoffExpires: number
+
+  public backoffFactor: number
+
   public database: SqlDatabase
 
-  public pxBackoff: number
+  public entityExpires: number
 
-  public pxEntity: number
+  public passwordLength: number
+
+  public saltLength: number
 
   public store: RedisClientType
 
+  public tokenExpires: number
+
+  public tokenLength: number
+
   public constructor (options: RouteAuthOptions) {
+    this.backoffExpires = options.backoffExpires ?? 24 * 60 * 60 * 1000
+    this.backoffFactor = options.backoffFactor ?? 2
     this.database = options.database
-    this.pxBackoff = options.pxBackoff ?? 24 * 60 * 60 * 1000
-    this.pxEntity = options.pxEntity ?? 60 * 60 * 1000
+    this.entityExpires = options.entityExpires ?? 60 * 60 * 1000
+    this.passwordLength = options.passwordLength ?? 64
+    this.saltLength = options.saltLength ?? 8
+    this.tokenExpires = options.tokenExpires ?? 5 * 60 * 1000
+    this.tokenLength = options.tokenLength ?? 32
     this.store = options.store
   }
 
@@ -85,7 +105,7 @@ export class RouteAuth {
     }
 
     if (
-      !data.user.state_active &&
+      data.user.state_active === false &&
       permit?.inactive === false
     ) {
       response.statusCode = 403
@@ -93,7 +113,7 @@ export class RouteAuth {
     }
 
     if (
-      data.user.state_compromised &&
+      data.user.state_compromised === true &&
       permit?.compromised === false
     ) {
       response.statusCode = 403
@@ -101,7 +121,7 @@ export class RouteAuth {
     }
 
     if (
-      !data.user.state_confirmed &&
+      data.user.state_confirmed === false &&
       permit?.unconfirmed === false
     ) {
       response.statusCode = 403
@@ -133,11 +153,11 @@ export class RouteAuth {
     })
   }
 
-  public createUserToken (user: User, expires = user.role?.expires ?? 0): UserToken {
+  public createUserToken (user: User, expires = user.role?.expires ?? this.tokenExpires): UserToken {
     return createUserToken({
       date_expires: new Date(Date.now() + expires),
       group_id: user.group?.group_id ?? null,
-      hash: randomBytes(64).toString('hex'),
+      hash: randomBytes(this.tokenLength).toString('hex'),
       role_id: user.role?.role_id ?? null,
       user_id: user.user_id
     })
@@ -148,7 +168,23 @@ export class RouteAuth {
       DELETE
       FROM $[user_token]
       WHERE $[token_id] = $(token_id)
-    `, userToken)
+    `, {
+      token_id: userToken.token_id
+    })
+  }
+
+  public async derivePassword (password: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const salt = randomBytes(this.saltLength)
+
+      scrypt(password, salt, this.passwordLength, (error, derivedKey) => {
+        if (error === null) {
+          resolve(`${salt.toString('hex')}:${derivedKey.toString('hex')}`)
+        } else {
+          reject(error)
+        }
+      })
+    })
   }
 
   public extractTokenHash (data: RouteData): string | undefined {
@@ -165,36 +201,28 @@ export class RouteAuth {
     return undefined
   }
 
-  public async hashPassword (password: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const salt = randomBytes(8).toString('hex')
-
-      scrypt(password, salt, 64, (error, derivedKey) => {
-        if (error === null) {
-          resolve(`${salt}:${derivedKey.toString('hex')}`)
-        } else {
-          reject(error)
-        }
-      })
-    })
-  }
-
   public async insertUserToken (userToken: Partial<UserToken>): Promise<Pick<UserToken, 'token_id'>> {
     return this.database.insert<UserToken, Pick<UserToken, 'token_id'>>(sql`
       INSERT INTO $[user_token] (
-        $[expires],
+        $[date_expires],
         $[group_id],
+        $[hash],
         $[role_id],
-        $[token],
         $[user_id]
       ) VALUES (
-        $(expires),
+        $(date_expires),
         $(group_id),
+        $(hash),
         $(role_id),
-        $(token),
         $(user_id)
       )
-    `, userToken, 'token_id')
+    `, {
+      date_expires: userToken.date_expires,
+      group_id: userToken.group_id,
+      hash: userToken.hash,
+      role_id: userToken.role_id,
+      user_id: userToken.user_id
+    }, 'token_id')
   }
 
   public async login (response: ServerResponse, user: User): Promise<void> {
@@ -229,12 +257,11 @@ export class RouteAuth {
 
   public async selectGroupByUser (userId: number): Promise<Group | undefined> {
     return this.database.select<User, Group>(sql`
-      SELECT $[group].*,
-      FROM $[group_user]
-      JOIN $[group] USING ($[user_id])
-      WHERE $[group_user.user_id] = $(user_id)
+      SELECT $[group].*
+      FROM $[user_group]
+      JOIN $[group] USING ($[group_id])
+      WHERE $[user_group.user_id] = $(user_id)
       ORDER BY $[group.name]
-      LIMIT 0, 1
     `, {
       user_id: userId
     })
@@ -257,7 +284,7 @@ export class RouteAuth {
 
     if (group !== undefined) {
       await this.store.set(`sc-auth-group-${groupId}`, JSON.stringify(group), {
-        PX: this.pxEntity.valueOf()
+        PX: this.entityExpires.valueOf()
       })
     }
 
@@ -266,7 +293,7 @@ export class RouteAuth {
 
   public async selectRoleByUser (userId: number): Promise<Role | undefined> {
     return this.database.select<UserRole, Role>(sql`
-      SELECT $[role].*,
+      SELECT $[role].*
       FROM $[user_role]
       JOIN $[role] USING ($[role_id])
       WHERE (
@@ -278,13 +305,13 @@ export class RouteAuth {
   }
 
   public async selectRoleByUserGroup (userId: number, groupId: number): Promise<Role | undefined> {
-    return this.database.select<UserRoleGroup, Role>(sql`
-      SELECT $[role].*,
-      FROM $[user_role_group]
+    return this.database.select<UserGroupRole, Role>(sql`
+      SELECT $[role].*
+      FROM $[user_group_role]
       JOIN $[role] USING ($[role_id])
       WHERE (
-        $[user_role_group.group_id] = $(group_id) AND
-        $[user_role_group.user_id] = $(user_id)
+        $[user_group_role.group_id] = $(group_id) AND
+        $[user_group_role.user_id] = $(user_id)
       )
     `, {
       group_id: groupId,
@@ -309,7 +336,7 @@ export class RouteAuth {
 
     if (role !== undefined) {
       await this.store.set(`sc-auth-role-${roleId}`, JSON.stringify(role), {
-        PX: this.pxEntity
+        PX: this.entityExpires
       })
     }
 
@@ -328,7 +355,7 @@ export class RouteAuth {
 
   public async selectUserByUsername (identity: string): Promise<User | undefined> {
     return this.database.select<User, User>(sql`
-      SELECT *,
+      SELECT *
       FROM $[user]
       WHERE
         $[email] = $(email) OR
@@ -356,6 +383,7 @@ export class RouteAuth {
         $[preferences],
         $[state_active],
         $[state_confirmed],
+        $[state_compromised],
         $[tel],
         $[user_id],
         $[username]
@@ -367,7 +395,7 @@ export class RouteAuth {
 
     if (user !== undefined) {
       await this.store.set(`sc-auth-user-${userId}`, JSON.stringify(user), {
-        PX: this.pxEntity
+        PX: this.entityExpires
       })
     }
 
@@ -383,7 +411,7 @@ export class RouteAuth {
 
     const userToken = await this.database.select<UserToken, UserToken>(sql`
       SELECT
-        $[expires],
+        $[date_expires],
         $[group_id],
         $[role_id],
         $[permissions],
@@ -412,12 +440,12 @@ export class RouteAuth {
     const [count] = await this.store
       .multi()
       .incr(key)
-      .pExpire(key, this.pxBackoff)
+      .pExpire(key, this.backoffExpires)
       .exec()
 
     setTimeout(() => {
       response.end()
-    }, (2 ** Number(count ?? 0)) * 1000)
+    }, (this.backoffFactor ** Number(count ?? 0)) * 1000)
   }
 
   public async updateUserCodes (user: User): Promise<void> {
@@ -453,11 +481,15 @@ export class RouteAuth {
 
   public async validatePassword (user: User, password: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      const [salt, key] = user.auth_password?.split(':') ?? []
+      const [salt, key] = user.auth_password
+        ?.split(':')
+        .map((value) => {
+          return Buffer.from(value, 'hex')
+        }) ?? []
 
-      scrypt(password, salt, 64, (error, derivedKey) => {
+      scrypt(password, salt, this.passwordLength, (error, derivedKey) => {
         if (error === null) {
-          resolve(key === derivedKey.toString('hex'))
+          resolve(timingSafeEqual(key, derivedKey))
         } else {
           reject(error)
         }

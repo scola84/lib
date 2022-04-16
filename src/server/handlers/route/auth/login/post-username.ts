@@ -21,7 +21,7 @@ export class AuthLoginPostUsernameHandler extends AuthHandler {
           type: 'text'
         }
       },
-      type: 'struct'
+      type: 'fieldset'
     }
   }
 
@@ -30,7 +30,7 @@ export class AuthLoginPostUsernameHandler extends AuthHandler {
 
     if (user === undefined) {
       response.statusCode = 401
-      throw new Error('User is undefined')
+      throw new Error('User in database is undefined')
     }
 
     let type: string | null = null
@@ -39,14 +39,14 @@ export class AuthLoginPostUsernameHandler extends AuthHandler {
       type = 'password'
     } else if (
       user.auth_webauthn !== null &&
-      user.auth_webauthn_confirmed
+      user.auth_webauthn_confirmed === true
     ) {
       type = 'webauthn'
     }
 
     if (type === null) {
       response.statusCode = 401
-      throw new Error('Type is null')
+      throw new Error('User has no credentials set')
     }
 
     const token = this.auth.createUserToken(user, this.px)

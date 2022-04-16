@@ -1,4 +1,5 @@
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http'
+import { isNil, toString } from '../../../common'
 import type { FileBucket } from '../file'
 import type { Logger } from 'pino'
 import type { RedisClientType } from 'redis'
@@ -11,7 +12,6 @@ import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import type { URL } from 'url'
 import type { User } from '../../entities'
-import { isNil } from '../../../common'
 
 export interface RouteData extends Struct {
   body?: unknown
@@ -172,6 +172,11 @@ export abstract class RouteHandler {
           response.end()
         }
       }
+
+      this.logger?.error({
+        context: 'handle-route',
+        status: response.statusCode
+      }, toString(error))
 
       throw error
     }

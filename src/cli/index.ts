@@ -11,6 +11,9 @@ try {
     .command('html-ts', 'creates TypeScript CRUD handlers from HTML files', {
       executableFile: 'html-ts'
     })
+    .command('password', 'generates a derived password with scrypt', {
+      executableFile: 'password'
+    })
     .command('sql-diff', 'dumps the diff of a SQL database and a DDL file', {
       executableFile: 'sql-diff'
     })

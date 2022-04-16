@@ -22,7 +22,7 @@ export class AuthLoginPostTotpHandler extends AuthHandler {
           type: 'text'
         }
       },
-      type: 'struct'
+      type: 'fieldset'
     }
   }
 
@@ -31,14 +31,14 @@ export class AuthLoginPostTotpHandler extends AuthHandler {
 
     if (hash === undefined) {
       response.statusCode = 401
-      throw new Error('Hash is undefined')
+      throw new Error('Hash in request headers is undefined')
     }
 
     const storedUser = await this.store.getDel(`sc-auth-mfa-${hash}`)
 
     if (storedUser === null) {
       response.statusCode = 401
-      throw new Error('Stored user is null')
+      throw new Error('User in store is null')
     }
 
     const parsedUser = JSON.parse(storedUser) as User
@@ -46,12 +46,12 @@ export class AuthLoginPostTotpHandler extends AuthHandler {
 
     if (user === undefined) {
       response.statusCode = 401
-      throw new Error('User is undefined')
+      throw new Error('User in database is undefined')
     }
 
     if (user.auth_totp === null) {
       response.statusCode = 401
-      throw new Error('TOTP secret is null')
+      throw new Error('TOTP secret in database is null')
     }
 
     if (!this.auth.validateTotp(user, data.body.totp)) {

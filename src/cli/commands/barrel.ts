@@ -69,4 +69,5 @@ try {
   writeFileSync(`${targetDir}/index.ts`, `${data}\n`)
 } catch (error: unknown) {
   logger.error(String(error).toLowerCase())
+  process.exit(1)
 }

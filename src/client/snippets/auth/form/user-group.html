@@ -1,0 +1,31 @@
+<form name="user_group">
+  <fieldset hidden>
+    <legend>Relations</legend>
+    <div>
+      <label for="group-id">Group</label>
+      <input
+        id="group-id"
+        name="group_id"
+        type="number"
+        readonly
+        required
+        sc-fkey="group.group_id"
+        sc-fkey-delete="cascade"
+        sc-index="group"
+      />
+    </div>
+    <div>
+      <label for="user-id">User</label>
+      <input
+        id="user-id"
+        name="user_id"
+        type="number"
+        readonly
+        required
+        sc-fkey="user.user_id"
+        sc-fkey-delete="cascade"
+        sc-index="user"
+      />
+    </div>
+  </fieldset>
+</form>

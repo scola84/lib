@@ -1,9 +1,9 @@
 USE `scola`;
 CREATE TABLE `queue` (
-  `database_name` VARCHAR(255),
-  `database_query` TEXT,
   `date_created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_updated` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `db_name` VARCHAR(255),
+  `db_query` TEXT,
   `name` VARCHAR(255) NOT NULL,
   `options` JSON NOT NULL DEFAULT (json_object()),
   `parent_id` INTEGER,

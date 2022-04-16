@@ -57,7 +57,7 @@
       />
     </div>
   </fieldset>
-  <fieldset name="preferences">
+  <fieldset name="preferences" required>
     <legend>Preferences</legend>
     <div>
       <label for="locale">Locale</label>
@@ -136,7 +136,6 @@
           value="true"
           disabled
           readonly
-          required
         />
         <input
           name="auth_hotp_email"
@@ -152,7 +151,6 @@
           value="true"
           disabled
           readonly
-          required
         />
         <input
           name="auth_hotp_tel"
@@ -169,7 +167,6 @@
           value="true"
           disabled
           readonly
-          required
         />
         <label for="auth-totp-confirmed"
           >Whether an authenticator was confirmed</label
@@ -183,7 +180,6 @@
           value="true"
           disabled
           readonly
-          required
         />
         <label for="auth-codes-confirmed"
           >Whether backup codes were confirmed</label
@@ -200,7 +196,6 @@
         type="checkbox"
         value="true"
         readonly
-        required
       />
       <label for="auth-webauthn-confirmed"
         >Whether WebAuthn was confirmed</label

@@ -1,7 +1,7 @@
 import type { IncomingMessage, Server, ServerResponse } from 'http'
-import { Struct, toString } from '../../../common'
 import type { Logger } from 'pino'
 import type { RouteHandler } from './handler'
+import { Struct } from '../../../common'
 import { URL } from 'url'
 import { createServer } from 'http'
 
@@ -55,17 +55,7 @@ export class Router {
       this.server = createServer((request, response) => {
         this
           .handleRoute(request, response)
-          .catch((error: unknown) => {
-            if (!response.headersSent) {
-              response.statusCode = 500
-              response.end()
-            }
-
-            this.logger?.error({
-              context: 'handle-route',
-              status: response.statusCode
-            }, toString(error))
-          })
+          .catch(() => {})
       })
 
       if (listen) {

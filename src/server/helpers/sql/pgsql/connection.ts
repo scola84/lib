@@ -111,7 +111,7 @@ export class PgsqlConnection extends SqlConnection {
               .join(',')
             })
             ON CONFLICT DO NOTHING
-          `, object)
+          `, object, null)
         }))
       }))
   }

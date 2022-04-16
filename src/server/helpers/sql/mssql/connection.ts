@@ -112,7 +112,7 @@ export class MssqlConnection extends SqlConnection {
               .join(',')
             })
             SET IDENTITY_INSERT ${table} OFF;
-          `, object)
+          `, object, null)
         }))
       }))
   }

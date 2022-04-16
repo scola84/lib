@@ -312,12 +312,21 @@ export class MssqlFormatter extends SqlFormatter {
         return field.fkey !== undefined
       })
       .map(([name, field]) => {
+        let deleteAction = 'NO ACTION'
+
+        if (
+          field.fkeyDelete !== undefined &&
+          field.fkey?.table !== object
+        ) {
+          deleteAction = field.fkeyDelete.toUpperCase()
+        }
+
         return [
           `ALTER TABLE [${object}]`,
           `ADD CONSTRAINT [fkey_${object}_${name}]`,
           `FOREIGN KEY ([${name}])`,
           `REFERENCES [${field.fkey?.table ?? ''}] ([${field.fkey?.column ?? ''}])`,
-          `ON DELETE ${field.fkeyDelete?.toUpperCase() ?? 'NO ACTION'};`
+          `ON DELETE ${deleteAction};`
         ].join(' ')
       })
   }

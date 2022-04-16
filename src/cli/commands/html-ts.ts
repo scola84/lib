@@ -38,7 +38,7 @@ const program = new Command()
 
 program.addHelpText('after', `
 Description:
-  Creates TypeScript interfaces from an HTML file.
+  Creates TypeScript CRUD handlers from HTML files.
 
 Example:
   $ scola html-ts contact.html ./contact
@@ -67,7 +67,6 @@ try {
   if (options.silent) {
     logger.error = () => {}
     logger.log = () => {}
-    logger.warn = () => {}
   }
 
   Promise
@@ -134,7 +133,7 @@ try {
             writeFileSync(targetFile, formatter(parsedSource.schema, writeOptions, relations))
             logger.log(`Created ${targetFile}`)
           } catch (error: unknown) {
-            logger.warn(`Skipped ${targetFile}`)
+            logger.log(`Skipped ${targetFile}`)
           }
         })
 

@@ -3,11 +3,6 @@ import type { Struct } from '../../../common'
 
 export interface Queue<Options = unknown> extends Required<QueueBase> {
   /**
-   * The database to run the generator query on.
-   */
-  database: string | null
-
-  /**
    * The date the queue was created.
    */
   date_created: Date
@@ -18,16 +13,26 @@ export interface Queue<Options = unknown> extends Required<QueueBase> {
   date_updated: Date
 
   /**
-   * The ID of the queue.
+   * The database to run the generator query on.
+   */
+  db_name: string | null
+
+  /**
+   * The generator query.
+   */
+  db_query: string | null
+
+  /**
+   * The ID of the parent queue.
    *
    * If a queue run has finished, dependant queues will be triggered.
    */
-  fkey_queue_id: number | null
+  parent_id: number | null
 
   /**
    * The ID.
    */
-  id: number
+  queue_id: number
 
   /**
    * The name.
@@ -40,16 +45,11 @@ export interface Queue<Options = unknown> extends Required<QueueBase> {
   options: Options
 
   /**
-   * The generator query.
-   */
-  query: string | null
-
-  /**
    * The schedule as a cron schedule expression.
    *
    * @see https://www.npmjs.com/package/node-schedule
    */
-  schedule: string | null
+  schedule_cron: string | null
 
   /**
    * The date after which the queue may be run.
@@ -69,16 +69,16 @@ export interface Queue<Options = unknown> extends Required<QueueBase> {
 
 export function createQueue<Options = Struct> (queue?: Partial<Queue<Options>>, date = new Date()): Queue<Options> {
   return {
-    database: 'database',
     date_created: date,
     date_updated: date,
-    fkey_queue_id: 0,
-    id: 0,
+    db_name: 'database',
+    db_query: '',
     name: 'name',
     options: (queue?.options ?? {}) as Options,
-    query: '',
-    schedule: '',
+    parent_id: 0,
+    queue_id: 0,
     schedule_begin: null,
+    schedule_cron: '',
     schedule_end: null,
     schedule_next: null
   }

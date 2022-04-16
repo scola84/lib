@@ -4,6 +4,12 @@ services:
     environment:
       ACCEPT_EULA: Y
       SA_PASSWORD: rootRoot1
+    command: /bin/bash /usr/local/docker-entrypoint.sh
     image: "mcr.microsoft.com/mssql/server:2019-latest"
     ports:
       - "1433:1433"
+    volumes:
+      - ./mssql/docker-entrypoint.sh:/usr/local/docker-entrypoint.sh
+      - ./mssql/docker-entrypoint-initdb.d/lib:/docker-entrypoint-initdb.d/00_lib
+      - ./mssql/docker-entrypoint-initdb.d/load.sh:/docker-entrypoint-initdb.d/load.sh
+      - $PWD/.docker/mssql/docker-entrypoint-initdb.d/app:/docker-entrypoint-initdb.d/01_app

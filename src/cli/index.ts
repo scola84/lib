@@ -5,10 +5,10 @@ try {
     .command('barrel', 'creates a barrel file', {
       executableFile: 'barrel'
     })
-    .command('html-sql', 'creates a DDL from an HTML file', {
+    .command('html-sql', 'creates DDL files from HTML files', {
       executableFile: 'html-sql'
     })
-    .command('html-ts', 'creates TypeScript classes from an HTML file', {
+    .command('html-ts', 'creates TypeScript CRUD handlers from HTML files', {
       executableFile: 'html-ts'
     })
     .command('sql-diff', 'dumps the diff of a SQL database and a DDL file', {

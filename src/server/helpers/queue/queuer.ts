@@ -4,10 +4,10 @@ import type { Logger } from 'pino'
 import type { Queue } from '../../entities'
 import type { QueueHandler } from './handler'
 import { QueueRunner } from '../../helpers/queue/runner'
-import type { QueueTask } from '../../entities/queue/base'
 import type { RedisClientType } from 'redis'
 import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
+import type { Task } from '../../entities/queue/base'
 import { parseExpression } from 'cron-parser'
 import { scheduleJob } from 'node-schedule'
 import { sql } from '../sql'
@@ -246,12 +246,12 @@ export class Queuer {
   /**
    * Runs a queue.
    *
-   * @param id - The ID of the queue
+   * @param queueId - The ID of the queue
    * @param parameters - The parameters
    * @see {@link QueueRunner.run}
    */
-  public async run (id: number, parameters?: unknown): Promise<void> {
-    const queue = await this.selectQueue(id)
+  public async run (queueId: number, parameters?: unknown): Promise<void> {
+    const queue = await this.selectQueue(queueId)
 
     if (queue !== undefined) {
       if (isStruct(parameters)) {
@@ -267,12 +267,12 @@ export class Queuer {
    *
    * Updates all tasks by setting their `status` to 'err' and `reason` to 'skipped'.
    *
-   * @param id - The ID of the queue run
+   * @param runId - The ID of the queue run
    */
-  public async skip (id: number): Promise<void> {
-    await this.updateQueueTasks({
-      fkey_queue_run_id: id,
+  public async skip (runId: number): Promise<void> {
+    await this.updateTasks({
       reason: 'skipped',
+      run_id: runId,
       status: 'err'
     })
   }
@@ -424,16 +424,16 @@ export class Queuer {
   /**
    * Selects a queue.
    *
-   * @param id - The id of the queue
+   * @param queueId - The id of the queue
    * @returns The queue
    */
-  protected async selectQueue (id: number): Promise<Queue | undefined> {
+  protected async selectQueue (queueId: number): Promise<Queue | undefined> {
     return this.database.select<Queue, Queue>(sql`
       SELECT *
       FROM queue
-      WHERE id = $(id)
+      WHERE queue_id = $(queue_id)
     `, {
-      id
+      queue_id: queueId
     })
   }
 
@@ -548,10 +548,10 @@ export class Queuer {
     await this.database.update<Queue>(sql`
       UPDATE queue
       SET schedule_next = $(schedule_next)
-      WHERE id = $(id)
+      WHERE queue_id = $(queue_id)
     `, {
-      id: queue.id,
-      schedule_next: parseExpression(queue.schedule ?? '')
+      queue_id: queue.queue_id,
+      schedule_next: parseExpression(queue.schedule_cron ?? '')
         .next()
         .toDate()
     })
@@ -568,20 +568,20 @@ export class Queuer {
    *
    * @param task - The task properties
    */
-  protected async updateQueueTasks (task: Pick<QueueTask, 'fkey_queue_run_id' | 'reason' | 'status'>): Promise<void> {
-    await this.database.update<QueueTask>(sql`
-      UPDATE queue_task
+  protected async updateTasks (task: Pick<Task, 'reason' | 'run_id' | 'status'>): Promise<void> {
+    await this.database.update<Task>(sql`
+      UPDATE task
       SET
         date_updated = NOW(),
         reason = $(reason),
         status = $(status)
       WHERE
         date_started IS NULL AND
-        fkey_queue_run_id = $(fkey_queue_run_id) AND
+        run_id = $(run_id) AND
         status = 'pending'
     `, {
-      fkey_queue_run_id: task.fkey_queue_run_id,
       reason: task.reason,
+      run_id: task.run_id,
       status: task.status
     })
   }

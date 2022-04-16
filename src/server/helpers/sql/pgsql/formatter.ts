@@ -8,7 +8,7 @@ import type { User } from '../../../entities'
 import { literal } from 'pg-format'
 import { sql } from '../tag'
 
-export class PostgresqlFormatter extends SqlFormatter {
+export class PgsqlFormatter extends SqlFormatter {
   public createInsertQuery (object: string, schema: Schema, keys: SqlQueryKeys, data: Struct, user?: User): SqlQuery {
     let {
       string,

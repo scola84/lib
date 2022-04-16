@@ -1,14 +1,14 @@
 export interface Queue {
-  database: string | null
   date_created: Date
   date_updated: Date
-  fkey_queue_id: number | null
-  id: number
+  db_name: string | null
+  db_query: string | null
   name: string
   options: unknown
-  query: string | null
-  schedule: string | null
+  parent_id: number | null
+  queue_id: number
   schedule_begin: Date | null
+  schedule_cron: string | null
   schedule_end: Date | null
   schedule_next: Date | null
 }

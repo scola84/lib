@@ -1,8 +1,8 @@
 import { Pool, types } from 'pg'
 import { cast, isStruct, set, toString } from '../../../../common'
+import { PgsqlConnection } from './connection'
+import { PgsqlFormatter } from './formatter'
 import type { PoolConfig } from 'pg'
-import { PostgresqlConnection } from './connection'
-import { PostgresqlFormatter } from './formatter'
 import { SqlDatabase } from '../database'
 import { URL } from 'url'
 import { readFileSync } from 'fs-extra'
@@ -10,15 +10,15 @@ import { readFileSync } from 'fs-extra'
 types.setTypeParser(types.builtins.INT8, parseInt)
 
 /**
- * Manages PostgreSQL connections.
+ * Manages PgSQL connections.
  */
-export class PostgresqlDatabase extends SqlDatabase {
-  public formatter = new PostgresqlFormatter()
+export class PgsqlDatabase extends SqlDatabase {
+  public formatter = new PgsqlFormatter()
 
   public pool: Pool
 
-  public async connect (): Promise<PostgresqlConnection> {
-    return new PostgresqlConnection(await this.pool.connect())
+  public async connect (): Promise<PgsqlConnection> {
+    return new PgsqlConnection(await this.pool.connect())
   }
 
   public async start (): Promise<void> {

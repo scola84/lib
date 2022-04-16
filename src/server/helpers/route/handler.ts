@@ -29,12 +29,12 @@ export interface RouteHandlerOptions {
   authorize: boolean
   bucket: FileBucket
   codec: RouteCodec
-  compromised: boolean
   database: SqlDatabase
   decode: boolean
   description: string
   logger: Logger
   method: string
+  permit: Struct
   router: Router
   schema: Schema
   store: RedisClientType
@@ -54,8 +54,6 @@ export abstract class RouteHandler {
   public bucket?: FileBucket
 
   public codec: RouteCodec
-
-  public compromised: boolean
 
   public database?: SqlDatabase
 
@@ -100,12 +98,12 @@ export abstract class RouteHandler {
     this.authorize = handlerOptions.authorize ?? true
     this.bucket = handlerOptions.bucket
     this.codec = handlerOptions.codec
-    this.compromised = handlerOptions.compromised ?? true
     this.database = handlerOptions.database
     this.decode = handlerOptions.decode ?? true
     this.description = handlerOptions.description
     this.logger = handlerOptions.logger
     this.method = handlerOptions.method ?? 'GET'
+    this.permit = handlerOptions.permit
     this.router = handlerOptions.router
     this.schema = handlerOptions.schema ?? {}
     this.store = handlerOptions.store

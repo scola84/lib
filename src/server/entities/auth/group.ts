@@ -1,9 +1,11 @@
-export interface Group {
+import type { Group as GroupBase } from './base'
+
+export interface Group extends GroupBase {
   date_created: Date
 
   date_updated: Date
 
-  group_id: number | string
+  group_id: number
 
   name: string
 }

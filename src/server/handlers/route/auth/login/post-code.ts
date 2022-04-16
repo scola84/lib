@@ -9,7 +9,9 @@ interface AuthLoginPostCodeData extends RouteData {
   }
 }
 
-export class AuthLoginCodeHandler extends AuthHandler {
+export class AuthLoginPostCodeHandler extends AuthHandler {
+  public method = 'POST'
+
   public schema = {
     body: {
       required: true,

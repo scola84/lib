@@ -1,9 +1,9 @@
 import type { Queue } from './queue'
-import type { QueueRun as QueueRunBase } from './base/queue-run'
+import type { Run as RunBase } from './base/run'
 import type { Struct } from '../../../common'
 import { createQueue } from './queue'
 
-export interface QueueRun<Options = unknown> extends Required<QueueRunBase> {
+export interface Run<Options = unknown> extends Required<RunBase> {
   /**
    * The number of tasks which have failed.
    */
@@ -30,19 +30,9 @@ export interface QueueRun<Options = unknown> extends Required<QueueRunBase> {
   date_updated: Date
 
   /**
-   * The ID of the queue.
-   */
-  fkey_queue_id: number
-
-  /**
-   * THe ID of the last task.
-   */
-  fkey_queue_task_id: number | null
-
-  /**
    * The ID.
    */
-  id: number
+  run_id: number
 
   /**
    * The name.
@@ -62,6 +52,11 @@ export interface QueueRun<Options = unknown> extends Required<QueueRunBase> {
   queue: Queue<Options>
 
   /**
+   * The ID of the queue.
+   */
+  queue_id: number
+
+  /**
    * The reason the queue run failed.
    */
   reason: string | null
@@ -70,23 +65,28 @@ export interface QueueRun<Options = unknown> extends Required<QueueRunBase> {
    * The status.
    */
   status: 'err' | 'ok' | 'pending'
+
+  /**
+   * THe ID of the last task.
+   */
+  task_id: number | null
 }
 
-export function createQueueRun<Options = Struct> (run?: Partial<QueueRun<Options>>, date = new Date()): QueueRun<Options> {
+export function createRun<Options = Struct> (run?: Partial<Run<Options>>, date = new Date()): Run<Options> {
   return {
     aggr_err: 0,
     aggr_ok: 0,
     aggr_total: 0,
     date_created: date,
     date_updated: date,
-    fkey_queue_id: run?.queue?.id ?? 0,
-    fkey_queue_task_id: null,
-    id: 0,
     name: run?.queue?.name ?? 'name',
     options: (run?.queue?.options ?? {}) as Options,
     queue: run?.queue ?? createQueue<Options>(),
+    queue_id: run?.queue?.queue_id ?? 0,
     reason: null,
+    run_id: 0,
     status: 'pending',
+    task_id: null,
     ...run
   }
 }

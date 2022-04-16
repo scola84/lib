@@ -1,6 +1,7 @@
+import type { Role as RoleBase } from './base'
 import type { Struct } from '../../../common'
 
-export interface Role {
+export interface Role extends RoleBase {
   date_created: Date
 
   date_updated: Date
@@ -11,7 +12,7 @@ export interface Role {
 
   permissions: Struct
 
-  role_id: number | string
+  role_id: number
 }
 
 export function createRole (role?: Partial<Role>, date = new Date()): Role {

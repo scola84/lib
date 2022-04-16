@@ -45,9 +45,7 @@ CREATE TABLE `task` (
 );
 CREATE INDEX `index_queue_queue` ON `queue` (`parent_id`);
 CREATE INDEX `index_run_queue` ON `run` (`queue_id`);
-CREATE INDEX `index_run_task` ON `run` (`task_id`);
 CREATE INDEX `index_task_run` ON `task` (`run_id`);
 ALTER TABLE `queue` ADD CONSTRAINT `fkey_queue_parent_id` FOREIGN KEY (`parent_id`) REFERENCES `queue` (`queue_id`) ON DELETE SET NULL;
 ALTER TABLE `run` ADD CONSTRAINT `fkey_run_queue_id` FOREIGN KEY (`queue_id`) REFERENCES `queue` (`queue_id`) ON DELETE CASCADE;
-ALTER TABLE `run` ADD CONSTRAINT `fkey_run_task_id` FOREIGN KEY (`task_id`) REFERENCES `task` (`task_id`) ON DELETE SET NULL;
 ALTER TABLE `task` ADD CONSTRAINT `fkey_task_run_id` FOREIGN KEY (`run_id`) REFERENCES `run` (`run_id`) ON DELETE CASCADE;

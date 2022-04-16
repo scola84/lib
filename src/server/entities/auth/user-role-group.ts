@@ -1,7 +1,9 @@
-export interface UserRoleGroup {
-  group_id: number | string
+import type { UserRoleGroup as UserRoleGroupBase } from './base'
 
-  role_id: number | string
+export interface UserRoleGroup extends UserRoleGroupBase{
+  group_id: number
 
-  user_id: number | string
+  role_id: number
+
+  user_id: number
 }

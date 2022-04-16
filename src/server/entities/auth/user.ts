@@ -1,9 +1,12 @@
 import type { Group } from './group'
 import type { Role } from './role'
+import type { User as UserBase } from './base'
 import type { UserToken } from './user-token'
 
-export interface User {
+export interface User extends UserBase {
   auth_codes: string | null
+
+  auth_codes_confirmed: boolean
 
   auth_hotp?: string
 
@@ -37,7 +40,7 @@ export interface User {
 
   group?: Group
 
-  group_id?: number | string
+  group_id?: number
 
   preferences: {
     auth_login_email?: boolean
@@ -46,7 +49,7 @@ export interface User {
 
   role?: Role
 
-  role_id?: number | string
+  role_id?: number
 
   state_active: boolean
 
@@ -58,7 +61,7 @@ export interface User {
 
   token?: UserToken
 
-  user_id: number | string
+  user_id: number
 
   username: string | null
 }
@@ -66,6 +69,7 @@ export interface User {
 export function createUser (user?: Partial<User>, date = new Date()): User {
   return {
     auth_codes: null,
+    auth_codes_confirmed: false,
     auth_hotp_email: null,
     auth_hotp_email_confirmed: false,
     auth_hotp_tel: null,

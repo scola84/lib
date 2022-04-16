@@ -1,6 +1,6 @@
 import PgQueryStream from 'pg-query-stream'
+import { PgsqlFormatter } from './formatter'
 import type { PoolClient } from 'pg'
-import { PostgresqlFormatter } from './formatter'
 import type { Readable } from 'stream'
 import { SqlConnection } from '../connection'
 import type { SqlQuery } from '../query'
@@ -8,15 +8,15 @@ import type { Struct } from '../../../../common'
 import { sql } from '../tag'
 
 /**
- * Executes PostgreSQL queries.
+ * Executes PgSQL queries.
  */
-export class PostgresqlConnection extends SqlConnection {
+export class PgsqlConnection extends SqlConnection {
   public connection: PoolClient
 
-  public formatter = new PostgresqlFormatter()
+  public formatter = new PgsqlFormatter()
 
   /**
-   * Creates a PostgreSQL connection.
+   * Creates a PgSQL connection.
    *
    * @param connection - The underlying connection
    */

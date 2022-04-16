@@ -3,7 +3,13 @@ import { Command } from 'commander'
 import { URL } from 'url'
 import sqlts from '@rmp135/sql-ts'
 
-type Dialects = 'mssql' | 'mysql' | 'postgres'
+interface Options {
+  exclude?: string[]
+  include?: string[]
+  silent: boolean
+}
+
+type Dialects = 'mssql' | 'mysql' | 'pgsql'
 
 const logger = console
 const program = new Command()
@@ -28,25 +34,28 @@ Description:
   using the Entities interface.
 
 Example:
-  $ scola sql-ts postgres://root:root@localhost/queue src/server/entities/base
+  $ scola sql-ts pgsql://root:root@localhost/queue src/server/entities/base
 `)
 
 program
   .argument('<source>', 'the Data Source Name (DSN) of the database')
   .argument('<target>', 'the directory to write the interfaces to')
+  .option('-e, --exclude <exclude...>', 'a list of tables')
+  .option('-i, --include <include...>', 'a list of tables')
+  .option('-s, --silent', 'whether not to log')
   .parse()
 
 try {
   const clients = {
     mssql: ['mssql'],
     mysql: ['mysql', 'mysql2'],
-    postgres: ['pg']
+    pgsql: ['pg']
   }
 
   const ports = {
     mssql: 1433,
     mysql: 3306,
-    postgres: 5432
+    pgsql: 5432
   }
 
   const typeMap = {
@@ -62,6 +71,13 @@ try {
     source,
     target
   ] = program.args
+
+  const options = program.opts<Options>()
+
+  if (options.silent) {
+    logger.error = () => {}
+    logger.log = () => {}
+  }
 
   const url = new URL(source)
   const dialect = url.protocol.slice(0, -1) as Dialects
@@ -111,7 +127,12 @@ try {
     })
     .then((database) => {
       database.tables = database.tables.filter((table) => {
-        return url.pathname.includes('queue') || table.schema !== 'queue'
+        return (
+          options.exclude !== undefined &&
+          !options.exclude.includes(table.name)
+        ) || (
+          options.include?.includes(table.name) === true
+        )
       })
 
       return database
@@ -141,7 +162,7 @@ try {
     .then((database) => {
       database.tables.forEach((table) => {
         writeFileSync(
-          `${target}/${table.name.replace('_', '-')}.ts`,
+          `${target}/${table.name.replace(/_/gu, '-')}.ts`,
           sqlts
             .fromObject({
               enums: [],
@@ -153,6 +174,8 @@ try {
             .replace(/&gt;/gu, '>')
             .replace(/\s\n/gu, '\n')
         )
+
+        logger.log(`Created ${target}/${table.name.replace(/_/gu, '-')}.ts`)
       })
 
       return database
@@ -167,14 +190,14 @@ try {
 
       const exports = database.tables
         .map((table) => {
-          return `export * from './${table.name.replace('_', '-')}'`
+          return `export * from './${table.name.replace(/_/gu, '-')}'`
         })
         .sort()
         .join('\n')
 
       const imports = database.tables
         .map((table) => {
-          return `import type { ${table.interfaceName} } from './${table.name.replace('_', '-')}'`
+          return `import type { ${table.interfaceName} } from './${table.name.replace(/_/gu, '-')}'`
         })
         .sort()
         .join('\n')
@@ -190,6 +213,7 @@ try {
       ].join('\n')
 
       writeFileSync(`${target}/index.ts`, `${data.trim()}\n`)
+      logger.log(`Created ${target}/index.ts`)
     })
     .catch((error) => {
       logger.error(String(error).toLowerCase())

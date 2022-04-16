@@ -1,10 +1,10 @@
 import { PassThrough, Writable } from 'stream'
-import type { Queue, QueueRun, QueueTask } from '../../entities'
+import type { Queue, Run, Task } from '../../entities'
 import type { Readable } from 'stream'
 import type { RedisClientType } from 'redis'
 import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
-import { createQueueRun } from '../../entities'
+import { createRun } from '../../entities'
 import { pipeline } from '../stream'
 import { sql } from '../sql'
 import { toString } from '../../../common'
@@ -79,7 +79,7 @@ export class QueueRunner {
    * @param parameters - The parameters
    * @returns The reader
    */
-  public async createQueueTaskReader (queue: Queue, parameters?: Struct): Promise<Readable> {
+  public async createTaskReader (queue: Queue, parameters?: Struct): Promise<Readable> {
     if (parameters?.payload !== undefined) {
       const reader = new PassThrough({
         objectMode: true
@@ -89,13 +89,13 @@ export class QueueRunner {
       return reader
     }
 
-    const database = this.databases[queue.database ?? '']
+    const database = this.databases[queue.db_name ?? '']
 
     if (database === undefined) {
-      throw new Error(`Database "${queue.database ?? ''}" is undefined`)
+      throw new Error(`Database "${queue.db_name ?? ''}" is undefined`)
     }
 
-    return database.stream(queue.query ?? '', parameters)
+    return database.stream(queue.db_query ?? '', parameters)
   }
 
   /**
@@ -110,13 +110,13 @@ export class QueueRunner {
    * @param run - The queue run
    * @returns The writer
    */
-  public createQueueTaskWriter (run: QueueRun): Writable {
+  public createTaskWriter (run: Run): Writable {
     return new Writable({
       objectMode: true,
       write: async (payload: unknown, encoding, finish) => {
         try {
           run.aggr_total += 1
-          await this.store.rPush(run.name, (await this.insertQueueTask(run, payload)).id.toString())
+          await this.store.rPush(run.name, (await this.insertTask(run, payload)).task_id.toString())
           finish()
         } catch (error: unknown) {
           finish(new Error(toString(error)))
@@ -142,33 +142,33 @@ export class QueueRunner {
    * @param parameters - The parameters
    */
   public async run (queue: Queue, parameters?: Struct): Promise<void> {
-    const run = createQueueRun({
+    const run = createRun({
       queue
     })
 
-    run.id = (await this.insertQueueRun(run)).id
+    run.run_id = (await this.insertRun(run)).run_id
 
     try {
       await pipeline(
-        await this.createQueueTaskReader(queue, parameters),
-        this.createQueueTaskWriter(run)
+        await this.createTaskReader(queue, parameters),
+        this.createTaskWriter(run)
       )
 
-      await this.updateQueueRunTotal(run)
+      await this.updateRunTotal(run)
 
       const queues = await this.selectQueues(run)
 
-      await Promise.all(queues.map(async ({ id }): Promise<void> => {
+      await Promise.all(queues.map(async (nextQueue): Promise<void> => {
         await this.store.publish('queue', JSON.stringify({
           command: 'run',
-          id: id,
           parameters: {
-            id: run.id
-          }
+            run_id: run.run_id
+          },
+          queue_id: nextQueue.queue_id
         }))
       }))
     } catch (error: unknown) {
-      await this.updateQueueRunErr(run, error)
+      await this.updateRunErr(run, error)
     }
   }
 
@@ -178,22 +178,22 @@ export class QueueRunner {
    * @param run - The queue run
    * @returns The insert result
    */
-  protected async insertQueueRun (run: QueueRun): Promise<Pick<QueueRun, 'id'>> {
-    return this.database.insert<QueueRun, Pick<QueueRun, 'id'>>(sql`
-      INSERT INTO queue_run (
-        fkey_queue_id,
+  protected async insertRun (run: Run): Promise<Pick<Run, 'run_id'>> {
+    return this.database.insert<Run, Pick<Run, 'run_id'>>(sql`
+      INSERT INTO run (
+        queue_id,
         name,
         options
       ) VALUES (
-        $(fkey_queue_id),
+        $(queue_id),
         $(name),
         $(options)
       )
     `, {
-      fkey_queue_id: run.queue.id,
       name: run.name,
-      options: run.options
-    })
+      options: run.options,
+      queue_id: run.queue.queue_id
+    }, 'run_id')
   }
 
   /**
@@ -203,19 +203,19 @@ export class QueueRunner {
    * @param payload - The payload of the task
    * @returns The insert result
    */
-  protected async insertQueueTask (run: QueueRun, payload: unknown): Promise<Pick<QueueTask, 'id'>> {
-    return this.database.insert<QueueTask, Pick<QueueTask, 'id'>>(sql`
-      INSERT INTO queue_task (
-        fkey_queue_run_id,
+  protected async insertTask (run: Run, payload: unknown): Promise<Pick<Task, 'task_id'>> {
+    return this.database.insert<Task, Pick<Task, 'task_id'>>(sql`
+      INSERT INTO task (
+        run_id,
         payload
       ) VALUES (
-        $(fkey_queue_run_id),
+        $(run_id),
         $(payload)
       )
     `, {
-      fkey_queue_run_id: run.id,
-      payload: payload
-    })
+      payload: payload,
+      run_id: run.run_id
+    }, 'task_id')
   }
 
   /**
@@ -223,22 +223,22 @@ export class QueueRunner {
    *
    * Applies the following criteria:
    *
-   * * `queue.fkey_queue_id = queue_run.fkey_queue_id`
-   * * `queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total`
+   * * `queue.queue_id = run.queue_id`
+   * * `run.aggr_ok + run.aggr_err = run.aggr_total`
    *
-   * @param run - The queue run
+   * @param run - The run
    * @returns The queues
    */
-  protected async selectQueues (run: QueueRun): Promise<Array<Pick<Queue, 'id'>>> {
-    return this.database.selectAll<QueueRun, Pick<Queue, 'id'>>(sql`
+  protected async selectQueues (run: Run): Promise<Array<Pick<Queue, 'queue_id'>>> {
+    return this.database.selectAll<Run, Pick<Queue, 'queue_id'>>(sql`
       SELECT queue.id
       FROM queue
-      JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
+      JOIN run ON queue.parent_id = run.queue_id
       WHERE
-        queue_run.id = $(id) AND
-        queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total
+        run.run_id = $(run_id) AND
+        run.aggr_ok + run.aggr_err = run.aggr_total
     `, {
-      id: run.id
+      run_id: run.run_id
     })
   }
 
@@ -250,17 +250,17 @@ export class QueueRunner {
    * @param run - The queue run
    * @param error - The error
    */
-  protected async updateQueueRunErr (run: QueueRun, error: unknown): Promise<void> {
-    await this.database.update<QueueRun>(sql`
-      UPDATE queue_run
+  protected async updateRunErr (run: Run, error: unknown): Promise<void> {
+    await this.database.update<Run>(sql`
+      UPDATE run
       SET
         status = 'err',
         date_updated = NOW(),
         reason = $(reason)
-      WHERE id = $(id)
+      WHERE run_id = $(run_id)
     `, {
-      id: run.id,
-      reason: toString(error)
+      reason: toString(error),
+      run_id: run.run_id
     })
   }
 
@@ -271,16 +271,16 @@ export class QueueRunner {
    *
    * @param run - The queue run
    */
-  protected async updateQueueRunTotal (run: QueueRun): Promise<void> {
-    await this.database.update<QueueRun>(sql`
-      UPDATE queue_run
+  protected async updateRunTotal (run: Run): Promise<void> {
+    await this.database.update<Run>(sql`
+      UPDATE run
       SET
         aggr_total = $(aggr_total),
         date_updated = NOW()
-      WHERE id = $(id)
+      WHERE run_id = $(run_id)
     `, {
       aggr_total: run.aggr_total,
-      id: run.id
+      run_id: run.run_id
     })
   }
 }

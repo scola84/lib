@@ -1,23 +1,24 @@
 import type { Struct } from '../../../common'
+import type { UserToken as UserTokenBase } from './base'
 
-export interface UserToken {
+export interface UserToken extends UserTokenBase {
   date_created: Date
 
   date_expires: Date
 
   date_updated: Date
 
-  group_id: number | string | null
+  group_id: number | null
 
   hash: string
 
   permissions: Struct | null
 
-  role_id: number | string | null
+  role_id: number | null
 
-  token_id: number | string
+  token_id: number
 
-  user_id: number | string
+  user_id: number
 }
 
 export function createUserToken (token: Partial<UserToken>, date = new Date()): UserToken {

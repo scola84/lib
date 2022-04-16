@@ -1,4 +1,4 @@
-import { MssqlDatabase, MysqlDatabase, PostgresqlDatabase, SchemaParser } from '../../server/helpers'
+import { MssqlDatabase, MysqlDatabase, PgsqlDatabase, SchemaParser } from '../../server/helpers'
 import { mkdirSync, writeFileSync } from 'fs-extra'
 import { Command } from 'commander'
 import type { SqlDatabase } from '../../server/helpers'
@@ -18,7 +18,7 @@ const program = new Command()
 
 program.addHelpText('after', `
 Description:
-  Creates a DDL file from an HTML file.
+  Creates DDL files from HTML files.
 
 Example:
   $ scola html-sql contact.html#insert ./contact
@@ -28,7 +28,7 @@ program
   .argument('<source>', 'source files (glob)')
   .argument('<target>', 'target to write the files to')
   .option('-D, --database <database>', 'database of the SQL file', 'postgres')
-  .option('-d, --dialect <dialect>', 'dialect of the SQL file', 'postgres')
+  .option('-d, --dialect <dialect>', 'dialect of the SQL file', 'pgsql')
   .option('-i, --id <id>', 'id of the element to parse', '')
   .option('-s, --silent', 'whether not to log')
   .parse()
@@ -39,7 +39,7 @@ try {
   const databases: Partial<Struct<SqlDatabase>> = {
     mssql: new MssqlDatabase(),
     mysql: new MysqlDatabase(),
-    postgres: new PostgresqlDatabase()
+    pgsql: new PgsqlDatabase()
   }
 
   const [
@@ -86,14 +86,14 @@ try {
           recursive: true
         })
 
-        writeFileSync(targetFile, [
+        writeFileSync(targetFile, `${[
           ddl?.connect,
           ddl?.create,
           ddl?.indexes,
           ddl?.fkeys
         ].filter((line) => {
           return line !== ''
-        }).join('\n'))
+        }).join('\n')}\n`)
 
         logger.log(`Created ${targetFile}`)
       }
@@ -106,7 +106,7 @@ try {
           recursive: true
         })
 
-        writeFileSync(target, [
+        writeFileSync(target, `${[
           data
             .reduce((result, ddl) => {
               return ddl?.connect ?? ''
@@ -135,7 +135,7 @@ try {
               return line !== ''
             })
             .join('\n')
-        ].join('\n'))
+        ].join('\n')}\n`)
 
         logger.log(`Created ${target}`)
       }

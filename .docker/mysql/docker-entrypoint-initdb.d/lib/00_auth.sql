@@ -15,7 +15,7 @@ CREATE TABLE `role` (
   `role_id` INTEGER NOT NULL AUTO_INCREMENT,
   CONSTRAINT `pkey_role` PRIMARY KEY (`role_id`)
 );
-CREATE TABLE `user_group_role` (
+CREATE TABLE `user_role_group` (
   `group_id` INTEGER NOT NULL,
   `role_id` INTEGER NOT NULL,
   `user_id` INTEGER NOT NULL
@@ -62,9 +62,9 @@ CREATE TABLE `user` (
   `username` VARCHAR(255),
   CONSTRAINT `pkey_user` PRIMARY KEY (`user_id`)
 );
-CREATE INDEX `index_user_group_role_group` ON `user_group_role` (`group_id`);
-CREATE INDEX `index_user_group_role_role` ON `user_group_role` (`role_id`);
-CREATE INDEX `index_user_group_role_user` ON `user_group_role` (`user_id`);
+CREATE INDEX `index_user_role_group_group` ON `user_role_group` (`group_id`);
+CREATE INDEX `index_user_role_group_role` ON `user_role_group` (`role_id`);
+CREATE INDEX `index_user_role_group_user` ON `user_role_group` (`user_id`);
 CREATE INDEX `index_user_role_role` ON `user_role` (`role_id`);
 CREATE INDEX `index_user_role_user` ON `user_role` (`user_id`);
 CREATE INDEX `index_user_token_group` ON `user_token` (`group_id`);
@@ -74,9 +74,9 @@ CREATE UNIQUE INDEX `index_user_token_hash` ON `user_token` (`hash`);
 CREATE UNIQUE INDEX `index_user_email` ON `user` (`email`);
 CREATE UNIQUE INDEX `index_user_tel` ON `user` (`tel`);
 CREATE UNIQUE INDEX `index_user_username` ON `user` (`username`);
-ALTER TABLE `user_group_role` ADD CONSTRAINT `fkey_user_group_role_group_id` FOREIGN KEY (`group_id`) REFERENCES `group` (`group_id`) ON DELETE CASCADE;
-ALTER TABLE `user_group_role` ADD CONSTRAINT `fkey_user_group_role_role_id` FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`) ON DELETE CASCADE;
-ALTER TABLE `user_group_role` ADD CONSTRAINT `fkey_user_group_role_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE;
+ALTER TABLE `user_role_group` ADD CONSTRAINT `fkey_user_role_group_group_id` FOREIGN KEY (`group_id`) REFERENCES `group` (`group_id`) ON DELETE CASCADE;
+ALTER TABLE `user_role_group` ADD CONSTRAINT `fkey_user_role_group_role_id` FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`) ON DELETE CASCADE;
+ALTER TABLE `user_role_group` ADD CONSTRAINT `fkey_user_role_group_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE;
 ALTER TABLE `user_role` ADD CONSTRAINT `fkey_user_role_role_id` FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`) ON DELETE CASCADE;
 ALTER TABLE `user_role` ADD CONSTRAINT `fkey_user_role_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE;
 ALTER TABLE `user_token` ADD CONSTRAINT `fkey_user_token_group_id` FOREIGN KEY (`group_id`) REFERENCES `group` (`group_id`) ON DELETE SET NULL;

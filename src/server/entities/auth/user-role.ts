@@ -1,5 +1,6 @@
-export interface UserRole {
-  role_id: number | string
+import type { UserRole as UserRoleBase } from './base'
 
-  user_id: number | string
+export interface UserRole extends UserRoleBase {
+  role_id: number
+  user_id: number
 }

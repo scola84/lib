@@ -96,7 +96,7 @@ try {
     })
   }
 
-  if (dialect.includes('postgres')) {
+  if (dialect.includes('pgsql')) {
     const excludeFlags = (options.exclude ?? [])
       .map((table) => {
         return `--exclude-table ${table}`

@@ -12,6 +12,8 @@ interface AuthLoginPostPasswordData extends RouteData {
 }
 
 export class AuthLoginPostPasswordHandler extends AuthHandler {
+  public method = 'POST'
+
   public schema = {
     body: {
       required: true,

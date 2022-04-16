@@ -1,4 +1,4 @@
-import type { Queue, QueueRun, QueueTask } from '../../entities'
+import type { Queue, Run, Task } from '../../entities'
 import type { Readable, Transform, Writable } from 'stream'
 import Ajv from 'ajv'
 import type { Logger } from 'pino'
@@ -240,8 +240,8 @@ export abstract class QueueHandler {
    * @returns The queue
    */
   public createQueue (): fastq {
-    const queue = promise<unknown, number>(async (id) => {
-      return this.handleQueueTask(id)
+    const queue = promise<unknown, number>(async (taskId) => {
+      return this.handleTask(taskId)
     }, this.concurrency)
 
     return queue
@@ -350,25 +350,25 @@ export abstract class QueueHandler {
    *
    * @param task - The task
    */
-  protected async finishQueueTask (task: QueueTask): Promise<void> {
+  protected async finishTask (task: Task): Promise<void> {
     if (task.status === 'pending') {
       task.status = 'ok'
     }
 
     await Promise.all([
-      this.updateQueueTaskOnFinish(task),
-      this.updateQueueRun(task)
+      this.updateTaskOnFinish(task),
+      this.updateRun(task)
     ])
 
     const queues = await this.selectQueues(task)
 
-    await Promise.all(queues.map(async ({ id }) => {
+    await Promise.all(queues.map(async (nextQueue) => {
       await this.store.publish('queue', JSON.stringify({
         command: 'run',
-        id: id,
         parameters: {
-          id: task.run.id
-        }
+          run_id: task.run.run_id
+        },
+        queue_id: nextQueue.queue_id
       }))
     }))
   }
@@ -382,15 +382,15 @@ export abstract class QueueHandler {
    *
    * Finishes the task and calls `read`.
    *
-   * @param id - The ID of the task
+   * @param taskId - The ID of the task
    */
-  protected async handleQueueTask (id: number): Promise<void> {
+  protected async handleTask (taskId: number): Promise<void> {
     try {
-      const task = await this.selectQueueTask(id)
+      const task = await this.selectTask(taskId)
 
       if (task !== undefined) {
         try {
-          task.run = await this.selectQueueRun(task)
+          task.run = await this.selectRun(task)
 
           if (task.status === 'pending') {
             await this.prepareTask(task)
@@ -400,7 +400,7 @@ export abstract class QueueHandler {
           task.reason = toString(error)
           task.status = 'err'
         } finally {
-          await this.finishQueueTask(task)
+          await this.finishTask(task)
           this.read()
         }
       }
@@ -418,8 +418,8 @@ export abstract class QueueHandler {
    *
    * @param task - The task
    */
-  protected async prepareTask (task: QueueTask): Promise<void> {
-    await this.updateQueueTaskOnRun(task)
+  protected async prepareTask (task: Task): Promise<void> {
+    await this.updateTaskOnRun(task)
 
     if (this.validator?.getSchema('options') !== undefined) {
       this.validate('options', task.run.options)
@@ -442,7 +442,7 @@ export abstract class QueueHandler {
       this.reading = true
 
       this
-        .readQueueTask()
+        .readTask()
         .then(() => {
           this.reading = false
 
@@ -477,17 +477,46 @@ export abstract class QueueHandler {
    *
    * Updates the task and pushes the ID onto the queue.
    */
-  protected async readQueueTask (): Promise<void> {
+  protected async readTask (): Promise<void> {
     const { element } = await this.storeRead?.blPop([this.name], this.timeout / 1000) ?? {}
 
     const task = {
-      id: Number(element)
+      task_id: Number(element)
     }
 
-    if (Number.isFinite(task.id)) {
-      await this.updateQueueTaskOnRead(task)
-      this.queue?.push(task.id)
+    if (Number.isFinite(task.task_id)) {
+      await this.updateTaskOnRead(task)
+      this.queue?.push(task.task_id)
     }
+  }
+
+  /**
+   * Selects queues.
+   *
+   * Applies the following criteria:
+   *
+   * * `queue.queue_id = run.queue_id`
+   * * `run.aggr_ok + run.aggr_err = run.aggr_total`
+   * * `run.task_id = task.task_id`
+   *
+   * The second criterion may be true for multiple tasks (race condition). The latter criterion prevents this, because together they will only be satisfied by the last task.
+   *
+   * @param task - The task
+   * @returns The queues
+   */
+  protected async selectQueues (task: Task): Promise<Array<Pick<Queue, 'queue_id'>>> {
+    return this.database.selectAll<Run, Pick<Queue, 'queue_id'>>(sql`
+      SELECT queue.queue_id
+      FROM queue
+      JOIN run ON queue.parent_id = run.queue_id
+      WHERE
+        run.run_id = $(run_id) AND
+        run.aggr_ok + run.aggr_err = run.aggr_total AND
+        run.task_id = $(task_id)
+    `, {
+      run_id: task.run.run_id,
+      task_id: task.task_id
+    })
   }
 
   /**
@@ -496,58 +525,29 @@ export abstract class QueueHandler {
    * @param task - The task
    * @returns The queue run
    */
-  protected async selectQueueRun (task: QueueTask): Promise<QueueRun> {
-    return this.database.selectOne<QueueRun, QueueRun>(sql`
+  protected async selectRun (task: Task): Promise<Run> {
+    return this.database.selectOne<Run, Run>(sql`
       SELECT *
-      FROM queue_run
-      WHERE id = $(id)
+      FROM run
+      WHERE run_id = $(run_id)
     `, {
-      id: task.fkey_queue_run_id
+      run_id: task.run_id
     })
   }
 
   /**
    * Selects a task.
    *
-   * @param id - The ID of the task
+   * @param taskId - The ID of the task
    * @returns The task
    */
-  protected async selectQueueTask (id: number): Promise<QueueTask | undefined> {
-    return this.database.select<QueueTask, QueueTask>(sql`
+  protected async selectTask (taskId: number): Promise<Task | undefined> {
+    return this.database.select<Task, Task>(sql`
       SELECT *
-      FROM queue_task
-      WHERE id = $(id)
+      FROM task
+      WHERE task_id = $(task_id)
     `, {
-      id
-    })
-  }
-
-  /**
-   * Selects queues.
-   *
-   * Applies the following criteria:
-   *
-   * * `queue.fkey_queue_id = queue_run.fkey_queue_id`
-   * * `queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total`
-   * * `queue_run.fkey_queue_task_id = queue_task.id`
-   *
-   * The second criterion may be true for multiple tasks (race condition). The latter criterion prevents this, because together they will only be satisfied by the last task.
-   *
-   * @param task - The task
-   * @returns The queues
-   */
-  protected async selectQueues (task: QueueTask): Promise<Array<Pick<Queue, 'id'>>> {
-    return this.database.selectAll<QueueRun, Pick<Queue, 'id'>>(sql`
-      SELECT queue.id
-      FROM queue
-      JOIN queue_run ON queue.fkey_queue_id = queue_run.fkey_queue_id
-      WHERE
-        queue_run.id = $(id) AND
-        queue_run.aggr_ok + queue_run.aggr_err = queue_run.aggr_total AND
-        queue_run.fkey_queue_task_id = $(fkey_queue_task_id)
-    `, {
-      fkey_queue_task_id: task.id,
-      id: task.run.id
+      task_id: taskId
     })
   }
 
@@ -584,19 +584,19 @@ export abstract class QueueHandler {
    *
    * Increments either `aggr_err` or `aggr_ok` by 1, depending on the result of the task.
    *
-   * Sets `fkey_queue_task_id` to the ID of the task.
+   * Sets `task_id` to the ID of the task.
    *
    * When the queue run has finished, sets `status` to either 'ok' or 'err', depending on the result of the task.
    *
    * @param task - The task
    */
-  protected async updateQueueRun (task: QueueTask): Promise<void> {
-    await this.database.update<QueueRun>(sql`
-      UPDATE queue_run
+  protected async updateRun (task: Task): Promise<void> {
+    await this.database.update<Run>(sql`
+      UPDATE run
       SET
         aggr_${task.status} = aggr_${task.status} + 1,
         date_updated = NOW(),
-        fkey_queue_task_id = $(fkey_queue_task_id),
+        task_id = $(task_id),
         status = (
           CASE
             WHEN aggr_err + aggr_ok + 1 = aggr_total THEN
@@ -607,10 +607,10 @@ export abstract class QueueHandler {
             ELSE 'pending'
           END
         )
-      WHERE id = $(id)
+      WHERE run_id = $(run_id)
     `, {
-      fkey_queue_task_id: task.id,
-      id: task.run.id
+      run_id: task.run.run_id,
+      task_id: task.task_id
     })
   }
 
@@ -621,20 +621,20 @@ export abstract class QueueHandler {
    *
    * @param task - The task
    */
-  protected async updateQueueTaskOnFinish (task: QueueTask): Promise<void> {
-    await this.database.update<QueueTask>(sql`
-      UPDATE queue_task
+  protected async updateTaskOnFinish (task: Task): Promise<void> {
+    await this.database.update<Task>(sql`
+      UPDATE task
       SET
         date_updated = NOW(),
         reason = $(reason),
         result = $(result),
         status = $(status)
-      WHERE id = $(id)
+      WHERE task_id = $(task_id)
     `, {
-      id: task.id,
       reason: task.reason,
       result: task.result,
-      status: task.status
+      status: task.status,
+      task_id: task.task_id
     })
   }
 
@@ -645,17 +645,17 @@ export abstract class QueueHandler {
    *
    * @param task - The task
    */
-  protected async updateQueueTaskOnRead (task: Pick<QueueTask, 'id'>): Promise<void> {
-    await this.database.update<QueueTask>(sql`
-      UPDATE queue_task
+  protected async updateTaskOnRead (task: Pick<Task, 'task_id'>): Promise<void> {
+    await this.database.update<Task>(sql`
+      UPDATE task
       SET
         date_queued = NOW(),
         date_updated = NOW(),
         host = $(host)
-      WHERE id = $(id)
+      WHERE task_id = $(task_id)
     `, {
       host: this.host,
-      id: task.id
+      task_id: task.task_id
     })
   }
 
@@ -666,15 +666,15 @@ export abstract class QueueHandler {
    *
    * @param task - The task
    */
-  protected async updateQueueTaskOnRun (task: QueueTask): Promise<void> {
-    await this.database.update<QueueTask>(sql`
-      UPDATE queue_task
+  protected async updateTaskOnRun (task: Task): Promise<void> {
+    await this.database.update<Task>(sql`
+      UPDATE task
       SET
         date_started = NOW(),
         date_updated = NOW()
-      WHERE id = $(id)
+      WHERE task_id = $(task_id)
     `, {
-      id: task.id
+      task_id: task.task_id
     })
   }
 
@@ -708,5 +708,5 @@ export abstract class QueueHandler {
    *
    * @param task - The task
    */
-  protected abstract handle (task: QueueTask): Promise<unknown> | unknown
+  protected abstract handle (task: Task): Promise<unknown> | unknown
 }

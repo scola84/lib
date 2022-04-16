@@ -227,7 +227,7 @@ export class RouteAuth {
     response.setHeader('Set-Cookie', this.createCookie())
   }
 
-  public async selectGroupByUser (userId: number | string): Promise<Group | undefined> {
+  public async selectGroupByUser (userId: number): Promise<Group | undefined> {
     return this.database.select<User, Group>(sql`
       SELECT $[group].*,
       FROM $[group_user]
@@ -240,7 +240,7 @@ export class RouteAuth {
     })
   }
 
-  public async selectGroupFromStore (groupId: number | string): Promise<Group | undefined> {
+  public async selectGroupFromStore (groupId: number): Promise<Group | undefined> {
     const storedGroup = await this.store.get(`sc-auth-group-${groupId}`)
 
     if (storedGroup !== null) {
@@ -264,7 +264,7 @@ export class RouteAuth {
     return group
   }
 
-  public async selectRoleByUser (userId: number | string): Promise<Role | undefined> {
+  public async selectRoleByUser (userId: number): Promise<Role | undefined> {
     return this.database.select<UserRole, Role>(sql`
       SELECT $[role].*,
       FROM $[user_role]
@@ -277,7 +277,7 @@ export class RouteAuth {
     })
   }
 
-  public async selectRoleByUserGroup (userId: number | string, groupId: number | string): Promise<Role | undefined> {
+  public async selectRoleByUserGroup (userId: number, groupId: number): Promise<Role | undefined> {
     return this.database.select<UserRoleGroup, Role>(sql`
       SELECT $[role].*,
       FROM $[user_role_group]
@@ -292,7 +292,7 @@ export class RouteAuth {
     })
   }
 
-  public async selectRoleFromStore (roleId: number | string): Promise<Role | undefined> {
+  public async selectRoleFromStore (roleId: number): Promise<Role | undefined> {
     const storedRole = await this.store.get(`sc-auth-role-${roleId}`)
 
     if (storedRole !== null) {
@@ -316,7 +316,7 @@ export class RouteAuth {
     return role
   }
 
-  public async selectUser (userId: number | string): Promise<User | undefined> {
+  public async selectUser (userId: number): Promise<User | undefined> {
     return this.database.select<User, User>(sql`
       SELECT *
       FROM $[user]
@@ -341,7 +341,7 @@ export class RouteAuth {
     })
   }
 
-  public async selectUserFromStore (userId: number | string): Promise<User | undefined> {
+  public async selectUserFromStore (userId: number): Promise<User | undefined> {
     const storedUser = await this.store.get(`sc-auth-user-${userId}`)
 
     if (storedUser !== null) {

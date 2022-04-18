@@ -61,11 +61,5 @@ export class AuthLoginPostTotpHandler extends AuthHandler {
 
     await this.auth.login(response, user)
     await this.auth.clearBackoff(data)
-
-    if (user.preferences.auth_login_email === true) {
-      await this.sendEmail(user, 'auth_login_email', {
-        user
-      })
-    }
   }
 }

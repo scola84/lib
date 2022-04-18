@@ -1,4 +1,9 @@
-export const nl = {
+export default {
+  auth_hotp_email_subject: 'Nieuwe login',
+  auth_hotp_email_text: '$(otp)s',
+  auth_hotp_sms_text: '$(otp)s',
+  auth_login_email_subject: 'Nieuwe login',
+  auth_login_email_text: 'Hallo!\nU bent ingelogd!',
   button_cancel: 'Annuleren',
   button_ok: 'OK',
   err_idb: 'Onbekende fout ($(message))',

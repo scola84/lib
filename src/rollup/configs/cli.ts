@@ -12,7 +12,7 @@ const options: RollupOptions = {
     'html-sql': 'src/cli/commands/html-sql.ts',
     'html-ts': 'src/cli/commands/html-ts.ts',
     'index': 'src/cli/index.ts',
-    'password': 'src/cli/commands/password.ts',
+    'secret': 'src/cli/commands/secret.ts',
     'sql-diff': 'src/cli/commands/sql-diff.ts',
     'sql-schema': 'src/cli/commands/sql-schema.ts',
     'sql-ts': 'src/cli/commands/sql-ts.ts'

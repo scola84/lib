@@ -4,6 +4,7 @@ import type { User } from '../../server'
 import { cast } from './cast'
 import { flatten } from './flatten'
 import { isNil } from './is-nil'
+import { marked } from 'marked'
 
 interface LocaleStrings {
   [key: string]: LocaleStrings | string | undefined
@@ -22,7 +23,7 @@ export type FormatterFactory = (name: string, locale: string, options: Struct<st
 export class I18n {
   public static formatters: Struct<FormatterFactory> = {}
 
-  public static locale = 'en'
+  public static locale = 'nl-NL'
 
   public static matcher = /\$\(.+?\)[dejnqs]/gu
 
@@ -173,7 +174,7 @@ export class I18n {
 
   public formatEmailAddress (user: Partial<User>): string {
     if (isNil(user.email)) {
-      throw new Error('Email is undefined')
+      throw new Error('Email is nil')
     }
 
     if (isNil(user.name)) {
@@ -181,6 +182,15 @@ export class I18n {
     }
 
     return `${user.name} <${user.email}>`
+  }
+
+  public marked (code: string, data: unknown = {}, locale = I18n.locale): string {
+    return marked(this.format(code, data, locale), {
+      breaks: true,
+      smartLists: true,
+      smartypants: true,
+      xhtml: true
+    })
   }
 
   public sort (items: Struct[], query: Query): Struct[] {

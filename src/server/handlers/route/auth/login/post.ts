@@ -1,6 +1,7 @@
 import { AuthHandler } from '../auth'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
+import type { Struct } from '../../../../../common'
 
 interface AuthLoginPostData extends RouteData {
   body: {
@@ -29,7 +30,7 @@ export class AuthLoginPostHandler extends AuthHandler {
     }
   }
 
-  public async handle (data: AuthLoginPostData, response: ServerResponse): Promise<void> {
+  public async handle (data: AuthLoginPostData, response: ServerResponse): Promise<Struct | undefined> {
     const user = await this.auth.selectUserByUsername(data.body.username)
 
     if (user === undefined) {
@@ -47,13 +48,12 @@ export class AuthLoginPostHandler extends AuthHandler {
       throw new Error('Password is not valid')
     }
 
+    if (user.auth_mfa === true) {
+      return this.auth.requestSecondFactor(response, user)
+    }
+
     await this.auth.login(response, user)
     await this.auth.clearBackoff(data)
-
-    if (user.preferences.auth_login_email === true) {
-      await this.sendEmail(user, 'auth_login_email', {
-        user
-      })
-    }
+    return undefined
   }
 }

@@ -1,5 +1,5 @@
-import { nl } from './nl'
+import nlNL from './nl-NL'
 
 export const strings = {
-  nl
+  'nl-NL': nlNL
 }

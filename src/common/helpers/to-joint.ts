@@ -1,13 +1,15 @@
 export interface ToJointOptions {
   caps?: RegExp | null
   chars?: RegExp | null
+  lower?: boolean
   separator?: string
 }
 
 export function toJoint (string: string, options: ToJointOptions = {}): string {
   const {
-    caps = /[A-Z]/gu,
+    caps = /(?<![A-Z])[A-Z]/gu,
     chars = /[^a-z0-9_]+/gui,
+    lower = true,
     separator = ''
   } = options
 
@@ -18,7 +20,11 @@ export function toJoint (string: string, options: ToJointOptions = {}): string {
 
   if (caps !== null) {
     jointString = jointString.replace(caps, (match) => {
-      return `${separator}${match.toLowerCase()}`
+      if (lower) {
+        return `${separator}${match.toLowerCase()}`
+      }
+
+      return `${separator}${match}`
     })
   }
 

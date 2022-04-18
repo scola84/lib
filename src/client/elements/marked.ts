@@ -1,7 +1,6 @@
 import { I18n, isError } from '../../common'
 import { Mutator, Observer, Propagator, Sanitizer } from '../helpers'
 import type { ScolaElement } from './element'
-import { marked } from 'marked'
 
 export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
   public code: string
@@ -94,20 +93,7 @@ export class ScolaMarkedElement extends HTMLDivElement implements ScolaElement {
   }
 
   public update (): void {
-    let string = this.i18n.format(this.code, this.data, this.locale)
-
-    if (this.trim) {
-      string = string
-        .trim()
-        .replace(/\s+/u, ' ')
-    }
-
-    const html = this.sanitizer.sanitizeHtml(marked(string, {
-      breaks: true,
-      smartLists: true,
-      smartypants: true,
-      xhtml: true
-    }))
+    const html = this.sanitizer.sanitizeHtml(this.i18n.marked(this.code, this.data, this.locale))
 
     if (
       html === '' ||

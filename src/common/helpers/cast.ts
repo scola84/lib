@@ -71,7 +71,8 @@ export function cast (value: unknown): CastValue {
 
   if (
     typeof value === 'string' &&
-    value !== ''
+    value !== '' &&
+    !value.startsWith('0')
   ) {
     const number = Number(value)
 

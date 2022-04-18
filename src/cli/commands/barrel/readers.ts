@@ -6,12 +6,13 @@ export const readers: Struct<((targetDir: string) => string[][]) | undefined> = 
   html: (targetDir: string) => {
     return glob(`${targetDir}/**/*.html`)
       .filter((file) => {
-        return file !== 'index.ts'
+        return !file.endsWith('index.ts')
       })
       .map((file) => {
         const path = file.replace(targetDir, '')
 
         const name = toJoint(path.split('.')[0], {
+          lower: false,
           separator: '-'
         })
 
@@ -27,7 +28,7 @@ export const readers: Struct<((targetDir: string) => string[][]) | undefined> = 
   ts: (targetDir: string) => {
     return glob(`${targetDir}/**/*.ts`)
       .filter((file) => {
-        return file !== 'index.ts'
+        return !file.endsWith('index.ts')
       })
       .map((file) => {
         const path = file
@@ -35,6 +36,7 @@ export const readers: Struct<((targetDir: string) => string[][]) | undefined> = 
           .replace('.ts', '')
 
         const name = toJoint(path, {
+          lower: false,
           separator: '-'
         })
 

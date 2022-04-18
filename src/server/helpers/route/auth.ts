@@ -1,11 +1,13 @@
 import type { Group, Role, User, UserGroupRole, UserRole, UserToken } from '../../entities'
-import { hotp, totp } from 'otplib'
+import { HOTP, Secret, TOTP } from 'otpauth'
 import { isNil, revive } from '../../../common'
 import { parse, serialize } from 'cookie'
 import { randomBytes, scrypt, timingSafeEqual } from 'crypto'
 import type { RedisClientType } from 'redis'
 import type { RouteData } from './handler'
 import type { ServerResponse } from 'http'
+import type { Sms } from '../sms'
+import type { Smtp } from '../smtp'
 import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import { createUserToken } from '../../entities'
@@ -16,9 +18,14 @@ export interface RouteAuthOptions {
   backoffFactor?: number
   database: SqlDatabase
   entityExpires?: number
+  factorExpires?: number
+  hotp?: typeof HOTP.defaults
+  loginExpires?: number
   passwordLength?: number
   saltLength?: number
-  tokenExpires?: number
+  sms?: Sms
+  smtp?: Smtp
+  totp?: typeof TOTP.defaults
   tokenLength?: number
   store: RedisClientType
 }
@@ -32,25 +39,40 @@ export class RouteAuth {
 
   public entityExpires: number
 
+  public factorExpires: number
+
+  public hotp: typeof HOTP.defaults
+
+  public loginExpires: number
+
   public passwordLength: number
 
   public saltLength: number
 
-  public store: RedisClientType
+  public sms?: Sms
 
-  public tokenExpires: number
+  public smtp?: Smtp
+
+  public store: RedisClientType
 
   public tokenLength: number
 
+  public totp: typeof TOTP.defaults
+
   public constructor (options: RouteAuthOptions) {
-    this.backoffExpires = options.backoffExpires ?? 24 * 60 * 60 * 1000
+    this.backoffExpires = options.backoffExpires ?? 5 * 60 * 1000
     this.backoffFactor = options.backoffFactor ?? 2
     this.database = options.database
-    this.entityExpires = options.entityExpires ?? 60 * 60 * 1000
+    this.entityExpires = options.entityExpires ?? 5 * 60 * 1000
+    this.factorExpires = options.factorExpires ?? 5 * 60 * 1000
+    this.hotp = options.hotp ?? HOTP.defaults
+    this.loginExpires = options.loginExpires ?? 5 * 60 * 1000
     this.passwordLength = options.passwordLength ?? 64
     this.saltLength = options.saltLength ?? 8
-    this.tokenExpires = options.tokenExpires ?? 5 * 60 * 1000
+    this.sms = options.sms
+    this.smtp = options.smtp
     this.tokenLength = options.tokenLength ?? 32
+    this.totp = options.totp ?? TOTP.defaults
     this.store = options.store
   }
 
@@ -83,16 +105,20 @@ export class RouteAuth {
       throw new Error('User is undefined')
     }
 
-    user.token = userToken
+    Object.defineProperty(user, 'token', {
+      value: userToken
+    })
 
-    if (user.token.group_id !== null) {
-      user.group_id = user.token.group_id
-      user.group = await this.selectGroupFromStore(user.group_id)
-    }
+    if (user.token !== undefined) {
+      if (user.token.group_id !== null) {
+        user.group_id = user.token.group_id
+        user.group = await this.selectGroupFromStore(user.group_id)
+      }
 
-    if (user.token.role_id !== null) {
-      user.role_id = user.token.role_id
-      user.role = await this.selectRoleFromStore(user.role_id)
+      if (user.token.role_id !== null) {
+        user.role_id = user.token.role_id
+        user.role = await this.selectRoleFromStore(user.role_id)
+      }
     }
 
     return user
@@ -108,7 +134,7 @@ export class RouteAuth {
       data.user.state_active === false &&
       permit?.inactive === false
     ) {
-      response.statusCode = 403
+      response.statusCode = 401
       throw new Error('User is not active')
     }
 
@@ -116,7 +142,7 @@ export class RouteAuth {
       data.user.state_compromised === true &&
       permit?.compromised === false
     ) {
-      response.statusCode = 403
+      response.statusCode = 401
       throw new Error('User is compromised')
     }
 
@@ -124,11 +150,11 @@ export class RouteAuth {
       data.user.state_confirmed === false &&
       permit?.unconfirmed === false
     ) {
-      response.statusCode = 403
+      response.statusCode = 401
       throw new Error('User is not confirmed')
     }
 
-    const name = `${data.method}${data.url.pathname}`
+    const name = `${data.method.toUpperCase()} ${data.url.pathname.toLowerCase()}`
 
     if (
       data.user.role?.permissions[name] !== true &&
@@ -153,7 +179,7 @@ export class RouteAuth {
     })
   }
 
-  public createUserToken (user: User, expires = user.role?.expires ?? this.tokenExpires): UserToken {
+  public createUserToken (user: User, expires: number): UserToken {
     return createUserToken({
       date_expires: new Date(Date.now() + expires),
       group_id: user.group?.group_id ?? null,
@@ -241,9 +267,24 @@ export class RouteAuth {
       user.role_id = user.role?.role_id
     }
 
-    user.token = this.createUserToken(user)
-    await this.insertUserToken(user.token)
-    response.setHeader('Set-Cookie', this.createCookie(user.token))
+    Object.defineProperty(user, 'token', {
+      value: this.createUserToken(user, user.role?.expires ?? this.loginExpires)
+    })
+
+    if (user.token !== undefined) {
+      await this.insertUserToken(user.token)
+      await this.storeUserToken(user.token)
+      response.setHeader('Set-Cookie', this.createCookie(user.token))
+    }
+
+    if (
+      user.preferences.auth_login_email === true &&
+      user.email !== null
+    ) {
+      await this.smtp?.send(await this.smtp.create('auth_login_email', {
+        user
+      }, user))
+    }
   }
 
   public async logout (response: ServerResponse, user?: User): Promise<void> {
@@ -253,6 +294,152 @@ export class RouteAuth {
     }
 
     response.setHeader('Set-Cookie', this.createCookie())
+  }
+
+  public async requestFirstFactor (response: ServerResponse, user: User): Promise<Struct> {
+    let type: string | null = null
+
+    if (user.auth_password !== null) {
+      type = 'password'
+    } else if (
+      user.auth_webauthn !== null &&
+      user.auth_webauthn_confirmed === true
+    ) {
+      type = 'webauthn'
+    }
+
+    if (type === null) {
+      response.statusCode = 401
+      throw new Error('User has no credentials set')
+    }
+
+    const token = this.createUserToken(user, this.factorExpires)
+
+    await this.storeFactor(token, {
+      user_id: user.user_id
+    })
+
+    response.setHeader('Set-Cookie', this.createCookie(token))
+
+    return {
+      type
+    }
+  }
+
+  public async requestSecondFactor (response: ServerResponse, user: User): Promise<Struct> {
+    if (
+      user.auth_totp !== null &&
+      user.auth_totp_confirmed === true
+    ) {
+      return this.requestSecondFactorTotp(response, user)
+    } else if (
+      user.auth_hotp_email !== null &&
+      user.auth_hotp_email_confirmed === true
+    ) {
+      return this.requestSecondFactorHotpEmail(response, user)
+    } else if (
+      user.auth_hotp_tel !== null &&
+      user.auth_hotp_tel_confirmed === true
+    ) {
+      return this.requestSecondFactorHotpTel(response, user)
+    }
+
+    response.statusCode = 401
+    throw new Error('MFA is undefined')
+  }
+
+  public async requestSecondFactorHotpEmail (response: ServerResponse, user: User): Promise<Struct> {
+    const secret = new Secret()
+    const counter = Math.round(Math.random() * 1_000_000)
+
+    const otp = HOTP.generate({
+      counter,
+      secret
+    })
+
+    const token = this.createUserToken(user, this.factorExpires)
+
+    await this.storeFactor(token, {
+      auth_hotp: `${secret.base32}:${counter}`,
+      user_id: user.user_id
+    })
+
+    await this.smtp?.send(await this.smtp.create('auth_hotp_email', {
+      otp,
+      token,
+      user
+    }, {
+      email: user.auth_hotp_email,
+      name: user.name,
+      preferences: user.preferences,
+      user_id: user.user_id
+    }))
+
+    response.setHeader('Set-Cookie', this.createCookie(token))
+
+    return {
+      email: user.auth_hotp_email,
+      type: 'hotp'
+    }
+  }
+
+  public async requestSecondFactorHotpTel (response: ServerResponse, user: User): Promise<Struct> {
+    const secret = new Secret()
+    const counter = Math.round(Math.random() * 1_000_000)
+
+    const otp = HOTP.generate({
+      counter,
+      secret
+    })
+
+    const token = this.createUserToken(user, this.factorExpires)
+
+    await this.storeFactor(token, {
+      auth_hotp: `${secret.base32}:${counter}`,
+      user_id: user.user_id
+    })
+
+    await this.sms?.send(await this.sms.create('auth_hotp_sms', {
+      otp,
+      token,
+      user
+    }, {
+      name: user.name,
+      preferences: user.preferences,
+      tel: user.auth_hotp_tel,
+      user_id: user.user_id
+    }))
+
+    response.setHeader('Set-Cookie', this.createCookie(token))
+
+    return {
+      tel: user.auth_hotp_tel,
+      type: 'hotp'
+    }
+  }
+
+  public async requestSecondFactorTotp (response: ServerResponse, user: User): Promise<Struct> {
+    if (user.auth_totp === null) {
+      response.statusCode = 401
+      throw new Error('TOTP secret in database is null')
+    }
+
+    if (user.auth_totp_confirmed !== true) {
+      response.statusCode = 401
+      throw new Error('TOTP is not confirmed')
+    }
+
+    const token = this.createUserToken(user, this.factorExpires)
+
+    await this.storeFactor(token, {
+      user_id: user.user_id
+    })
+
+    response.setHeader('Set-Cookie', this.createCookie(token))
+
+    return {
+      type: 'totp'
+    }
   }
 
   public async selectGroupByUser (userId: number): Promise<Group | undefined> {
@@ -283,9 +470,7 @@ export class RouteAuth {
     })
 
     if (group !== undefined) {
-      await this.store.set(`sc-auth-group-${groupId}`, JSON.stringify(group), {
-        PX: this.entityExpires.valueOf()
-      })
+      await this.storeGroup(group)
     }
 
     return group
@@ -335,9 +520,7 @@ export class RouteAuth {
     })
 
     if (role !== undefined) {
-      await this.store.set(`sc-auth-role-${roleId}`, JSON.stringify(role), {
-        PX: this.entityExpires
-      })
+      await this.storeRole(role)
     }
 
     return role
@@ -394,9 +577,7 @@ export class RouteAuth {
     })
 
     if (user !== undefined) {
-      await this.store.set(`sc-auth-user-${userId}`, JSON.stringify(user), {
-        PX: this.entityExpires
-      })
+      await this.storeUser(user)
     }
 
     return user
@@ -425,10 +606,7 @@ export class RouteAuth {
 
     if (userToken !== undefined) {
       userToken.hash = hash
-
-      await this.store.set(`sc-auth-token-${hash}`, JSON.stringify(userToken), {
-        PXAT: userToken.date_expires.valueOf()
-      })
+      await this.storeUserToken(userToken)
     }
 
     return userToken
@@ -448,6 +626,36 @@ export class RouteAuth {
     }, (this.backoffFactor ** Number(count ?? 0)) * 1000)
   }
 
+  public async storeFactor (token: UserToken, factor: Struct): Promise<void> {
+    await this.store.set(`sc-auth-mfa-${token.hash}`, JSON.stringify(factor), {
+      PX: this.factorExpires
+    })
+  }
+
+  public async storeGroup (group: Group): Promise<void> {
+    await this.store.set(`sc-auth-group-${group.group_id}`, JSON.stringify(group), {
+      PX: this.entityExpires
+    })
+  }
+
+  public async storeRole (role: Role): Promise<void> {
+    await this.store.set(`sc-auth-role-${role.role_id}`, JSON.stringify(role), {
+      PX: this.entityExpires
+    })
+  }
+
+  public async storeUser (user: User): Promise<void> {
+    await this.store.set(`sc-auth-user-${user.user_id}`, JSON.stringify(user), {
+      PX: this.entityExpires
+    })
+  }
+
+  public async storeUserToken (userToken: UserToken): Promise<void> {
+    await this.store.set(`sc-auth-token-${userToken.hash}`, JSON.stringify(userToken), {
+      PXAT: userToken.date_expires.valueOf()
+    })
+  }
+
   public async updateUserCodes (user: User): Promise<void> {
     await this.database.update<User>(sql`
       UPDATE $[user]
@@ -464,10 +672,8 @@ export class RouteAuth {
     const index = codes?.indexOf(code) ?? -1
 
     if (index !== -1) {
-      user.auth_codes = codes
-        ?.splice(index, 1)
-        .join('\n') ?? null
-
+      codes?.splice(index, 1)
+      user.auth_codes = codes?.join('\n') ?? null
       return true
     }
 
@@ -475,8 +681,19 @@ export class RouteAuth {
   }
 
   public validateHotp (user: User, otp: string): boolean {
-    const [secret = '', counter = 0] = user.auth_hotp?.split(':') ?? []
-    return hotp.check(otp, secret, Number(counter))
+    const [
+      secret = '',
+      counter = 0
+    ] = user.auth_hotp?.split(':') ?? []
+
+    const delta = HOTP.validate({
+      ...this.hotp,
+      counter: Number(counter),
+      secret: Secret.fromBase32(secret),
+      token: otp
+    })
+
+    return delta !== null
   }
 
   public async validatePassword (user: User, password: string): Promise<boolean> {
@@ -498,6 +715,12 @@ export class RouteAuth {
   }
 
   public validateTotp (user: User, otp: string): boolean {
-    return totp.check(otp, user.auth_totp ?? '')
+    const delta = TOTP.validate({
+      ...this.totp,
+      secret: Secret.fromBase32(user.auth_totp ?? ''),
+      token: otp
+    })
+
+    return delta !== null
   }
 }

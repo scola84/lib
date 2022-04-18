@@ -2,5 +2,6 @@
 /dist
 /node_modules
 /types
+.cookie
 .env
 TODO.md

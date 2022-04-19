@@ -45,12 +45,12 @@ Example:
 `)
 
 program
-  .argument('<source>', 'source files (glob)')
-  .argument('<target>', 'target to write the files to')
+  .argument('<source>', 'source files')
+  .argument('<target>', 'target directory')
   .option('-a, --actions <actions>', 'micromatch pattern to include actions in the API', '{da,dm,do,im,io,sa,sm,so,um,uo}')
   .option('-i, --id <id>', 'id of the element to parse', '')
   .option('-r, --relation <relation...>', 'source file of a related object')
-  .option('-s, --silent', 'whether not to log')
+  .option('-s, --silent', 'whether to log')
   .option('-u, --url <url>', 'URL prefix of the API', '/api/[action-long]/[name]')
   .parse()
 

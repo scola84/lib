@@ -28,9 +28,9 @@ Example:
 `)
 
 program
-  .argument('<container>', 'the container of the local database')
-  .argument('<source>', 'the Data Source Name (DSN) of the remote database')
-  .argument('[target]', 'the file to write the diff to', '/tmp/scola-sql-diff-out.sql')
+  .argument('<container>', 'container of the local database')
+  .argument('<source>', 'Data Source Name (DSN) of the remote database')
+  .argument('[target]', 'file to write the diff to', '/tmp/scola-sql-diff-out.sql')
   .parse()
 
 try {

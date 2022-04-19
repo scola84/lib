@@ -19,10 +19,10 @@ Example:
 `)
 
 program
-  .argument('<type>', 'the plain secret')
-  .argument('[secret]', 'the plain secret', '')
-  .option('-k, --keylen <keylen>', 'the length of the derived password', '64')
-  .option('-s, --saltlen <saltlen>', 'the length of the salt', '8')
+  .argument('<type>', 'type of secret')
+  .argument('[secret]', 'plain secret', '')
+  .option('-k, --keylen <keylen>', 'length of the derived password', '64')
+  .option('-s, --saltlen <saltlen>', 'length of the salt', '8')
   .parse()
 
 try {

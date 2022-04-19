@@ -25,12 +25,12 @@ Example:
 `)
 
 program
-  .argument('<source>', 'source files (glob)')
-  .argument('<target>', 'target to write the files to')
+  .argument('<source>', 'source files')
+  .argument('<target>', 'target file or directory')
   .option('-D, --database <database>', 'database of the SQL file', 'postgres')
   .option('-d, --dialect <dialect>', 'dialect of the SQL file', 'pgsql')
   .option('-i, --id <id>', 'id of the element to parse', '')
-  .option('-s, --silent', 'whether not to log')
+  .option('-s, --silent', 'whether to log')
   .parse()
 
 try {
@@ -76,15 +76,15 @@ try {
         parsedSource.schema
       )
 
-      const targetFile = target
-        .replace(/\[index\]/gu, String(index).padStart(2, '0'))
-        .replace(/\[name\]/gu, parsedSource.name)
-        .replace(/\[ext\]/gu, '.sql')
-
       if (parsedTarget.ext === '') {
         mkdirSync(parsedTarget.dir, {
           recursive: true
         })
+
+        const targetFile = target
+          .replace(/\[index\]/gu, String(index).padStart(2, '0'))
+          .replace(/\[name\]/gu, parsedSource.name)
+          .replace(/\[ext\]/gu, '.sql')
 
         writeFileSync(targetFile, `${[
           ddl?.connect,

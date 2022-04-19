@@ -38,11 +38,11 @@ Example:
 `)
 
 program
-  .argument('<source>', 'the Data Source Name (DSN) of the database')
-  .argument('<target>', 'the directory to write the interfaces to')
-  .option('-e, --exclude <exclude...>', 'a list of tables')
-  .option('-i, --include <include...>', 'a list of tables')
-  .option('-s, --silent', 'whether not to log')
+  .argument('<source>', 'Data Source Name (DSN) of the database')
+  .argument('<target>', 'target directory')
+  .option('-e, --exclude <exclude...>', 'list of tables')
+  .option('-i, --include <include...>', 'list of tables')
+  .option('-s, --silent', 'whether to log')
   .parse()
 
 try {

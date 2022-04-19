@@ -273,7 +273,6 @@ export class RouteAuth {
 
     if (user.token !== undefined) {
       await this.insertUserToken(user.token)
-      await this.storeUserToken(user.token)
       response.setHeader('Set-Cookie', this.createCookie(user.token))
     }
 

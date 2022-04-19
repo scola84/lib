@@ -1,5 +1,7 @@
-import { formatName, formatWildcard, readers } from './barrel/'
+import { formatName, formatWildcard } from './barrel/'
+import { toCaps, toJoint } from '../../common'
 import { Command } from 'commander'
+import { sync as glob } from 'glob'
 import { writeFileSync } from 'fs-extra'
 
 export interface Options {
@@ -7,6 +9,7 @@ export interface Options {
   name?: string
   prefix: string
   shorthand: boolean
+  subdir: boolean
   type: string
 }
 
@@ -18,16 +21,16 @@ Description:
   Creates a barrel file.
 
 Example:
-  $ scola barrel
+  $ scola barrel ./src
 `)
 
 program
-  .argument('[target]', 'directory to create the barrel for', process.cwd())
+  .argument('[target]', 'target directory', process.cwd())
   .option('-d, --defaults', 'whether to import defaults', false)
   .option('-n, --name <name>', 'output name')
   .option('-p, --prefix <prefix>', 'prefix of the named export properties', '')
   .option('-s, --shorthand', 'whether to export shorthand properties', false)
-  .option('-t, --type <type>', 'output type', 'ts')
+  .option('-S, --subdir', 'whether to scan subdirectories', false)
   .parse()
 
 try {
@@ -40,11 +43,34 @@ try {
     targetDir = process.cwd()
   }
 
-  if (readers[options.type] === undefined) {
-    throw new Error(`Reader for type "${options.type}" is undefined`)
+  let pattern = '*'
+
+  if (options.subdir) {
+    pattern = '**/*.{css,html,js,ts}'
   }
 
-  const files = readers[options.type]?.(targetDir) ?? []
+  const files = glob(`${targetDir}/${pattern}`)
+    .filter((file) => {
+      return !file.endsWith('index.ts')
+    })
+    .map((file) => {
+      const path = file
+        .replace(targetDir, '')
+        .replace('.ts', '')
+
+      const name = toJoint(path.split('.')[0], {
+        lower: false,
+        separator: '-'
+      })
+
+      return [
+        path,
+        name,
+        toCaps(name, {
+          lcfirst: true
+        })
+      ]
+    })
 
   files.sort(([,leftBase], [,rightBase]) => {
     if (rightBase.includes(leftBase)) {

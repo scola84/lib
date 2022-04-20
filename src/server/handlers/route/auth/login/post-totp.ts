@@ -1,12 +1,14 @@
+import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
 import { AuthHandler } from '../auth'
-import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { User } from '../../../../entities'
 
 interface AuthLoginPostTotpData extends RouteData {
   body: {
     totp: string
   }
+}
+
+export interface AuthLoginPostTotpHandlerOptions extends Partial<RouteHandlerOptions> {
 }
 
 export class AuthLoginPostTotpHandler extends AuthHandler {
@@ -26,23 +28,26 @@ export class AuthLoginPostTotpHandler extends AuthHandler {
     }
   }
 
+  public constructor (options?: AuthLoginPostTotpHandlerOptions) {
+    super(options)
+  }
+
   public async handle (data: AuthLoginPostTotpData, response: ServerResponse): Promise<void> {
-    const hash = this.auth.extractTokenHash(data)
+    const hash = this.auth.getHash(data)
 
     if (hash === undefined) {
       response.statusCode = 401
-      throw new Error('Hash in request headers is undefined')
+      throw new Error('Hash is undefined')
     }
 
-    const storedUser = await this.store.getDel(`sc-auth-mfa-${hash}`)
+    const tmpUser = await this.auth.getDelTmpUser(hash)
 
-    if (storedUser === null) {
+    if (tmpUser === null) {
       response.statusCode = 401
-      throw new Error('User in store is null')
+      throw new Error('Factor in store is null')
     }
 
-    const parsedUser = JSON.parse(storedUser) as User
-    const user = await this.auth.selectUser(parsedUser.user_id)
+    const user = await this.auth.selectUser(tmpUser.user_id)
 
     if (user === undefined) {
       response.statusCode = 401
@@ -59,7 +64,8 @@ export class AuthLoginPostTotpHandler extends AuthHandler {
       throw new Error('TOTP is not valid')
     }
 
-    await this.auth.login(response, user)
+    await this.auth.login(data, response, user)
+    await this.auth.sendLoginEmail(user)
     await this.auth.clearBackoff(data)
   }
 }

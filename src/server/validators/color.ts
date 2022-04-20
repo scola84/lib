@@ -10,9 +10,7 @@ export function color (name: string): Validator {
         code: 'err_validator_bad_input_color'
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

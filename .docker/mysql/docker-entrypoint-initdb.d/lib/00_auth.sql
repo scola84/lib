@@ -2,6 +2,8 @@ USE `scola`;
 CREATE TABLE `group` (
   `date_created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_updated` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `for_confirm` BOOLEAN,
+  `for_register` BOOLEAN,
   `group_id` INTEGER NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(255) NOT NULL,
   CONSTRAINT `pkey_group` PRIMARY KEY (`group_id`)
@@ -10,8 +12,12 @@ CREATE TABLE `role` (
   `date_created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_updated` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `expires` INTEGER NOT NULL,
+  `for_confirm` BOOLEAN,
+  `for_register` BOOLEAN,
   `name` VARCHAR(255) NOT NULL,
   `permissions` JSON NOT NULL DEFAULT (json_object()),
+  `require_confirm` BOOLEAN,
+  `require_mfa` BOOLEAN,
   `role_id` INTEGER NOT NULL AUTO_INCREMENT,
   CONSTRAINT `pkey_role` PRIMARY KEY (`role_id`)
 );

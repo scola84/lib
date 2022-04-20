@@ -69,17 +69,17 @@ export interface Queue<Options = unknown> extends Required<QueueBase> {
 
 export function createQueue<Options = Struct> (queue?: Partial<Queue<Options>>, date = new Date()): Queue<Options> {
   return {
-    date_created: date,
-    date_updated: date,
-    db_name: 'database',
-    db_query: '',
-    name: 'name',
-    options: (queue?.options ?? {}) as Options,
-    parent_id: 0,
-    queue_id: 0,
-    schedule_begin: null,
-    schedule_cron: '',
-    schedule_end: null,
-    schedule_next: null
+    date_created: queue?.date_created ?? date,
+    date_updated: queue?.date_updated ?? date,
+    db_name: queue?.db_name ?? 'database',
+    db_query: queue?.db_query ?? 'SELECT 1',
+    name: queue?.name ?? 'name',
+    options: queue?.options ?? ({} as unknown as Options),
+    parent_id: queue?.parent_id ?? 0,
+    queue_id: queue?.queue_id ?? 0,
+    schedule_begin: queue?.schedule_begin ?? null,
+    schedule_cron: queue?.schedule_cron ?? '* * * * *',
+    schedule_end: queue?.schedule_end ?? null,
+    schedule_next: queue?.schedule_next ?? null
   }
 }

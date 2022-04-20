@@ -8,9 +8,7 @@ export function number (name: string): Validator {
         code: 'err_validator_bad_input_number'
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

@@ -8,13 +8,13 @@ export function required (name: string, field: SchemaField): Validator {
     switch (field.var) {
       case '$created':
         data[name] = new Date()
-        return true
+        return
       case '$group_id':
         data[name] = user?.group_id
-        return true
+        return
       case '$user_id':
         data[name] = user?.user_id
-        return true
+        return
       default:
         break
     }
@@ -31,15 +31,13 @@ export function required (name: string, field: SchemaField): Validator {
             code: 'err_validator_value_missing'
           }
 
-          return false
+          throw errors[name]
         }
 
         data[name] = field.value
       } else {
-        return null
+        throw null as unknown as Error
       }
     }
-
-    return true
   }
 }

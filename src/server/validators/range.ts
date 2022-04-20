@@ -8,9 +8,7 @@ export function range (name: string): Validator {
         code: 'err_validator_bad_input_range'
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

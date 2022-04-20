@@ -24,14 +24,14 @@ export function checkbox (name: string, field: SchemaField): Validator {
           data: { accept: field.values }
         }
 
-        return false
+        throw errors[name]
       }
     } else {
       errors[name] = {
         code: 'err_validator_bad_input_checkbox'
       }
-    }
 
-    return true
+      throw errors[name]
+    }
   }
 }

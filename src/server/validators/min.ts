@@ -11,9 +11,7 @@ export function min (name: string, field: SchemaField): Validator {
         data: { min: field.min }
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

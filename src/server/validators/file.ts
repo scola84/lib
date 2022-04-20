@@ -30,10 +30,8 @@ export function file (name: string, field: SchemaField): Validator {
           data: { accept: field.accept }
         }
 
-        return false
+        throw errors[name]
       }
     }
-
-    return true
   }
 }

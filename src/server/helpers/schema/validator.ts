@@ -2,7 +2,7 @@ import type { Primitive } from '../../../common'
 import { Struct } from '../../../common'
 import type { User } from '../../entities'
 
-export type Validator = (data: Struct, errors: Struct, user?: User) => boolean | null
+export type Validator = (data: Struct, errors: Struct, user?: User) => Promise<void> | void
 
 export type ValidatorFactory = (name: string, field: SchemaField) => Validator
 
@@ -65,26 +65,21 @@ export class SchemaValidator {
       })
   }
 
-  public validate<Data extends Struct = Struct>(data: Data, user?: User): Data {
-    let hasErrors = false
-    let isValid: boolean | null = false
-
+  public async validate<Data extends Struct = Struct>(data: Data, user?: User): Promise<Data> {
     const errors = Struct.create()
 
     for (const validators of this.validators) {
       for (const validator of validators) {
-        isValid = validator(data, errors, user)
-
-        if (isValid === null) {
-          break
-        } else if (!isValid) {
-          hasErrors = true
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          await validator(data, errors, user)
+        } catch (error: unknown) {
           break
         }
       }
     }
 
-    if (hasErrors) {
+    if (Object.keys(errors).length > 0) {
       throw errors as unknown as Error
     }
 
@@ -103,9 +98,18 @@ export class SchemaValidator {
     const validators = []
 
     validators.push(SchemaValidator.validators.required?.(name, field))
+
+    if (SchemaValidator.validators[field.type] === undefined) {
+      throw new Error(`Validator "${field.type}" is undefined`)
+    }
+
     validators.push(SchemaValidator.validators[field.type]?.(name, field))
 
     if (field.custom !== undefined) {
+      if (SchemaValidator.validators[field.custom] === undefined) {
+        throw new Error(`Validator "${field.custom}" is undefined`)
+      }
+
       validators.push(SchemaValidator.validators[field.custom]?.(name, field))
     }
 

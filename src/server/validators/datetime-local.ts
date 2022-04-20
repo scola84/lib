@@ -10,9 +10,7 @@ export function datetimeLocal (name: string): Validator {
         code: 'err_validator_bad_input_datetimelocal'
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

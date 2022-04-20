@@ -11,9 +11,7 @@ export function pattern (name: string, field: SchemaField): Validator {
         data: { pattern: field.pattern.source }
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

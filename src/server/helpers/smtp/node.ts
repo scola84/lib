@@ -1,4 +1,4 @@
-import { I18n, cast, isNil, set } from '../../../common'
+import { I18n, cast, set } from '../../../common'
 import type { Smtp, SmtpSendOptions } from './smtp'
 import type Mail from 'nodemailer/lib/mailer'
 import type SMTPTransport from 'nodemailer/lib/smtp-transport'
@@ -36,22 +36,22 @@ export class NodeSmtp implements Smtp {
     this.start()
   }
 
-  public async create (code: string, data: unknown, user: Partial<User>): Promise<SmtpSendOptions> {
-    if (isNil(user.email)) {
-      throw new Error('Email is nil')
+  public async create (code: string, data: unknown, user: User): Promise<SmtpSendOptions> {
+    if (user.email === null) {
+      throw new Error('Email is null')
     }
 
     let html: string | null | undefined = null
 
     if (this.html !== undefined) {
-      html = this.html[0] + this.i18n.marked(`${code}_text`, data, user.preferences?.locale ?? undefined) + this.html[1]
+      html = this.html[0] + this.i18n.marked(`${code}_text`, data, user.preferences.locale ?? undefined) + this.html[1]
     }
 
     return Promise.resolve({
       from: this.from,
       html: html ?? undefined,
-      subject: this.i18n.format(`${code}_subject`, data, user.preferences?.locale ?? undefined),
-      text: this.i18n.format(`${code}_text`, data, user.preferences?.locale ?? undefined),
+      subject: this.i18n.format(`${code}_subject`, data, user.preferences.locale ?? undefined),
+      text: this.i18n.format(`${code}_text`, data, user.preferences.locale ?? undefined),
       to: this.i18n.formatEmailAddress(user)
     })
   }

@@ -20,9 +20,7 @@ export function maxLength (name: string, field: SchemaField): Validator {
         data: { maxLength: field.maxLength }
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

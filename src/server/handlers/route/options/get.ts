@@ -1,7 +1,8 @@
 import { RouteHandler } from '../../../helpers'
+import type { Struct } from '../../../../common'
 
 export class OptionsGetHandler extends RouteHandler {
-  public handle (): Array<Partial<RouteHandler>> {
+  public handle (): Struct[] {
     return Array
       .from(this.router.handlers.values())
       .map((handlers) => {

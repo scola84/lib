@@ -1,7 +1,6 @@
 import { AuthHandler } from '../auth'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { User } from '../../../../entities'
 
 interface AuthLoginPostCodeData extends RouteData {
   body: {
@@ -27,22 +26,21 @@ export class AuthLoginPostCodeHandler extends AuthHandler {
   }
 
   public async handle (data: AuthLoginPostCodeData, response: ServerResponse): Promise<void> {
-    const hash = this.auth.extractTokenHash(data)
+    const hash = this.auth.getHash(data)
 
     if (hash === undefined) {
       response.statusCode = 401
-      throw new Error('Hash in request headers is undefined')
+      throw new Error('Hash is undefined')
     }
 
-    const storedUser = await this.store.getDel(`sc-auth-mfa-${hash}`)
+    const tmpUser = await this.auth.getDelTmpUser(hash)
 
-    if (storedUser === null) {
+    if (tmpUser === null) {
       response.statusCode = 401
       throw new Error('User in store is null')
     }
 
-    const parsedUser = JSON.parse(storedUser) as User
-    const user = await this.auth.selectUser(parsedUser.user_id)
+    const user = await this.auth.selectUser(tmpUser.user_id)
 
     if (user === undefined) {
       response.statusCode = 401
@@ -60,7 +58,8 @@ export class AuthLoginPostCodeHandler extends AuthHandler {
     }
 
     await this.auth.updateUserCodes(user)
-    await this.auth.login(response, user)
+    await this.auth.login(data, response, user)
+    await this.auth.sendLoginEmail(user)
     await this.auth.clearBackoff(data)
   }
 }

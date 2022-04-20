@@ -2,6 +2,8 @@
 CREATE TABLE "group" (
   "date_created" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "date_updated" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "for_confirm" BOOLEAN,
+  "for_register" BOOLEAN,
   "group_id" SERIAL,
   "name" CHARACTER VARYING NOT NULL,
   CONSTRAINT "pkey_group" PRIMARY KEY ("group_id")
@@ -10,8 +12,12 @@ CREATE TABLE "role" (
   "date_created" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "date_updated" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "expires" INTEGER NOT NULL,
+  "for_confirm" BOOLEAN,
+  "for_register" BOOLEAN,
   "name" CHARACTER VARYING NOT NULL,
   "permissions" JSON NOT NULL DEFAULT '{}'::JSON,
+  "require_confirm" BOOLEAN,
+  "require_mfa" BOOLEAN,
   "role_id" SERIAL,
   CONSTRAINT "pkey_role" PRIMARY KEY ("role_id")
 );

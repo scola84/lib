@@ -10,9 +10,7 @@ export function date (name: string): Validator {
         code: 'err_validator_bad_input_date'
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

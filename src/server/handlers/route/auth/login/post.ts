@@ -1,29 +1,29 @@
-import { AuthHandler } from '../auth'
+import { AuthLoginPostPasswordHandler } from '../../../..'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
 
 interface AuthLoginPostData extends RouteData {
   body: {
+    identity: string
     password: string
-    username: string
   }
 }
 
-export class AuthLoginPostHandler extends AuthHandler {
+export class AuthLoginPostHandler extends AuthLoginPostPasswordHandler {
   public method = 'POST'
 
   public schema = {
     body: {
       required: true,
       schema: {
+        identity: {
+          required: true,
+          type: 'text'
+        },
         password: {
           required: true,
           type: 'password'
-        },
-        username: {
-          required: true,
-          type: 'text'
         }
       },
       type: 'fieldset'
@@ -31,7 +31,7 @@ export class AuthLoginPostHandler extends AuthHandler {
   }
 
   public async handle (data: AuthLoginPostData, response: ServerResponse): Promise<Struct | undefined> {
-    const user = await this.auth.selectUserByUsername(data.body.username)
+    const user = await this.auth.selectUserByIdentity(data.body.identity)
 
     if (user === undefined) {
       response.statusCode = 401
@@ -48,11 +48,15 @@ export class AuthLoginPostHandler extends AuthHandler {
       throw new Error('Password is not valid')
     }
 
-    if (user.auth_mfa === true) {
-      return this.auth.requestSecondFactor(response, user)
+    if (
+      user.role?.require_mfa === true ||
+      user.auth_mfa === true
+    ) {
+      return this.requestSecondFactor(response, user)
     }
 
-    await this.auth.login(response, user)
+    await this.auth.login(data, response, user)
+    await this.auth.sendLoginEmail(user)
     await this.auth.clearBackoff(data)
     return undefined
   }

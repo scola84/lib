@@ -1,5 +1,5 @@
-import { I18n, isNil } from '../../../common'
 import type { Sms, SmsSendOptions, SmsSendResult } from './sms'
+import { I18n } from '../../../common'
 import type { MessageBird } from 'messagebird/types'
 import type { User } from '../../entities'
 import messagebird from 'messagebird'
@@ -23,14 +23,14 @@ export class MessagebirdSms implements Sms {
     this.originator = options.originator ?? ''
   }
 
-  public async create (code: string, data: unknown, user: Partial<User>): Promise<SmsSendOptions> {
-    if (isNil(user.tel)) {
-      throw new Error('Tel is nil')
+  public async create (code: string, data: unknown, user: User): Promise<SmsSendOptions> {
+    if (user.tel === null) {
+      throw new Error('Tel is null')
     }
 
     return Promise.resolve({
       from: this.originator,
-      text: this.i18n.format(`${code}_text`, data, user.preferences?.locale ?? undefined),
+      text: this.i18n.format(`${code}_text`, data, user.preferences.locale ?? undefined),
       to: user.tel
     })
   }

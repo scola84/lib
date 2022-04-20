@@ -6,6 +6,7 @@ export function elementStateElementHasProps (observer: ScolaElement, observable:
     .entries(observer.dataset)
     .every(([name, value]) => {
       const observeValue = get(observable, name)
+
       return value
         ?.split(/\s+/u)
         .some((someValue) => {

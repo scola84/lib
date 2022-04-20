@@ -21,17 +21,16 @@ export interface UserToken extends UserTokenBase {
   user_id: number
 }
 
-export function createUserToken (token: Partial<UserToken>, date = new Date()): UserToken {
+export function createUserToken (userToken?: Partial<UserToken>, date = new Date()): UserToken {
   return {
-    date_created: date,
-    date_expires: date,
-    date_updated: date,
-    group_id: null,
-    hash: 'hash',
-    permissions: null,
-    role_id: null,
-    token_id: 0,
-    user_id: 0,
-    ...token
+    date_created: userToken?.date_created ?? date,
+    date_expires: userToken?.date_expires ?? date,
+    date_updated: userToken?.date_updated ?? date,
+    group_id: userToken?.group_id ?? null,
+    hash: userToken?.hash ?? 'hash',
+    permissions: userToken?.permissions ?? null,
+    role_id: userToken?.role_id ?? null,
+    token_id: userToken?.token_id ?? 0,
+    user_id: userToken?.user_id ?? 0
   }
 }

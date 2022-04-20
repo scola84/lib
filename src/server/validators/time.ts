@@ -10,9 +10,7 @@ export function time (name: string): Validator {
         code: 'err_validator_bad_input_time'
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

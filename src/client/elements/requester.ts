@@ -537,6 +537,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     if (this.strict) {
       const expected = Struct.fromQuery(this.url.split('?').pop() ?? '')
       const actual = Struct.fromQuery(url.split('?').pop() ?? '')
+
       return Object
         .keys(expected)
         .every((key) => {

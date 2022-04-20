@@ -11,9 +11,7 @@ export function step (name: string, field: SchemaField): Validator {
         data: { step: field.step }
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

@@ -20,9 +20,7 @@ export function minLength (name: string, field: SchemaField): Validator {
         data: { minLength: field.minLength }
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

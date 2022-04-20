@@ -66,31 +66,31 @@ export interface User extends UserBase {
   username: string | null
 }
 
+// eslint-disable-next-line complexity
 export function createUser (user?: Partial<User>, date = new Date()): User {
   return {
-    auth_codes: null,
-    auth_codes_confirmed: false,
-    auth_hotp_email: null,
-    auth_hotp_email_confirmed: false,
-    auth_hotp_tel: null,
-    auth_hotp_tel_confirmed: false,
-    auth_mfa: false,
-    auth_password: null,
-    auth_totp: null,
-    auth_totp_confirmed: false,
-    auth_webauthn: null,
-    auth_webauthn_confirmed: false,
-    date_created: date,
-    date_updated: date,
-    email: null,
-    name: null,
-    preferences: {},
-    state_active: false,
-    state_compromised: false,
-    state_confirmed: false,
-    tel: null,
-    user_id: 0,
-    username: null,
-    ...user
+    auth_codes: user?.auth_codes ?? null,
+    auth_codes_confirmed: user?.auth_codes_confirmed ?? false,
+    auth_hotp_email: user?.auth_hotp_email ?? null,
+    auth_hotp_email_confirmed: user?.auth_hotp_email_confirmed ?? false,
+    auth_hotp_tel: user?.auth_hotp_tel ?? null,
+    auth_hotp_tel_confirmed: user?.auth_hotp_tel_confirmed ?? false,
+    auth_mfa: user?.auth_mfa ?? false,
+    auth_password: user?.auth_password ?? null,
+    auth_totp: user?.auth_totp ?? null,
+    auth_totp_confirmed: user?.auth_totp_confirmed ?? false,
+    auth_webauthn: user?.auth_webauthn ?? null,
+    auth_webauthn_confirmed: user?.auth_webauthn_confirmed ?? false,
+    date_created: user?.date_created ?? date,
+    date_updated: user?.date_updated ?? date,
+    email: user?.email ?? null,
+    name: user?.name ?? null,
+    preferences: user?.preferences ?? {},
+    state_active: user?.state_active ?? false,
+    state_compromised: user?.state_compromised ?? false,
+    state_confirmed: user?.state_confirmed ?? false,
+    tel: user?.tel ?? null,
+    user_id: user?.user_id ?? 0,
+    username: user?.username ?? null
   }
 }

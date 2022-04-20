@@ -9,9 +9,7 @@ export function select (name: string, field: SchemaField): Validator {
         data: { accept: field.values }
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

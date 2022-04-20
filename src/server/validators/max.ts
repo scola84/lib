@@ -11,9 +11,7 @@ export function max (name: string, field: SchemaField): Validator {
         data: { max: field.max }
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

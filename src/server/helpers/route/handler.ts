@@ -8,6 +8,8 @@ import type { RouteCodec } from './codec'
 import type { Router } from './router'
 import type { Schema } from '../schema'
 import { SchemaValidator } from '../schema/validator'
+import type { Sms } from '../sms'
+import type { Smtp } from '../smtp'
 import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import type { URL } from 'url'
@@ -37,6 +39,8 @@ export interface RouteHandlerOptions {
   permit: Struct
   router: Router
   schema: Schema
+  sms: Sms
+  smtp: Smtp
   store: RedisClientType
   url: string
   validate: boolean
@@ -70,6 +74,10 @@ export abstract class RouteHandler {
   public router: Router
 
   public schema: Partial<Schema> = {}
+
+  public sms?: Sms
+
+  public smtp?: Smtp
 
   public store?: RedisClientType
 
@@ -106,6 +114,8 @@ export abstract class RouteHandler {
     this.permit = handlerOptions.permit
     this.router = handlerOptions.router
     this.schema = handlerOptions.schema ?? {}
+    this.sms = handlerOptions.sms
+    this.smtp = handlerOptions.smtp
     this.store = handlerOptions.store
     this.url = handlerOptions.url ?? '/'
     this.validate = handlerOptions.validate ?? true
@@ -132,7 +142,7 @@ export abstract class RouteHandler {
 
       if (this.validate) {
         try {
-          this.validator.validate(data, data.user)
+          await this.validator.validate(data, data.user)
         } catch (error: unknown) {
           response.statusCode = 400
           response.end(this.codec.encode(error, response, request))

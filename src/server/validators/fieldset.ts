@@ -7,7 +7,7 @@ import { isStruct } from '../../common'
 export function fieldset (name: string, field: SchemaField, user?: User): Validator {
   const schemaValidator = new SchemaValidator(field.schema ?? {})
 
-  function validator (data: Struct, errors: Struct): boolean {
+  return async (data: Struct, errors: Struct) => {
     let childErrors: Struct | null = null
 
     const values = data[name]
@@ -25,7 +25,7 @@ export function fieldset (name: string, field: SchemaField, user?: User): Valida
           }
         }
 
-        schemaValidator.validate(values, user)
+        await schemaValidator.validate(values, user)
       } catch (error: unknown) {
         childErrors = error as Struct
       }
@@ -35,13 +35,9 @@ export function fieldset (name: string, field: SchemaField, user?: User): Valida
       }
     }
 
-    if (childErrors === null) {
-      return true
+    if (childErrors !== null) {
+      errors[name] = childErrors
+      throw errors[name]
     }
-
-    errors[name] = childErrors
-    return false
   }
-
-  return validator
 }

@@ -1,6 +1,6 @@
 export * from './post-code'
 export * from './post-hotp'
+export * from './post-identity'
 export * from './post-password'
 export * from './post-totp'
-export * from './post-username'
 export * from './post'

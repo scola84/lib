@@ -6,7 +6,7 @@ import type { Struct } from '../../common'
 export function array (name: string, field: SchemaField): Validator {
   const schemaValidator = new SchemaValidator(field.schema ?? {})
 
-  function validator (data: Struct, errors: Struct): boolean {
+  return async (data: Struct, errors: Struct) => {
     let childErrors: Struct | null = null
     let values = data[name]
 
@@ -18,19 +18,18 @@ export function array (name: string, field: SchemaField): Validator {
     }
 
     if (isArray(values)) {
-      for (const value of values) {
-        try {
+      try {
+        await Promise.all(values.map(async (value) => {
           if (isStruct(value)) {
-            schemaValidator.validate(value)
+            await schemaValidator.validate(value)
           } else {
-            schemaValidator.validate({
+            await schemaValidator.validate({
               [name]: value
             })
           }
-        } catch (error: unknown) {
-          childErrors = error as Struct
-          break
-        }
+        }))
+      } catch (error: unknown) {
+        childErrors = error as Struct
       }
     } else {
       childErrors = {
@@ -38,13 +37,9 @@ export function array (name: string, field: SchemaField): Validator {
       }
     }
 
-    if (childErrors === null) {
-      return true
+    if (childErrors !== null) {
+      errors[name] = childErrors
+      throw errors[name] as Error
     }
-
-    errors[name] = childErrors
-    return false
   }
-
-  return validator
 }

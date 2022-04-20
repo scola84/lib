@@ -8,9 +8,6 @@ export function text (name: string): Validator {
 
     if (isPrimitive(value)) {
       data[name] = value.toString()
-      return true
     }
-
-    return false
   }
 }

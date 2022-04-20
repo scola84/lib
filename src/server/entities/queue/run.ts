@@ -74,19 +74,18 @@ export interface Run<Options = unknown> extends Required<RunBase> {
 
 export function createRun<Options = Struct> (run?: Partial<Run<Options>>, date = new Date()): Run<Options> {
   return {
-    aggr_err: 0,
-    aggr_ok: 0,
-    aggr_total: 0,
-    date_created: date,
-    date_updated: date,
+    aggr_err: run?.aggr_err ?? 0,
+    aggr_ok: run?.aggr_ok ?? 0,
+    aggr_total: run?.aggr_total ?? 0,
+    date_created: run?.date_created ?? date,
+    date_updated: run?.date_updated ?? date,
     name: run?.queue?.name ?? 'name',
-    options: (run?.queue?.options ?? {}) as Options,
+    options: run?.queue?.options ?? ({} as unknown as Options),
     queue: run?.queue ?? createQueue<Options>(),
     queue_id: run?.queue?.queue_id ?? 0,
-    reason: null,
-    run_id: 0,
-    status: 'pending',
-    task_id: null,
-    ...run
+    reason: run?.reason ?? null,
+    run_id: run?.run_id ?? 0,
+    status: run?.status ?? 'pending',
+    task_id: run?.task_id ?? null
   }
 }

@@ -11,10 +11,7 @@ export function tel (name: string): Validator {
 
       if (phoneNumber?.isValid() === true) {
         data[name] = phoneNumber.format('E.164')
-        return true
       }
     }
-
-    return false
   }
 }

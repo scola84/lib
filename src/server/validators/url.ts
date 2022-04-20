@@ -10,9 +10,7 @@ export function url (name: string): Validator {
         code: 'err_validator_bad_input_url'
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

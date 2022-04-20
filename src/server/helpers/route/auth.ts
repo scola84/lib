@@ -1,4 +1,4 @@
-import type { Group, Role, User, UserGroupRole, UserRole, UserToken } from '../../entities'
+import type { Group, Role, User, UserGroup, UserGroupRole, UserRole, UserToken } from '../../entities'
 import { HOTP, Secret, TOTP } from 'otpauth'
 import { isNil, revive } from '../../../common'
 import { parse, serialize } from 'cookie'
@@ -18,15 +18,14 @@ export interface RouteAuthOptions {
   backoffFactor?: number
   database: SqlDatabase
   entityExpires?: number
-  factorExpires?: number
   hotp?: typeof HOTP.defaults
   loginExpires?: number
   passwordLength?: number
   saltLength?: number
   sms?: Sms
   smtp?: Smtp
-  totp?: typeof TOTP.defaults
   tokenLength?: number
+  totp?: typeof TOTP.defaults
   store: RedisClientType
 }
 
@@ -38,8 +37,6 @@ export class RouteAuth {
   public database: SqlDatabase
 
   public entityExpires: number
-
-  public factorExpires: number
 
   public hotp: typeof HOTP.defaults
 
@@ -64,7 +61,6 @@ export class RouteAuth {
     this.backoffFactor = options.backoffFactor ?? 2
     this.database = options.database
     this.entityExpires = options.entityExpires ?? 5 * 60 * 1000
-    this.factorExpires = options.factorExpires ?? 5 * 60 * 1000
     this.hotp = options.hotp ?? HOTP.defaults
     this.loginExpires = options.loginExpires ?? 5 * 60 * 1000
     this.passwordLength = options.passwordLength ?? 64
@@ -77,7 +73,7 @@ export class RouteAuth {
   }
 
   public async authenticate (data: RouteData, response: ServerResponse): Promise<User> {
-    const hash = this.extractTokenHash(data)
+    const hash = this.getHash(data)
 
     if (hash === undefined) {
       response.statusCode = 401
@@ -106,7 +102,8 @@ export class RouteAuth {
     }
 
     Object.defineProperty(user, 'token', {
-      value: userToken
+      value: userToken,
+      writable: true
     })
 
     if (user.token !== undefined) {
@@ -179,6 +176,26 @@ export class RouteAuth {
     })
   }
 
+  public async createPassword (password: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const salt = randomBytes(this.saltLength)
+
+      scrypt(password, salt, this.passwordLength, (error, derivedKey) => {
+        if (error === null) {
+          resolve(`${salt.toString('hex')}:${derivedKey.toString('hex')}`)
+        } else {
+          reject(error)
+        }
+      })
+    })
+  }
+
+  public createTotp (): TOTP {
+    return new TOTP({
+      ...this.totp
+    })
+  }
+
   public createUserToken (user: User, expires: number): UserToken {
     return createUserToken({
       date_expires: new Date(Date.now() + expires),
@@ -199,21 +216,17 @@ export class RouteAuth {
     })
   }
 
-  public async derivePassword (password: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const salt = randomBytes(this.saltLength)
+  public async getDelTmpUser (hash: string): Promise<User | null> {
+    const user = await this.store.getDel(`sc-auth-tmp-user-${hash}`)
 
-      scrypt(password, salt, this.passwordLength, (error, derivedKey) => {
-        if (error === null) {
-          resolve(`${salt.toString('hex')}:${derivedKey.toString('hex')}`)
-        } else {
-          reject(error)
-        }
-      })
-    })
+    if (user !== null) {
+      return JSON.parse(user) as User
+    }
+
+    return null
   }
 
-  public extractTokenHash (data: RouteData): string | undefined {
+  public getHash (data: RouteData): string | undefined {
     if (data.headers.authorization === undefined) {
       const cookie = parse(data.headers.cookie ?? '')
 
@@ -227,7 +240,64 @@ export class RouteAuth {
     return undefined
   }
 
-  public async insertUserToken (userToken: Partial<UserToken>): Promise<Pick<UserToken, 'token_id'>> {
+  public async insertUser (user: User): Promise<Pick<User, 'user_id'>> {
+    return this.database.insert<User, Pick<User, 'user_id'>>(sql`
+      INSERT INTO $[user] (
+        $[auth_password],
+        $[email],
+        $[name],
+        $[preferences],
+        $[tel],
+        $[username]
+      ) VALUES (
+        $(auth_password),
+        $(email),
+        $(name),
+        $(preferences),
+        $(tel),
+        $(username)
+      )
+    `, {
+      auth_password: user.auth_password,
+      email: user.email,
+      name: user.name,
+      preferences: user.preferences,
+      tel: user.tel,
+      username: user.username
+    }, 'user_id')
+  }
+
+  public async insertUserGroup (userGroup: UserGroup): Promise<void> {
+    await this.database.insert<UserGroup>(sql`
+      INSERT INTO $[user_group] (
+        $[group_id],
+        $[user_id]
+      ) VALUES (
+        $(group_id),
+        $(user_id)
+      )
+    `, {
+      group_id: userGroup.group_id,
+      user_id: userGroup.user_id
+    }, null)
+  }
+
+  public async insertUserRole (userRole: UserRole): Promise<void> {
+    await this.database.insert<UserRole>(sql`
+      INSERT INTO $[user_role] (
+        $[role_id],
+        $[user_id]
+      ) VALUES (
+        $(role_id),
+        $(user_id)
+      )
+    `, {
+      role_id: userRole.role_id,
+      user_id: userRole.user_id
+    }, null)
+  }
+
+  public async insertUserToken (userToken: UserToken): Promise<Pick<UserToken, 'token_id'>> {
     return this.database.insert<UserToken, Pick<UserToken, 'token_id'>>(sql`
       INSERT INTO $[user_token] (
         $[date_expires],
@@ -251,7 +321,7 @@ export class RouteAuth {
     }, 'token_id')
   }
 
-  public async login (response: ServerResponse, user: User): Promise<void> {
+  public async login (data: RouteData, response: ServerResponse, user: User): Promise<UserToken> {
     if (user.group === undefined) {
       user.group = await this.selectGroupByUser(user.user_id)
       user.group_id = user.group?.group_id
@@ -267,8 +337,11 @@ export class RouteAuth {
       user.role_id = user.role?.role_id
     }
 
+    const token = this.createUserToken(user, user.role?.expires ?? this.loginExpires)
+
     Object.defineProperty(user, 'token', {
-      value: this.createUserToken(user, user.role?.expires ?? this.loginExpires)
+      value: token,
+      writable: true
     })
 
     if (user.token !== undefined) {
@@ -276,14 +349,7 @@ export class RouteAuth {
       response.setHeader('Set-Cookie', this.createCookie(user.token))
     }
 
-    if (
-      user.preferences.auth_login_email === true &&
-      user.email !== null
-    ) {
-      await this.smtp?.send(await this.smtp.create('auth_login_email', {
-        user
-      }, user))
-    }
+    return token
   }
 
   public async logout (response: ServerResponse, user?: User): Promise<void> {
@@ -295,150 +361,36 @@ export class RouteAuth {
     response.setHeader('Set-Cookie', this.createCookie())
   }
 
-  public async requestFirstFactor (response: ServerResponse, user: User): Promise<Struct> {
-    let type: string | null = null
+  public async register (user: User): Promise<User> {
+    user.user_id = (await this.insertUser(user)).user_id
 
-    if (user.auth_password !== null) {
-      type = 'password'
-    } else if (
-      user.auth_webauthn !== null &&
-      user.auth_webauthn_confirmed === true
-    ) {
-      type = 'webauthn'
+    const [
+      group,
+      role
+    ] = await Promise.all([
+      this.selectGroupForRegister(),
+      this.selectRoleForRegister()
+    ])
+
+    if (group !== undefined) {
+      user.group = group
+
+      await this.insertUserGroup({
+        group_id: group.group_id,
+        user_id: user.user_id
+      })
     }
 
-    if (type === null) {
-      response.statusCode = 401
-      throw new Error('User has no credentials set')
+    if (role !== undefined) {
+      user.role = role
+
+      await this.insertUserRole({
+        role_id: role.role_id,
+        user_id: user.user_id
+      })
     }
 
-    const token = this.createUserToken(user, this.factorExpires)
-
-    await this.storeFactor(token, {
-      user_id: user.user_id
-    })
-
-    response.setHeader('Set-Cookie', this.createCookie(token))
-
-    return {
-      type
-    }
-  }
-
-  public async requestSecondFactor (response: ServerResponse, user: User): Promise<Struct> {
-    if (
-      user.auth_totp !== null &&
-      user.auth_totp_confirmed === true
-    ) {
-      return this.requestSecondFactorTotp(response, user)
-    } else if (
-      user.auth_hotp_email !== null &&
-      user.auth_hotp_email_confirmed === true
-    ) {
-      return this.requestSecondFactorHotpEmail(response, user)
-    } else if (
-      user.auth_hotp_tel !== null &&
-      user.auth_hotp_tel_confirmed === true
-    ) {
-      return this.requestSecondFactorHotpTel(response, user)
-    }
-
-    response.statusCode = 401
-    throw new Error('MFA is undefined')
-  }
-
-  public async requestSecondFactorHotpEmail (response: ServerResponse, user: User): Promise<Struct> {
-    const secret = new Secret()
-    const counter = Math.round(Math.random() * 1_000_000)
-
-    const otp = HOTP.generate({
-      counter,
-      secret
-    })
-
-    const token = this.createUserToken(user, this.factorExpires)
-
-    await this.storeFactor(token, {
-      auth_hotp: `${secret.base32}:${counter}`,
-      user_id: user.user_id
-    })
-
-    await this.smtp?.send(await this.smtp.create('auth_hotp_email', {
-      otp,
-      token,
-      user
-    }, {
-      email: user.auth_hotp_email,
-      name: user.name,
-      preferences: user.preferences,
-      user_id: user.user_id
-    }))
-
-    response.setHeader('Set-Cookie', this.createCookie(token))
-
-    return {
-      email: user.auth_hotp_email,
-      type: 'hotp'
-    }
-  }
-
-  public async requestSecondFactorHotpTel (response: ServerResponse, user: User): Promise<Struct> {
-    const secret = new Secret()
-    const counter = Math.round(Math.random() * 1_000_000)
-
-    const otp = HOTP.generate({
-      counter,
-      secret
-    })
-
-    const token = this.createUserToken(user, this.factorExpires)
-
-    await this.storeFactor(token, {
-      auth_hotp: `${secret.base32}:${counter}`,
-      user_id: user.user_id
-    })
-
-    await this.sms?.send(await this.sms.create('auth_hotp_sms', {
-      otp,
-      token,
-      user
-    }, {
-      name: user.name,
-      preferences: user.preferences,
-      tel: user.auth_hotp_tel,
-      user_id: user.user_id
-    }))
-
-    response.setHeader('Set-Cookie', this.createCookie(token))
-
-    return {
-      tel: user.auth_hotp_tel,
-      type: 'hotp'
-    }
-  }
-
-  public async requestSecondFactorTotp (response: ServerResponse, user: User): Promise<Struct> {
-    if (user.auth_totp === null) {
-      response.statusCode = 401
-      throw new Error('TOTP secret in database is null')
-    }
-
-    if (user.auth_totp_confirmed !== true) {
-      response.statusCode = 401
-      throw new Error('TOTP is not confirmed')
-    }
-
-    const token = this.createUserToken(user, this.factorExpires)
-
-    await this.storeFactor(token, {
-      user_id: user.user_id
-    })
-
-    response.setHeader('Set-Cookie', this.createCookie(token))
-
-    return {
-      type: 'totp'
-    }
+    return user
   }
 
   public async selectGroupByUser (userId: number): Promise<Group | undefined> {
@@ -453,6 +405,26 @@ export class RouteAuth {
     })
   }
 
+  public async selectGroupForConfirm (): Promise<Group | undefined> {
+    return this.database.select<Group, Group>(sql`
+      SELECT $[group].*
+      FROM $[group]
+      WHERE $[for_confirm] = $(for_confirm)
+    `, {
+      for_confirm: true
+    })
+  }
+
+  public async selectGroupForRegister (): Promise<Group | undefined> {
+    return this.database.select<Group, Group>(sql`
+      SELECT $[group].*
+      FROM $[group]
+      WHERE $[for_register] = $(for_register)
+    `, {
+      for_register: true
+    })
+  }
+
   public async selectGroupFromStore (groupId: number): Promise<Group | undefined> {
     const storedGroup = await this.store.get(`sc-auth-group-${groupId}`)
 
@@ -461,7 +433,7 @@ export class RouteAuth {
     }
 
     const group = await this.database.select<Group, Group>(sql`
-      SELECT *
+      SELECT $[group].*
       FROM $[group]
       WHERE $[group_id] = $(group_id)
     `, {
@@ -469,7 +441,7 @@ export class RouteAuth {
     })
 
     if (group !== undefined) {
-      await this.storeGroup(group)
+      await this.setGroup(group)
     }
 
     return group
@@ -503,6 +475,26 @@ export class RouteAuth {
     })
   }
 
+  public async selectRoleForConfirm (): Promise<Role | undefined> {
+    return this.database.select<Role, Role>(sql`
+      SELECT $[role].*
+      FROM $[role]
+      WHERE $[for_confirm] = $(for_confirm)
+    `, {
+      for_confirm: true
+    })
+  }
+
+  public async selectRoleForRegister (): Promise<Role | undefined> {
+    return this.database.select<Role, Role>(sql`
+      SELECT $[role].*
+      FROM $[role]
+      WHERE $[for_register] = $(for_register)
+    `, {
+      for_register: true
+    })
+  }
+
   public async selectRoleFromStore (roleId: number): Promise<Role | undefined> {
     const storedRole = await this.store.get(`sc-auth-role-${roleId}`)
 
@@ -511,7 +503,7 @@ export class RouteAuth {
     }
 
     const role = await this.database.select<Role, Role>(sql`
-      SELECT *
+      SELECT $[role].*
       FROM $[role]
       WHERE $[role_id] = $(role_id)
     `, {
@@ -519,7 +511,7 @@ export class RouteAuth {
     })
 
     if (role !== undefined) {
-      await this.storeRole(role)
+      await this.setRole(role)
     }
 
     return role
@@ -527,7 +519,7 @@ export class RouteAuth {
 
   public async selectUser (userId: number): Promise<User | undefined> {
     return this.database.select<User, User>(sql`
-      SELECT *
+      SELECT $[user].*
       FROM $[user]
       WHERE $[user_id] = $(user_id)
     `, {
@@ -535,9 +527,24 @@ export class RouteAuth {
     })
   }
 
-  public async selectUserByUsername (identity: string): Promise<User | undefined> {
+  public async selectUserByIdentities (user: Pick<User, 'email' | 'tel' | 'username'>): Promise<User | undefined> {
     return this.database.select<User, User>(sql`
-      SELECT *
+      SELECT $[user].*
+      FROM $[user]
+      WHERE
+        $[email] = $(email) OR
+        $[tel] = $(tel) OR
+        $[username] = $(username)
+    `, {
+      email: user.email,
+      tel: user.tel,
+      username: user.username
+    })
+  }
+
+  public async selectUserByIdentity (identity: string): Promise<User | undefined> {
+    return this.database.select<User, User>(sql`
+      SELECT $[user].*
       FROM $[user]
       WHERE
         $[email] = $(email) OR
@@ -576,7 +583,7 @@ export class RouteAuth {
     })
 
     if (user !== undefined) {
-      await this.storeUser(user)
+      await this.setUser(user)
     }
 
     return user
@@ -605,10 +612,33 @@ export class RouteAuth {
 
     if (userToken !== undefined) {
       userToken.hash = hash
-      await this.storeUserToken(userToken)
+      await this.setUserToken(userToken)
     }
 
     return userToken
+  }
+
+  public async sendLoginEmail (user: User): Promise<void> {
+    if (
+      user.preferences.auth_login_email === true &&
+      user.email !== null
+    ) {
+      await this.smtp?.send(await this.smtp.create('auth_login_email', {
+        user
+      }, user))
+    }
+  }
+
+  public async sendRegisterEmail (user: User): Promise<void> {
+    if (user.email !== null) {
+      await this.smtp?.send(await this.smtp.create('auth_register_email', {
+        user
+      }, user))
+    } else if (user.tel !== null) {
+      await this.sms?.send(await this.sms.create('auth_register_sms', {
+        user
+      }, user))
+    }
   }
 
   public async setBackoff (data: RouteData, response: ServerResponse): Promise<void> {
@@ -625,43 +655,87 @@ export class RouteAuth {
     }, (this.backoffFactor ** Number(count ?? 0)) * 1000)
   }
 
-  public async storeFactor (token: UserToken, factor: Struct): Promise<void> {
-    await this.store.set(`sc-auth-mfa-${token.hash}`, JSON.stringify(factor), {
-      PX: this.factorExpires
-    })
-  }
-
-  public async storeGroup (group: Group): Promise<void> {
+  public async setGroup (group: Group): Promise<void> {
     await this.store.set(`sc-auth-group-${group.group_id}`, JSON.stringify(group), {
       PX: this.entityExpires
     })
   }
 
-  public async storeRole (role: Role): Promise<void> {
+  public async setRole (role: Role): Promise<void> {
     await this.store.set(`sc-auth-role-${role.role_id}`, JSON.stringify(role), {
       PX: this.entityExpires
     })
   }
 
-  public async storeUser (user: User): Promise<void> {
+  public async setTmpUser (user: User, token: UserToken): Promise<void> {
+    await this.store.set(`sc-auth-tmp-user-${token.hash}`, JSON.stringify(user), {
+      PXAT: token.date_expires.valueOf()
+    })
+  }
+
+  public async setUser (user: User): Promise<void> {
     await this.store.set(`sc-auth-user-${user.user_id}`, JSON.stringify(user), {
       PX: this.entityExpires
     })
   }
 
-  public async storeUserToken (userToken: UserToken): Promise<void> {
+  public async setUserToken (userToken: UserToken): Promise<void> {
     await this.store.set(`sc-auth-token-${userToken.hash}`, JSON.stringify(userToken), {
       PXAT: userToken.date_expires.valueOf()
     })
   }
 
-  public async updateUserCodes (user: User): Promise<void> {
+  public async updateUserCodes (user: Pick<User, 'auth_codes' | 'user_id'>): Promise<void> {
     await this.database.update<User>(sql`
       UPDATE $[user]
       SET $[auth_codes] = $(auth_codes)
       WHERE $[user_id] = $(user_id)
     `, {
       auth_codes: user.auth_codes,
+      user_id: user.user_id
+    })
+  }
+
+  public async updateUserHotpEmail (user: Pick<User, 'auth_hotp_email' | 'user_id'>): Promise<void> {
+    await this.database.update<User>(sql`
+      UPDATE $[user]
+      SET $[auth_hotp_email] = $(auth_hotp_email)
+      WHERE $[user_id] = $(user_id)
+    `, {
+      auth_hotp_email: user.auth_hotp_email,
+      user_id: user.user_id
+    })
+  }
+
+  public async updateUserHotpTel (user: Pick<User, 'auth_hotp_tel' | 'user_id'>): Promise<void> {
+    await this.database.update<User>(sql`
+      UPDATE $[user]
+      SET $[auth_hotp_tel] = $(auth_hotp_tel)
+      WHERE $[user_id] = $(user_id)
+    `, {
+      auth_hotp_tel: user.auth_hotp_tel,
+      user_id: user.user_id
+    })
+  }
+
+  public async updateUserPassword (user: Pick<User, 'auth_password' | 'user_id'>): Promise<void> {
+    await this.database.update<User>(sql`
+      UPDATE $[user]
+      SET $[auth_password] = $(auth_password)
+      WHERE $[user_id] = $(user_id)
+    `, {
+      auth_password: user.auth_password,
+      user_id: user.user_id
+    })
+  }
+
+  public async updateUserTotp (user: Pick<User, 'auth_totp' | 'user_id'>): Promise<void> {
+    await this.database.update<User>(sql`
+      UPDATE $[user]
+      SET $[auth_totp] = $(auth_totp)
+      WHERE $[user_id] = $(user_id)
+    `, {
+      auth_totp: user.auth_totp,
       user_id: user.user_id
     })
   }
@@ -685,14 +759,12 @@ export class RouteAuth {
       counter = 0
     ] = user.auth_hotp?.split(':') ?? []
 
-    const delta = HOTP.validate({
+    return HOTP.validate({
       ...this.hotp,
       counter: Number(counter),
       secret: Secret.fromBase32(secret),
       token: otp
-    })
-
-    return delta !== null
+    }) !== null
   }
 
   public async validatePassword (user: User, password: string): Promise<boolean> {

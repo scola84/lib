@@ -16,9 +16,7 @@ export function order (name: string): Validator {
         data: { accept: values }
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

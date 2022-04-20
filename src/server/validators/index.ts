@@ -7,6 +7,7 @@ import { datetimeLocal } from './datetime-local'
 import { email } from './email'
 import { fieldset } from './fieldset'
 import { file } from './file'
+import { identity } from './identity'
 import { max } from './max'
 import { maxLength } from './max-length'
 import { min } from './min'
@@ -38,6 +39,7 @@ export const validators = {
   'email': email,
   'fieldset': fieldset,
   'file': file,
+  'identity': identity,
   'max': max,
   'max-length': maxLength,
   'min': min,

@@ -10,9 +10,7 @@ export function email (name: string): Validator {
         code: 'err_validator_bad_input_email'
       }
 
-      return false
+      throw errors[name]
     }
-
-    return true
   }
 }

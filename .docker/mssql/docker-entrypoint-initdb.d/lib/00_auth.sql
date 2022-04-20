@@ -2,6 +2,8 @@ USE [scola];
 CREATE TABLE [group] (
   [date_created] DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   [date_updated] DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  [for_confirm] BIT,
+  [for_register] BIT,
   [group_id] INTEGER NOT NULL IDENTITY(1,1),
   [name] VARCHAR(255) NOT NULL,
   CONSTRAINT [pkey_group] PRIMARY KEY ([group_id])
@@ -10,8 +12,12 @@ CREATE TABLE [role] (
   [date_created] DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   [date_updated] DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   [expires] INTEGER NOT NULL,
+  [for_confirm] BIT,
+  [for_register] BIT,
   [name] VARCHAR(255) NOT NULL,
   [permissions] TEXT NOT NULL DEFAULT '{}',
+  [require_confirm] BIT,
+  [require_mfa] BIT,
   [role_id] INTEGER NOT NULL IDENTITY(1,1),
   CONSTRAINT [pkey_role] PRIMARY KEY ([role_id])
 );

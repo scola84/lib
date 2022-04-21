@@ -52,19 +52,8 @@ export class AuthRegisterPostHotpConfirmHandler extends AuthHandler {
       throw new Error('HOTP is not valid')
     }
 
-    if (tmpUser.auth_hotp_email !== null) {
-      await this.auth.updateUserHotpEmail({
-        auth_hotp_email: tmpUser.auth_hotp_email,
-        user_id: tmpUser.user_id
-      })
-    } else if (tmpUser.auth_hotp_tel !== null) {
-      await this.auth.updateUserHotpTel({
-        auth_hotp_tel: tmpUser.auth_hotp_tel,
-        user_id: tmpUser.user_id
-      })
-    }
-
-    await this.auth.login(data, response, data.user)
+    await this.auth.login(response, data.user)
+    await this.auth.updateUserHotp(tmpUser)
     await this.auth.clearBackoff(data)
   }
 }

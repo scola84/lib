@@ -64,8 +64,17 @@ export class AuthLoginPostTotpHandler extends AuthHandler {
       throw new Error('TOTP is not valid')
     }
 
-    await this.auth.login(data, response, user)
-    await this.auth.sendLoginEmail(user)
+    await this.auth.login(response, user)
+
+    if (
+      user.preferences.auth_login_email === true &&
+      user.email !== null
+    ) {
+      await this.smtp?.send(await this.smtp.create('auth_login_email', {
+        user
+      }, user))
+    }
+
     await this.auth.clearBackoff(data)
   }
 }

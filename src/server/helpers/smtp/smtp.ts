@@ -11,6 +11,6 @@ export interface SmtpSendOptions {
 }
 
 export interface Smtp {
-  create: (code: string, data: unknown, user: User) => Promise<SmtpSendOptions>
+  create: (code: string, data: unknown, user: Pick<User, 'email' | 'name' | 'preferences'>) => Promise<SmtpSendOptions>
   send: (options: SmtpSendOptions) => Promise<void>
 }

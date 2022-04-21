@@ -36,7 +36,7 @@ export class NodeSmtp implements Smtp {
     this.start()
   }
 
-  public async create (code: string, data: unknown, user: User): Promise<SmtpSendOptions> {
+  public async create (code: string, data: unknown, user: Pick<User, 'email' | 'name' | 'preferences'>): Promise<SmtpSendOptions> {
     if (user.email === null) {
       throw new Error('Email is null')
     }

@@ -11,6 +11,6 @@ export interface SmsSendResult {
 }
 
 export interface Sms {
-  create: (code: string, data: unknown, user: User) => Promise<SmsSendOptions>
+  create: (code: string, data: unknown, user: Pick<User, 'preferences' | 'tel'>) => Promise<SmsSendOptions>
   send: (options: SmsSendOptions) => Promise<SmsSendResult>
 }

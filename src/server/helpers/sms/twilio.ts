@@ -24,7 +24,7 @@ export class TwilioSms implements Sms {
     this.i18n = options.i18n ?? new I18n()
   }
 
-  public async create (code: string, data: unknown, user: User): Promise<SmsSendOptions> {
+  public async create (code: string, data: unknown, user: Pick<User, 'preferences' | 'tel'>): Promise<SmsSendOptions> {
     if (user.tel === null) {
       throw new Error('Tel is null')
     }

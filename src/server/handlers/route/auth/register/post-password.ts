@@ -1,6 +1,7 @@
 import { AuthHandler } from '../auth'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
+import type { User } from '../../../../entities'
 
 interface AuthRegisterPostPasswordData extends RouteData {
   body: {
@@ -39,13 +40,33 @@ export class AuthRegisterPostPasswordHandler extends AuthHandler {
       throw new Error('User in store is null')
     }
 
-    const user = await this.auth.register({
+    const existingUser = await this.auth.selectUserByIdentities(tmpUser)
+
+    if (existingUser !== undefined) {
+      response.statusCode = 401
+      throw new Error('User in database is defined')
+    }
+
+    await this.register(data, response, {
       ...tmpUser,
       auth_password: await this.auth.createPassword(data.body.password)
     })
+  }
 
-    await this.auth.login(data, response, user)
-    await this.auth.sendRegisterEmail(user)
+  protected async register (data: AuthRegisterPostPasswordData, response: ServerResponse, user: User): Promise<void> {
+    await this.auth.register(user)
+    await this.auth.login(response, user)
+
+    if (user.email !== null) {
+      await this.smtp?.send(await this.smtp.create('auth_register_email', {
+        user
+      }, user))
+    } else if (user.tel !== null) {
+      await this.sms?.send(await this.sms.create('auth_register_sms', {
+        user
+      }, user))
+    }
+
     await this.auth.clearBackoff(data)
   }
 }

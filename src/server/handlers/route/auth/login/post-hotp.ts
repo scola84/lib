@@ -1,7 +1,6 @@
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
 import { AuthHandler } from '../auth'
 import type { ServerResponse } from 'http'
-import { isNil } from '../../../../../common'
 
 interface AuthLoginPostHotpData extends RouteData {
   body: {
@@ -55,9 +54,9 @@ export class AuthLoginPostHotpHandler extends AuthHandler {
       throw new Error('User in database is undefined')
     }
 
-    if (isNil(tmpUser.auth_hotp)) {
+    if (tmpUser.auth_hotp === undefined) {
       response.statusCode = 401
-      throw new Error('HOTP secret in database is null')
+      throw new Error('HOTP secret in database is undefined')
     }
 
     if (!this.auth.validateHotp(tmpUser, data.body.hotp)) {
@@ -65,8 +64,17 @@ export class AuthLoginPostHotpHandler extends AuthHandler {
       throw new Error('HOTP is not valid')
     }
 
-    await this.auth.login(data, response, user)
-    await this.auth.sendLoginEmail(user)
+    await this.auth.login(response, user)
+
+    if (
+      user.preferences.auth_login_email === true &&
+      user.email !== null
+    ) {
+      await this.smtp?.send(await this.smtp.create('auth_login_email', {
+        user
+      }, user))
+    }
+
     await this.auth.clearBackoff(data)
   }
 }

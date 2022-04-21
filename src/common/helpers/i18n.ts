@@ -172,7 +172,7 @@ export class I18n {
       .join('')
   }
 
-  public formatEmailAddress (user: Partial<User>): string {
+  public formatEmailAddress (user: Pick<User, 'email' | 'name'>): string {
     if (isNil(user.email)) {
       throw new Error('Email is nil')
     }

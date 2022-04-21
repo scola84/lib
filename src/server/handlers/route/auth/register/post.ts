@@ -1,4 +1,4 @@
-import { AuthHandler } from '../../../..'
+import { AuthRegisterPostPasswordHandler } from '../../../..'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
@@ -6,7 +6,7 @@ import { createUser } from '../../../../entities'
 
 interface AuthRegisterPostData extends RouteData {
   body: {
-    auth_password: string
+    password: string
     email?: string
     name?: string
     preferences: Struct
@@ -15,7 +15,7 @@ interface AuthRegisterPostData extends RouteData {
   }
 }
 
-export class AuthRegisterPostHandler extends AuthHandler {
+export class AuthRegisterPostHandler extends AuthRegisterPostPasswordHandler {
   public method = 'POST'
 
   public schema = {
@@ -23,15 +23,15 @@ export class AuthRegisterPostHandler extends AuthHandler {
       custom: 'identity',
       required: true,
       schema: {
-        auth_password: {
-          required: true,
-          type: 'password'
-        },
         email: {
           type: 'email'
         },
         name: {
           type: 'text'
+        },
+        password: {
+          required: true,
+          type: 'password'
         },
         preferences: {
           required: true,
@@ -67,17 +67,13 @@ export class AuthRegisterPostHandler extends AuthHandler {
       throw new Error('User in database is defined')
     }
 
-    const user = await this.auth.register(createUser({
-      auth_password: await this.auth.createPassword(data.body.auth_password),
+    await this.register(data, response, createUser({
+      auth_password: await this.auth.createPassword(data.body.password),
       email: data.body.email,
       name: data.body.name,
       preferences: data.body.preferences,
       tel: data.body.tel,
       username: data.body.username
     }))
-
-    await this.auth.login(data, response, user)
-    await this.auth.sendRegisterEmail(user)
-    await this.auth.clearBackoff(data)
   }
 }

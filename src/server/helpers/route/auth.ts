@@ -6,8 +6,6 @@ import { randomBytes, scrypt, timingSafeEqual } from 'crypto'
 import type { RedisClientType } from 'redis'
 import type { RouteData } from './handler'
 import type { ServerResponse } from 'http'
-import type { Sms } from '../sms'
-import type { Smtp } from '../smtp'
 import type { SqlDatabase } from '../sql'
 import type { Struct } from '../../../common'
 import { createUserToken } from '../../entities'
@@ -16,14 +14,14 @@ import { sql } from '../sql'
 export interface RouteAuthOptions {
   backoffExpires?: number
   backoffFactor?: number
+  codesCount?: number
+  codesLength?: number[]
   database: SqlDatabase
   entityExpires?: number
   hotp?: typeof HOTP.defaults
   loginExpires?: number
   passwordLength?: number
   saltLength?: number
-  sms?: Sms
-  smtp?: Smtp
   tokenLength?: number
   totp?: typeof TOTP.defaults
   store: RedisClientType
@@ -33,6 +31,10 @@ export class RouteAuth {
   public backoffExpires: number
 
   public backoffFactor: number
+
+  public codesCount: number
+
+  public codesLength: number[]
 
   public database: SqlDatabase
 
@@ -46,10 +48,6 @@ export class RouteAuth {
 
   public saltLength: number
 
-  public sms?: Sms
-
-  public smtp?: Smtp
-
   public store: RedisClientType
 
   public tokenLength: number
@@ -59,14 +57,14 @@ export class RouteAuth {
   public constructor (options: RouteAuthOptions) {
     this.backoffExpires = options.backoffExpires ?? 5 * 60 * 1000
     this.backoffFactor = options.backoffFactor ?? 2
+    this.codesCount = options.codesCount ?? 5
+    this.codesLength = options.codesLength ?? [5]
     this.database = options.database
     this.entityExpires = options.entityExpires ?? 5 * 60 * 1000
     this.hotp = options.hotp ?? HOTP.defaults
     this.loginExpires = options.loginExpires ?? 5 * 60 * 1000
     this.passwordLength = options.passwordLength ?? 64
     this.saltLength = options.saltLength ?? 8
-    this.sms = options.sms
-    this.smtp = options.smtp
     this.tokenLength = options.tokenLength ?? 32
     this.totp = options.totp ?? TOTP.defaults
     this.store = options.store
@@ -166,6 +164,19 @@ export class RouteAuth {
     await this.store.del(`sc-auth-backoff-${data.ip}`)
   }
 
+  public createCodes (): string {
+    return new Array(this.codesCount)
+      .fill('')
+      .map(() => {
+        return this.codesLength
+          .map((length) => {
+            return randomBytes(length).toString('hex')
+          })
+          .join('-')
+      })
+      .join('\n')
+  }
+
   public createCookie (userToken?: UserToken): string {
     return serialize('authorization', userToken?.hash ?? '', {
       expires: userToken?.date_expires ?? new Date(0),
@@ -173,6 +184,13 @@ export class RouteAuth {
       path: '/',
       sameSite: true,
       secure: true
+    })
+  }
+
+  public createHotp (): HOTP {
+    return new HOTP({
+      ...this.hotp,
+      counter: Math.round(Math.random() * 1000 * 1000)
     })
   }
 
@@ -206,6 +224,16 @@ export class RouteAuth {
     })
   }
 
+  public async deleteUser (user: User): Promise<void> {
+    await this.database.delete<User>(sql`
+      DELETE
+      FROM $[user]
+      WHERE $[user_id] = $(user_id)
+    `, {
+      user_id: user.user_id
+    })
+  }
+
   public async deleteUserToken (userToken: UserToken): Promise<void> {
     await this.database.delete<UserToken>(sql`
       DELETE
@@ -228,13 +256,21 @@ export class RouteAuth {
 
   public getHash (data: RouteData): string | undefined {
     if (data.headers.authorization === undefined) {
-      const cookie = parse(data.headers.cookie ?? '')
+      return this.getHashFromCookie(data)
+    }
 
-      if (typeof cookie.authorization === 'string') {
-        return cookie.authorization
-      }
-    } else {
-      return data.headers.authorization.slice(7)
+    return this.getHashFromAuthorization(data)
+  }
+
+  public getHashFromAuthorization (data: RouteData): string | undefined {
+    return data.headers.authorization?.slice(7)
+  }
+
+  public getHashFromCookie (data: RouteData): string | undefined {
+    const cookie = parse(data.headers.cookie ?? '')
+
+    if (typeof cookie.authorization === 'string') {
+      return cookie.authorization
     }
 
     return undefined
@@ -321,7 +357,9 @@ export class RouteAuth {
     }, 'token_id')
   }
 
-  public async login (data: RouteData, response: ServerResponse, user: User): Promise<UserToken> {
+  public async login (response: ServerResponse, user: User): Promise<UserToken> {
+    await this.logout(response, user)
+
     if (user.group === undefined) {
       user.group = await this.selectGroupByUser(user.user_id)
       user.group_id = user.group?.group_id
@@ -361,7 +399,7 @@ export class RouteAuth {
     response.setHeader('Set-Cookie', this.createCookie())
   }
 
-  public async register (user: User): Promise<User> {
+  public async register (user: User): Promise<void> {
     user.user_id = (await this.insertUser(user)).user_id
 
     const [
@@ -389,8 +427,6 @@ export class RouteAuth {
         user_id: user.user_id
       })
     }
-
-    return user
   }
 
   public async selectGroupByUser (userId: number): Promise<Group | undefined> {
@@ -618,29 +654,6 @@ export class RouteAuth {
     return userToken
   }
 
-  public async sendLoginEmail (user: User): Promise<void> {
-    if (
-      user.preferences.auth_login_email === true &&
-      user.email !== null
-    ) {
-      await this.smtp?.send(await this.smtp.create('auth_login_email', {
-        user
-      }, user))
-    }
-  }
-
-  public async sendRegisterEmail (user: User): Promise<void> {
-    if (user.email !== null) {
-      await this.smtp?.send(await this.smtp.create('auth_register_email', {
-        user
-      }, user))
-    } else if (user.tel !== null) {
-      await this.sms?.send(await this.sms.create('auth_register_sms', {
-        user
-      }, user))
-    }
-  }
-
   public async setBackoff (data: RouteData, response: ServerResponse): Promise<void> {
     const key = `sc-auth-backoff-${data.ip}`
 
@@ -685,35 +698,60 @@ export class RouteAuth {
     })
   }
 
-  public async updateUserCodes (user: Pick<User, 'auth_codes' | 'user_id'>): Promise<void> {
+  public async updateUserCodes (user: Pick<User, 'auth_codes_confirmed' | 'auth_codes' | 'user_id'>): Promise<void> {
     await this.database.update<User>(sql`
       UPDATE $[user]
-      SET $[auth_codes] = $(auth_codes)
+      SET 
+        $[auth_codes] = $(auth_codes),
+        $[auth_codes_confirmed] = $(auth_codes_confirmed)
       WHERE $[user_id] = $(user_id)
     `, {
       auth_codes: user.auth_codes,
+      auth_codes_confirmed: user.auth_codes_confirmed,
       user_id: user.user_id
     })
   }
 
-  public async updateUserHotpEmail (user: Pick<User, 'auth_hotp_email' | 'user_id'>): Promise<void> {
+  public async updateUserHotp (user: User): Promise<void> {
+    if (user.auth_hotp_email_confirmed !== null) {
+      await this.updateUserHotpEmail({
+        auth_hotp_email: user.auth_hotp_email,
+        auth_hotp_email_confirmed: user.auth_hotp_email_confirmed,
+        user_id: user.user_id
+      })
+    } else if (user.auth_hotp_tel_confirmed !== null) {
+      await this.updateUserHotpTel({
+        auth_hotp_tel: user.auth_hotp_tel,
+        auth_hotp_tel_confirmed: user.auth_hotp_tel_confirmed,
+        user_id: user.user_id
+      })
+    }
+  }
+
+  public async updateUserHotpEmail (user: Pick<User, 'auth_hotp_email_confirmed' | 'auth_hotp_email' | 'user_id'>): Promise<void> {
     await this.database.update<User>(sql`
       UPDATE $[user]
-      SET $[auth_hotp_email] = $(auth_hotp_email)
+      SET
+        $[auth_hotp_email] = $(auth_hotp_email),
+        $[auth_hotp_email_confirmed] = $(auth_hotp_email_confirmed)
       WHERE $[user_id] = $(user_id)
     `, {
       auth_hotp_email: user.auth_hotp_email,
+      auth_hotp_email_confirmed: user.auth_hotp_email_confirmed,
       user_id: user.user_id
     })
   }
 
-  public async updateUserHotpTel (user: Pick<User, 'auth_hotp_tel' | 'user_id'>): Promise<void> {
+  public async updateUserHotpTel (user: Pick<User, 'auth_hotp_tel_confirmed' | 'auth_hotp_tel' | 'user_id'>): Promise<void> {
     await this.database.update<User>(sql`
       UPDATE $[user]
-      SET $[auth_hotp_tel] = $(auth_hotp_tel)
+      SET
+        $[auth_hotp_tel] = $(auth_hotp_tel),
+        $[auth_hotp_tel_confirmed] = $(auth_hotp_tel_confirmed)
       WHERE $[user_id] = $(user_id)
     `, {
       auth_hotp_tel: user.auth_hotp_tel,
+      auth_hotp_tel_confirmed: user.auth_hotp_tel_confirmed,
       user_id: user.user_id
     })
   }
@@ -729,13 +767,16 @@ export class RouteAuth {
     })
   }
 
-  public async updateUserTotp (user: Pick<User, 'auth_totp' | 'user_id'>): Promise<void> {
+  public async updateUserTotp (user: Pick<User, 'auth_totp_confirmed' | 'auth_totp' | 'user_id'>): Promise<void> {
     await this.database.update<User>(sql`
       UPDATE $[user]
-      SET $[auth_totp] = $(auth_totp)
+      SET
+        $[auth_totp] = $(auth_totp),
+        $[auth_totp_confirmed] = $(auth_totp_confirmed)
       WHERE $[user_id] = $(user_id)
     `, {
       auth_totp: user.auth_totp,
+      auth_totp_confirmed: user.auth_totp_confirmed,
       user_id: user.user_id
     })
   }

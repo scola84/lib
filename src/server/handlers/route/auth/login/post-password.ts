@@ -1,4 +1,3 @@
-import { HOTP, Secret } from 'otpauth'
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
 import { AuthHandler } from '../auth'
 import type { ServerResponse } from 'http'
@@ -61,6 +60,10 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
       throw new Error('User in database is undefined')
     }
 
+    return this.login(data, response, user)
+  }
+
+  protected async login (data: AuthLoginPostPasswordData, response: ServerResponse, user: User): Promise<Struct | undefined> {
     if (user.auth_password === null) {
       response.statusCode = 401
       throw new Error('Password in database is null')
@@ -75,94 +78,75 @@ export class AuthLoginPostPasswordHandler extends AuthHandler {
       user.role?.require_mfa === true ||
       user.auth_mfa === true
     ) {
-      return this.requestSecondFactor(response, user)
+      if (user.auth_totp !== null) {
+        return this.requestTotp(response, user)
+      }
+
+      return this.requestHotp(response, user)
     }
 
-    await this.auth.login(data, response, user)
-    await this.auth.sendLoginEmail(user)
+    await this.auth.login(response, user)
+
+    if (
+      user.preferences.auth_login_email === true &&
+      user.email !== null
+    ) {
+      await this.smtp?.send(await this.smtp.create('auth_login_email', {
+        user
+      }, user))
+    }
+
     await this.auth.clearBackoff(data)
     return undefined
   }
 
-  public async requestSecondFactor (response: ServerResponse, user: User): Promise<Struct> {
-    if (user.auth_totp !== null) {
-      return this.requestSecondFactorTotp(response, user)
-    } else if (user.auth_hotp_email !== null) {
-      return this.requestSecondFactorHotpEmail(response, user)
+  protected async requestHotp (response: ServerResponse, user: User): Promise<Struct> {
+    const hotp = this.auth.createHotp()
+    const token = this.auth.createUserToken(user, this.tokenExpires)
+
+    await this.auth.setTmpUser(createUser({
+      auth_hotp: `${hotp.secret.base32}:${hotp.counter}`,
+      user_id: user.user_id
+    }), token)
+
+    if (user.auth_hotp_email !== null) {
+      await this.smtp?.send(await this.smtp.create('auth_login_hotp_email', {
+        hotp: hotp.generate(),
+        user: user
+      }, {
+        email: user.auth_hotp_email,
+        name: user.name,
+        preferences: user.preferences
+      }))
+
+      response.setHeader('Set-Cookie', this.auth.createCookie(token))
+
+      return {
+        email: user.auth_hotp_email,
+        type: 'hotp'
+      }
     } else if (user.auth_hotp_tel !== null) {
-      return this.requestSecondFactorHotpTel(response, user)
+      await this.sms?.send(await this.sms.create('auth_login_hotp_sms', {
+        hotp: hotp.generate(),
+        user: user
+      }, {
+        preferences: user.preferences,
+        tel: user.auth_hotp_tel
+      }))
+
+      response.setHeader('Set-Cookie', this.auth.createCookie(token))
+
+      return {
+        tel: user.auth_hotp_tel,
+        type: 'hotp'
+      }
     }
 
     response.statusCode = 401
     throw new Error('MFA is undefined')
   }
 
-  public async requestSecondFactorHotpEmail (response: ServerResponse, user: User): Promise<Struct> {
-    const secret = new Secret()
-    const counter = Math.round(Math.random() * 1_000_000)
-
-    const otp = HOTP.generate({
-      counter,
-      secret
-    })
-
-    const token = this.auth.createUserToken(user, this.tokenExpires)
-
-    await this.auth.setTmpUser(createUser({
-      auth_hotp: `${secret.base32}:${counter}`,
-      user_id: user.user_id
-    }), token)
-
-    await this.smtp?.send(await this.smtp.create('auth_hotp_email', {
-      otp,
-      token,
-      user
-    }, user))
-
-    response.setHeader('Set-Cookie', this.auth.createCookie(token))
-
-    return {
-      email: user.auth_hotp_email,
-      type: 'hotp'
-    }
-  }
-
-  public async requestSecondFactorHotpTel (response: ServerResponse, user: User): Promise<Struct> {
-    const secret = new Secret()
-    const counter = Math.round(Math.random() * 1_000_000)
-
-    const otp = HOTP.generate({
-      counter,
-      secret
-    })
-
-    const token = this.auth.createUserToken(user, this.tokenExpires)
-
-    await this.auth.setTmpUser(createUser({
-      auth_hotp: `${secret.base32}:${counter}`,
-      user_id: user.user_id
-    }), token)
-
-    await this.sms?.send(await this.sms.create('auth_hotp_sms', {
-      otp,
-      token,
-      user
-    }, user))
-
-    response.setHeader('Set-Cookie', this.auth.createCookie(token))
-
-    return {
-      tel: user.auth_hotp_tel,
-      type: 'hotp'
-    }
-  }
-
-  public async requestSecondFactorTotp (response: ServerResponse, user: User): Promise<Struct> {
-    if (user.auth_totp === null) {
-      response.statusCode = 401
-      throw new Error('TOTP secret in database is null')
-    }
-
+  protected async requestTotp (response: ServerResponse, user: User): Promise<Struct> {
     const token = this.auth.createUserToken(user, this.tokenExpires)
 
     await this.auth.setTmpUser(createUser({

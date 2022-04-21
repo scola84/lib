@@ -2,13 +2,13 @@ import { AuthHandler } from '../auth'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 
-interface AuthRegisterPostTotpConfirmData extends RouteData {
+interface AuthUnregisterPostTotpConfirmData extends RouteData {
   body: {
     totp: string
   }
 }
 
-export class AuthRegisterPostTotpConfirmHandler extends AuthHandler {
+export class AuthUnregisterPostTotpConfirmHandler extends AuthHandler {
   public authenticate = true
 
   public method = 'POST'
@@ -27,7 +27,7 @@ export class AuthRegisterPostTotpConfirmHandler extends AuthHandler {
     }
   }
 
-  public async handle (data: AuthRegisterPostTotpConfirmData, response: ServerResponse): Promise<void> {
+  public async handle (data: AuthUnregisterPostTotpConfirmData, response: ServerResponse): Promise<void> {
     if (data.user === undefined) {
       response.statusCode = 401
       throw new Error('User is undefined')
@@ -47,7 +47,7 @@ export class AuthRegisterPostTotpConfirmHandler extends AuthHandler {
       throw new Error('User in store is null')
     }
 
-    if (!this.auth.validateTotp(tmpUser, data.body.totp)) {
+    if (!this.auth.validateTotp(data.user, data.body.totp)) {
       response.statusCode = 401
       throw new Error('TOTP is not valid')
     }

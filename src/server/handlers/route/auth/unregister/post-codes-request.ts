@@ -1,8 +1,9 @@
 import { AuthHandler } from '../auth'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
+import { createUser } from '../../../../entities'
 
-export class AuthRegisterPostCodesConfirmHandler extends AuthHandler {
+export class AuthUnregisterPostCodesRequestHandler extends AuthHandler {
   public authenticate = true
 
   public method = 'POST'
@@ -13,14 +14,10 @@ export class AuthRegisterPostCodesConfirmHandler extends AuthHandler {
       throw new Error('Token is undefined')
     }
 
-    const tmpUser = await this.auth.getDelTmpUser(data.user.token.hash)
-
-    if (tmpUser === null) {
-      response.statusCode = 401
-      throw new Error('User in store is null')
-    }
-
-    await this.auth.updateUserCodes(tmpUser)
-    await this.auth.clearBackoff(data)
+    await this.auth.setTmpUser(createUser({
+      auth_codes: null,
+      auth_codes_confirmed: false,
+      user_id: data.user.user_id
+    }), data.user.token)
   }
 }

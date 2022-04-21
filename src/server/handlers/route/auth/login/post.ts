@@ -1,4 +1,4 @@
-import { AuthLoginPostPasswordHandler } from '../../../..'
+import { AuthLoginPostPasswordHandler } from './post-password'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'

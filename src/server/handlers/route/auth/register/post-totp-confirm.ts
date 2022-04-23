@@ -1,14 +1,15 @@
-import { AuthHandler } from '../auth'
+import { AuthRegisterHandler } from './abstract-register'
+import { AuthTotp } from '../../../../helpers'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 
 interface AuthRegisterPostTotpConfirmData extends RouteData {
   body: {
-    totp: string
+    token: string
   }
 }
 
-export class AuthRegisterPostTotpConfirmHandler extends AuthHandler {
+export class AuthRegisterPostTotpConfirmHandler extends AuthRegisterHandler {
   public authenticate = true
 
   public method = 'POST'
@@ -17,7 +18,7 @@ export class AuthRegisterPostTotpConfirmHandler extends AuthHandler {
     body: {
       required: true,
       schema: {
-        totp: {
+        token: {
           pattern: /^\d{6}$/u,
           required: true,
           type: 'text'
@@ -33,27 +34,14 @@ export class AuthRegisterPostTotpConfirmHandler extends AuthHandler {
       throw new Error('User is undefined')
     }
 
-    const hash = this.auth.getHash(data)
+    const tmpUser = await this.getTmpUser(data, response)
+    const totp = AuthTotp.parse(tmpUser.auth_totp ?? '')
 
-    if (hash === undefined) {
-      response.statusCode = 401
-      throw new Error('Hash is undefined')
-    }
-
-    const tmpUser = await this.auth.getDelTmpUser(hash)
-
-    if (tmpUser === null) {
-      response.statusCode = 401
-      throw new Error('User in store is null')
-    }
-
-    if (!this.auth.validateTotp(tmpUser, data.body.totp)) {
+    if (totp.validate(data.body) === null) {
       response.statusCode = 401
       throw new Error('TOTP is not valid')
     }
 
-    await this.auth.updateUserTotp(tmpUser)
-    await this.auth.login(response, data.user)
-    await this.auth.clearBackoff(data)
+    await this.updateUserTotp(tmpUser)
   }
 }

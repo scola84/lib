@@ -1,5 +1,5 @@
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
-import { AuthHandler } from '../auth'
+import { AuthLoginHandler } from './abstract-login'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
 import { createUser } from '../../../../entities'
@@ -14,7 +14,7 @@ export interface AuthLoginPostIdentityHandlerOptions extends Partial<RouteHandle
   tokenExpires?: number
 }
 
-export class AuthLoginPostIdentityHandler extends AuthHandler {
+export class AuthLoginPostIdentityHandler extends AuthLoginHandler {
   public method = 'POST'
 
   public schema = {
@@ -38,7 +38,7 @@ export class AuthLoginPostIdentityHandler extends AuthHandler {
   }
 
   public async handle (data: AuthLoginPostIdentityData, response: ServerResponse): Promise<Struct> {
-    const user = await this.auth.selectUserByIdentity(data.body.identity)
+    const user = await this.selectUserByIdentity(data.body.identity)
 
     if (user === undefined) {
       response.statusCode = 401
@@ -60,7 +60,7 @@ export class AuthLoginPostIdentityHandler extends AuthHandler {
 
     const token = this.auth.createUserToken(user, this.tokenExpires)
 
-    await this.auth.setTmpUser(createUser({
+    await this.setTmpUser(createUser({
       user_id: user.user_id
     }), token)
 

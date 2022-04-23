@@ -1,4 +1,5 @@
-import { AuthHandler } from '../auth'
+import { AuthCodes } from '../../../../helpers'
+import { AuthLoginHandler } from './abstract-login'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 
@@ -8,7 +9,7 @@ interface AuthLoginPostCodeData extends RouteData {
   }
 }
 
-export class AuthLoginPostCodeHandler extends AuthHandler {
+export class AuthLoginPostCodeHandler extends AuthLoginHandler {
   public method = 'POST'
 
   public schema = {
@@ -26,49 +27,18 @@ export class AuthLoginPostCodeHandler extends AuthHandler {
   }
 
   public async handle (data: AuthLoginPostCodeData, response: ServerResponse): Promise<void> {
-    const hash = this.auth.getHash(data)
+    const user = await this.selectUser(data, response)
+    const codes = AuthCodes.parse(user.auth_codes ?? '')
 
-    if (hash === undefined) {
-      response.statusCode = 401
-      throw new Error('Hash is undefined')
-    }
-
-    const tmpUser = await this.auth.getDelTmpUser(hash)
-
-    if (tmpUser === null) {
-      response.statusCode = 401
-      throw new Error('User in store is null')
-    }
-
-    const user = await this.auth.selectUser(tmpUser.user_id)
-
-    if (user === undefined) {
-      response.statusCode = 401
-      throw new Error('User in database is undefined')
-    }
-
-    if (user.auth_codes === null) {
-      response.statusCode = 401
-      throw new Error('Codes in database is null')
-    }
-
-    if (!this.auth.validateCode(user, data.body.code)) {
+    if (!codes.validate(data.body.code)) {
       response.statusCode = 401
       throw new Error('Code is not valid')
     }
 
-    await this.auth.updateUserCodes(user)
+    user.auth_codes = codes.toString()
+    await this.updateUserCodes(user)
     await this.auth.login(response, user)
-
-    if (
-      user.preferences.auth_login_email === true &&
-      user.email !== null
-    ) {
-      await this.smtp?.send(await this.smtp.create('auth_login_email', {
-        user
-      }, user))
-    }
-
     await this.auth.clearBackoff(data)
+    await this.sendMessage(user)
   }
 }

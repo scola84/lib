@@ -1,4 +1,5 @@
-import { AuthRegisterPostPasswordHandler } from '../../../..'
+import { AuthPassword } from '../../../../helpers'
+import { AuthRegisterPasswordHandler } from './abstract-password'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
@@ -15,7 +16,7 @@ interface AuthRegisterPostData extends RouteData {
   }
 }
 
-export class AuthRegisterPostHandler extends AuthRegisterPostPasswordHandler {
+export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
   public method = 'POST'
 
   public schema = {
@@ -56,19 +57,25 @@ export class AuthRegisterPostHandler extends AuthRegisterPostPasswordHandler {
   }
 
   public async handle (data: AuthRegisterPostData, response: ServerResponse): Promise<void> {
-    const existingUser = await this.auth.selectUserByIdentities(createUser({
+    const tmpUser = createUser({
       email: data.body.email,
       tel: data.body.tel,
       username: data.body.username
-    }))
+    })
 
-    if (existingUser !== undefined) {
+    const user = await this.selectUserByIdentities(tmpUser)
+
+    if (user !== undefined) {
       response.statusCode = 401
       throw new Error('User in database is defined')
     }
 
+    const password = new AuthPassword()
+
+    await password.generate(data.body.password)
+
     await this.register(data, response, createUser({
-      auth_password: await this.auth.createPassword(data.body.password),
+      auth_password: password.toString(),
       email: data.body.email,
       name: data.body.name,
       preferences: data.body.preferences,

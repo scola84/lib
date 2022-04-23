@@ -1,6 +1,8 @@
 import { AuthHandler } from '../auth'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
+import type { User } from '../../../../entities'
+import { sql } from '../../../../helpers'
 
 export class AuthUnregisterPostIdentityConfirmHandler extends AuthHandler {
   public authenticate = true
@@ -8,26 +10,19 @@ export class AuthUnregisterPostIdentityConfirmHandler extends AuthHandler {
   public method = 'POST'
 
   public async handle (data: RouteData, response: ServerResponse): Promise<void> {
-    if (data.user === undefined) {
-      response.statusCode = 401
-      throw new Error('User is undefined')
-    }
+    const tmpUser = await this.getTmpUser(data, response)
 
-    const hash = this.auth.getHashFromAuthorization(data)
-
-    if (hash === undefined) {
-      response.statusCode = 401
-      throw new Error('Hash is undefined')
-    }
-
-    const tmpUser = await this.auth.getDelTmpUser(hash)
-
-    if (tmpUser === null) {
-      response.statusCode = 401
-      throw new Error('User in store is null')
-    }
-
-    await this.auth.deleteUser(tmpUser)
+    await this.deleteUser(tmpUser)
     await this.auth.logout(response)
+  }
+
+  protected async deleteUser (user: Pick<User, 'user_id'>): Promise<void> {
+    await this.database.delete<User>(sql`
+      DELETE
+      FROM $[user]
+      WHERE $[user_id] = $(user_id)
+    `, {
+      user_id: user.user_id
+    })
   }
 }

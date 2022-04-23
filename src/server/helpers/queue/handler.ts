@@ -590,7 +590,7 @@ export abstract class QueueHandler {
    *
    * @param task - The task
    */
-  protected async updateRun (task: Task): Promise<void> {
+  protected async updateRun (task: Pick<Task, 'run' | 'status' | 'task_id'>): Promise<void> {
     await this.database.update<Run>(sql`
       UPDATE run
       SET
@@ -621,7 +621,7 @@ export abstract class QueueHandler {
    *
    * @param task - The task
    */
-  protected async updateTaskOnFinish (task: Task): Promise<void> {
+  protected async updateTaskOnFinish (task: Pick<Task, 'reason' | 'result' | 'status' | 'task_id'>): Promise<void> {
     await this.database.update<Task>(sql`
       UPDATE task
       SET
@@ -666,7 +666,7 @@ export abstract class QueueHandler {
    *
    * @param task - The task
    */
-  protected async updateTaskOnRun (task: Task): Promise<void> {
+  protected async updateTaskOnRun (task: Pick<Task, 'task_id'>): Promise<void> {
     await this.database.update<Task>(sql`
       UPDATE task
       SET

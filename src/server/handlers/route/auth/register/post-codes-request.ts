@@ -1,13 +1,29 @@
-import { AuthHandler } from '../auth'
-import type { RouteData } from '../../../../helpers'
+import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
+import { AuthCodes } from '../../../../helpers'
+import { AuthRegisterHandler } from './abstract-register'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
 import { createUser } from '../../../../entities'
 
-export class AuthRegisterPostCodesRequestHandler extends AuthHandler {
+export interface AuthRegisterPostCodesRequestHandlerOptions extends Partial<RouteHandlerOptions> {
+  count?: number
+  length?: number[]
+}
+
+export class AuthRegisterPostCodesRequestHandler extends AuthRegisterHandler {
   public authenticate = true
 
+  public count: number
+
+  public length: number[]
+
   public method = 'POST'
+
+  public constructor (options?: AuthRegisterPostCodesRequestHandlerOptions) {
+    super(options)
+    this.count = options?.count ?? 5
+    this.length = options?.length ?? [5]
+  }
 
   public async handle (data: RouteData, response: ServerResponse): Promise<Struct> {
     if (data.user?.token === undefined) {
@@ -15,10 +31,10 @@ export class AuthRegisterPostCodesRequestHandler extends AuthHandler {
       throw new Error('Token is undefined')
     }
 
-    const codes = this.auth.createCodes()
+    const codes = new AuthCodes()
 
-    await this.auth.setTmpUser(createUser({
-      auth_codes: codes,
+    await this.setTmpUser(createUser({
+      auth_codes: codes.toString(),
       auth_codes_confirmed: true,
       user_id: data.user.user_id
     }), data.user.token)

@@ -1,3 +1,5 @@
+export * from './abstract-login'
+export * from './abstract-password'
 export * from './post-code'
 export * from './post-hotp'
 export * from './post-identity'

@@ -14,7 +14,7 @@ export class AuthUnregisterPostTotpRequestHandler extends AuthHandler {
       throw new Error('Token is undefined')
     }
 
-    await this.auth.setTmpUser(createUser({
+    await this.setTmpUser(createUser({
       auth_totp: null,
       auth_totp_confirmed: false,
       user_id: data.user.user_id

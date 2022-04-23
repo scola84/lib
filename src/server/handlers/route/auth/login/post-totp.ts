@@ -1,24 +1,22 @@
-import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
-import { AuthHandler } from '../auth'
+import { AuthLoginHandler } from './abstract-login'
+import { AuthTotp } from '../../../../helpers'
+import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 
 interface AuthLoginPostTotpData extends RouteData {
   body: {
-    totp: string
+    token: string
   }
 }
 
-export interface AuthLoginPostTotpHandlerOptions extends Partial<RouteHandlerOptions> {
-}
-
-export class AuthLoginPostTotpHandler extends AuthHandler {
+export class AuthLoginPostTotpHandler extends AuthLoginHandler {
   public method = 'POST'
 
   public schema = {
     body: {
       required: true,
       schema: {
-        totp: {
+        token: {
           pattern: /^\d{6}$/u,
           required: true,
           type: 'text'
@@ -28,53 +26,17 @@ export class AuthLoginPostTotpHandler extends AuthHandler {
     }
   }
 
-  public constructor (options?: AuthLoginPostTotpHandlerOptions) {
-    super(options)
-  }
-
   public async handle (data: AuthLoginPostTotpData, response: ServerResponse): Promise<void> {
-    const hash = this.auth.getHash(data)
+    const user = await this.selectUser(data, response)
+    const totp = AuthTotp.parse(user.auth_totp ?? '')
 
-    if (hash === undefined) {
-      response.statusCode = 401
-      throw new Error('Hash is undefined')
-    }
-
-    const tmpUser = await this.auth.getDelTmpUser(hash)
-
-    if (tmpUser === null) {
-      response.statusCode = 401
-      throw new Error('Factor in store is null')
-    }
-
-    const user = await this.auth.selectUser(tmpUser.user_id)
-
-    if (user === undefined) {
-      response.statusCode = 401
-      throw new Error('User in database is undefined')
-    }
-
-    if (user.auth_totp === null) {
-      response.statusCode = 401
-      throw new Error('TOTP secret in database is null')
-    }
-
-    if (!this.auth.validateTotp(user, data.body.totp)) {
+    if (totp.validate(data.body) === null) {
       response.statusCode = 401
       throw new Error('TOTP is not valid')
     }
 
     await this.auth.login(response, user)
-
-    if (
-      user.preferences.auth_login_email === true &&
-      user.email !== null
-    ) {
-      await this.smtp?.send(await this.smtp.create('auth_login_email', {
-        user
-      }, user))
-    }
-
     await this.auth.clearBackoff(data)
+    await this.sendMessage(user)
   }
 }

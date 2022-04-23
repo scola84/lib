@@ -1,4 +1,5 @@
 import { AuthHandler } from '../auth'
+import { AuthHotp } from '../../../../helpers'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
@@ -32,67 +33,72 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
   }
 
   public async handle (data: AuthUnregisterPostHotpRequestData, response: ServerResponse): Promise<Struct> {
+    if (data.body.email !== undefined) {
+      return this.requestHotpEmail(data, response, data.body.email)
+    } else if (data.body.tel !== undefined) {
+      return this.requestHotpTel(data, response, data.body.tel)
+    }
+
+    response.statusCode = 401
+    throw new Error('HOTP is undefined')
+  }
+
+  protected async requestHotpEmail (data: AuthUnregisterPostHotpRequestData, response: ServerResponse, email: string): Promise<Struct> {
     if (data.user?.token === undefined) {
       response.statusCode = 401
       throw new Error('Token is undefined')
     }
 
-    if (
-      data.body.email === undefined &&
-      data.body.tel === undefined
-    ) {
+    const hotp = new AuthHotp()
+
+    const tmpUser = createUser({
+      auth_hotp: hotp.toString(),
+      auth_hotp_email: null,
+      auth_hotp_email_confirmed: false,
+      user_id: data.user.user_id
+    })
+
+    await this.setTmpUser(tmpUser, data.user.token)
+
+    await this.smtp?.send(await this.smtp.create('auth_register_hotp_email', {
+      token: hotp.generate(),
+      user: data.user
+    }, {
+      email: email,
+      name: data.user.name,
+      preferences: data.user.preferences
+    }))
+
+    return {
+      email
+    }
+  }
+
+  protected async requestHotpTel (data: AuthUnregisterPostHotpRequestData, response: ServerResponse, tel: string): Promise<Struct> {
+    if (data.user?.token === undefined) {
       response.statusCode = 401
-      throw new Error('Email and tel are undefined')
+      throw new Error('Token is undefined')
     }
 
-    const hotp = this.auth.createHotp()
+    const hotp = new AuthHotp()
 
-    if (data.body.email !== undefined) {
-      const user = createUser({
-        auth_hotp: `${hotp.secret.base32}:${hotp.counter}`,
-        auth_hotp_email: null,
-        auth_hotp_email_confirmed: false,
-        user_id: data.user.user_id
-      })
+    await this.setTmpUser(createUser({
+      auth_hotp: hotp.toString(),
+      auth_hotp_tel: null,
+      auth_hotp_tel_confirmed: false,
+      user_id: data.user.user_id
+    }), data.user.token)
 
-      await this.auth.setTmpUser(user, data.user.token)
+    await this.sms?.send(await this.sms.create('auth_register_hotp_tel', {
+      token: hotp.generate(),
+      user: data.user
+    }, {
+      preferences: data.user.preferences,
+      tel: tel
+    }))
 
-      await this.smtp?.send(await this.smtp.create('auth_unregister_hotp_email', {
-        hotp: hotp.generate(),
-        user: user
-      }, {
-        email: data.body.email,
-        name: data.user.name,
-        preferences: data.user.preferences
-      }))
-
-      return {
-        email: data.body.email
-      }
-    } else if (data.body.tel !== undefined) {
-      const user = createUser({
-        auth_hotp: `${hotp.secret.base32}:${hotp.counter}`,
-        auth_hotp_tel: null,
-        auth_hotp_tel_confirmed: false,
-        user_id: data.user.user_id
-      })
-
-      await this.auth.setTmpUser(user, data.user.token)
-
-      await this.sms?.send(await this.sms.create('auth_unregister_hotp_sms', {
-        hotp: hotp.generate(),
-        user: user
-      }, {
-        preferences: data.user.preferences,
-        tel: data.body.tel
-      }))
-
-      return {
-        tel: data.body.tel
-      }
+    return {
+      tel
     }
-
-    response.statusCode = 401
-    throw new Error('HOTP is undefined')
   }
 }

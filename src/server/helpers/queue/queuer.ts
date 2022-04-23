@@ -544,7 +544,7 @@ export class Queuer {
    *
    * @param queue - The queue
    */
-  protected async updateQueue (queue: Queue): Promise<void> {
+  protected async updateQueue (queue: Pick<Queue, 'queue_id' | 'schedule_cron'>): Promise<void> {
     await this.database.update<Queue>(sql`
       UPDATE queue
       SET schedule_next = $(schedule_next)

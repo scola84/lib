@@ -1,14 +1,15 @@
-import { AuthHandler } from '../auth'
+import { AuthHotp } from '../../../../helpers'
+import { AuthRegisterHandler } from './abstract-register'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 
 interface AuthRegisterPostHotpConfirmData extends RouteData {
   body: {
-    hotp: string
+    token: string
   }
 }
 
-export class AuthRegisterPostHotpConfirmHandler extends AuthHandler {
+export class AuthRegisterPostHotpConfirmHandler extends AuthRegisterHandler {
   public authenticate = true
 
   public method = 'POST'
@@ -17,7 +18,7 @@ export class AuthRegisterPostHotpConfirmHandler extends AuthHandler {
     body: {
       required: true,
       schema: {
-        hotp: {
+        token: {
           pattern: /^\d{6}$/u,
           required: true,
           type: 'text'
@@ -33,27 +34,14 @@ export class AuthRegisterPostHotpConfirmHandler extends AuthHandler {
       throw new Error('User is undefined')
     }
 
-    const hash = this.auth.getHash(data)
+    const tmpUser = await this.getTmpUser(data, response)
+    const hotp = AuthHotp.parse(tmpUser.auth_hotp ?? '')
 
-    if (hash === undefined) {
-      response.statusCode = 401
-      throw new Error('Hash is undefined')
-    }
-
-    const tmpUser = await this.auth.getDelTmpUser(hash)
-
-    if (tmpUser === null) {
-      response.statusCode = 401
-      throw new Error('User in store is null')
-    }
-
-    if (!this.auth.validateHotp(tmpUser, data.body.hotp)) {
+    if (hotp.validate(data.body) === null) {
       response.statusCode = 401
       throw new Error('HOTP is not valid')
     }
 
-    await this.auth.login(response, data.user)
-    await this.auth.updateUserHotp(tmpUser)
-    await this.auth.clearBackoff(data)
+    await this.updateUserHotp(tmpUser)
   }
 }

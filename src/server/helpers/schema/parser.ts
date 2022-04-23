@@ -1,4 +1,4 @@
-import type { ChildNode, Element } from 'parse5'
+import type { ChildNode, Element } from 'parse5/dist/tree-adapters/default'
 import type { Schema, SchemaField, SchemaFieldKey } from './validator'
 import { Struct, cast, isArray, isObject, isStruct, toJoint } from '../../../common'
 import { parse } from 'path'

@@ -250,7 +250,7 @@ export class QueueRunner {
    * @param run - The queue run
    * @param error - The error
    */
-  protected async updateRunErr (run: Run, error: unknown): Promise<void> {
+  protected async updateRunErr (run: Pick<Run, 'run_id'>, error: unknown): Promise<void> {
     await this.database.update<Run>(sql`
       UPDATE run
       SET
@@ -271,7 +271,7 @@ export class QueueRunner {
    *
    * @param run - The queue run
    */
-  protected async updateRunTotal (run: Run): Promise<void> {
+  protected async updateRunTotal (run: Pick<Run, 'aggr_total' | 'run_id'>): Promise<void> {
     await this.database.update<Run>(sql`
       UPDATE run
       SET

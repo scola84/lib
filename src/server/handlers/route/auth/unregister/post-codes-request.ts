@@ -14,7 +14,7 @@ export class AuthUnregisterPostCodesRequestHandler extends AuthHandler {
       throw new Error('Token is undefined')
     }
 
-    await this.auth.setTmpUser(createUser({
+    await this.setTmpUser(createUser({
       auth_codes: null,
       auth_codes_confirmed: false,
       user_id: data.user.user_id

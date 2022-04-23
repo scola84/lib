@@ -1,3 +1,5 @@
+export * from './abstract-password'
+export * from './abstract-register'
 export * from './post-codes-confirm'
 export * from './post-codes-request'
 export * from './post-hotp-confirm'

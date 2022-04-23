@@ -1,4 +1,4 @@
-import { AuthLoginPostPasswordHandler } from './post-password'
+import { AuthLoginPasswordHandler } from './abstract-password'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
@@ -10,7 +10,7 @@ interface AuthLoginPostData extends RouteData {
   }
 }
 
-export class AuthLoginPostHandler extends AuthLoginPostPasswordHandler {
+export class AuthLoginPostHandler extends AuthLoginPasswordHandler {
   public method = 'POST'
 
   public schema = {
@@ -31,7 +31,7 @@ export class AuthLoginPostHandler extends AuthLoginPostPasswordHandler {
   }
 
   public async handle (data: AuthLoginPostData, response: ServerResponse): Promise<Struct | undefined> {
-    const user = await this.auth.selectUserByIdentity(data.body.identity)
+    const user = await this.selectUserByIdentity(data.body.identity)
 
     if (user === undefined) {
       response.statusCode = 401

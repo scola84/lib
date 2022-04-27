@@ -1,7 +1,7 @@
 import type { Sms, SmsSendOptions, SmsSendResult } from './sms'
 import { I18n } from '../../../common'
 import type { MessageBird } from 'messagebird/types'
-import type { User } from '../../entities'
+import type { User } from '../../../common'
 import messagebird from 'messagebird'
 
 export interface MessageBirdSmsOptions {

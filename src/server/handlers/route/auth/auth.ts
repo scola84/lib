@@ -1,5 +1,5 @@
 import type { RouteAuth, RouteData, RouteHandlerOptions } from '../../../helpers/route'
-import type { User, UserToken } from '../../../entities'
+import type { User, UserToken } from '../../../../common'
 import type { RedisClientType } from 'redis'
 import { RouteHandler } from '../../../helpers/route'
 import type { ServerResponse } from 'http'

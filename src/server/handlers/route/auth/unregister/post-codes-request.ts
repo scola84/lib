@@ -1,7 +1,7 @@
 import { AuthHandler } from '../auth'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import { createUser } from '../../../../entities'
+import { createUser } from '../../../../../common'
 
 export class AuthUnregisterPostCodesRequestHandler extends AuthHandler {
   public authenticate = true

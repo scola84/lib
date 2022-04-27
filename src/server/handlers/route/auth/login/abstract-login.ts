@@ -1,7 +1,7 @@
 import { AuthHandler } from '../auth'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { User } from '../../../../entities'
+import type { User } from '../../../../../common'
 import { sql } from '../../../../helpers'
 
 export abstract class AuthLoginHandler extends AuthHandler {

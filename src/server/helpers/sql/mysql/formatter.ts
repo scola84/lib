@@ -4,7 +4,7 @@ import { Struct, isStruct } from '../../../../common'
 import type { Query } from '../../../../common'
 import type { SqlDdl } from '../formatter'
 import { SqlFormatter } from '../formatter'
-import type { User } from '../../../entities'
+import type { User } from '../../../../common'
 import { escape } from 'sqlstring'
 import { sql } from '../tag'
 

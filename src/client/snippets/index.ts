@@ -1,3 +1,4 @@
+import authFlowLogin from './auth/flow/login.html'
 import authFormGroup from './auth/form/group.html'
 import authFormRole from './auth/form/role.html'
 import authFormUser from './auth/form/user.html'
@@ -10,14 +11,15 @@ import queueFormRun from './queue/form/run.html'
 import queueFormTask from './queue/form/task.html'
 
 export const snippets = {
-  'auth-form-group': authFormGroup,
-  'auth-form-role': authFormRole,
-  'auth-form-user': authFormUser,
-  'auth-form-user-group': authFormUserGroup,
-  'auth-form-user-group-role': authFormUserGroupRole,
-  'auth-form-user-role': authFormUserRole,
-  'auth-form-user-token': authFormUserToken,
-  'queue-form-queue': queueFormQueue,
-  'queue-form-run': queueFormRun,
-  'queue-form-task': queueFormTask
+  'sc-auth-flow-login': authFlowLogin,
+  'sc-auth-form-group': authFormGroup,
+  'sc-auth-form-role': authFormRole,
+  'sc-auth-form-user': authFormUser,
+  'sc-auth-form-user-group': authFormUserGroup,
+  'sc-auth-form-user-group-role': authFormUserGroupRole,
+  'sc-auth-form-user-role': authFormUserRole,
+  'sc-auth-form-user-token': authFormUserToken,
+  'sc-queue-form-queue': queueFormQueue,
+  'sc-queue-form-run': queueFormRun,
+  'sc-queue-form-task': queueFormTask
 }

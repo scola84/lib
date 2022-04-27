@@ -1,9 +1,8 @@
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
-import type { User, UserToken } from '../../../../entities'
+import type { Struct, User, UserToken } from '../../../../../common'
 import { AuthRegisterHandler } from './abstract-register'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
-import { createUser } from '../../../../entities'
+import { createUser } from '../../../../../common'
 
 interface AuthRegisterPostIdentityData extends RouteData {
   body: {

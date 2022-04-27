@@ -1,10 +1,9 @@
+import type { Query, User } from '../../../../common'
 import type { Schema, SchemaField } from '../../../helpers/schema'
 import { Struct, cast, isFile, isSame } from '../../../../common'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
-import type { Query } from '../../../../common'
 import type { ServerResponse } from 'http'
-import type { User } from '../../../entities'
 
 export abstract class CrudDeleteHandler extends CrudHandler {
   public method = 'POST'

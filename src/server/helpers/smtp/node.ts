@@ -3,7 +3,7 @@ import type { Smtp, SmtpSendOptions } from './smtp'
 import type Mail from 'nodemailer/lib/mailer'
 import type SMTPTransport from 'nodemailer/lib/smtp-transport'
 import { URL } from 'url'
-import type { User } from '../../entities'
+import type { User } from '../../../common'
 import { createTransport } from 'nodemailer'
 
 export interface NodeSmtpOptions {

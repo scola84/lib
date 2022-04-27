@@ -1,4 +1,4 @@
-import type { User } from '../../entities'
+import type { User } from '../../../common'
 
 export interface SmsSendOptions {
   from: string

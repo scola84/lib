@@ -1,13 +1,11 @@
 import { PassThrough, Writable } from 'stream'
-import type { Queue, Run, Task } from '../../entities'
+import type { Queue, Run, Struct, Task } from '../../../common'
+import { createRun, toString } from '../../../common'
 import type { Readable } from 'stream'
 import type { RedisClientType } from 'redis'
 import type { SqlDatabase } from '../sql'
-import type { Struct } from '../../../common'
-import { createRun } from '../../entities'
 import { pipeline } from '../stream'
 import { sql } from '../sql'
-import { toString } from '../../../common'
 
 export interface QueueRunnerOptions {
   /**

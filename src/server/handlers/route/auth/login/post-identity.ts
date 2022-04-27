@@ -2,7 +2,7 @@ import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
 import { AuthLoginHandler } from './abstract-login'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
-import { createUser } from '../../../../entities'
+import { createUser } from '../../../../../common'
 
 interface AuthLoginPostIdentityData extends RouteData {
   body: {

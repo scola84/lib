@@ -1,10 +1,9 @@
-import type { Query, Struct } from '../../../../common'
+import type { Query, Struct, User } from '../../../../common'
 import type { Schema, SchemaField, SchemaFieldKey } from '../../../helpers/schema'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
 import { ScolaFile } from '../../../../common'
 import type { ServerResponse } from 'http'
-import type { User } from '../../../entities'
 
 export abstract class CrudInsertHandler extends CrudHandler {
   public method = 'POST'

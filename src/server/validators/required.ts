@@ -1,6 +1,5 @@
 import type { SchemaField, Validator } from '../helpers'
-import type { Struct } from '../../common'
-import type { User } from '../entities'
+import type { Struct, User } from '../../common'
 import { isNil } from '../../common'
 
 export function required (name: string, field: SchemaField): Validator {

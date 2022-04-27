@@ -1,12 +1,10 @@
-import type { Group, Role, User, UserGroupRole, UserRole, UserToken } from '../../entities'
-import { isNil, revive } from '../../../common'
+import type { Group, Role, Struct, User, UserGroupRole, UserRole, UserToken } from '../../../common'
+import { createUserToken, isNil, revive } from '../../../common'
 import { parse, serialize } from 'cookie'
 import type { RedisClientType } from 'redis'
 import type { RouteData } from './handler'
 import type { ServerResponse } from 'http'
 import type { SqlDatabase } from '../sql'
-import type { Struct } from '../../../common'
-import { createUserToken } from '../../entities'
 import { randomBytes } from 'crypto'
 import { sql } from '../sql'
 
@@ -230,9 +228,9 @@ export class RouteAuth {
       .pExpire(key, this.backoffExpires)
       .exec()
 
-    setTimeout(() => {
-      response.end()
-    }, (this.backoffFactor ** Number(count ?? 0)) * 1000)
+    response.end()
+    // setTimeout(() => {
+    // }, (this.backoffFactor ** Number(count ?? 0)) * 1000)
   }
 
   protected async deleteUserToken (userToken: Pick<UserToken, 'token_id'>): Promise<void> {

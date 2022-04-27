@@ -8,6 +8,7 @@
   font-size: inherit;
   font-weight: inherit;
   line-height: inherit;
+  list-style: none;
   margin: 0;
   padding: 0;
   text-align: start;
@@ -579,6 +580,18 @@ body {
 
 [sc-scrollbar-color="theme"]:hover::-webkit-scrollbar-thumb {
   background-color: var(--tc1);
+}
+
+[sc-text-align="center"] {
+  text-align: center;
+}
+
+[sc-text-align="end"] {
+  text-align: end;
+}
+
+[sc-text-align="start"] {
+  text-align: start;
 }
 
 [sc-text-color="black"] {

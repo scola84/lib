@@ -1,7 +1,7 @@
 import type { Sms, SmsSendOptions, SmsSendResult } from './sms'
 import { I18n } from '../../../common'
 import type { Twilio } from 'twilio'
-import type { User } from '../../entities'
+import type { User } from '../../../common'
 import twilio from 'twilio'
 
 export interface TwilioSmsOptions {

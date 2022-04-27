@@ -631,6 +631,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       url = url.replace(previous, current)
     }
 
-    window.history.replaceState(null, '', url)
+    window.history.replaceState(null, '', url + window.location.search + window.location.hash)
   }
 }

@@ -1,8 +1,7 @@
 import { I18n, Struct, flatten, toJoint } from '../../../common'
+import type { Query, User } from '../../../common'
 import type { Schema, SchemaField, SchemaFieldKey } from '../schema'
 import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from './query'
-import type { Query } from '../../../common'
-import type { User } from '../../entities'
 import { sql } from './tag'
 
 export interface SqlDdl {

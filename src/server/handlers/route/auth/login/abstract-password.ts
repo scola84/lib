@@ -1,10 +1,9 @@
 import { AuthHotp, AuthPassword } from '../../../../helpers'
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
+import type { Struct, User } from '../../../../../common'
 import { AuthLoginHandler } from './abstract-login'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
-import type { User } from '../../../../entities'
-import { createUser } from '../../../../entities'
+import { createUser } from '../../../../../common'
 
 interface AuthLoginPasswordData extends RouteData {
   body: {

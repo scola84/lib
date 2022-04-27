@@ -1,5 +1,6 @@
 import '@ungap/custom-elements'
 import { ScolaAudioElement } from './audio'
+import { ScolaAuthElement } from './auth'
 import { ScolaButtonElement } from './button'
 import { ScolaButtonGroupElement } from './button-group'
 import { ScolaCarouselElement } from './carousel'
@@ -14,7 +15,9 @@ import { ScolaIconElement } from './icon'
 import { ScolaIdbElement } from './idb'
 import { ScolaImageElement } from './img'
 import { ScolaInputElement } from './input'
+import { ScolaLIElement } from './li'
 import { ScolaLabelElement } from './label'
+import { ScolaLegendElement } from './legend'
 import { ScolaMarkedElement } from './marked'
 import { ScolaMessageElement } from './message'
 import { ScolaMoverElement } from './mover'
@@ -31,12 +34,14 @@ import { ScolaTableElement } from './table'
 import { ScolaTableRowElement } from './table-row'
 import { ScolaTextAreaElement } from './textarea'
 import { ScolaTextElement } from './text'
+import { ScolaUListElement } from './ul'
 import { ScolaVideoElement } from './video'
 import { ScolaViewElement } from './view'
 import { ScolaWorkerElement } from './worker'
 
 export function defineElements (): void {
   ScolaAudioElement.define()
+  ScolaAuthElement.define()
   ScolaButtonElement.define()
   ScolaButtonGroupElement.define()
   ScolaCarouselElement.define()
@@ -50,7 +55,9 @@ export function defineElements (): void {
   ScolaIdbElement.define()
   ScolaImageElement.define()
   ScolaInputElement.define()
+  ScolaLIElement.define()
   ScolaLabelElement.define()
+  ScolaLegendElement.define()
   ScolaMarkedElement.define()
   ScolaMessageElement.define()
   ScolaMoverElement.define()
@@ -68,6 +75,7 @@ export function defineElements (): void {
   ScolaTableRowElement.define()
   ScolaTextAreaElement.define()
   ScolaTextElement.define()
+  ScolaUListElement.define()
   ScolaVideoElement.define()
   ScolaViewElement.define()
   ScolaWorkerElement.define()

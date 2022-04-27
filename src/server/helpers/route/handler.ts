@@ -1,4 +1,5 @@
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http'
+import type { Struct, User } from '../../../common'
 import { isNil, toString } from '../../../common'
 import type { FileBucket } from '../file'
 import type { Logger } from 'pino'
@@ -11,9 +12,7 @@ import { SchemaValidator } from '../schema/validator'
 import type { Sms } from '../sms'
 import type { Smtp } from '../smtp'
 import type { SqlDatabase } from '../sql'
-import type { Struct } from '../../../common'
 import type { URL } from 'url'
-import type { User } from '../../entities'
 
 export interface RouteData extends Struct {
   body?: unknown

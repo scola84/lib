@@ -1,5 +1,5 @@
 import { AuthHandler } from '../auth'
-import type { User } from '../../../../entities'
+import type { User } from '../../../../../common'
 import { sql } from '../../../../helpers'
 
 export abstract class AuthRegisterHandler extends AuthHandler {

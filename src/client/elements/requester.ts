@@ -35,6 +35,8 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   public download: boolean
 
+  public error?: ScolaError
+
   public i18n: I18n
 
   public loaded = 0
@@ -72,6 +74,13 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   public wait: boolean
 
   public xhr: Set<XMLHttpRequest> = new Set()
+
+  // eslint-disable-next-line @typescript-eslint/class-literal-property-style
+  public get data (): string {
+    return ''
+  }
+
+  public set data (value: unknown) {}
 
   public get opened (): number {
     return this.xhr.size
@@ -376,10 +385,13 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatch<ScolaError>('error', [{
+    this.error = {
       code: 'err_requester',
       message: toString(error)
-    }])
+    }
+
+    this.setAttribute('aria-invalid', 'true')
+    this.propagator.dispatch<ScolaError>('error', [this.error])
   }
 
   protected handleLoadend (event: ProgressEvent, options: unknown): void {
@@ -407,10 +419,13 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   protected handleLoadendError (event: ProgressEvent, options: unknown, data: unknown): void {
     const xhr = event.target as XMLHttpRequest
 
-    this.propagator.dispatch('error', [{
+    this.error = {
       code: `err_requester_${xhr.status}`,
       message: xhr.statusText
-    }], event)
+    }
+
+    this.setAttribute('aria-invalid', 'true')
+    this.propagator.dispatch<ScolaError>('error', [this.error], event)
 
     if (isStruct(data)) {
       this.propagator.dispatch('errordata', [
@@ -442,6 +457,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       return
     }
 
+    this.removeAttribute('aria-invalid')
     this.propagator.dispatch('message', [data], event)
 
     if (isTransaction(options)) {

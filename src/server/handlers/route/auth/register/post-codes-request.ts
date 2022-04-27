@@ -3,7 +3,7 @@ import { AuthCodes } from '../../../../helpers'
 import { AuthRegisterHandler } from './abstract-register'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
-import { createUser } from '../../../../entities'
+import { createUser } from '../../../../../common'
 
 export interface AuthRegisterPostCodesRequestHandlerOptions extends Partial<RouteHandlerOptions> {
   count?: number

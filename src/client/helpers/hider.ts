@@ -617,6 +617,7 @@ export class Hider {
     if (this.mode === 'move-bottom') {
       if (event.type === 'end') {
         this.toggleScrollElement(event, true)
+
         return (
           event.axis === 'y' &&
           !event.startScroll.top
@@ -648,6 +649,7 @@ export class Hider {
     )) {
       if (event.type === 'end') {
         this.toggleScrollElement(event, true)
+
         return (
           event.axis === 'x' &&
           !event.startScroll.right
@@ -679,6 +681,7 @@ export class Hider {
     )) {
       if (event.type === 'end') {
         this.toggleScrollElement(event, true)
+
         return (
           event.axis === 'x' &&
           !event.startScroll.left
@@ -704,6 +707,7 @@ export class Hider {
     if (this.mode === 'move-top') {
       if (event.type === 'end') {
         this.toggleScrollElement(event, true)
+
         return (
           event.axis === 'y' &&
           !event.startScroll.bottom

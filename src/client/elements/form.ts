@@ -159,7 +159,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected focusErrorElement (): void {
-    const element = this.querySelector('[sc-field-error]:not([hidden]')
+    const element = this.querySelector('[aria-invalid="true"]:not([hidden]')
 
     if (element instanceof HTMLElement) {
       if (element.parentElement?.hasAttribute('tabindex') === false) {
@@ -258,7 +258,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     const force = this.hasAttribute('hidden')
 
     this
-      .querySelectorAll('fieldset')
+      .querySelectorAll('button, input, select, textarea')
       .forEach((element) => {
         element.toggleAttribute('disabled', force)
       })

@@ -1,5 +1,5 @@
 import type { Attachment } from 'nodemailer/lib/mailer'
-import type { User } from '../../entities'
+import type { User } from '../../../common'
 
 export interface SmtpSendOptions {
   attachments?: Attachment[]

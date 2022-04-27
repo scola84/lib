@@ -1,4 +1,4 @@
-import type { Group, Role, User, UserGroup, UserRole } from '../../../../entities'
+import type { Group, Role, User, UserGroup, UserRole } from '../../../../../common'
 import { AuthRegisterHandler } from './abstract-register'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'

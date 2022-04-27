@@ -1,13 +1,15 @@
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import { cast } from '../../common'
-import { highlightElement } from 'prismjs'
+import type { highlightElement } from 'prismjs'
 
 /**
  * Many thanks to https://css-tricks.com/creating-an-editable-textarea-that-supports-syntax-highlighted-code/
  */
 export class ScolaCodeElement extends HTMLDivElement implements ScolaElement {
   public editor: HTMLTextAreaElement | null
+
+  public highlightElement: typeof highlightElement
 
   public mutator: Mutator
 
@@ -124,7 +126,7 @@ export class ScolaCodeElement extends HTMLDivElement implements ScolaElement {
       .replace(/&/gu, '&amp;')
       .replace(/</gu, '&lt;')
 
-    highlightElement(this)
+    this.highlightElement(this)
   }
 
   protected insertTab (editor: HTMLTextAreaElement, tab: string): void {

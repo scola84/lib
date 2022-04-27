@@ -1,3 +1,4 @@
+import { isNumber, isStruct } from '../../helpers'
 import type { Group } from './group'
 import type { Role } from './role'
 import type { User as UserBase } from './base'
@@ -64,6 +65,14 @@ export interface User extends UserBase {
   user_id: number
 
   username: string | null
+}
+
+export function isUser (value: unknown): value is User {
+  return (
+    isStruct(value)
+  ) && (
+    isNumber(value.user_id)
+  )
 }
 
 // eslint-disable-next-line complexity

@@ -1,0 +1,182 @@
+<div
+  class="sc-hidden"
+  id="auth"
+  is="sc-auth"
+  hidden
+  sc-hide
+  sc-hide-mode="opacity@all"
+  sc-onload="sc-requester-send@#requester-get-user"
+  sc-preset="sc-auth"
+>
+  <object
+    id="requester-get-user"
+    is="sc-requester"
+    sc-url="/api/auth/user"
+    sc-wait
+  ></object>
+  <div
+    id="carousel-auth"
+    is="sc-carousel"
+    sc-pointer="0"
+    sc-preset="sc-carousel sc-carousel-auth"
+  >
+    <div is="sc-div" sc-preset="sc-carousel-body" sc-transition="@all">
+      <form
+        hidden
+        id="form-login"
+        is="sc-form"
+        sc-onsubmit="sc-requester-send@#requester-post-login"
+        sc-preset="sc-carousel-item sc-form-auth"
+      >
+        <div is="sc-div" sc-preset="identity"></div>
+        <fieldset is="sc-fieldset" sc-preset="sc-fieldset" sc-height="flex@all">
+          <legend is="sc-legend" sc-preset="sc-fieldset-legend">Login</legend>
+          <div is="sc-div" sc-preset="sc-fieldset-row">
+            <label
+              for="input-login-identity"
+              is="sc-label"
+              sc-code="identity"
+              sc-focus="form"
+              sc-preset="sc-field-label"
+              >Phone, email or username</label
+            >
+            <input
+              aria-errormessage="error-login-identity"
+              id="input-login-identity"
+              is="sc-input"
+              name="identity"
+              required
+              type="text"
+              sc-preset="sc-field"
+            />
+            <span
+              hidden
+              id="error-login-identity"
+              is="sc-text"
+              sc-observe-target="sc-text-state-field-error@#input-login-identity"
+              sc-preset="sc-field-error"
+            ></span>
+          </div>
+          <div is="sc-div" sc-preset="sc-fieldset-row">
+            <label
+              for="input-login-password"
+              is="sc-label"
+              sc-code="password"
+              sc-preset="sc-field-label"
+              >Password</label
+            >
+            <input
+              aria-errormessage="error-login-password"
+              id="input-login-password"
+              is="sc-input"
+              name="password"
+              required
+              type="password"
+              sc-preset="sc-field"
+            />
+            <span
+              hidden
+              id="error-login-password"
+              is="sc-text"
+              sc-observe-target="sc-text-state-field-error@#input-login-password"
+              sc-preset="sc-field-error"
+            ></span>
+          </div>
+          <div
+            is="sc-div"
+            sc-preset="sc-fieldset-row"
+            sc-padding-top="1.25@all"
+          >
+            <object
+              aria-errormessage="error-form-login"
+              id="requester-post-login"
+              is="sc-requester"
+              sc-method="POST"
+              sc-onerrordata="sc-data-set@#form-login"
+              sc-onmessage="sc-data-set@#auth"
+              sc-url="/api/auth/login"
+              sc-wait
+            ></object>
+            <button is="sc-button" type="submit" sc-preset="sc-button-submit">
+              Log In
+            </button>
+          </div>
+          <div
+            is="sc-div"
+            sc-preset="sc-fieldset-row"
+            sc-padding-top="1.25@all"
+          >
+            <span
+              aria-live="polite"
+              hidden
+              id="error-form-login"
+              is="sc-text"
+              role="alert"
+              sc-observe-target="sc-text-state-requester-error@#requester-post-login"
+              sc-preset="sc-form-error"
+            ></span>
+          </div>
+        </fieldset>
+        <ul is="sc-ul" sc-preset="sc-footer-buttons">
+          <li>
+            <button
+              is="sc-button"
+              type="button"
+              sc-code="auth_register"
+              sc-onclick="sc-carousel-go?pointer=1@#carousel-auth"
+              sc-preset="sc-footer-button"
+            >
+              Register account
+            </button>
+          </li>
+          <li>
+            <button
+              is="sc-button"
+              type="button"
+              sc-code="auth_reset"
+              sc-onclick="sc-carousel-go?pointer=2@#carousel-auth"
+              sc-preset="sc-footer-button"
+            >
+              Reset password
+            </button>
+          </li>
+        </ul>
+      </form>
+      <form is="sc-form" sc-direction="column" sc-preset="sc-carousel-item">
+        <fieldset is="sc-fieldset">
+          <legend is="sc-legend">Register</legend>
+          <div is="sc-div">
+            <label
+              for="register-identity"
+              is="sc-label"
+              sc-code="identity"
+              sc-preset="sc-field-label"
+              >Phone, email or username</label
+            >
+            <input id="register-identity" is="sc-input" name="identity" />
+          </div>
+          <div is="sc-div">
+            <label for="registser-password" is="sc-label" sc-code="password"
+              >Password</label
+            >
+            <input id="registser-password" is="sc-input" name="password" />
+          </div>
+          <div is="sc-div">
+            <button is="sc-button" type="submit">Register</button>
+          </div>
+        </fieldset>
+        <ul>
+          <li>
+            <button
+              is="sc-button"
+              sc-code="auth_register"
+              sc-onclick="sc-carousel-go?pointer=0@#carousel-auth"
+            >
+              Login
+            </button>
+          </li>
+        </ul>
+      </form>
+    </div>
+  </div>
+</div>

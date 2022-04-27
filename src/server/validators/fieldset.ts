@@ -1,7 +1,6 @@
 import type { SchemaField, Validator } from '../helpers'
+import type { Struct, User } from '../../common'
 import { SchemaValidator } from '../helpers'
-import type { Struct } from '../../common'
-import type { User } from '../entities'
 import { isStruct } from '../../common'
 
 export function fieldset (name: string, field: SchemaField, user?: User): Validator {

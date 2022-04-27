@@ -3,7 +3,7 @@ import { AuthTotp } from '../../../../helpers'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
-import { createUser } from '../../../../entities'
+import { createUser } from '../../../../../common'
 
 export class AuthRegisterPostTotpRequestHandler extends AuthRegisterHandler {
   public authenticate = true

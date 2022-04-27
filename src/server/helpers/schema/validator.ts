@@ -1,6 +1,5 @@
-import type { Primitive } from '../../../common'
+import type { Primitive, User } from '../../../common'
 import { Struct } from '../../../common'
-import type { User } from '../../entities'
 
 export type Validator = (data: Struct, errors: Struct, user?: User) => Promise<void> | void
 

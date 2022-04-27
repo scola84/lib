@@ -3,7 +3,7 @@ import { AuthRegisterPasswordHandler } from './abstract-password'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
-import { createUser } from '../../../../entities'
+import { createUser } from '../../../../../common'
 
 interface AuthRegisterPostData extends RouteData {
   body: {

@@ -4,7 +4,7 @@ import { Struct, isArray, isNil, isObject, isPrimitive } from '../../../../commo
 import type { Query } from '../../../../common'
 import type { SqlDdl } from '../formatter'
 import { SqlFormatter } from '../formatter'
-import type { User } from '../../../entities'
+import type { User } from '../../../../common'
 import { literal } from 'pg-format'
 import { sql } from '../tag'
 

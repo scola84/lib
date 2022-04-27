@@ -1,8 +1,8 @@
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
-import type { User, UserToken } from '../../../../entities'
+import type { User, UserToken } from '../../../../../common'
 import { AuthHandler } from '../auth'
 import type { ServerResponse } from 'http'
-import { createUser } from '../../../../entities'
+import { createUser } from '../../../../../common'
 
 export interface AuthUnregisterPostIdentityHandlerOptions extends Partial<RouteHandlerOptions
 > {

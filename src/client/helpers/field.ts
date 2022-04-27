@@ -41,8 +41,7 @@ export class Field {
 
   public clear (): void {
     this.error = undefined
-    this.element.toggleAttribute('sc-field-error', false)
-    this.element.toggleAttribute('sc-field-valid', false)
+    this.element.toggleAttribute('aria-invalid', false)
   }
 
   public connect (): void {
@@ -70,12 +69,12 @@ export class Field {
 
   public setError (error: ScolaError): void {
     this.error = error
-    this.element.toggleAttribute('sc-field-error', true)
+    this.element.setAttribute('aria-invalid', 'true')
   }
 
   public setValid (): void {
     this.clear()
-    this.element.toggleAttribute('sc-field-valid', true)
+    this.element.setAttribute('aria-invalid', 'false')
   }
 
   public verify (): void {

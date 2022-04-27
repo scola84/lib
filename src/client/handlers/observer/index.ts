@@ -16,6 +16,8 @@ import { inputDataRequesterProps } from './input-data-requester-props'
 import { log } from './log'
 import { tableRowsViewViews } from './table-rows-view-views'
 import { tableSelectorTableLister } from './table-selector-table-lister'
+import { textStateFieldError } from './text-state-field-error'
+import { textStateRequesterError } from './text-state-requester-error'
 
 export const observerHandlers = {
   'sc-button-state-carousel-hider': buttonStateCarouselHider,
@@ -35,5 +37,7 @@ export const observerHandlers = {
   'sc-input-data-requester-props': inputDataRequesterProps,
   'sc-log': log,
   'sc-table-rows-view-views': tableRowsViewViews,
-  'sc-table-selector-table-lister': tableSelectorTableLister
+  'sc-table-selector-table-lister': tableSelectorTableLister,
+  'sc-text-state-field-error': textStateFieldError,
+  'sc-text-state-requester-error': textStateRequesterError
 }

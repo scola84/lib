@@ -43,24 +43,6 @@ export class Propagator {
     this.removeEventListeners()
   }
 
-  public dispatch<T = unknown>(on: string, data?: T[], trigger?: Event): boolean {
-    let dispatched = false
-
-    this
-      .getEvents(on)
-      .forEach((event) => {
-        if (event.selector === 'console') {
-          // eslint-disable-next-line no-console
-          console.log(on, data)
-        } else {
-          dispatched = true
-          this.dispatchEvent(event, data, trigger)
-        }
-      })
-
-    return dispatched
-  }
-
   public dispatchEvent<T = unknown> (event: PropagatorEvent, data: T[] = [Struct.create()], trigger?: Event): void {
     let targets: HTMLElement[] | NodeList = []
 
@@ -82,6 +64,24 @@ export class Propagator {
         })
       })
     })
+  }
+
+  public dispatchEvents<T = unknown>(on: string, data?: T[], trigger?: Event): boolean {
+    let dispatched = false
+
+    this
+      .getEvents(on)
+      .forEach((event) => {
+        if (event.selector === 'console') {
+          // eslint-disable-next-line no-console
+          console.log(on, data)
+        } else {
+          dispatched = true
+          this.dispatchEvent(event, data, trigger)
+        }
+      })
+
+    return dispatched
   }
 
   public parseEvents (events: string, data?: Struct): PropagatorEvent[] {
@@ -108,29 +108,25 @@ export class Propagator {
       })
   }
 
-  public set (data: unknown): void {
+  public setData (data: unknown): void {
     this.element
       .querySelectorAll<ScolaElement>(Propagator.selector)
       .forEach((target) => {
-        this.setData(target, data)
+        const name = (
+          target.getAttribute('sc-data-name') ??
+          target.getAttribute('name') ??
+          ''
+        )
+
+        if (
+          isStruct(data) &&
+          data[name] !== undefined
+        ) {
+          target.data = data[name]
+        } else {
+          target.data = data
+        }
       })
-  }
-
-  public setData (target: ScolaElement, data: unknown): void {
-    const name = (
-      target.getAttribute('sc-data-name') ??
-      target.getAttribute('name') ??
-      ''
-    )
-
-    if (
-      isStruct(data) &&
-      data[name] !== undefined
-    ) {
-      target.data = data[name]
-    } else {
-      target.data = data
-    }
   }
 
   protected addEventListeners (): void {

@@ -10,18 +10,18 @@ interface LocaleStrings {
   [key: string]: LocaleStrings | string | undefined
 }
 
-type LocaleStringsCache = Struct<Formatter[] | undefined>
+type LocaleStringsCache = Struct<I18nFormatter[] | undefined>
 
 type Strings = Struct<Partial<Struct<string>> | undefined>
 
 type StringsCache = Partial<Struct<LocaleStringsCache>>
 
-export type Formatter = (data: unknown) => string
+export type I18nFormatter = (data: unknown) => string
 
-export type FormatterFactory = (name: string, locale: string, options: Struct<string>) => Formatter
+export type I18nFormatterFactory = (name: string, locale: string, options: Struct<string>) => I18nFormatter
 
 export class I18n {
-  public static formatters: Struct<FormatterFactory> = {}
+  public static formatters: Struct<I18nFormatterFactory> = {}
 
   public static locale = 'nl-NL'
 
@@ -31,7 +31,7 @@ export class I18n {
 
   public static stringsCache: StringsCache = {}
 
-  public static compile (string: string, locale: string): Formatter[] {
+  public static compile (string: string, locale: string): I18nFormatter[] {
     const compiled = []
 
     const lastString = string
@@ -68,7 +68,7 @@ export class I18n {
     return compiled
   }
 
-  public static defineFormatters (formatters: Struct<FormatterFactory>): void {
+  public static defineFormatters (formatters: Struct<I18nFormatterFactory>): void {
     Object
       .entries(formatters)
       .forEach(([name, formatter]) => {
@@ -143,7 +143,7 @@ export class I18n {
   }
 
   public format (code: string, data: unknown = {}, locale = I18n.locale): string {
-    let compiled: Formatter[] | undefined = []
+    let compiled: I18nFormatter[] | undefined = []
     let string = I18n.strings[locale]?.[code]
 
     if (string === undefined) {
@@ -170,6 +170,7 @@ export class I18n {
         return formatter(data)
       })
       .join('')
+      .trim()
   }
 
   public formatEmailAddress (user: Pick<User, 'email' | 'name'>): string {

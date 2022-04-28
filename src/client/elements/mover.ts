@@ -25,7 +25,9 @@ export class ScolaMoverElement extends HTMLDivElement implements ScolaElement {
   public targetOffsets = new Map<HTMLElement, Offset>()
 
   public get data (): unknown {
-    return { ...this.dataset }
+    return {
+      ...this.dataset
+    }
   }
 
   protected handleInteractorBound = this.handleInteractor.bind(this)

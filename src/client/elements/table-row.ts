@@ -11,12 +11,14 @@ export class ScolaTableRowElement extends HTMLTableRowElement implements ScolaEl
   public propagator: Propagator
 
   public get data (): unknown {
-    return this.datamap ?? { ...this.dataset }
+    return this.datamap ?? {
+      ...this.dataset
+    }
   }
 
   public set data (data: unknown) {
     this.datamap = data
-    this.propagator.set(data)
+    this.propagator.setData(data)
   }
 
   public constructor () {

@@ -191,14 +191,14 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatch<ScolaError>('error', [{
+    this.propagator.dispatchEvents<ScolaError>('error', [{
       code: 'err_worker',
       message: toString(error)
     }])
   }
 
   protected handleLoad (): void {
-    this.propagator.dispatch('load')
+    this.propagator.dispatchEvents('load')
   }
 
   protected handleMessage (event: MessageEvent): void {
@@ -206,7 +206,7 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
       event.source === this.iframe?.contentWindow ||
       event.target === this.worker
     ) {
-      this.propagator.dispatch('message', [event.data], event)
+      this.propagator.dispatchEvents('message', [event.data], event)
     }
   }
 

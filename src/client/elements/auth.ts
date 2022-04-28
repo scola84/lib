@@ -90,7 +90,7 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public toJSON (): unknown {
@@ -106,9 +106,9 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
     this.notify()
 
     if (this.flow !== null) {
-      this.propagator.dispatch(this.flow.type, [this.flow.data])
+      this.propagator.dispatchEvents(this.flow.type, [this.flow.data])
     } else if (this.user !== null) {
-      this.propagator.dispatch('load', [this.user])
+      this.propagator.dispatchEvents('load', [this.user])
     }
   }
 

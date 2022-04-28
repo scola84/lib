@@ -5,8 +5,8 @@ import type { Struct } from '../../../../../common'
 
 interface AuthLoginPostData extends RouteData {
   body: {
+    auth_password: string
     identity: string
-    password: string
   }
 }
 
@@ -17,13 +17,13 @@ export class AuthLoginPostHandler extends AuthLoginPasswordHandler {
     body: {
       required: true,
       schema: {
+        auth_password: {
+          required: true,
+          type: 'password'
+        },
         identity: {
           required: true,
           type: 'text'
-        },
-        password: {
-          required: true,
-          type: 'password'
         }
       },
       type: 'fieldset'

@@ -307,17 +307,17 @@ export class TableSelector {
     if (items.length === 1) {
       const [item] = items
 
-      this.element.propagator.dispatch(on, items, event)
+      this.element.propagator.dispatchEvents(on, items, event)
 
       if (this.element.tree !== undefined) {
-        this.element.propagator.dispatch(`${on}${String(item.type)}`, items, event)
+        this.element.propagator.dispatchEvents(`${on}${String(item.type)}`, items, event)
       }
     }
 
-    this.element.propagator.dispatch(`${on}item`, items, event)
-    this.element.propagator.dispatch(`${on}items`, [{ items }], event)
-    this.element.propagator.dispatch(`${on}key`, keys, event)
-    this.element.propagator.dispatch(`${on}keys`, [{ keys }], event)
+    this.element.propagator.dispatchEvents(`${on}item`, items, event)
+    this.element.propagator.dispatchEvents(`${on}items`, [{ items }], event)
+    this.element.propagator.dispatchEvents(`${on}key`, keys, event)
+    this.element.propagator.dispatchEvents(`${on}keys`, [{ keys }], event)
   }
 
   protected findNext (row?: ScolaTableRowElement, count = 1): ScolaTableRowElement | null {

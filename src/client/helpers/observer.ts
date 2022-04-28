@@ -193,9 +193,9 @@ export class Observer {
 
   protected handleHidden (): void {
     if (this.element.hasAttribute('hidden')) {
-      this.element.propagator.dispatch('hide', [this.element.data])
+      this.element.propagator.dispatchEvents('hide', [this.element.data])
     } else {
-      this.element.propagator.dispatch('show', [this.element.data])
+      this.element.propagator.dispatchEvents('show', [this.element.data])
     }
   }
 

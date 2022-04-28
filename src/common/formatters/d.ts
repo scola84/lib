@@ -1,7 +1,7 @@
-import type { Formatter, Struct } from '../helpers'
+import type { I18nFormatter, Struct } from '../helpers'
 import { cast, get } from '../helpers'
 
-export function d (name: string, locale: string, options: Struct<string>): Formatter {
+export function d (name: string, locale: string, options: Struct<string>): I18nFormatter {
   const format = new Intl.DateTimeFormat(locale, options)
 
   const path = name

@@ -7,7 +7,7 @@ import { createUser } from '../../../../../common'
 
 interface AuthRegisterPostData extends RouteData {
   body: {
-    password: string
+    auth_password: string
     email?: string
     name?: string
     preferences: Struct
@@ -24,15 +24,15 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
       custom: 'identity',
       required: true,
       schema: {
+        auth_password: {
+          required: true,
+          type: 'password'
+        },
         email: {
           type: 'email'
         },
         name: {
           type: 'text'
-        },
-        password: {
-          required: true,
-          type: 'password'
         },
         preferences: {
           required: true,
@@ -72,7 +72,7 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
 
     const password = new AuthPassword()
 
-    await password.generate(data.body.password)
+    await password.generate(data.body.auth_password)
 
     await this.register(data, response, createUser({
       auth_password: password.toString(),

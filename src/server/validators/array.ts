@@ -5,7 +5,6 @@ import type { Struct } from '../../common'
 
 export function array (name: string, field: SchemaField): Validator {
   const schemaValidator = new SchemaValidator(field.schema ?? {})
-
   return async (data: Struct, errors: Struct) => {
     let childErrors: Struct | null = null
     let values = data[name]

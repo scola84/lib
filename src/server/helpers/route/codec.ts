@@ -172,6 +172,10 @@ export class RouteCodec {
         'text/html',
         'text/plain'
       ])
+
+      if (typeof contentType === 'string') {
+        response.setHeader('content-type', contentType)
+      }
     }
 
     switch (contentType) {

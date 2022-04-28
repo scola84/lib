@@ -79,11 +79,13 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   public trigger?: MouseEvent
 
   public get data (): unknown {
-    return { ...this.dataset }
+    return {
+      ...this.dataset
+    }
   }
 
   public set data (data: unknown) {
-    this.propagator.set(data)
+    this.propagator.setData(data)
   }
 
   protected handleBreakpointBound = this.handleBreakpoint.bind(this)
@@ -355,9 +357,9 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     if (this.hasAttribute('hidden')) {
       this.style.setProperty('display', 'none', 'important')
       this.indexer.remove(this)
-      this.propagator.dispatch('afterhide')
+      this.propagator.dispatchEvents('afterhide')
     } else {
-      this.propagator.dispatch('aftershow')
+      this.propagator.dispatchEvents('aftershow')
     }
 
     this.changeFocus()

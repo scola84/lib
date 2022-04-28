@@ -146,7 +146,7 @@
       },
       {
         "blankLine": "always",
-        "next": ["multiline-const", "multiline-expression", "multiline-let", "multiline-return"],
+        "next": ["multiline-const", "multiline-expression", "multiline-let"],
         "prev": "*"
       },
       {

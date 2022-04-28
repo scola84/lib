@@ -77,7 +77,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     if (isTransaction(data)) {
       this.commit(data)
     } else {
-      this.propagator.set(data)
+      this.propagator.setData(data)
     }
   }
 
@@ -286,7 +286,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
         type: 'view'
       }
 
-      this.propagator.dispatch<Transaction>('request', [transaction])
+      this.propagator.dispatchEvents<Transaction>('request', [transaction])
       this.update()
     } else {
       this.view.snippet = snippet
@@ -297,7 +297,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public reset (): void {

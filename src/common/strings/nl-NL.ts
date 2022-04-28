@@ -1,9 +1,11 @@
 export default {
+  auth_login: 'Inloggen',
   auth_login_email_subject: 'Nieuwe login',
   auth_login_email_text: 'Hallo!\nU bent ingelogd!',
   auth_login_hotp_email_subject: 'Nieuwe login',
   auth_login_hotp_email_text: '$(otp)s',
   auth_login_hotp_sms_text: '$(otp)s',
+  auth_register: 'Registeren',
   auth_register_email_subject: 'Nieuw account',
   auth_register_email_text: '$(user.email)s: $(token.hash)s',
   auth_register_hotp_email_subject: 'Nieuwe HOTP',
@@ -43,6 +45,7 @@ export default {
   err_validator_bad_input_struct: 'Voer een geldig object in',
   err_validator_bad_input_time: 'Voer een geldige tijd in',
   err_validator_bad_input_url: 'Voer een geldige URL in',
+  err_validator_identity: 'Minstens een van de velden e-mail, telefoon of gebruikersnaam is verplicht',
   err_validator_pattern_mismatch: 'Voer een geldige waarde in',
   err_validator_range_overflow: 'Voer een getal in kleiner dan $(max)',
   err_validator_range_underflow: 'Voer een getal in groter dan $(min)',
@@ -52,5 +55,17 @@ export default {
   err_validator_type_mismatch_email: 'Voer een geldig e-mailadres in',
   err_validator_type_mismatch_url: 'Voer een geldige URL in',
   err_validator_value_missing: 'Dit veld is verplicht',
-  err_worker: 'Onbekende fout ($(message))'
+  err_worker: 'Onbekende fout ($(message))',
+  user_auth_password: 'Wachtwoord',
+  user_auth_password_hint: 'Gebruik indien mogelijk een wachtwoordmanager om een wachtwoord aan te maken. Voer 8 of meer tekens in met een mix van letters, nummers en tekens.',
+  user_auth_password_required: 'Wachtwoord (verplicht)',
+  user_email: 'E-mail',
+  user_identity: 'E-mail, telefoon of gebruikersnaam',
+  user_identity_hint: 'Minstens een van de velden e-mail, telefoon of gebruikersnaam is verplicht',
+  user_locale: 'Taal',
+  user_locale_hint: 'Een herstart is nodig om de geselecteerde taal te activeren.',
+  user_name: 'Naam',
+  user_name_required: 'Naam (verplicht)',
+  user_tel: 'Telefoon',
+  user_username: 'Gebruikersnaam'
 }

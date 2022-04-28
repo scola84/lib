@@ -35,7 +35,6 @@ export abstract class CrudUpdateManyHandler extends CrudUpdateHandler {
         return undefined
       } catch (error: unknown) {
         response.statusCode = 400
-
         return {
           message: toString(error)
         }

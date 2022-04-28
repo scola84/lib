@@ -109,7 +109,7 @@ export class ScolaEventSourceElement extends HTMLObjectElement implements ScolaE
 
   protected handleMessage (event: MessageEvent<string>): void {
     try {
-      this.propagator.dispatch('message', [JSON.parse(event.data, revive) as Struct], event)
+      this.propagator.dispatchEvents('message', [JSON.parse(event.data, revive) as Struct], event)
     } catch (error: unknown) {
       this.handleError()
     }

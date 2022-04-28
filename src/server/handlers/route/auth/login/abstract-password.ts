@@ -7,7 +7,7 @@ import { createUser } from '../../../../../common'
 
 interface AuthLoginPasswordData extends RouteData {
   body: {
-    password: string
+    auth_password: string
   }
 }
 
@@ -26,7 +26,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
   protected async login (data: AuthLoginPasswordData, response: ServerResponse, user: User): Promise<Struct | undefined> {
     const password = AuthPassword.parse(user.auth_password ?? '')
 
-    if (!(await password.validate(data.body.password))) {
+    if (!(await password.validate(data.body.auth_password))) {
       response.statusCode = 401
       throw new Error('Password is not valid')
     }
@@ -78,7 +78,6 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     }))
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
-
     return {
       email: user.auth_hotp_email,
       type: 'hotp'
@@ -103,7 +102,6 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     }))
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
-
     return {
       tel: user.auth_hotp_tel,
       type: 'hotp'
@@ -118,7 +116,6 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     }), token)
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
-
     return {
       type: 'totp'
     }

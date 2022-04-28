@@ -16,7 +16,7 @@ export class TableTree {
     const row = this.element.elements.get(key)
 
     if (item.items === null) {
-      this.element.propagator.dispatch<Transaction>('request', [{
+      this.element.propagator.dispatchEvents<Transaction>('request', [{
         commit: item,
         type: 'table-tree'
       }])

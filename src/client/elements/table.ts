@@ -57,7 +57,9 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   public wait: boolean
 
   public get data (): unknown {
-    return { ...this.dataset }
+    return {
+      ...this.dataset
+    }
   }
 
   public set data (data: unknown) {
@@ -205,10 +207,10 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
 
     if (this.elements.size === 0) {
-      this.propagator.dispatch('empty')
+      this.propagator.dispatchEvents('empty')
     }
   }
 
@@ -542,7 +544,7 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
           break
       }
 
-      this.propagator.dispatch(event.detail.event, [data], event)
+      this.propagator.dispatchEvents(event.detail.event, [data], event)
     }
   }
 

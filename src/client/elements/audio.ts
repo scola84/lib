@@ -36,7 +36,9 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   public url: string | null
 
   public get data (): unknown {
-    return { ...this.dataset }
+    return {
+      ...this.dataset
+    }
   }
 
   public set data (data: unknown) {
@@ -95,7 +97,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public reset (): void {
@@ -137,7 +139,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   protected handleError (error: unknown): void {
     this.data = null
 
-    this.propagator.dispatch('error', [{
+    this.propagator.dispatchEvents('error', [{
       code: 'err_audio',
       message: toString(error)
     }])

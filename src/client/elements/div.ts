@@ -1,4 +1,4 @@
-import { Dragger, Dropper, Focuser, Hider, Interactor, Mutator, Observer, Paster, Propagator } from '../helpers'
+import { Dragger, Dropper, Focuser, Formatter, Hider, Interactor, Mutator, Observer, Paster, Propagator } from '../helpers'
 import { cast, isArray, isStruct } from '../../common'
 import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
@@ -17,6 +17,8 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
   public focuser?: Focuser
 
+  public formatter: Formatter
+
   public hider?: Hider
 
   public interactor: Interactor
@@ -30,12 +32,13 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   public propagator: Propagator
 
   public get data (): unknown {
-    return { ...this.dataset }
+    return this.formatter.data
   }
 
   public set data (data: unknown) {
     this.dragger?.setData(data)
-    this.propagator.set(data)
+    this.formatter.setData(data)
+    this.propagator.setData(data)
   }
 
   protected handleInteractorBound = this.handleInteractor.bind(this)
@@ -46,6 +49,7 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
+    this.formatter = new Formatter(this)
     this.interactor = new Interactor(this)
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
@@ -72,6 +76,7 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
     }
 
     this.reset()
+    this.update()
   }
 
   public static define (): void {
@@ -122,10 +127,18 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
 
   public toJSON (): unknown {
     return {
+      data: this.data,
       id: this.id,
       is: this.getAttribute('is'),
-      nodeName: this.nodeName
+      locale: this.formatter.locale,
+      nodeName: this.nodeName,
+      text: this.formatter.text,
+      title: this.formatter.title
     }
+  }
+
+  public update (): void {
+    this.formatter.update()
   }
 
   protected addEventListeners (): void {
@@ -150,15 +163,15 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleInteractorClick (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('click', [this.data], event.originalEvent)
+    return this.propagator.dispatchEvents('click', [this.data], event.originalEvent)
   }
 
   protected handleInteractorContextmenu (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('contextmenu', [this.data], event.originalEvent)
+    return this.propagator.dispatchEvents('contextmenu', [this.data], event.originalEvent)
   }
 
   protected handleInteractorDblclick (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('dblclick', [this.data], event.originalEvent)
+    return this.propagator.dispatchEvents('dblclick', [this.data], event.originalEvent)
   }
 
   protected handleInteractorStart (event: InteractorEvent): boolean {

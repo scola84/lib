@@ -18,7 +18,6 @@ import { ScolaInputElement } from './input'
 import { ScolaLIElement } from './li'
 import { ScolaLabelElement } from './label'
 import { ScolaLegendElement } from './legend'
-import { ScolaMarkedElement } from './marked'
 import { ScolaMessageElement } from './message'
 import { ScolaMoverElement } from './mover'
 import { ScolaOptionElement } from './option'
@@ -33,7 +32,6 @@ import { ScolaTableCellElement } from './table-cell'
 import { ScolaTableElement } from './table'
 import { ScolaTableRowElement } from './table-row'
 import { ScolaTextAreaElement } from './textarea'
-import { ScolaTextElement } from './text'
 import { ScolaUListElement } from './ul'
 import { ScolaVideoElement } from './video'
 import { ScolaViewElement } from './view'
@@ -58,7 +56,6 @@ export function defineElements (): void {
   ScolaLIElement.define()
   ScolaLabelElement.define()
   ScolaLegendElement.define()
-  ScolaMarkedElement.define()
   ScolaMessageElement.define()
   ScolaMoverElement.define()
   ScolaOptionElement.define()
@@ -74,7 +71,6 @@ export function defineElements (): void {
   ScolaTableElement.define()
   ScolaTableRowElement.define()
   ScolaTextAreaElement.define()
-  ScolaTextElement.define()
   ScolaUListElement.define()
   ScolaVideoElement.define()
   ScolaViewElement.define()

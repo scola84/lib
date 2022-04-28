@@ -1,22 +1,17 @@
-import { Dragger, Dropper, Interactor, Mutator, Observer, Propagator } from '../helpers'
-import { I18n } from '../../common'
+import { Dragger, Dropper, Formatter, Interactor, Mutator, Observer, Propagator } from '../helpers'
 import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
 
 export class ScolaButtonElement extends HTMLButtonElement implements ScolaElement {
-  public code: string | null
-
   public datamap: unknown
 
   public dragger?: Dragger
 
   public dropper?: Dropper
 
-  public i18n: I18n
+  public formatter: Formatter
 
   public interactor: Interactor
-
-  public locale?: string
 
   public mutator: Mutator
 
@@ -25,13 +20,16 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   public propagator: Propagator
 
   public get data (): unknown {
-    return this.datamap ?? { ...this.dataset }
+    return this.datamap ?? {
+      ...this.dataset
+    }
   }
 
   public set data (data: unknown) {
     this.datamap = data
     this.dragger?.setData(data)
-    this.propagator.set(data)
+    this.formatter.setData(data)
+    this.propagator.setData(data)
     this.update()
   }
 
@@ -41,7 +39,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
 
   public constructor () {
     super()
-    this.i18n = new I18n()
+    this.formatter = new Formatter(this)
     this.interactor = new Interactor(this)
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
@@ -90,29 +88,26 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   }
 
   public reset (): void {
-    this.code = this.getAttribute('sc-code')
     this.interactor.cancel = this.hasAttribute('sc-cancel')
     this.interactor.keyboard = this.interactor.hasKeyboard
     this.interactor.mouse = this.interactor.hasMouse
     this.interactor.touch = this.interactor.hasTouch
-    this.locale = this.getAttribute('sc-locale') ?? undefined
   }
 
   public toJSON (): unknown {
     return {
-      code: this.code,
       data: this.data,
       id: this.id,
       is: this.getAttribute('is'),
-      locale: this.locale,
-      nodeName: this.nodeName
+      locale: this.formatter.locale,
+      nodeName: this.nodeName,
+      text: this.formatter.text,
+      title: this.formatter.title
     }
   }
 
   public update (): void {
-    if (this.code !== null) {
-      this.title = this.i18n.format(this.code, this.data, this.locale)
-    }
+    this.formatter.update()
   }
 
   protected changeFocus (): void {
@@ -139,15 +134,15 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   }
 
   protected handleInteractorClick (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('click', [this.data], event.originalEvent)
+    return this.propagator.dispatchEvents('click', [this.data], event.originalEvent)
   }
 
   protected handleInteractorContextmenu (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('contextmenu', [this.data], event.originalEvent)
+    return this.propagator.dispatchEvents('contextmenu', [this.data], event.originalEvent)
   }
 
   protected handleInteractorDblclick (event: InteractorEvent): boolean {
-    return this.propagator.dispatch('dblclick', [this.data], event.originalEvent)
+    return this.propagator.dispatchEvents('dblclick', [this.data], event.originalEvent)
   }
 
   protected handleInteractorStart (event: InteractorEvent): boolean {

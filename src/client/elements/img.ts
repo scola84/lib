@@ -27,7 +27,9 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
   public url: string | null
 
   public get data (): unknown {
-    return { ...this.dataset }
+    return {
+      ...this.dataset
+    }
   }
 
   public set data (data: unknown) {
@@ -97,7 +99,7 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public reset (): void {
@@ -124,7 +126,7 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
   protected handleError (error: unknown): void {
     this.data = null
 
-    this.propagator.dispatch('error', [{
+    this.propagator.dispatchEvents('error', [{
       code: 'err_img',
       message: toString(error)
     }])

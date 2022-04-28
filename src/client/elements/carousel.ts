@@ -46,7 +46,9 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   public transition: boolean
 
   public get data (): unknown {
-    return { ...this.dataset }
+    return {
+      ...this.dataset
+    }
   }
 
   public set data (data: unknown) {
@@ -60,7 +62,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
       this.pointer = 0
       this.update()
     } else {
-      this.propagator.set(data)
+      this.propagator.setData(data)
     }
   }
 
@@ -175,7 +177,7 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public reset (): void {

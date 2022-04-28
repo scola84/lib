@@ -253,7 +253,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public async put (item: Struct): Promise<Struct | undefined> {
@@ -387,8 +387,8 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     ) {
       await this.delete(transaction.commit)
       await this.put(transaction.result)
-      this.propagator.dispatch('delete', [transaction.commit])
-      this.propagator.dispatch('add', [transaction.result])
+      this.propagator.dispatchEvents('delete', [transaction.commit])
+      this.propagator.dispatchEvents('add', [transaction.result])
     }
   }
 
@@ -399,27 +399,27 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     ) {
       await this.deleteAll(transaction.commit)
       await this.addAll(transaction.result)
-      this.propagator.dispatch('deleteall', [transaction.commit])
-      this.propagator.dispatch('addall', [transaction.result])
+      this.propagator.dispatchEvents('deleteall', [transaction.commit])
+      this.propagator.dispatchEvents('addall', [transaction.result])
     }
   }
 
   protected commitDelete (transaction: Transaction): void {
     if (isStruct(transaction.result)) {
-      this.propagator.dispatch('delete', [transaction.result])
+      this.propagator.dispatchEvents('delete', [transaction.result])
     }
   }
 
   protected commitDeleteAll (transaction: Transaction): void {
     if (isArray(transaction.result)) {
-      this.propagator.dispatch('deleteall', [transaction.result])
+      this.propagator.dispatchEvents('deleteall', [transaction.result])
     }
   }
 
   protected async commitGet (transaction: Transaction): Promise<void> {
     if (isStruct(transaction.result)) {
       await this.put(transaction.result)
-      this.propagator.dispatch('get', [transaction.result])
+      this.propagator.dispatchEvents('get', [transaction.result])
     }
   }
 
@@ -442,7 +442,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
           })
 
           await this.put(item)
-          this.propagator.dispatch('getfile', [item])
+          this.propagator.dispatchEvents('getfile', [item])
         }
       }
     }
@@ -451,14 +451,14 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
   protected async commitPut (transaction: Transaction): Promise<void> {
     if (isStruct(transaction.result)) {
       await this.put(transaction.result)
-      this.propagator.dispatch('put', [transaction.result])
+      this.propagator.dispatchEvents('put', [transaction.result])
     }
   }
 
   protected async commitPutAll (transaction: Transaction): Promise<void> {
     if (isArray(transaction.result)) {
       await this.putAll(transaction.result)
-      this.propagator.dispatch('putall', [transaction.result])
+      this.propagator.dispatchEvents('putall', [transaction.result])
     }
   }
 
@@ -484,10 +484,10 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
             cast(options[type]) === true &&
             items.length > 0
           ) {
-            const dispatched = this.propagator.dispatch(`tsynclocal${type}items`, [items])
+            const dispatched = this.propagator.dispatchEvents(`tsynclocal${type}items`, [items])
 
             if (!dispatched) {
-              this.propagator.dispatch(`tsynclocal${type}item`, items)
+              this.propagator.dispatchEvents(`tsynclocal${type}item`, items)
             }
           }
         })
@@ -516,13 +516,13 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
             cast(options[type]) === true &&
             items.length > 0
           ) {
-            const dispatched = this.propagator.dispatch<Transaction>(`tsyncremote${type}items`, [{
+            const dispatched = this.propagator.dispatchEvents<Transaction>(`tsyncremote${type}items`, [{
               commit: items,
               type: `t${type}-all`
             }])
 
             if (!dispatched) {
-              this.propagator.dispatch<Transaction>(`tsyncremote${type}item`, items.map((item) => {
+              this.propagator.dispatchEvents<Transaction>(`tsyncremote${type}item`, items.map((item) => {
                 return {
                   commit: item,
                   type: `t${type}`
@@ -598,7 +598,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       this
         .add(event.detail)
         .then((item) => {
-          this.propagator.dispatch('add', [item], event)
+          this.propagator.dispatchEvents('add', [item], event)
         })
         .catch((error) => {
           this.handleError(error)
@@ -611,7 +611,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       this
         .addAll(event.detail)
         .then((items) => {
-          this.propagator.dispatch('addall', [items], event)
+          this.propagator.dispatchEvents('addall', [items], event)
         })
         .catch((error) => {
           this.handleError(error)
@@ -623,7 +623,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     this
       .clear()
       .then(() => {
-        this.propagator.dispatch('clear')
+        this.propagator.dispatchEvents('clear')
       })
       .catch((error) => {
         this.handleError(error)
@@ -635,7 +635,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       this
         .delete(event.detail)
         .then((item) => {
-          this.propagator.dispatch('delete', [item], event)
+          this.propagator.dispatchEvents('delete', [item], event)
         })
         .catch((error) => {
           this.handleError(error)
@@ -648,7 +648,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       this
         .deleteAll(event.detail)
         .then((items) => {
-          this.propagator.dispatch('deleteall', [items], event)
+          this.propagator.dispatchEvents('deleteall', [items], event)
         })
         .catch((error) => {
           this.handleError(error)
@@ -672,7 +672,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
             if (file instanceof File) {
               saveAs(file)
             } else if (isFile(file)) {
-              this.propagator.dispatch('download', [event.detail], event)
+              this.propagator.dispatchEvents('download', [event.detail], event)
             }
           }
         }
@@ -683,7 +683,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatch('error', [{
+    this.propagator.dispatchEvents('error', [{
       code: 'err_idb',
       message: toString(error)
     }])
@@ -694,7 +694,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       this
         .get(event.detail)
         .then((item) => {
-          this.propagator.dispatch('get', [item], event)
+          this.propagator.dispatchEvents('get', [item], event)
         })
         .catch((error) => {
           this.handleError(error)
@@ -717,7 +717,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
     this
       .getAll(query)
       .then((items) => {
-        this.propagator.dispatch('getall', [items], event)
+        this.propagator.dispatchEvents('getall', [items], event)
       })
       .catch((error) => {
         this.handleError(error)
@@ -729,7 +729,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       this
         .put(event.detail)
         .then((item) => {
-          this.propagator.dispatch('put', [item], event)
+          this.propagator.dispatchEvents('put', [item], event)
         })
         .catch((error) => {
           this.handleError(error)
@@ -742,7 +742,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       this
         .putAll(event.detail)
         .then((items) => {
-          this.propagator.dispatch('putall', [items], event)
+          this.propagator.dispatchEvents('putall', [items], event)
         })
         .catch((error) => {
           this.handleError(error)
@@ -762,8 +762,8 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
               type: 'tadd'
             }
 
-            this.propagator.dispatch('add', [item], event)
-            this.propagator.dispatch('tadd', [transaction], event)
+            this.propagator.dispatchEvents('add', [item], event)
+            this.propagator.dispatchEvents('tadd', [transaction], event)
           }
         })
         .catch((error) => {
@@ -794,8 +794,8 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
               type: 'tdelete'
             }
 
-            this.propagator.dispatch('delete', [item], event)
-            this.propagator.dispatch('tdelete', [transaction], event)
+            this.propagator.dispatchEvents('delete', [item], event)
+            this.propagator.dispatchEvents('tdelete', [transaction], event)
           }
         })
         .catch((error) => {
@@ -815,8 +815,8 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
               type: 'tget'
             }
 
-            this.propagator.dispatch('get', [item], event)
-            this.propagator.dispatch('tget', [transaction], event)
+            this.propagator.dispatchEvents('get', [item], event)
+            this.propagator.dispatchEvents('tget', [transaction], event)
           }
         })
         .catch((error) => {
@@ -831,7 +831,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       type: 'tget-file'
     }
 
-    this.propagator.dispatch('tgetfile', [transaction], event)
+    this.propagator.dispatchEvents('tgetfile', [transaction], event)
   }
 
   protected handleTPut (event: CustomEvent): void {
@@ -852,8 +852,8 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
               type: 'tput'
             }
 
-            this.propagator.dispatch('put', [newItem], event)
-            this.propagator.dispatch('tput', [transaction], event)
+            this.propagator.dispatchEvents('put', [newItem], event)
+            this.propagator.dispatchEvents('tput', [transaction], event)
           }
         }
       })
@@ -878,7 +878,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       type: 'tsync-local'
     }
 
-    this.propagator.dispatch('tsynclocal', [transaction], event)
+    this.propagator.dispatchEvents('tsynclocal', [transaction], event)
   }
 
   protected handleTSyncRemote (event: CustomEvent<unknown>): void {
@@ -887,7 +887,7 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
       type: 'tsync-remote'
     }
 
-    this.propagator.dispatch('tsyncremote', [transaction], event)
+    this.propagator.dispatchEvents('tsyncremote', [transaction], event)
   }
 
   protected isKey (value: unknown): value is IDBValidKey {
@@ -971,42 +971,42 @@ export class ScolaIdbElement extends HTMLObjectElement implements ScolaElement {
   protected async rollbackAdd (transaction: Transaction): Promise<void> {
     if (isStruct(transaction.rollback)) {
       await this.delete(transaction.rollback)
-      this.propagator.dispatch('delete', [transaction.rollback])
+      this.propagator.dispatchEvents('delete', [transaction.rollback])
     }
   }
 
   protected async rollbackAddAll (transaction: Transaction): Promise<void> {
     if (isArray(transaction.rollback)) {
       await this.deleteAll(transaction.rollback)
-      this.propagator.dispatch('deleteall', [transaction.rollback])
+      this.propagator.dispatchEvents('deleteall', [transaction.rollback])
     }
   }
 
   protected async rollbackDelete (transaction: Transaction): Promise<void> {
     if (isStruct(transaction.rollback)) {
       await this.add(transaction.rollback)
-      this.propagator.dispatch('add', [transaction.rollback])
+      this.propagator.dispatchEvents('add', [transaction.rollback])
     }
   }
 
   protected async rollbackDeleteAll (transaction: Transaction): Promise<void> {
     if (isArray(transaction.rollback)) {
       await this.addAll(transaction.rollback)
-      this.propagator.dispatch('addall', [transaction.rollback])
+      this.propagator.dispatchEvents('addall', [transaction.rollback])
     }
   }
 
   protected async rollbackPut (transaction: Transaction): Promise<void> {
     if (isStruct(transaction.rollback)) {
       await this.put(transaction.rollback)
-      this.propagator.dispatch('put', [transaction.rollback])
+      this.propagator.dispatchEvents('put', [transaction.rollback])
     }
   }
 
   protected async rollbackPutAll (transaction: Transaction): Promise<void> {
     if (isArray(transaction.rollback)) {
       await this.putAll(transaction.rollback)
-      this.propagator.dispatch('putall', [transaction.rollback])
+      this.propagator.dispatchEvents('putall', [transaction.rollback])
     }
   }
 }

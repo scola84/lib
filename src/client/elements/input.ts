@@ -16,8 +16,6 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   public initialChecked: boolean
 
-  public initialCode: string | null
-
   public initialValue: unknown
 
   public mutator: Mutator
@@ -176,7 +174,6 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.field = new Field(this)
     this.i18n = new I18n()
     this.initialChecked = this.checked
-    this.initialCode = this.getAttribute('sc-code')
     this.initialValue = this.value
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
@@ -219,7 +216,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.toggleAttribute('sc-updated', false)
     this.form?.toggleAttribute('sc-updated', true)
     this.form?.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public reset (): void {
@@ -249,15 +246,8 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public update (): void {
-    this.updatePlaceholder()
     this.updateStyle()
     this.notify()
-  }
-
-  public updatePlaceholder (): void {
-    if (this.initialCode !== null) {
-      this.placeholder = this.i18n.format(this.initialCode)
-    }
   }
 
   public updateStyle (): void {
@@ -312,6 +302,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   protected handleInput (event: Event): void {
     this.field.clear()
+    this.toggleAttribute('sc-changed', true)
 
     if (
       this.files instanceof FileList &&
@@ -331,7 +322,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   protected handleInputChecked (checked: boolean, event?: Event): void {
-    this.propagator.dispatch('checked', [
+    this.propagator.dispatchEvents('checked', [
       set(Struct.create(), this.name, checked)
     ], event)
   }
@@ -345,12 +336,12 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
       this.setFiles(files[0])
     }
 
-    this.propagator.dispatch<File | ScolaFile>('file', files, event)
-    this.propagator.dispatch<Struct<Array<File | ScolaFile>>>('files', [{ files }], event)
+    this.propagator.dispatchEvents<File | ScolaFile>('file', files, event)
+    this.propagator.dispatchEvents<Struct<Array<File | ScolaFile>>>('files', [{ files }], event)
   }
 
   protected handleInputValue (event: Event): void {
-    this.propagator.dispatch('value', [this.valueAsCast], event)
+    this.propagator.dispatchEvents('value', [this.valueAsCast], event)
   }
 
   protected handleObserver (): void {

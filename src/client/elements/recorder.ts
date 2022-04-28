@@ -70,7 +70,9 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   public wait: boolean
 
   public get data (): unknown {
-    return { ...this.dataset }
+    return {
+      ...this.dataset
+    }
   }
 
   public get enabled (): boolean {
@@ -189,7 +191,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public reset (): void {
@@ -374,7 +376,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
       type: blob.type
     })
 
-    this.propagator.dispatch<File>(this.type, [file])
+    this.propagator.dispatchEvents<File>(this.type, [file])
   }
 
   protected enableAudio (): void {
@@ -407,7 +409,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
         if (this.started) {
           this.toggleAttribute('sc-has-code', true)
 
-          this.propagator.dispatch('code', [{
+          this.propagator.dispatchEvents('code', [{
             code: code,
             value: code
           }])
@@ -464,7 +466,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatch<ScolaError>('error', [{
+    this.propagator.dispatchEvents<ScolaError>('error', [{
       code: 'err_recorder',
       message: toString(error)
     }])

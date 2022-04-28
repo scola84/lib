@@ -287,6 +287,10 @@ body {
   border-color: var(--tc1);
 }
 
+[sc-border-color="transparent"] {
+  border-color: transparent;
+}
+
 [sc-checkbox-color],
 [sc-radio-color] {
   align-items: center;
@@ -552,10 +556,16 @@ body {
 
 [sc-scrollbar-axis="x"] {
   overflow-x: scroll;
+  scrollbar-gutter: stable;
 }
 
 [sc-scrollbar-axis="y"] {
   overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+[hidden] [sc-scrollbar] {
+  overflow: hidden;
 }
 
 [sc-scrollbar-color="contrast"]:hover {

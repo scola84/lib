@@ -4,8 +4,18 @@ import { cast, isArray, isError, isPrimitive, isStruct } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 
+type Generator = () => Array<[string, string, boolean?]> | Promise<Array<[string, string, boolean?]>>
+
+interface Generators {
+  [key: string]: Generator | undefined
+}
+
 export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldElement {
+  public static generators: Generators = {}
+
   public field: Field
+
+  public generator: string | null
 
   public mutator: Mutator
 
@@ -104,7 +114,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
 
     this.verify()
     this.update()
-    this.propagator.set(value)
+    this.propagator.setData(value)
   }
 
   protected handleInputBound = this.handleInput.bind(this)
@@ -115,6 +125,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
+    this.reset()
     this.update()
   }
 
@@ -122,6 +133,14 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     customElements.define('sc-select', ScolaSelectElement, {
       extends: 'select'
     })
+  }
+
+  public static defineGenerators (generators: Struct<Generator>): void {
+    Object
+      .entries(generators)
+      .forEach(([name, generator]) => {
+        ScolaSelectElement.generators[name] = generator
+      })
   }
 
   public connectedCallback (): void {
@@ -149,10 +168,12 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     this.toggleAttribute('sc-updated', false)
     this.form?.toggleAttribute('sc-updated', true)
     this.form?.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public reset (): void {
+    this.generator = this.getAttribute('sc-generator')
+
     this.data = this.optionElements
       .filter((option) => {
         return option.hasAttribute('selected')
@@ -160,6 +181,8 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
       .map((option) => {
         return option.value
       })
+
+    this.appendOptions()
   }
 
   public toJSON (): unknown {
@@ -187,9 +210,41 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     this.addEventListener('input', this.handleInputBound)
   }
 
+  protected appendOptions (): void {
+    Promise
+      .resolve()
+      .then(() => {
+        if (
+          this.generator !== null &&
+          ScolaSelectElement.generators[this.generator] !== undefined
+        ) {
+          return ScolaSelectElement.generators[this.generator]?.() ?? []
+        }
+
+        return []
+      })
+      .then((options) => {
+        this.innerHTML = ''
+
+        options.forEach(([value, text, selected = false]) => {
+          const option = document.createElement('option')
+
+          option.value = value
+          option.textContent = text
+          option.toggleAttribute('selected', selected)
+          this.appendChild(option)
+        })
+      })
+      .catch(() => {})
+      .finally(() => {
+        this.update()
+      })
+  }
+
   protected handleInput (event: Event): void {
     this.field.clear()
-    this.propagator.dispatch('value', [this.valueAsCast], event)
+    this.toggleAttribute('sc-changed', true)
+    this.propagator.dispatchEvents('value', [this.valueAsCast], event)
     this.update()
   }
 

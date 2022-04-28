@@ -214,12 +214,52 @@
   }
 
   @for $i from 0 through 12 {
-    [sc-gap~="#{$i * 0.25}@#{$name}"] {
-      gap: #{$i * 0.25}rem;
+    [sc-gap~="#{$i * 0.25}@#{$name}"],
+    [sc-gap-x~="#{$i * 0.25}@#{$name}"] {
+      column-gap: #{$i * 0.25}rem;
+    }
+
+    [sc-gap~="#{$i * 0.25}@#{$name}"],
+    [sc-gap-y~="#{$i * 0.25}@#{$name}"] {
+      row-gap: #{$i * 0.25}rem;
     }
 
     [sc-height~="#{$i * 0.25}@#{$name}"] {
       height: #{$i * 0.25}rem;
+    }
+
+    [sc-margin="#{$i * 0.25}@#{$name}"],
+    [sc-margin-bottom="#{$i * 0.25}@#{$name}"],
+    [sc-margin-y="#{$i * 0.25}@#{$name}"] {
+      margin-bottom: #{$i * 0.25}rem;
+    }
+
+    [sc-margin="#{$i * 0.25}@#{$name}"],
+    [sc-margin-end="#{$i * 0.25}@#{$name}"],
+    [dir="rtl"] [sc-margin-start="#{$i * 0.25}@#{$name}"],
+    [sc-margin-x="#{$i * 0.25}@#{$name}"] {
+      margin-right: #{$i * 0.25}rem;
+    }
+
+    [dir="rtl"] [sc-margin-start="#{$i * 0.25}@#{$name}"] {
+      margin-left: 0;
+    }
+
+    [sc-margin="#{$i * 0.25}@#{$name}"],
+    [sc-margin-start="#{$i * 0.25}@#{$name}"],
+    [dir="rtl"] [sc-margin-end="#{$i * 0.25}@#{$name}"],
+    [sc-margin-x="#{$i * 0.25}@#{$name}"] {
+      margin-left: #{$i * 0.25}rem;
+    }
+
+    [dir="rtl"] [sc-margin-end="#{$i * 0.25}@#{$name}"] {
+      margin-right: 0;
+    }
+
+    [sc-margin="#{$i * 0.25}@#{$name}"],
+    [sc-margin-top="#{$i * 0.25}@#{$name}"],
+    [sc-margin-y="#{$i * 0.25}@#{$name}"] {
+      margin-top: #{$i * 0.25}rem;
     }
 
     [sc-max-height~="#{$i * 0.25}@#{$name}"] {

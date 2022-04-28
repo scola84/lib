@@ -27,7 +27,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
 
   public set data (data: unknown) {
     this.toggleDisabled()
-    this.propagator.set(data)
+    this.propagator.setData(data)
   }
 
   public get fieldElements (): ScolaFieldElement[] {
@@ -120,7 +120,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   protected handleFalsify (): void {
-    const dispatched = this.propagator.dispatch('falsify', [this.data])
+    const dispatched = this.propagator.dispatchEvents('falsify', [this.data])
 
     if (!dispatched) {
       this.falsify()
@@ -133,7 +133,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   protected handleVerify (): void {
-    const dispatched = this.propagator.dispatch('verify', [this.data])
+    const dispatched = this.propagator.dispatchEvents('verify', [this.data])
 
     if (!dispatched) {
       this.verify()
@@ -161,6 +161,12 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   protected toggleDisabled (): void {
-    this.toggleAttribute('disabled', this.hasAttribute('hidden'))
+    const force = this.hasAttribute('hidden')
+
+    this
+      .querySelectorAll('button, input, select, textarea')
+      .forEach((element) => {
+        element.toggleAttribute('disabled', force)
+      })
   }
 }

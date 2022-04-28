@@ -60,7 +60,7 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
   }
 
   public dispatch (data: Struct = {}, event?: Event): void {
-    this.propagator.dispatch('dispatch', [data], event)
+    this.propagator.dispatchEvents('dispatch', [data], event)
   }
 
   public reset (): void {
@@ -94,7 +94,9 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     return Array
       .from(this.querySelectorAll('param'))
       .map((param) => {
-        return this.propagator.parseEvents(param.value, { ...param.dataset })
+        return this.propagator.parseEvents(param.value, {
+          ...param.dataset
+        })
       })
       .flat()
   }

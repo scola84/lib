@@ -166,7 +166,7 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     this.toggleAttribute('sc-updated', false)
     this.form?.toggleAttribute('sc-updated', true)
     this.form?.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public reset (): void {
@@ -219,7 +219,8 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   protected handleInput (event: Event): void {
     this.field.clear()
-    this.propagator.dispatch('value', [this.valueAsCast], event)
+    this.toggleAttribute('sc-changed', true)
+    this.propagator.dispatchEvents('value', [this.valueAsCast], event)
     this.update()
   }
 

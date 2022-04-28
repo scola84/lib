@@ -31,8 +31,8 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   public set data (data: unknown) {
     this.valid = true
     this.toggleDisabled()
+    this.propagator.setData(data)
     this.changeFocus()
-    this.propagator.set(data)
     this.notify()
   }
 
@@ -67,12 +67,17 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
+    this.toggleDisabled()
   }
 
   public static define (): void {
     customElements.define('sc-form', ScolaFormElement, {
       extends: 'form'
     })
+  }
+
+  public clear (): void {
+    this.valid = true
   }
 
   public connectedCallback (): void {
@@ -108,12 +113,10 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public reset (): void {
-    this.valid = true
-
     this.fieldElements.forEach((fieldElement) => {
       fieldElement.reset()
     })
@@ -121,7 +124,8 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
 
   public setErrors (data: unknown): void {
     this.valid = false
-    this.propagator.set(data)
+    this.propagator.setData(data)
+    this.changeFocus()
     this.notify()
   }
 
@@ -143,10 +147,12 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected changeFocus (): void {
-    if (!this.valid) {
-      this.focusErrorElement()
-    } else if (!this.hasAttribute('hidden')) {
-      this.focusElement()
+    if (!this.hasAttribute('hidden')) {
+      if (this.valid) {
+        this.focusElement()
+      } else {
+        this.focusInvalidElement()
+      }
     }
   }
 
@@ -154,20 +160,20 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     const element = this.querySelector('[sc-focus~="form"]')
 
     if (element instanceof HTMLElement) {
-      element.focus()
+      element.parentElement?.setAttribute('tabindex', '0')
+      element.parentElement?.focus({ preventScroll: true })
+      element.parentElement?.removeAttribute('tabindex')
+      element.focus({ preventScroll: true })
     }
   }
 
-  protected focusErrorElement (): void {
-    const element = this.querySelector('[aria-invalid="true"]:not([hidden]')
+  protected focusInvalidElement (): void {
+    const element = this.querySelector('[aria-invalid="true"][sc-focus~="invalid"]:not([hidden])')
 
     if (element instanceof HTMLElement) {
-      if (element.parentElement?.hasAttribute('tabindex') === false) {
-        element.parentElement.setAttribute('tabindex', '0')
-        element.parentElement.focus()
-        element.parentElement.removeAttribute('tabindex')
-      }
-
+      element.parentElement?.setAttribute('tabindex', '0')
+      element.parentElement?.focus()
+      element.parentElement?.removeAttribute('tabindex')
       element.focus()
     }
   }
@@ -188,7 +194,9 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   protected handleReset (): void {
+    this.clear()
     this.reset()
+    this.notify()
   }
 
   protected handleSubmit (event: Event): void {
@@ -199,12 +207,12 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
       const errors = this.getErrors()
 
       this.setErrors(errors)
-      this.propagator.dispatch<Struct<ScolaError>>('error', [errors], event)
+      this.propagator.dispatchEvents<Struct<ScolaError>>('error', [errors], event)
       return
     }
 
     this.valid = true
-    this.propagator.dispatch('submit', [this.data], event)
+    this.propagator.dispatchEvents('submit', [this.data], event)
   }
 
   protected isFieldElement (element: Element): element is ScolaFieldElement {

@@ -40,8 +40,8 @@ export class Paster {
 
     const files = Array.from(event.clipboardData?.files ?? [])
 
-    this.element.propagator.dispatch<File>('pastefile', files, event)
-    this.element.propagator.dispatch<Struct<File[]>>('pastefiles', [{ files }], event)
+    this.element.propagator.dispatchEvents<File>('pastefile', files, event)
+    this.element.propagator.dispatchEvents<Struct<File[]>>('pastefiles', [{ files }], event)
   }
 
   protected removeEventListeners (): void {

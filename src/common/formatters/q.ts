@@ -1,7 +1,7 @@
 import { cast, flatten, get, isStruct } from '../helpers'
-import type { Formatter } from '../helpers'
+import type { I18nFormatter } from '../helpers'
 
-export function q (name: string): Formatter {
+export function q (name: string): I18nFormatter {
   const path = name
     .split('.')
     .map(cast)

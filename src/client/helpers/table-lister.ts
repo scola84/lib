@@ -186,7 +186,7 @@ export class TableLister {
       type: 'table-lister'
     }
 
-    this.element.propagator.dispatch<Transaction>('request', [transaction])
+    this.element.propagator.dispatchEvents<Transaction>('request', [transaction])
   }
 
   public reset (): void {

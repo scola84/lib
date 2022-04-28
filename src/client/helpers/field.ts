@@ -41,7 +41,8 @@ export class Field {
 
   public clear (): void {
     this.error = undefined
-    this.element.toggleAttribute('aria-invalid', false)
+    this.element.removeAttribute('aria-invalid')
+    this.element.removeAttribute('sc-changed')
   }
 
   public connect (): void {
@@ -98,7 +99,7 @@ export class Field {
   }
 
   protected handleFalsify (): void {
-    const dispatched = this.element.propagator.dispatch('falsify', [this.element.data])
+    const dispatched = this.element.propagator.dispatchEvents('falsify', [this.element.data])
 
     if (!dispatched) {
       this.falsify()
@@ -142,7 +143,7 @@ export class Field {
       on = `ctrl${on}`
     }
 
-    this.element.propagator.dispatch(on, [{
+    this.element.propagator.dispatchEvents(on, [{
       [this.element.name]: this.element.value
     }], event)
   }
@@ -152,7 +153,7 @@ export class Field {
   }
 
   protected handleVerify (): void {
-    const dispatched = this.element.propagator.dispatch('verify', [this.element.data])
+    const dispatched = this.element.propagator.dispatchEvents('verify', [this.element.data])
 
     if (!dispatched) {
       this.verify()

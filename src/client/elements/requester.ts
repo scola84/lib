@@ -10,6 +10,7 @@ import { saveAs } from 'file-saver'
 declare global {
   interface HTMLElementEventMap {
     'sc-requester-abort': CustomEvent
+    'sc-requester-reset': CustomEvent
     'sc-requester-send': CustomEvent
   }
 }
@@ -37,6 +38,8 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   public error?: ScolaError
 
+  public errorData?: unknown
+
   public i18n: I18n
 
   public loaded = 0
@@ -58,6 +61,8 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   public requestType: string
 
   public responseType: string
+
+  public result?: unknown
 
   public state = 0
 
@@ -104,6 +109,8 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   protected handleQueueBound = this.handleQueue.bind(this)
 
+  protected handleResetBound = this.handleReset.bind(this)
+
   protected handleSendBound = this.handleSend.bind(this)
 
   public constructor () {
@@ -130,6 +137,15 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     this.xhr.clear()
   }
 
+  public clear (): void {
+    this.error = undefined
+    this.errorData = undefined
+    this.loaded = 0
+    this.state = 0
+    this.total = 0
+    this.removeAttribute('aria-invalid')
+  }
+
   public connectedCallback (): void {
     this.mutator.connect()
     this.observer.connect()
@@ -153,7 +169,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public reset (): void {
@@ -175,12 +191,12 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       this.max > -1 &&
       this.opened === this.max
     ) {
-      this.propagator.dispatch('max', [options])
+      this.propagator.dispatchEvents('max', [options])
       return
     }
 
     if (!window.navigator.onLine) {
-      this.propagator.dispatch('offline', [options])
+      this.propagator.dispatchEvents('offline', [options])
       return
     }
 
@@ -218,8 +234,9 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   }
 
   protected addEventListeners (): void {
-    this.addEventListener('sc-requester-send', this.handleSendBound)
     this.addEventListener('sc-requester-abort', this.handleAbortBound)
+    this.addEventListener('sc-requester-reset', this.handleResetBound)
+    this.addEventListener('sc-requester-send', this.handleSendBound)
   }
 
   protected createRequest (options?: unknown): Request {
@@ -391,7 +408,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }
 
     this.setAttribute('aria-invalid', 'true')
-    this.propagator.dispatch<ScolaError>('error', [this.error])
+    this.propagator.dispatchEvents<ScolaError>('error', [this.error])
   }
 
   protected handleLoadend (event: ProgressEvent, options: unknown): void {
@@ -424,13 +441,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       message: xhr.statusText
     }
 
-    this.setAttribute('aria-invalid', 'true')
-    this.propagator.dispatch<ScolaError>('error', [this.error], event)
+    this.propagator.dispatchEvents<ScolaError>('error', [this.error], event)
 
     if (isStruct(data)) {
-      this.propagator.dispatch('errordata', [
-        data.body ?? data.query ?? data.headers ?? data
-      ], event)
+      this.errorData = data.body ?? data.query ?? data.headers ?? data
+      this.propagator.dispatchEvents('errordata', [this.errorData], event)
     }
 
     if (isTransaction(options)) {
@@ -438,8 +453,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
         options.result = data.body ?? data.query ?? data.headers ?? data
       }
 
-      this.propagator.dispatch<Transaction>('terror', [options], event)
+      this.propagator.dispatchEvents<Transaction>('terror', [options], event)
     }
+
+    this.setAttribute('aria-invalid', 'true')
   }
 
   protected handleLoadendOk (event: ProgressEvent, options: unknown, data: unknown): void {
@@ -457,13 +474,15 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       return
     }
 
-    this.removeAttribute('aria-invalid')
-    this.propagator.dispatch('message', [data], event)
+    this.result = data
+    this.propagator.dispatchEvents('message', [this.result], event)
 
     if (isTransaction(options)) {
       options.result = data
-      this.propagator.dispatch<Transaction>('tmessage', [options], event)
+      this.propagator.dispatchEvents<Transaction>('tmessage', [options], event)
     }
+
+    this.setAttribute('aria-invalid', 'false')
   }
 
   protected handleProgress (event: ProgressEvent): void {
@@ -478,7 +497,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     const request = this.createRequest(options)
 
     if (!this.isValid(request.url)) {
-      this.propagator.dispatch('invalidurl', [options])
+      this.propagator.dispatchEvents('invalidurl', [options])
       callback(null)
       return
     }
@@ -533,6 +552,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       }
 
       if (this.concurrency === 1) {
+        this.clear()
         this.state = xhr.readyState
         this.notify()
       }
@@ -541,19 +561,24 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     }
   }
 
+  protected handleReset (): void {
+    this.clear()
+    this.reset()
+    this.notify()
+  }
+
   protected handleSend (event: CustomEvent): void {
     this.send(event.detail)
   }
 
   protected handleTimeout (event: ProgressEvent, options: unknown): void {
-    this.propagator.dispatch('timeout', [options], event)
+    this.propagator.dispatchEvents('timeout', [options], event)
   }
 
   protected isValid (url: string): boolean {
     if (this.strict) {
       const expected = Struct.fromQuery(this.url.split('?').pop() ?? '')
       const actual = Struct.fromQuery(url.split('?').pop() ?? '')
-
       return Object
         .keys(expected)
         .every((key) => {
@@ -566,6 +591,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   protected removeEventListeners (): void {
     this.removeEventListener('sc-requester-abort', this.handleAbortBound)
+    this.removeEventListener('sc-requester-reset', this.handleResetBound)
     this.removeEventListener('sc-requester-send', this.handleSendBound)
   }
 }

@@ -1,10 +1,9 @@
+import type { Query, User } from '../../../../common'
 import type { Schema, SchemaField } from '../../schema'
 import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from '../query'
 import { Struct, isArray, isNil, isObject, isPrimitive } from '../../../../common'
-import type { Query } from '../../../../common'
 import type { SqlDdl } from '../formatter'
 import { SqlFormatter } from '../formatter'
-import type { User } from '../../../../common'
 import { literal } from 'pg-format'
 import { sql } from '../tag'
 

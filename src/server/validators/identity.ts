@@ -1,17 +1,23 @@
+import { isNil, isStruct } from '../../common'
 import type { Struct } from '../../common'
 import type { Validator } from '../helpers'
-import { isStruct } from '../../common'
 
 export function identity (name: string): Validator {
   return (data: Struct, errors: Struct) => {
     const value = data[name]
 
-    if (
-      isStruct(value) &&
-      value.email === undefined &&
-      value.tel === undefined &&
-      value.username === undefined
-    ) {
+    if ((
+      isStruct(value)
+    ) && (
+      isNil(value.email) ||
+      value.email === ''
+    ) && (
+      isNil(value.tel) ||
+      value.tel === ''
+    ) && (
+      isNil(value.username) ||
+      value.username === ''
+    )) {
       errors[name] = {
         code: 'err_validator_identity'
       }

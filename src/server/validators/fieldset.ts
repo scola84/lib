@@ -5,7 +5,6 @@ import { isStruct } from '../../common'
 
 export function fieldset (name: string, field: SchemaField, user?: User): Validator {
   const schemaValidator = new SchemaValidator(field.schema ?? {})
-
   return async (data: Struct, errors: Struct) => {
     let childErrors: Struct | null = null
 

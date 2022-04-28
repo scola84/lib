@@ -1,7 +1,9 @@
-import { Mutator, Observer, Propagator } from '../helpers'
+import { Formatter, Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 
 export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement {
+  public formatter: Formatter
+
   public mutator: Mutator
 
   public observer: Observer
@@ -9,18 +11,22 @@ export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement 
   public propagator: Propagator
 
   public get data (): unknown {
-    return { ...this.dataset }
+    return this.formatter.data
   }
 
   public set data (data: unknown) {
-    this.propagator.set(data)
+    this.formatter.setData(data)
+    this.propagator.setData(data)
+    this.update()
   }
 
   public constructor () {
     super()
+    this.formatter = new Formatter(this)
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
+    this.update()
   }
 
   public static define (): void {
@@ -43,9 +49,17 @@ export class ScolaLabelElement extends HTMLLabelElement implements ScolaElement 
 
   public toJSON (): unknown {
     return {
+      data: this.data,
       id: this.id,
       is: this.getAttribute('is'),
-      nodeName: this.nodeName
+      locale: this.formatter.locale,
+      nodeName: this.nodeName,
+      text: this.formatter.text,
+      title: this.formatter.title
     }
+  }
+
+  public update (): void {
+    this.formatter.update()
   }
 }

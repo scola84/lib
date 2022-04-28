@@ -1,5 +1,5 @@
+import { App, Mutator, Observer, Propagator } from '../helpers'
 import { I18n, toString } from '../../common'
-import { Mutator, Observer, Propagator, Theme } from '../helpers'
 import type { ScolaError, Struct } from '../../common'
 import type { ScolaElement } from './element'
 
@@ -45,7 +45,9 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   public url: string
 
   public get data (): unknown {
-    return this.datamap ?? { ...this.dataset }
+    return this.datamap ?? {
+      ...this.dataset
+    }
   }
 
   public set data (data: unknown) {
@@ -56,6 +58,8 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   protected handleErrorBound = this.handleError.bind(this)
 
   protected handleLoadBound = this.handleLoad.bind(this)
+
+  protected handleLocaleBound = this.handleLocale.bind(this)
 
   protected handleObserverBound = this.handleObserver.bind(this)
 
@@ -108,7 +112,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
-    this.propagator.dispatch('update')
+    this.propagator.dispatchEvents('update')
   }
 
   public postMessage (data: unknown): void {
@@ -143,7 +147,8 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected addEventListeners (): void {
-    window.addEventListener('sc-theme', this.handleThemeBound)
+    window.addEventListener('sc-app-i18n', this.handleLocaleBound)
+    window.addEventListener('sc-app-theme', this.handleThemeBound)
   }
 
   protected calculateDimensions (): Dimensions {
@@ -183,20 +188,25 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
 
   protected createOptions (dimensions: Dimensions): Struct {
     return {
-      theme: Theme.theme,
+      locale: I18n.locale,
+      theme: App.theme,
       ...dimensions,
       ...this.dataset
     }
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatch<ScolaError>('error', [{
+    this.propagator.dispatchEvents<ScolaError>('error', [{
       code: 'err_drawer',
       message: toString(error)
     }])
   }
 
   protected handleLoad (): void {
+    this.update()
+  }
+
+  protected handleLocale (): void {
     this.update()
   }
 
@@ -259,6 +269,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected removeEventListeners (): void {
-    window.removeEventListener('sc-theme', this.handleThemeBound)
+    window.removeEventListener('sc-app-locale', this.handleLocaleBound)
+    window.removeEventListener('sc-app-theme', this.handleThemeBound)
   }
 }

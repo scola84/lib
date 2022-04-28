@@ -172,9 +172,9 @@ export class Hider {
       this.element.style.setProperty('display', 'none', 'important')
       this.backdrop?.style.setProperty('display', 'none', 'important')
       this.indexer.remove(this.element, this.backdrop)
-      this.element.propagator.dispatch('afterhide', [this.element.data])
+      this.element.propagator.dispatchEvents('afterhide', [this.element.data])
     } else {
-      this.element.propagator.dispatch('aftershow', [this.element.data])
+      this.element.propagator.dispatchEvents('aftershow', [this.element.data])
     }
 
     this.changeFocus()
@@ -617,7 +617,6 @@ export class Hider {
     if (this.mode === 'move-bottom') {
       if (event.type === 'end') {
         this.toggleScrollElement(event, true)
-
         return (
           event.axis === 'y' &&
           !event.startScroll.top
@@ -649,7 +648,6 @@ export class Hider {
     )) {
       if (event.type === 'end') {
         this.toggleScrollElement(event, true)
-
         return (
           event.axis === 'x' &&
           !event.startScroll.right
@@ -681,7 +679,6 @@ export class Hider {
     )) {
       if (event.type === 'end') {
         this.toggleScrollElement(event, true)
-
         return (
           event.axis === 'x' &&
           !event.startScroll.left
@@ -707,7 +704,6 @@ export class Hider {
     if (this.mode === 'move-top') {
       if (event.type === 'end') {
         this.toggleScrollElement(event, true)
-
         return (
           event.axis === 'y' &&
           !event.startScroll.bottom

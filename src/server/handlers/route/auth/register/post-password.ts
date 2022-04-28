@@ -5,7 +5,7 @@ import type { ServerResponse } from 'http'
 
 interface AuthRegisterPostPasswordData extends RouteData {
   body: {
-    password: string
+    auth_password: string
   }
 }
 
@@ -16,7 +16,7 @@ export class AuthRegisterPostPasswordHandler extends AuthRegisterPasswordHandler
     body: {
       required: true,
       schema: {
-        password: {
+        auth_password: {
           required: true,
           type: 'password'
         }
@@ -36,7 +36,7 @@ export class AuthRegisterPostPasswordHandler extends AuthRegisterPasswordHandler
 
     const password = new AuthPassword()
 
-    await password.generate(data.body.password)
+    await password.generate(data.body.auth_password)
 
     await this.register(data, response, {
       ...tmpUser,

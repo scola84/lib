@@ -21,7 +21,9 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
   public propagator: Propagator
 
   public get data (): unknown {
-    return this.datamap ?? { ...this.dataset }
+    return this.datamap ?? {
+      ...this.dataset
+    }
   }
 
   public set data (data: unknown) {

@@ -32,22 +32,22 @@ export class Dropper {
   public dropFiles (fileList: FileList, event?: Event): void {
     const files = Array.from(fileList)
 
-    this.element.propagator.dispatch<File>('dropfile', files, event)
-    this.element.propagator.dispatch<Struct<File[]>>('dropfiles', [{ files }], event)
+    this.element.propagator.dispatchEvents<File>('dropfile', files, event)
+    this.element.propagator.dispatchEvents<Struct<File[]>>('dropfiles', [{ files }], event)
   }
 
   public dropItems (items: unknown[], on = 'drop', event?: Event): void {
-    this.element.propagator.dispatch(`${on}item`, items, event)
+    this.element.propagator.dispatchEvents(`${on}item`, items, event)
 
-    this.element.propagator.dispatch(`${on}items`, [{
+    this.element.propagator.dispatchEvents(`${on}items`, [{
       items
     }], event)
   }
 
   public dropKeys (keys: unknown[], on = 'drop', event?: Event): void {
-    this.element.propagator.dispatch(`${on}key`, keys, event)
+    this.element.propagator.dispatchEvents(`${on}key`, keys, event)
 
-    this.element.propagator.dispatch(`${on}keys`, [{
+    this.element.propagator.dispatchEvents(`${on}keys`, [{
       keys
     }], event)
   }

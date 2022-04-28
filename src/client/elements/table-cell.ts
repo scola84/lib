@@ -1,8 +1,10 @@
-import { Mutator, Observer, Propagator } from '../helpers'
+import { Formatter, Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 
 export class ScolaTableCellElement extends HTMLTableCellElement implements ScolaElement {
   public datamap: unknown
+
+  public formatter: Formatter
 
   public mutator: Mutator
 
@@ -11,19 +13,25 @@ export class ScolaTableCellElement extends HTMLTableCellElement implements Scola
   public propagator: Propagator
 
   public get data (): unknown {
-    return this.datamap ?? { ...this.dataset }
+    return this.datamap ?? {
+      ...this.dataset
+    }
   }
 
   public set data (data: unknown) {
     this.datamap = data
-    this.propagator.set(data)
+    this.formatter.setData(data)
+    this.propagator.setData(data)
+    this.update()
   }
 
   public constructor () {
     super()
+    this.formatter = new Formatter(this)
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
+    this.update()
   }
 
   public static define (): void {
@@ -49,7 +57,14 @@ export class ScolaTableCellElement extends HTMLTableCellElement implements Scola
       data: this.data,
       id: this.id,
       is: this.getAttribute('is'),
-      nodeName: this.nodeName
+      locale: this.formatter.locale,
+      nodeName: this.nodeName,
+      text: this.formatter.text,
+      title: this.formatter.title
     }
+  }
+
+  public update (): void {
+    this.formatter.update()
   }
 }

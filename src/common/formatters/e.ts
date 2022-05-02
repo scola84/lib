@@ -22,7 +22,7 @@ export function e (name: string, locale: string, options: Partial<Struct<string>
         isNil(value) ||
         value === ''
       ) {
-        return i18n.format(def, data, locale)
+        return i18n.formatText(def, data, locale)
       }
 
       return value.toString()
@@ -31,10 +31,10 @@ export function e (name: string, locale: string, options: Partial<Struct<string>
       const code = `${name}_${value.toString()}`
 
       if (I18n.strings[locale]?.[code] === undefined) {
-        return i18n.format(`${name}_d`, data, locale)
+        return i18n.formatText(`${name}_d`, data, locale)
       }
 
-      return i18n.format(code, data, locale)
+      return i18n.formatText(code, data, locale)
     }
 
     return ''

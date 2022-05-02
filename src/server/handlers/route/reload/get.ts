@@ -75,7 +75,7 @@ export class ReloadGetHandler extends RouteHandler {
   protected startWatcher (): void {
     this.watcher = watch(this.file)
 
-    this.watcher.on('change', debounce(this.debounce, false, () => {
+    this.watcher.on('change', debounce(this.debounce, () => {
       if (readFileSync(this.file).length > 0) {
         this.notifyClients()
       }

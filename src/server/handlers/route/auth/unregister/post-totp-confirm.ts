@@ -2,6 +2,7 @@ import { AuthHandler } from '../auth'
 import { AuthTotp } from '../../../../helpers'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
+import type { Struct } from '../../../../../common'
 
 interface AuthUnregisterPostTotpConfirmData extends RouteData {
   body: {
@@ -28,7 +29,7 @@ export class AuthUnregisterPostTotpConfirmHandler extends AuthHandler {
     }
   }
 
-  public async handle (data: AuthUnregisterPostTotpConfirmData, response: ServerResponse): Promise<void> {
+  public async handle (data: AuthUnregisterPostTotpConfirmData, response: ServerResponse): Promise<Struct> {
     if (data.user === undefined) {
       response.statusCode = 401
       throw new Error('User is undefined')
@@ -43,5 +44,8 @@ export class AuthUnregisterPostTotpConfirmHandler extends AuthHandler {
     }
 
     await this.updateUserTotp(tmpUser)
+    return {
+      code: 'ok_auth_unregister_totp_confirm'
+    }
   }
 }

@@ -48,9 +48,9 @@ export class AuthLoginPostIdentityHandler extends AuthLoginHandler {
     let type: string | null = null
 
     if (user.auth_password !== null) {
-      type = 'password'
+      type = 'auth_password'
     } else if (user.auth_webauthn !== null) {
-      type = 'webauthn'
+      type = 'auth_webauthn'
     }
 
     if (type === null) {
@@ -66,7 +66,8 @@ export class AuthLoginPostIdentityHandler extends AuthLoginHandler {
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
     return {
-      type
+      code: 'ok_auth_login_identity',
+      type: type
     }
   }
 }

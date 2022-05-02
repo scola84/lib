@@ -56,7 +56,7 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
     }
   }
 
-  public async handle (data: AuthRegisterPostData, response: ServerResponse): Promise<void> {
+  public async handle (data: AuthRegisterPostData, response: ServerResponse): Promise<Struct> {
     const tmpUser = createUser({
       email: data.body.email,
       tel: data.body.tel,
@@ -82,5 +82,9 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
       tel: data.body.tel,
       username: data.body.username
     }))
+
+    return {
+      code: 'ok_auth_register'
+    }
   }
 }

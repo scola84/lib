@@ -1,6 +1,7 @@
 import { AuthHandler } from '../auth'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
+import type { Struct } from '../../../../../common'
 import { createUser } from '../../../../../common'
 
 export class AuthUnregisterPostTotpRequestHandler extends AuthHandler {
@@ -8,7 +9,7 @@ export class AuthUnregisterPostTotpRequestHandler extends AuthHandler {
 
   public method = 'POST'
 
-  public async handle (data: RouteData, response: ServerResponse): Promise<void> {
+  public async handle (data: RouteData, response: ServerResponse): Promise<Struct> {
     if (data.user?.token === undefined) {
       response.statusCode = 401
       throw new Error('Token is undefined')
@@ -19,5 +20,9 @@ export class AuthUnregisterPostTotpRequestHandler extends AuthHandler {
       auth_totp_confirmed: false,
       user_id: data.user.user_id
     }), data.user.token)
+
+    return {
+      code: 'ok_auth_unregister_totp_request'
+    }
   }
 }

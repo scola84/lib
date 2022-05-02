@@ -46,6 +46,7 @@ export interface User extends UserBase {
   preferences: {
     auth_login_email?: boolean
     locale?: string
+    theme?: string
   }
 
   role?: Role

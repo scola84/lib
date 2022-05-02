@@ -1,4 +1,4 @@
-import { I18n, isError } from '../../common'
+import { I18n, isError, isResult } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
@@ -27,12 +27,12 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
   }
 
   public set data (data: unknown) {
-    if (isError(data)) {
+    if (
+      isError(data) ||
+      isResult(data)
+    ) {
+      this.code = data.code
       this.datamap = data.data
-
-      if (this.initialCode === null) {
-        this.code = data.code
-      }
     } else {
       this.datamap = data
     }
@@ -92,7 +92,7 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
   }
 
   public update (): void {
-    const code = this.i18n.format(this.code, this.data)
+    const code = this.i18n.formatText(this.code, this.data)
     const snippet = ScolaIconElement.snippets[code]
 
     if (snippet !== undefined) {

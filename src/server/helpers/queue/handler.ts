@@ -707,5 +707,5 @@ export abstract class QueueHandler {
    *
    * @param task - The task
    */
-  protected abstract handle (task: Task): Promise<unknown> | unknown
+  protected abstract handle (task: Task): unknown
 }

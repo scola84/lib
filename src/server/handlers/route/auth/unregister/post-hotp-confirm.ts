@@ -2,6 +2,7 @@ import { AuthHandler } from '../auth'
 import { AuthHotp } from '../../../../helpers'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
+import type { Struct } from '../../../../../common'
 
 interface AuthUnregisterPostHotpConfirmData extends RouteData {
   body: {
@@ -28,7 +29,7 @@ export class AuthUnregisterPostHotpConfirmHandler extends AuthHandler {
     }
   }
 
-  public async handle (data: AuthUnregisterPostHotpConfirmData, response: ServerResponse): Promise<void> {
+  public async handle (data: AuthUnregisterPostHotpConfirmData, response: ServerResponse): Promise<Struct> {
     if (data.user === undefined) {
       response.statusCode = 401
       throw new Error('User is undefined')
@@ -43,5 +44,18 @@ export class AuthUnregisterPostHotpConfirmHandler extends AuthHandler {
     }
 
     await this.updateUserHotp(tmpUser)
+
+    if (tmpUser.auth_hotp_email !== null) {
+      return {
+        code: 'ok_auth_unregister_hotp_email_confirm'
+      }
+    } else if (tmpUser.auth_hotp_tel !== null) {
+      return {
+        code: 'ok_auth_unregister_hotp_tel_confirm'
+      }
+    }
+
+    response.statusCode = 401
+    throw new Error('HOTP is undefined')
   }
 }

@@ -9,6 +9,7 @@ import authFormUserToken from './auth/form/user-token.html'
 import queueFormQueue from './queue/form/queue.html'
 import queueFormRun from './queue/form/run.html'
 import queueFormTask from './queue/form/task.html'
+import smtpEmail from './smtp/email.html'
 
 export const snippets = {
   'sc-auth-flow-login': authFlowLogin,
@@ -21,5 +22,6 @@ export const snippets = {
   'sc-auth-form-user-token': authFormUserToken,
   'sc-queue-form-queue': queueFormQueue,
   'sc-queue-form-run': queueFormRun,
-  'sc-queue-form-task': queueFormTask
+  'sc-queue-form-task': queueFormTask,
+  'sc-smtp-email': smtpEmail
 }

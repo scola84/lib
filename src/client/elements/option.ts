@@ -36,12 +36,14 @@ export class ScolaOptionElement extends HTMLOptionElement implements ScolaElemen
   }
 
   public connectedCallback (): void {
+    this.formatter.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
   }
 
   public disconnectedCallback (): void {
+    this.formatter.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()

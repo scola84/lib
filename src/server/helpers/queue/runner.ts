@@ -111,14 +111,23 @@ export class QueueRunner {
   public createTaskWriter (run: Run): Writable {
     return new Writable({
       objectMode: true,
-      write: async (payload: unknown, encoding, finish) => {
-        try {
-          run.aggr_total += 1
-          await this.store.rPush(run.name, (await this.insertTask(run, payload)).task_id.toString())
-          finish()
-        } catch (error: unknown) {
-          finish(new Error(toString(error)))
-        }
+      write: (payload: unknown, encoding, finish) => {
+        run.aggr_total += 1
+
+        Promise
+          .resolve()
+          .then(async () => {
+            return this.insertTask(run, payload)
+          })
+          .then(async (task) => {
+            return this.store.rPush(run.name, task.task_id.toString())
+          })
+          .then(() => {
+            finish()
+          })
+          .catch((error) => {
+            finish(new Error(toString(error)))
+          })
       }
     })
   }

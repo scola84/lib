@@ -1,17 +1,27 @@
 <div
-  class="sc-hidden"
   hidden
   id="auth"
   is="sc-auth"
   sc-hide
   sc-hide-mode="opacity@all"
-  sc-onload="sc-requester-send@#requester-get-user"
+  sc-onauthload="sc-requester-send@#requester-get-session"
   sc-preset="sc-auth"
 >
   <object
-    id="requester-get-user"
+    id="requester-get-session"
     is="sc-requester"
-    sc-url="/api/auth/user"
+    sc-url="/api/auth/user/session"
+    sc-ondata="sc-data-set@#auth"
+    sc-onerror="sc-data-set@#auth"
+    sc-wait
+  ></object>
+  <object
+    id="requester-post-logout"
+    is="sc-requester"
+    sc-method="POST"
+    sc-onerror="sc-data-set@#auth"
+    sc-onresult="sc-data-set@#auth"
+    sc-url="/api/auth/logout"
     sc-wait
   ></object>
   <div
@@ -34,7 +44,7 @@
           <legend
             is="sc-legend"
             sc-preset="sc-header-title sc-header"
-            sc-text="auth_login"
+            sc-text="legend_auth_login"
           >
             Log in
           </legend>
@@ -44,7 +54,7 @@
                 for="input-login-identity"
                 is="sc-label"
                 sc-preset="sc-field-label"
-                sc-text="user_identity"
+                sc-text="label_auth_identity"
                 >Phone, email or username</label
               >
               <input
@@ -70,7 +80,7 @@
                 for="input-login-password"
                 is="sc-label"
                 sc-preset="sc-field-label"
-                sc-text="user_auth_password"
+                sc-text="label_auth_password"
                 >Password</label
               >
               <input
@@ -99,7 +109,7 @@
                 is="sc-requester"
                 sc-method="POST"
                 sc-onerrordata="sc-form-error@#form-post-login"
-                sc-onmessage="sc-data-set@#auth"
+                sc-onauthload="sc-requester-send@#requester-get-session"
                 sc-url="/api/auth/login"
                 sc-wait
               ></object>
@@ -107,7 +117,7 @@
                 is="sc-button"
                 type="submit"
                 sc-preset="sc-button-submit"
-                sc-text="auth_login"
+                sc-text="button_auth_login"
               >
                 Log in
               </button>
@@ -121,14 +131,6 @@
                 sc-observe-target="sc-element-state-requester-state@#requester-post-login"
                 sc-preset="sc-form-error"
               ></span>
-              <span
-                aria-live="polite"
-                data-aria-invalid="false"
-                id="result-requester-post-login"
-                is="sc-span"
-                sc-observe-target="sc-element-state-requester-state@#requester-post-login"
-                sc-preset="sc-form-result"
-              ></span>
             </div>
           </div>
         </fieldset>
@@ -139,7 +141,7 @@
               type="button"
               sc-onclick="sc-carousel-go?pointer=1@#carousel-auth"
               sc-preset="sc-footer-button"
-              sc-text="auth_register"
+              sc-text="button_auth_register"
             >
               Register
             </button>
@@ -159,17 +161,21 @@
           <legend
             is="sc-legend"
             sc-preset="sc-header-title sc-header"
-            sc-text="auth_register"
+            sc-text="legend_auth_register"
           >
             Register
           </legend>
-          <div is="sc-div" sc-preset="sc-body sc-fieldset-body" sc-scrollbar-axis="y">
+          <div
+            is="sc-div"
+            sc-preset="sc-body sc-fieldset-body"
+            sc-scrollbar-axis="y"
+          >
             <div is="sc-div" sc-preset="sc-fieldset-item">
               <label
                 for="input-register-locale"
                 is="sc-label"
                 sc-preset="sc-field-label"
-                sc-text="user_locale"
+                sc-text="label_auth_locale"
                 >Language</label
               >
               <select
@@ -188,32 +194,20 @@
                 sc-observe-target="sc-element-state-field-state@#input-register-locale"
                 sc-preset="sc-field-error"
               ></span>
-              <span
-                aria-live="polite"
-                data-sc-changed="true"
-                is="sc-span"
-                sc-observe-target="sc-element-state-element-has-attrs@#input-register-locale"
-                sc-observe-state-inverse="hidden"
-                sc-padding-x="1@all"
-                sc-preset="sc-field-comment"
-                sc-text="user_locale_hint"
-                >A reload is required to activate the selected language.</span
-              >
             </div>
             <div is="sc-div" sc-preset="sc-fieldset-item">
               <label
                 for="input-register-name"
                 is="sc-label"
                 sc-preset="sc-field-label"
-                sc-text="user_name_required"
-                >Name (required)</label
+                sc-text="label_auth_name"
+                >Name</label
               >
               <input
                 aria-errormessage="error-register-name"
                 id="input-register-name"
                 is="sc-input"
                 name="name"
-                required
                 type="text"
                 sc-focus="form invalid"
                 sc-preset="sc-field"
@@ -232,7 +226,7 @@
                 for="input-register-email"
                 is="sc-label"
                 sc-preset="sc-field-label"
-                sc-text="user_email"
+                sc-text="label_auth_email"
                 >Email</label
               >
               <input
@@ -256,7 +250,7 @@
                 for="input-register-tel"
                 is="sc-label"
                 sc-preset="sc-field-label"
-                sc-text="user_tel"
+                sc-text="label_auth_tel"
                 >Phone</label
               >
               <div is="sc-div" sc-preset="sc-field-group-column">
@@ -290,7 +284,7 @@
                 for="input-register-username"
                 is="sc-label"
                 sc-preset="sc-field-label"
-                sc-text="user_username"
+                sc-text="label_auth_username"
                 >Username</label
               >
               <input
@@ -311,7 +305,7 @@
               <span
                 is="sc-span"
                 sc-preset="sc-field-comment"
-                sc-text="user_identity_hint"
+                sc-text="hint_auth_identity"
                 >At least one of the fields email, phone or username is
                 required.</span
               >
@@ -322,7 +316,7 @@
                 for="input-register-password"
                 is="sc-label"
                 sc-preset="sc-field-label"
-                sc-text="user_auth_password_required"
+                sc-text="label_auth_password_required"
                 >Password (required)</label
               >
               <input
@@ -339,7 +333,7 @@
               <span
                 is="sc-span"
                 sc-preset="sc-field-comment"
-                sc-text="user_auth_password_hint"
+                sc-text="hint_auth_password"
                 >If possible use a password manager to generate a password.
                 Enter 8 or more characters with a mix of letters, numbers and
                 symbols.</span
@@ -360,7 +354,7 @@
                 is="sc-requester"
                 sc-method="POST"
                 sc-onerrordata="sc-form-error@#form-post-register"
-                sc-onmessage="sc-data-set@#auth"
+                sc-onresult="sc-data-set@#auth"
                 sc-url="/api/auth/register"
                 sc-wait
               ></object>
@@ -368,7 +362,7 @@
                 is="sc-button"
                 type="submit"
                 sc-preset="sc-button-submit"
-                sc-text="auth_register"
+                sc-text="button_auth_register"
               >
                 Register
               </button>
@@ -402,7 +396,7 @@
               type="button"
               sc-onclick="sc-carousel-go?pointer=0@#carousel-auth"
               sc-preset="sc-footer-button"
-              sc-text="auth_login"
+              sc-text="button_auth_login"
             >
               Log in
             </button>

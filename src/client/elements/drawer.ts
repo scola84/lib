@@ -179,7 +179,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     iframe.onerror = this.handleErrorBound
     iframe.onload = this.handleLoadBound
 
-    iframe.src = this.i18n.format(`${this.origin}${this.url}`, {
+    iframe.src = this.i18n.formatText(`${this.origin}${this.url}`, {
       name: this.name
     })
 

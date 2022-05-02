@@ -72,6 +72,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
 
     this.dragger?.connect()
     this.dropper?.connect()
+    this.formatter.connect()
     this.interactor.connect()
     this.mutator.connect()
     this.observer.connect()
@@ -81,6 +82,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   public disconnectedCallback (): void {
     this.dragger?.disconnect()
     this.dropper?.disconnect()
+    this.formatter.disconnect()
     this.interactor.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()

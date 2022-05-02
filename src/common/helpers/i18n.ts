@@ -142,13 +142,34 @@ export class I18n {
     })
   }
 
-  public format (code: string, data: unknown = {}, locale = I18n.locale): string {
+  public formatEmailAddress (user: Pick<User, 'email' | 'name'>): string {
+    if (isNil(user.email)) {
+      throw new Error('Email is nil')
+    }
+
+    if (isNil(user.name)) {
+      return user.email
+    }
+
+    return `${user.name} <${user.email}>`
+  }
+
+  public formatMarked (code: string, data: unknown = {}, locale = I18n.locale): string {
+    return marked(this.formatText(code, data, locale), {
+      breaks: true,
+      smartLists: true,
+      smartypants: true,
+      xhtml: true
+    })
+  }
+
+  public formatText (code: string, data: unknown = {}, locale = I18n.locale): string {
+    const string = I18n.strings[locale]?.[code]
+
     let compiled: I18nFormatter[] | undefined = []
-    let string = I18n.strings[locale]?.[code]
 
     if (string === undefined) {
       compiled = I18n.compile(code, locale)
-      string = code
     } else {
       let stringsCache = I18n.stringsCache[locale]
 
@@ -171,27 +192,6 @@ export class I18n {
       })
       .join('')
       .trim()
-  }
-
-  public formatEmailAddress (user: Pick<User, 'email' | 'name'>): string {
-    if (isNil(user.email)) {
-      throw new Error('Email is nil')
-    }
-
-    if (isNil(user.name)) {
-      return user.email
-    }
-
-    return `${user.name} <${user.email}>`
-  }
-
-  public marked (code: string, data: unknown = {}, locale = I18n.locale): string {
-    return marked(this.format(code, data, locale), {
-      breaks: true,
-      smartLists: true,
-      smartypants: true,
-      xhtml: true
-    })
   }
 
   public sort (items: Struct[], query: Query): Struct[] {

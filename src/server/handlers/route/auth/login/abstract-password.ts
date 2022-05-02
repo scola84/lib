@@ -45,7 +45,10 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     await this.auth.login(response, user)
     await this.auth.clearBackoff(data)
     await this.sendMessage(user)
-    return undefined
+    return {
+      code: 'ok_auth_login',
+      next: 'auth_load'
+    }
   }
 
   protected async requestHotp (response: ServerResponse, user: User): Promise<Struct> {
@@ -68,7 +71,8 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
       user_id: user.user_id
     }), token)
 
-    await this.smtp?.send(await this.smtp.create('auth_login_hotp_email', {
+    await this.smtp?.send(await this.smtp.create('auth_login_hotp', {
+      date: new Date(),
       token: hotp.generate(),
       user: user
     }, {
@@ -79,8 +83,13 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
     return {
-      email: user.auth_hotp_email,
-      type: 'hotp'
+      code: 'ok_auth_login_hotp_email',
+      data: {
+        email: user.auth_hotp_email
+          ?.slice(user.auth_hotp_email.indexOf('@'))
+          .padStart(user.auth_hotp_email.length, '*')
+      },
+      next: 'auth_hotp'
     }
   }
 
@@ -93,7 +102,8 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
       user_id: user.user_id
     }), token)
 
-    await this.sms?.send(await this.sms.create('auth_login_hotp_tel', {
+    await this.sms?.send(await this.sms.create('auth_login_hotp', {
+      date: new Date(),
       token: hotp.generate(),
       user: user
     }, {
@@ -103,8 +113,13 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
     return {
-      tel: user.auth_hotp_tel,
-      type: 'hotp'
+      code: 'ok_auth_login_hotp_tel',
+      data: {
+        tel: user.auth_hotp_tel
+          ?.slice(-4)
+          .padStart(user.auth_hotp_tel.length, '*')
+      },
+      next: 'auth_hotp'
     }
   }
 
@@ -117,7 +132,8 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
     return {
-      type: 'totp'
+      code: 'ok_auth_login_totp',
+      next: 'auth_totp'
     }
   }
 }

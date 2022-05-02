@@ -35,6 +35,7 @@ export interface RouteHandlerOptions {
   description: string
   logger: Logger
   method: string
+  origin: string
   permit: Struct
   router: Router
   schema: Schema
@@ -66,13 +67,15 @@ export abstract class RouteHandler {
 
   public logger?: Logger
 
-  public method = 'GET'
+  public method: string
+
+  public origin: string
 
   public permit?: Struct
 
   public router: Router
 
-  public schema: Partial<Schema> = {}
+  public schema: Partial<Schema>
 
   public sms?: Sms
 
@@ -110,6 +113,7 @@ export abstract class RouteHandler {
     this.description = handlerOptions.description
     this.logger = handlerOptions.logger
     this.method = handlerOptions.method ?? 'GET'
+    this.origin = handlerOptions.origin ?? ''
     this.permit = handlerOptions.permit
     this.router = handlerOptions.router
     this.schema = handlerOptions.schema ?? {}
@@ -168,7 +172,7 @@ export abstract class RouteHandler {
     } catch (error: unknown) {
       if (!response.headersSent) {
         if (response.statusCode === 401) {
-          this.auth?.setBackoff(data, response)
+          await this.auth?.setBackoff(data, response)
         } else {
           if (response.statusCode < 300) {
             response.statusCode = 500
@@ -204,5 +208,5 @@ export abstract class RouteHandler {
 
   public stop (): Promise<void> | void {}
 
-  public abstract handle (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<unknown> | unknown
+  public abstract handle (data: RouteData, response: ServerResponse, request: IncomingMessage): unknown
 }

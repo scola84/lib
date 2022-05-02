@@ -1,6 +1,6 @@
-import { I18n, toString } from '../../common'
+import { I18n, isResult, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { ScolaError, Struct } from '../../common'
+import type { Result, ScolaError, Struct } from '../../common'
 import type { ScolaElement } from './element'
 
 declare global {
@@ -10,12 +10,14 @@ declare global {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Handler = (data: any) => Promise<unknown> | unknown
+type Handler = (data: any) => Promise<void> | void
 
 export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElement {
   public static handlers: Partial<Struct<Handler>> = {}
 
   public static origin = window.location.origin
+
+  public error?: ScolaError
 
   public i18n: I18n
 
@@ -32,6 +34,8 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   public origin = ScolaWorkerElement.origin
 
   public propagator: Propagator
+
+  public result?: Result
 
   public url: string
 
@@ -68,6 +72,10 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
       .forEach(([name, handler]) => {
         ScolaWorkerElement.handlers[name] = handler
       })
+  }
+
+  public clear (): void {
+    this.removeAttribute('aria-invalid')
   }
 
   public connectedCallback (): void {
@@ -126,7 +134,7 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
     iframe.onerror = this.handleErrorBound
     iframe.onload = this.handleLoadBound
 
-    iframe.src = this.i18n.format(`${this.origin}${this.url}`, {
+    iframe.src = this.i18n.formatText(`${this.origin}${this.url}`, {
       name: this.name
     })
 
@@ -191,10 +199,13 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatchEvents<ScolaError>('error', [{
+    this.error = {
       code: 'err_worker',
       message: toString(error)
-    }])
+    }
+
+    this.propagator.dispatchEvents<ScolaError>('error', [this.error])
+    this.setAttribute('aria-invalid', 'true')
   }
 
   protected handleLoad (): void {
@@ -206,12 +217,17 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
       event.source === this.iframe?.contentWindow ||
       event.target === this.worker
     ) {
-      this.propagator.dispatchEvents('message', [event.data], event)
+      if (isResult(event.data)) {
+        this.result = event.data
+        this.propagator.dispatchEvents('message', [this.result], event)
+        this.setAttribute('aria-invalid', 'false')
+      }
     }
   }
 
   protected handleWork (event: CustomEvent): void {
     this.postMessage(event.detail)
+    this.clear()
   }
 
   protected load (): void {

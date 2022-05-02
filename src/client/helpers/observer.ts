@@ -58,8 +58,6 @@ export class Observer {
   }
 
   public connect (): void {
-    this.connectTargets()
-
     if (this.observer !== undefined) {
       this.connectSelf(...this.observer)
     }
@@ -76,6 +74,8 @@ export class Observer {
     if (this.save.length > 0) {
       this.connectSelf(this.saveStateBound, this.save)
     }
+
+    this.connectTargets()
   }
 
   public disconnect (): void {

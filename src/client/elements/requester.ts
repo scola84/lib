@@ -1,6 +1,6 @@
-import { I18n, Struct, flatten, isArray, isNil, isPrimitive, isStruct, isTransaction, revive, toString } from '../../common'
+import { I18n, Struct, flatten, isArray, isFlow, isNil, isPrimitive, isResult, isStruct, isTransaction, revive, toJoint, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { ScolaError, Transaction } from '../../common'
+import type { Result, ScolaError, Transaction } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaViewElement } from './view'
 import type { queue as fastq } from 'fastq'
@@ -62,7 +62,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
   public responseType: string
 
-  public result?: unknown
+  public result?: Result
 
   public state = 0
 
@@ -260,7 +260,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       data = this.view?.view?.params
     }
 
-    const url = `${this.origin}${this.i18n.format(this.url, data)}`
+    const url = `${this.origin}${this.i18n.formatText(this.url, data)}`
 
     let body: FormData | URLSearchParams | string | null = null
 
@@ -407,8 +407,8 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       message: toString(error)
     }
 
-    this.setAttribute('aria-invalid', 'true')
     this.propagator.dispatchEvents<ScolaError>('error', [this.error])
+    this.setAttribute('aria-invalid', 'true')
   }
 
   protected handleLoadend (event: ProgressEvent, options: unknown): void {
@@ -474,12 +474,22 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       return
     }
 
-    this.result = data
-    this.propagator.dispatchEvents('message', [this.result], event)
+    if (isFlow(data)) {
+      this.propagator.dispatchEvents(toJoint(data.next, {
+        chars: /[^a-z0-9]+/gui
+      }), [data.data])
+    }
+
+    if (this.method === 'GET') {
+      this.propagator.dispatchEvents('data', [data], event)
+    } else if (isResult(data)) {
+      this.result = data
+      this.propagator.dispatchEvents('result', [this.result], event)
+    }
 
     if (isTransaction(options)) {
       options.result = data
-      this.propagator.dispatchEvents<Transaction>('tmessage', [options], event)
+      this.propagator.dispatchEvents<Transaction>('tresult', [options], event)
     }
 
     this.setAttribute('aria-invalid', 'false')

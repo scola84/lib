@@ -109,7 +109,7 @@ export class FastifyServer {
 
     this.plugins = options.plugins ?? {
       cookie: fastifyCookie,
-      formbody: fastifyFormbody,
+      formbody: fastifyFormbody as FastifyPluginCallback,
       multipart: fastifyMulter.contentParser,
       sse: fastifySse
     }

@@ -31,7 +31,7 @@ export class TwilioSms implements Sms {
 
     return Promise.resolve({
       from: this.from,
-      text: this.i18n.format(`${code}_text`, data, user.preferences.locale ?? undefined),
+      text: this.i18n.formatText(`sms_text_${code}`, data, user.preferences.locale ?? undefined),
       to: user.tel
     })
   }

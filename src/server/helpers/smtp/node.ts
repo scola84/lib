@@ -9,7 +9,7 @@ import { createTransport } from 'nodemailer'
 export interface NodeSmtpOptions {
   dsn: string
   from?: string
-  html?: [string, string]
+  html?: string
   i18n?: I18n
   password?: string
 }
@@ -21,7 +21,7 @@ export class NodeSmtp implements Smtp {
 
   public from: string
 
-  public html?: [string, string]
+  public html?: string
 
   public i18n: I18n
 
@@ -41,17 +41,23 @@ export class NodeSmtp implements Smtp {
       throw new Error('Email is null')
     }
 
-    let html: string | null | undefined = null
+    const subject = this.i18n.formatText(`email_subject_${code}`, data, user.preferences.locale ?? undefined)
+    const text = this.i18n.formatText(`email_text_${code}`, data, user.preferences.locale ?? undefined)
+
+    let html: string | null = null
 
     if (this.html !== undefined) {
-      html = this.html[0] + this.i18n.marked(`${code}_text`, data, user.preferences.locale ?? undefined) + this.html[1]
+      html = this.i18n.formatText(this.html, {
+        subject: subject,
+        text: this.i18n.formatMarked(text)
+      })
     }
 
     return Promise.resolve({
       from: this.from,
       html: html ?? undefined,
-      subject: this.i18n.format(`${code}_subject`, data, user.preferences.locale ?? undefined),
-      text: this.i18n.format(`${code}_text`, data, user.preferences.locale ?? undefined),
+      subject: subject,
+      text: text,
       to: this.i18n.formatEmailAddress(user)
     })
   }

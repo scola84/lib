@@ -78,7 +78,9 @@ export class RouteCodec {
       })
 
       decoder.on('file', (name, stream, info) => {
-        this.decodeFormDataFile(name, stream, info, body, schema)
+        this
+          .decodeFormDataFile(name, stream, info, body, schema)
+          .catch(reject)
       })
 
       decoder.on('close', () => {
@@ -101,7 +103,7 @@ export class RouteCodec {
     setPush(body, name, castValue)
   }
 
-  public decodeFormDataFile (name: string, stream: Readable, info: FileInfo, body: Struct, schema?: Schema): void {
+  public async decodeFormDataFile (name: string, stream: Readable, info: FileInfo, body: Struct, schema?: Schema): Promise<void> {
     if (schema?.[name] === undefined) {
       this.discardStream(stream)
       return
@@ -121,7 +123,7 @@ export class RouteCodec {
     })
 
     setPush(body, name, file)
-    this.bucket?.put(file, stream)
+    await this.bucket?.put(file, stream)
   }
 
   public async decodeFormUrlencoded (request: IncomingMessage): Promise<Struct> {

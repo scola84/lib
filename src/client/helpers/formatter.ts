@@ -1,4 +1,4 @@
-import { I18n, isError } from '../../common'
+import { I18n, isError, isResult } from '../../common'
 import type { ScolaElement } from '../elements'
 
 export class Formatter {
@@ -18,10 +18,21 @@ export class Formatter {
 
   public title?: string
 
+  protected handleLocaleBound = this.handleLocale.bind(this)
+
   public constructor (element: ScolaElement) {
     this.element = element
     this.i18n = new I18n()
     this.reset()
+  }
+
+  public connect (): void {
+    this.addEventListeners()
+    this.focusElement()
+  }
+
+  public disconnect (): void {
+    this.removeEventListeners()
   }
 
   public reset (): void {
@@ -33,27 +44,27 @@ export class Formatter {
   }
 
   public setData (data: unknown): void {
-    if (isError(data)) {
-      this.text = data.code
+    if (
+      isError(data) ||
+      isResult(data)
+    ) {
       this.data = data.data
+      this.text = data.code
     } else {
       this.data = data
     }
   }
 
   public update (): void {
-    if (this.text !== undefined) {
-      this.element.textContent = this.format(this.text, this.data, this.locale) ?? this.element.textContent
-    }
+    this.format()
+    this.focusElement()
+  }
 
-    if (this.html !== undefined) {
-      this.element.innerHTML = this.marked(this.html, this.data, this.locale) ?? this.element.innerHTML
-    }
+  protected addEventListeners (): void {
+    window.addEventListener('sc-app-locale', this.handleLocaleBound)
+  }
 
-    if (this.title !== undefined) {
-      this.element.title = this.format(this.title, this.data, this.locale) ?? ''
-    }
-
+  protected focusElement (): void {
     if (
       this.focus === 'formatter' &&
       !this.element.hasAttribute('hidden')
@@ -65,8 +76,22 @@ export class Formatter {
     }
   }
 
-  protected format (code: string, data: unknown, locale?: string): string | null {
-    const string = this.i18n.format(code, data, locale ?? undefined)
+  protected format (): void {
+    if (this.text !== undefined) {
+      this.element.textContent = this.formatText(this.text, this.data, this.locale) ?? this.element.textContent
+    }
+
+    if (this.html !== undefined) {
+      this.element.innerHTML = this.formatMarked(this.html, this.data, this.locale) ?? this.element.innerHTML
+    }
+
+    if (this.title !== undefined) {
+      this.element.title = this.formatText(this.title, this.data, this.locale) ?? ''
+    }
+  }
+
+  protected formatMarked (code: string, data: unknown, locale?: string): string | null {
+    const string = this.i18n.formatMarked(code, data, locale ?? undefined)
 
     if (
       string === '' ||
@@ -78,8 +103,8 @@ export class Formatter {
     return string
   }
 
-  protected marked (code: string, data: unknown, locale?: string): string | null {
-    const string = this.i18n.marked(code, data, locale ?? undefined)
+  protected formatText (code: string, data: unknown, locale?: string): string | null {
+    const string = this.i18n.formatText(code, data, locale ?? undefined)
 
     if (
       string === '' ||
@@ -89,5 +114,13 @@ export class Formatter {
     }
 
     return string
+  }
+
+  protected handleLocale (): void {
+    this.format()
+  }
+
+  protected removeEventListeners (): void {
+    window.removeEventListener('sc-app-locale', this.handleLocaleBound)
   }
 }

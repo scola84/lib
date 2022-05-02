@@ -230,6 +230,6 @@ export class Media {
   }
 
   protected setSourceFromStruct (struct: Struct): void {
-    this.element.src = this.i18n.format(`${this.element.origin}${this.element.url ?? ''}`, struct)
+    this.element.src = this.i18n.formatText(`${this.element.origin}${this.element.url ?? ''}`, struct)
   }
 }

@@ -2,6 +2,7 @@ import { AuthHotp } from '../../../../helpers'
 import { AuthLoginHandler } from './abstract-login'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
+import type { Struct } from '../../../../../common'
 
 interface AuthLoginPostHotpData extends RouteData {
   body: {
@@ -26,7 +27,7 @@ export class AuthLoginPostHotpHandler extends AuthLoginHandler {
     }
   }
 
-  public async handle (data: AuthLoginPostHotpData, response: ServerResponse): Promise<void> {
+  public async handle (data: AuthLoginPostHotpData, response: ServerResponse): Promise<Struct> {
     const user = await this.selectUser(data, response)
     const htop = AuthHotp.parse(user.auth_hotp ?? '')
 
@@ -38,5 +39,8 @@ export class AuthLoginPostHotpHandler extends AuthLoginHandler {
     await this.auth.login(response, user)
     await this.auth.clearBackoff(data)
     await this.sendMessage(user)
+    return {
+      code: 'ok_auth_login'
+    }
   }
 }

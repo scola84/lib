@@ -1,6 +1,6 @@
 import { I18n, isFile, isStruct, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { ScolaFileProperties, Struct } from '../../common'
+import type { ScolaError, ScolaFileProperties, Struct } from '../../common'
 import type { ScolaElement } from './element'
 
 export interface ImgData extends Struct {
@@ -126,7 +126,7 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
   protected handleError (error: unknown): void {
     this.data = null
 
-    this.propagator.dispatchEvents('error', [{
+    this.propagator.dispatchEvents<ScolaError>('error', [{
       code: 'err_img',
       message: toString(error)
     }])
@@ -174,6 +174,6 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
   }
 
   protected setSourceFromStruct (struct: Struct): void {
-    this.src = this.i18n.format(`${this.origin}${this.url ?? ''}`, struct)
+    this.src = this.i18n.formatText(`${this.origin}${this.url ?? ''}`, struct)
   }
 }

@@ -153,7 +153,7 @@ export class Propagator {
       return detail
     }
 
-    return Struct.fromQuery(this.i18n.format(event.filter, detail))
+    return Struct.fromQuery(this.i18n.formatText(event.filter, detail))
   }
 
   protected getEvents (on: string): PropagatorEvent[] {

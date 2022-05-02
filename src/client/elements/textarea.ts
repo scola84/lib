@@ -9,8 +9,6 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   public i18n: I18n
 
-  public initialCode: string | null
-
   public initialInnerHtml: string
 
   public mutator: Mutator
@@ -120,7 +118,6 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
     super()
     this.field = new Field(this)
     this.i18n = new I18n()
-    this.initialCode = this.getAttribute('sc-code')
     this.initialInnerHtml = this.value
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
@@ -187,19 +184,11 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
   }
 
   public update (): void {
-    this.updatePlaceholder()
-
     if (this.resize) {
       this.updateStyle()
     }
 
     this.notify()
-  }
-
-  public updatePlaceholder (): void {
-    if (this.initialCode !== null) {
-      this.placeholder = this.i18n.format(this.initialCode)
-    }
   }
 
   public updateStyle (): void {

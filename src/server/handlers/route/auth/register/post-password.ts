@@ -2,6 +2,7 @@ import { AuthPassword } from '../../../../helpers'
 import { AuthRegisterPasswordHandler } from './abstract-password'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
+import type { Struct } from '../../../../../common'
 
 interface AuthRegisterPostPasswordData extends RouteData {
   body: {
@@ -25,7 +26,7 @@ export class AuthRegisterPostPasswordHandler extends AuthRegisterPasswordHandler
     }
   }
 
-  public async handle (data: AuthRegisterPostPasswordData, response: ServerResponse): Promise<void> {
+  public async handle (data: AuthRegisterPostPasswordData, response: ServerResponse): Promise<Struct> {
     const tmpUser = await this.getTmpUser(data, response)
     const user = await this.selectUserByIdentities(tmpUser)
 
@@ -42,5 +43,9 @@ export class AuthRegisterPostPasswordHandler extends AuthRegisterPasswordHandler
       ...tmpUser,
       auth_password: password.toString()
     })
+
+    return {
+      code: 'ok_auth_register_password'
+    }
   }
 }

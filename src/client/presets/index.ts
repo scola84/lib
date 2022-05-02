@@ -1,5 +1,6 @@
 export const presets = {
   'sc-auth': {
+    'sc-direction': 'column',
     'sc-height': 'max@all',
     'sc-position': 'absolute@all',
     'sc-transition': '@all',

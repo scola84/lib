@@ -10,7 +10,7 @@ export interface Query extends Struct {
   operator?: Struct<Partial<Struct<string>> | string | undefined>
   order?: Struct<Partial<Struct<string>> | string | undefined>
   select?: Struct<Partial<Struct<boolean>> | boolean | undefined>
-  where?: Struct<Partial<Struct> | unknown | undefined>
+  where?: Struct
 }
 
 export function isQuery (value: unknown): value is Query {

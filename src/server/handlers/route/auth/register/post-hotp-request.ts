@@ -60,7 +60,8 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
 
     await this.setTmpUser(tmpUser, data.user.token)
 
-    await this.smtp?.send(await this.smtp.create('auth_register_hotp_email', {
+    await this.smtp?.send(await this.smtp.create('auth_register_hotp', {
+      date: new Date(),
       token: hotp.generate(),
       user: data.user
     }, {
@@ -70,7 +71,12 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
     }))
 
     return {
-      email
+      code: 'ok_auth_register_hotp_email_request',
+      data: {
+        email: email
+          .slice(email.indexOf('@'))
+          .padStart(email.length, '*')
+      }
     }
   }
 
@@ -89,7 +95,8 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
       user_id: data.user.user_id
     }), data.user.token)
 
-    await this.sms?.send(await this.sms.create('auth_register_hotp_tel', {
+    await this.sms?.send(await this.sms.create('auth_register_hotp', {
+      date: new Date(),
       token: hotp.generate(),
       user: data.user
     }, {
@@ -98,7 +105,12 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
     }))
 
     return {
-      tel
+      code: 'ok_auth_register_hotp_tel_request',
+      data: {
+        tel: tel
+          .slice(-4)
+          .padStart(tel.length, '*')
+      }
     }
   }
 }

@@ -4,7 +4,7 @@ export interface UserToken {
   date_updated: Date
   group_id: number | null
   hash: string | null
-  permissions: unknown | null
+  permissions: unknown
   role_id: number | null
   token_id: number
   user_id: number

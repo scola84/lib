@@ -199,6 +199,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   public update (): void {
+    this.field.update()
     this.notify()
   }
 

@@ -1,4 +1,5 @@
 import type { Primitive, ScolaError, ScolaFile } from '../../common'
+import { Formatter } from './formatter'
 import { Interactor } from './interactor'
 import type { InteractorEvent } from './interactor'
 import type { ScolaFieldElement } from '../elements'
@@ -19,6 +20,8 @@ export class Field {
 
   public error?: ScolaError
 
+  public formatter: Formatter
+
   public interactor: Interactor
 
   protected handleClearBound = this.handleClear.bind(this)
@@ -35,6 +38,7 @@ export class Field {
 
   public constructor (element: ScolaFieldElement) {
     this.element = element
+    this.formatter = new Formatter(element)
     this.interactor = new Interactor(element)
     this.reset()
   }
@@ -47,11 +51,13 @@ export class Field {
 
   public connect (): void {
     this.interactor.observe(this.handleInteractorBound)
+    this.formatter.connect()
     this.interactor.connect()
     this.addEventListeners()
   }
 
   public disconnect (): void {
+    this.formatter.disconnect()
     this.interactor.disconnect()
     this.removeEventListeners()
   }
@@ -76,6 +82,10 @@ export class Field {
   public setValid (): void {
     this.clear()
     this.element.setAttribute('aria-invalid', 'false')
+  }
+
+  public update (): void {
+    this.formatter.update()
   }
 
   public verify (): void {

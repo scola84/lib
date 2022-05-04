@@ -246,16 +246,9 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public update (): void {
+    this.field.update()
     this.updateStyle()
     this.notify()
-  }
-
-  public updateStyle (): void {
-    if (this.type === 'range') {
-      this.style.setProperty('--max', this.max)
-      this.style.setProperty('--min', this.min)
-      this.style.setProperty('--value', this.value)
-    }
   }
 
   public verify (): void {
@@ -431,6 +424,14 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
     if (isPrimitive(value.value)) {
       this.setPrimitive(value.value)
+    }
+  }
+
+  protected updateStyle (): void {
+    if (this.type === 'range') {
+      this.style.setProperty('--max', this.max)
+      this.style.setProperty('--min', this.min)
+      this.style.setProperty('--value', this.value)
     }
   }
 }

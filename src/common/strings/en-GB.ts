@@ -1,7 +1,7 @@
 export default {
-  button_auth_login: 'Inloggen',
-  button_auth_register: 'Registeren',
-  button_cancel: 'Annuleren',
+  button_auth_login: 'Login',
+  button_auth_register: 'Register',
+  button_cancel: 'Cancel',
   button_ok: 'OK',
   email_subject_auth_login: 'U bent ingelogd',
   email_subject_auth_login_hotp: 'Inloggen',
@@ -58,7 +58,7 @@ export default {
   err_validator_type_mismatch_url: 'Voer een geldige URL in',
   err_validator_value_missing: 'Dit veld is verplicht',
   err_worker: 'Onbekende fout ($(message)s)',
-  hint_auth_identity: 'Minstens een van de velden e-mail, telefoon of gebruikersnaam is verplicht.',
+  hint_auth_identity: 'Minstens een van de velden e-mail, telefoon of gebruikersnaam is verplicht',
   hint_auth_password: 'Gebruik indien mogelijk een wachtwoordmanager om een wachtwoord aan te maken. Voer 8 of meer tekens in met een mix van letters, nummers en tekens.',
   label_auth_email: 'E-mail',
   label_auth_identity: 'E-mail, telefoon of gebruikersnaam',
@@ -95,6 +95,6 @@ export default {
   sms_text_auth_register_identity: 'U hebt een account geregistreerd.\n\nU kunt deze registratie bevestigen via [deze link]($(url)s).',
   sms_text_auth_unregister_hotp: 'Uw eenmalige code is: $(token)s',
   sms_text_auth_unregister_identity: 'U kunt uw account verwijderen via [deze link]($(url)s).',
-  tooltip_app_locale: 'Wijzig de taal',
-  tooltip_app_theme: 'Wijzig het thema'
+  tooltip_app_locale: 'Change the language',
+  tooltip_app_theme: 'Change the theme'
 }

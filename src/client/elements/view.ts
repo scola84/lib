@@ -201,19 +201,6 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     } else {
       this.wait = true
       this.loadState()
-
-      if (
-        !this.hasAttribute('hidden') ||
-        this.view?.source === 'location'
-      ) {
-        window.requestAnimationFrame(() => {
-          if (this.hider !== undefined) {
-            this.hider.immediate = true
-          }
-
-          this.go(this.pointer)
-        })
-      }
     }
   }
 
@@ -536,6 +523,19 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     ) {
       this.update()
     }
+
+    if (
+      !this.hasAttribute('hidden') ||
+      this.view?.source === 'location'
+    ) {
+      window.requestAnimationFrame(() => {
+        if (this.hider !== undefined) {
+          this.hider.immediate = true
+        }
+
+        this.go(this.pointer)
+      })
+    }
   }
 
   protected loadStateFromElement (element: ScolaViewElement): void {
@@ -556,7 +556,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     if (result !== null) {
       const {
         name,
-        params
+        params = ''
       } = result.groups ?? {}
 
       const view = {

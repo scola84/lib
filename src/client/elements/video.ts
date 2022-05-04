@@ -49,7 +49,6 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
 
   public set data (data: unknown) {
     this.media.setData(data)
-    this.notify()
   }
 
   protected handleErrorBound = this.handleError.bind(this)
@@ -129,10 +128,6 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
     }
   }
 
-  public toggle (): void {
-    this.media.toggle()
-  }
-
   protected addEventListeners (): void {
     this.addEventListener('error', this.handleErrorBound)
     this.addEventListener('sc-video-fullscreen', this.handleFullscreenBound)
@@ -191,7 +186,7 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
   }
 
   protected handleToggle (): void {
-    this.toggle()
+    this.media.toggle()
   }
 
   protected handleVolume (event: CustomEvent): void {

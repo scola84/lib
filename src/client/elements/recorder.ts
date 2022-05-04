@@ -273,28 +273,6 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     this.notify()
   }
 
-  public updateStyle (): void {
-    const {
-      offsetHeight = 0,
-      offsetWidth = 0
-    } = this.parentElement ?? {}
-
-    let maxHeight = this.codeOverlay
-    let maxWidth = this.codeOverlay
-
-    if (this.codeOverlay < 1) {
-      maxHeight *= offsetHeight
-      maxWidth *= offsetWidth
-    }
-
-    const height = Math.min(offsetHeight - 32, maxHeight)
-    const width = Math.min(offsetWidth - 32, maxWidth)
-    const size = Math.min(height, width)
-
-    this.parentElement?.style.setProperty('--sc-code-overlay-y', `${(offsetHeight - size) / 2}px`)
-    this.parentElement?.style.setProperty('--sc-code-overlay-x', `${(offsetWidth - size) / 2}px`)
-  }
-
   protected addEventListeners (): void {
     this.addEventListener('sc-recorder-disable', this.handleDisableBound)
     this.addEventListener('sc-recorder-enable', this.handleEnableBound)
@@ -594,5 +572,27 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     this.rtcRecorder?.stopRecording(() => {
       this.stopRtc()
     })
+  }
+
+  protected updateStyle (): void {
+    const {
+      offsetHeight = 0,
+      offsetWidth = 0
+    } = this.parentElement ?? {}
+
+    let maxHeight = this.codeOverlay
+    let maxWidth = this.codeOverlay
+
+    if (this.codeOverlay < 1) {
+      maxHeight *= offsetHeight
+      maxWidth *= offsetWidth
+    }
+
+    const height = Math.min(offsetHeight - 32, maxHeight)
+    const width = Math.min(offsetWidth - 32, maxWidth)
+    const size = Math.min(height, width)
+
+    this.parentElement?.style.setProperty('--sc-overlay-code-x', `${(offsetWidth - size) / 2}px`)
+    this.parentElement?.style.setProperty('--sc-overlay-code-y', `${(offsetHeight - size) / 2}px`)
   }
 }

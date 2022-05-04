@@ -184,18 +184,13 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
   }
 
   public update (): void {
+    this.field.update()
+
     if (this.resize) {
       this.updateStyle()
     }
 
     this.notify()
-  }
-
-  public updateStyle (): void {
-    if (this.scrollHeight > 0) {
-      this.style.setProperty('height', '0px')
-      this.style.setProperty('height', `${this.scrollHeight}px`)
-    }
   }
 
   public verify (): void {
@@ -228,6 +223,13 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
     if (isPrimitive(value.value)) {
       this.setPrimitive(value.value)
+    }
+  }
+
+  protected updateStyle (): void {
+    if (this.scrollHeight > 0) {
+      this.style.setProperty('height', '0px')
+      this.style.setProperty('height', `${this.scrollHeight}px`)
     }
   }
 }

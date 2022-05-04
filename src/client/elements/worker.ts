@@ -10,7 +10,7 @@ declare global {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Handler = (data: any) => Promise<void> | void
+type Handler = (data: any) => unknown
 
 export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElement {
   public static handlers: Partial<Struct<Handler>> = {}
@@ -95,14 +95,6 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
     if (this.workerUrl !== undefined) {
       this.worker?.terminate()
       URL.revokeObjectURL(this.workerUrl)
-    }
-  }
-
-  public postMessage (data: unknown): void {
-    if (this.worker === undefined) {
-      this.postIframe(data)
-    } else {
-      this.postWorker(data)
     }
   }
 
@@ -239,13 +231,21 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
     }
   }
 
-  protected postIframe (data: unknown): void {
+  protected postMessage (data: unknown): void {
+    if (this.worker === undefined) {
+      this.postMessageIframe(data)
+    } else {
+      this.postMessageWorker(data)
+    }
+  }
+
+  protected postMessageIframe (data: unknown): void {
     this.iframe?.contentWindow?.postMessage({
       data
     }, '*')
   }
 
-  protected postWorker (data: unknown): void {
+  protected postMessageWorker (data: unknown): void {
     this.worker?.postMessage({
       data
     })

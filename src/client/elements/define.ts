@@ -1,4 +1,5 @@
 import '@ungap/custom-elements'
+import { ScolaAppElement } from './app'
 import { ScolaAudioElement } from './audio'
 import { ScolaAuthElement } from './auth'
 import { ScolaButtonElement } from './button'
@@ -38,6 +39,7 @@ import { ScolaViewElement } from './view'
 import { ScolaWorkerElement } from './worker'
 
 export function defineElements (): void {
+  ScolaAppElement.define()
   ScolaAudioElement.define()
   ScolaAuthElement.define()
   ScolaButtonElement.define()

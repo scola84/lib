@@ -24,6 +24,10 @@ body {
   user-select: none;
 }
 
+:autofill {
+  background: inherit;
+}
+
 :focus {
   outline: none;
 }
@@ -415,10 +419,6 @@ body {
   outline-offset: -2px;
 }
 
-input:autofill {
-  background: inherit;
-}
-
 [sc-range] {
   appearance: none;
   --range: calc(var(--max, 100) - var(--min, 0));
@@ -753,6 +753,20 @@ textarea.sc-code:focus-visible {
   display: none;
 }
 
+.sc-overlay-field {
+  align-items: inherit;
+  background-color: inherit;
+  border-radius: inherit;
+  bottom: 2px;
+  display: inherit;
+  justify-content: inherit;
+  left: 2px;
+  pointer-events: none;
+  position: absolute;
+  right: 2px;
+  top: 2px;
+}
+
 .sc-recorder video {
   width: 100%;
 }
@@ -761,14 +775,14 @@ textarea.sc-code:focus-visible {
   transform: scaleX(-1);
 }
 
-.sc-recorder[sc-type="code"][sc-started] + .sc-code-overlay {
+.sc-recorder[sc-type="code"][sc-started] + .sc-overlay-code {
   border-color: rgba(0, 0, 0, 0.5);
   border-style: solid;
-  border-width: var(--sc-code-overlay-y) var(--sc-code-overlay-x);
+  border-width: var(--sc-overlay-code-y) var(--sc-overlay-code-x);
 }
 
 .sc-recorder[sc-type="code"][sc-started][sc-has-code]
-  + .sc-code-overlay::after {
+  + .sc-overlay-code::after {
   display: block;
   content: "";
   height: 100%;

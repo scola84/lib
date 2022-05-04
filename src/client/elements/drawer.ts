@@ -1,10 +1,11 @@
-import { App, Mutator, Observer, Propagator } from '../helpers'
 import { I18n, toString } from '../../common'
+import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaError, Struct } from '../../common'
+import { ScolaAppElement } from './app'
 import type { ScolaElement } from './element'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Drawer = (data: any, options: Struct) => Promise<SVGElement | undefined> | SVGElement | undefined
+type Drawer = (data: any, options: Struct) => unknown
 
 interface Dimensions {
   height: number
@@ -115,14 +116,6 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     this.propagator.dispatchEvents('update')
   }
 
-  public postMessage (data: unknown): void {
-    if (this.drawer === undefined) {
-      this.postIframe(data)
-    } else {
-      this.postSvg(data)
-    }
-  }
-
   public reset (): void {
     this.name = this.getAttribute('sc-name') ?? ''
     this.scale = Number(this.getAttribute('sc-scale') ?? 0)
@@ -147,7 +140,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected addEventListeners (): void {
-    window.addEventListener('sc-app-i18n', this.handleLocaleBound)
+    window.addEventListener('sc-app-locale', this.handleLocaleBound)
     window.addEventListener('sc-app-theme', this.handleThemeBound)
   }
 
@@ -189,7 +182,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   protected createOptions (dimensions: Dimensions): Struct {
     return {
       locale: I18n.locale,
-      theme: App.theme,
+      theme: ScolaAppElement.theme,
       ...dimensions,
       ...this.dataset
     }
@@ -235,7 +228,15 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  protected postIframe (data: unknown): void {
+  protected postMessage (data: unknown): void {
+    if (this.drawer === undefined) {
+      this.postMessageIframe(data)
+    } else {
+      this.postMessageSvg(data)
+    }
+  }
+
+  protected postMessageIframe (data: unknown): void {
     const dimensions = this.calculateDimensions()
     const options = this.createOptions(dimensions)
 
@@ -248,7 +249,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
     }, '*')
   }
 
-  protected postSvg (data: unknown): void {
+  protected postMessageSvg (data: unknown): void {
     const dimensions = this.calculateDimensions()
     const options = this.createOptions(dimensions)
 
@@ -258,7 +259,7 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
         return this.drawer?.(data, options)
       })
       .then((svg) => {
-        if (svg !== undefined) {
+        if (svg instanceof SVGElement) {
           this.innerHTML = ''
           this.appendChild(svg)
         }

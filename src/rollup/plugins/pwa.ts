@@ -52,7 +52,7 @@ function createIndex (options: Options, base: Base, identity: Result | null = nu
   ]
 
   if (!index.includes('Content-Security-Policy')) {
-    meta.push(`<meta http-equiv="Content-Security-Policy" content="default-src blob: ${origin} 'self'; object-src 'none'; script-src blob: ${origin} 'self' 'sha256-JFPk4y66cnSbK+MbJWM5RWRG6W/tpVnNLswwXhPPgnE=' 'unsafe-inline'; style-src blob: ${origin} 'self' 'unsafe-inline';" />`)
+    meta.push(`<meta http-equiv="Content-Security-Policy" content="default-src blob: ${origin} 'self'; object-src 'none'; script-src blob: ${origin} 'self' 'sha256-2rVHqgm02VB2OTfVE365ErA3EZVe9h8jJeDbFaj9CIA=' 'unsafe-inline'; style-src blob: ${origin} 'self' 'unsafe-inline';" />`)
   }
 
   if (options.reload === true) {
@@ -86,7 +86,7 @@ function createIndexBase (options: Options, base: Base): string {
       '</head>',
       '<body>',
       '<script>',
-      'document.body.classList.add(localStorage.getItem("sc-app-theme") ?? "sc-light");',
+      'document.body.classList.add(localStorage.getItem("sc-app-theme") ?? sessionStorage.getItem("sc-app-theme") ?? "sc-light");',
       '</script>',
       '<script src="/index.js"></script>',
       '</body>',

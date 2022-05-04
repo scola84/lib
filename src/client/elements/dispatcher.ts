@@ -1,7 +1,6 @@
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { PropagatorEvent } from '../helpers'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
 import { isStruct } from '../../common'
 
 declare global {
@@ -47,7 +46,7 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
       this.wait = true
 
       window.requestAnimationFrame(() => {
-        this.dispatch()
+        this.propagator.dispatchEvents('dispatch')
       })
     }
   }
@@ -57,10 +56,6 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
     this.observer.disconnect()
     this.propagator.disconnect()
     this.removeEventListeners()
-  }
-
-  public dispatch (data: Struct = {}, event?: Event): void {
-    this.propagator.dispatchEvents('dispatch', [data], event)
   }
 
   public reset (): void {
@@ -84,9 +79,9 @@ export class ScolaDispatcherElement extends HTMLObjectElement implements ScolaEl
 
   protected handleDispatch (event: CustomEvent): void {
     if (isStruct(event.detail)) {
-      this.dispatch(event.detail, event)
+      this.propagator.dispatchEvents('dispatch', [event.detail], event)
     } else {
-      this.dispatch(undefined, event)
+      this.propagator.dispatchEvents('dispatch', [undefined], event)
     }
   }
 

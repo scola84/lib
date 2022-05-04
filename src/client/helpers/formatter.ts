@@ -2,6 +2,8 @@ import { I18n, isError, isResult } from '../../common'
 import type { ScolaElement } from '../elements'
 
 export class Formatter {
+  public ariaLabel?: string
+
   public data: unknown
 
   public element: ScolaElement
@@ -36,6 +38,7 @@ export class Formatter {
   }
 
   public reset (): void {
+    this.ariaLabel = this.element.getAttribute('sc-aria-label') ?? undefined
     this.focus = this.element.getAttribute('sc-focus') ?? undefined
     this.html = this.element.getAttribute('sc-html') ?? undefined
     this.locale = this.element.getAttribute('sc-locale') ?? undefined
@@ -83,6 +86,10 @@ export class Formatter {
 
     if (this.html !== undefined) {
       this.element.innerHTML = this.formatMarked(this.html, this.data, this.locale) ?? this.element.innerHTML
+    }
+
+    if (this.ariaLabel !== undefined) {
+      this.element.ariaLabel = this.formatText(this.ariaLabel, this.data, this.locale) ?? ''
     }
 
     if (this.title !== undefined) {

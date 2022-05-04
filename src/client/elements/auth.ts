@@ -1,11 +1,14 @@
-import { App, Hider, Mutator, Observer, Propagator } from '../helpers'
 import type { Flow, User } from '../../common/'
+import { Hider, Mutator, Observer, Propagator } from '../helpers'
 import { Struct, isFlow, isUser } from '../../common'
 import type { ScolaElement } from './element'
 import { toJoint } from '../../common/'
 
 export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
-  public app: App
+  public static storage: Partial<Struct<Storage>> = {
+    local: window.localStorage,
+    session: window.sessionStorage
+  }
 
   public flow: Flow | null = null
 
@@ -16,6 +19,8 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
   public observer: Observer
 
   public propagator: Propagator
+
+  public storage: Storage
 
   public user: User | null = null
 
@@ -42,7 +47,6 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
 
   public constructor () {
     super()
-    this.app = new App()
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
@@ -50,6 +54,8 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
     if (this.hasAttribute('sc-hide')) {
       this.hider = new Hider(this)
     }
+
+    this.reset()
   }
 
   public static define (): void {
@@ -83,6 +89,10 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
     this.propagator.dispatchEvents('update')
   }
 
+  public reset (): void {
+    this.storage = ScolaAuthElement.storage[this.getAttribute('sc-storage') ?? 'session'] ?? window.sessionStorage
+  }
+
   public toJSON (): unknown {
     return {
       id: this.id,
@@ -92,19 +102,8 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
   }
 
   public update (): void {
-    this.updateApp()
     this.updateAttributes()
     this.notify()
-  }
-
-  public updateApp (): void {
-    if (typeof this.user?.preferences.locale === 'string') {
-      this.app.setLocale(this.user.preferences.locale)
-    }
-
-    if (typeof this.user?.preferences.theme === 'string') {
-      this.app.setTheme(this.user.preferences.theme)
-    }
   }
 
   public updateAttributes (): void {
@@ -121,7 +120,7 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected loadState (): void {
-    const state = JSON.parse(sessionStorage.getItem('sc-auth') ?? 'null') as Struct | null
+    const state = JSON.parse(this.storage.getItem('sc-auth') ?? 'null') as Struct | null
 
     if (isUser(state?.user)) {
       this.user = state?.user ?? null
@@ -162,7 +161,7 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected saveState (): void {
-    sessionStorage.setItem('sc-auth', JSON.stringify({
+    this.storage.setItem('sc-auth', JSON.stringify({
       flow: this.flow,
       user: this.user
     }))

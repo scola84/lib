@@ -69,7 +69,6 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
-    this.notify()
   }
 
   public static define (): void {
@@ -120,10 +119,6 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
       url: this.url,
       volume: this.volume
     }
-  }
-
-  public toggle (): void {
-    this.media.toggle()
   }
 
   protected addEventListeners (): void {
@@ -177,7 +172,7 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   }
 
   protected handleToggle (): void {
-    this.toggle()
+    this.media.toggle()
   }
 
   protected handleVolume (event: CustomEvent): void {

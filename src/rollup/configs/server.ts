@@ -2,6 +2,7 @@ import { isExternal, onwarn } from '../helpers'
 import type { RollupOptions } from 'rollup'
 import commonjs from '@rollup/plugin-commonjs'
 import copy from 'rollup-plugin-copy'
+import { html } from '../plugins'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
 
@@ -26,6 +27,9 @@ const options: RollupOptions = {
         rename: 'index.d.ts',
         src: 'src/index.ts'
       }]
+    }),
+    html({
+      minify: process.env.ROLLUP_WATCH !== 'true'
     }),
     resolve({
       exportConditions: ['node']

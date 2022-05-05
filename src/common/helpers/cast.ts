@@ -63,17 +63,19 @@ export function cast (value: unknown): CastValue {
   }
 
   if (
-    Number.isFinite(value) &&
-    typeof value === 'number'
+    typeof value === 'number' &&
+    Number.isFinite(value)
   ) {
     return value
   }
 
-  if (
+  if ((
     typeof value === 'string' &&
-    value !== '' &&
-    !value.startsWith('0')
-  ) {
+    value !== ''
+  ) && (
+    !value.startsWith('0') ||
+    value === '0'
+  )) {
     const number = Number(value)
 
     if (Number.isFinite(number)) {

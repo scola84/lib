@@ -1,8 +1,8 @@
 import type { Flow, User } from '../../common/'
 import { Hider, Mutator, Observer, Propagator } from '../helpers'
 import { Struct, isFlow, isUser } from '../../common'
+import { isError, toJoint } from '../../common/'
 import type { ScolaElement } from './element'
-import { toJoint } from '../../common/'
 
 export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
   public static storage: Partial<Struct<Storage>> = {
@@ -34,13 +34,26 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
   public set data (data: unknown) {
     if (isUser(data)) {
       this.user = data
+      this.saveState()
+      this.update()
+    } else if (isError(data)) {
+      if (
+        data.code.endsWith('401') ||
+        data.code.endsWith('403')
+      ) {
+        this.flow = null
+        this.user = null
+        this.saveState()
+        this.update()
+      } else {
+        this.propagator.dispatchEvents('error', [data])
+      }
     } else {
       this.flow = null
       this.user = null
+      this.saveState()
+      this.update()
     }
-
-    this.saveState()
-    this.update()
   }
 
   protected handleObserverBound = this.handleObserver.bind(this)

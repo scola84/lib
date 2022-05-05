@@ -1,6 +1,6 @@
+import { chmod, html } from '../plugins'
 import { isExternal, onwarn } from '../helpers'
 import type { RollupOptions } from 'rollup'
-import { chmod } from '../plugins'
 import commonjs from '@rollup/plugin-commonjs'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
@@ -29,6 +29,9 @@ const options: RollupOptions = {
     commonjs(),
     chmod({
       include: 'dist/cli/index.js'
+    }),
+    html({
+      minify: process.env.ROLLUP_WATCH !== 'true'
     }),
     resolve()
   ]

@@ -24,7 +24,6 @@ export const presets = {
   'sc-button-group': {
     'sc-align-y': 'center',
     'sc-direction': 'row',
-    // 'sc-gap': '0.5@all',
     'sc-height': 'max@all',
     'sc-padding-x': '0.5@all'
   },

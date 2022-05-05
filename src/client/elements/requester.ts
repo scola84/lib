@@ -470,26 +470,18 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
         saveAs(data, name)
       }
-
-      return
-    }
-
-    if (isFlow(data)) {
+    } else if (isTransaction(options)) {
+      options.result = data
+      this.propagator.dispatchEvents<Transaction>('tresult', [options], event)
+    } else if (isFlow(data)) {
       this.propagator.dispatchEvents(toJoint(data.next, {
         chars: /[^a-z0-9]+/gui
       }), [data.data])
-    }
-
-    if (this.method === 'GET') {
-      this.propagator.dispatchEvents('data', [data], event)
     } else if (isResult(data)) {
       this.result = data
-      this.propagator.dispatchEvents('result', [this.result], event)
-    }
-
-    if (isTransaction(options)) {
-      options.result = data
-      this.propagator.dispatchEvents<Transaction>('tresult', [options], event)
+      this.propagator.dispatchEvents('result', [data], event)
+    } else {
+      this.propagator.dispatchEvents('data', [data], event)
     }
 
     this.setAttribute('aria-invalid', 'false')

@@ -1,4 +1,4 @@
-import { I18n, isResult, toString } from '../../common'
+import { I18n, isResult, isTransaction, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { Result, ScolaError, Struct } from '../../common'
 import type { ScolaElement } from './element'
@@ -209,12 +209,17 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
       event.source === this.iframe?.contentWindow ||
       event.target === this.worker
     ) {
-      if (isResult(event.data)) {
+      if (isTransaction(event.data)) {
+        this.propagator.dispatchEvents('tresult', [event.data], event)
+      } else if (isResult(event.data)) {
         this.result = event.data
-        this.propagator.dispatchEvents('message', [this.result], event)
-        this.setAttribute('aria-invalid', 'false')
+        this.propagator.dispatchEvents('result', [event.data], event)
+      } else {
+        this.propagator.dispatchEvents('data', [event.data], event)
       }
     }
+
+    this.setAttribute('aria-invalid', 'false')
   }
 
   protected handleWork (event: CustomEvent): void {

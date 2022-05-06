@@ -62,6 +62,7 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
 
     await this.smtp?.send(await this.smtp.create('auth_register_hotp', {
       date: new Date(),
+      date_tz: data.user.preferences.time_zone,
       token: hotp.generate(),
       user: data.user
     }, {
@@ -97,6 +98,7 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
 
     await this.sms?.send(await this.sms.create('auth_register_hotp', {
       date: new Date(),
+      date_tz: data.user.preferences.time_zone,
       token: hotp.generate(),
       user: data.user
     }, {

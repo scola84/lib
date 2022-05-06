@@ -338,36 +338,35 @@
             </div>
             <div is="sc-div" sc-preset="sc-fieldset-item">
               <label
-                for="input-register-tel"
+                for="input-register-tel-national"
                 is="sc-label"
                 sc-preset="sc-field-label"
-                sc-text="label_auth_tel"
+                sc-text="label_auth_tel_national"
                 >Phone</label
               >
               <div is="sc-div" sc-preset="sc-field-group-column">
                 <select
-                  autocomplete="tel-country-code"
-                  id="tel-cc"
+                  id="tel-country-code"
                   is="sc-select"
-                  name="tel_cc"
-                  sc-generator="sc-tel"
+                  name="tel_country_code"
+                  sc-generator="sc-tel-country-code"
                   sc-preset="sc-field"
                 ></select>
                 <input
-                  aria-errormessage="error-register-tel"
+                  aria-errormessage="error-register-tel-national"
                   autocomplete="tel-national"
-                  id="input-register-tel"
+                  id="input-register-tel-national"
                   is="sc-input"
-                  name="tel"
+                  name="tel-national"
                   type="tel"
                   sc-preset="sc-field"
                 />
               </div>
               <span
                 data-aria-invalid="true"
-                id="error-register-tel"
+                id="error-register-tel-national"
                 is="sc-span"
-                sc-observe-target="sc-element-state-field-state@#input-register-tel"
+                sc-observe-target="sc-element-state-field-state@#input-register-tel-national"
                 sc-preset="sc-field-error"
               ></span>
             </div>
@@ -381,6 +380,7 @@
               >
               <input
                 aria-errormessage="error-register-username"
+                autocomplete="username"
                 id="input-register-username"
                 is="sc-input"
                 name="username"

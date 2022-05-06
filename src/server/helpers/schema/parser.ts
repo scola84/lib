@@ -174,8 +174,8 @@ export class SchemaParser {
       field.rkey = this.extractDatabaseKey(attributes['sc-rkey'])
     }
 
+    field.generated = attributes['sc-generated']
     field.index = attributes['sc-index']
-    field.unique = attributes['sc-unique']
     field.fkeyDelete = attributes['sc-fkey-delete']
     field.mkey = attributes['sc-mkey'] !== undefined
     field.order = attributes['sc-order'] !== undefined

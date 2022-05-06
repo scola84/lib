@@ -5,7 +5,7 @@ export interface Run {
   date_created: Date
   date_updated: Date
   name: string | null
-  options: unknown
+  options: unknown | null
   queue_id: number
   reason: string | null
   run_id: number

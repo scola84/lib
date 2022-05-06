@@ -127,6 +127,7 @@ export abstract class AuthRegisterPasswordHandler extends AuthRegisterHandler {
   protected async sendMessageEmail (user: User): Promise<void> {
     await this.smtp?.send(await this.smtp.create('auth_register', {
       date: new Date(),
+      date_tz: user.preferences.time_zone,
       url: `${this.origin}?next=auth_unregister_identity_request`,
       user: user
     }, {
@@ -139,6 +140,7 @@ export abstract class AuthRegisterPasswordHandler extends AuthRegisterHandler {
   protected async sendMessageTel (user: User): Promise<void> {
     await this.sms?.send(await this.sms.create('auth_register', {
       date: new Date(),
+      date_tz: user.preferences.time_zone,
       url: `${this.origin}?next=auth_unregister_identity_request`,
       user: user
     }, {

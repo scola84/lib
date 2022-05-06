@@ -73,6 +73,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
 
     await this.smtp?.send(await this.smtp.create('auth_login_hotp', {
       date: new Date(),
+      date_tz: user.preferences.time_zone,
       token: hotp.generate(),
       user: user
     }, {
@@ -104,6 +105,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
 
     await this.sms?.send(await this.sms.create('auth_login_hotp', {
       date: new Date(),
+      date_tz: user.preferences.time_zone,
       token: hotp.generate(),
       user: user
     }, {

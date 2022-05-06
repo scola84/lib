@@ -12,9 +12,15 @@ export function d (name: string, locale: string, options: Struct<string>): I18nF
     })
 
   function formatter (data: unknown): string {
+    const timeZone = cast(get(data, `${name}_tz`))
     const value = cast(get(data, path))
 
     if (value instanceof Date) {
+      value.toLocaleString(locale, {
+        ...options,
+        timeZone: timeZone?.toString()
+      })
+
       return format.format(value)
     }
 

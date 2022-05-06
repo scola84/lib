@@ -5,6 +5,8 @@ export interface User {
   auth_hotp_email_confirmed: boolean | null
   auth_hotp_tel: string | null
   auth_hotp_tel_confirmed: boolean | null
+  auth_hotp_tel_country_code: string | null
+  auth_hotp_tel_national: string | null
   auth_mfa: boolean | null
   auth_password: string | null
   auth_totp: string | null
@@ -18,8 +20,9 @@ export interface User {
   preferences: unknown
   state_active: boolean | null
   state_compromised: boolean | null
-  state_confirmed: boolean | null
   tel: string | null
+  tel_country_code: string | null
+  tel_national: string | null
   user_id: number
   username: string | null
 }

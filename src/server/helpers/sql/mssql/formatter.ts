@@ -39,12 +39,12 @@ export class MssqlFormatter extends SqlFormatter {
             return line.padStart(line.length + 2, ' ')
           }),
         ...this
-          .formatDdlCursor(fields)
+          .formatDdlGeneratedColumns(fields)
           .map((line) => {
             return line.padStart(line.length + 2, ' ')
           }),
         ...this
-          .formatDdlConstraintPrimaryKey(object, fields)
+          .formatDdlPrimaryKey(object, fields)
           .map((line) => {
             return line.padStart(line.length + 2, ' ')
           })
@@ -53,19 +53,16 @@ export class MssqlFormatter extends SqlFormatter {
     ].join('\n')
 
     const fkeys = this
-      .formatDdlConstraintForeignKeys(object, fields)
+      .formatDdlForeignKeys(object, fields)
       .join('\n')
       .trim()
 
     const indexes = ([
       this
-        .formatDdlIndex(object, fields)
+        .formatDdlIndexes(object, fields)
         .join('\n'),
       this
-        .formatDdlIndexCursor(object, fields)
-        .join('\n'),
-      this
-        .formatDdlIndexUnique(object, fields)
+        .formatDdlGeneratedIndexes(object, fields)
         .join('\n')
     ]).filter((line) => {
       return line !== ''
@@ -304,7 +301,7 @@ export class MssqlFormatter extends SqlFormatter {
       })
   }
 
-  protected formatDdlConstraintForeignKeys (object: string, fields: Struct<SchemaField>): string[] {
+  protected formatDdlForeignKeys (object: string, fields: Struct<SchemaField>): string[] {
     return Object
       .entries(fields)
       .filter(([, field]) => {
@@ -330,7 +327,176 @@ export class MssqlFormatter extends SqlFormatter {
       })
   }
 
-  protected formatDdlConstraintPrimaryKey (object: string, fields: Struct<SchemaField>): string[] {
+  protected formatDdlGeneratedColumns (fields: Struct<SchemaField>): string[] {
+    const indexes: Struct<Array<string | undefined> | undefined> = {}
+
+    Object
+      .entries(fields)
+      .map(([name, field]) => {
+        return (field.generated ?? '')
+          .split(' ')
+          .filter((generated) => {
+            return generated !== ''
+          })
+          .map((generated) => {
+            const [
+              generatedName,
+              generatedOptions = ''
+            ] = generated.split('?')
+
+            return [name, {
+              name: generatedName,
+              options: Struct.fromQuery(generatedOptions),
+              required: field.required === true
+            }] as [string, {
+              name: string
+              options: Struct
+              required: boolean
+            }]
+          })
+      })
+      .flat()
+      .forEach(([name, generated]) => {
+        let columns = indexes[generated.name]
+
+        if (columns === undefined) {
+          columns = []
+          indexes[generated.name] = columns
+        }
+
+        if (generated.required) {
+          columns[Number(generated.options.order ?? 0)] = `[${name}]`
+        } else {
+          columns[Number(generated.options.order ?? 0)] = `COALESCE([${name}], '')`
+        }
+      })
+
+    return Object
+      .entries(indexes)
+      .map(([name, columns = []]) => {
+        return [name, columns.map((column) => {
+          if (column === undefined) {
+            return ' '
+          }
+
+          return column
+        })] as [string, string[]]
+      })
+      .map(([name, columns = []]) => {
+        return [
+          `[${name}]`,
+          `AS (CONCAT(${columns.join(',')}))`
+        ].join(' ')
+      })
+  }
+
+  protected formatDdlGeneratedIndexes (object: string, fields: Struct<SchemaField>): string[] {
+    const indexes: Struct<string[] | undefined> = {}
+    const types: Struct<string> = {}
+
+    Object
+      .entries(fields)
+      .map(([name, field]) => {
+        return (field.generated ?? '')
+          .split(' ')
+          .filter((index) => {
+            return index !== ''
+          })
+          .map((index) => {
+            const [
+              indexName,
+              indexOptions = ''
+            ] = index.split('?')
+
+            return [name, {
+              name: indexName,
+              options: Struct.fromQuery(indexOptions)
+            }] as [string, {
+              name: string
+              options: Struct
+            }]
+          })
+      })
+      .flat()
+      .filter(([,index]) => {
+        return index.options.index === true
+      })
+      .forEach(([, index]) => {
+        indexes[index.name] = [`[${index.name}]`]
+
+        if (index.options.unique === true) {
+          types[index.name] = 'UNIQUE INDEX'
+        } else {
+          types[index.name] = 'INDEX'
+        }
+      })
+
+    return Object
+      .entries(indexes)
+      .map(([name, columns = []]) => {
+        return [
+          `CREATE ${types[name]} [index_${object}_${name}]`,
+          `ON [${object}] (${columns.join(',')});`
+        ].join(' ')
+      })
+  }
+
+  protected formatDdlIndexes (object: string, fields: Struct<SchemaField>): string[] {
+    const indexes: Struct<string[] | undefined> = {}
+    const types: Struct<string> = {}
+
+    Object
+      .entries(fields)
+      .map(([name, field]) => {
+        return (field.index ?? '')
+          .split(' ')
+          .filter((index) => {
+            return index !== ''
+          })
+          .map((index) => {
+            const [
+              indexName,
+              indexOptions = ''
+            ] = index.split('?')
+
+            return [name, {
+              name: indexName,
+              options: Struct.fromQuery(indexOptions)
+            }] as [string, {
+              name: string
+              options: Struct
+            }]
+          })
+      })
+      .flat()
+      .forEach(([name, index]) => {
+        let columns = indexes[index.name]
+
+        if (columns === undefined) {
+          columns = []
+          indexes[index.name] = columns
+        }
+
+        columns[Number(index.options.order ?? 0)] = `[${name}]`
+
+        if (index.options.unique === true) {
+          types[index.name] = 'UNIQUE INDEX'
+        } else {
+          types[index.name] = 'INDEX'
+        }
+      })
+
+    return Object
+      .entries(indexes)
+      .map(([name, columns = []]) => {
+        return [
+          `CREATE ${types[name]} [index_${object}_${name}]`,
+          `ON [${object}] (${columns.join(',')});`
+        ].join(' ')
+      })
+  }
+
+  protected formatDdlPrimaryKey (object: string, fields: Struct<SchemaField>): string[] {
     const lines = []
 
     const columns = Object
@@ -350,117 +516,5 @@ export class MssqlFormatter extends SqlFormatter {
     }
 
     return lines
-  }
-
-  protected formatDdlCursor (fields: Struct<SchemaField>): string[] {
-    const lines = []
-
-    const columns = Object
-      .entries(fields)
-      .filter(([, field]) => {
-        return field.cursor !== undefined
-      })
-      .sort(([,left], [,right]) => {
-        return (left.cursor ?? 0) - (right.cursor ?? 0)
-      })
-      .map(([name, field]) => {
-        if (field.required === true) {
-          return `[${name}]`
-        }
-
-        return `COALESCE([${name}], '')`
-      })
-
-    if (columns.length > 0) {
-      lines.push([
-        '[cursor]',
-        `AS (CONCAT(${columns.join(',')}))`
-      ].join(' '))
-    }
-
-    return lines
-  }
-
-  protected formatDdlIndex (object: string, fields: Struct<SchemaField>): string[] {
-    const indexes: Struct<string[] | undefined> = {}
-
-    Object
-      .entries(fields)
-      .forEach(([name, field]) => {
-        field.index
-          ?.split(' ')
-          .forEach((index) => {
-            const [indexName, indexIndex = 0] = index.split(':')
-
-            let columns = indexes[indexName]
-
-            if (columns === undefined) {
-              columns = []
-              indexes[indexName] = columns
-            }
-
-            columns[Number(indexIndex)] = `[${name}]`
-          })
-      })
-
-    return Object
-      .entries(indexes)
-      .map(([name, columns = []]) => {
-        return [
-          `CREATE INDEX [index_${object}_${name}]`,
-          `ON [${object}] (${columns.join(',')});`
-        ].join(' ')
-      })
-  }
-
-  protected formatDdlIndexCursor (object: string, fields: Struct<SchemaField>): string[] {
-    const lines = []
-
-    const hasCursor = Object
-      .entries(fields)
-      .some(([,field]) => {
-        return field.cursor !== undefined
-      })
-
-    if (hasCursor) {
-      lines.push([
-        `CREATE INDEX [index_${object}_cursor]`,
-        `ON [${object}] ([cursor]);`
-      ].join(' '))
-    }
-
-    return lines
-  }
-
-  protected formatDdlIndexUnique (object: string, fields: Struct<SchemaField>): string[] {
-    const indexes: Struct<string[] | undefined> = {}
-
-    Object
-      .entries(fields)
-      .forEach(([name, field]) => {
-        field.unique
-          ?.split(' ')
-          .forEach((unique) => {
-            const [indexName, indexIndex = 0] = unique.split(':')
-
-            let columns = indexes[indexName]
-
-            if (columns === undefined) {
-              columns = []
-              indexes[indexName] = columns
-            }
-
-            columns[Number(indexIndex)] = `[${name}]`
-          })
-      })
-
-    return Object
-      .entries(indexes)
-      .map(([name, columns = []]) => {
-        return [
-          `CREATE UNIQUE INDEX [index_${object}_${name}]`,
-          `ON [${object}] (${columns.join(',')});`
-        ].join(' ')
-      })
   }
 }

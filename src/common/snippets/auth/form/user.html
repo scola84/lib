@@ -40,11 +40,29 @@
     </div>
     <div>
       <label for="email">Email</label>
-      <input id="email" name="email" type="email" sc-unique="email" />
+      <input
+        id="email"
+        name="email"
+        type="email"
+        sc-index="email?index=true&order=0&unique=true"
+      />
     </div>
     <div>
-      <label for="tel">Phone number</label>
-      <input id="tel" name="tel" type="tel" sc-unique="tel" />
+      <label for="tel-national">Phone number</label>
+      <select
+        id="tel-country-code"
+        name="tel_country_code"
+        sc-generated="tel?index=true&order=0&unique=true"
+      >
+        <option value="1">+1 (United States)</option>
+        <option value="31">+31 (The Netherlands)</option>
+      </select>
+      <input
+        id="tel-national"
+        name="tel_national"
+        type="tel"
+        sc-generated="tel?index=true&order=1&unique=true"
+      />
     </div>
     <div>
       <label for="username">Username</label>
@@ -53,7 +71,7 @@
         name="username"
         pattern="\w+"
         type="text"
-        sc-unique="username"
+        sc-index="username?index=true&order=0&unique=true"
       />
     </div>
   </fieldset>
@@ -64,6 +82,12 @@
       <select id="locale" name="locale">
         <option value="en-GB" sc-text="en-GB">en-GB</option>
         <option value="nl-NL" sc-text="nl-NL">nl-NL</option>
+      </select>
+    </div>
+    <div>
+      <label for="time-zone">Time Zone</label>
+      <select id="time-zone" name="time_zone">
+        <option value="Europe/Amsterdam">Europe/Amsterdam</option>
       </select>
     </div>
     <div>
@@ -96,17 +120,6 @@
         disabled
       />
       <label for="state-active">Whether the user account is active</label>
-    </div>
-    <div>
-      <input
-        id="state-confirmed"
-        name="state_confirmed"
-        type="checkbox"
-        value="true"
-        disabled
-        readonly
-      />
-      <label for="state-confirmed">Whether the user account is confirmed</label>
     </div>
     <div>
       <input
@@ -144,12 +157,7 @@
           disabled
           readonly
         />
-        <input
-          name="auth_hotp_email"
-          placeholder="Email Address"
-          type="email"
-          readonly
-        />
+        <input name="auth_hotp_email" type="email" readonly />
       </div>
       <div>
         <input
@@ -159,11 +167,19 @@
           disabled
           readonly
         />
-        <input
-          name="auth_hotp_tel"
-          type="tel"
-          placeholder="Phone number"
+        <select
+          name="auth_hotp_tel_country_code"
           readonly
+          sc-generated="auth_hotp_tel?order=0"
+        >
+          <option value="1">+1 (United States)</option>
+          <option value="31">+31 (The Netherlands)</option>
+        </select>
+        <input
+          name="auth_hotp_tel_national"
+          type="tel"
+          readonly
+          sc-generated="auth_hotp_tel?order=1"
         />
       </div>
       <div>

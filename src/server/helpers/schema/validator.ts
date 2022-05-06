@@ -10,6 +10,7 @@ export interface SchemaField extends Struct {
   auth?: SchemaFieldKey[][]
   cursor?: number
   custom?: string
+  generated?: string
   hidden?: boolean
   index?: string
   fkey?: SchemaFieldKey
@@ -30,7 +31,6 @@ export interface SchemaField extends Struct {
   step?: number
   strict?: boolean
   type: string
-  unique?: string
   values?: unknown[]
   value?: Date | Primitive
   var?: string

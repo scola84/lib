@@ -2,7 +2,6 @@
 CREATE TABLE "group" (
   "date_created" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "date_updated" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "for_confirm" BOOLEAN,
   "for_register" BOOLEAN,
   "group_id" SERIAL,
   "name" CHARACTER VARYING NOT NULL,
@@ -12,11 +11,9 @@ CREATE TABLE "role" (
   "date_created" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "date_updated" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "expires" INTEGER NOT NULL,
-  "for_confirm" BOOLEAN,
   "for_register" BOOLEAN,
   "name" CHARACTER VARYING NOT NULL,
   "permissions" JSON NOT NULL DEFAULT '{}'::JSON,
-  "require_confirm" BOOLEAN,
   "require_mfa" BOOLEAN,
   "role_id" SERIAL,
   CONSTRAINT "pkey_role" PRIMARY KEY ("role_id")
@@ -51,8 +48,9 @@ CREATE TABLE "user" (
   "auth_codes_confirmed" BOOLEAN,
   "auth_hotp_email" CHARACTER VARYING,
   "auth_hotp_email_confirmed" BOOLEAN,
-  "auth_hotp_tel" CHARACTER VARYING,
   "auth_hotp_tel_confirmed" BOOLEAN,
+  "auth_hotp_tel_country_code" CHARACTER VARYING,
+  "auth_hotp_tel_national" CHARACTER VARYING,
   "auth_mfa" BOOLEAN,
   "auth_password" CHARACTER VARYING,
   "auth_totp" CHARACTER VARYING,
@@ -66,10 +64,12 @@ CREATE TABLE "user" (
   "preferences" JSON NOT NULL DEFAULT '{}'::JSON,
   "state_active" BOOLEAN,
   "state_compromised" BOOLEAN,
-  "state_confirmed" BOOLEAN,
-  "tel" CHARACTER VARYING,
+  "tel_country_code" CHARACTER VARYING,
+  "tel_national" CHARACTER VARYING,
   "user_id" SERIAL,
   "username" CHARACTER VARYING,
+  "auth_hotp_tel" TEXT GENERATED ALWAYS AS (COALESCE("auth_hotp_tel_country_code", '') || COALESCE("auth_hotp_tel_national", '')) STORED,
+  "tel" TEXT GENERATED ALWAYS AS (COALESCE("tel_country_code", '') || COALESCE("tel_national", '')) STORED,
   CONSTRAINT "pkey_user" PRIMARY KEY ("user_id")
 );
 CREATE INDEX "index_user_group_role_group" ON "user_group_role" ("group_id");
@@ -80,12 +80,12 @@ CREATE INDEX "index_user_group_user" ON "user_group" ("user_id");
 CREATE INDEX "index_user_role_role" ON "user_role" ("role_id");
 CREATE INDEX "index_user_role_user" ON "user_role" ("user_id");
 CREATE INDEX "index_user_token_group" ON "user_token" ("group_id");
+CREATE UNIQUE INDEX "index_user_token_hash" ON "user_token" ("hash");
 CREATE INDEX "index_user_token_role" ON "user_token" ("role_id");
 CREATE INDEX "index_user_token_user" ON "user_token" ("user_id");
-CREATE UNIQUE INDEX "index_user_token_hash" ON "user_token" ("hash");
 CREATE UNIQUE INDEX "index_user_email" ON "user" ("email");
-CREATE UNIQUE INDEX "index_user_tel" ON "user" ("tel");
 CREATE UNIQUE INDEX "index_user_username" ON "user" ("username");
+CREATE UNIQUE INDEX "index_user_tel" ON "user" ("tel");
 ALTER TABLE "user_group_role" ADD CONSTRAINT "fkey_user_group_role_group_id" FOREIGN KEY ("group_id") REFERENCES "group" ("group_id") ON DELETE CASCADE;
 ALTER TABLE "user_group_role" ADD CONSTRAINT "fkey_user_group_role_role_id" FOREIGN KEY ("role_id") REFERENCES "role" ("role_id") ON DELETE CASCADE;
 ALTER TABLE "user_group_role" ADD CONSTRAINT "fkey_user_group_role_user_id" FOREIGN KEY ("user_id") REFERENCES "user" ("user_id") ON DELETE CASCADE;

@@ -1,6 +1,6 @@
 <form name="user_token">
   <fieldset hidden>
-    <input name="hash" type="text" sc-unique="hash" readonly />
+    <input name="hash" type="text" sc-index="hash?unique=true" readonly />
     <input name="token_id" type="number" readonly required sc-pkey sc-serial />
   </fieldset>
   <fieldset>

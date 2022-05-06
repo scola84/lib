@@ -1,7 +1,7 @@
 import { locale } from './locale'
-import { tel } from './tel'
+import { telCountryCode } from './tel-country-code'
 
 export const selectGenerators = {
   'sc-locale': locale,
-  'sc-tel': tel
+  'sc-tel-country-code': telCountryCode
 }

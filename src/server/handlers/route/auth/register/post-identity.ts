@@ -97,6 +97,7 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
   protected async requestEmail (user: User, token: UserToken): Promise<Struct> {
     await this.smtp?.send(await this.smtp.create('auth_register_identity', {
       date: new Date(),
+      date_tz: user.preferences.time_zone,
       token: token,
       url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
       user: user
@@ -119,6 +120,7 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
   protected async requestTel (user: User, token: UserToken): Promise<Struct> {
     await this.sms?.send(await this.sms.create('auth_register_identity', {
       date: new Date(),
+      date_tz: user.preferences.time_zone,
       token: token,
       url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
       user: user

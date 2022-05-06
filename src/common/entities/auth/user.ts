@@ -19,6 +19,10 @@ export interface User extends UserBase {
 
   auth_hotp_tel_confirmed: boolean | null
 
+  auth_hotp_tel_country_code: string | null
+
+  auth_hotp_tel_national: string | null
+
   auth_mfa: boolean | null
 
   auth_password: string | null
@@ -47,6 +51,7 @@ export interface User extends UserBase {
     auth_login_email?: boolean
     locale?: string
     theme?: string
+    time_zone?: string
   }
 
   role?: Role
@@ -60,6 +65,10 @@ export interface User extends UserBase {
   state_confirmed: boolean | null
 
   tel: string | null
+
+  tel_country_code: string | null
+
+  tel_national: string | null
 
   token?: UserToken
 
@@ -83,8 +92,10 @@ export function createUser (user?: Partial<User>, date = new Date()): User {
     auth_codes_confirmed: user?.auth_codes_confirmed ?? false,
     auth_hotp_email: user?.auth_hotp_email ?? null,
     auth_hotp_email_confirmed: user?.auth_hotp_email_confirmed ?? false,
-    auth_hotp_tel: user?.auth_hotp_tel ?? null,
+    auth_hotp_tel: null,
     auth_hotp_tel_confirmed: user?.auth_hotp_tel_confirmed ?? false,
+    auth_hotp_tel_country_code: user?.auth_hotp_tel_country_code ?? null,
+    auth_hotp_tel_national: user?.auth_hotp_tel_national ?? null,
     auth_mfa: user?.auth_mfa ?? false,
     auth_password: user?.auth_password ?? null,
     auth_totp: user?.auth_totp ?? null,
@@ -99,7 +110,9 @@ export function createUser (user?: Partial<User>, date = new Date()): User {
     state_active: user?.state_active ?? false,
     state_compromised: user?.state_compromised ?? false,
     state_confirmed: user?.state_confirmed ?? false,
-    tel: user?.tel ?? null,
+    tel: null,
+    tel_country_code: user?.tel_country_code ?? null,
+    tel_national: user?.tel_national ?? null,
     user_id: user?.user_id ?? 0,
     username: user?.username ?? null
   }

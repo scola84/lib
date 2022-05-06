@@ -62,6 +62,7 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
 
     await this.smtp?.send(await this.smtp.create('auth_unregister_hotp', {
       date: new Date(),
+      date_tz: data.user.preferences.time_zone,
       token: hotp.generate(),
       user: data.user
     }, {
@@ -97,6 +98,7 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
 
     await this.sms?.send(await this.sms.create('auth_unregister_hotp', {
       date: new Date(),
+      date_tz: data.user.preferences.time_zone,
       token: hotp.generate(),
       user: data.user
     }, {

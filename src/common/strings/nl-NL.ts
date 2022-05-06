@@ -66,7 +66,7 @@ export default {
   label_auth_name: 'Naam',
   label_auth_password: 'Wachtwoord',
   label_auth_password_required: 'Wachtwoord (verplicht)',
-  label_auth_tel: 'Telefoon',
+  label_auth_tel_national: 'Telefoon',
   label_auth_username: 'Gebruikersnaam',
   legend_auth_login: 'Inloggen',
   legend_auth_register: 'Registeren',

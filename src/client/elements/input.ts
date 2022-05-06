@@ -256,10 +256,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   protected addEventListeners (): void {
-    if (this.debounce > 0) {
-      this.handleInputBound = debounce(this.debounce, this.handleInput.bind(this))
-    }
-
+    this.handleInputBound = debounce(this.debounce, this.handleInput.bind(this))
     this.addEventListener('input', this.handleInputBound)
   }
 

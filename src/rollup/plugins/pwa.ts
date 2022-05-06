@@ -41,7 +41,7 @@ async function createIdentity (options: Options, base: Base): Promise<Result | n
 
 function createIndex (options: Options, base: Base, identity: Result | null = null): string {
   const index = createIndexBase(options, base)
-  const origin = `https://${determineOrigin(options.origin)}`
+  const origin = determineOrigin(options.origin)
   const body = []
 
   const meta = [
@@ -117,18 +117,15 @@ function createManifest (options: Options, base: Base, identity?: Result): strin
 }
 
 function determineOrigin (origin?: string): string {
-  switch (origin) {
-    case 'true':
-      return execSync('ip route get 255.255.255.255')
+  if (origin === 'https://localhost') {
+    return `https://${execSync('ip route get 255.255.255.255')
         .toString()
         .match(/src (?<ip>[^\s]+)/u)
         ?.groups
-        ?.ip ?? 'localhost'
-    case undefined:
-      return 'localhost'
-    default:
-      return origin
+        ?.ip ?? 'localhost'}`
   }
+
+  return origin ?? 'https://localhost'
 }
 
 export function pwa (options: Options): Plugin {

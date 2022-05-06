@@ -22,6 +22,8 @@ export class ReloadGetHandler extends RouteHandler {
 
   public watcher?: FSWatcher
 
+  protected handleChangeBound = debounce(1000, this.handleChange.bind(this))
+
   public constructor (options: ReloadGetHandlerOptions) {
     super(options)
     this.debounce = options.debounce ?? 1000
@@ -41,12 +43,14 @@ export class ReloadGetHandler extends RouteHandler {
   }
 
   public start (): void {
+    this.handleChangeBound = debounce(this.debounce, this.handleChange.bind(this))
     this.startWatcher()
     super.start()
   }
 
   public async stop (): Promise<void> {
     await super.stop()
+    this.handleChangeBound.cancel()
 
     await Promise.all(Array
       .from(this.responses)
@@ -55,6 +59,12 @@ export class ReloadGetHandler extends RouteHandler {
           response.end(resolve)
         })
       }))
+  }
+
+  protected handleChange (): void {
+    if (readFileSync(this.file).length > 0) {
+      this.notifyClients()
+    }
   }
 
   protected notifyClient (response: ServerResponse): void {
@@ -74,11 +84,6 @@ export class ReloadGetHandler extends RouteHandler {
 
   protected startWatcher (): void {
     this.watcher = watch(this.file)
-
-    this.watcher.on('change', debounce(this.debounce, () => {
-      if (readFileSync(this.file).length > 0) {
-        this.notifyClients()
-      }
-    }))
+    this.watcher.on('change', this.handleChangeBound)
   }
 }

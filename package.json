@@ -114,6 +114,7 @@
     "commitizen": "^4.2.4",
     "cz-conventional-changelog": "^3.3.0",
     "denque": "^2.0.1",
+    "dotenv": "^16.0.0",
     "eslint": "^8.14.0",
     "eslint-config-standard-with-typescript": "^21.0.1",
     "eslint-plugin-import": "^2.26.0",

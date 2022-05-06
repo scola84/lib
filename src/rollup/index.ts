@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { cli, client, rollup, server, worker } from './configs'
 import { existsSync } from 'fs-extra'
 

@@ -113,7 +113,7 @@ export abstract class RouteHandler {
     this.description = handlerOptions.description
     this.logger = handlerOptions.logger
     this.method = handlerOptions.method ?? 'GET'
-    this.origin = handlerOptions.origin ?? ''
+    this.origin = handlerOptions.origin ?? process.env.ORIGIN ?? ''
     this.permit = handlerOptions.permit
     this.router = handlerOptions.router
     this.schema = handlerOptions.schema ?? {}
@@ -153,11 +153,7 @@ export abstract class RouteHandler {
         }
       }
 
-      const result = await Promise
-        .resolve()
-        .then(() => {
-          return this.handle(data, response, request)
-        })
+      const result = await this.handle(data, response, request)
 
       if (!response.headersSent) {
         if (isNil(result)) {

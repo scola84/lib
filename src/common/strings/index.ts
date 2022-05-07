@@ -1,7 +1,7 @@
-import enGB from './en-GB'
+import enUS from './en-US'
 import nlNL from './nl-NL'
 
 export const strings = {
-  'en-GB': enGB,
+  'en-US': enUS,
   'nl-NL': nlNL
 }

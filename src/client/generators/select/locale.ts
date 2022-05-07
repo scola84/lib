@@ -2,7 +2,7 @@ import { I18n } from '../../../common'
 
 export function locale (): Array<[string, string, boolean?]> {
   const options: Array<[string, string, boolean?]> = [
-    ['en-GB', 'English (United Kingdom)'],
+    ['en-US', 'English (United States)'],
     ['nl-NL', 'Nederlands (Nederland)']
   ]
 

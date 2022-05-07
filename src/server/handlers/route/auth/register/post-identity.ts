@@ -9,7 +9,8 @@ interface AuthRegisterPostIdentityData extends RouteData {
     email?: string
     name?: string
     preferences: Struct
-    tel?: string
+    tel_country_code?: string
+    tel_national?: string
     username?: string
   }
 }
@@ -43,7 +44,11 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
           },
           type: 'fieldset'
         },
-        tel: {
+        tel_country_code: {
+          type: 'number'
+        },
+        tel_national: {
+          custom: 'tel-national',
           type: 'tel'
         },
         username: {
@@ -62,24 +67,21 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
   }
 
   public async handle (data: AuthRegisterPostIdentityData, response: ServerResponse): Promise<Struct | undefined> {
-    const user = await this.selectUserByIdentities(createUser({
+    const tmpUser = createUser({
       email: data.body.email,
-      tel: data.body.tel,
+      name: data.body.name,
+      preferences: data.body.preferences,
+      tel_country_code: data.body.tel_country_code,
+      tel_national: data.body.tel_national,
       username: data.body.username
-    }))
+    })
+
+    const user = await this.selectUserByIdentities(tmpUser)
 
     if (user !== undefined) {
       response.statusCode = 401
       throw new Error('User in database is defined')
     }
-
-    const tmpUser = createUser({
-      email: data.body.email,
-      name: data.body.name,
-      preferences: data.body.preferences,
-      tel: data.body.tel,
-      username: data.body.username
-    })
 
     const token = this.auth.createUserToken(tmpUser, this.tokenExpires)
 
@@ -87,7 +89,7 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
 
     if (tmpUser.email !== null) {
       return this.requestEmail(tmpUser, token)
-    } else if (tmpUser.tel !== null) {
+    } else if (tmpUser.tel_national !== null) {
       return this.requestTel(tmpUser, token)
     }
 
@@ -97,7 +99,7 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
   protected async requestEmail (user: User, token: UserToken): Promise<Struct> {
     await this.smtp?.send(await this.smtp.create('auth_register_identity', {
       date: new Date(),
-      date_tz: user.preferences.time_zone,
+      date_time_zone: user.preferences.time_zone,
       token: token,
       url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
       user: user
@@ -120,7 +122,7 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
   protected async requestTel (user: User, token: UserToken): Promise<Struct> {
     await this.sms?.send(await this.sms.create('auth_register_identity', {
       date: new Date(),
-      date_tz: user.preferences.time_zone,
+      date_time_zone: user.preferences.time_zone,
       token: token,
       url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
       user: user
@@ -133,7 +135,7 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
       code: 'ok_auth_register_identity_tel',
       data: {
         tel: user.tel
-          ?.slice(-4)
+          .slice(-4)
           .padStart(user.tel.length, '*')
       }
     }

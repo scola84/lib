@@ -95,8 +95,9 @@ export abstract class AuthHandler extends RouteHandler {
       })
     } else if (user.auth_hotp_tel_confirmed !== null) {
       await this.updateUserHotpTel({
-        auth_hotp_tel: user.auth_hotp_tel,
         auth_hotp_tel_confirmed: user.auth_hotp_tel_confirmed,
+        auth_hotp_tel_country_code: user.auth_hotp_tel_country_code,
+        auth_hotp_tel_national: user.auth_hotp_tel_national,
         user_id: user.user_id
       })
     }
@@ -116,16 +117,18 @@ export abstract class AuthHandler extends RouteHandler {
     })
   }
 
-  protected async updateUserHotpTel (user: Pick<User, 'auth_hotp_tel_confirmed' | 'auth_hotp_tel' | 'user_id'>): Promise<void> {
+  protected async updateUserHotpTel (user: Pick<User, 'auth_hotp_tel_confirmed' | 'auth_hotp_tel_country_code' | 'auth_hotp_tel_national' | 'user_id'>): Promise<void> {
     await this.database.update<User>(sql`
       UPDATE $[user]
       SET
-        $[auth_hotp_tel] = $(auth_hotp_tel),
-        $[auth_hotp_tel_confirmed] = $(auth_hotp_tel_confirmed)
+        $[auth_hotp_tel_confirmed] = $(auth_hotp_tel_confirmed),
+        $[auth_hotp_tel_country_code] = $(auth_hotp_tel_country_code),
+        $[auth_hotp_tel_national] = $(auth_hotp_tel_national)
       WHERE $[user_id] = $(user_id)
     `, {
-      auth_hotp_tel: user.auth_hotp_tel,
       auth_hotp_tel_confirmed: user.auth_hotp_tel_confirmed,
+      auth_hotp_tel_country_code: user.auth_hotp_tel_country_code,
+      auth_hotp_tel_national: user.auth_hotp_tel_national,
       user_id: user.user_id
     })
   }

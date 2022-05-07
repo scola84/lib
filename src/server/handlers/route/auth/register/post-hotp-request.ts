@@ -7,8 +7,9 @@ import { createUser } from '../../../../../common'
 
 interface AuthRegisterPostHotpRequestData extends RouteData {
   body: {
-    email?: string
-    tel?: string
+    auth_hotp_email?: string
+    auth_hotp_tel_country_code?: string
+    auth_hotp_tel_national?: string
   }
 }
 
@@ -21,10 +22,14 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
     body: {
       required: true,
       schema: {
-        email: {
+        auth_hotp_email: {
           type: 'email'
         },
-        tel: {
+        auth_hotp_tel_country_code: {
+          type: 'number'
+        },
+        auth_hotp_tel_national: {
+          custom: 'tel-national',
           type: 'tel'
         }
       },
@@ -33,17 +38,17 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
   }
 
   public async handle (data: AuthRegisterPostHotpRequestData, response: ServerResponse): Promise<Struct> {
-    if (data.body.email !== undefined) {
-      return this.requestHotpEmail(data, response, data.body.email)
-    } else if (data.body.tel !== undefined) {
-      return this.requestHotpTel(data, response, data.body.tel)
+    if (data.body.auth_hotp_email !== undefined) {
+      return this.requestHotpEmail(data, response)
+    } else if (data.body.auth_hotp_tel_national !== undefined) {
+      return this.requestHotpTel(data, response)
     }
 
     response.statusCode = 401
     throw new Error('HOTP is undefined')
   }
 
-  protected async requestHotpEmail (data: AuthRegisterPostHotpRequestData, response: ServerResponse, email: string): Promise<Struct> {
+  protected async requestHotpEmail (data: AuthRegisterPostHotpRequestData, response: ServerResponse): Promise<Struct> {
     if (data.user?.token === undefined) {
       response.statusCode = 401
       throw new Error('Token is undefined')
@@ -53,7 +58,7 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
 
     const tmpUser = createUser({
       auth_hotp: hotp.toString(),
-      auth_hotp_email: email,
+      auth_hotp_email: data.body.auth_hotp_email,
       auth_hotp_email_confirmed: true,
       user_id: data.user.user_id
     })
@@ -62,11 +67,11 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
 
     await this.smtp?.send(await this.smtp.create('auth_register_hotp', {
       date: new Date(),
-      date_tz: data.user.preferences.time_zone,
+      date_time_zone: data.user.preferences.time_zone,
       token: hotp.generate(),
       user: data.user
     }, {
-      email: email,
+      email: tmpUser.auth_hotp_email,
       name: data.user.name,
       preferences: data.user.preferences
     }))
@@ -74,14 +79,14 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
     return {
       code: 'ok_auth_register_hotp_email_request',
       data: {
-        email: email
-          .slice(email.indexOf('@'))
-          .padStart(email.length, '*')
+        email: tmpUser.auth_hotp_email
+          ?.slice(tmpUser.auth_hotp_email.indexOf('@'))
+          .padStart(tmpUser.auth_hotp_email.length, '*')
       }
     }
   }
 
-  protected async requestHotpTel (data: AuthRegisterPostHotpRequestData, response: ServerResponse, tel: string): Promise<Struct> {
+  protected async requestHotpTel (data: AuthRegisterPostHotpRequestData, response: ServerResponse): Promise<Struct> {
     if (data.user?.token === undefined) {
       response.statusCode = 401
       throw new Error('Token is undefined')
@@ -89,29 +94,32 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
 
     const hotp = new AuthHotp()
 
-    await this.setTmpUser(createUser({
+    const tmpUser = createUser({
       auth_hotp: hotp.toString(),
-      auth_hotp_tel: tel,
       auth_hotp_tel_confirmed: true,
+      auth_hotp_tel_country_code: data.body.auth_hotp_tel_country_code,
+      auth_hotp_tel_national: data.body.auth_hotp_tel_national,
       user_id: data.user.user_id
-    }), data.user.token)
+    })
+
+    await this.setTmpUser(tmpUser, data.user.token)
 
     await this.sms?.send(await this.sms.create('auth_register_hotp', {
       date: new Date(),
-      date_tz: data.user.preferences.time_zone,
+      date_time_zone: data.user.preferences.time_zone,
       token: hotp.generate(),
       user: data.user
     }, {
       preferences: data.user.preferences,
-      tel: tel
+      tel: tmpUser.tel
     }))
 
     return {
       code: 'ok_auth_register_hotp_tel_request',
       data: {
-        tel: tel
+        tel: tmpUser.tel
           .slice(-4)
-          .padStart(tel.length, '*')
+          .padStart(tmpUser.tel.length, '*')
       }
     }
   }

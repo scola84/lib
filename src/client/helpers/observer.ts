@@ -3,7 +3,7 @@ import { Sanitizer } from './sanitizer'
 import type { ScolaElement } from '../elements'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Handler = ((observer: any, observable: any, mutations: MutationRecord[]) => void)
+type Handler = ((observer: any, observable: any, query: Struct, mutations: MutationRecord[]) => void)
 
 export class Observer {
   public static handlers: Partial<Struct<Handler>> = {}
@@ -146,16 +146,16 @@ export class Observer {
   protected connectTargets (): void {
     this.target.forEach((target) => {
       const [
-        nameAndFilter,
+        nameAndQueryString,
         selector
       ] = target.split('@')
 
       const [
         name,
-        filter = undefined
-      ] = nameAndFilter.split('?')
+        queryString = ''
+      ] = nameAndQueryString.split('?')
 
-      const filters = filter?.split('&')
+      const query = Struct.fromQuery(queryString)
       const handler = Observer.handlers[name]
 
       if (
@@ -165,11 +165,10 @@ export class Observer {
         this.parent
           .querySelectorAll<ScolaElement>(selector)
           .forEach((element) => {
-            const observerHandler = handler.bind(null, this.element, element)
+            const observerHandler = handler.bind(null, this.element, element, query)
             const observer = new MutationObserver(observerHandler)
 
             observer.observe(element, {
-              attributeFilter: filters,
               attributes: true
             })
 

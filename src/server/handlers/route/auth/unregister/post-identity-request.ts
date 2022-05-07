@@ -33,10 +33,10 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
 
     await this.setTmpUser(tmpUser, token)
 
-    if (tmpUser.email !== null) {
-      return this.requestEmail(tmpUser, token)
-    } else if (tmpUser.tel !== null) {
-      return this.requestTel(tmpUser, token)
+    if (data.user.email !== null) {
+      return this.requestEmail(data.user, token)
+    } else if (data.user.tel_national !== null) {
+      return this.requestTel(data.user, token)
     }
 
     return undefined
@@ -45,7 +45,7 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
   protected async requestEmail (user: User, token: UserToken): Promise<Struct> {
     await this.smtp?.send(await this.smtp.create('auth_unregister_identity', {
       date: new Date(),
-      date_tz: user.preferences.time_zone,
+      date_time_zone: user.preferences.time_zone,
       token: token,
       url: `${this.origin}?next=auth_unregister_identity_confirm&token=${token.hash}`,
       user: user
@@ -68,7 +68,7 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
   protected async requestTel (user: User, token: UserToken): Promise<Struct> {
     await this.sms?.send(await this.sms.create('auth_unregister_identity', {
       date: new Date(),
-      date_tz: user.preferences.time_zone,
+      date_time_zone: user.preferences.time_zone,
       token: token,
       url: `${this.origin}?next=auth_unregister_identity_confirm&token=${token.hash}`,
       user: user
@@ -81,7 +81,7 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
       code: 'ok_auth_unregister_identity_tel_request',
       data: {
         tel: user.tel
-          ?.slice(-4)
+          .slice(-4)
           .padStart(user.tel.length, '*')
       }
     }

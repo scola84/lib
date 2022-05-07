@@ -23,13 +23,15 @@ export type I18nFormatterFactory = (name: string, locale: string, options: Struc
 export class I18n {
   public static formatters: Struct<I18nFormatterFactory> = {}
 
-  public static locale = 'nl-NL'
+  public static locale = ''
 
   public static matcher = /\$\(.+?\)[dejnqs]/gu
 
   public static strings: Strings = {}
 
   public static stringsCache: StringsCache = {}
+
+  public static timeZone = ''
 
   public static compile (string: string, locale: string): I18nFormatter[] {
     const compiled = []

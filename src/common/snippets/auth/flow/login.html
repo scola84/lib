@@ -57,12 +57,11 @@
                 sc-preset="sc-button-icon"
               >
                 <select
-                  data-value="locale"
                   is="sc-select"
                   sc-aria-label="tooltip_app_locale"
                   sc-bg-color="normal"
                   sc-generator="sc-locale"
-                  sc-observe-target="sc-element-data-element-get-props@[is='sc-app']"
+                  sc-observe-target="sc-element-data-element-get-props?value=locale@[is='sc-app']"
                   sc-onvalue="sc-app-locale@[is='sc-app']"
                   sc-preset="sc-field-icon"
                   sc-title="tooltip_app_locale"
@@ -111,10 +110,9 @@
                 sc-preset="sc-field"
               />
               <span
-                data-aria-invalid="true"
                 id="error-login-identity"
                 is="sc-span"
-                sc-observe-target="sc-element-state-field-state@#input-login-identity"
+                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-login-identity"
                 sc-preset="sc-field-error"
               ></span>
             </div>
@@ -138,10 +136,9 @@
                 sc-preset="sc-field"
               />
               <span
-                data-aria-invalid="true"
                 id="error-login-password"
                 is="sc-span"
-                sc-observe-target="sc-element-state-field-state@#input-login-password"
+                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-login-password"
                 sc-preset="sc-field-error"
               ></span>
             </div>
@@ -169,10 +166,9 @@
             <div is="sc-div" sc-preset="sc-fieldset-item">
               <span
                 aria-live="polite"
-                data-aria-invalid="true"
                 id="error-requester-post-login"
                 is="sc-span"
-                sc-observe-target="sc-element-state-requester-state@#requester-post-login"
+                sc-observe-target="sc-element-state-requester-state?aria-invalid=true@#requester-post-login"
                 sc-preset="sc-form-error"
               ></span>
             </div>
@@ -218,12 +214,11 @@
                 sc-preset="sc-button-icon"
               >
                 <select
-                  data-value="locale"
                   is="sc-select"
                   sc-aria-label="tooltip_app_locale"
                   sc-bg-color="normal"
                   sc-generator="sc-locale"
-                  sc-observe-target="sc-element-data-element-get-props@[is='sc-app']"
+                  sc-observe-target="sc-element-data-element-get-props?value=locale@[is='sc-app']"
                   sc-onvalue="sc-app-locale@[is='sc-app']"
                   sc-preset="sc-field-icon"
                   sc-title="tooltip_app_locale"
@@ -259,33 +254,6 @@
           >
             <div is="sc-div" sc-preset="sc-fieldset-item">
               <label
-                for="input-register-locale"
-                is="sc-label"
-                sc-preset="sc-field-label"
-                sc-text="label_auth_locale"
-                >Language</label
-              >
-              <select
-                aria-errormessage="error-register-locale"
-                data-value="locale"
-                id="input-register-locale"
-                is="sc-select"
-                name="preferences.locale"
-                sc-generator="sc-locale"
-                sc-observe-target="sc-element-data-element-get-props@[is='sc-app']"
-                sc-onvalue="sc-app-locale@[is='sc-app']"
-                sc-preset="sc-field"
-              ></select>
-              <span
-                data-aria-invalid="true"
-                id="error-register-locale"
-                is="sc-span"
-                sc-observe-target="sc-element-state-field-state@#input-register-locale"
-                sc-preset="sc-field-error"
-              ></span>
-            </div>
-            <div is="sc-div" sc-preset="sc-fieldset-item">
-              <label
                 for="input-register-name"
                 is="sc-label"
                 sc-preset="sc-field-label"
@@ -303,10 +271,9 @@
                 sc-preset="sc-field"
               />
               <span
-                data-aria-invalid="true"
                 id="error-register-name"
                 is="sc-span"
-                sc-observe-target="sc-element-state-field-state@#input-register-name"
+                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-name"
                 sc-preset="sc-field-error"
               ></span>
             </div>
@@ -329,10 +296,9 @@
                 sc-preset="sc-field"
               />
               <span
-                data-aria-invalid="true"
                 id="error-register-email"
                 is="sc-span"
-                sc-observe-target="sc-element-state-field-state@#input-register-email"
+                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-email"
                 sc-preset="sc-field-error"
               ></span>
             </div>
@@ -357,16 +323,15 @@
                   autocomplete="tel-national"
                   id="input-register-tel-national"
                   is="sc-input"
-                  name="tel-national"
+                  name="tel_national"
                   type="tel"
                   sc-preset="sc-field"
                 />
               </div>
               <span
-                data-aria-invalid="true"
                 id="error-register-tel-national"
                 is="sc-span"
-                sc-observe-target="sc-element-state-field-state@#input-register-tel-national"
+                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-tel-national"
                 sc-preset="sc-field-error"
               ></span>
             </div>
@@ -388,10 +353,9 @@
                 sc-preset="sc-field"
               />
               <span
-                data-aria-invalid="true"
                 id="error-register-username"
                 is="sc-span"
-                sc-observe-target="sc-element-state-field-state@#input-register-username"
+                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-username"
                 sc-preset="sc-field-error"
               ></span>
               <span
@@ -431,10 +395,60 @@
                 symbols.</span
               >
               <span
-                data-aria-invalid="true"
                 id="error-register-password"
                 is="sc-span"
-                sc-observe-target="sc-element-state-field-state@#input-register-password"
+                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-password"
+                sc-preset="sc-field-error"
+              ></span>
+            </div>
+            <div is="sc-div" sc-preset="sc-fieldset-divider"></div>
+            <div is="sc-div" sc-preset="sc-fieldset-item">
+              <label
+                for="input-register-locale"
+                is="sc-label"
+                sc-preset="sc-field-label"
+                sc-text="label_auth_locale"
+                >Language</label
+              >
+              <select
+                aria-errormessage="error-register-locale"
+                id="input-register-locale"
+                is="sc-select"
+                name="preferences.locale"
+                sc-generator="sc-locale"
+                sc-observe-target="sc-element-data-element-get-props?value=locale@[is='sc-app']"
+                sc-onvalue="sc-app-locale@[is='sc-app']"
+                sc-preset="sc-field"
+              ></select>
+              <span
+                id="error-register-locale"
+                is="sc-span"
+                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-locale"
+                sc-preset="sc-field-error"
+              ></span>
+            </div>
+            <div is="sc-div" sc-preset="sc-fieldset-item">
+              <label
+                for="input-register-time-zone"
+                is="sc-label"
+                sc-preset="sc-field-label"
+                sc-text="label_auth_time_zone"
+                >Time Zone</label
+              >
+              <select
+                aria-errormessage="error-register-time-zone"
+                id="input-register-time-zone"
+                is="sc-select"
+                name="preferences.time_zone"
+                sc-generator="sc-time-zone"
+                sc-observe-target="sc-element-data-element-get-props?value=timeZone@[is='sc-app']"
+                sc-onvalue="sc-app-time-zone@[is='sc-app']"
+                sc-preset="sc-field"
+              ></select>
+              <span
+                id="error-register-time-zone"
+                is="sc-span"
+                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-time-zone"
                 sc-preset="sc-field-error"
               ></span>
             </div>
@@ -462,20 +476,18 @@
             <div is="sc-div" sc-preset="sc-fieldset-item">
               <span
                 aria-live="polite"
-                data-aria-invalid="true"
                 id="error-form-post-register"
                 is="sc-span"
                 sc-focus="formatter"
-                sc-observe-target="sc-element-state-requester-state@#requester-post-register"
+                sc-observe-target="sc-element-state-requester-state?aria-invalid=true@#requester-post-register"
                 sc-preset="sc-form-error"
               ></span>
               <span
                 aria-live="polite"
-                data-aria-invalid="false"
                 id="result-form-post-register"
                 is="sc-span"
                 sc-focus="formatter"
-                sc-observe-target="sc-element-state-requester-state@#requester-post-register"
+                sc-observe-target="sc-element-state-requester-state?aria-invalid=false@#requester-post-register"
                 sc-preset="sc-form-result"
               ></span>
             </div>

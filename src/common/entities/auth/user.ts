@@ -15,7 +15,7 @@ export interface User extends UserBase {
 
   auth_hotp_email_confirmed: boolean | null
 
-  auth_hotp_tel: string | null
+  auth_hotp_tel: string
 
   auth_hotp_tel_confirmed: boolean | null
 
@@ -62,9 +62,7 @@ export interface User extends UserBase {
 
   state_compromised: boolean | null
 
-  state_confirmed: boolean | null
-
-  tel: string | null
+  tel: string
 
   tel_country_code: string | null
 
@@ -92,7 +90,7 @@ export function createUser (user?: Partial<User>, date = new Date()): User {
     auth_codes_confirmed: user?.auth_codes_confirmed ?? false,
     auth_hotp_email: user?.auth_hotp_email ?? null,
     auth_hotp_email_confirmed: user?.auth_hotp_email_confirmed ?? false,
-    auth_hotp_tel: null,
+    auth_hotp_tel: `${user?.auth_hotp_tel_country_code ?? ''}${user?.auth_hotp_tel_national ?? ''}`,
     auth_hotp_tel_confirmed: user?.auth_hotp_tel_confirmed ?? false,
     auth_hotp_tel_country_code: user?.auth_hotp_tel_country_code ?? null,
     auth_hotp_tel_national: user?.auth_hotp_tel_national ?? null,
@@ -109,8 +107,7 @@ export function createUser (user?: Partial<User>, date = new Date()): User {
     preferences: user?.preferences ?? {},
     state_active: user?.state_active ?? false,
     state_compromised: user?.state_compromised ?? false,
-    state_confirmed: user?.state_confirmed ?? false,
-    tel: null,
+    tel: `${user?.tel_country_code ?? ''}${user?.tel_national ?? ''}`,
     tel_country_code: user?.tel_country_code ?? null,
     tel_national: user?.tel_national ?? null,
     user_id: user?.user_id ?? 0,

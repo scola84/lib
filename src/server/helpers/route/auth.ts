@@ -114,14 +114,6 @@ export class RouteAuth {
       throw new Error('User is compromised')
     }
 
-    if (
-      data.user.state_confirmed === false &&
-      permit?.unconfirmed === false
-    ) {
-      response.statusCode = 401
-      throw new Error('User is not confirmed')
-    }
-
     const name = `${data.method.toUpperCase()} ${data.url.pathname.toLowerCase()}`
 
     if (
@@ -369,7 +361,6 @@ export class RouteAuth {
         $[name],
         $[preferences],
         $[state_active],
-        $[state_confirmed],
         $[state_compromised],
         $[tel],
         $[user_id],

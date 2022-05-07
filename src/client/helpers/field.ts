@@ -44,7 +44,7 @@ export class Field {
   }
 
   public clear (): void {
-    this.error = undefined
+    this.element.error = undefined
     this.element.removeAttribute('aria-invalid')
     this.element.removeAttribute('sc-changed')
   }
@@ -62,21 +62,18 @@ export class Field {
     this.removeEventListeners()
   }
 
-  public falsify (): void {
-    const { error } = this.element
-
-    if (error !== undefined) {
-      this.element.data = error
-    }
-  }
-
   public reset (): void {
     this.interactor.keyboard = this.interactor.hasKeyboard
   }
 
-  public setError (error: ScolaError): void {
+  public setError (error?: ScolaError): void {
     this.error = error
-    this.element.setAttribute('aria-invalid', 'true')
+
+    if (error === undefined) {
+      this.element.removeAttribute('aria-invalid')
+    } else {
+      this.element.setAttribute('aria-invalid', 'true')
+    }
   }
 
   public setValid (): void {
@@ -86,14 +83,6 @@ export class Field {
 
   public update (): void {
     this.formatter.update()
-  }
-
-  public verify (): void {
-    const { error } = this.element
-
-    if (error === undefined) {
-      this.setValid()
-    }
   }
 
   protected addEventListeners (): void {
@@ -112,7 +101,7 @@ export class Field {
     const dispatched = this.element.propagator.dispatchEvents('falsify', [this.element.data])
 
     if (!dispatched) {
-      this.falsify()
+      this.element.falsify()
     }
   }
 
@@ -166,7 +155,7 @@ export class Field {
     const dispatched = this.element.propagator.dispatchEvents('verify', [this.element.data])
 
     if (!dispatched) {
-      this.verify()
+      this.element.verify()
     }
   }
 

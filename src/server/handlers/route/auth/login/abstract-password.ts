@@ -54,7 +54,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
   protected async requestHotp (response: ServerResponse, user: User): Promise<Struct> {
     if (user.auth_hotp_email !== null) {
       return this.requestHotpEmail(response, user)
-    } else if (user.auth_hotp_tel !== null) {
+    } else if (user.auth_hotp_tel_national !== null) {
       return this.requestHotpTel(response, user)
     }
 
@@ -73,7 +73,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
 
     await this.smtp?.send(await this.smtp.create('auth_login_hotp', {
       date: new Date(),
-      date_tz: user.preferences.time_zone,
+      date_time_zone: user.preferences.time_zone,
       token: hotp.generate(),
       user: user
     }, {
@@ -105,7 +105,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
 
     await this.sms?.send(await this.sms.create('auth_login_hotp', {
       date: new Date(),
-      date_tz: user.preferences.time_zone,
+      date_time_zone: user.preferences.time_zone,
       token: hotp.generate(),
       user: user
     }, {
@@ -118,7 +118,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
       code: 'ok_auth_login_hotp_tel',
       data: {
         tel: user.auth_hotp_tel
-          ?.slice(-4)
+          .slice(-4)
           .padStart(user.auth_hotp_tel.length, '*')
       },
       next: 'auth_hotp'

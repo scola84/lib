@@ -1,13 +1,14 @@
 import { cast, get } from '../../../common'
 import type { ScolaElement } from '../../elements/element'
+import type { Struct } from '../../../common'
 
-export function elementStateElementGetProps (observer: ScolaElement, observable: ScolaElement): void {
+export function elementStateElementGetProps (observer: ScolaElement, observable: ScolaElement, query: Struct): void {
   observer.observer.toggleState(Object
-    .entries(observer.dataset)
+    .entries(query)
     .every(([name, value]) => {
       const observeValue = get(observable, name)
-      return value
-        ?.split(/\s+/u)
+      return String(value ?? '')
+        .split(/\s+/u)
         .some((someValue) => {
           return cast(someValue) === observeValue
         })

@@ -1,16 +1,14 @@
-import { cast, isNil, toJoint } from '../../../common'
+import { cast, isNil } from '../../../common'
 import type { ScolaElement } from '../../elements/element'
+import type { Struct } from '../../../common'
 
-export function elementStateElementHasAttrs (observer: ScolaElement, observable: ScolaElement): void {
+export function elementStateElementHasAttrs (observer: ScolaElement, observable: ScolaElement, query: Struct): void {
   observer.observer.toggleState(Object
-    .entries(observer.dataset)
+    .entries(query)
     .every(([name, value]) => {
-      const observeValue = observable.getAttribute(toJoint(name, {
-        separator: '-'
-      }))
-
-      return value
-        ?.split(/\s+/u)
+      const observeValue = observable.getAttribute(name)
+      return String(value ?? '')
+        .split(/\s+/u)
         .some((someValue) => {
           const castValue = cast(someValue)
 

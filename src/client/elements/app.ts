@@ -7,11 +7,12 @@ declare global {
   interface HTMLElementEventMap {
     'sc-app-locale': CustomEvent
     'sc-app-theme': CustomEvent
+    'sc-app-time-zone': CustomEvent
   }
 
   interface WindowEventMap {
     'sc-app-locale': CustomEvent
-    'sc-app-theme': CustomEvent
+    'sc-app-time-zone': CustomEvent
   }
 }
 
@@ -58,11 +59,17 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
     return ScolaAppElement.theme
   }
 
+  public get timeZone (): string {
+    return I18n.timeZone
+  }
+
   protected handleLocaleBound = this.handleLocale.bind(this)
 
   protected handleObserverBound = this.handleObserver.bind(this)
 
   protected handleThemeBound = this.handleTheme.bind(this)
+
+  protected handleTimeZoneBound = this.handleTimeZone.bind(this)
 
   public constructor () {
     super()
@@ -109,7 +116,7 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
     this.propagator.dispatchEvents('update')
 
     window.dispatchEvent(new CustomEvent('sc-app-locale', {
-      detail: I18n.locale
+      detail: this.locale
     }))
 
     window.dispatchEvent(new CustomEvent('sc-app-theme', {
@@ -121,6 +128,7 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
     this.storage = ScolaAppElement.storage[this.getAttribute('sc-storage') ?? 'session'] ?? window.sessionStorage
     this.setLocale(this.loadLocale())
     this.setTheme(this.loadTheme())
+    this.setTimeZone(this.loadTimeZone())
   }
 
   public toJSON (): unknown {
@@ -136,6 +144,7 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
   protected addEventListeners (): void {
     this.addEventListener('sc-app-locale', this.handleLocaleBound)
     this.addEventListener('sc-app-theme', this.handleThemeBound)
+    this.addEventListener('sc-app-time-zone', this.handleTimeZoneBound)
   }
 
   protected findThemeIndex (): number {
@@ -176,6 +185,17 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
     this.notify()
   }
 
+  protected handleTimeZone (event: CustomEvent): void {
+    if (
+      isArray(event.detail) &&
+      typeof event.detail[0] === 'string'
+    ) {
+      this.setTimeZone(event.detail[0])
+    }
+
+    this.notify()
+  }
+
   protected loadLocale (): string {
     return this.storage.getItem('sc-app-locale') ?? navigator.language
   }
@@ -184,9 +204,14 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
     return ScolaAppElement.themes[this.findThemeIndex()] ?? ScolaAppElement.themes[0]
   }
 
+  protected loadTimeZone (): string {
+    return this.storage.getItem('sc-app-time-zone') ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+  }
+
   protected removeEventListeners (): void {
     this.removeEventListener('sc-app-locale', this.handleLocaleBound)
     this.removeEventListener('sc-app-theme', this.handleThemeBound)
+    this.removeEventListener('sc-app-time-zone', this.handleTimeZoneBound)
   }
 
   protected setLocale (locale: string): void {
@@ -202,6 +227,11 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
     this.storage.setItem('sc-app-theme', theme)
   }
 
+  protected setTimeZone (timeZone: string): void {
+    I18n.timeZone = timeZone
+    this.storage.setItem('sc-app-time-zone', timeZone)
+  }
+
   protected setUser (user: User): void {
     if (typeof user.preferences.locale === 'string') {
       this.setLocale(user.preferences.locale)
@@ -209,6 +239,10 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
 
     if (typeof user.preferences.theme === 'string') {
       this.setTheme(user.preferences.theme)
+    }
+
+    if (typeof user.preferences.time_zone === 'string') {
+      this.setTimeZone(user.preferences.time_zone)
     }
 
     this.notify()

@@ -11,7 +11,8 @@ interface AuthRegisterPostData extends RouteData {
     email?: string
     name?: string
     preferences: Struct
-    tel?: string
+    tel_country_code?: string
+    tel_national?: string
     username?: string
   }
 }
@@ -45,7 +46,11 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
           },
           type: 'fieldset'
         },
-        tel: {
+        tel_country_code: {
+          type: 'number'
+        },
+        tel_national: {
+          custom: 'tel-national',
           type: 'tel'
         },
         username: {
@@ -59,7 +64,8 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
   public async handle (data: AuthRegisterPostData, response: ServerResponse): Promise<Struct> {
     const tmpUser = createUser({
       email: data.body.email,
-      tel: data.body.tel,
+      tel_country_code: data.body.tel_country_code,
+      tel_national: data.body.tel_national,
       username: data.body.username
     })
 
@@ -79,7 +85,8 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
       email: data.body.email,
       name: data.body.name,
       preferences: data.body.preferences,
-      tel: data.body.tel,
+      tel_country_code: data.body.tel_country_code,
+      tel_national: data.body.tel_national,
       username: data.body.username
     }))
 

@@ -51,7 +51,7 @@ export abstract class AuthLoginHandler extends AuthHandler {
   protected async sendMessageEmail (user: User): Promise<void> {
     await this.smtp?.send(await this.smtp.create('auth_login', {
       date: new Date(),
-      date_tz: user.preferences.time_zone,
+      date_time_zone: user.preferences.time_zone,
       url: `${this.origin}?next=auth_reset`,
       user: user
     }, {

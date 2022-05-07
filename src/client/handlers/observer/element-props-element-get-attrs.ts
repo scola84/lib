@@ -1,12 +1,11 @@
-import { cast, set, toJoint } from '../../../common'
+import { cast, set } from '../../../common'
 import type { ScolaElement } from '../../elements'
+import type { Struct } from '../../../common'
 
-export function elementPropsElementGetAttrs (observer: ScolaElement, observable: ScolaElement): void {
+export function elementPropsElementGetAttrs (observer: ScolaElement, observable: ScolaElement, query: Struct): void {
   Object
-    .entries(observer.dataset)
+    .entries(query)
     .forEach(([setName, getName = '']) => {
-      return set(observer, setName, cast(observable.getAttribute(toJoint(getName, {
-        separator: '-'
-      }))))
+      return set(observer, setName, cast(observable.getAttribute(String(getName))))
     })
 }

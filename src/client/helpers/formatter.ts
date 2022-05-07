@@ -18,9 +18,13 @@ export class Formatter {
 
   public text?: string
 
+  public timeZone?: string
+
   public title?: string
 
   protected handleLocaleBound = this.handleLocale.bind(this)
+
+  protected handleTimeZoneBound = this.handleTimeZone.bind(this)
 
   public constructor (element: ScolaElement) {
     this.element = element
@@ -43,6 +47,7 @@ export class Formatter {
     this.html = this.element.getAttribute('sc-html') ?? undefined
     this.locale = this.element.getAttribute('sc-locale') ?? undefined
     this.text = this.element.getAttribute('sc-text') ?? undefined
+    this.timeZone = this.element.getAttribute('sc-time-zone') ?? undefined
     this.title = this.element.getAttribute('sc-title') ?? undefined
   }
 
@@ -65,6 +70,7 @@ export class Formatter {
 
   protected addEventListeners (): void {
     window.addEventListener('sc-app-locale', this.handleLocaleBound)
+    window.addEventListener('sc-app-time-zone', this.handleTimeZoneBound)
   }
 
   protected focusElement (): void {
@@ -127,7 +133,12 @@ export class Formatter {
     this.format()
   }
 
+  protected handleTimeZone (): void {
+    this.format()
+  }
+
   protected removeEventListeners (): void {
     window.removeEventListener('sc-app-locale', this.handleLocaleBound)
+    window.removeEventListener('sc-app-time-zone', this.handleTimeZoneBound)
   }
 }

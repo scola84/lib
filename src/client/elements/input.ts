@@ -1,6 +1,6 @@
 import type { CastValue, Primitive, ScolaError, ScolaFile } from '../../common'
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import { I18n, Struct, cast, isArray, isError, isFile, isPrimitive, isStruct, set } from '../../common'
+import { I18n, Struct, cast, isArray, isFile, isPrimitive, isStruct, set } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 import { debounce } from 'throttle-debounce'
@@ -37,6 +37,26 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public get error (): ScolaError | undefined {
+    return this.field.error
+  }
+
+  public set error (error: ScolaError | undefined) {
+    this.field.setError(error)
+  }
+
+  public get qualifiedName (): string {
+    let name = this.name
+    let fieldset = this.closest<HTMLFieldSetElement>('fieldset[name]')
+
+    while (fieldset !== null) {
+      name = `${fieldset.name}.${name}`
+      fieldset = fieldset.closest<HTMLFieldSetElement>('fieldset[name]')
+    }
+
+    return name
+  }
+
+  public get validityError (): ScolaError | undefined {
     let error: ScolaError | null = null
 
     if (this.validity.badInput) {
@@ -86,24 +106,6 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     return error ?? undefined
   }
 
-  public set error (error: ScolaError | undefined) {
-    if (error !== undefined) {
-      this.field.setError(error)
-    }
-  }
-
-  public get qualifiedName (): string {
-    let name = this.name
-    let fieldset = this.closest<HTMLFieldSetElement>('fieldset[name]')
-
-    while (fieldset !== null) {
-      name = `${fieldset.name}.${name}`
-      fieldset = fieldset.closest<HTMLFieldSetElement>('fieldset[name]')
-    }
-
-    return name
-  }
-
   public get valueAsCast (): FieldValue {
     if (
       this.type === 'checkbox' ||
@@ -124,14 +126,6 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public set valueAsCast (value: unknown) {
-    if (this.form?.valid === false) {
-      if (isError(value)) {
-        this.error = value
-      }
-
-      return
-    }
-
     if (
       isStruct(value) &&
       value.valid === true
@@ -165,7 +159,9 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
     this.update()
   }
 
-  protected handleInputBound = debounce(0, this.handleInput.bind(this))
+  protected handleInputBound = debounce(0, this.handleInput.bind(this), {
+    atBegin: true
+  })
 
   protected handleObserverBound = this.handleObserver.bind(this)
 
@@ -208,7 +204,9 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public falsify (): void {
-    this.field.falsify()
+    if (!this.checkValidity()) {
+      this.error = this.validityError
+    }
   }
 
   public notify (): void {
@@ -252,18 +250,17 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public verify (): void {
-    this.field.verify()
+    if (this.checkValidity()) {
+      this.field.setValid()
+    }
   }
 
   protected addEventListeners (): void {
-    this.handleInputBound = debounce(this.debounce, this.handleInput.bind(this))
-    this.addEventListener('input', this.handleInputBound)
-  }
+    this.handleInputBound = debounce(this.debounce, this.handleInput.bind(this), {
+      atBegin: true
+    })
 
-  protected clearDebounce (): void {
-    this.handleInputBound.cancel()
-    this.removeEventListeners()
-    this.addEventListeners()
+    this.addEventListener('input', this.handleInputBound)
   }
 
   protected getChecked (): CastValue {

@@ -16,7 +16,9 @@ export function operator (name: string): Validator {
     if (!values.includes(data[name])) {
       errors[name] = {
         code: 'err_validator_bad_input_operator',
-        data: { accept: values }
+        data: {
+          accept: values
+        }
       }
 
       throw errors[name]

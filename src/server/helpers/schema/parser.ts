@@ -66,7 +66,7 @@ export class SchemaParser {
           if (element.nodeName === 'fieldset') {
             await this.extractFieldset(field, element, dir)
           } else if (element.nodeName === 'select') {
-            this.extractSelect(field, element)
+            this.extractSelect(attributes, field, element)
           } else if (element.nodeName === 'textarea') {
             this.extractTextarea(field)
           }
@@ -236,7 +236,7 @@ export class SchemaParser {
     }
   }
 
-  protected extractSelect (field: SchemaField, element: Element): void {
+  protected extractSelect (attributes: SchemaAttributes, field: SchemaField, element: Element): void {
     field.type = 'select'
     field.values = []
 
@@ -251,6 +251,8 @@ export class SchemaParser {
         }
       }
     }
+
+    field.generator = attributes['sc-generator']
   }
 
   protected extractString (attributes: SchemaAttributes, field: SchemaField): void {

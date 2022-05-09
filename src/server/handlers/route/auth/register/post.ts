@@ -39,15 +39,21 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
           required: true,
           schema: {
             locale: {
-              pattern: /^[a-z]{2}-[a-z]{2}$/ui,
+              generator: 'sc-locale',
               required: true,
-              type: 'text'
+              type: 'select'
+            },
+            time_zone: {
+              generator: 'sc-time-zone',
+              required: true,
+              type: 'select'
             }
           },
           type: 'fieldset'
         },
         tel_country_code: {
-          type: 'number'
+          generator: 'sc-tel-country-code',
+          type: 'select'
         },
         tel_national: {
           custom: 'tel-national',

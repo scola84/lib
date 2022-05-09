@@ -1,4 +1,4 @@
-import { I18n, Struct, isArray, isNil, isObject, isStruct } from '../../common'
+import { I18n, Struct, get, isArray, isNil, isObject, isStruct } from '../../common'
 import type { ScolaElement } from '../elements'
 import { ScolaEvent } from './event'
 
@@ -118,13 +118,12 @@ export class Propagator {
           ''
         )
 
-        if (
-          isStruct(data) &&
-          data[name] !== undefined
-        ) {
-          target.data = data[name]
-        } else {
+        const datum = get(data, name)
+
+        if (datum === undefined) {
           target.data = data
+        } else {
+          target.data = datum
         }
       })
   }

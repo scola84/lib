@@ -63,7 +63,7 @@ export class Mutator {
 
     const attrValues = String(value)
       .trim()
-      .split(/\s+/u)
+      .split(',')
 
     const index = attrValues.findIndex((attrValue) => {
       return this.element.getAttribute(attrName)?.includes(attrValue)

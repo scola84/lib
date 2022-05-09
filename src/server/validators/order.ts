@@ -13,7 +13,9 @@ export function order (name: string): Validator {
     if (!values.includes(value)) {
       errors[name] = {
         code: 'err_validator_bad_input_order',
-        data: { accept: values }
+        data: {
+          accept: values
+        }
       }
 
       throw errors[name]

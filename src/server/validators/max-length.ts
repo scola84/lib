@@ -17,7 +17,9 @@ export function maxLength (name: string, field: SchemaField): Validator {
     )) {
       errors[name] = {
         code: 'err_validator_too_long',
-        data: { maxLength: field.maxLength }
+        data: {
+          maxLength: field.maxLength
+        }
       }
 
       throw errors[name]

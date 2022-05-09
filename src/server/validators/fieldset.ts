@@ -3,9 +3,11 @@ import type { Struct, User } from '../../common'
 import { SchemaValidator } from '../helpers'
 import { isStruct } from '../../common'
 
-export function fieldset (name: string, field: SchemaField, user?: User): Validator {
+export async function fieldset (name: string, field: SchemaField): Promise<Validator> {
   const schemaValidator = new SchemaValidator(field.schema ?? {})
-  return async (data: Struct, errors: Struct) => {
+
+  await schemaValidator.compile()
+  return async (data: Struct, errors: Struct, user?: User) => {
     let childErrors: Struct | null = null
 
     const values = data[name]
@@ -17,7 +19,9 @@ export function fieldset (name: string, field: SchemaField, user?: User): Valida
             if (field.schema?.[key] === undefined) {
               throw {
                 code: 'err_validator_bad_input_fieldset',
-                data: { accept: Object.keys(field.schema ?? {}) }
+                data: {
+                  accept: Object.keys(field.schema ?? {})
+                }
               } as unknown
             }
           }

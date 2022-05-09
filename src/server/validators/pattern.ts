@@ -8,7 +8,9 @@ export function pattern (name: string, field: SchemaField): Validator {
     if (field.pattern?.test(value) === false) {
       errors[name] = {
         code: 'err_validator_pattern_mismatch',
-        data: { pattern: field.pattern.source }
+        data: {
+          pattern: field.pattern.source
+        }
       }
 
       throw errors[name]

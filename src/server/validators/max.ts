@@ -8,7 +8,9 @@ export function max (name: string, field: SchemaField): Validator {
     if (value > (field.max ?? Infinity)) {
       errors[name] = {
         code: 'err_validator_range_overflow',
-        data: { max: field.max }
+        data: {
+          max: field.max
+        }
       }
 
       throw errors[name]

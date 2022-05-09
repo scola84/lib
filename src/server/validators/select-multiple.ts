@@ -1,8 +1,16 @@
-import type { SchemaField, Validator } from '../helpers'
+import type { SchemaField, SchemaValidator, Validator } from '../helpers'
 import type { Struct } from '../../common'
 import { isArray } from '../../common'
 
-export function selectMultiple (name: string, field: SchemaField): Validator {
+export async function selectMultiple (name: string, field: SchemaField, validator: SchemaValidator): Promise<Validator> {
+  let fieldValues = field.values
+
+  if (field.generator !== undefined) {
+    fieldValues = (await validator.generators[field.generator]?.())?.map(([value]) => {
+      return value
+    })
+  }
+
   return (data: Struct, errors: Struct) => {
     let values = data[name]
 
@@ -15,13 +23,15 @@ export function selectMultiple (name: string, field: SchemaField): Validator {
 
     if (isArray(values)) {
       const included = values.every((value) => {
-        return field.values?.includes(value) === true
+        return fieldValues?.includes(value) === true
       })
 
       if (!included) {
         errors[name] = {
           code: 'err_validator_bad_input_selectmultiple',
-          data: { accept: field.values }
+          data: {
+            accept: fieldValues
+          }
         }
 
         throw errors[name]

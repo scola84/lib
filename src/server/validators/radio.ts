@@ -6,7 +6,9 @@ export function radio (name: string, field: SchemaField): Validator {
     if (field.values?.includes(data[name]) !== true) {
       errors[name] = {
         code: 'err_validator_bad_input_radio',
-        data: { accept: field.values }
+        data: {
+          accept: field.values
+        }
       }
 
       throw errors[name]

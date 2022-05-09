@@ -1,12 +1,18 @@
 import type { ScolaElement } from '../../elements'
 import type { ScolaRequesterElement } from '../../elements/requester'
 import type { Struct } from '../../../common'
+import { isError } from '../../../common'
 
 export function elementStateRequesterState (observer: ScolaElement, observable: ScolaRequesterElement, query: Struct): void {
   if (query['aria-invalid'] === true) {
-    if (observable.getAttribute('aria-invalid') === 'true') {
+    const error = observable.errorData ?? observable.error
+
+    if (
+      observable.getAttribute('aria-invalid') === 'true' &&
+      isError(error)
+    ) {
       observer.toggleAttribute('hidden', false)
-      observer.data = observable.errorData ?? observable.error
+      observer.data = error
     } else {
       observer.toggleAttribute('hidden', true)
     }

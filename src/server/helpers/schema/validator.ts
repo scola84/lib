@@ -1,9 +1,11 @@
 import type { Primitive, User } from '../../../common'
 import { Struct } from '../../../common'
 
+type Generator = () => Array<[number | string, string, boolean?]> | Promise<Array<[string, string, boolean?]>>
+
 export type Validator = (data: Struct, errors: Struct, user?: User) => Promise<void> | void
 
-export type ValidatorFactory = (name: string, field: SchemaField) => Validator
+export type ValidatorFactory = (name: string, field: SchemaField, validator: SchemaValidator) => Promise<Validator> | Validator
 
 export interface SchemaField extends Struct {
   accept?: string[]
@@ -11,6 +13,7 @@ export interface SchemaField extends Struct {
   cursor?: number
   custom?: string
   generated?: string
+  generator?: string
   hidden?: boolean
   index?: string
   fkey?: SchemaFieldKey
@@ -45,15 +48,27 @@ export interface SchemaFieldKey {
 export type Schema = Struct<SchemaField>
 
 export class SchemaValidator {
+  public static generators: Partial<Struct<Generator>> = {}
+
   public static validators: Partial<Struct<ValidatorFactory>> = {}
+
+  public generators: Partial<Struct<Generator>>
 
   public schema: Schema
 
   public validators: Validator[][]
 
   public constructor (schema: Schema) {
+    this.generators = SchemaValidator.generators
     this.schema = schema
-    this.validators = this.compile(schema)
+  }
+
+  public static defineGenerators (generators: Struct<Generator>): void {
+    Object
+      .entries(generators)
+      .forEach(([name, generator]) => {
+        SchemaValidator.generators[name] = generator
+      })
   }
 
   public static defineValidators (validators: Struct<ValidatorFactory>): void {
@@ -62,6 +77,14 @@ export class SchemaValidator {
       .forEach(([name, validator]) => {
         SchemaValidator.validators[name] = validator
       })
+  }
+
+  public async compile (): Promise<void> {
+    this.validators = await Promise.all(Object
+      .entries(this.schema)
+      .map(async ([name, field]) => {
+        return this.compileField(name, field)
+      }))
   }
 
   public async validate<Data extends Struct = Struct>(data: Data, user?: User): Promise<Data> {
@@ -85,55 +108,47 @@ export class SchemaValidator {
     return data
   }
 
-  protected compile (schema: Schema): Validator[][] {
-    return Object
-      .entries(schema)
-      .map(([name, field]) => {
-        return this.compileField(name, field)
-      })
-  }
-
-  protected compileField (name: string, field: SchemaField): Validator[] {
+  protected async compileField (name: string, field: SchemaField): Promise<Validator[]> {
     const validators = []
 
-    validators.push(SchemaValidator.validators.required?.(name, field))
+    validators.push(SchemaValidator.validators.required?.(name, field, this))
 
     if (SchemaValidator.validators[field.type] === undefined) {
       throw new Error(`Validator "${field.type}" is undefined`)
     }
 
-    validators.push(SchemaValidator.validators[field.type]?.(name, field))
+    validators.push(await SchemaValidator.validators[field.type]?.(name, field, this))
 
     if (field.custom !== undefined) {
       if (SchemaValidator.validators[field.custom] === undefined) {
         throw new Error(`Validator "${field.custom}" is undefined`)
       }
 
-      validators.push(SchemaValidator.validators[field.custom]?.(name, field))
+      validators.push(await SchemaValidator.validators[field.custom]?.(name, field, this))
     }
 
     if (field.max !== undefined) {
-      validators.push(SchemaValidator.validators.max?.(name, field))
+      validators.push(await SchemaValidator.validators.max?.(name, field, this))
     }
 
     if (field.maxLength !== undefined) {
-      validators.push(SchemaValidator.validators['max-length']?.(name, field))
+      validators.push(await SchemaValidator.validators['max-length']?.(name, field, this))
     }
 
     if (field.min !== undefined) {
-      validators.push(SchemaValidator.validators.min?.(name, field))
+      validators.push(await SchemaValidator.validators.min?.(name, field, this))
     }
 
     if (field.minLength !== undefined) {
-      validators.push(SchemaValidator.validators['min-length']?.(name, field))
+      validators.push(await SchemaValidator.validators['min-length']?.(name, field, this))
     }
 
     if (field.pattern !== undefined) {
-      validators.push(SchemaValidator.validators.pattern?.(name, field))
+      validators.push(await SchemaValidator.validators.pattern?.(name, field, this))
     }
 
     if (field.step !== undefined) {
-      validators.push(SchemaValidator.validators.step?.(name, field))
+      validators.push(await SchemaValidator.validators.step?.(name, field, this))
     }
 
     return validators.filter((validator) => {

@@ -8,7 +8,9 @@ export function min (name: string, field: SchemaField): Validator {
     if (value < (field.min ?? -Infinity)) {
       errors[name] = {
         code: 'err_validator_range_underflow',
-        data: { min: field.min }
+        data: {
+          min: field.min
+        }
       }
 
       throw errors[name]

@@ -21,7 +21,9 @@ export function checkbox (name: string, field: SchemaField): Validator {
       if (!included) {
         errors[name] = {
           code: 'err_validator_bad_input_checkbox',
-          data: { accept: field.values }
+          data: {
+            accept: field.values
+          }
         }
 
         throw errors[name]

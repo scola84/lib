@@ -8,7 +8,9 @@ export function step (name: string, field: SchemaField): Validator {
     if ((value % (field.step ?? 0)) !== 0) {
       errors[name] = {
         code: 'err_validator_step_mismatch',
-        data: { step: field.step }
+        data: {
+          step: field.step
+        }
       }
 
       throw errors[name]

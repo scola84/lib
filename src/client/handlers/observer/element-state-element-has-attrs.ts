@@ -8,7 +8,7 @@ export function elementStateElementHasAttrs (observer: ScolaElement, observable:
     .every(([name, value]) => {
       const observeValue = observable.getAttribute(name)
       return String(value ?? '')
-        .split(/\s+/u)
+        .split(',')
         .some((someValue) => {
           const castValue = cast(someValue)
 

@@ -3,8 +3,10 @@ import { isArray, isStruct } from '../../common'
 import { SchemaValidator } from '../helpers'
 import type { Struct } from '../../common'
 
-export function array (name: string, field: SchemaField): Validator {
+export async function array (name: string, field: SchemaField): Promise<Validator> {
   const schemaValidator = new SchemaValidator(field.schema ?? {})
+
+  await schemaValidator.compile()
   return async (data: Struct, errors: Struct) => {
     let childErrors: Struct | null = null
     let values = data[name]

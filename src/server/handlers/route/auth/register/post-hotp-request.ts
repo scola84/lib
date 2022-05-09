@@ -26,7 +26,8 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
           type: 'email'
         },
         auth_hotp_tel_country_code: {
-          type: 'number'
+          generator: 'sc-tel-country-code',
+          type: 'select'
         },
         auth_hotp_tel_national: {
           custom: 'tel-national',

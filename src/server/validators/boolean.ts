@@ -11,7 +11,9 @@ export function boolean (name: string): Validator {
     if (typeof data[name] !== 'boolean') {
       errors[name] = {
         code: 'err_validator_bad_input_boolean',
-        data: { accept: values }
+        data: {
+          accept: values
+        }
       }
 
       throw errors[name]

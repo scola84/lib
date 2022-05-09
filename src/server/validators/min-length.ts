@@ -17,7 +17,9 @@ export function minLength (name: string, field: SchemaField): Validator {
     )) {
       errors[name] = {
         code: 'err_validator_too_short',
-        data: { minLength: field.minLength }
+        data: {
+          minLength: field.minLength
+        }
       }
 
       throw errors[name]

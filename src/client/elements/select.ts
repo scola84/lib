@@ -4,14 +4,10 @@ import { cast, isArray, isPrimitive, isStruct } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 
-type Generator = () => Array<[string, string, boolean?]> | Promise<Array<[string, string, boolean?]>>
-
-interface Generators {
-  [key: string]: Generator | undefined
-}
+type Generator = () => Array<[number | string, string, boolean?]> | Promise<Array<[string, string, boolean?]>>
 
 export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldElement {
-  public static generators: Generators = {}
+  public static generators: Partial<Struct<Generator>> = {}
 
   public field: Field
 
@@ -228,7 +224,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
         options.forEach(([value, text, selected = false]) => {
           const option = document.createElement('option')
 
-          option.value = value
+          option.value = value.toString()
           option.textContent = text
           option.toggleAttribute('selected', selected)
           this.appendChild(option)

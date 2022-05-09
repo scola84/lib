@@ -21,6 +21,8 @@ export type I18nFormatter = (data: unknown) => string
 export type I18nFormatterFactory = (name: string, locale: string, options: Struct<string>) => I18nFormatter
 
 export class I18n {
+  public static defaultLocale = ''
+
   public static formatters: Struct<I18nFormatterFactory> = {}
 
   public static locale = ''
@@ -166,7 +168,7 @@ export class I18n {
   }
 
   public formatText (code: string, data: unknown = {}, locale = I18n.locale): string {
-    const string = I18n.strings[locale]?.[code]
+    const string = I18n.strings[locale]?.[code] ?? I18n.strings[I18n.defaultLocale]?.[code]
 
     let compiled: I18nFormatter[] | undefined = []
 

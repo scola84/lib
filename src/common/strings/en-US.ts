@@ -61,7 +61,7 @@ export default {
   hint_auth_identity: 'Minstens een van de velden e-mail, telefoon of gebruikersnaam is verplicht',
   hint_auth_password: 'Gebruik indien mogelijk een wachtwoordmanager om een wachtwoord aan te maken. Voer 8 of meer tekens in met een mix van letters, nummers en tekens.',
   label_auth_email: 'E-mail',
-  label_auth_identity: 'E-mail, telefoon of gebruikersnaam',
+  label_auth_identity: 'Email, phone or username',
   label_auth_locale: 'Taal',
   label_auth_name: 'Naam',
   label_auth_password: 'Wachtwoord',

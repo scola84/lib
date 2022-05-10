@@ -1,12 +1,18 @@
+import { cast, toJoint } from '../../../common'
 import type { ScolaElement } from '../../elements/element'
 import type { Struct } from '../../../common'
-import { cast } from '../../../common'
 
 export function elementStateElementGetAttrs (observer: ScolaElement, observable: ScolaElement, query: Struct): void {
   observer.observer.toggleState(Object
-    .entries(query)
+    .entries({
+      ...query,
+      ...observer.dataset
+    })
     .every(([name, value]) => {
-      const observeValue = cast(observable.getAttribute(name))
+      const observeValue = cast(observable.getAttribute(toJoint(name, {
+        separator: '-'
+      })))
+
       return String(value ?? '')
         .split(',')
         .some((someValue) => {

@@ -3,6 +3,7 @@ import { AuthLoginHandler } from './abstract-login'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
+import { toString } from '../../../../../common'
 
 interface AuthLoginPostCodeData extends RouteData {
   body: {
@@ -39,8 +40,19 @@ export class AuthLoginPostCodeHandler extends AuthLoginHandler {
     user.auth_codes = codes.toString()
     await this.updateUserCodes(user)
     await this.auth.login(response, user)
-    await this.auth.clearBackoff(data)
-    await this.sendMessage(user)
+
+    Promise
+      .resolve()
+      .then(async () => {
+        await this.auth.clearBackoff(data)
+        await this.sendMessage(user)
+      })
+      .catch((error) => {
+        this.logger?.error({
+          context: 'handle'
+        }, toString(error))
+      })
+
     return {
       code: 'ok_auth_login'
     }

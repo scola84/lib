@@ -1,8 +1,8 @@
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
 import type { Struct, User, UserToken } from '../../../../../common'
+import { createUser, toString } from '../../../../../common'
 import { AuthRegisterHandler } from './abstract-register'
 import type { ServerResponse } from 'http'
-import { createUser } from '../../../../../common'
 
 interface AuthRegisterPostIdentityData extends RouteData {
   body: {
@@ -103,17 +103,23 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
   }
 
   protected async requestEmail (user: User, token: UserToken): Promise<Struct> {
-    await this.smtp?.send(await this.smtp.create('auth_register_identity', {
-      date: new Date(),
-      date_time_zone: user.preferences.time_zone,
-      token: token,
-      url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
-      user: user
-    }, {
-      email: user.email,
-      name: user.name,
-      preferences: user.preferences
-    }))
+    this.smtp
+      ?.send(await this.smtp.create('auth_register_identity', {
+        date: new Date(),
+        date_time_zone: user.preferences.time_zone,
+        token: token,
+        url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
+        user: user
+      }, {
+        email: user.email,
+        name: user.name,
+        preferences: user.preferences
+      }))
+      .catch((error) => {
+        this.logger?.error({
+          context: 'request-email'
+        }, toString(error))
+      })
 
     return {
       code: 'ok_auth_register_identity_email',
@@ -126,16 +132,22 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
   }
 
   protected async requestTel (user: User, token: UserToken): Promise<Struct> {
-    await this.sms?.send(await this.sms.create('auth_register_identity', {
-      date: new Date(),
-      date_time_zone: user.preferences.time_zone,
-      token: token,
-      url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
-      user: user
-    }, {
-      preferences: user.preferences,
-      tel: user.tel
-    }))
+    this.sms
+      ?.send(await this.sms.create('auth_register_identity', {
+        date: new Date(),
+        date_time_zone: user.preferences.time_zone,
+        token: token,
+        url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
+        user: user
+      }, {
+        preferences: user.preferences,
+        tel: user.tel
+      }))
+      .catch((error) => {
+        this.logger?.error({
+          context: 'request-tel'
+        }, toString(error))
+      })
 
     return {
       code: 'ok_auth_register_identity_tel',

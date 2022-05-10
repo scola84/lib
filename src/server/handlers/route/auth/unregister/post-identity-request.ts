@@ -1,8 +1,8 @@
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
 import type { Struct, User, UserToken } from '../../../../../common'
+import { createUser, toString } from '../../../../../common'
 import { AuthHandler } from '../auth'
 import type { ServerResponse } from 'http'
-import { createUser } from '../../../../../common'
 
 export interface AuthUnregisterPostIdentityHandlerOptions extends Partial<RouteHandlerOptions
 > {
@@ -43,17 +43,23 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
   }
 
   protected async requestEmail (user: User, token: UserToken): Promise<Struct> {
-    await this.smtp?.send(await this.smtp.create('auth_unregister_identity', {
-      date: new Date(),
-      date_time_zone: user.preferences.time_zone,
-      token: token,
-      url: `${this.origin}?next=auth_unregister_identity_confirm&token=${token.hash}`,
-      user: user
-    }, {
-      email: user.email,
-      name: user.name,
-      preferences: user.preferences
-    }))
+    this.smtp
+      ?.send(await this.smtp.create('auth_unregister_identity', {
+        date: new Date(),
+        date_time_zone: user.preferences.time_zone,
+        token: token,
+        url: `${this.origin}?next=auth_unregister_identity_confirm&token=${token.hash}`,
+        user: user
+      }, {
+        email: user.email,
+        name: user.name,
+        preferences: user.preferences
+      }))
+      .catch((error) => {
+        this.logger?.error({
+          context: 'request-email'
+        }, toString(error))
+      })
 
     return {
       code: 'ok_auth_unregister_identity_email_request',
@@ -66,16 +72,22 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
   }
 
   protected async requestTel (user: User, token: UserToken): Promise<Struct> {
-    await this.sms?.send(await this.sms.create('auth_unregister_identity', {
-      date: new Date(),
-      date_time_zone: user.preferences.time_zone,
-      token: token,
-      url: `${this.origin}?next=auth_unregister_identity_confirm&token=${token.hash}`,
-      user: user
-    }, {
-      preferences: user.preferences,
-      tel: user.tel
-    }))
+    this.sms
+      ?.send(await this.sms.create('auth_unregister_identity', {
+        date: new Date(),
+        date_time_zone: user.preferences.time_zone,
+        token: token,
+        url: `${this.origin}?next=auth_unregister_identity_confirm&token=${token.hash}`,
+        user: user
+      }, {
+        preferences: user.preferences,
+        tel: user.tel
+      }))
+      .catch((error) => {
+        this.logger?.error({
+          context: 'request-tel'
+        }, toString(error))
+      })
 
     return {
       code: 'ok_auth_unregister_identity_tel_request',

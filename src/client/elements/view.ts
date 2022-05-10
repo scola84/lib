@@ -371,7 +371,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
         this.replaceChild(view.element, this.firstElementChild)
       }
 
-      view.title = this.firstElementChild?.getAttribute('sc-title') ?? ''
+      view.title = this.firstElementChild?.getAttribute('sc-view-title') ?? ''
     }
   }
 

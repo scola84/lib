@@ -1,9 +1,9 @@
 import { AuthHotp, AuthPassword } from '../../../../helpers'
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
 import type { Struct, User } from '../../../../../common'
+import { createUser, toString } from '../../../../../common'
 import { AuthLoginHandler } from './abstract-login'
 import type { ServerResponse } from 'http'
-import { createUser } from '../../../../../common'
 
 interface AuthLoginPasswordData extends RouteData {
   body: {
@@ -43,8 +43,19 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     }
 
     await this.auth.login(response, user)
-    await this.auth.clearBackoff(data)
-    await this.sendMessage(user)
+
+    Promise
+      .resolve()
+      .then(async () => {
+        await this.auth.clearBackoff(data)
+        await this.sendMessage(user)
+      })
+      .catch((error) => {
+        this.logger?.error({
+          context: 'login'
+        }, toString(error))
+      })
+
     return {
       code: 'ok_auth_login',
       next: 'auth_load'
@@ -71,16 +82,22 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
       user_id: user.user_id
     }), token)
 
-    await this.smtp?.send(await this.smtp.create('auth_login_hotp', {
-      date: new Date(),
-      date_time_zone: user.preferences.time_zone,
-      token: hotp.generate(),
-      user: user
-    }, {
-      email: user.auth_hotp_email,
-      name: user.name,
-      preferences: user.preferences
-    }))
+    this.smtp
+      ?.send(await this.smtp.create('auth_login_hotp', {
+        date: new Date(),
+        date_time_zone: user.preferences.time_zone,
+        token: hotp.generate(),
+        user: user
+      }, {
+        email: user.auth_hotp_email,
+        name: user.name,
+        preferences: user.preferences
+      }))
+      .catch((error) => {
+        this.logger?.error({
+          context: 'request-hotp-email'
+        }, toString(error))
+      })
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
     return {
@@ -103,15 +120,21 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
       user_id: user.user_id
     }), token)
 
-    await this.sms?.send(await this.sms.create('auth_login_hotp', {
-      date: new Date(),
-      date_time_zone: user.preferences.time_zone,
-      token: hotp.generate(),
-      user: user
-    }, {
-      preferences: user.preferences,
-      tel: user.auth_hotp_tel
-    }))
+    this.sms
+      ?.send(await this.sms.create('auth_login_hotp', {
+        date: new Date(),
+        date_time_zone: user.preferences.time_zone,
+        token: hotp.generate(),
+        user: user
+      }, {
+        preferences: user.preferences,
+        tel: user.auth_hotp_tel
+      }))
+      .catch((error) => {
+        this.logger?.error({
+          context: 'request-hotp-tel'
+        }, toString(error))
+      })
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
     return {

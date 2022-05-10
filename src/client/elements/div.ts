@@ -1,5 +1,5 @@
 import { Dragger, Dropper, Focuser, Formatter, Hider, Interactor, Mutator, Observer, Paster, Propagator } from '../helpers'
-import { cast, isArray, isStruct } from '../../common'
+import { cast, isArray, isStruct, merge } from '../../common'
 import type { InteractorEvent } from '../helpers'
 import type { ScolaElement } from './element'
 
@@ -11,6 +11,8 @@ declare global {
 }
 
 export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
+  public datamap: unknown
+
   public dragger?: Dragger
 
   public dropper?: Dropper
@@ -32,10 +34,17 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
   public propagator: Propagator
 
   public get data (): unknown {
-    return this.formatter.data
+    if (isStruct(this.datamap)) {
+      return merge(this.datamap, this.dataset)
+    }
+
+    return this.datamap ?? {
+      ...this.dataset
+    }
   }
 
   public set data (data: unknown) {
+    this.datamap = data
     this.dragger?.setData(data)
     this.formatter.setData(data)
     this.propagator.setData(data)

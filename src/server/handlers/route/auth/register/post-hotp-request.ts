@@ -1,9 +1,9 @@
+import { createUser, toString } from '../../../../../common'
 import { AuthHotp } from '../../../../helpers'
 import { AuthRegisterHandler } from './abstract-register'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import type { Struct } from '../../../../../common'
-import { createUser } from '../../../../../common'
 
 interface AuthRegisterPostHotpRequestData extends RouteData {
   body: {
@@ -66,16 +66,22 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
 
     await this.setTmpUser(tmpUser, data.user.token)
 
-    await this.smtp?.send(await this.smtp.create('auth_register_hotp', {
-      date: new Date(),
-      date_time_zone: data.user.preferences.time_zone,
-      token: hotp.generate(),
-      user: data.user
-    }, {
-      email: tmpUser.auth_hotp_email,
-      name: data.user.name,
-      preferences: data.user.preferences
-    }))
+    this.smtp
+      ?.send(await this.smtp.create('auth_register_hotp', {
+        date: new Date(),
+        date_time_zone: data.user.preferences.time_zone,
+        token: hotp.generate(),
+        user: data.user
+      }, {
+        email: tmpUser.auth_hotp_email,
+        name: data.user.name,
+        preferences: data.user.preferences
+      }))
+      .catch((error) => {
+        this.logger?.error({
+          context: 'request-hotp-email'
+        }, toString(error))
+      })
 
     return {
       code: 'ok_auth_register_hotp_email_request',
@@ -105,15 +111,21 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
 
     await this.setTmpUser(tmpUser, data.user.token)
 
-    await this.sms?.send(await this.sms.create('auth_register_hotp', {
-      date: new Date(),
-      date_time_zone: data.user.preferences.time_zone,
-      token: hotp.generate(),
-      user: data.user
-    }, {
-      preferences: data.user.preferences,
-      tel: tmpUser.tel
-    }))
+    this.sms
+      ?.send(await this.sms.create('auth_register_hotp', {
+        date: new Date(),
+        date_time_zone: data.user.preferences.time_zone,
+        token: hotp.generate(),
+        user: data.user
+      }, {
+        preferences: data.user.preferences,
+        tel: tmpUser.tel
+      }))
+      .catch((error) => {
+        this.logger?.error({
+          context: 'request-hotp-tel'
+        }, toString(error))
+      })
 
     return {
       code: 'ok_auth_register_hotp_tel_request',

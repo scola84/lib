@@ -3,6 +3,7 @@ import { AuthRegisterHandler } from './abstract-register'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import { sql } from '../../../../helpers'
+import { toString } from '../../../../../common'
 
 export abstract class AuthRegisterPasswordHandler extends AuthRegisterHandler {
   protected async insertUser (user: User): Promise<Pick<User, 'user_id'>> {
@@ -95,8 +96,18 @@ export abstract class AuthRegisterPasswordHandler extends AuthRegisterHandler {
     }
 
     await this.auth.login(response, user)
-    await this.auth.clearBackoff(data)
-    await this.sendMessage(user)
+
+    Promise
+      .resolve()
+      .then(async () => {
+        await this.auth.clearBackoff(data)
+        await this.sendMessage(user)
+      })
+      .catch((error) => {
+        this.logger?.error({
+          context: 'register'
+        }, toString(error))
+      })
   }
 
   protected async selectGroupForRegister (): Promise<Group | undefined> {

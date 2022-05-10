@@ -2,6 +2,8 @@ import type { I18nFormatter, Struct } from '../helpers'
 import { cast, get } from '../helpers'
 
 export function d (name: string, locale: string, options: Struct<string>): I18nFormatter {
+  const defaultValue = cast(options.default)
+
   const path = name
     .split('.')
     .map(cast)
@@ -11,7 +13,7 @@ export function d (name: string, locale: string, options: Struct<string>): I18nF
 
   function formatter (data: unknown): string {
     const timeZone = cast(get(data, `${name}_time_zone`))
-    const value = cast(get(data, path))
+    const value = cast(get(data, path)) ?? defaultValue
 
     if (value instanceof Date) {
       return value.toLocaleString(locale, {

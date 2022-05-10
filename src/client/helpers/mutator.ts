@@ -42,11 +42,15 @@ export class Mutator {
   }
 
   public connect (): void {
-    this.addEventListeners()
+    if (!this.element.hasAttribute('sc-nolisten')) {
+      this.addEventListeners()
+    }
   }
 
   public disconnect (): void {
-    this.removeEventListeners()
+    if (!this.element.hasAttribute('sc-nolisten')) {
+      this.removeEventListeners()
+    }
   }
 
   public preset (): void {

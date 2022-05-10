@@ -2,6 +2,7 @@ import type { I18nFormatter, Struct } from '../helpers'
 import { cast, get } from '../helpers'
 
 export function s (name: string, locale: string, options: Partial<Struct<string>>): I18nFormatter {
+  const defaultValue = cast(options.default)
   const encodeuri = cast(options.encodeuri)
   const match = cast(options.match)
 
@@ -19,7 +20,7 @@ export function s (name: string, locale: string, options: Partial<Struct<string>
   }
 
   function formatter (data: unknown): string {
-    let value = (cast(get(data, path)) ?? '').toString()
+    let value = (cast(get(data, path)) ?? defaultValue ?? '').toString()
 
     if (regexp !== null) {
       value = value

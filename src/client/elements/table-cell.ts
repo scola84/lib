@@ -1,4 +1,5 @@
 import { Formatter, Mutator, Observer, Propagator } from '../helpers'
+import { isStruct, merge } from '../../common'
 import type { ScolaElement } from './element'
 
 export class ScolaTableCellElement extends HTMLTableCellElement implements ScolaElement {
@@ -13,6 +14,10 @@ export class ScolaTableCellElement extends HTMLTableCellElement implements Scola
   public propagator: Propagator
 
   public get data (): unknown {
+    if (isStruct(this.datamap)) {
+      return merge(this.datamap, this.dataset)
+    }
+
     return this.datamap ?? {
       ...this.dataset
     }

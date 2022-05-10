@@ -1,4 +1,4 @@
-import { I18n, isError, isResult } from '../../common'
+import { I18n, isError, isResult, isStruct, merge } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import type { Struct } from '../../common'
@@ -21,6 +21,10 @@ export class ScolaIconElement extends HTMLSpanElement implements ScolaElement {
   public propagator: Propagator
 
   public get data (): unknown {
+    if (isStruct(this.datamap)) {
+      return merge(this.datamap, this.dataset)
+    }
+
     return this.datamap ?? {
       ...this.dataset
     }

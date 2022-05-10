@@ -1,4 +1,4 @@
-import { I18n, toString } from '../../common'
+import { I18n, isStruct, merge, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaError, Struct } from '../../common'
 import { ScolaAppElement } from './app'
@@ -46,6 +46,10 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   public url: string
 
   public get data (): unknown {
+    if (isStruct(this.datamap)) {
+      return merge(this.datamap, this.dataset)
+    }
+
     return this.datamap ?? {
       ...this.dataset
     }

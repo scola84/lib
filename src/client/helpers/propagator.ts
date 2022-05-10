@@ -36,11 +36,15 @@ export class Propagator {
   }
 
   public connect (): void {
-    this.addEventListeners()
+    if (!this.element.hasAttribute('sc-nolisten')) {
+      this.addEventListeners()
+    }
   }
 
   public disconnect (): void {
-    this.removeEventListeners()
+    if (!this.element.hasAttribute('sc-nolisten')) {
+      this.removeEventListeners()
+    }
   }
 
   public dispatchEvent<T = unknown> (event: PropagatorEvent, data: T[] = [Struct.create()], trigger?: Event): void {

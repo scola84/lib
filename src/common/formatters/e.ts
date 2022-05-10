@@ -11,18 +11,18 @@ export function e (name: string, locale: string, options: Partial<Struct<string>
       return key !== ''
     })
 
-  const def = cast(options.default)
+  const defaultValue = cast(options.default)
   const counter = cast(options.counter)
 
   function formatter (data: unknown): string {
-    if (typeof def === 'string') {
+    if (typeof defaultValue === 'string') {
       const value = cast(get(data, path))
 
       if (
         isNil(value) ||
         value === ''
       ) {
-        return i18n.formatText(def, data, locale)
+        return i18n.formatText(defaultValue, data, locale)
       }
 
       return value.toString()

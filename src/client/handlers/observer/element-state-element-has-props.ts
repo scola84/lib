@@ -4,7 +4,10 @@ import type { Struct } from '../../../common'
 
 export function elementStateElementHasProps (observer: ScolaElement, observable: ScolaElement, query: Struct): void {
   observer.observer.toggleState(Object
-    .entries(query)
+    .entries({
+      ...query,
+      ...observer.dataset
+    })
     .every(([name, value]) => {
       const observeValue = get(observable, name)
       return String(value ?? '')

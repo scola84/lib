@@ -33,12 +33,30 @@ export class Formatter {
   }
 
   public connect (): void {
-    this.addEventListeners()
-    this.focusElement()
+    if ((
+      !this.element.hasAttribute('sc-nolisten')
+    ) && (
+      this.ariaLabel !== undefined ||
+      this.html !== undefined ||
+      this.text !== undefined ||
+      this.title !== undefined
+    )) {
+      this.addEventListeners()
+      this.focusElement()
+    }
   }
 
   public disconnect (): void {
-    this.removeEventListeners()
+    if ((
+      !this.element.hasAttribute('sc-nolisten')
+    ) && (
+      this.ariaLabel !== undefined ||
+      this.html !== undefined ||
+      this.text !== undefined ||
+      this.title !== undefined
+    )) {
+      this.removeEventListeners()
+    }
   }
 
   public reset (): void {
@@ -87,46 +105,20 @@ export class Formatter {
 
   protected format (): void {
     if (this.text !== undefined) {
-      this.element.textContent = this.formatText(this.text, this.data, this.locale) ?? this.element.textContent
+      this.element.textContent = this.i18n.formatText(this.text, this.data, this.locale)
     }
 
     if (this.html !== undefined) {
-      this.element.innerHTML = this.formatMarked(this.html, this.data, this.locale) ?? this.element.innerHTML
+      this.element.innerHTML = this.i18n.formatMarked(this.html, this.data, this.locale)
     }
 
     if (this.ariaLabel !== undefined) {
-      this.element.ariaLabel = this.formatText(this.ariaLabel, this.data, this.locale) ?? ''
+      this.element.ariaLabel = this.i18n.formatText(this.ariaLabel, this.data, this.locale)
     }
 
     if (this.title !== undefined) {
-      this.element.title = this.formatText(this.title, this.data, this.locale) ?? ''
+      this.element.title = this.i18n.formatText(this.title, this.data, this.locale)
     }
-  }
-
-  protected formatMarked (code: string, data: unknown, locale?: string): string | null {
-    const string = this.i18n.formatMarked(code, data, locale ?? undefined)
-
-    if (
-      string === '' ||
-      string === code
-    ) {
-      return null
-    }
-
-    return string
-  }
-
-  protected formatText (code: string, data: unknown, locale?: string): string | null {
-    const string = this.i18n.formatText(code, data, locale ?? undefined)
-
-    if (
-      string === '' ||
-      string === code
-    ) {
-      return null
-    }
-
-    return string
   }
 
   protected handleLocale (): void {

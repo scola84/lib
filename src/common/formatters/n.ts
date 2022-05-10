@@ -2,6 +2,8 @@ import type { I18nFormatter, Struct } from '../helpers'
 import { cast, get, isNumber } from '../helpers'
 
 export function n (name: string, locale: string, options: Struct<string>): I18nFormatter {
+  const defaultValue = cast(options.default)
+
   const path = name
     .split('.')
     .map(cast)
@@ -10,7 +12,7 @@ export function n (name: string, locale: string, options: Struct<string>): I18nF
     })
 
   function formatter (data: unknown): string {
-    const value = cast(get(data, path))
+    const value = cast(get(data, path)) ?? defaultValue
 
     if (isNumber(value)) {
       return value.toLocaleString(locale, options)

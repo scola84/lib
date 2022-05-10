@@ -439,11 +439,15 @@ export class ScolaTableElement extends HTMLTableElement implements ScolaElement 
             })
 
           if (element instanceof ScolaTableCellElement) {
-            element.data = { key }
+            element.data = {
+              key
+            }
           } else {
             window.requestAnimationFrame(() => {
               if (element instanceof ScolaTableCellElement) {
-                element.data = { key }
+                element.data = {
+                  key
+                }
               }
             })
           }

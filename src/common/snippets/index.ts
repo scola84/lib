@@ -10,6 +10,9 @@ import queueFormQueue from './queue/form/queue.html'
 import queueFormRun from './queue/form/run.html'
 import queueFormTask from './queue/form/task.html'
 import smtpEmail from './smtp/email.html'
+import viewFormView from './view/form/view.html'
+import viewFormViewGroup from './view/form/view-group.html'
+import viewFormViewUser from './view/form/view-user.html'
 
 export const snippets = {
   'sc-auth-flow-login': authFlowLogin,
@@ -23,5 +26,8 @@ export const snippets = {
   'sc-queue-form-queue': queueFormQueue,
   'sc-queue-form-run': queueFormRun,
   'sc-queue-form-task': queueFormTask,
-  'sc-smtp-email': smtpEmail
+  'sc-smtp-email': smtpEmail,
+  'sc-view-form-view': viewFormView,
+  'sc-view-form-view-group': viewFormViewGroup,
+  'sc-view-form-view-user': viewFormViewUser
 }

@@ -4,3 +4,6 @@
 ./dist/cli/index.js html-sql "src/common/snippets/queue/form/*.html" ".docker/mssql/docker-entrypoint-initdb.d/lib/01_queue.sql" -d mssql -D scola
 ./dist/cli/index.js html-sql "src/common/snippets/queue/form/*.html" ".docker/mysql/docker-entrypoint-initdb.d/lib/01_queue.sql" -d mysql -D scola
 ./dist/cli/index.js html-sql "src/common/snippets/queue/form/*.html" ".docker/pgsql/docker-entrypoint-initdb.d/lib/01_queue.sql" -d pgsql -D scola
+./dist/cli/index.js html-sql "src/common/snippets/view/form/*.html" ".docker/mssql/docker-entrypoint-initdb.d/lib/02_view.sql" -d mssql -D scola
+./dist/cli/index.js html-sql "src/common/snippets/view/form/*.html" ".docker/mysql/docker-entrypoint-initdb.d/lib/02_view.sql" -d mysql -D scola
+./dist/cli/index.js html-sql "src/common/snippets/view/form/*.html" ".docker/pgsql/docker-entrypoint-initdb.d/lib/02_view.sql" -d pgsql -D scola

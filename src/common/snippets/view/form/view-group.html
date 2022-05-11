@@ -1,0 +1,42 @@
+<form name="view_group">
+  <fieldset>
+    <legend>Relations</legend>
+    <div>
+      <label for="group-id">Group</label>
+      <input
+        id="group-id"
+        name="group_id"
+        type="number"
+        readonly
+        required
+        sc-fkey="group.group_id"
+        sc-fkey-delete="cascade"
+        sc-index="group"
+      />
+    </div>
+    <div>
+      <label for="view-id">View</label>
+      <input
+        id="view-id"
+        name="view_id"
+        type="number"
+        readonly
+        required
+        sc-fkey="view.view_id"
+        sc-fkey-delete="cascade"
+        sc-index="view"
+      />
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Settings</legend>
+    <div>
+      <label for="default-for">Default For</label>
+      <input
+        id="default-for"
+        name="default_for"
+        type="text"
+      />
+    </div>
+  </fieldset>
+</form>

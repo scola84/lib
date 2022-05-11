@@ -12,6 +12,7 @@ declare global {
 
   interface WindowEventMap {
     'sc-app-locale': CustomEvent
+    'sc-app-theme': CustomEvent
     'sc-app-time-zone': CustomEvent
   }
 }
@@ -121,6 +122,10 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
 
     window.dispatchEvent(new CustomEvent('sc-app-theme', {
       detail: this.theme
+    }))
+
+    window.dispatchEvent(new CustomEvent('sc-app-time-zone', {
+      detail: this.timeZone
     }))
   }
 

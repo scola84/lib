@@ -3,6 +3,7 @@ import { Hider, Mutator, Observer, Propagator } from '../helpers'
 import { Struct, isFlow, isUser } from '../../common'
 import { isError, toJoint } from '../../common/'
 import type { ScolaElement } from './element'
+import type { ScolaViewElement } from './view'
 
 export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
   public static storage: Partial<Struct<Storage>> = {
@@ -35,6 +36,7 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
     if (isUser(data)) {
       this.user = data
       this.saveState()
+      this.loadViews()
       this.update()
     } else if (isError(data)) {
       if (
@@ -44,6 +46,7 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
         this.flow = null
         this.user = null
         this.saveState()
+        this.clearViews()
         this.update()
       } else {
         this.propagator.dispatchEvents('error', [data])
@@ -52,6 +55,7 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
       this.flow = null
       this.user = null
       this.saveState()
+      this.clearViews()
       this.update()
     }
   }
@@ -124,6 +128,14 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
     this.toggleAttribute('hidden', this.user !== null)
   }
 
+  protected clearViews (): void {
+    document
+      .querySelectorAll<ScolaViewElement>('[is="sc-view"]')
+      .forEach((element) => {
+        element.clear()
+      })
+  }
+
   protected handleObserver (mutations: MutationRecord[]): void {
     const attributes = this.observer.normalizeMutations(mutations)
 
@@ -171,6 +183,18 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
       this.saveState()
       window.location.search = ''
     }
+  }
+
+  protected loadViews (): void {
+    Object
+      .entries(this.user?.views ?? {})
+      .forEach(([id, name]) => {
+        document
+          .querySelector<ScolaViewElement>(`#${id}[is="sc-view"]`)
+          ?.load({
+            name: String(name)
+          })
+      })
   }
 
   protected saveState (): void {

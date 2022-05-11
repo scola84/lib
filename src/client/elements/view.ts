@@ -1,7 +1,8 @@
 import { Hider, Mutator, Observer, Propagator, Sanitizer } from '../helpers'
-import { Struct, flatten, isArray, isNumber, isSame, isStruct, isTransaction } from '../../common'
+import { Struct, createView, flatten, isArray, isNil, isNumber, isSame, isStruct, isTransaction } from '../../common'
+import type { Transaction, View } from '../../common'
+import type { RequireAtLeastOne } from 'type-fest'
 import type { ScolaElement } from './element'
-import type { Transaction } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -15,11 +16,9 @@ declare global {
   }
 }
 
-export interface View extends Struct {
+interface ScolaElementView extends RequireAtLeastOne<Partial<View>, 'name'> {
   element?: Element
-  name: string
   params?: Struct
-  snippet?: string
   source?: string
   title?: string
 }
@@ -33,6 +32,8 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     local: window.localStorage,
     session: window.sessionStorage
   }
+
+  public defaultView?: ScolaElementView
 
   public hider?: Hider
 
@@ -62,7 +63,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
 
   public unique: boolean
 
-  public views: View[] = []
+  public views: ScolaElementView[] = []
 
   public wait: boolean
 
@@ -93,7 +94,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     return this.pointer + 1
   }
 
-  public get view (): View | null {
+  public get view (): ScolaElementView | null {
     return this.views[this.pointer] ?? null
   }
 
@@ -180,6 +181,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   public clear (): void {
     this.views = []
     this.pointer = -1
+    this.saveState()
   }
 
   public connectedCallback (): void {
@@ -194,11 +196,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     this.propagator.connect()
     this.addEventListeners()
 
-    if (this.wait) {
-      if (this.save !== '') {
-        this.saveState()
-      }
-    } else {
+    if (!this.wait) {
       this.wait = true
       this.loadState()
     }
@@ -281,6 +279,11 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
+  public load (view: ScolaElementView): void {
+    this.defaultView = view
+    this.loadState()
+  }
+
   public notify (): void {
     this.toggleAttribute('sc-updated', true)
     this.toggleAttribute('sc-updated', false)
@@ -360,7 +363,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     const { view } = this
 
     if (view !== null) {
-      if (view.snippet === undefined) {
+      if (isNil(view.snippet)) {
         this.innerHTML = ''
       } else if (view.element === undefined) {
         this.innerHTML = this.sanitizer.sanitizeHtml(view.snippet)
@@ -386,20 +389,32 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected commit (transaction: Transaction): void {
-    if (
-      this.isView(transaction.commit) &&
-      typeof transaction.result === 'string'
-    ) {
-      transaction.commit.snippet = transaction.result
+    if (this.isView(transaction.commit)) {
+      if (typeof transaction.result === 'string') {
+        transaction.commit.snippet = transaction.result
 
-      if (transaction.commit === this.view) {
-        this.update()
+        if (transaction.commit === this.view) {
+          this.update()
+        }
+      } else {
+        const index = this.views.indexOf(transaction.commit)
+
+        this.views.splice(index, 1)
+
+        if (this.pointer >= index) {
+          this.pointer -= 1
+        }
+
+        if (this.pointer === -1) {
+          this.loadStateFromDefault(this.defaultView)
+          this.go(this.pointer)
+        }
       }
     }
   }
 
-  protected createView (options?: unknown): View {
-    const view: View = {
+  protected createView (options?: unknown): ScolaElementView {
+    const view: ScolaElementView = {
       name: '',
       params: {}
     }
@@ -517,6 +532,10 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
       this.loadStateFromLocation(window.location.pathname)
     }
 
+    if (this.pointer === -1) {
+      this.loadStateFromDefault(this.defaultView)
+    }
+
     if (
       this.pointer === -1 &&
       !this.hasAttribute('hidden')
@@ -538,10 +557,22 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
+  protected loadStateFromDefault (view?: ScolaElementView): void {
+    if (view !== undefined) {
+      this.views.push({
+        name: view.name
+      })
+
+      this.pointer = this.views.length - 1
+    }
+  }
+
   protected loadStateFromElement (element: ScolaViewElement): void {
     if (element.name !== null) {
       this.views = [{
-        name: element.name,
+        ...createView({
+          name: element.name
+        }),
         params: Struct.fromQuery(element.params ?? ''),
         source: 'element'
       }]
@@ -559,7 +590,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
         params = ''
       } = result.groups ?? {}
 
-      const view = {
+      const view: ScolaElementView = {
         name: name,
         params: Struct.fromQuery(params),
         source: 'location'

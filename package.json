@@ -5,7 +5,7 @@
   },
   "browser": "./dist/client/index.js",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.87.0",
+    "@aws-sdk/client-s3": "^3.88.0",
     "@fastify/cookie": "^6.0.0",
     "@fastify/formbody": "^6.0.0",
     "@rmp135/sql-ts": "^1.13.0",
@@ -114,7 +114,7 @@
     "commitizen": "^4.2.4",
     "cz-conventional-changelog": "^3.3.0",
     "denque": "^2.0.1",
-    "dotenv": "^16.0.0",
+    "dotenv": "^16.0.1",
     "eslint": "^8.15.0",
     "eslint-config-standard-with-typescript": "^21.0.1",
     "eslint-plugin-import": "^2.26.0",

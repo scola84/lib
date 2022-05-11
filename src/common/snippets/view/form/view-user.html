@@ -1,0 +1,42 @@
+<form name="view_user">
+  <fieldset>
+    <legend>Relations</legend>
+    <div>
+      <label for="user-id">User</label>
+      <input
+        id="user-id"
+        name="user_id"
+        type="number"
+        readonly
+        required
+        sc-fkey="user.user_id"
+        sc-fkey-delete="cascade"
+        sc-index="user"
+      />
+    </div>
+    <div>
+      <label for="view-id">View</label>
+      <input
+        id="view-id"
+        name="view_id"
+        type="number"
+        readonly
+        required
+        sc-fkey="view.view_id"
+        sc-fkey-delete="cascade"
+        sc-index="view"
+      />
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Settings</legend>
+    <div>
+      <label for="default-for">Default For</label>
+      <input
+        id="default-for"
+        name="default_for"
+        type="text"
+      />
+    </div>
+  </fieldset>
+</form>

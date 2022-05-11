@@ -1,6 +1,7 @@
 import { isNumber, isStruct } from '../../helpers'
 import type { Group } from './group'
 import type { Role } from './role'
+import type { Struct } from '../../helpers'
 import type { User as UserBase } from './base'
 import type { UserToken } from './user-token'
 
@@ -73,6 +74,8 @@ export interface User extends UserBase {
   user_id: number
 
   username: string | null
+
+  views?: Struct
 }
 
 export function isUser (value: unknown): value is User {

@@ -1,5 +1,6 @@
 import type { ScolaTableElement } from '../../elements/table'
 import type { ScolaViewElement } from '../../elements/view'
+import { get } from '../../../common'
 
 export function tableRowsViewViews (observer: ScolaTableElement, observable: ScolaViewElement): void {
   const focus = (
@@ -16,7 +17,7 @@ export function tableRowsViewViews (observer: ScolaTableElement, observable: Sco
     observer.add(view)
 
     if (view === observable.view) {
-      key = view[observer.lister.pkey]
+      key = get(view, observer.lister.pkey)
     }
   })
 

@@ -87,10 +87,10 @@ export const presets = {
   'sc-carousel-body': {
     'sc-direction': 'row',
     'sc-height': 'max@all',
-    'sc-transition': '@all',
     'sc-width': 'max@all'
   },
   'sc-carousel-item': {
+    'sc-direction': 'column',
     'sc-width': 'flex-max@all'
   },
   'sc-field': {
@@ -104,6 +104,14 @@ export const presets = {
     'sc-text-color': 'contrast',
     'sc-text-size': '0.9@all'
   },
+  'sc-field-container-icon': {
+    'sc-height': '2@all',
+    'sc-position': 'relative@all'
+  },
+  'sc-field-container-text': {
+    'sc-height': '3@all',
+    'sc-position': 'relative@all'
+  },
   'sc-field-error': {
     'sc-bg-color': 'red',
     'sc-nodata': '',
@@ -114,43 +122,43 @@ export const presets = {
     'sc-text-color': 'white',
     'sc-text-size': '0.9@all'
   },
-  'sc-field-group-column': {
-    'sc-direction': 'column',
-    'sc-gap-y': '0.5@all'
-  },
-  'sc-field-group-row': {
-    'sc-direction': 'row',
-    'sc-gap-x': '0.5@all'
-  },
-  'sc-field-icon': {
-    'sc-height': '2@all',
-    'sc-interact': '',
-    'sc-round': 'max@all',
-    'sc-width': '2@all'
-  },
   'sc-field-label': {
     'sc-padding-bottom': '0.25@all',
     'sc-text-color': 'normal',
     'sc-text-size': '0.9@all'
   },
-  'sc-fieldset': {
-    'sc-direction': 'column'
+  'sc-field-under-icon': {
+    'sc-height': '2@all',
+    'sc-interact': '',
+    'sc-round': 'max@all',
+    'sc-width': '2@all'
   },
-  'sc-fieldset-body': {
+  'sc-field-under-text': {
+    'sc-interact': ''
+  },
+  'sc-fieldset': {
     'sc-direction': 'column',
     'sc-gap': '0.75@all',
-    'sc-padding': '1@all'
+    'sc-padding-x': '1@all'
+  },
+  'sc-fieldset-column': {
+    'sc-direction': 'column',
+    'sc-gap-y': '0.5@all'
   },
   'sc-fieldset-divider': {
     'sc-border-bottom': '@all',
-    'sc-border-color': 'contrast',
+    'sc-border-color': 'normal',
     'sc-direction': 'column',
-    'sc-margin-y': '0.25@all',
+    'sc-margin-y': '0.5@all',
     'sc-width': 'max@all'
   },
   'sc-fieldset-item': {
     'sc-direction': 'column',
     'sc-position': 'relative@all'
+  },
+  'sc-fieldset-row': {
+    'sc-direction': 'row',
+    'sc-gap-x': '0.5@all'
   },
   'sc-footer': {
     'sc-align-y': 'center',
@@ -169,7 +177,9 @@ export const presets = {
   },
   'sc-form': {
     'novalidate': '',
-    'sc-direction': 'column'
+    'sc-direction': 'column',
+    'sc-padding-y': '1@all'
+    // 'sc-gap': '0.75@all'
   },
   'sc-form-error': {
     'sc-bg-color': 'red',
@@ -201,30 +211,75 @@ export const presets = {
   },
   'sc-header-title': {
     'sc-padding-x': '0.5@all',
-    'sc-text-style': 'uppercase'
+    'sc-text-style': 'bold uppercase',
+    'sc-width': 'flex@all'
   },
-  'sc-icon-button-contrast': {
+  'sc-icon': {
+    'sc-height': '1.5@all',
+    'sc-round': 'max@all',
+    'sc-width': '1.5@all'
+  },
+  'sc-icon-contrast': {
     'sc-height': '1.5@all',
     'sc-round': 'max@all',
     'sc-text-color': 'contrast',
     'sc-width': '1.5@all'
   },
-  'sc-icon-button-contrast-small': {
+  'sc-icon-contrast-small': {
     'sc-height': '1.25@all',
     'sc-round': 'max@all',
     'sc-text-color': 'contrast',
     'sc-width': '1.25@all'
   },
-  'sc-icon-button-normal': {
+  'sc-icon-normal': {
     'sc-height': '1.5@all',
     'sc-round': 'max@all',
     'sc-text-color': 'normal',
     'sc-width': '1.5@all'
   },
-  'sc-icon-button-normal-small': {
+  'sc-icon-normal-small': {
     'sc-height': '1.25@all',
     'sc-round': 'max@all',
     'sc-text-color': 'normal',
     'sc-width': '1.25@all'
+  },
+  'sc-icon-small': {
+    'sc-height': '1.25@all',
+    'sc-round': 'max@all',
+    'sc-width': '1.25@all'
+  },
+  'sc-section': {
+    'sc-direction': 'column'
+    // 'sc-gap': '0.75@all'
+  },
+  'sc-section-body': {
+    'sc-clip': '',
+    'sc-direction': 'column',
+    'sc-hide': '',
+    'sc-hide-mode': 'height@all',
+    'sc-observe-save': 'hidden',
+    'sc-transition': '@all'
+  },
+  'sc-section-group': {
+    'sc-direction': 'column',
+    'sc-gap-y': '0.5@all'
+  },
+  'sc-section-title': {
+    // 'sc-align-y': 'center',
+    'sc-direction': 'row',
+    // 'sc-height': '2@all',
+    'sc-interact': '',
+    'sc-padding-x': '1@all',
+    'sc-text-color': 'contrast',
+    'sc-text-size': '0.9@all',
+    'sc-text-style': 'bold uppercase'
+  },
+  'sc-text-over-field': {
+    'sc-align-y': 'center',
+    'sc-bg-color': 'contrast',
+    'sc-direction': 'column',
+    'sc-height': 'max@all',
+    'sc-text-color': 'normal',
+    'sc-width': 'max@all'
   }
 }

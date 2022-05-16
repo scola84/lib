@@ -2,11 +2,10 @@ import type { Struct } from '../../common'
 import type { Validator } from '../helpers'
 import { parsePhoneNumberFromString } from 'libphonenumber-js'
 
-export function telNational (name: string): Validator {
-  const nameCountryCode = name.replace('_national', '_country_code')
+export function telE164 (name: string): Validator {
   return (data: Struct, errors: Struct) => {
-    const value = `+${String(data[nameCountryCode])} ${String(data[name])}`
-    const phoneNumber = parsePhoneNumberFromString(value)
+    const value = data[name]
+    const phoneNumber = parsePhoneNumberFromString(String(value))
 
     if (phoneNumber?.isValid() !== true) {
       errors[name] = {
@@ -16,6 +15,6 @@ export function telNational (name: string): Validator {
       throw errors[name]
     }
 
-    data[name] = phoneNumber.nationalNumber
+    data[name] = phoneNumber.format('E.164')
   }
 }

@@ -1,8 +1,7 @@
 import { Hider, Mutator, Observer, Propagator } from '../helpers'
 import { ScolaDivElement } from './div'
 import type { ScolaElement } from './element'
-import type { Struct } from '../../common'
-import { isStruct } from '../../common'
+import { isObject } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -17,7 +16,7 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
 
   public hider?: Hider
 
-  public items: Struct[] = []
+  public items: unknown[] = []
 
   public mutator: Mutator
 
@@ -137,7 +136,7 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
     this.addEventListener('sc-message-next', this.handleNextBound)
   }
 
-  protected appendElement (item: Struct): void {
+  protected appendElement (item: unknown): void {
     const template = this.templates.get('item')?.content.cloneNode(true)
 
     if (
@@ -164,7 +163,7 @@ export class ScolaMessageElement extends HTMLDivElement implements ScolaElement 
   }
 
   protected handleAdd (event: CustomEvent): void {
-    if (isStruct(event.detail)) {
+    if (isObject(event.detail)) {
       this.items.push(event.detail)
 
       if (this.timeoutId === undefined) {

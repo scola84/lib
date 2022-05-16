@@ -1,4 +1,4 @@
-import { Mutator, Observer, Propagator } from '../helpers'
+import { Hider, Mutator, Observer, Propagator } from '../helpers'
 import type { ScolaElement } from './element'
 import type { ScolaFieldElement } from './field'
 import { ScolaInputElement } from './input'
@@ -15,6 +15,8 @@ declare global {
 }
 
 export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaElement {
+  public hider?: Hider
+
   public mutator: Mutator
 
   public observer: Observer
@@ -57,6 +59,10 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
+
+    if (this.hasAttribute('sc-hide')) {
+      this.hider = new Hider(this)
+    }
   }
 
   public static define (): void {
@@ -70,6 +76,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
       'hidden'
     ])
 
+    this.hider?.connect()
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
@@ -77,6 +84,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   public disconnectedCallback (): void {
+    this.hider?.disconnect()
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
@@ -128,6 +136,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   }
 
   protected handleObserver (): void {
+    this.hider?.toggle()
     this.toggleDisabled()
     this.changeFocus()
   }
@@ -149,10 +158,7 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
     const data = {}
 
     for (const element of this.fieldElements) {
-      if (!(
-        element.disabled ||
-        element.name === ''
-      )) {
+      if (element.name !== '') {
         setPush(data, element.qualifiedName, element.valueAsCast)
       }
     }

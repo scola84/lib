@@ -1,8 +1,8 @@
 import { AuthHotp } from '../../../../helpers'
 import { AuthRegisterHandler } from './abstract-register'
+import type { Result } from '../../../../../common'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
 
 interface AuthRegisterPostHotpConfirmData extends RouteData {
   body: {
@@ -29,7 +29,7 @@ export class AuthRegisterPostHotpConfirmHandler extends AuthRegisterHandler {
     }
   }
 
-  public async handle (data: AuthRegisterPostHotpConfirmData, response: ServerResponse): Promise<Struct> {
+  public async handle (data: AuthRegisterPostHotpConfirmData, response: ServerResponse): Promise<Result> {
     if (data.user === undefined) {
       response.statusCode = 401
       throw new Error('User is undefined')

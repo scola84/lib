@@ -37,9 +37,9 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   public codeFps: number
 
-  public codeOverlay: number
-
   public codeScanner?: Html5Qrcode
+
+  public codeWindow: number
 
   public durationAsString = '00:00:00'
 
@@ -196,7 +196,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
 
   public reset (): void {
     this.codeFps = Number(this.getAttribute('sc-code-fps') ?? 1)
-    this.codeOverlay = Number(this.getAttribute('sc-code-overlay') ?? 250)
+    this.codeWindow = Number(this.getAttribute('sc-code-window') ?? 250)
     this.facingMode = this.getAttribute('sc-facing-mode') ?? 'user'
     this.fillLightMode = this.getAttribute('sc-fill-light-mode') ?? 'off'
     this.type = this.getAttribute('sc-type') ?? 'image'
@@ -245,7 +245,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   public toJSON (): unknown {
     return {
       codeFps: this.codeFps,
-      codeOverlay: this.codeOverlay,
+      codeWindow: this.codeWindow,
       durationAsString: this.durationAsString,
       enabled: this.enabled,
       facingMode: this.facingMode,
@@ -580,10 +580,10 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
       offsetWidth = 0
     } = this.parentElement ?? {}
 
-    let maxHeight = this.codeOverlay
-    let maxWidth = this.codeOverlay
+    let maxHeight = this.codeWindow
+    let maxWidth = this.codeWindow
 
-    if (this.codeOverlay < 1) {
+    if (this.codeWindow < 1) {
       maxHeight *= offsetHeight
       maxWidth *= offsetWidth
     }
@@ -592,7 +592,7 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
     const width = Math.min(offsetWidth - 32, maxWidth)
     const size = Math.min(height, width)
 
-    this.parentElement?.style.setProperty('--sc-overlay-code-x', `${(offsetWidth - size) / 2}px`)
-    this.parentElement?.style.setProperty('--sc-overlay-code-y', `${(offsetHeight - size) / 2}px`)
+    this.parentElement?.style.setProperty('--sc-recorder-code-window-x', `${(offsetWidth - size) / 2}px`)
+    this.parentElement?.style.setProperty('--sc-recorder-code-window-y', `${(offsetHeight - size) / 2}px`)
   }
 }

@@ -31,74 +31,64 @@
     sc-preset="sc-carousel sc-auth-carousel"
   >
     <div is="sc-div" sc-preset="sc-carousel-body" sc-transition="@all">
-      <form
-        hidden
-        id="form-post-login"
-        is="sc-form"
-        sc-onhide="sc-requester-reset@#requester-post-login"
-        sc-onsubmit="sc-requester-send@#requester-post-login"
-        sc-preset="sc-carousel-item sc-form"
-      >
-        <div is="sc-div" sc-preset="identity"></div>
-        <fieldset is="sc-fieldset" sc-preset="sc-fieldset" sc-height="flex@all">
-          <div is="sc-div" sc-preset="sc-header">
-            <legend
-              is="sc-legend"
-              sc-preset="sc-header-title"
-              sc-text="legend_auth_login"
-              sc-width="flex@all"
-            >
-              Log in
-            </legend>
-            <div is="sc-div" sc-preset="sc-button-group">
-              <div
-                is="sc-div"
-                sc-position="relative@all"
-                sc-preset="sc-button-icon"
-              >
-                <select
-                  is="sc-select"
-                  sc-aria-label="tooltip_app_locale"
-                  sc-bg-color="normal"
-                  sc-generator="sc-locale"
-                  sc-observe-target="sc-element-data-element-get-props?value=locale@[is='sc-app']"
-                  sc-onvalue="sc-app-locale@[is='sc-app']"
-                  sc-preset="sc-field-icon"
-                  sc-title="tooltip_app_locale"
-                ></select>
-                <span class="sc-overlay-field" is="sc-span">
-                  <span
-                    is="sc-icon"
-                    sc-code="language"
-                    sc-preset="sc-icon-button-normal-small"
-                  ></span>
-                </span>
-              </div>
-              <button
-                is="sc-button"
-                sc-onclick="sc-app-theme@[is='sc-app']"
-                sc-aria-label="tooltip_app_theme"
-                sc-preset="sc-button-icon-normal"
-                sc-title="tooltip_app_theme"
-                type="button"
-              >
+      <div hidden is="sc-div" sc-preset="sc-carousel-item">
+        <div is="sc-div" sc-preset="sc-header">
+          <h1
+            is="sc-h1"
+            sc-preset="sc-header-title"
+            sc-text="header_auth_login"
+          ></h1>
+          <div is="sc-div" sc-preset="sc-button-group">
+            <div is="sc-div" sc-preset="sc-field-container-icon sc-button-icon">
+              <select
+                is="sc-select"
+                sc-aria-label="tooltip_app_locale"
+                sc-bg-color="normal"
+                sc-generator="sc-locale"
+                sc-observe-target="sc-element-data-element-get-props?value=locale@[is='sc-app']"
+                sc-onvalue="sc-app-locale@[is='sc-app']"
+                sc-preset="sc-field-under-icon"
+                sc-title="tooltip_app_locale"
+              ></select>
+              <span class="sc-text-over-field-container" is="sc-span">
                 <span
                   is="sc-icon"
-                  sc-code="contrast"
-                  sc-preset="sc-icon-button-normal-small"
+                  sc-code="language"
+                  sc-preset="sc-icon-normal-small"
                 ></span>
-              </button>
+              </span>
             </div>
+            <button
+              is="sc-button"
+              sc-onclick="sc-app-theme@[is='sc-app']"
+              sc-aria-label="tooltip_app_theme"
+              sc-preset="sc-button-icon-normal"
+              sc-title="tooltip_app_theme"
+              type="button"
+            >
+              <span
+                is="sc-icon"
+                sc-code="contrast"
+                sc-preset="sc-icon-normal-small"
+              ></span>
+            </button>
           </div>
-          <div is="sc-div" sc-preset="sc-body sc-fieldset-body">
+        </div>
+        <form
+          id="form-post-login"
+          is="sc-form"
+          sc-onhide="sc-requester-reset@#requester-post-login"
+          sc-onsubmit="sc-requester-send@#requester-post-login"
+          sc-preset="sc-body sc-form"
+        >
+          <fieldset is="sc-fieldset" sc-preset="sc-fieldset">
             <div is="sc-div" sc-preset="sc-fieldset-item">
               <label
                 for="input-login-identity"
                 is="sc-label"
                 sc-preset="sc-field-label"
-                sc-text="label_auth_identity"
-                >Email, phone or username</label
-              >
+                sc-text="label_user_identity"
+              ></label>
               <input
                 aria-errormessage="error-login-identity"
                 id="input-login-identity"
@@ -121,9 +111,8 @@
                 for="input-login-password"
                 is="sc-label"
                 sc-preset="sc-field-label"
-                sc-text="label_auth_password"
-                >Password</label
-              >
+                sc-text="label_user_auth_password"
+              ></label>
               <input
                 aria-errormessage="error-login-password"
                 autocomplete="current-password"
@@ -143,7 +132,7 @@
               ></span>
             </div>
             <div is="sc-div" sc-preset="sc-fieldset-divider"></div>
-            <div is="sc-div" sc-preset="sc-fieldset-item">
+            <div is="sc-div" sc-preset="sc-fieldset-column">
               <object
                 aria-errormessage="error-requester-post-login"
                 id="requester-post-login"
@@ -159,11 +148,7 @@
                 type="submit"
                 sc-preset="sc-button-submit"
                 sc-text="button_auth_login"
-              >
-                Log in
-              </button>
-            </div>
-            <div is="sc-div" sc-preset="sc-fieldset-item">
+              ></button>
               <span
                 aria-live="polite"
                 id="error-requester-post-login"
@@ -172,8 +157,8 @@
                 sc-preset="sc-form-error"
               ></span>
             </div>
-          </div>
-        </fieldset>
+          </fieldset>
+        </form>
         <ul is="sc-ul" sc-align-x="center" sc-preset="sc-footer">
           <li>
             <button
@@ -182,317 +167,385 @@
               sc-onclick="sc-carousel-go?pointer=1@#carousel-auth"
               sc-preset="sc-footer-button"
               sc-text="button_auth_register"
-            >
-              Register
-            </button>
+            ></button>
           </li>
         </ul>
-      </form>
-      <form
-        hidden
-        id="form-post-register"
-        is="sc-form"
-        sc-onhide="sc-requester-reset@#requester-post-register"
-        sc-onsubmit="sc-requester-send@#requester-post-register"
-        sc-preset="sc-carousel-item sc-form"
-      >
-        <div is="sc-div" sc-preset="identity"></div>
-        <fieldset is="sc-fieldset" sc-preset="sc-fieldset" sc-height="flex@all">
-          <div is="sc-div" sc-preset="sc-header">
-            <legend
-              is="sc-legend"
-              sc-preset="sc-header-title"
-              sc-text="legend_auth_register"
-              sc-width="flex@all"
-            >
-              Register
-            </legend>
-            <div is="sc-div" sc-preset="sc-button-group">
-              <div
-                is="sc-div"
-                sc-position="relative@all"
-                sc-preset="sc-button-icon"
-              >
-                <select
-                  is="sc-select"
-                  sc-aria-label="tooltip_app_locale"
-                  sc-bg-color="normal"
-                  sc-generator="sc-locale"
-                  sc-observe-target="sc-element-data-element-get-props?value=locale@[is='sc-app']"
-                  sc-onvalue="sc-app-locale@[is='sc-app']"
-                  sc-preset="sc-field-icon"
-                  sc-title="tooltip_app_locale"
-                ></select>
-                <span class="sc-overlay-field" is="sc-span">
-                  <span
-                    is="sc-icon"
-                    sc-code="language"
-                    sc-preset="sc-icon-button-normal-small"
-                  ></span>
-                </span>
-              </div>
-              <button
-                is="sc-button"
-                sc-onclick="sc-app-theme@[is='sc-app']"
-                sc-aria-label="tooltip_app_theme"
-                sc-preset="sc-button-icon-normal"
-                sc-title="tooltip_app_theme"
-                type="button"
-              >
-                <span
-                  is="sc-icon"
-                  sc-code="contrast"
-                  sc-preset="sc-icon-button-normal-small"
-                ></span>
-              </button>
-            </div>
-          </div>
-          <div
-            is="sc-div"
-            sc-preset="sc-body sc-fieldset-body"
-            sc-scrollbar-axis="y"
-          >
-            <div is="sc-div" sc-preset="sc-fieldset-item">
-              <label
-                for="input-register-name"
-                is="sc-label"
-                sc-preset="sc-field-label"
-                sc-text="label_auth_name"
-                >Name</label
-              >
-              <input
-                aria-errormessage="error-register-name"
-                autocomplete="name"
-                id="input-register-name"
-                is="sc-input"
-                name="name"
-                type="text"
-                sc-focus="form invalid"
-                sc-preset="sc-field"
-              />
-              <span
-                id="error-register-name"
-                is="sc-span"
-                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-name"
-                sc-preset="sc-field-error"
-              ></span>
-            </div>
-            <div is="sc-div" sc-preset="sc-fieldset-divider"></div>
-            <div is="sc-div" sc-preset="sc-fieldset-item">
-              <label
-                for="input-register-email"
-                is="sc-label"
-                sc-preset="sc-field-label"
-                sc-text="label_auth_email"
-                >Email</label
-              >
-              <input
-                aria-errormessage="error-register-email"
-                autocomplete="email"
-                id="input-register-email"
-                is="sc-input"
-                name="email"
-                type="email"
-                sc-preset="sc-field"
-              />
-              <span
-                id="error-register-email"
-                is="sc-span"
-                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-email"
-                sc-preset="sc-field-error"
-              ></span>
-            </div>
-            <div is="sc-div" sc-preset="sc-fieldset-item">
-              <label
-                for="input-register-tel-national"
-                is="sc-label"
-                sc-preset="sc-field-label"
-                sc-text="label_auth_tel_national"
-                >Phone</label
-              >
-              <div is="sc-div" sc-preset="sc-field-group-column">
-                <select
-                  id="input-register-tel-country-code"
-                  is="sc-select"
-                  name="tel_country_code"
-                  sc-generator="sc-tel-country-code"
-                  sc-preset="sc-field"
-                ></select>
-                <input
-                  aria-errormessage="error-register-tel-national"
-                  autocomplete="tel-national"
-                  id="input-register-tel-national"
-                  is="sc-input"
-                  name="tel_national"
-                  type="tel"
-                  sc-preset="sc-field"
-                />
-              </div>
-              <span
-                id="error-register-tel-national"
-                is="sc-span"
-                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-tel-national sc-element-state-field-state?aria-invalid=true@#input-register-tel-country-code"
-                sc-preset="sc-field-error"
-              ></span>
-            </div>
-            <div is="sc-div" sc-preset="sc-fieldset-item">
-              <label
-                for="input-register-username"
-                is="sc-label"
-                sc-preset="sc-field-label"
-                sc-text="label_auth_username"
-                >Username</label
-              >
-              <input
-                aria-errormessage="error-register-username"
-                autocomplete="username"
-                id="input-register-username"
-                is="sc-input"
-                name="username"
-                type="text"
-                sc-preset="sc-field"
-              />
-              <span
-                id="error-register-username"
-                is="sc-span"
-                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-username"
-                sc-preset="sc-field-error"
-              ></span>
-              <span
-                is="sc-span"
-                sc-preset="sc-field-comment"
-                sc-text="hint_auth_identity"
-                >At least one of the fields email, phone or username is
-                required.</span
-              >
-            </div>
-            <div is="sc-div" sc-preset="sc-fieldset-divider"></div>
-            <div is="sc-div" sc-preset="sc-fieldset-item">
-              <label
-                for="input-register-password"
-                is="sc-label"
-                sc-preset="sc-field-label"
-                sc-text="label_auth_password_required"
-                >Password (required)</label
-              >
-              <input
-                aria-errormessage="error-register-password"
-                autocomplete="new-password"
-                id="input-register-password"
-                is="sc-input"
-                name="auth_password"
-                required
-                type="password"
-                sc-focus="invalid"
-                sc-preset="sc-field"
-              />
-              <span
-                is="sc-span"
-                sc-preset="sc-field-comment"
-                sc-text="hint_auth_password"
-                >If possible use a password manager to generate a password.
-                Enter 8 or more characters with a mix of letters, numbers and
-                symbols.</span
-              >
-              <span
-                id="error-register-password"
-                is="sc-span"
-                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-password"
-                sc-preset="sc-field-error"
-              ></span>
-            </div>
-            <div is="sc-div" sc-preset="sc-fieldset-divider"></div>
-            <div is="sc-div" sc-preset="sc-fieldset-item">
-              <label
-                for="input-register-locale"
-                is="sc-label"
-                sc-preset="sc-field-label"
-                sc-text="label_auth_locale"
-                >Language</label
-              >
+      </div>
+      <div hidden is="sc-div" sc-preset="sc-carousel-item">
+        <div is="sc-div" sc-preset="sc-header">
+          <h1
+            is="sc-h1"
+            sc-preset="sc-header-title"
+            sc-text="header_auth_register"
+          ></h1>
+          <div is="sc-div" sc-preset="sc-button-group">
+            <div is="sc-div" sc-preset="sc-field-container-icon sc-button-icon">
               <select
-                aria-errormessage="error-register-locale"
-                id="input-register-locale"
                 is="sc-select"
-                name="preferences.locale"
+                sc-aria-label="tooltip_app_locale"
+                sc-bg-color="normal"
                 sc-generator="sc-locale"
                 sc-observe-target="sc-element-data-element-get-props?value=locale@[is='sc-app']"
                 sc-onvalue="sc-app-locale@[is='sc-app']"
-                sc-preset="sc-field"
+                sc-preset="sc-field-under-icon"
+                sc-title="tooltip_app_locale"
               ></select>
-              <span
-                id="error-register-locale"
-                is="sc-span"
-                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-locale"
-                sc-preset="sc-field-error"
-              ></span>
+              <span class="sc-text-over-field-container" is="sc-span">
+                <span
+                  is="sc-icon"
+                  sc-code="language"
+                  sc-preset="sc-icon-normal-small"
+                ></span>
+              </span>
             </div>
-            <div is="sc-div" sc-preset="sc-fieldset-item">
-              <label
-                for="input-register-time-zone"
-                is="sc-label"
-                sc-preset="sc-field-label"
-                sc-text="label_auth_time_zone"
-                >Time Zone</label
-              >
-              <select
-                aria-errormessage="error-register-time-zone"
-                id="input-register-time-zone"
-                is="sc-select"
-                name="preferences.time_zone"
-                sc-generator="sc-time-zone"
-                sc-observe-target="sc-element-data-element-get-props?value=timeZone@[is='sc-app']"
-                sc-onvalue="sc-app-time-zone@[is='sc-app']"
-                sc-preset="sc-field"
-              ></select>
+            <button
+              is="sc-button"
+              sc-onclick="sc-app-theme@[is='sc-app']"
+              sc-aria-label="tooltip_app_theme"
+              sc-preset="sc-button-icon-normal"
+              sc-title="tooltip_app_theme"
+              type="button"
+            >
               <span
-                id="error-register-time-zone"
-                is="sc-span"
-                sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-time-zone"
-                sc-preset="sc-field-error"
+                is="sc-icon"
+                sc-code="contrast"
+                sc-preset="sc-icon-normal-small"
               ></span>
-            </div>
-            <div is="sc-div" sc-preset="sc-fieldset-divider"></div>
-            <div is="sc-div" sc-preset="sc-fieldset-item">
-              <object
-                aria-errormessage="error-form-post-register"
-                id="requester-post-register"
-                is="sc-requester"
-                sc-method="POST"
-                sc-onerrordata="sc-form-error@#form-post-register"
-                sc-onresult="sc-data-set@[is='sc-auth']"
-                sc-url="/api/auth/register"
-                sc-wait
-              ></object>
-              <button
-                is="sc-button"
-                type="submit"
-                sc-preset="sc-button-submit"
-                sc-text="button_auth_register"
-              >
-                Register
-              </button>
-            </div>
-            <div is="sc-div" sc-preset="sc-fieldset-item">
-              <span
-                aria-live="polite"
-                id="error-form-post-register"
-                is="sc-span"
-                sc-focus="formatter"
-                sc-observe-target="sc-element-state-requester-state?aria-invalid=true@#requester-post-register"
-                sc-preset="sc-form-error"
-              ></span>
-              <span
-                aria-live="polite"
-                id="result-form-post-register"
-                is="sc-span"
-                sc-focus="formatter"
-                sc-observe-target="sc-element-state-requester-state?aria-invalid=false@#requester-post-register"
-                sc-preset="sc-form-result"
-              ></span>
-            </div>
+            </button>
           </div>
-        </fieldset>
+        </div>
+        <form
+          id="form-post-register"
+          is="sc-form"
+          sc-scrollbar-axis="y"
+          sc-onhide="sc-requester-reset@#requester-post-register"
+          sc-onsubmit="sc-requester-send@#requester-post-register"
+          sc-preset="sc-body sc-form sc-section-group"
+        >
+          <div is="sc-div" sc-preset="sc-section">
+            <button
+              is="sc-button"
+              type="button"
+              sc-observe-state="sc-open"
+              sc-observe-target="sc-element-state-element-has-attrs?hidden=false@#fieldset-register-identity"
+              sc-onclick="sc-attrs-toggle?hidden=false@#fieldset-register-identity"
+              sc-preset="sc-section-title"
+            >
+              <span
+                id="title-register-identity"
+                is="sc-span"
+                sc-text="title_user_identity"
+                sc-width="flex@all"
+              ></span>
+              <span
+                is="sc-icon"
+                class="sc-arrow"
+                sc-code="chevronForward"
+                sc-preset="sc-icon-contrast-small"
+                sc-transition="@all"
+              ></span>
+            </button>
+            <fieldset
+              aria-describedby="hint-register-identity"
+              aria-labelledby="title-register-identity"
+              id="fieldset-register-identity"
+              is="sc-fieldset"
+              sc-preset="sc-section-body sc-fieldset"
+            >
+              <div is="sc-div"></div>
+              <div is="sc-div" sc-preset="sc-fieldset-item">
+                <label
+                  for="input-register-name"
+                  is="sc-label"
+                  sc-preset="sc-field-label"
+                  sc-text="label_user_name"
+                ></label>
+                <input
+                  aria-errormessage="error-register-name"
+                  autocomplete="name"
+                  id="input-register-name"
+                  is="sc-input"
+                  name="name"
+                  type="text"
+                  sc-focus="form invalid"
+                  sc-preset="sc-field"
+                />
+                <span
+                  id="error-register-name"
+                  is="sc-span"
+                  sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-name"
+                  sc-preset="sc-field-error"
+                ></span>
+              </div>
+              <div is="sc-div" sc-preset="sc-fieldset-item">
+                <label
+                  for="input-register-email"
+                  is="sc-label"
+                  sc-preset="sc-field-label"
+                  sc-text="label_user_email"
+                ></label>
+                <input
+                  aria-errormessage="error-register-email"
+                  autocomplete="email"
+                  id="input-register-email"
+                  is="sc-input"
+                  name="email"
+                  type="email"
+                  sc-preset="sc-field"
+                />
+                <span
+                  id="error-register-email"
+                  is="sc-span"
+                  sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-email"
+                  sc-preset="sc-field-error"
+                ></span>
+              </div>
+              <div is="sc-div" sc-preset="sc-fieldset-item">
+                <label
+                  for="input-register-tel-national"
+                  is="sc-label"
+                  sc-preset="sc-field-label"
+                  sc-text="label_user_tel_national"
+                ></label>
+                <div is="sc-div" sc-preset="sc-fieldset-column">
+                  <select
+                    id="input-register-tel-country-code"
+                    is="sc-select"
+                    name="tel_country_code"
+                    sc-generator="sc-tel-country-code"
+                    sc-preset="sc-field"
+                  ></select>
+                  <input
+                    aria-errormessage="error-register-tel-national"
+                    autocomplete="tel-national"
+                    id="input-register-tel-national"
+                    is="sc-input"
+                    name="tel_national"
+                    type="tel"
+                    sc-preset="sc-field"
+                  />
+                </div>
+                <span
+                  id="error-register-tel-national"
+                  is="sc-span"
+                  sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-tel-national sc-element-state-field-state?aria-invalid=true@#input-register-tel-country-code"
+                  sc-preset="sc-field-error"
+                ></span>
+              </div>
+              <div is="sc-div" sc-preset="sc-fieldset-item">
+                <label
+                  for="input-register-username"
+                  is="sc-label"
+                  sc-preset="sc-field-label"
+                  sc-text="label_user_username"
+                ></label>
+                <input
+                  aria-errormessage="error-register-username"
+                  autocomplete="username"
+                  id="input-register-username"
+                  is="sc-input"
+                  name="username"
+                  type="text"
+                  sc-preset="sc-field"
+                />
+                <span
+                  id="error-register-username"
+                  is="sc-span"
+                  sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-username"
+                  sc-preset="sc-field-error"
+                ></span>
+                <span
+                  is="sc-span"
+                  sc-preset="sc-field-comment"
+                  sc-text="hint_user_identity"
+                ></span>
+              </div>
+            </fieldset>
+          </div>
+          <div is="sc-div" sc-preset="sc-fieldset-divider"></div>
+          <div is="sc-div" sc-preset="sc-section">
+            <button
+              is="sc-button"
+              type="button"
+              sc-observe-state="sc-open"
+              sc-observe-target="sc-element-state-element-has-attrs?hidden=false@#fieldset-register-auth"
+              sc-onclick="sc-attrs-toggle?hidden=false@#fieldset-register-auth"
+              sc-preset="sc-section-title"
+            >
+              <span
+                id="title-register-auth"
+                is="sc-span"
+                sc-text="title_user_auth"
+                sc-width="flex@all"
+              ></span>
+              <span
+                is="sc-icon"
+                class="sc-arrow"
+                sc-code="chevronForward"
+                sc-preset="sc-icon-contrast-small"
+                sc-transition="@all"
+              ></span>
+            </button>
+            <fieldset
+              aria-labelledby="title-register-auth"
+              id="fieldset-register-auth"
+              is="sc-fieldset"
+              sc-preset="sc-section-body sc-fieldset"
+            >
+              <div is="sc-div"></div>
+              <div is="sc-div" sc-preset="sc-fieldset-item">
+                <label
+                  for="input-register-password"
+                  is="sc-label"
+                  sc-preset="sc-field-label"
+                  sc-text="label_user_auth_password_required"
+                ></label>
+                <input
+                  aria-errormessage="error-register-password"
+                  autocomplete="new-password"
+                  id="input-register-password"
+                  is="sc-input"
+                  name="auth_password"
+                  required
+                  type="password"
+                  sc-focus="invalid"
+                  sc-preset="sc-field"
+                />
+                <span
+                  is="sc-span"
+                  sc-preset="sc-field-comment"
+                  sc-text="hint_user_auth_password"
+                ></span>
+                <span
+                  id="error-register-password"
+                  is="sc-span"
+                  sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-password"
+                  sc-preset="sc-field-error"
+                ></span>
+              </div>
+            </fieldset>
+          </div>
+          <div is="sc-div" sc-preset="sc-fieldset-divider"></div>
+          <div is="sc-div" sc-preset="sc-section">
+            <button
+              is="sc-button"
+              type="button"
+              sc-observe-state="sc-open"
+              sc-observe-target="sc-element-state-element-has-attrs?hidden=false@#fieldset-register-preferences"
+              sc-onclick="sc-attrs-toggle?hidden=false@#fieldset-register-preferences"
+              sc-preset="sc-section-title"
+            >
+              <span
+                id="title-register-preferences"
+                is="sc-span"
+                sc-text="title_user_preferences"
+                sc-width="flex@all"
+              ></span>
+              <span
+                is="sc-icon"
+                class="sc-arrow"
+                sc-code="chevronForward"
+                sc-preset="sc-icon-contrast-small"
+                sc-transition="@all"
+              ></span>
+            </button>
+            <fieldset
+              aria-labelledby="title-register-preferences"
+              id="fieldset-register-preferences"
+              is="sc-fieldset"
+              sc-preset="sc-section-body sc-fieldset"
+            >
+              <div is="sc-div"></div>
+              <div is="sc-div" sc-preset="sc-fieldset-item">
+                <label
+                  for="input-register-locale"
+                  is="sc-label"
+                  sc-preset="sc-field-label"
+                  sc-text="label_user_locale"
+                ></label>
+                <select
+                  aria-errormessage="error-register-locale"
+                  id="input-register-locale"
+                  is="sc-select"
+                  name="preferences.locale"
+                  sc-generator="sc-locale"
+                  sc-observe-target="sc-element-data-element-get-props?value=locale@[is='sc-app']"
+                  sc-onvalue="sc-app-locale@[is='sc-app']"
+                  sc-preset="sc-field"
+                ></select>
+                <span
+                  id="error-register-locale"
+                  is="sc-span"
+                  sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-locale"
+                  sc-preset="sc-field-error"
+                ></span>
+              </div>
+              <div is="sc-div" sc-preset="sc-fieldset-item">
+                <label
+                  for="input-register-time-zone"
+                  is="sc-label"
+                  sc-preset="sc-field-label"
+                  sc-text="label_user_time_zone"
+                ></label>
+                <select
+                  aria-errormessage="error-register-time-zone"
+                  id="input-register-time-zone"
+                  is="sc-select"
+                  name="preferences.time_zone"
+                  sc-generator="sc-time-zone"
+                  sc-observe-target="sc-element-data-element-get-props?value=timeZone@[is='sc-app']"
+                  sc-onvalue="sc-app-time-zone@[is='sc-app']"
+                  sc-preset="sc-field"
+                ></select>
+                <span
+                  id="error-register-time-zone"
+                  is="sc-span"
+                  sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-time-zone"
+                  sc-preset="sc-field-error"
+                ></span>
+              </div>
+            </fieldset>
+          </div>
+          <div is="sc-div" sc-preset="sc-fieldset-divider"></div>
+          <div is="sc-div" sc-preset="sc-section">
+            <fieldset is="sc-fieldset" sc-preset="sc-fieldset">
+              <div is="sc-div" sc-preset="sc-fieldset-column">
+                <object
+                  aria-errormessage="error-form-post-register"
+                  id="requester-post-register"
+                  is="sc-requester"
+                  sc-method="POST"
+                  sc-onerrordata="sc-form-error@#form-post-register"
+                  sc-onresult="sc-data-set@[is='sc-auth']"
+                  sc-url="/api/auth/register"
+                  sc-wait
+                ></object>
+                <button
+                  is="sc-button"
+                  type="submit"
+                  sc-preset="sc-button-submit"
+                  sc-text="button_auth_register"
+                ></button>
+                <span
+                  aria-live="polite"
+                  id="error-form-post-register"
+                  is="sc-span"
+                  sc-focus="formatter"
+                  sc-observe-target="sc-element-state-requester-state?aria-invalid=true@#requester-post-register"
+                  sc-preset="sc-form-error"
+                ></span>
+                <span
+                  aria-live="polite"
+                  id="result-form-post-register"
+                  is="sc-span"
+                  sc-focus="formatter"
+                  sc-observe-target="sc-element-state-requester-state?aria-invalid=false@#requester-post-register"
+                  sc-preset="sc-form-result"
+                ></span>
+              </div>
+            </fieldset>
+          </div>
+        </form>
         <ul is="sc-ul" sc-align-x="center" sc-preset="sc-footer">
           <li>
             <button
@@ -501,12 +554,10 @@
               sc-onclick="sc-carousel-go?pointer=0@#carousel-auth"
               sc-preset="sc-footer-button"
               sc-text="button_auth_login"
-            >
-              Log in
-            </button>
+            ></button>
           </li>
         </ul>
-      </form>
+      </div>
     </div>
   </div>
 </div>

@@ -12,6 +12,12 @@ import { ScolaDrawerElement } from './drawer'
 import { ScolaEventSourceElement } from './event-source'
 import { ScolaFieldSetElement } from './fieldset'
 import { ScolaFormElement } from './form'
+import { ScolaH1Element } from './h1'
+import { ScolaH2Element } from './h2'
+import { ScolaH3Element } from './h3'
+import { ScolaH4Element } from './h4'
+import { ScolaH5Element } from './h5'
+import { ScolaH6Element } from './h6'
 import { ScolaIconElement } from './icon'
 import { ScolaIdbElement } from './idb'
 import { ScolaImageElement } from './img'
@@ -51,6 +57,12 @@ export function defineElements (): void {
   ScolaEventSourceElement.define()
   ScolaFieldSetElement.define()
   ScolaFormElement.define()
+  ScolaH1Element.define()
+  ScolaH2Element.define()
+  ScolaH3Element.define()
+  ScolaH4Element.define()
+  ScolaH5Element.define()
+  ScolaH6Element.define()
   ScolaIconElement.define()
   ScolaIdbElement.define()
   ScolaImageElement.define()

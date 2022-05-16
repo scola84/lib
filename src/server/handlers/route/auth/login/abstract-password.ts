@@ -1,6 +1,6 @@
 import { AuthHotp, AuthPassword } from '../../../../helpers'
+import type { Flow, User } from '../../../../../common'
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
-import type { Struct, User } from '../../../../../common'
 import { createUser, toString } from '../../../../../common'
 import { AuthLoginHandler } from './abstract-login'
 import type { ServerResponse } from 'http'
@@ -23,7 +23,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     this.tokenExpires = options?.tokenExpires ?? 5 * 60 * 1000
   }
 
-  protected async login (data: AuthLoginPasswordData, response: ServerResponse, user: User): Promise<Struct | undefined> {
+  protected async login (data: AuthLoginPasswordData, response: ServerResponse, user: User): Promise<Flow | undefined> {
     const password = AuthPassword.parse(user.auth_password ?? '')
 
     if (!(await password.validate(data.body.auth_password))) {
@@ -62,7 +62,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     }
   }
 
-  protected async requestHotp (response: ServerResponse, user: User): Promise<Struct> {
+  protected async requestHotp (response: ServerResponse, user: User): Promise<Flow> {
     if (user.auth_hotp_email !== null) {
       return this.requestHotpEmail(response, user)
     } else if (user.auth_hotp_tel_national !== null) {
@@ -73,7 +73,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     throw new Error('HOTP is undefined')
   }
 
-  protected async requestHotpEmail (response: ServerResponse, user: User): Promise<Struct> {
+  protected async requestHotpEmail (response: ServerResponse, user: User): Promise<Flow> {
     const hotp = new AuthHotp()
     const token = this.auth.createUserToken(user, this.tokenExpires)
 
@@ -111,7 +111,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     }
   }
 
-  protected async requestHotpTel (response: ServerResponse, user: User): Promise<Struct> {
+  protected async requestHotpTel (response: ServerResponse, user: User): Promise<Flow> {
     const hotp = new AuthHotp()
     const token = this.auth.createUserToken(user, this.tokenExpires)
 
@@ -148,7 +148,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     }
   }
 
-  protected async requestTotp (response: ServerResponse, user: User): Promise<Struct> {
+  protected async requestTotp (response: ServerResponse, user: User): Promise<Flow> {
     const token = this.auth.createUserToken(user, this.tokenExpires)
 
     await this.setTmpUser(createUser({

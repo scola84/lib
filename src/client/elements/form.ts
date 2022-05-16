@@ -211,10 +211,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     const data = {}
 
     for (const element of this.fieldElements) {
-      if (!(
-        element.disabled ||
-        element.name === ''
-      )) {
+      if (element.name !== '') {
         setPush(data, element.qualifiedName, element.valueAsCast)
       }
     }

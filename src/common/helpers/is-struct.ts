@@ -35,7 +35,7 @@ export class Struct<Value = unknown> implements Record<string, Value> {
           return struct
         }
 
-        return setPush(struct, key, cast(decodeURIComponent(value)))
+        return setPush(struct, key, cast(decodeURIComponent(value.replace(/\+/gu, ' '))))
       }, Struct.create())
       /* eslint-enable @typescript-eslint/indent */
   }

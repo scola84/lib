@@ -1,4 +1,4 @@
-import type { Struct, User } from '../../../../../common'
+import type { Result, User } from '../../../../../common'
 import { AuthHandler } from '../auth'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
@@ -9,7 +9,7 @@ export class AuthUnregisterPostIdentityConfirmHandler extends AuthHandler {
 
   public method = 'POST'
 
-  public async handle (data: RouteData, response: ServerResponse): Promise<Struct> {
+  public async handle (data: RouteData, response: ServerResponse): Promise<Result> {
     const tmpUser = await this.getTmpUser(data, response)
 
     await this.deleteUser(tmpUser)

@@ -1,8 +1,8 @@
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
 import { AuthCodes } from '../../../../helpers'
 import { AuthRegisterHandler } from './abstract-register'
+import type { Result } from '../../../../../common'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
 import { createUser } from '../../../../../common'
 
 export interface AuthRegisterPostCodesRequestHandlerOptions extends Partial<RouteHandlerOptions> {
@@ -25,7 +25,7 @@ export class AuthRegisterPostCodesRequestHandler extends AuthRegisterHandler {
     this.length = options?.length ?? [5]
   }
 
-  public async handle (data: RouteData, response: ServerResponse): Promise<Struct> {
+  public async handle (data: RouteData, response: ServerResponse): Promise<Result> {
     if (data.user?.token === undefined) {
       response.statusCode = 401
       throw new Error('Token is undefined')

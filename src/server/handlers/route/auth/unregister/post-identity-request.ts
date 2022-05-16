@@ -1,5 +1,5 @@
+import type { Result, User, UserToken } from '../../../../../common'
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
-import type { Struct, User, UserToken } from '../../../../../common'
 import { createUser, toString } from '../../../../../common'
 import { AuthHandler } from '../auth'
 import type { ServerResponse } from 'http'
@@ -19,7 +19,7 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
     this.tokenExpires = options?.tokenExpires ?? 5 * 60 * 1000
   }
 
-  public async handle (data: RouteData, response: ServerResponse): Promise<Struct | undefined> {
+  public async handle (data: RouteData, response: ServerResponse): Promise<Result | undefined> {
     if (data.user === undefined) {
       response.statusCode = 401
       throw new Error('User is undefined')
@@ -42,7 +42,7 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
     return undefined
   }
 
-  protected async requestEmail (user: User, token: UserToken): Promise<Struct> {
+  protected async requestEmail (user: User, token: UserToken): Promise<Result> {
     this.smtp
       ?.send(await this.smtp.create('auth_unregister_identity', {
         date: new Date(),
@@ -71,7 +71,7 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
     }
   }
 
-  protected async requestTel (user: User, token: UserToken): Promise<Struct> {
+  protected async requestTel (user: User, token: UserToken): Promise<Result> {
     this.sms
       ?.send(await this.sms.create('auth_unregister_identity', {
         date: new Date(),

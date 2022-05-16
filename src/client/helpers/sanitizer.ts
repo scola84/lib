@@ -8,16 +8,16 @@ export class Sanitizer {
   public static prefix = /^sc-/u
 
   public static checkAttribute (tag: string, name: string, value: string): boolean {
-    return (
-      (
-        isValidAttribute(tag, name, value)
-      ) || (
-        name === 'is' &&
-        Sanitizer.prefix.test(value)
-      ) || (
-        Sanitizer.prefix.test(name)
-      )
-    )
+    return ((
+      isValidAttribute(tag, name, value)
+    ) || (
+      name === 'name'
+    ) || (
+      name === 'is' &&
+      Sanitizer.prefix.test(value)
+    ) || (
+      Sanitizer.prefix.test(name)
+    ))
   }
 
   public static sanitizeHtml (html: string): string {

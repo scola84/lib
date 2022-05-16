@@ -1,7 +1,7 @@
 import { AuthHandler } from '../auth'
+import type { Result } from '../../../../../common'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
 import { createUser } from '../../../../../common'
 
 export class AuthUnregisterPostTotpRequestHandler extends AuthHandler {
@@ -9,7 +9,7 @@ export class AuthUnregisterPostTotpRequestHandler extends AuthHandler {
 
   public method = 'POST'
 
-  public async handle (data: RouteData, response: ServerResponse): Promise<Struct> {
+  public async handle (data: RouteData, response: ServerResponse): Promise<Result> {
     if (data.user?.token === undefined) {
       response.statusCode = 401
       throw new Error('Token is undefined')

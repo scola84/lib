@@ -1,8 +1,8 @@
 import { AuthPassword } from '../../../../helpers'
 import { AuthRegisterPasswordHandler } from './abstract-password'
+import type { Result } from '../../../../../common'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
 
 interface AuthRegisterPostPasswordData extends RouteData {
   body: {
@@ -26,7 +26,7 @@ export class AuthRegisterPostPasswordHandler extends AuthRegisterPasswordHandler
     }
   }
 
-  public async handle (data: AuthRegisterPostPasswordData, response: ServerResponse): Promise<Struct> {
+  public async handle (data: AuthRegisterPostPasswordData, response: ServerResponse): Promise<Result> {
     const tmpUser = await this.getTmpUser(data, response)
     const user = await this.selectUserByIdentities(tmpUser)
 

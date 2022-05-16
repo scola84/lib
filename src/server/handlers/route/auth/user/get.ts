@@ -9,8 +9,13 @@ export class AuthUserGetHandler extends AuthHandler {
   public async handle (data: RouteData): Promise<User> {
     return this.database.selectOne<User, User>(sql`
       SELECT
+        $[email],
+        $[name],
         $[preferences],
-        $[user_id]
+        $[tel_country_code],
+        $[tel_national],
+        $[user_id],
+        $[username]
       FROM $[user]
       WHERE $[user_id] = $(user_id)
     `, {

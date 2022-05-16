@@ -1,5 +1,5 @@
+import type { Result, Struct, User, UserToken } from '../../../../../common'
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
-import type { Struct, User, UserToken } from '../../../../../common'
 import { createUser, toString } from '../../../../../common'
 import { AuthRegisterHandler } from './abstract-register'
 import type { ServerResponse } from 'http'
@@ -72,7 +72,7 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
     this.tokenExpires = options?.tokenExpires ?? 5 * 60 * 1000
   }
 
-  public async handle (data: AuthRegisterPostIdentityData, response: ServerResponse): Promise<Struct | undefined> {
+  public async handle (data: AuthRegisterPostIdentityData, response: ServerResponse): Promise<Result | undefined> {
     const tmpUser = createUser({
       email: data.body.email,
       name: data.body.name,
@@ -102,7 +102,7 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
     return undefined
   }
 
-  protected async requestEmail (user: User, token: UserToken): Promise<Struct> {
+  protected async requestEmail (user: User, token: UserToken): Promise<Result> {
     this.smtp
       ?.send(await this.smtp.create('auth_register_identity', {
         date: new Date(),
@@ -131,7 +131,7 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
     }
   }
 
-  protected async requestTel (user: User, token: UserToken): Promise<Struct> {
+  protected async requestTel (user: User, token: UserToken): Promise<Result> {
     this.sms
       ?.send(await this.sms.create('auth_register_identity', {
         date: new Date(),

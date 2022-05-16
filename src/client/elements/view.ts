@@ -279,7 +279,7 @@ export class ScolaViewElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
-  public load (view: ScolaElementView): void {
+  public load (view?: ScolaElementView): void {
     this.defaultView = view
     this.loadState()
   }

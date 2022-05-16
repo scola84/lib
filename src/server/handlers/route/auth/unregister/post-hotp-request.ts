@@ -1,9 +1,9 @@
 import { createUser, toString } from '../../../../../common'
 import { AuthHandler } from '../auth'
 import { AuthHotp } from '../../../../helpers'
+import type { Result } from '../../../../../common'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
 
 interface AuthUnregisterPostHotpRequestData extends RouteData {
   body: {
@@ -32,7 +32,7 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
     }
   }
 
-  public async handle (data: AuthUnregisterPostHotpRequestData, response: ServerResponse): Promise<Struct> {
+  public async handle (data: AuthUnregisterPostHotpRequestData, response: ServerResponse): Promise<Result> {
     if (data.body.email === true) {
       return this.requestHotpEmail(data, response)
     } else if (data.body.tel === true) {
@@ -43,7 +43,7 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
     throw new Error('HOTP is undefined')
   }
 
-  protected async requestHotpEmail (data: AuthUnregisterPostHotpRequestData, response: ServerResponse): Promise<Struct> {
+  protected async requestHotpEmail (data: AuthUnregisterPostHotpRequestData, response: ServerResponse): Promise<Result> {
     if (data.user?.token === undefined) {
       response.statusCode = 401
       throw new Error('Token is undefined')
@@ -93,7 +93,7 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
     }
   }
 
-  protected async requestHotpTel (data: AuthUnregisterPostHotpRequestData, response: ServerResponse): Promise<Struct> {
+  protected async requestHotpTel (data: AuthUnregisterPostHotpRequestData, response: ServerResponse): Promise<Result> {
     if (data.user?.token === undefined) {
       response.statusCode = 401
       throw new Error('Token is undefined')

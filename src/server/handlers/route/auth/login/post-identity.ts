@@ -1,7 +1,7 @@
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
 import { AuthLoginHandler } from './abstract-login'
+import type { Result } from '../../../../../common'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
 import { createUser } from '../../../../../common'
 
 interface AuthLoginPostIdentityData extends RouteData {
@@ -37,7 +37,7 @@ export class AuthLoginPostIdentityHandler extends AuthLoginHandler {
     this.tokenExpires = options?.tokenExpires ?? 5 * 60 * 1000
   }
 
-  public async handle (data: AuthLoginPostIdentityData, response: ServerResponse): Promise<Struct> {
+  public async handle (data: AuthLoginPostIdentityData, response: ServerResponse): Promise<Result> {
     const user = await this.selectUserByIdentity(data.body.identity)
 
     if (user === undefined) {

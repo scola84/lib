@@ -112,11 +112,6 @@ export class SchemaValidator {
     const validators = []
 
     validators.push(SchemaValidator.validators.required?.(name, field, this))
-
-    if (SchemaValidator.validators[field.type] === undefined) {
-      throw new Error(`Validator "${field.type}" is undefined`)
-    }
-
     validators.push(await SchemaValidator.validators[field.type]?.(name, field, this))
 
     if (field.custom !== undefined) {

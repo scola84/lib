@@ -4,7 +4,7 @@ import { cast, isArray, isPrimitive, isStruct } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 
-type Generator = () => Array<[number | string, string, boolean?]> | Promise<Array<[string, string, boolean?]>>
+type Generator = () => Array<[number | string, string]> | Promise<Array<[number | string, string]>>
 
 export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldElement {
   public static generators: Partial<Struct<Generator>> = {}
@@ -221,13 +221,8 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
       .then((options) => {
         this.innerHTML = ''
 
-        options.forEach(([value, text, selected = false]) => {
-          const option = document.createElement('option')
-
-          option.value = value.toString()
-          option.textContent = text
-          option.toggleAttribute('selected', selected)
-          this.appendChild(option)
+        options.forEach(([value, text]) => {
+          this.innerHTML += `<option is="sc-option" value="${value}" sc-text="${text}"></option>`
         })
       })
       .catch(() => {})

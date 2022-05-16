@@ -1,7 +1,7 @@
 import { AuthLoginPasswordHandler } from './abstract-password'
+import type { Flow } from '../../../../../common'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
 
 interface AuthLoginPostPasswordData extends RouteData {
   body: {
@@ -25,7 +25,7 @@ export class AuthLoginPostPasswordHandler extends AuthLoginPasswordHandler {
     }
   }
 
-  public async handle (data: AuthLoginPostPasswordData, response: ServerResponse): Promise<Struct | undefined> {
+  public async handle (data: AuthLoginPostPasswordData, response: ServerResponse): Promise<Flow | undefined> {
     const user = await this.selectUser(data, response)
     return this.login(data, response, user)
   }

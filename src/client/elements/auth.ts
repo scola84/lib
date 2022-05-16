@@ -186,14 +186,16 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected loadViews (): void {
-    Object
-      .entries(this.user?.views ?? {})
-      .forEach(([id, name]) => {
-        document
-          .querySelector<ScolaViewElement>(`#${id}[is="sc-view"]`)
-          ?.load({
-            name: String(name)
+    document
+      .querySelectorAll<ScolaViewElement>('[is="sc-view"]')
+      .forEach((element) => {
+        if (typeof this.user?.views?.[element.id] === 'string') {
+          element.load({
+            name: String(this.user.views[element.id])
           })
+        } else {
+          element.load()
+        }
       })
   }
 

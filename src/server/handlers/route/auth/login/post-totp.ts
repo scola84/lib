@@ -1,8 +1,8 @@
 import { AuthLoginHandler } from './abstract-login'
 import { AuthTotp } from '../../../../helpers'
+import type { Result } from '../../../../../common'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
 import { toString } from '../../../../../common'
 
 interface AuthLoginPostTotpData extends RouteData {
@@ -28,7 +28,7 @@ export class AuthLoginPostTotpHandler extends AuthLoginHandler {
     }
   }
 
-  public async handle (data: AuthLoginPostTotpData, response: ServerResponse): Promise<Struct> {
+  public async handle (data: AuthLoginPostTotpData, response: ServerResponse): Promise<Result> {
     const user = await this.selectUser(data, response)
     const totp = AuthTotp.parse(user.auth_totp ?? '')
 

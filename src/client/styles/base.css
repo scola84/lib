@@ -58,9 +58,7 @@ body {
 [is="sc-reloader"],
 [is="sc-requester"]:empty,
 [is="sc-worker"] {
-  display: block;
-  height: 0;
-  width: 0;
+  display: none;
 }
 
 [is="sc-icon"] {
@@ -318,20 +316,31 @@ body {
   padding: 3px;
 }
 
+[sc-checkbox-color="contrast"],
+[sc-radio-color="contrast"] {
+  border: 2px solid var(--gc2);
+}
+
 [sc-checkbox-color="normal"],
 [sc-radio-color="normal"] {
-  border: 2px solid var(--fc2);
+  border: 2px solid var(--gc1);
 }
 
 [sc-checkbox-color="theme"],
 [sc-radio-color="theme"] {
-  border: 2px solid var(--fc2);
+  border: 2px solid var(--gc1);
+}
+
+[sc-active] [sc-checkbox-color="contrast"],
+[sc-checkbox-color="contrast"]:checked {
+  background-color: var(--gc2);
+  border: 2px solid var(--gc2);
 }
 
 [sc-active] [sc-checkbox-color="normal"],
 [sc-checkbox-color="normal"]:checked {
-  background-color: var(--fc1);
-  border: 2px solid var(--fc1);
+  background-color: var(--gc1);
+  border: 2px solid var(--gc1);
 }
 
 [sc-active] [sc-checkbox-color="theme"],
@@ -340,9 +349,14 @@ body {
   border: 2px solid var(--tc1);
 }
 
+[sc-active] [sc-radio-color="contrast"],
+[sc-radio-color="contrast"]:checked {
+  border: 2px solid var(--gc2);
+}
+
 [sc-active] [sc-radio-color="normal"],
 [sc-radio-color="normal"]:checked {
-  border: 2px solid var(--fc1);
+  border: 2px solid var(--gc1);
 }
 
 [sc-active] [sc-radio-color="theme"],
@@ -362,9 +376,14 @@ body {
   clip-path: polygon(6% 50%, 0% 56%, 31% 88%, 100% 19%, 94% 13%, 31% 75%);
 }
 
+[sc-active] [sc-checkbox-color="contrast"]::before,
+[sc-checkbox-color="contrast"]:checked::before {
+  background-color: var(--fc1);
+}
+
 [sc-active] [sc-checkbox-color="normal"]::before,
 [sc-checkbox-color="normal"]:checked::before {
-  background-color: var(--gc1);
+  background-color: var(--fc1);
 }
 
 [sc-active] [sc-checkbox-color="theme"]::before,
@@ -372,9 +391,14 @@ body {
   background-color: #fff;
 }
 
+[sc-active] [sc-radio-color="contrast"]::before,
+[sc-radio-color="contrast"]:checked::before {
+  background-color: var(--fc2);
+}
+
 [sc-active] [sc-radio-color="normal"]::before,
 [sc-radio-color="normal"]:checked::before {
-  background-color: var(--fc1);
+  background-color: var(--fc2);
 }
 
 [sc-active] [sc-radio-color="theme"]::before,
@@ -577,10 +601,6 @@ body {
   scrollbar-gutter: stable;
 }
 
-[hidden] [sc-scrollbar] {
-  overflow: hidden;
-}
-
 [sc-scrollbar-color="contrast"]:hover {
   scrollbar-color: var(--gc3) transparent;
 }
@@ -753,20 +773,6 @@ textarea.sc-code:focus-visible {
   display: none;
 }
 
-.sc-overlay-field {
-  align-items: inherit;
-  background-color: inherit;
-  border-radius: inherit;
-  bottom: 2px;
-  display: inherit;
-  justify-content: inherit;
-  left: 2px;
-  pointer-events: none;
-  position: absolute;
-  right: 2px;
-  top: 2px;
-}
-
 .sc-recorder video {
   width: 100%;
 }
@@ -775,14 +781,15 @@ textarea.sc-code:focus-visible {
   transform: scaleX(-1);
 }
 
-.sc-recorder[sc-type="code"][sc-started] + .sc-overlay-code {
+.sc-recorder[sc-type="code"][sc-started] + .sc-recorder-code-window {
   border-color: rgba(0, 0, 0, 0.5);
   border-style: solid;
-  border-width: var(--sc-overlay-code-y) var(--sc-overlay-code-x);
+  border-width: var(--sc-recorder-code-window-y)
+    var(--sc-recorder-code-window-x);
 }
 
 .sc-recorder[sc-type="code"][sc-started][sc-has-code]
-  + .sc-overlay-code::after {
+  + .sc-recorder-code-window::after {
   display: block;
   content: "";
   height: 100%;
@@ -863,4 +870,19 @@ textarea.sc-code:focus-visible {
 
 .sc-table[sc-tree] [sc-tree-inset] {
   width: calc(var(--sc-tree-inset, 1rem) * (var(--sc-tree-level)));
+}
+
+.sc-text-over-field-container {
+  align-items: inherit;
+  background-color: inherit;
+  border-radius: inherit;
+  bottom: 2px;
+  cursor: pointer;
+  display: inherit;
+  justify-content: inherit;
+  left: 2px;
+  pointer-events: none;
+  position: absolute;
+  right: 2px;
+  top: 2px;
 }

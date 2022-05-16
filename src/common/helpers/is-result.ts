@@ -1,8 +1,8 @@
+import type { Struct } from './is-struct'
 import { isObject } from './is-object'
 
-export interface Result {
+export interface Result extends Struct {
   code: string
-
   data?: unknown
 }
 

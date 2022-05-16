@@ -1,7 +1,7 @@
 import { AuthLoginPasswordHandler } from './abstract-password'
+import type { Flow } from '../../../../../common'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
 
 interface AuthLoginPostData extends RouteData {
   body: {
@@ -30,7 +30,7 @@ export class AuthLoginPostHandler extends AuthLoginPasswordHandler {
     }
   }
 
-  public async handle (data: AuthLoginPostData, response: ServerResponse): Promise<Struct | undefined> {
+  public async handle (data: AuthLoginPostData, response: ServerResponse): Promise<Flow | undefined> {
     const user = await this.selectUserByIdentity(data.body.identity)
 
     if (user === undefined) {

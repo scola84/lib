@@ -1,8 +1,8 @@
 import { AuthCodes } from '../../../../helpers'
 import { AuthLoginHandler } from './abstract-login'
+import type { Result } from '../../../../../common'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
 import { toString } from '../../../../../common'
 
 interface AuthLoginPostCodeData extends RouteData {
@@ -28,7 +28,7 @@ export class AuthLoginPostCodeHandler extends AuthLoginHandler {
     }
   }
 
-  public async handle (data: AuthLoginPostCodeData, response: ServerResponse): Promise<Struct> {
+  public async handle (data: AuthLoginPostCodeData, response: ServerResponse): Promise<Result> {
     const user = await this.selectUser(data, response)
     const codes = AuthCodes.parse(user.auth_codes ?? '')
 

@@ -1,4 +1,5 @@
 import authFlowLogin from './auth/flow/login.html'
+import authFlowUpdate from './auth/flow/update.html'
 import authFormGroup from './auth/form/group.html'
 import authFormRole from './auth/form/role.html'
 import authFormUser from './auth/form/user.html'
@@ -16,6 +17,7 @@ import viewFormViewUser from './view/form/view-user.html'
 
 export const snippets = {
   'sc-auth-flow-login': authFlowLogin,
+  'sc-auth-flow-update': authFlowUpdate,
   'sc-auth-form-group': authFormGroup,
   'sc-auth-form-role': authFormRole,
   'sc-auth-form-user': authFormUser,

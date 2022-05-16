@@ -1,8 +1,8 @@
 import { AuthHandler } from '../auth'
 import { AuthTotp } from '../../../../helpers'
+import type { Result } from '../../../../../common'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
-import type { Struct } from '../../../../../common'
 
 interface AuthUnregisterPostTotpConfirmData extends RouteData {
   body: {
@@ -29,7 +29,7 @@ export class AuthUnregisterPostTotpConfirmHandler extends AuthHandler {
     }
   }
 
-  public async handle (data: AuthUnregisterPostTotpConfirmData, response: ServerResponse): Promise<Struct> {
+  public async handle (data: AuthUnregisterPostTotpConfirmData, response: ServerResponse): Promise<Result> {
     if (data.user === undefined) {
       response.statusCode = 401
       throw new Error('User is undefined')

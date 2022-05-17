@@ -23,11 +23,11 @@ export class MessagebirdSms implements Sms {
     this.originator = options.originator ?? ''
   }
 
-  public async create (code: string, data: unknown, user: Pick<User, 'preferences' | 'tel'>): Promise<SmsSendOptions> {
+  public async create (code: string, data: unknown, user: Pick<User, 'i18n_locale' | 'identity_tel'>): Promise<SmsSendOptions> {
     return Promise.resolve({
       from: this.originator,
-      text: this.i18n.formatText(`sms_text_${code}`, data, user.preferences.locale ?? undefined),
-      to: user.tel
+      text: this.i18n.formatText(`sms_text_${code}`, data, user.i18n_locale ?? undefined),
+      to: user.identity_tel
     })
   }
 

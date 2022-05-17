@@ -29,35 +29,35 @@ export abstract class AuthLoginHandler extends AuthHandler {
       SELECT $[user].*
       FROM $[user]
       WHERE
-        $[email] = $(email) OR
-        $[tel] = $(tel) OR
-        $[username] = $(username)
+        $[identity_email] = $(identity_email) OR
+        $[identity_tel] = $(identity_tel) OR
+        $[identity_username] = $(identity_username)
     `, {
-      email: identity,
-      tel: identity,
-      username: identity
+      identity_email: identity,
+      identity_tel: identity,
+      identity_username: identity
     })
   }
 
   protected async sendMessage (user: User): Promise<void> {
     if (
-      user.preferences.auth_login_email === true &&
-      user.email !== null
+      user.email_auth_login === true &&
+      user.identity_email !== null
     ) {
       await this.sendMessageEmail(user)
     }
   }
 
   protected async sendMessageEmail (user: User): Promise<void> {
-    await this.smtp?.send(await this.smtp.create('auth_login', {
+    await this.smtp?.send(await this.smtp.create('login', {
       date: new Date(),
-      date_time_zone: user.preferences.time_zone,
+      date_time_zone: user.i18n_time_zone,
       url: `${this.origin}?next=auth_reset`,
       user: user
     }, {
-      email: user.email,
-      name: user.name,
-      preferences: user.preferences
+      i18n_locale: user.i18n_locale,
+      identity_email: user.identity_email,
+      identity_name: user.identity_name
     }))
   }
 }

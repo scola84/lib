@@ -15,7 +15,7 @@ export class AuthUnregisterPostIdentityConfirmHandler extends AuthHandler {
     await this.deleteUser(tmpUser)
     await this.auth.logout(response)
     return {
-      code: 'ok_auth_unregister_identity_confirm'
+      code: 'ok_unregister_identity_confirm'
     }
   }
 

@@ -59,17 +59,20 @@ CREATE TABLE `user` (
   `auth_webauthn_confirmed` BOOLEAN,
   `date_created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_updated` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `email` VARCHAR(255),
-  `name` VARCHAR(255),
-  `preferences` JSON NOT NULL DEFAULT (json_object()),
+  `email_auth_login` BOOLEAN,
+  `email_auth_update` BOOLEAN,
+  `i18n_locale` VARCHAR(255),
+  `i18n_time_zone` VARCHAR(255),
+  `identity_email` VARCHAR(255),
+  `identity_name` VARCHAR(255),
+  `identity_tel_country_code` VARCHAR(255),
+  `identity_tel_national` VARCHAR(255),
+  `identity_username` VARCHAR(255),
   `state_active` BOOLEAN,
   `state_compromised` BOOLEAN,
-  `tel_country_code` VARCHAR(255),
-  `tel_national` VARCHAR(255),
   `user_id` INTEGER NOT NULL AUTO_INCREMENT,
-  `username` VARCHAR(255),
   `auth_hotp_tel` VARCHAR(510) GENERATED ALWAYS AS (CONCAT(COALESCE(`auth_hotp_tel_country_code`, ''),COALESCE(`auth_hotp_tel_national`, ''))),
-  `tel` VARCHAR(510) GENERATED ALWAYS AS (CONCAT(COALESCE(`tel_country_code`, ''),COALESCE(`tel_national`, ''))),
+  `identity_tel` VARCHAR(510) GENERATED ALWAYS AS (CONCAT(COALESCE(`identity_tel_country_code`, ''),COALESCE(`identity_tel_national`, ''))),
   CONSTRAINT `pkey_user` PRIMARY KEY (`user_id`)
 );
 CREATE INDEX `index_user_group_role_group` ON `user_group_role` (`group_id`);
@@ -83,9 +86,9 @@ CREATE INDEX `index_user_token_group` ON `user_token` (`group_id`);
 CREATE UNIQUE INDEX `index_user_token_hash` ON `user_token` (`hash`);
 CREATE INDEX `index_user_token_role` ON `user_token` (`role_id`);
 CREATE INDEX `index_user_token_user` ON `user_token` (`user_id`);
-CREATE UNIQUE INDEX `index_user_email` ON `user` (`email`);
-CREATE UNIQUE INDEX `index_user_username` ON `user` (`username`);
-CREATE UNIQUE INDEX `index_user_tel` ON `user` (`tel`);
+CREATE UNIQUE INDEX `index_user_identity_email` ON `user` (`identity_email`);
+CREATE UNIQUE INDEX `index_user_identity_username` ON `user` (`identity_username`);
+CREATE UNIQUE INDEX `index_user_identity_tel` ON `user` (`identity_tel`);
 ALTER TABLE `user_group_role` ADD CONSTRAINT `fkey_user_group_role_group_id` FOREIGN KEY (`group_id`) REFERENCES `group` (`group_id`) ON DELETE CASCADE;
 ALTER TABLE `user_group_role` ADD CONSTRAINT `fkey_user_group_role_role_id` FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`) ON DELETE CASCADE;
 ALTER TABLE `user_group_role` ADD CONSTRAINT `fkey_user_group_role_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE;

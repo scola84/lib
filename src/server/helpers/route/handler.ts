@@ -199,17 +199,8 @@ export abstract class RouteHandler {
     }, 'Starting route handler')
 
     this.validator = new SchemaValidator(this.schema as Schema)
-
-    this.validator
-      .compile()
-      .then(() => {
-        this.router.register(this.method, this.url, this)
-      })
-      .catch((error: unknown) => {
-        this.logger?.error({
-          context: 'start'
-        }, toString(error))
-      })
+    this.validator.compile()
+    this.router.register(this.method, this.url, this)
   }
 
   public stop (): Promise<void> | void {}

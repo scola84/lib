@@ -1,4 +1,4 @@
-import type { Result, Struct, User, UserToken } from '../../../../../common'
+import type { Result, User, UserToken } from '../../../../../common'
 import type { RouteData, RouteHandlerOptions } from '../../../../helpers'
 import { createUser, toString } from '../../../../../common'
 import { AuthRegisterHandler } from './abstract-register'
@@ -6,12 +6,13 @@ import type { ServerResponse } from 'http'
 
 interface AuthRegisterPostIdentityData extends RouteData {
   body: {
-    email?: string
-    name?: string
-    preferences: Struct
-    tel_country_code?: string
-    tel_national?: string
-    username?: string
+    i18n_locale?: string
+    i18n_time_zone?: string
+    identity_email?: string
+    identity_name?: string
+    identity_tel_country_code?: string
+    identity_tel_national?: string
+    identity_username?: string
   }
 }
 
@@ -27,37 +28,31 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
       custom: 'identity',
       required: true,
       schema: {
-        email: {
+        i18n_locale: {
+          generator: 'sc-locale',
+          required: true,
+          type: 'select'
+        },
+        i18n_time_zone: {
+          generator: 'sc-time-zone',
+          required: true,
+          type: 'select'
+        },
+        identity_email: {
           type: 'email'
         },
-        name: {
+        identity_name: {
           type: 'text'
         },
-        preferences: {
-          required: true,
-          schema: {
-            locale: {
-              generator: 'sc-locale',
-              required: true,
-              type: 'select'
-            },
-            time_zone: {
-              generator: 'sc-time-zone',
-              required: true,
-              type: 'select'
-            }
-          },
-          type: 'fieldset'
-        },
-        tel_country_code: {
+        identity_tel_country_code: {
           generator: 'sc-tel-country-code',
           type: 'select'
         },
-        tel_national: {
+        identity_tel_national: {
           custom: 'tel-national',
           type: 'tel'
         },
-        username: {
+        identity_username: {
           type: 'text'
         }
       },
@@ -74,12 +69,15 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
 
   public async handle (data: AuthRegisterPostIdentityData, response: ServerResponse): Promise<Result | undefined> {
     const tmpUser = createUser({
-      email: data.body.email,
-      name: data.body.name,
-      preferences: data.body.preferences,
-      tel_country_code: data.body.tel_country_code,
-      tel_national: data.body.tel_national,
-      username: data.body.username
+      email_auth_login: true,
+      email_auth_update: true,
+      i18n_locale: data.body.i18n_locale,
+      i18n_time_zone: data.body.i18n_time_zone,
+      identity_email: data.body.identity_email,
+      identity_name: data.body.identity_name,
+      identity_tel_country_code: data.body.identity_tel_country_code,
+      identity_tel_national: data.body.identity_tel_national,
+      identity_username: data.body.identity_username
     })
 
     const user = await this.selectUserByIdentities(tmpUser)
@@ -93,9 +91,9 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
 
     await this.setTmpUser(tmpUser, token)
 
-    if (tmpUser.email !== null) {
+    if (tmpUser.identity_email !== null) {
       return this.requestEmail(tmpUser, token)
-    } else if (tmpUser.tel_national !== null) {
+    } else if (tmpUser.identity_tel_national !== null) {
       return this.requestTel(tmpUser, token)
     }
 
@@ -104,16 +102,16 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
 
   protected async requestEmail (user: User, token: UserToken): Promise<Result> {
     this.smtp
-      ?.send(await this.smtp.create('auth_register_identity', {
+      ?.send(await this.smtp.create('register_identity', {
         date: new Date(),
-        date_time_zone: user.preferences.time_zone,
+        date_time_zone: user.i18n_time_zone,
         token: token,
         url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
         user: user
       }, {
-        email: user.email,
-        name: user.name,
-        preferences: user.preferences
+        i18n_locale: user.i18n_locale,
+        identity_email: user.identity_email,
+        identity_name: user.identity_name
       }))
       .catch((error) => {
         this.logger?.error({
@@ -122,26 +120,26 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
       })
 
     return {
-      code: 'ok_auth_register_identity_email',
+      code: 'ok_register_identity_email',
       data: {
-        email: user.email
-          ?.slice(user.email.indexOf('@'))
-          .padStart(user.email.length, '*')
+        email: user.identity_email
+          ?.slice(user.identity_email.indexOf('@'))
+          .padStart(user.identity_email.length, '*')
       }
     }
   }
 
   protected async requestTel (user: User, token: UserToken): Promise<Result> {
     this.sms
-      ?.send(await this.sms.create('auth_register_identity', {
+      ?.send(await this.sms.create('register_identity', {
         date: new Date(),
-        date_time_zone: user.preferences.time_zone,
+        date_time_zone: user.i18n_time_zone,
         token: token,
         url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
         user: user
       }, {
-        preferences: user.preferences,
-        tel: user.tel
+        i18n_locale: user.i18n_locale,
+        identity_tel: user.identity_tel
       }))
       .catch((error) => {
         this.logger?.error({
@@ -150,11 +148,11 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
       })
 
     return {
-      code: 'ok_auth_register_identity_tel',
+      code: 'ok_register_identity_tel',
       data: {
-        tel: user.tel
+        tel: user.identity_tel
           .slice(-4)
-          .padStart(user.tel.length, '*')
+          .padStart(user.identity_tel.length, '*')
       }
     }
   }

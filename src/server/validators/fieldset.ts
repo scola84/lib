@@ -3,10 +3,10 @@ import type { Struct, User } from '../../common'
 import { SchemaValidator } from '../helpers'
 import { isStruct } from '../../common'
 
-export async function fieldset (name: string, field: SchemaField): Promise<Validator> {
+export function fieldset (name: string, field: SchemaField): Validator {
   const schemaValidator = new SchemaValidator(field.schema ?? {})
 
-  await schemaValidator.compile()
+  schemaValidator.compile()
   return async (data: Struct, errors: Struct, user?: User) => {
     let childErrors: Struct | null = null
 

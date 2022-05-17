@@ -10,8 +10,9 @@ export class AuthUserGetSessionHandler extends AuthHandler {
   public async handle (data: RouteData): Promise<User> {
     const user = await this.database.selectOne<User, User>(sql`
       SELECT
-        $[name],
-        $[preferences],
+        $[i18n_locale],
+        $[i18n_time_zone],
+        $[identity_name],
         $[user_id]
       FROM $[user]
       WHERE $[user_id] = $(user_id)

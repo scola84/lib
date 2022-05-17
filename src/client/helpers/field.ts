@@ -77,7 +77,6 @@ export class Field {
   }
 
   public setValid (): void {
-    this.clear()
     this.element.setAttribute('aria-invalid', 'false')
   }
 

@@ -1,13 +1,13 @@
 import type { SchemaField, SchemaValidator, Validator } from '../helpers'
+import { cast, isArray } from '../../common'
 import type { Struct } from '../../common'
-import { isArray } from '../../common'
 
-export async function selectMultiple (name: string, field: SchemaField, validator: SchemaValidator): Promise<Validator> {
+export function selectMultiple (name: string, field: SchemaField, validator: SchemaValidator): Validator {
   let fieldValues = field.values
 
   if (field.generator !== undefined) {
-    fieldValues = (await validator.generators[field.generator]?.())?.map(([value]) => {
-      return value
+    fieldValues = validator.generators[field.generator]?.()?.map(([value]) => {
+      return cast(value)
     })
   }
 

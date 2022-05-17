@@ -80,7 +80,7 @@ export class Mutator {
     } else if (isPrimitive(castValue)) {
       const attrValue = castValue.toString()
 
-      if (this.sanitizer.checkAttribute(this.element.nodeName, name, attrValue)) {
+      if (this.sanitizer.testAttribute(this.element.nodeName, name, attrValue)) {
         this.element.setAttribute(name, attrValue)
       }
     }
@@ -127,7 +127,7 @@ export class Mutator {
       } else if (isPrimitive(castValue)) {
         const attrValue = castValue.toString()
 
-        if (this.sanitizer.checkAttribute(this.element.nodeName, name, attrValue)) {
+        if (this.sanitizer.testAttribute(this.element.nodeName, name, attrValue)) {
           this.element.setAttribute(name, attrValue)
         }
       }
@@ -159,7 +159,7 @@ export class Mutator {
     } else if (isPrimitive(castValue)) {
       const attrValue = castValue.toString()
 
-      if (this.sanitizer.checkAttribute(this.element.nodeName, name, attrValue)) {
+      if (this.sanitizer.testAttribute(this.element.nodeName, name, attrValue)) {
         this.element.setAttribute(name, attrValue)
       }
     }

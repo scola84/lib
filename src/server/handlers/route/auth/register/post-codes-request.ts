@@ -40,7 +40,7 @@ export class AuthRegisterPostCodesRequestHandler extends AuthRegisterHandler {
     }), data.user.token)
 
     return {
-      code: 'ok_auth_register_codes_request',
+      code: 'ok_register_codes_request',
       data: {
         auth_codes: codes.codes.join('\n')
       }

@@ -10,29 +10,36 @@ export abstract class AuthRegisterPasswordHandler extends AuthRegisterHandler {
     return this.database.insert<User, Pick<User, 'user_id'>>(sql`
       INSERT INTO $[user] (
         $[auth_password],
-        $[email],
-        $[name],
-        $[preferences],
-        $[tel_country_code],
-        $[tel_national],
-        $[username]
+        $[email_auth_login],
+        $[email_auth_update],
+        $[i18n_locale],
+        $[i18n_time_zone],
+        $[identity_email],
+        $[identity_name],
+        $[identity_tel_country_code],
+        $[identity_tel_national],
+        $[identity_username]
       ) VALUES (
         $(auth_password),
-        $(email),
-        $(name),
-        $(preferences),
-        $(tel_country_code),
-        $(tel_national),
-        $(username)
+        $(i18n_locale),
+        $(i18n_time_zone),
+        $(identity_email),
+        $(identity_name),
+        $(identity_tel_country_code),
+        $(identity_tel_national),
+        $(identity_username)
       )
     `, {
       auth_password: user.auth_password,
-      email: user.email,
-      name: user.name,
-      preferences: user.preferences,
-      tel_country_code: user.tel_country_code,
-      tel_national: user.tel_national,
-      username: user.username
+      email_auth_login: user.email_auth_login,
+      email_auth_update: user.email_auth_update,
+      i18n_locale: user.i18n_locale,
+      i18n_time_zone: user.i18n_time_zone,
+      identity_email: user.identity_email,
+      identity_name: user.identity_name,
+      identity_tel_country_code: user.identity_tel_country_code,
+      identity_tel_national: user.identity_tel_national,
+      identity_username: user.identity_username
     }, 'user_id')
   }
 
@@ -131,35 +138,35 @@ export abstract class AuthRegisterPasswordHandler extends AuthRegisterHandler {
   }
 
   protected async sendMessage (user: User): Promise<void> {
-    if (user.email !== null) {
+    if (user.identity_email !== null) {
       await this.sendMessageEmail(user)
-    } else if (user.tel_national !== null) {
+    } else if (user.identity_tel_national !== null) {
       await this.sendMessageTel(user)
     }
   }
 
   protected async sendMessageEmail (user: User): Promise<void> {
-    await this.smtp?.send(await this.smtp.create('auth_register', {
+    await this.smtp?.send(await this.smtp.create('register', {
       date: new Date(),
-      date_time_zone: user.preferences.time_zone,
+      date_time_zone: user.i18n_time_zone,
       url: `${this.origin}?next=auth_unregister_identity_request`,
       user: user
     }, {
-      email: user.email,
-      name: user.name,
-      preferences: user.preferences
+      i18n_locale: user.i18n_locale,
+      identity_email: user.identity_email,
+      identity_name: user.identity_name
     }))
   }
 
   protected async sendMessageTel (user: User): Promise<void> {
-    await this.sms?.send(await this.sms.create('auth_register', {
+    await this.sms?.send(await this.sms.create('register', {
       date: new Date(),
-      date_time_zone: user.preferences.time_zone,
+      date_time_zone: user.i18n_time_zone,
       url: `${this.origin}?next=auth_unregister_identity_request`,
       user: user
     }, {
-      preferences: user.preferences,
-      tel: user.tel
+      i18n_locale: user.i18n_locale,
+      identity_tel: user.identity_tel
     }))
   }
 }

@@ -57,7 +57,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
       })
 
     return {
-      code: 'ok_auth_login',
+      code: 'ok_login',
       next: 'auth_load'
     }
   }
@@ -83,15 +83,15 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     }), token)
 
     this.smtp
-      ?.send(await this.smtp.create('auth_login_hotp', {
+      ?.send(await this.smtp.create('login_hotp', {
         date: new Date(),
-        date_time_zone: user.preferences.time_zone,
+        date_time_zone: user.i18n_time_zone,
         token: hotp.generate(),
         user: user
       }, {
-        email: user.auth_hotp_email,
-        name: user.name,
-        preferences: user.preferences
+        i18n_locale: user.i18n_locale,
+        identity_email: user.auth_hotp_email,
+        identity_name: user.identity_name
       }))
       .catch((error) => {
         this.logger?.error({
@@ -101,7 +101,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
     return {
-      code: 'ok_auth_login_hotp_email',
+      code: 'ok_login_hotp_email',
       data: {
         email: user.auth_hotp_email
           ?.slice(user.auth_hotp_email.indexOf('@'))
@@ -121,14 +121,14 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     }), token)
 
     this.sms
-      ?.send(await this.sms.create('auth_login_hotp', {
+      ?.send(await this.sms.create('login_hotp', {
         date: new Date(),
-        date_time_zone: user.preferences.time_zone,
+        date_time_zone: user.i18n_time_zone,
         token: hotp.generate(),
         user: user
       }, {
-        preferences: user.preferences,
-        tel: user.auth_hotp_tel
+        i18n_locale: user.i18n_locale,
+        identity_tel: user.auth_hotp_tel
       }))
       .catch((error) => {
         this.logger?.error({
@@ -138,7 +138,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
     return {
-      code: 'ok_auth_login_hotp_tel',
+      code: 'ok_login_hotp_tel',
       data: {
         tel: user.auth_hotp_tel
           .slice(-4)
@@ -157,7 +157,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
     return {
-      code: 'ok_auth_login_totp',
+      code: 'ok_login_totp',
       next: 'auth_totp'
     }
   }

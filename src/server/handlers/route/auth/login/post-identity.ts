@@ -66,7 +66,7 @@ export class AuthLoginPostIdentityHandler extends AuthLoginHandler {
 
     response.setHeader('Set-Cookie', this.auth.createCookie(token))
     return {
-      code: 'ok_auth_login_identity',
+      code: 'ok_login_identity',
       type: type
     }
   }

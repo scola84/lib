@@ -67,15 +67,15 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
     await this.setTmpUser(tmpUser, data.user.token)
 
     this.smtp
-      ?.send(await this.smtp.create('auth_unregister_hotp', {
+      ?.send(await this.smtp.create('unregister_hotp', {
         date: new Date(),
-        date_time_zone: data.user.preferences.time_zone,
+        date_time_zone: data.user.i18n_time_zone,
         token: hotp.generate(),
         user: data.user
       }, {
-        email: email,
-        name: data.user.name,
-        preferences: data.user.preferences
+        i18n_locale: data.user.i18n_locale,
+        identity_email: email,
+        identity_name: data.user.identity_name
       }))
       .catch((error) => {
         this.logger?.error({
@@ -84,7 +84,7 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
       })
 
     return {
-      code: 'ok_auth_unregister_hotp_email_request',
+      code: 'ok_unregister_hotp_email_request',
       data: {
         email: email
           .slice(email.indexOf('@'))
@@ -116,14 +116,14 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
     }), data.user.token)
 
     this.sms
-      ?.send(await this.sms.create('auth_unregister_hotp', {
+      ?.send(await this.sms.create('unregister_hotp', {
         date: new Date(),
-        date_time_zone: data.user.preferences.time_zone,
+        date_time_zone: data.user.i18n_time_zone,
         token: hotp.generate(),
         user: data.user
       }, {
-        preferences: data.user.preferences,
-        tel: tel
+        i18n_locale: data.user.i18n_locale,
+        identity_tel: tel
       }))
       .catch((error) => {
         this.logger?.error({
@@ -132,7 +132,7 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
       })
 
     return {
-      code: 'ok_auth_unregister_hotp_tel_request',
+      code: 'ok_unregister_hotp_tel_request',
       data: {
         tel: tel
           .slice(-4)

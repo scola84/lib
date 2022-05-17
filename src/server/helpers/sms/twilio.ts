@@ -24,11 +24,11 @@ export class TwilioSms implements Sms {
     this.i18n = options.i18n ?? new I18n()
   }
 
-  public async create (code: string, data: unknown, user: Pick<User, 'preferences' | 'tel'>): Promise<SmsSendOptions> {
+  public async create (code: string, data: unknown, user: Pick<User, 'i18n_locale' | 'identity_tel'>): Promise<SmsSendOptions> {
     return Promise.resolve({
       from: this.from,
-      text: this.i18n.formatText(`sms_text_${code}`, data, user.preferences.locale ?? undefined),
-      to: user.tel
+      text: this.i18n.formatText(`sms_text_${code}`, data, user.i18n_locale ?? undefined),
+      to: user.identity_tel
     })
   }
 

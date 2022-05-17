@@ -172,6 +172,7 @@ try {
             .replace(/["';]/gu, '')
             .replace(/&lt;/gu, '<')
             .replace(/&gt;/gu, '>')
+            .replace(/unknown.+/ui, 'unknown')
             .replace(/\s\n/gu, '\n')
         )
 

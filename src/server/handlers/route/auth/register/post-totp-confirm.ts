@@ -45,7 +45,7 @@ export class AuthRegisterPostTotpConfirmHandler extends AuthRegisterHandler {
 
     await this.updateUserTotp(tmpUser)
     return {
-      code: 'ok_auth_register_totp_confirm'
+      code: 'ok_register_totp_confirm'
     }
   }
 }

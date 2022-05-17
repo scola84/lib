@@ -158,27 +158,34 @@ export class Observer {
       const query = Struct.fromQuery(queryString)
       const handler = Observer.handlers[name]
 
-      if (
-        handler !== undefined &&
-        selector !== ''
-      ) {
-        this.parent
-          .querySelectorAll<ScolaElement>(selector)
-          .forEach((element) => {
-            const observerHandler = handler.bind(null, this.element, element, query)
-            const observer = new MutationObserver(observerHandler)
-
-            observer.observe(element, {
-              attributes: true
-            })
-
-            this.observers.push(observer)
-
-            if (!this.wait) {
-              observerHandler([])
-            }
-          })
+      if (handler === undefined) {
+        // eslint-disable-next-line no-console
+        console.warn(`Handler "${name}" is undefined`)
+        return
       }
+
+      if (selector === '') {
+        // eslint-disable-next-line no-console
+        console.warn('Selector is empty')
+        return
+      }
+
+      this.parent
+        .querySelectorAll<ScolaElement>(selector)
+        .forEach((element) => {
+          const observerHandler = handler.bind(null, this.element, element, query)
+          const observer = new MutationObserver(observerHandler)
+
+          observer.observe(element, {
+            attributes: true
+          })
+
+          this.observers.push(observer)
+
+          if (!this.wait) {
+            observerHandler([])
+          }
+        })
     })
   }
 
@@ -215,7 +222,7 @@ export class Observer {
             } else if (isPrimitive(castValue)) {
               const attrValue = castValue.toString()
 
-              if (this.sanitizer.checkAttribute(this.element.nodeName, name, attrValue)) {
+              if (this.sanitizer.testAttribute(this.element.nodeName, name, attrValue)) {
                 this.element.setAttribute(name, attrValue)
               }
             }

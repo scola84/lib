@@ -129,12 +129,8 @@ export const presets = {
   },
   'sc-field-under-icon': {
     'sc-height': '2@all',
-    'sc-interact': '',
     'sc-round': 'max@all',
     'sc-width': '2@all'
-  },
-  'sc-field-under-text': {
-    'sc-interact': ''
   },
   'sc-fieldset': {
     'sc-direction': 'column',

@@ -22,7 +22,7 @@ export class AuthUnregisterPostCodesRequestHandler extends AuthHandler {
     }), data.user.token)
 
     return {
-      code: 'ok_auth_unregister_codes_request'
+      code: 'ok_unregister_codes_request'
     }
   }
 }

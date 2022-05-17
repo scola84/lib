@@ -445,9 +445,11 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     } else if (isError(data)) {
       this.error = data
       this.propagator.dispatchEvents<ScolaError>('error', [this.error], event)
-    } else if (isStruct(data)) {
-      this.errorData = data.body ?? data.query ?? data.headers ?? data
-      this.propagator.dispatchEvents('errordata', [this.errorData], event)
+    } else {
+      if (isStruct(data)) {
+        this.errorData = data.body ?? data.query ?? data.headers ?? data
+        this.propagator.dispatchEvents('errordata', [this.errorData], event)
+      }
 
       this.error = {
         code: `err_requester_${xhr.status}`,

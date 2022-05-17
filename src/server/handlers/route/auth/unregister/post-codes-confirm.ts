@@ -13,7 +13,7 @@ export class AuthUnregisterPostCodesConfirmHandler extends AuthHandler {
 
     await this.updateUserCodes(tmpUser)
     return {
-      code: 'ok_auth_unregister_codes_confirm'
+      code: 'ok_unregister_codes_confirm'
     }
   }
 }

@@ -142,7 +142,8 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
       is: this.getAttribute('is'),
       locale: this.locale,
       nodeName: this.nodeName,
-      theme: this.theme
+      theme: this.theme,
+      timeZone: this.timeZone
     }
   }
 
@@ -238,16 +239,12 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected setUser (user: User): void {
-    if (typeof user.preferences.locale === 'string') {
-      this.setLocale(user.preferences.locale)
+    if (user.i18n_locale !== null) {
+      this.setLocale(user.i18n_locale)
     }
 
-    if (typeof user.preferences.theme === 'string') {
-      this.setTheme(user.preferences.theme)
-    }
-
-    if (typeof user.preferences.time_zone === 'string') {
-      this.setTimeZone(user.preferences.time_zone)
+    if (user.i18n_time_zone !== null) {
+      this.setTimeZone(user.i18n_time_zone)
     }
 
     this.notify()

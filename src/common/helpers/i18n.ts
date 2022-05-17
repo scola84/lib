@@ -146,16 +146,16 @@ export class I18n {
     })
   }
 
-  public formatEmailAddress (user: Pick<User, 'email' | 'name'>): string {
-    if (isNil(user.email)) {
+  public formatEmailAddress (user: Pick<User, 'identity_email' | 'identity_name'>): string {
+    if (isNil(user.identity_email)) {
       throw new Error('Email is nil')
     }
 
-    if (isNil(user.name)) {
-      return user.email
+    if (isNil(user.identity_name)) {
+      return user.identity_email
     }
 
-    return `${user.name} <${user.email}>`
+    return `${user.identity_name} <${user.identity_email}>`
   }
 
   public formatMarked (code: string, data: unknown = {}, locale = I18n.locale): string {

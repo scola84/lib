@@ -25,7 +25,7 @@ export class AuthRegisterPostTotpRequestHandler extends AuthRegisterHandler {
     }), data.user.token)
 
     return {
-      code: 'ok_auth_register_totp_request',
+      code: 'ok_register_totp_request',
       data: {
         secret: totp.secret.base32,
         url: totp.toString()

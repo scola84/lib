@@ -40,20 +40,25 @@ export interface User extends UserBase {
 
   date_updated: Date
 
-  email: string | null
+  email_auth_login: boolean | null
 
-  name: string | null
+  email_auth_update: boolean | null
 
   group?: Group
 
   group_id?: number
 
-  preferences: {
-    auth_login_email?: boolean
-    locale?: string
-    theme?: string
-    time_zone?: string
-  }
+  identity_email: string | null
+
+  identity_name: string | null
+
+  identity_tel: string
+
+  identity_tel_country_code: string | null
+
+  identity_tel_national: string | null
+
+  identity_username: string | null
 
   role?: Role
 
@@ -63,17 +68,9 @@ export interface User extends UserBase {
 
   state_compromised: boolean | null
 
-  tel: string
-
-  tel_country_code: string | null
-
-  tel_national: string | null
-
   token?: UserToken
 
   user_id: number
-
-  username: string | null
 
   views?: Struct
 }
@@ -105,15 +102,18 @@ export function createUser (user?: Partial<User>, date = new Date()): User {
     auth_webauthn_confirmed: user?.auth_webauthn_confirmed ?? false,
     date_created: user?.date_created ?? date,
     date_updated: user?.date_updated ?? date,
-    email: user?.email ?? null,
-    name: user?.name ?? null,
-    preferences: user?.preferences ?? {},
+    email_auth_login: user?.email_auth_login ?? false,
+    email_auth_update: user?.email_auth_update ?? false,
+    i18n_locale: user?.i18n_locale ?? null,
+    i18n_time_zone: user?.i18n_time_zone ?? null,
+    identity_email: user?.identity_email ?? null,
+    identity_name: user?.identity_name ?? null,
+    identity_tel: `${user?.identity_tel_country_code ?? ''}${user?.identity_tel_national ?? ''}`,
+    identity_tel_country_code: user?.identity_tel_country_code ?? null,
+    identity_tel_national: user?.identity_tel_national ?? null,
+    identity_username: user?.identity_username ?? null,
     state_active: user?.state_active ?? false,
     state_compromised: user?.state_compromised ?? false,
-    tel: `${user?.tel_country_code ?? ''}${user?.tel_national ?? ''}`,
-    tel_country_code: user?.tel_country_code ?? null,
-    tel_national: user?.tel_national ?? null,
-    user_id: user?.user_id ?? 0,
-    username: user?.username ?? null
+    user_id: user?.user_id ?? 0
   }
 }

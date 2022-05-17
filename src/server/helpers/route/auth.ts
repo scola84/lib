@@ -357,14 +357,17 @@ export class RouteAuth {
     const user = await this.database.select<User, User>(sql`
       SELECT
         $[auth_mfa],
-        $[email],
-        $[name],
-        $[preferences],
+        $[email_auth_login],
+        $[email_auth_update],
+        $[i18n_locale],
+        $[i18n_time_zone],
+        $[identity_email],
+        $[identity_name],
+        $[identity_tel],
+        $[identity_username],
         $[state_active],
         $[state_compromised],
-        $[tel],
-        $[user_id],
-        $[username]
+        $[user_id]
       FROM $[user]
       WHERE $[user_id] = $(user_id)
     `, {

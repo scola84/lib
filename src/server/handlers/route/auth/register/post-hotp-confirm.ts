@@ -47,11 +47,11 @@ export class AuthRegisterPostHotpConfirmHandler extends AuthRegisterHandler {
 
     if (tmpUser.auth_hotp_email !== null) {
       return {
-        code: 'ok_auth_register_hotp_email_confirm'
+        code: 'ok_register_hotp_email_confirm'
       }
     } else if (tmpUser.auth_hotp_tel_national !== null) {
       return {
-        code: 'ok_auth_register_hotp_tel_confirm'
+        code: 'ok_register_hotp_tel_confirm'
       }
     }
 

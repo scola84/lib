@@ -35,77 +35,59 @@
   <fieldset>
     <legend>Identity</legend>
     <div>
-      <label for="name">Name</label>
-      <input id="name" name="name" type="text" />
+      <label for="identity-name">Name</label>
+      <input id="identity-name" name="identity_name" type="text" />
     </div>
     <div>
-      <label for="email">Email</label>
+      <label for="identity-email">Email</label>
       <input
-        id="email"
-        name="email"
+        id="identity-email"
+        name="identity_email"
         type="email"
-        sc-index="email?index=true&order=0&unique=true"
+        sc-index="identity_email?index=true&order=0&unique=true"
       />
     </div>
     <div>
-      <label for="tel-national">Phone number</label>
+      <label for="identity-tel-national">Phone number</label>
       <select
-        id="tel-country-code"
-        name="tel_country_code"
-        sc-generated="tel?index=true&order=0&unique=true"
+        id="identity-tel-country-code"
+        name="identity_tel_country_code"
+        sc-generated="identity_tel?index=true&order=0&unique=true"
       >
         <option value="1">+1 (United States)</option>
         <option value="31">+31 (The Netherlands)</option>
       </select>
       <input
-        id="tel-national"
-        name="tel_national"
+        id="identity-tel-national"
+        name="identity_tel_national"
         type="tel"
-        sc-generated="tel?index=true&order=1&unique=true"
+        sc-generated="identity_tel?index=true&order=1&unique=true"
       />
     </div>
     <div>
-      <label for="username">Username</label>
+      <label for="identity-username">Username</label>
       <input
-        id="username"
-        name="username"
+        id="identity-username"
+        name="identity_username"
         pattern="\w+"
         type="text"
-        sc-index="username?index=true&order=0&unique=true"
+        sc-index="identity_username?index=true&order=0&unique=true"
       />
     </div>
   </fieldset>
-  <fieldset name="preferences" required>
-    <legend>Preferences</legend>
+  <fieldset required>
+    <legend>I18n</legend>
     <div>
-      <label for="locale">Locale</label>
-      <select id="locale" name="locale">
+      <label for="i18n-locale">Locale</label>
+      <select id="i18n-locale" name="i18n_locale">
         <option value="nl-NL" sc-text="nl-NL">nl-NL</option>
       </select>
     </div>
     <div>
-      <label for="time-zone">Time Zone</label>
-      <select id="time-zone" name="time_zone">
+      <label for="i18n-time-zone">Time Zone</label>
+      <select id="i18n-time-zone" name="i18n_time_zone">
         <option value="Europe/Amsterdam">Europe/Amsterdam</option>
       </select>
-    </div>
-    <div>
-      <label for="theme">Theme</label>
-      <select id="theme" name="theme">
-        <option value="sc-light" sc-text="theme-light">Light</option>
-        <option value="sc-dark" sc-text="theme-dark">Dark</option>
-      </select>
-    </div>
-    <div>
-      <input
-        id="auth-login-email"
-        name="auth_login_email"
-        type="checkbox"
-        value="true"
-      />
-      <label for="auth-login-email"
-        >Whether to send an email after a successful login</label
-      >
     </div>
   </fieldset>
   <fieldset>
@@ -221,6 +203,31 @@
       />
       <label for="auth-webauthn-confirmed"
         >Whether WebAuthn was confirmed</label
+      >
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Messages</legend>
+    <div>
+      <input
+        id="email-auth-login"
+        name="email_auth_login"
+        type="checkbox"
+        value="true"
+      />
+      <label for="email-auth-login"
+        >Whether to send an email after a successful login</label
+      >
+    </div>
+    <div>
+      <input
+        id="email-auth-update"
+        name="email_auth_update"
+        type="checkbox"
+        value="true"
+      />
+      <label for="email-auth-update"
+        >Whether to send an email after a profile update</label
       >
     </div>
   </fieldset>

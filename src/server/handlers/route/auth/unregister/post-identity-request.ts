@@ -33,9 +33,9 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
 
     await this.setTmpUser(tmpUser, token)
 
-    if (data.user.email !== null) {
+    if (data.user.identity_email !== null) {
       return this.requestEmail(data.user, token)
-    } else if (data.user.tel_national !== null) {
+    } else if (data.user.identity_tel_national !== null) {
       return this.requestTel(data.user, token)
     }
 
@@ -44,16 +44,16 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
 
   protected async requestEmail (user: User, token: UserToken): Promise<Result> {
     this.smtp
-      ?.send(await this.smtp.create('auth_unregister_identity', {
+      ?.send(await this.smtp.create('unregister_identity', {
         date: new Date(),
-        date_time_zone: user.preferences.time_zone,
+        date_time_zone: user.i18n_time_zone,
         token: token,
         url: `${this.origin}?next=auth_unregister_identity_confirm&token=${token.hash}`,
         user: user
       }, {
-        email: user.email,
-        name: user.name,
-        preferences: user.preferences
+        i18n_locale: user.i18n_locale,
+        identity_email: user.identity_email,
+        identity_name: user.identity_name
       }))
       .catch((error) => {
         this.logger?.error({
@@ -62,26 +62,26 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
       })
 
     return {
-      code: 'ok_auth_unregister_identity_email_request',
+      code: 'ok_unregister_identity_email_request',
       data: {
-        email: user.email
-          ?.slice(user.email.indexOf('@'))
-          .padStart(user.email.length, '*')
+        email: user.identity_email
+          ?.slice(user.identity_email.indexOf('@'))
+          .padStart(user.identity_email.length, '*')
       }
     }
   }
 
   protected async requestTel (user: User, token: UserToken): Promise<Result> {
     this.sms
-      ?.send(await this.sms.create('auth_unregister_identity', {
+      ?.send(await this.sms.create('unregister_identity', {
         date: new Date(),
-        date_time_zone: user.preferences.time_zone,
+        date_time_zone: user.i18n_time_zone,
         token: token,
         url: `${this.origin}?next=auth_unregister_identity_confirm&token=${token.hash}`,
         user: user
       }, {
-        preferences: user.preferences,
-        tel: user.tel
+        i18n_locale: user.i18n_locale,
+        identity_tel: user.identity_tel
       }))
       .catch((error) => {
         this.logger?.error({
@@ -90,11 +90,11 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
       })
 
     return {
-      code: 'ok_auth_unregister_identity_tel_request',
+      code: 'ok_unregister_identity_tel_request',
       data: {
-        tel: user.tel
+        tel: user.identity_tel
           .slice(-4)
-          .padStart(user.tel.length, '*')
+          .padStart(user.identity_tel.length, '*')
       }
     }
   }

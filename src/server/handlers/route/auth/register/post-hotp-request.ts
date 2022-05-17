@@ -67,15 +67,15 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
     await this.setTmpUser(tmpUser, data.user.token)
 
     this.smtp
-      ?.send(await this.smtp.create('auth_register_hotp', {
+      ?.send(await this.smtp.create('register_hotp', {
         date: new Date(),
-        date_time_zone: data.user.preferences.time_zone,
+        date_time_zone: data.user.i18n_time_zone,
         token: hotp.generate(),
         user: data.user
       }, {
-        email: tmpUser.auth_hotp_email,
-        name: data.user.name,
-        preferences: data.user.preferences
+        i18n_locale: data.user.i18n_locale,
+        identity_email: tmpUser.auth_hotp_email,
+        identity_name: data.user.identity_name
       }))
       .catch((error) => {
         this.logger?.error({
@@ -84,7 +84,7 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
       })
 
     return {
-      code: 'ok_auth_register_hotp_email_request',
+      code: 'ok_register_hotp_email_request',
       data: {
         email: tmpUser.auth_hotp_email
           ?.slice(tmpUser.auth_hotp_email.indexOf('@'))
@@ -112,14 +112,14 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
     await this.setTmpUser(tmpUser, data.user.token)
 
     this.sms
-      ?.send(await this.sms.create('auth_register_hotp', {
+      ?.send(await this.sms.create('register_hotp', {
         date: new Date(),
-        date_time_zone: data.user.preferences.time_zone,
+        date_time_zone: data.user.i18n_time_zone,
         token: hotp.generate(),
         user: data.user
       }, {
-        preferences: data.user.preferences,
-        tel: tmpUser.tel
+        i18n_locale: tmpUser.i18n_locale,
+        identity_tel: tmpUser.identity_tel
       }))
       .catch((error) => {
         this.logger?.error({
@@ -128,11 +128,11 @@ export class AuthRegisterPostHotpRequestHandler extends AuthRegisterHandler {
       })
 
     return {
-      code: 'ok_auth_register_hotp_tel_request',
+      code: 'ok_register_hotp_tel_request',
       data: {
-        tel: tmpUser.tel
+        tel: tmpUser.identity_tel
           .slice(-4)
-          .padStart(tmpUser.tel.length, '*')
+          .padStart(tmpUser.identity_tel.length, '*')
       }
     }
   }

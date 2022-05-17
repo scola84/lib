@@ -47,11 +47,11 @@ export class AuthUnregisterPostHotpConfirmHandler extends AuthHandler {
 
     if (tmpUser.auth_hotp_email_confirmed !== null) {
       return {
-        code: 'ok_auth_unregister_hotp_email_confirm'
+        code: 'ok_unregister_hotp_email_confirm'
       }
     } else if (tmpUser.auth_hotp_tel_confirmed !== null) {
       return {
-        code: 'ok_auth_unregister_hotp_tel_confirm'
+        code: 'ok_unregister_hotp_tel_confirm'
       }
     }
 

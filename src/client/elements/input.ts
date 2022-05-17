@@ -42,6 +42,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
 
   public set error (error: ScolaError | undefined) {
     this.field.setError(error)
+    this.update()
   }
 
   public get qualifiedName (): string {
@@ -204,6 +205,8 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public falsify (): void {
+    this.field.clear()
+
     if (!this.checkValidity()) {
       this.error = this.validityError
     }
@@ -250,6 +253,8 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public verify (): void {
+    this.field.clear()
+
     if (this.checkValidity()) {
       this.field.setValid()
     }

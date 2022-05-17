@@ -4,7 +4,7 @@ import { cast, isArray, isPrimitive, isStruct } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 
-type Generator = () => Array<[number | string, string]> | Promise<Array<[number | string, string]>>
+type Generator = (element: ScolaSelectElement) => Array<[number | string, string]>
 
 export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldElement {
   public static generators: Partial<Struct<Generator>> = {}
@@ -22,6 +22,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   public get data (): unknown {
     return {
       name: this.name,
+      text: this.text,
       value: this.valueAsCast
     }
   }
@@ -37,6 +38,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
 
   public set error (error: ScolaError | undefined) {
     this.field.setError(error)
+    this.update()
   }
 
   public get optionElements (): HTMLOptionElement[] {
@@ -53,6 +55,14 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
     }
 
     return name
+  }
+
+  public get text (): string[] {
+    return Array
+      .from(this.selectedOptions)
+      .map((option) => {
+        return option.textContent ?? ''
+      })
   }
 
   public get validityError (): ScolaError | undefined {
@@ -150,6 +160,8 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   public falsify (): void {
+    this.field.clear()
+
     if (!this.checkValidity()) {
       this.error = this.validityError
     }
@@ -196,6 +208,8 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   public verify (): void {
+    this.field.clear()
+
     if (this.checkValidity()) {
       this.field.setValid()
     }
@@ -206,29 +220,20 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   protected appendOptions (): void {
-    Promise
-      .resolve()
-      .then(() => {
-        if (
-          this.generator !== null &&
-          ScolaSelectElement.generators[this.generator] !== undefined
-        ) {
-          return ScolaSelectElement.generators[this.generator]?.() ?? []
-        }
+    if (
+      this.generator !== null &&
+      ScolaSelectElement.generators[this.generator] !== undefined
+    ) {
+      this.innerHTML = ''
 
-        return []
-      })
-      .then((options) => {
-        this.innerHTML = ''
+      const options = ScolaSelectElement.generators[this.generator]?.(this) ?? []
 
-        options.forEach(([value, text]) => {
-          this.innerHTML += `<option is="sc-option" value="${value}" sc-text="${text}"></option>`
-        })
+      options.forEach(([value, text]) => {
+        this.innerHTML += `<option is="sc-option" value="${value}" sc-text="${text}"></option>`
       })
-      .catch(() => {})
-      .finally(() => {
-        this.update()
-      })
+
+      this.update()
+    }
   }
 
   protected handleInput (event: Event): void {

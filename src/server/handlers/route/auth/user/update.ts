@@ -1,16 +1,19 @@
-import type { Result, Struct } from '../../../../../common'
+import type { Result, User } from '../../../../../common'
 import type { RouteData } from '../../../../helpers'
 import { RouteHandler } from '../../../../helpers'
+import { toString } from '../../../../../common'
 
 interface AuthUserUpdateHandlerData extends RouteData {
   body: {
-    auth_password: string
-    email?: string
-    name?: string
-    preferences: Struct
-    tel_country_code?: string
-    tel_national?: string
-    username?: string
+    email_auth_login?: boolean
+    email_auth_update?: boolean
+    i18n_locale?: string
+    i18n_time_zone?: string
+    identity_email?: string
+    identity_name?: string
+    identity_tel_country_code?: string
+    identity_tel_national?: string
+    identity_username?: string
   }
 }
 
@@ -31,41 +34,35 @@ export class AuthUserUpdateHandler extends RouteHandler {
       custom: 'identity',
       required: true,
       schema: {
-        auth_password: {
-          type: 'password'
+        email_auth_login: {
+          type: 'boolean'
         },
-        email: {
+        email_auth_update: {
+          type: 'boolean'
+        },
+        i18n_locale: {
+          generator: 'sc-locale',
+          type: 'select'
+        },
+        i18n_time_zone: {
+          generator: 'sc-time-zone',
+          type: 'select'
+        },
+        identity_email: {
           type: 'email'
         },
-        name: {
+        identity_name: {
           type: 'text'
         },
-        preferences: {
-          schema: {
-            locale: {
-              generator: 'sc-locale',
-              type: 'select'
-            },
-            theme: {
-              generator: 'sc-theme',
-              type: 'select'
-            },
-            time_zone: {
-              generator: 'sc-time-zone',
-              type: 'select'
-            }
-          },
-          type: 'fieldset'
-        },
-        tel_country_code: {
+        identity_tel_country_code: {
           generator: 'sc-tel-country-code',
           type: 'select'
         },
-        tel_national: {
+        identity_tel_national: {
           custom: 'tel-national',
           type: 'tel'
         },
-        username: {
+        identity_username: {
           type: 'text'
         }
       },
@@ -81,8 +78,40 @@ export class AuthUserUpdateHandler extends RouteHandler {
       await this.database?.update(updateQuery.string, updateQuery.values)
     }
 
-    return {
-      code: 'ok_auth_update_user'
+    if (data.user !== undefined) {
+      this
+        .sendMessage(data.user)
+        .catch((error) => {
+          this.logger?.error({
+            context: 'update'
+          }, toString(error))
+        })
     }
+
+    return {
+      code: 'ok_update_user'
+    }
+  }
+
+  protected async sendMessage (user: User): Promise<void> {
+    if (
+      user.email_auth_update === true &&
+      user.identity_email !== null
+    ) {
+      await this.sendMessageEmail(user)
+    }
+  }
+
+  protected async sendMessageEmail (user: User): Promise<void> {
+    await this.smtp?.send(await this.smtp.create('update_user', {
+      date: new Date(),
+      date_time_zone: user.i18n_time_zone,
+      url: `${this.origin}?next=auth_reset`,
+      user: user
+    }, {
+      i18n_locale: user.i18n_locale,
+      identity_email: user.identity_email,
+      identity_name: user.identity_name
+    }))
   }
 }

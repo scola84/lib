@@ -37,6 +37,7 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
 
   public set error (error: ScolaError | undefined) {
     this.field.setError(error)
+    this.update()
   }
 
   public get qualifiedName (): string {
@@ -149,6 +150,8 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
   }
 
   public falsify (): void {
+    this.field.clear()
+
     if (!this.checkValidity()) {
       this.error = this.validityError
     }
@@ -190,6 +193,8 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
   }
 
   public verify (): void {
+    this.field.clear()
+
     if (this.checkValidity()) {
       this.field.setValid()
     }

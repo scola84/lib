@@ -22,7 +22,7 @@ export class AuthUnregisterPostTotpRequestHandler extends AuthHandler {
     }), data.user.token)
 
     return {
-      code: 'ok_auth_unregister_totp_request'
+      code: 'ok_unregister_totp_request'
     }
   }
 }

@@ -3,7 +3,7 @@ import { cast, get } from '../helpers'
 
 export function s (name: string, locale: string, options: Partial<Struct<string>>): I18nFormatter {
   const defaultValue = cast(options.default)
-  const encodeuri = cast(options.encodeuri)
+  const encode = cast(options.encode)
   const match = cast(options.match)
 
   const path = name
@@ -25,10 +25,11 @@ export function s (name: string, locale: string, options: Partial<Struct<string>
     if (regexp !== null) {
       value = value
         .match(regexp)
-        ?.join('') ?? ''
+        ?.join('')
+        .trim() ?? ''
     }
 
-    if (encodeuri === true) {
+    if (encode === true) {
       value = encodeURIComponent(value)
     }
 

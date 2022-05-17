@@ -1,6 +1,6 @@
-import type { Result, Struct } from '../../../../../common'
 import { AuthPassword } from '../../../../helpers'
 import { AuthRegisterPasswordHandler } from './abstract-password'
+import type { Result } from '../../../../../common'
 import type { RouteData } from '../../../../helpers'
 import type { ServerResponse } from 'http'
 import { createUser } from '../../../../../common'
@@ -8,12 +8,13 @@ import { createUser } from '../../../../../common'
 interface AuthRegisterPostData extends RouteData {
   body: {
     auth_password: string
-    email?: string
-    name?: string
-    preferences: Struct
-    tel_country_code?: string
-    tel_national?: string
-    username?: string
+    i18n_locale?: string
+    i18n_time_zone?: string
+    identity_email?: string
+    identity_name?: string
+    identity_tel_country_code?: string
+    identity_tel_national?: string
+    identity_username?: string
   }
 }
 
@@ -29,37 +30,31 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
           required: true,
           type: 'password'
         },
-        email: {
+        i18n_locale: {
+          generator: 'sc-locale',
+          required: true,
+          type: 'select'
+        },
+        i18n_time_zone: {
+          generator: 'sc-time-zone',
+          required: true,
+          type: 'select'
+        },
+        identity_email: {
           type: 'email'
         },
-        name: {
+        identity_name: {
           type: 'text'
         },
-        preferences: {
-          required: true,
-          schema: {
-            locale: {
-              generator: 'sc-locale',
-              required: true,
-              type: 'select'
-            },
-            time_zone: {
-              generator: 'sc-time-zone',
-              required: true,
-              type: 'select'
-            }
-          },
-          type: 'fieldset'
-        },
-        tel_country_code: {
+        identity_tel_country_code: {
           generator: 'sc-tel-country-code',
           type: 'select'
         },
-        tel_national: {
+        identity_tel_national: {
           custom: 'tel-national',
           type: 'tel'
         },
-        username: {
+        identity_username: {
           type: 'text'
         }
       },
@@ -69,10 +64,10 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
 
   public async handle (data: AuthRegisterPostData, response: ServerResponse): Promise<Result> {
     const tmpUser = createUser({
-      email: data.body.email,
-      tel_country_code: data.body.tel_country_code,
-      tel_national: data.body.tel_national,
-      username: data.body.username
+      identity_email: data.body.identity_email,
+      identity_tel_country_code: data.body.identity_tel_country_code,
+      identity_tel_national: data.body.identity_tel_national,
+      identity_username: data.body.identity_username
     })
 
     const user = await this.selectUserByIdentities(tmpUser)
@@ -88,16 +83,17 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
 
     await this.register(data, response, createUser({
       auth_password: password.toString(),
-      email: data.body.email,
-      name: data.body.name,
-      preferences: data.body.preferences,
-      tel_country_code: data.body.tel_country_code,
-      tel_national: data.body.tel_national,
-      username: data.body.username
+      i18n_locale: data.body.i18n_locale,
+      i18n_time_zone: data.body.i18n_time_zone,
+      identity_email: data.body.identity_email,
+      identity_name: data.body.identity_name,
+      identity_tel_country_code: data.body.identity_tel_country_code,
+      identity_tel_national: data.body.identity_tel_national,
+      identity_username: data.body.identity_username
     }))
 
     return {
-      code: 'ok_auth_register'
+      code: 'ok_register'
     }
   }
 }

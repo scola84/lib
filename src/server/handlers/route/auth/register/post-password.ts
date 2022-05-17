@@ -45,7 +45,7 @@ export class AuthRegisterPostPasswordHandler extends AuthRegisterPasswordHandler
     })
 
     return {
-      code: 'ok_auth_register_password'
+      code: 'ok_register_password'
     }
   }
 }

@@ -184,6 +184,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     this.setValues()
 
     if (this.checkValidity()) {
+      this.verify()
       this.propagator.dispatchEvents('submit', [this.data], event)
     } else {
       this.falsify()

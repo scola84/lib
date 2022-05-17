@@ -13,7 +13,7 @@ export class AuthRegisterPostCodesConfirmHandler extends AuthRegisterHandler {
 
     await this.updateUserCodes(tmpUser)
     return {
-      code: 'ok_auth_register_codes_confirm'
+      code: 'ok_register_codes_confirm'
     }
   }
 }

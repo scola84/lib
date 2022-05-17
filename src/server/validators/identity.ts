@@ -9,14 +9,14 @@ export function identity (name: string): Validator {
     if ((
       isStruct(value)
     ) && (
-      isNil(value.email) ||
-      value.email === ''
+      isNil(value.identity_email) ||
+      value.identity_email === ''
     ) && (
-      isNil(value.tel) ||
-      value.tel === ''
+      isNil(value.identity_tel) ||
+      value.identity_tel === ''
     ) && (
-      isNil(value.username) ||
-      value.username === ''
+      isNil(value.identity_username) ||
+      value.identity_username === ''
     )) {
       errors[name] = {
         code: 'err_validator_identity'

@@ -52,7 +52,7 @@ export class AuthLoginPostHotpHandler extends AuthLoginHandler {
       })
 
     return {
-      code: 'ok_auth_login'
+      code: 'ok_login'
     }
   }
 }

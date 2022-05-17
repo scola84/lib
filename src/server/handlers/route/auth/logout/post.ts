@@ -11,7 +11,7 @@ export class AuthLogoutPostHandler extends AuthHandler {
   public async handle (data: RouteData, response: ServerResponse): Promise<Result> {
     await this.auth.logout(response, data.user)
     return {
-      code: 'ok_auth_logout'
+      code: 'ok_logout'
     }
   }
 }

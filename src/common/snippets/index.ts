@@ -1,35 +1,35 @@
-import authFlowLogin from './auth/flow/login.html'
-import authFlowUpdate from './auth/flow/update.html'
-import authFormGroup from './auth/form/group.html'
-import authFormRole from './auth/form/role.html'
-import authFormUser from './auth/form/user.html'
-import authFormUserGroup from './auth/form/user-group.html'
-import authFormUserGroupRole from './auth/form/user-group-role.html'
-import authFormUserRole from './auth/form/user-role.html'
-import authFormUserToken from './auth/form/user-token.html'
-import queueFormQueue from './queue/form/queue.html'
-import queueFormRun from './queue/form/run.html'
-import queueFormTask from './queue/form/task.html'
+import authEntitiesGroup from './auth/entities/group.html'
+import authEntitiesRole from './auth/entities/role.html'
+import authEntitiesUser from './auth/entities/user.html'
+import authEntitiesUserGroup from './auth/entities/user-group.html'
+import authEntitiesUserGroupRole from './auth/entities/user-group-role.html'
+import authEntitiesUserRole from './auth/entities/user-role.html'
+import authEntitiesUserToken from './auth/entities/user-token.html'
+import authSfaGate from './auth/sfa/gate.html'
+import authSfaUpdate from './auth/sfa/update.html'
+import queueEntitiesQueue from './queue/entities/queue.html'
+import queueEntitiesRun from './queue/entities/run.html'
+import queueEntitiesTask from './queue/entities/task.html'
 import smtpEmail from './smtp/email.html'
-import viewFormView from './view/form/view.html'
-import viewFormViewGroup from './view/form/view-group.html'
-import viewFormViewUser from './view/form/view-user.html'
+import viewEntitiesView from './view/entities/view.html'
+import viewEntitiesViewGroup from './view/entities/view-group.html'
+import viewEntitiesViewUser from './view/entities/view-user.html'
 
 export const snippets = {
-  'sc-auth-flow-login': authFlowLogin,
-  'sc-auth-flow-update': authFlowUpdate,
-  'sc-auth-form-group': authFormGroup,
-  'sc-auth-form-role': authFormRole,
-  'sc-auth-form-user': authFormUser,
-  'sc-auth-form-user-group': authFormUserGroup,
-  'sc-auth-form-user-group-role': authFormUserGroupRole,
-  'sc-auth-form-user-role': authFormUserRole,
-  'sc-auth-form-user-token': authFormUserToken,
-  'sc-queue-form-queue': queueFormQueue,
-  'sc-queue-form-run': queueFormRun,
-  'sc-queue-form-task': queueFormTask,
+  'sc-auth-entities-group': authEntitiesGroup,
+  'sc-auth-entities-role': authEntitiesRole,
+  'sc-auth-entities-user': authEntitiesUser,
+  'sc-auth-entities-user-group': authEntitiesUserGroup,
+  'sc-auth-entities-user-group-role': authEntitiesUserGroupRole,
+  'sc-auth-entities-user-role': authEntitiesUserRole,
+  'sc-auth-entities-user-token': authEntitiesUserToken,
+  'sc-auth-sfa-gate': authSfaGate,
+  'sc-auth-sfa-update': authSfaUpdate,
+  'sc-queue-entities-queue': queueEntitiesQueue,
+  'sc-queue-entities-run': queueEntitiesRun,
+  'sc-queue-entities-task': queueEntitiesTask,
   'sc-smtp-email': smtpEmail,
-  'sc-view-form-view': viewFormView,
-  'sc-view-form-view-group': viewFormViewGroup,
-  'sc-view-form-view-user': viewFormViewUser
+  'sc-view-entities-view': viewEntitiesView,
+  'sc-view-entities-view-group': viewEntitiesViewGroup,
+  'sc-view-entities-view-user': viewEntitiesViewUser
 }

@@ -27,9 +27,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   public set data (data: unknown) {
-    this.toggleDisabled()
     this.propagator.setData(data)
-    this.focusElement()
     this.notify()
   }
 
@@ -51,10 +49,6 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
 
   protected handleErrorBound = this.handleError.bind(this)
 
-  protected handleFocusBound = this.handleFocus.bind(this)
-
-  protected handleObserverBound = this.handleObserver.bind(this)
-
   protected handleResetBound = this.handleReset.bind(this)
 
   protected handleSubmitBound = this.handleSubmit.bind(this)
@@ -64,7 +58,6 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
     this.mutator = new Mutator(this)
     this.observer = new Observer(this)
     this.propagator = new Propagator(this)
-    this.toggleDisabled()
   }
 
   public static define (): void {
@@ -74,10 +67,6 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
   }
 
   public connectedCallback (): void {
-    this.observer.observe(this.handleObserverBound, [
-      'hidden'
-    ])
-
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
@@ -126,32 +115,27 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
 
   protected addEventListeners (): void {
     this.addEventListener('sc-form-error', this.handleErrorBound)
-    this.addEventListener('sc-form-focus', this.handleFocusBound)
     this.addEventListener('sc-form-reset', this.handleResetBound)
     this.addEventListener('submit', this.handleSubmitBound)
   }
 
-  protected focusElement (): void {
-    if (!this.hasAttribute('hidden')) {
-      const element = this.querySelector('[sc-focus~="form"]')
-
-      if (element instanceof HTMLElement) {
-        element.parentElement?.setAttribute('tabindex', '0')
-        element.parentElement?.focus()
-        element.parentElement?.removeAttribute('tabindex')
-        element.focus()
-      }
-    }
-  }
-
   protected focusInvalidElement (): void {
     if (!this.hasAttribute('hidden')) {
-      const element = this.querySelector('[aria-invalid="true"]:not([hidden])')
+      const element = this.querySelector('[sc-focus~="form"][aria-invalid="true"]:not([hidden])')
 
       if (element instanceof HTMLElement) {
-        element.parentElement?.setAttribute('tabindex', '0')
-        element.parentElement?.focus()
-        element.parentElement?.removeAttribute('tabindex')
+        const messageId = element.getAttribute('aria-errormessage')
+
+        if (messageId !== null) {
+          const message = this.querySelector(`#${messageId}`)
+
+          if (message instanceof HTMLElement) {
+            message.parentElement?.setAttribute('tabindex', '0')
+            message.parentElement?.focus()
+            message.parentElement?.removeAttribute('tabindex')
+          }
+        }
+
         element.focus()
       }
     }
@@ -163,15 +147,6 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
       this.focusInvalidElement()
       this.notify()
     }
-  }
-
-  protected handleFocus (): void {
-    this.focusElement()
-  }
-
-  protected handleObserver (): void {
-    this.toggleDisabled()
-    this.focusElement()
   }
 
   protected handleReset (): void {
@@ -203,7 +178,6 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
 
   protected removeEventListeners (): void {
     this.removeEventListener('sc-form-error', this.handleErrorBound)
-    this.removeEventListener('sc-form-focus', this.handleFocusBound)
     this.removeEventListener('sc-form-reset', this.handleResetBound)
     this.removeEventListener('submit', this.handleSubmitBound)
   }
@@ -247,15 +221,5 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
           break
       }
     })
-  }
-
-  protected toggleDisabled (): void {
-    const force = this.hasAttribute('hidden')
-
-    this
-      .querySelectorAll('button, input, select, textarea')
-      .forEach((element) => {
-        element.toggleAttribute('disabled', force)
-      })
   }
 }

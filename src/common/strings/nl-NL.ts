@@ -10,7 +10,7 @@ export default {
   email_subject_register_hotp: 'E-mailadres registeren',
   email_subject_register_identity: 'Account registeren',
   email_subject_unregister_hotp: 'E-mailadres verwijderen',
-  email_subject_unregister_identity: 'Account verwijderen',
+  email_subject_unregister_identity: 'Uw account is gewijzigd',
   email_subject_update_user: 'Account gewijzigd',
   email_text_login: 'U bent ingelogd op een nieuw apparaat op $(date?dateStyle=full&timeStyle=short)d.\n\nAls u dit niet zelf hebt gedaan, verander dan zo snel mogelijk uw wachtwoord via [deze link]($(url)s).',
   email_text_login_hotp: 'Uw eenmalige code is:\n\n**_$(token)s_**',

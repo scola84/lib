@@ -8,8 +8,6 @@ export class Formatter {
 
   public element: ScolaElement
 
-  public focus?: string
-
   public html?: string
 
   public i18n: I18n
@@ -61,7 +59,6 @@ export class Formatter {
 
   public reset (): void {
     this.ariaLabel = this.element.getAttribute('sc-aria-label') ?? undefined
-    this.focus = this.element.getAttribute('sc-focus') ?? undefined
     this.html = this.element.getAttribute('sc-html') ?? undefined
     this.locale = this.element.getAttribute('sc-locale') ?? undefined
     this.text = this.element.getAttribute('sc-text') ?? undefined
@@ -93,7 +90,7 @@ export class Formatter {
 
   protected focusElement (): void {
     if (
-      this.focus === 'formatter' &&
+      this.element.getAttribute('sc-focus')?.includes('formatter') === true &&
       !this.element.hasAttribute('hidden')
     ) {
       this.element.setAttribute('tabindex', '0')

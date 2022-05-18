@@ -32,9 +32,13 @@ export class Hider {
 
   public direction?: Direction[]
 
+  public disable: boolean
+
   public distanceThreshold: number
 
   public element: ScolaElement
+
+  public focus: boolean
 
   public immediate = true
 
@@ -97,6 +101,8 @@ export class Hider {
       ?.trim()
       .split(/\s+/u) as Direction[]
 
+    this.disable = this.element.hasAttribute('sc-hide-disable')
+    this.focus = this.element.hasAttribute('sc-hide-focus')
     this.transition = this.breakpoint.parseAttribute('sc-transition') === ''
     this.indexer.index = this.element.getAttribute('sc-hide-index')
     this.interactor.cancel = true
@@ -135,30 +141,15 @@ export class Hider {
       default:
         break
     }
+
+    if (this.disable) {
+      this.toggleDisabled()
+    }
   }
 
   protected addEventListeners (): void {
     this.element.addEventListener('sc-hide-modal', this.handleHideModalBound)
     this.element.addEventListener('transitionend', this.handleTransitionendBound)
-  }
-
-  protected changeFocus (): void {
-    if (this.element.hasAttribute('hidden')) {
-      this.activeElement?.focus()
-      this.activeElement = undefined
-    } else {
-      const element = this.element.querySelector('[sc-focus~="hide"]')
-
-      if (element instanceof HTMLElement) {
-        if (document.activeElement instanceof HTMLElement) {
-          this.activeElement = document.activeElement
-        }
-
-        window.requestAnimationFrame(() => {
-          element.focus()
-        })
-      }
-    }
   }
 
   protected finalize (): void {
@@ -177,7 +168,28 @@ export class Hider {
       this.element.propagator.dispatchEvents('aftershow', [this.element.data])
     }
 
-    this.changeFocus()
+    if (this.focus) {
+      this.focusElement()
+    }
+  }
+
+  protected focusElement (): void {
+    if (this.element.hasAttribute('hidden')) {
+      this.activeElement?.focus()
+      this.activeElement = undefined
+    } else {
+      const element = this.element.querySelector('[sc-focus~="hider"]')
+
+      if (element instanceof HTMLElement) {
+        if (document.activeElement instanceof HTMLElement) {
+          this.activeElement = document.activeElement
+        }
+
+        window.requestAnimationFrame(() => {
+          element.focus()
+        })
+      }
+    }
   }
 
   protected handleBreakpoint (event: BreakpointEvent): void {
@@ -778,6 +790,24 @@ export class Hider {
         }
       })
     })
+  }
+
+  protected toggleDisabled (): void {
+    const isHidden = this.element.hasAttribute('hidden')
+
+    this.element
+      .querySelectorAll('button, input, fieldset, form, select, textarea')
+      .forEach((element) => {
+        if (isHidden) {
+          element.setAttribute('tabindex', '-1')
+        } else {
+          element.removeAttribute('tabindex')
+        }
+      })
+
+    if (this.focus) {
+      this.focusElement()
+    }
   }
 
   protected toggleHeight (): void {

@@ -339,16 +339,6 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     return style
   }
 
-  protected changeFocus (): void {
-    if (!this.hasAttribute('hidden')) {
-      const element = this.querySelector('[sc-focus~="popup"]')
-
-      if (element instanceof HTMLElement) {
-        element.focus()
-      }
-    }
-  }
-
   protected finalize (): void {
     if (this.transition) {
       this.immediate = false
@@ -362,7 +352,17 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
       this.propagator.dispatchEvents('aftershow')
     }
 
-    this.changeFocus()
+    this.focusElement()
+  }
+
+  protected focusElement (): void {
+    if (!this.hasAttribute('hidden')) {
+      const element = this.querySelector('[sc-focus~="popup"]')
+
+      if (element instanceof HTMLElement) {
+        element.focus()
+      }
+    }
   }
 
   protected handleBreakpoint (): void {

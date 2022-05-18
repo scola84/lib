@@ -11,7 +11,7 @@
     id="requester-get-user-session"
     is="sc-requester"
     sc-url="/api/auth/user/session"
-    sc-ondata="sc-data-set@[is='sc-auth']"
+    sc-ondata="sc-data-set@[is='sc-auth'] sc-data-set@[is='sc-app']"
     sc-onerror="sc-data-set@[is='sc-auth']"
     sc-wait
   ></object>
@@ -31,7 +31,13 @@
     sc-preset="sc-carousel sc-auth-carousel"
   >
     <div is="sc-div" sc-preset="sc-carousel-body" sc-transition="@all">
-      <div hidden is="sc-div" sc-preset="sc-carousel-item">
+      <div
+        is="sc-div"
+        sc-hide
+        sc-hide-disable
+        sc-hide-focus
+        sc-preset="sc-carousel-item"
+      >
         <div is="sc-div" sc-preset="sc-header">
           <h1 is="sc-h1" sc-preset="sc-header-title" sc-text="title_login"></h1>
           <div is="sc-div" sc-preset="sc-button-group">
@@ -73,6 +79,7 @@
         <form
           id="form-login"
           is="sc-form"
+          novalidate
           sc-onhide="sc-requester-reset@#requester-post-login"
           sc-onsubmit="sc-requester-send@#requester-post-login"
           sc-preset="sc-body sc-form sc-section-group"
@@ -88,12 +95,12 @@
             sc-wait
           ></object>
           <div is="sc-div" sc-preset="sc-section">
-            <fieldset is="sc-fieldset" sc-preset="sc-section-body sc-fieldset">
+            <fieldset is="sc-fieldset" sc-preset="sc-fieldset sc-section-body">
               <div is="sc-div" sc-preset="sc-fieldset-item">
                 <label
                   for="input-login-user-identity"
                   is="sc-label"
-                  sc-preset="sc-field-label"
+                  sc-preset="sc-field-title"
                   sc-text="label_user_identity"
                 ></label>
                 <input
@@ -103,7 +110,7 @@
                   name="identity"
                   required
                   type="text"
-                  sc-focus="form invalid"
+                  sc-focus="form hider"
                   sc-preset="sc-field"
                 />
                 <span
@@ -117,7 +124,7 @@
                 <label
                   for="input-login-user-auth-password"
                   is="sc-label"
-                  sc-preset="sc-field-label"
+                  sc-preset="sc-field-title"
                   sc-text="label_user_auth_password"
                 ></label>
                 <input
@@ -128,7 +135,7 @@
                   name="auth_password"
                   required
                   type="password"
-                  sc-focus="invalid"
+                  sc-focus="form"
                   sc-preset="sc-field"
                 />
                 <span
@@ -173,7 +180,14 @@
           </li>
         </ul>
       </div>
-      <div hidden is="sc-div" sc-preset="sc-carousel-item">
+      <div
+        hidden
+        is="sc-div"
+        sc-hide
+        sc-hide-disable
+        sc-hide-focus
+        sc-preset="sc-carousel-item"
+      >
         <div is="sc-div" sc-preset="sc-header">
           <h1
             is="sc-h1"
@@ -219,7 +233,7 @@
         <form
           id="form-register"
           is="sc-form"
-          sc-scrollbar-axis="y"
+          novalidate
           sc-onhide="sc-requester-reset@#requester-post-register"
           sc-onsubmit="sc-requester-send@#requester-post-register"
           sc-preset="sc-body sc-form sc-section-group"
@@ -261,14 +275,14 @@
               aria-labelledby="title-register-user-identity"
               id="fieldset-register-user-identity"
               is="sc-fieldset"
-              sc-preset="sc-section-body sc-fieldset"
+              sc-preset="sc-fieldset sc-section-body"
             >
               <div is="sc-div"></div>
               <div is="sc-div" sc-preset="sc-fieldset-item">
                 <label
                   for="input-register-user-identity-name"
                   is="sc-label"
-                  sc-preset="sc-field-label"
+                  sc-preset="sc-field-title"
                   sc-text="label_user_identity_name"
                 ></label>
                 <input
@@ -278,7 +292,7 @@
                   is="sc-input"
                   name="identity_name"
                   type="text"
-                  sc-focus="form invalid"
+                  sc-focus="form hider"
                   sc-preset="sc-field"
                 />
                 <span
@@ -292,7 +306,7 @@
                 <label
                   for="input-register-user-identity-email"
                   is="sc-label"
-                  sc-preset="sc-field-label"
+                  sc-preset="sc-field-title"
                   sc-text="label_user_identity_email"
                 ></label>
                 <input
@@ -302,6 +316,7 @@
                   is="sc-input"
                   name="identity_email"
                   type="email"
+                  sc-focus="form"
                   sc-preset="sc-field"
                 />
                 <span
@@ -315,7 +330,7 @@
                 <label
                   for="input-register-user-identity-tel-national"
                   is="sc-label"
-                  sc-preset="sc-field-label"
+                  sc-preset="sc-field-title"
                   sc-text="label_user_identity_tel"
                 ></label>
                 <div is="sc-div" sc-preset="sc-fieldset-row">
@@ -329,7 +344,7 @@
                       is="sc-select"
                       name="identity_tel_country_code"
                       sc-generator="sc-tel-country-code"
-                      sc-preset="sc-field"
+                      sc-preset="sc-field sc-field-under-text"
                       sc-width="3@all"
                     ></select>
                     <span class="sc-text-over-field-container" is="sc-span">
@@ -349,6 +364,7 @@
                     is="sc-input"
                     name="identity_tel_national"
                     type="tel"
+                    sc-focus="form"
                     sc-preset="sc-field"
                     sc-width="flex@all"
                   />
@@ -364,7 +380,7 @@
                 <label
                   for="input-register-user-identity-username"
                   is="sc-label"
-                  sc-preset="sc-field-label"
+                  sc-preset="sc-field-title"
                   sc-text="label_user_identity_username"
                 ></label>
                 <input
@@ -374,6 +390,7 @@
                   is="sc-input"
                   name="identity_username"
                   type="text"
+                  sc-focus="form"
                   sc-preset="sc-field"
                 />
                 <span
@@ -385,7 +402,7 @@
                 <span
                   id="hint-register-user-identity"
                   is="sc-span"
-                  sc-preset="sc-field-comment"
+                  sc-preset="sc-fieldset-hint"
                   sc-text="hint_user_identity"
                 ></span>
               </div>
@@ -419,14 +436,14 @@
               aria-labelledby="title-register-user-auth"
               id="fieldset-register-user-auth"
               is="sc-fieldset"
-              sc-preset="sc-section-body sc-fieldset"
+              sc-preset="sc-fieldset sc-section-body"
             >
               <div is="sc-div"></div>
               <div is="sc-div" sc-preset="sc-fieldset-item">
                 <label
                   for="input-register-user-auth-password"
                   is="sc-label"
-                  sc-preset="sc-field-label"
+                  sc-preset="sc-field-title"
                   sc-text="label_user_auth_password_required"
                 ></label>
                 <input
@@ -437,19 +454,19 @@
                   name="auth_password"
                   required
                   type="password"
-                  sc-focus="invalid"
+                  sc-focus="form"
                   sc-preset="sc-field"
                 />
-                <span
-                  is="sc-span"
-                  sc-preset="sc-field-comment"
-                  sc-text="hint_user_auth_password"
-                ></span>
                 <span
                   id="error-register-user-auth-password"
                   is="sc-span"
                   sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-register-user-auth-password"
                   sc-preset="sc-field-error"
+                ></span>
+                <span
+                  is="sc-span"
+                  sc-preset="sc-fieldset-hint"
+                  sc-text="hint_user_auth_password"
                 ></span>
               </div>
             </fieldset>

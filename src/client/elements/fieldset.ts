@@ -117,16 +117,6 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
     this.addEventListener('sc-fieldset-verify', this.handleVerifyBound)
   }
 
-  protected changeFocus (): void {
-    if (!this.hasAttribute('hidden')) {
-      const element = this.querySelector('[sc-focus~="fieldset"]')
-
-      if (element instanceof HTMLElement) {
-        element.focus()
-      }
-    }
-  }
-
   protected handleFalsify (): void {
     const dispatched = this.propagator.dispatchEvents('falsify', [this.data])
 
@@ -138,7 +128,6 @@ export class ScolaFieldSetElement extends HTMLFieldSetElement implements ScolaEl
   protected handleObserver (): void {
     this.hider?.toggle()
     this.toggleDisabled()
-    this.changeFocus()
   }
 
   protected handleVerify (): void {

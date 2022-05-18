@@ -117,7 +117,7 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
     this.formatter.update()
   }
 
-  protected changeFocus (): void {
+  protected focusElement (): void {
     if (!this.hasAttribute('hidden')) {
       if (this.getAttribute('sc-focus')?.includes('button') === true) {
         this.focus()
@@ -170,6 +170,6 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
   }
 
   protected handleObserver (): void {
-    this.changeFocus()
+    this.focusElement()
   }
 }

@@ -93,16 +93,17 @@ export const presets = {
     'sc-direction': 'column',
     'sc-width': 'flex-max@all'
   },
+  'sc-checkbox': {
+    'sc-checkbox-color': 'contrast',
+    'sc-height': '1.5@all',
+    'sc-round': 'max@all',
+    'sc-width': '1.5@all'
+  },
   'sc-field': {
     'sc-bg-color': 'contrast',
     'sc-height': '3@all',
     'sc-padding': '0.75@all',
     'sc-text-color': 'normal'
-  },
-  'sc-field-comment': {
-    'sc-padding-top': '0.25@all',
-    'sc-text-color': 'contrast',
-    'sc-text-size': '0.9@all'
   },
   'sc-field-container-icon': {
     'sc-height': '2@all',
@@ -122,15 +123,24 @@ export const presets = {
     'sc-text-color': 'white',
     'sc-text-size': '0.9@all'
   },
-  'sc-field-label': {
+  'sc-field-hint': {
+    'sc-align-y': 'center',
+    'sc-direction': 'row',
+    'sc-width': 'flex@all'
+  },
+  'sc-field-title': {
     'sc-padding-bottom': '0.25@all',
     'sc-text-color': 'normal',
     'sc-text-size': '0.9@all'
   },
   'sc-field-under-icon': {
     'sc-height': '2@all',
+    'sc-interact': '',
     'sc-round': 'max@all',
     'sc-width': '2@all'
+  },
+  'sc-field-under-text': {
+    'sc-interact': ''
   },
   'sc-fieldset': {
     'sc-direction': 'column',
@@ -145,8 +155,12 @@ export const presets = {
     'sc-border-bottom': '@all',
     'sc-border-color': 'normal',
     'sc-direction': 'column',
-    'sc-margin-y': '0.5@all',
-    'sc-width': 'max@all'
+    'sc-margin-y': '0.5@all'
+  },
+  'sc-fieldset-hint': {
+    'sc-padding-top': '0.25@all',
+    'sc-text-color': 'contrast',
+    'sc-text-size': '0.9@all'
   },
   'sc-fieldset-item': {
     'sc-direction': 'column',
@@ -170,12 +184,6 @@ export const presets = {
   },
   'sc-footer-button': {
     'sc-text-color-interact': 'theme'
-  },
-  'sc-form': {
-    'novalidate': '',
-    'sc-direction': 'column',
-    'sc-padding-y': '1@all'
-    // 'sc-gap': '0.75@all'
   },
   'sc-form-error': {
     'sc-bg-color': 'red',
@@ -244,9 +252,18 @@ export const presets = {
     'sc-round': 'max@all',
     'sc-width': '1.25@all'
   },
+  'sc-progress': {
+    'sc-height': '0.25@all',
+    'sc-position': 'absolute@all',
+    'sc-position-x': 'start@all',
+    'sc-position-y': 'top@all',
+    'sc-range': 'none',
+    'sc-range-bg-color': 'normal',
+    'sc-range-fg-color': 'theme',
+    'sc-width': 'max@all'
+  },
   'sc-section': {
     'sc-direction': 'column'
-    // 'sc-gap': '0.75@all'
   },
   'sc-section-body': {
     'sc-clip': '',
@@ -258,12 +275,11 @@ export const presets = {
   },
   'sc-section-group': {
     'sc-direction': 'column',
-    'sc-gap-y': '0.5@all'
+    'sc-gap-y': '0.5@all',
+    'sc-padding-y': '1@all'
   },
   'sc-section-title': {
-    // 'sc-align-y': 'center',
     'sc-direction': 'row',
-    // 'sc-height': '2@all',
     'sc-interact': '',
     'sc-padding-x': '1@all',
     'sc-text-color': 'contrast',

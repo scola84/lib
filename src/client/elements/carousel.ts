@@ -257,16 +257,21 @@ export class ScolaCarouselElement extends HTMLDivElement implements ScolaElement
 
       const elementBox = this.getBoundingClientRect()
 
-      Array
-        .from(this.body.children)
-        .forEach((element) => {
-          const itemBox = element.getBoundingClientRect()
+      if (
+        elementBox.height > 0 &&
+        elementBox.width > 0
+      ) {
+        Array
+          .from(this.body.children)
+          .forEach((element) => {
+            const itemBox = element.getBoundingClientRect()
 
-          element.toggleAttribute('hidden', !(
-            itemBox.right <= elementBox.right &&
-            itemBox.left >= elementBox.left
-          ))
-        })
+            element.toggleAttribute('hidden', !(
+              itemBox.right <= elementBox.right &&
+              itemBox.left >= elementBox.left
+            ))
+          })
+      }
     }
 
     this.locked = false

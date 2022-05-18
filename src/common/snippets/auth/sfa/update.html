@@ -4,22 +4,14 @@
     hidden
     is="sc-input"
     type="range"
-    value="0"
-    sc-range-bg-color="normal"
-    sc-range-fg-color="theme"
-    sc-height="0.25@all"
     sc-observe-target="sc-input-data-requester-props@#requester-post-update-user"
-    sc-position="absolute@all"
-    sc-position-x="start@all"
-    sc-position-y="top@all"
-    sc-range="none"
-    sc-width="max@all"
+    sc-preset="sc-progress"
   />
   <form
     id="form-update-user"
     is="sc-form"
     sc-onsubmit="sc-requester-send@#requester-post-update-user"
-    sc-preset="sc-body sc-form sc-section-group"
+    sc-preset="sc-body sc-section-group"
   >
     <object
       id="requester-get-user"
@@ -65,14 +57,14 @@
         aria-labelledby="title-update-user-identity"
         id="fieldset-update-user-identity"
         is="sc-fieldset"
-        sc-preset="sc-section-body sc-fieldset"
+        sc-preset="sc-fieldset sc-section-body"
       >
         <div is="sc-div"></div>
         <div is="sc-div" sc-preset="sc-fieldset-item">
           <label
             for="input-update-identity-name"
             is="sc-label"
-            sc-preset="sc-field-label"
+            sc-preset="sc-field-title"
             sc-text="label_user_identity_name"
           ></label>
           <input
@@ -82,7 +74,7 @@
             is="sc-input"
             name="identity_name"
             type="text"
-            sc-focus="invalid"
+            sc-focus="form"
             sc-preset="sc-field"
           />
           <span
@@ -96,7 +88,7 @@
           <label
             for="input-update-identity-email"
             is="sc-label"
-            sc-preset="sc-field-label"
+            sc-preset="sc-field-title"
             sc-text="label_user_identity_email"
           ></label>
           <input
@@ -106,6 +98,7 @@
             is="sc-input"
             name="identity_email"
             type="email"
+            sc-focus="form"
             sc-preset="sc-field"
           />
           <span
@@ -119,7 +112,7 @@
           <label
             for="input-update-user-identity-tel-national"
             is="sc-label"
-            sc-preset="sc-field-label"
+            sc-preset="sc-field-title"
             sc-text="label_user_identity_tel"
           ></label>
           <div is="sc-div" sc-preset="sc-fieldset-row">
@@ -133,7 +126,7 @@
                 is="sc-select"
                 name="identity_tel_country_code"
                 sc-generator="sc-tel-country-code"
-                sc-preset="sc-field"
+                sc-preset="sc-field sc-field-under-text"
                 sc-width="3@all"
               ></select>
               <span class="sc-text-over-field-container" is="sc-span">
@@ -153,6 +146,7 @@
               is="sc-input"
               name="identity_tel_national"
               type="tel"
+              sc-focus="form"
               sc-preset="sc-field"
               sc-width="flex@all"
             />
@@ -168,7 +162,7 @@
           <label
             for="input-update-user-identity-username"
             is="sc-label"
-            sc-preset="sc-field-label"
+            sc-preset="sc-field-title"
             sc-text="label_user_identity_username"
           ></label>
           <input
@@ -178,6 +172,7 @@
             is="sc-input"
             name="identity_username"
             type="text"
+            sc-focus="form"
             sc-preset="sc-field"
           />
           <span
@@ -189,7 +184,7 @@
           <span
             id="hint-update-user-identity"
             is="sc-span"
-            sc-preset="sc-field-comment"
+            sc-preset="sc-fieldset-hint"
             sc-text="hint_user_identity"
           ></span>
         </div>
@@ -223,7 +218,7 @@
         aria-labelledby="title-update-user-email"
         id="fieldset-update-user-email"
         is="sc-fieldset"
-        sc-preset="sc-section-body sc-fieldset"
+        sc-preset="sc-fieldset sc-section-body"
       >
         <div is="sc-div"></div>
         <div is="sc-div" sc-preset="sc-fieldset-item">
@@ -239,17 +234,14 @@
               name="email_auth_login"
               type="checkbox"
               value="true"
-              sc-checkbox-color="contrast"
-              sc-height="1.5@all"
-              sc-width="1.5@all"
-              sc-round="max@all"
+              sc-preset="sc-checkbox"
             />
             <label
               for="input-update-user-email-auth-login"
               id="hint-user-email-auth-login"
               is="sc-label"
+              sc-preset="sc-field-hint"
               sc-text="hint_user_email_auth_login"
-              sc-width="flex@all"
             ></label>
           </div>
         </div>
@@ -275,8 +267,8 @@
               for="input-update-user-email-auth-update"
               id="hint-user-email-auth-update"
               is="sc-label"
+              sc-preset="sc-field-hint"
               sc-text="hint_user_email_auth_update"
-              sc-width="flex@all"
             ></label>
           </div>
         </div>
@@ -310,14 +302,14 @@
         aria-labelledby="title-update-user-i18n"
         id="fieldset-update-user-i18n"
         is="sc-fieldset"
-        sc-preset="sc-section-body sc-fieldset"
+        sc-preset="sc-fieldset sc-section-body"
       >
         <div is="sc-div"></div>
         <div is="sc-div" sc-preset="sc-fieldset-item">
           <label
             for="input-update-user-i18n-locale"
             is="sc-label"
-            sc-preset="sc-field-label"
+            sc-preset="sc-field-title"
             sc-text="label_user_i18n_locale"
           ></label>
           <select
@@ -341,7 +333,7 @@
           <label
             for="input-update-user-i18n-time-zone"
             is="sc-label"
-            sc-preset="sc-field-label"
+            sc-preset="sc-field-title"
             sc-text="label_user_i18n_time_zone"
           ></label>
           <select

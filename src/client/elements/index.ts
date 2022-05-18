@@ -1,3 +1,5 @@
+import '@ungap/custom-elements'
+
 export * from './app'
 export * from './audio'
 export * from './auth'

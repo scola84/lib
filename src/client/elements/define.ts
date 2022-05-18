@@ -1,4 +1,3 @@
-import '@ungap/custom-elements'
 import { ScolaAppElement } from './app'
 import { ScolaAudioElement } from './audio'
 import { ScolaAuthElement } from './auth'

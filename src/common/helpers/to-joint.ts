@@ -7,7 +7,7 @@ export interface ToJointOptions {
 
 export function toJoint (string: string, options: ToJointOptions = {}): string {
   const {
-    caps = /(?<![A-Z])[A-Z]/gu,
+    caps = /[A-Z]/gu,
     chars = /[^a-z0-9_]+/gui,
     lower = true,
     separator = ''

@@ -12,8 +12,8 @@ export function identity (name: string): Validator {
       isNil(value.identity_email) ||
       value.identity_email === ''
     ) && (
-      isNil(value.identity_tel) ||
-      value.identity_tel === ''
+      isNil(value.identity_tel_national) ||
+      value.identity_tel_national === ''
     ) && (
       isNil(value.identity_username) ||
       value.identity_username === ''

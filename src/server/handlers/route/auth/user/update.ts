@@ -1,6 +1,6 @@
 import type { Result, User } from '../../../../../common'
+import { AuthHandler } from '../auth'
 import type { RouteData } from '../../../../helpers'
-import { RouteHandler } from '../../../../helpers'
 import { toString } from '../../../../../common'
 
 interface AuthUserUpdateHandlerData extends RouteData {
@@ -15,10 +15,11 @@ interface AuthUserUpdateHandlerData extends RouteData {
     identity_tel_national?: string
     identity_username?: string
   }
+  user: User
 }
 
-export class AuthUserUpdateHandler extends RouteHandler {
-  public authorize = false
+export class AuthUserUpdateHandler extends AuthHandler {
+  public authenticate = true
 
   public keys = {
     primary: [{
@@ -71,22 +72,20 @@ export class AuthUserUpdateHandler extends RouteHandler {
   }
 
   public async handle (data: AuthUserUpdateHandlerData): Promise<Result> {
-    const updateQuery = this.database?.formatter.createUpdateQuery('user', this.schema.body.schema, this.keys, data.body)
+    const updateQuery = this.database.formatter.createUpdateQuery('user', this.schema.body.schema, this.keys, data.body)
 
-    if (updateQuery?.values !== undefined) {
-      updateQuery.values.user_id = data.user?.user_id
-      await this.database?.update(updateQuery.string, updateQuery.values)
+    if (updateQuery.values !== undefined) {
+      updateQuery.values.user_id = data.user.user_id
+      await this.database.update(updateQuery.string, updateQuery.values)
     }
 
-    if (data.user !== undefined) {
-      this
-        .sendMessage(data.user)
-        .catch((error) => {
-          this.logger?.error({
-            context: 'update'
-          }, toString(error))
-        })
-    }
+    this
+      .sendMessage(data.user)
+      .catch((error) => {
+        this.logger?.error({
+          context: 'update'
+        }, toString(error))
+      })
 
     return {
       code: 'ok_update_user'

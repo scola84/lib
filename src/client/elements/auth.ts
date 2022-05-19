@@ -5,11 +5,19 @@ import { isError, toJoint } from '../../common/'
 import type { ScolaElement } from './element'
 import type { ScolaViewElement } from './view'
 
+declare global {
+  interface WindowEventMap {
+    'sc-auth-error': CustomEvent<() => void>
+  }
+}
+
 export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
   public static storage: Partial<Struct<Storage>> = {
     local: window.localStorage,
     session: window.sessionStorage
   }
+
+  public callbacks: Array<() => void> = []
 
   public flow: Flow | null = null
 
@@ -34,31 +42,22 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
 
   public set data (data: unknown) {
     if (isUser(data)) {
-      this.user = data
-      this.saveState()
-      this.loadViews()
-      this.update()
+      this.login(data)
     } else if (isError(data)) {
       if (
         data.code.endsWith('401') ||
         data.code.endsWith('403')
       ) {
-        this.flow = null
-        this.user = null
-        this.saveState()
-        this.clearViews()
-        this.update()
+        this.logout()
       } else {
         this.propagator.dispatchEvents('error', [data])
       }
     } else {
-      this.flow = null
-      this.user = null
-      this.saveState()
-      this.clearViews()
-      this.update()
+      this.logout()
     }
   }
+
+  protected handleErrorBound = this.handleError.bind(this)
 
   protected handleObserverBound = this.handleObserver.bind(this)
 
@@ -90,6 +89,7 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
     this.mutator.connect()
     this.observer.connect()
     this.propagator.connect()
+    this.addEventListeners()
     this.loadState()
   }
 
@@ -98,6 +98,7 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
     this.mutator.disconnect()
     this.observer.disconnect()
     this.propagator.disconnect()
+    this.removeEventListeners()
   }
 
   public notify (): void {
@@ -128,12 +129,21 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
     this.toggleAttribute('hidden', this.user !== null)
   }
 
+  protected addEventListeners (): void {
+    window.addEventListener('sc-auth-error', this.handleErrorBound)
+  }
+
   protected clearViews (): void {
     document
       .querySelectorAll<ScolaViewElement>('[is="sc-view"]')
       .forEach((element) => {
         element.clear()
       })
+  }
+
+  protected handleError (event: WindowEventMap['sc-auth-error']): void {
+    this.callbacks.push(event.detail)
+    this.logout(false)
   }
 
   protected handleObserver (mutations: MutationRecord[]): void {
@@ -197,6 +207,43 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
           element.load()
         }
       })
+  }
+
+  protected login (user: User): void {
+    this.user = user
+    this.saveState()
+    this.update()
+
+    if (this.callbacks.length > 0) {
+      this.resolveCallbacks()
+    } else {
+      this.loadViews()
+    }
+  }
+
+  protected logout (clear = true): void {
+    this.flow = null
+    this.user = null
+    this.saveState()
+    this.update()
+
+    if (clear) {
+      this.clearViews()
+    }
+  }
+
+  protected removeEventListeners (): void {
+    window.removeEventListener('sc-auth-error', this.handleErrorBound)
+  }
+
+  protected resolveCallbacks (): void {
+    try {
+      this.callbacks.forEach((callback) => {
+        callback()
+      })
+    } finally {
+      this.callbacks = []
+    }
   }
 
   protected saveState (): void {

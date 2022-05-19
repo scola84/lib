@@ -21,6 +21,8 @@ export abstract class AuthRegisterPasswordHandler extends AuthRegisterHandler {
         $[identity_username]
       ) VALUES (
         $(auth_password),
+        $(email_auth_login),
+        $(email_auth_update),
         $(i18n_locale),
         $(i18n_time_zone),
         $(identity_email),

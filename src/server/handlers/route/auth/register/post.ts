@@ -83,6 +83,8 @@ export class AuthRegisterPostHandler extends AuthRegisterPasswordHandler {
 
     await this.register(data, response, createUser({
       auth_password: password.toString(),
+      email_auth_login: true,
+      email_auth_update: true,
       i18n_locale: data.body.i18n_locale,
       i18n_time_zone: data.body.i18n_time_zone,
       identity_email: data.body.identity_email,

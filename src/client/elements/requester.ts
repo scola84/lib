@@ -436,7 +436,14 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   protected handleLoadendError (event: ProgressEvent, options: unknown, data: unknown): void {
     const xhr = event.target as XMLHttpRequest
 
-    if (isTransaction(options)) {
+    if (
+      xhr.status === 401 ||
+      xhr.status === 403
+    ) {
+      window.dispatchEvent(new CustomEvent('sc-auth-error', {
+        detail: this.send.bind(this, options)
+      }))
+    } else if (isTransaction(options)) {
       if (isStruct(data)) {
         options.result = data.body ?? data.query ?? data.headers ?? data
       }

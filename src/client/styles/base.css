@@ -24,10 +24,6 @@ body {
   user-select: none;
 }
 
-:autofill {
-  background: inherit;
-}
-
 :focus {
   outline: none;
 }
@@ -163,49 +159,78 @@ body {
   justify-content: flex-start;
 }
 
-[sc-bg-color="black"],
+[sc-bg-color="black"] {
+  background-color: #000;
+}
+
 [sc-bg-color="black"]:autofill {
   background-color: #000;
 }
 
-[sc-bg-color="black-transparent"],
+[sc-bg-color="black-transparent"] {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
 [sc-bg-color="black-transparent"]:autofill {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-[sc-bg-color="contrast"],
+[sc-bg-color="contrast"] {
+  background-color: var(--gc2);
+}
+
 [sc-bg-color="contrast"]:autofill {
   background-color: var(--gc2);
 }
 
-[sc-bg-color="green"],
+[sc-bg-color="green"] {
+  background-color: green;
+}
+
 [sc-bg-color="green"]:autofill {
   background-color: green;
 }
 
-[sc-bg-color="normal"],
+[sc-bg-color="normal"] {
+  background-color: var(--gc1);
+}
+
 [sc-bg-color="normal"]:autofill {
   background-color: var(--gc1);
 }
 
-[sc-bg-color="red"],
+[sc-bg-color="red"] {
+  background-color: firebrick;
+}
+
 [sc-bg-color="red"]:autofill {
   background-color: firebrick;
 }
 
-[sc-bg-color="theme"],
+[sc-bg-color="theme"] {
+  background-color: var(--tc1);
+  color: #fff;
+  fill: #fff;
+}
+
 [sc-bg-color="theme"]:autofill {
   background-color: var(--tc1);
   color: #fff;
   fill: #fff;
 }
 
-[sc-bg-color="white"],
+[sc-bg-color="white"] {
+  background-color: #fff;
+}
+
 [sc-bg-color="white"]:autofill {
   background-color: #fff;
 }
 
-[sc-bg-color="white-transparent"],
+[sc-bg-color="white-transparent"] {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
 [sc-bg-color="white-transparent"]:autofill {
   background-color: rgba(255, 255, 255, 0.5);
 }

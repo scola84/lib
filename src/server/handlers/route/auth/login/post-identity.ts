@@ -41,7 +41,7 @@ export class AuthLoginPostIdentityHandler extends AuthLoginHandler {
     const user = await this.selectUserByIdentity(data.body.identity)
 
     if (user === undefined) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('User in database is undefined')
     }
 
@@ -54,7 +54,7 @@ export class AuthLoginPostIdentityHandler extends AuthLoginHandler {
     }
 
     if (type === null) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('User has no credentials set')
     }
 

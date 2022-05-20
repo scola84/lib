@@ -27,7 +27,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
     const password = AuthPassword.parse(user.auth_password ?? '')
 
     if (!(await password.validate(data.body.auth_password))) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('Password is not valid')
     }
 
@@ -69,7 +69,7 @@ export abstract class AuthLoginPasswordHandler extends AuthLoginHandler {
       return this.requestHotpTel(response, user)
     }
 
-    response.statusCode = 401
+    response.statusCode = 403
     throw new Error('HOTP is undefined')
   }
 

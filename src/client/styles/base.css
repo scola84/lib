@@ -24,6 +24,10 @@ body {
   user-select: none;
 }
 
+:autofill {
+  background: inherit;
+}
+
 :focus {
   outline: none;
 }

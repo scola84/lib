@@ -33,7 +33,7 @@ export class AuthLoginPostCodeHandler extends AuthLoginHandler {
     const codes = AuthCodes.parse(user.auth_codes ?? '')
 
     if (!codes.validate(data.body.code)) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('Code is not valid')
     }
 

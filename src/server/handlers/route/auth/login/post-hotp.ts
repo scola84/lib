@@ -33,7 +33,7 @@ export class AuthLoginPostHotpHandler extends AuthLoginHandler {
     const htop = AuthHotp.parse(user.auth_hotp ?? '')
 
     if (htop.validate(data.body) === null) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('HOTP is not valid')
     }
 

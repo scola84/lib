@@ -21,7 +21,7 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
 
   public async handle (data: RouteData, response: ServerResponse): Promise<Result | undefined> {
     if (data.user === undefined) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('User is undefined')
     }
 

@@ -31,7 +31,7 @@ export class AuthUnregisterPostTotpConfirmHandler extends AuthHandler {
 
   public async handle (data: AuthUnregisterPostTotpConfirmData, response: ServerResponse): Promise<Result> {
     if (data.user === undefined) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('User is undefined')
     }
 
@@ -39,7 +39,7 @@ export class AuthUnregisterPostTotpConfirmHandler extends AuthHandler {
     const totp = AuthTotp.parse(tmpUser.auth_totp ?? '')
 
     if (totp.validate(data.body) === null) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('TOTP is not valid')
     }
 

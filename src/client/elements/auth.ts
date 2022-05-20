@@ -44,10 +44,7 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
     if (isUser(data)) {
       this.login(data)
     } else if (isError(data)) {
-      if (
-        data.code.endsWith('401') ||
-        data.code.endsWith('403')
-      ) {
+      if (data.code.endsWith('401')) {
         this.logout()
       } else {
         this.propagator.dispatchEvents('error', [data])

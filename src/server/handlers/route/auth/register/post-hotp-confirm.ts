@@ -31,7 +31,7 @@ export class AuthRegisterPostHotpConfirmHandler extends AuthRegisterHandler {
 
   public async handle (data: AuthRegisterPostHotpConfirmData, response: ServerResponse): Promise<Result> {
     if (data.user === undefined) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('User is undefined')
     }
 
@@ -39,7 +39,7 @@ export class AuthRegisterPostHotpConfirmHandler extends AuthRegisterHandler {
     const hotp = AuthHotp.parse(tmpUser.auth_hotp ?? '')
 
     if (hotp.validate(data.body) === null) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('HOTP is not valid')
     }
 
@@ -55,7 +55,7 @@ export class AuthRegisterPostHotpConfirmHandler extends AuthRegisterHandler {
       }
     }
 
-    response.statusCode = 401
+    response.statusCode = 403
     throw new Error('HOTP is undefined')
   }
 }

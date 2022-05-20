@@ -33,7 +33,7 @@ export class AuthLoginPostTotpHandler extends AuthLoginHandler {
     const totp = AuthTotp.parse(user.auth_totp ?? '')
 
     if (totp.validate(data.body) === null) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('TOTP is not valid')
     }
 

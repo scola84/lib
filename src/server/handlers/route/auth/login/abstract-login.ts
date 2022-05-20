@@ -17,7 +17,7 @@ export abstract class AuthLoginHandler extends AuthHandler {
     })
 
     if (user === undefined) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('User in database is undefined')
     }
 

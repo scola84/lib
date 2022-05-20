@@ -27,7 +27,7 @@ export class AuthRegisterPostCodesRequestHandler extends AuthRegisterHandler {
 
   public async handle (data: RouteData, response: ServerResponse): Promise<Result> {
     if (data.user?.token === undefined) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('Token is undefined')
     }
 

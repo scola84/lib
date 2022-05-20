@@ -39,18 +39,18 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
       return this.requestHotpTel(data, response)
     }
 
-    response.statusCode = 401
+    response.statusCode = 403
     throw new Error('HOTP is undefined')
   }
 
   protected async requestHotpEmail (data: AuthUnregisterPostHotpRequestData, response: ServerResponse): Promise<Result> {
     if (data.user?.token === undefined) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('Token is undefined')
     }
 
     if (data.user.auth_hotp_email === null) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('Email is null')
     }
 
@@ -95,12 +95,12 @@ export class AuthUnregisterPostHotpRequestHandler extends AuthHandler {
 
   protected async requestHotpTel (data: AuthUnregisterPostHotpRequestData, response: ServerResponse): Promise<Result> {
     if (data.user?.token === undefined) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('Token is undefined')
     }
 
     if (data.user.auth_hotp_tel_national === null) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('Tel is null')
     }
 

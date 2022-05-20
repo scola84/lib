@@ -167,7 +167,7 @@ export abstract class RouteHandler {
       }
     } catch (error: unknown) {
       if (!response.headersSent) {
-        if (response.statusCode === 401) {
+        if (response.statusCode === 403) {
           await this.auth?.setBackoff(data, response)
         } else {
           if (response.statusCode < 300) {

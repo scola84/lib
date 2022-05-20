@@ -31,7 +31,7 @@ export class AuthRegisterPostPasswordHandler extends AuthRegisterPasswordHandler
     const user = await this.selectUserByIdentities(tmpUser)
 
     if (user !== undefined) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('User in database is defined')
     }
 

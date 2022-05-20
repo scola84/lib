@@ -42,14 +42,14 @@ export abstract class AuthHandler extends RouteHandler {
     const hash = this.auth.getHash(data)
 
     if (hash === undefined) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('Hash is undefined')
     }
 
     const tmpUser = await this.getTmpUserByHash(hash)
 
     if (tmpUser === undefined) {
-      response.statusCode = 401
+      response.statusCode = 403
       throw new Error('Tmp user is undefined')
     }
 

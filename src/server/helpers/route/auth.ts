@@ -120,7 +120,7 @@ export class RouteAuth {
       data.user.role?.permissions[name] !== true &&
       data.user.token?.permissions?.[name] !== true
     ) {
-      response.statusCode = 403
+      response.statusCode = 401
       throw new Error('User is not permitted')
     }
   }

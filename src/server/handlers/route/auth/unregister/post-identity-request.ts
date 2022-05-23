@@ -47,8 +47,11 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
       ?.send(await this.smtp.create('unregister_identity', {
         date: new Date(),
         date_time_zone: user.i18n_time_zone,
-        token: token,
-        url: `${this.origin}?next=auth_unregister_identity_confirm&token=${token.hash}`,
+        token: {
+          date_expires_time_zone: user.i18n_time_zone,
+          ...token
+        },
+        url: `${this.origin}?next=auth_unregister_identity_confirm&data.date_expires=${token.date_expires.toISOString()}&data.hash=${token.hash}`,
         user: user
       }, {
         i18n_locale: user.i18n_locale,
@@ -76,8 +79,11 @@ export class AuthUnregisterPostIdentityHandler extends AuthHandler {
       ?.send(await this.sms.create('unregister_identity', {
         date: new Date(),
         date_time_zone: user.i18n_time_zone,
-        token: token,
-        url: `${this.origin}?next=auth_unregister_identity_confirm&token=${token.hash}`,
+        token: {
+          date_expires_time_zone: user.i18n_time_zone,
+          ...token
+        },
+        url: `${this.origin}?next=auth_unregister_identity_confirm&data.date_expires=${token.date_expires.toISOString()}&data.hash=${token.hash}`,
         user: user
       }, {
         i18n_locale: user.i18n_locale,

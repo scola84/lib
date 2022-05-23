@@ -129,6 +129,7 @@ export const presets = {
     'sc-width': 'flex@all'
   },
   'sc-field-title': {
+    'sc-clip': 'text',
     'sc-padding-bottom': '0.25@all',
     'sc-text-color': 'normal',
     'sc-text-size': '0.9@all'
@@ -180,6 +181,7 @@ export const presets = {
     'sc-height': '3@all',
     'sc-padding-x': '0.5@all',
     'sc-text-color': 'contrast',
+    'sc-text-size': '0.9@all',
     'sc-width': 'max@all'
   },
   'sc-footer-button': {
@@ -191,6 +193,13 @@ export const presets = {
     'sc-padding': '0.5@all',
     'sc-text-align': 'center',
     'sc-text-color': 'white',
+    'sc-text-size': '0.9@all'
+  },
+  'sc-form-message': {
+    'sc-bg-color': 'theme',
+    'sc-nodata': '',
+    'sc-padding': '0.5@all',
+    'sc-text-align': 'center',
     'sc-text-size': '0.9@all'
   },
   'sc-form-result': {
@@ -214,6 +223,7 @@ export const presets = {
     'sc-width': 'max@all'
   },
   'sc-header-title': {
+    'sc-clip': 'text',
     'sc-padding-x': '0.5@all',
     'sc-text-style': 'bold uppercase',
     'sc-width': 'flex@all'

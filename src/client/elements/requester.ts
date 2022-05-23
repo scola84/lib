@@ -213,6 +213,8 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
     return {
       concurrency: this.concurrency,
       download: this.download,
+      error: this.error,
+      errorData: this.errorData,
       id: this.id,
       is: this.getAttribute('is'),
       loaded: this.loaded,
@@ -223,6 +225,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
       queue: this.queue,
       queued: this.queued,
       requestType: this.requestType,
+      result: this.result,
       running: this.running,
       state: this.state,
       strict: this.strict,

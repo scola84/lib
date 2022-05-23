@@ -29,7 +29,7 @@ export class AuthLoginPostTotpHandler extends AuthLoginHandler {
   }
 
   public async handle (data: AuthLoginPostTotpData, response: ServerResponse): Promise<Result> {
-    const user = await this.selectUser(data, response)
+    const user = await this.selectTmpUser(data, response)
     const totp = AuthTotp.parse(user.auth_totp ?? '')
 
     if (totp.validate(data.body) === null) {

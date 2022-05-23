@@ -105,8 +105,11 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
       ?.send(await this.smtp.create('register_identity', {
         date: new Date(),
         date_time_zone: user.i18n_time_zone,
-        token: token,
-        url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
+        token: {
+          date_expires_time_zone: user.i18n_time_zone,
+          ...token
+        },
+        url: `${this.origin}?next=auth_register_password&data.date_expires=${token.date_expires.toISOString()}&data.hash=${token.hash}`,
         user: user
       }, {
         i18n_locale: user.i18n_locale,
@@ -134,8 +137,11 @@ export class AuthRegisterPostIdentityHandler extends AuthRegisterHandler {
       ?.send(await this.sms.create('register_identity', {
         date: new Date(),
         date_time_zone: user.i18n_time_zone,
-        token: token,
-        url: `${this.origin}?next=auth_register_identity_password&token=${token.hash}`,
+        token: {
+          date_expires_time_zone: user.i18n_time_zone,
+          ...token
+        },
+        url: `${this.origin}?next=auth_register_password&data.date_expires=${token.date_expires.toISOString()}&data.hash=${token.hash}`,
         user: user
       }, {
         i18n_locale: user.i18n_locale,

@@ -149,9 +149,9 @@ export class RouteAuth {
     })
   }
 
-  public getHash (data: RouteData): string | undefined {
+  public getHash (data: RouteData, cookieName?: string): string | undefined {
     if (data.headers.authorization === undefined) {
-      return this.getHashFromCookie(data)
+      return this.getHashFromCookie(data, cookieName)
     }
 
     return this.getHashFromAuthorization(data)
@@ -161,8 +161,12 @@ export class RouteAuth {
     return data.headers.authorization?.slice(7)
   }
 
-  public getHashFromCookie (data: RouteData): string | undefined {
+  public getHashFromCookie (data: RouteData, name?: string): string | undefined {
     const cookie = parse(data.headers.cookie ?? '')
+
+    if (name !== undefined) {
+      return cookie[name]
+    }
 
     if (typeof cookie.authorization === 'string') {
       return cookie.authorization

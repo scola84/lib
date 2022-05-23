@@ -1,7 +1,8 @@
 import type { Flow, User } from '../../common/'
 import { Hider, Mutator, Observer, Propagator } from '../helpers'
-import { Struct, isFlow, isUser } from '../../common'
-import { isError, toJoint } from '../../common/'
+import { Struct, isFlow, isUser, revive } from '../../common'
+import { isError, isUserToken, toJoint } from '../../common/'
+import Cookie from 'js-cookie'
 import type { ScolaElement } from './element'
 import type { ScolaViewElement } from './view'
 
@@ -152,14 +153,8 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected loadState (): void {
-    const state = JSON.parse(this.storage.getItem('sc-auth') ?? 'null') as Struct | null
-
-    if (isUser(state?.user)) {
-      this.user = state?.user ?? null
-    }
-
-    if (isFlow(state?.flow)) {
-      this.flow = state?.flow ?? null
+    if (this.storage.getItem('sc-auth') !== null) {
+      this.loadStateFromStorage()
     }
 
     if (window.location.search.length > 0) {
@@ -170,8 +165,6 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
       this.propagator.dispatchEvents(toJoint(this.flow.next, {
         chars: /[^a-z0-9]+/gui
       }), [this.flow.data])
-
-      this.flow = null
     } else if (this.user !== null) {
       this.propagator.dispatchEvents('authload', [this.user])
     }
@@ -186,9 +179,19 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
       isFlow(flow) &&
       flow.next.startsWith('auth_')
     ) {
-      this.flow = flow
+      this.setFlow(flow)
       this.saveState()
-      window.location.search = ''
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }
+
+  protected loadStateFromStorage (): void {
+    const state = JSON.parse(this.storage.getItem('sc-auth') ?? 'null', revive) as Struct | null
+
+    if (state !== null) {
+      if (isUser(state.user)) {
+        this.setUser(state.user)
+      }
     }
   }
 
@@ -245,8 +248,28 @@ export class ScolaAuthElement extends HTMLDivElement implements ScolaElement {
 
   protected saveState (): void {
     this.storage.setItem('sc-auth', JSON.stringify({
-      flow: this.flow,
       user: this.user
     }))
+  }
+
+  protected setFlow (flow: Flow): void {
+    this.flow = flow
+
+    if (isUserToken(this.flow.data, true)) {
+      if (this.flow.data.date_expires < new Date()) {
+        this.flow.next += '_expired'
+      } else {
+        Cookie.set(this.flow.next, this.flow.data.hash, {
+          expires: this.flow.data.date_expires,
+          path: '/',
+          sameSite: 'strict',
+          secure: true
+        })
+      }
+    }
+  }
+
+  protected setUser (user: User): void {
+    this.user = user
   }
 }

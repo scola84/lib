@@ -38,8 +38,8 @@ export abstract class AuthHandler extends RouteHandler {
     super(handlerOptions)
   }
 
-  protected async getTmpUser (data: RouteData, response: ServerResponse): Promise<User> {
-    const hash = this.auth.getHash(data)
+  protected async getTmpUser (data: RouteData, response: ServerResponse, cookieName?: string): Promise<User> {
+    const hash = this.auth.getHash(data, cookieName)
 
     if (hash === undefined) {
       response.statusCode = 403
@@ -64,6 +64,43 @@ export abstract class AuthHandler extends RouteHandler {
     }
 
     return JSON.parse(tmpUser) as User
+  }
+
+  protected async selectTmpUser (data: RouteData, response: ServerResponse, cookieName?: string): Promise<User> {
+    const tmpUser = await this.getTmpUser(data, response, cookieName)
+    const user = await this.selectUserById(tmpUser.user_id)
+
+    if (user === undefined) {
+      response.statusCode = 403
+      throw new Error('User in database is undefined')
+    }
+
+    return user
+  }
+
+  protected async selectUserById (id: number): Promise<User | undefined> {
+    return this.database.select<User, User>(sql`
+      SELECT $[user].*
+      FROM $[user]
+      WHERE $[user_id] = $(user_id)
+    `, {
+      user_id: id
+    })
+  }
+
+  protected async selectUserByIdentity (identity: string): Promise<User | undefined> {
+    return this.database.select<User, User>(sql`
+      SELECT $[user].*
+      FROM $[user]
+      WHERE
+        $[identity_email] = $(identity_email) OR
+        $[identity_tel] = $(identity_tel) OR
+        $[identity_username] = $(identity_username)
+    `, {
+      identity_email: identity,
+      identity_tel: identity,
+      identity_username: identity
+    })
   }
 
   protected async setTmpUser (user: User, token: UserToken): Promise<void> {

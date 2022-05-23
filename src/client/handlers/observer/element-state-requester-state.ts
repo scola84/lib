@@ -5,14 +5,14 @@ import { isError } from '../../../common'
 
 export function elementStateRequesterState (observer: ScolaElement, observable: ScolaRequesterElement, query: Struct): void {
   if (query['aria-invalid'] === true) {
-    const error = observable.errorData ?? observable.error
-
-    if (
-      observable.getAttribute('aria-invalid') === 'true' &&
-      isError(error)
-    ) {
+    if (observable.getAttribute('aria-invalid') === 'true') {
       observer.toggleAttribute('hidden', false)
-      observer.data = error
+
+      if (isError(observable.errorData)) {
+        observer.data = observable.errorData
+      } else if (isError(observable.error)) {
+        observer.data = observable.error
+      }
     } else {
       observer.toggleAttribute('hidden', true)
     }

@@ -1,3 +1,4 @@
+import { isNumber, isStruct } from '../../helpers'
 import type { Struct } from '../../../common'
 import type { UserToken as UserTokenBase } from './base'
 
@@ -33,4 +34,20 @@ export function createUserToken (userToken?: Partial<UserToken>, date = new Date
     token_id: userToken?.token_id ?? 0,
     user_id: userToken?.user_id ?? 0
   }
+}
+
+export function isUserToken (value: unknown, detached = false): value is UserToken {
+  if (detached) {
+    return (
+      isStruct(value)
+    ) && (
+      typeof value.hash === 'string'
+    )
+  }
+
+  return (
+    isStruct(value)
+  ) && (
+    isNumber(value.token_id)
+  )
 }

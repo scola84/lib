@@ -26,7 +26,7 @@ export class AuthLoginPostPasswordHandler extends AuthLoginPasswordHandler {
   }
 
   public async handle (data: AuthLoginPostPasswordData, response: ServerResponse): Promise<Flow | undefined> {
-    const user = await this.selectUser(data, response)
+    const user = await this.selectTmpUser(data, response)
     return this.login(data, response, user)
   }
 }

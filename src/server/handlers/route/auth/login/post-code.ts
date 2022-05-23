@@ -29,7 +29,7 @@ export class AuthLoginPostCodeHandler extends AuthLoginHandler {
   }
 
   public async handle (data: AuthLoginPostCodeData, response: ServerResponse): Promise<Result> {
-    const user = await this.selectUser(data, response)
+    const user = await this.selectTmpUser(data, response)
     const codes = AuthCodes.parse(user.auth_codes ?? '')
 
     if (!codes.validate(data.body.code)) {

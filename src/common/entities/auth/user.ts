@@ -75,14 +75,6 @@ export interface User extends UserBase {
   views?: Struct
 }
 
-export function isUser (value: unknown): value is User {
-  return (
-    isStruct(value)
-  ) && (
-    isNumber(value.user_id)
-  )
-}
-
 // eslint-disable-next-line complexity
 export function createUser (user?: Partial<User>, date = new Date()): User {
   return {
@@ -116,4 +108,22 @@ export function createUser (user?: Partial<User>, date = new Date()): User {
     state_compromised: user?.state_compromised ?? false,
     user_id: user?.user_id ?? 0
   }
+}
+
+export function isUser (value: unknown, detached = false): value is User {
+  if (detached) {
+    return (
+      isStruct(value)
+    ) && (
+      typeof value.identity_email === 'string' ||
+      typeof value.identity_name === 'string' ||
+      typeof value.identity_tel_national === 'string'
+    )
+  }
+
+  return (
+    isStruct(value)
+  ) && (
+    isNumber(value.user_id)
+  )
 }

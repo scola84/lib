@@ -20,6 +20,8 @@ type Mode = 'center' | 'height' | 'move-bottom' | 'move-end' | 'move-start' | 'm
 type SizeProperty = 'offsetHeight' | 'offsetWidth'
 
 export class Hider {
+  public static activeElement?: HTMLElement
+
   public static distanceThreshold = 0.1
 
   public static selector = '[is^="sc-"]'
@@ -174,20 +176,11 @@ export class Hider {
   }
 
   protected focusElement (): void {
-    if (this.element.hasAttribute('hidden')) {
-      this.activeElement?.focus()
-      this.activeElement = undefined
-    } else {
+    if (!this.element.hasAttribute('hidden')) {
       const element = this.element.querySelector('[sc-focus~="hider"]')
 
       if (element instanceof HTMLElement) {
-        if (document.activeElement instanceof HTMLElement) {
-          this.activeElement = document.activeElement
-        }
-
-        window.requestAnimationFrame(() => {
-          element.focus()
-        })
+        element.focus()
       }
     }
   }

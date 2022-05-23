@@ -130,7 +130,7 @@ export class ScolaAppElement extends HTMLDivElement implements ScolaElement {
   }
 
   public reset (): void {
-    this.storage = ScolaAppElement.storage[this.getAttribute('sc-storage') ?? 'session'] ?? window.sessionStorage
+    this.storage = ScolaAppElement.storage[this.getAttribute('sc-storage') ?? 'local'] ?? window.localStorage
     this.setLocale(this.loadLocale())
     this.setTheme(this.loadTheme())
     this.setTimeZone(this.loadTimeZone())

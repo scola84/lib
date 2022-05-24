@@ -4,23 +4,23 @@
     hidden
     is="sc-input"
     type="range"
-    sc-observe-target="sc-input-data-requester-props@#requester-post-update-user"
+    sc-observe-target="sc-input-data-requester-props@#requester-user-update"
     sc-preset="sc-progress"
   />
   <form
     id="form-update-user"
     is="sc-form"
-    sc-onsubmit="sc-requester-send@#requester-post-update-user"
+    sc-onsubmit="sc-requester-send@#requester-user-update"
     sc-preset="sc-body sc-section-group"
   >
     <object
-      id="requester-get-user"
+      id="requester-user-select"
       is="sc-requester"
-      sc-url="/api/auth/user"
+      sc-url="/api/auth/user/select"
       sc-ondata="sc-data-set@#form-update-user"
     ></object>
     <object
-      id="requester-post-update-user"
+      id="requester-user-update"
       is="sc-requester"
       sc-method="POST"
       sc-onresult="sc-message-add@#message"
@@ -60,12 +60,12 @@
         sc-preset="sc-fieldset sc-section-body"
       >
         <div is="sc-div"></div>
-        <div is="sc-div" sc-preset="sc-fieldset-item">
+        <div is="sc-div" sc-preset="sc-field">
           <label
             for="input-update-identity-name"
             is="sc-label"
             sc-preset="sc-field-title"
-            sc-text="label_user_identity_name"
+            sc-text="title_user_identity_name"
           ></label>
           <input
             aria-errormessage="error-update-identity-name"
@@ -75,7 +75,7 @@
             name="identity_name"
             type="text"
             sc-focus="form"
-            sc-preset="sc-field"
+            sc-preset="sc-field-input"
           />
           <span
             id="error-update-identity-name"
@@ -84,12 +84,12 @@
             sc-preset="sc-field-error"
           ></span>
         </div>
-        <div is="sc-div" sc-preset="sc-fieldset-item">
+        <div is="sc-div" sc-preset="sc-field">
           <label
             for="input-update-identity-email"
             is="sc-label"
             sc-preset="sc-field-title"
-            sc-text="label_user_identity_email"
+            sc-text="title_user_identity_email"
           ></label>
           <input
             aria-errormessage="error-update-identity-email"
@@ -99,7 +99,7 @@
             name="identity_email"
             type="email"
             sc-focus="form"
-            sc-preset="sc-field"
+            sc-preset="sc-field-input"
           />
           <span
             id="error-update-identity-email"
@@ -108,17 +108,17 @@
             sc-preset="sc-field-error"
           ></span>
         </div>
-        <div is="sc-div" sc-preset="sc-fieldset-item">
+        <div is="sc-div" sc-preset="sc-field">
           <label
             for="input-update-user-identity-tel-national"
             is="sc-label"
             sc-preset="sc-field-title"
-            sc-text="label_user_identity_tel"
+            sc-text="title_user_identity_tel"
           ></label>
           <div is="sc-div" sc-preset="sc-fieldset-row">
             <div
               is="sc-div"
-              sc-preset="sc-field-container-text"
+              sc-preset="sc-field-container-for-text"
               sc-width="3@all"
             >
               <select
@@ -126,10 +126,10 @@
                 is="sc-select"
                 name="identity_tel_country_code"
                 sc-generator="sc-tel-country-code"
-                sc-preset="sc-field sc-field-under-text"
+                sc-preset="sc-field-select sc-field-under-text"
                 sc-width="3@all"
               ></select>
-              <span class="sc-text-over-field-container" is="sc-span">
+              <span class="sc-field-container-body" is="sc-span">
                 <span
                   is="sc-span"
                   sc-align-x="center"
@@ -147,7 +147,7 @@
               name="identity_tel_national"
               type="tel"
               sc-focus="form"
-              sc-preset="sc-field"
+              sc-preset="sc-field-input"
               sc-width="flex@all"
             />
           </div>
@@ -158,12 +158,12 @@
             sc-preset="sc-field-error"
           ></span>
         </div>
-        <div is="sc-div" sc-preset="sc-fieldset-item">
+        <div is="sc-div" sc-preset="sc-field">
           <label
             for="input-update-user-identity-username"
             is="sc-label"
             sc-preset="sc-field-title"
-            sc-text="label_user_identity_username"
+            sc-text="title_user_identity_username"
           ></label>
           <input
             aria-errormessage="error-update-user-identity-username"
@@ -173,7 +173,7 @@
             name="identity_username"
             type="text"
             sc-focus="form"
-            sc-preset="sc-field"
+            sc-preset="sc-field-input"
           />
           <span
             id="error-update-user-identity-username"
@@ -221,7 +221,7 @@
         sc-preset="sc-fieldset sc-section-body"
       >
         <div is="sc-div"></div>
-        <div is="sc-div" sc-preset="sc-fieldset-item">
+        <div is="sc-div" sc-preset="sc-field">
           <div
             is="sc-div"
             sc-align-y="top"
@@ -245,7 +245,7 @@
             ></label>
           </div>
         </div>
-        <div is="sc-div" sc-preset="sc-fieldset-item">
+        <div is="sc-div" sc-preset="sc-field">
           <div
             is="sc-div"
             sc-align-y="top"
@@ -305,12 +305,12 @@
         sc-preset="sc-fieldset sc-section-body"
       >
         <div is="sc-div"></div>
-        <div is="sc-div" sc-preset="sc-fieldset-item">
+        <div is="sc-div" sc-preset="sc-field">
           <label
             for="input-update-user-i18n-locale"
             is="sc-label"
             sc-preset="sc-field-title"
-            sc-text="label_user_i18n_locale"
+            sc-text="title_user_i18n_locale"
           ></label>
           <select
             aria-errormessage="error-update-user-i18n-locale"
@@ -320,7 +320,7 @@
             sc-generator="sc-locale"
             sc-observe-target="sc-element-data-element-get-props?value=locale@[is='sc-app']"
             sc-onvalue="sc-app-locale@[is='sc-app']"
-            sc-preset="sc-field"
+            sc-preset="sc-field-select"
           ></select>
           <span
             id="error-update-user-i18n-locale"
@@ -329,12 +329,12 @@
             sc-preset="sc-field-error"
           ></span>
         </div>
-        <div is="sc-div" sc-preset="sc-fieldset-item">
+        <div is="sc-div" sc-preset="sc-field">
           <label
             for="input-update-user-i18n-time-zone"
             is="sc-label"
             sc-preset="sc-field-title"
-            sc-text="label_user_i18n_time_zone"
+            sc-text="title_user_i18n_time_zone"
           ></label>
           <select
             aria-errormessage="error-update-user-i18n-time-zone"
@@ -344,7 +344,7 @@
             sc-generator="sc-time-zone"
             sc-observe-target="sc-element-data-element-get-props?value=timeZone@[is='sc-app']"
             sc-onvalue="sc-app-time-zone@[is='sc-app']"
-            sc-preset="sc-field"
+            sc-preset="sc-field-select"
           ></select>
           <span
             id="error-update-user-i18n-time-zone"
@@ -362,7 +362,7 @@
         <button
           is="sc-button"
           type="submit"
-          sc-preset="sc-button-submit"
+          sc-preset="sc-button-for-form"
           sc-text="action_save"
         ></button>
       </fieldset>

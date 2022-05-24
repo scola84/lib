@@ -798,6 +798,21 @@ textarea.sc-code:focus-visible {
   pointer-events: none;
 }
 
+.sc-field-container-body {
+  align-items: inherit;
+  background-color: inherit;
+  border-radius: inherit;
+  bottom: 2px;
+  cursor: pointer;
+  display: inherit;
+  justify-content: inherit;
+  left: 2px;
+  pointer-events: none;
+  position: absolute;
+  right: 2px;
+  top: 2px;
+}
+
 .sc-hidden[hidden] {
   display: none;
 }
@@ -899,19 +914,4 @@ textarea.sc-code:focus-visible {
 
 .sc-table[sc-tree] [sc-tree-inset] {
   width: calc(var(--sc-tree-inset, 1rem) * (var(--sc-tree-level)));
-}
-
-.sc-text-over-field-container {
-  align-items: inherit;
-  background-color: inherit;
-  border-radius: inherit;
-  bottom: 2px;
-  cursor: pointer;
-  display: inherit;
-  justify-content: inherit;
-  left: 2px;
-  pointer-events: none;
-  position: absolute;
-  right: 2px;
-  top: 2px;
 }

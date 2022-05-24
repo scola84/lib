@@ -10,7 +10,6 @@ import authSfaUpdate from './auth/sfa/update.html'
 import queueEntitiesQueue from './queue/entities/queue.html'
 import queueEntitiesRun from './queue/entities/run.html'
 import queueEntitiesTask from './queue/entities/task.html'
-import smtpEmail from './smtp/email.html'
 import viewEntitiesView from './view/entities/view.html'
 import viewEntitiesViewGroup from './view/entities/view-group.html'
 import viewEntitiesViewUser from './view/entities/view-user.html'
@@ -28,7 +27,6 @@ export const snippets = {
   'sc-queue-entities-queue': queueEntitiesQueue,
   'sc-queue-entities-run': queueEntitiesRun,
   'sc-queue-entities-task': queueEntitiesTask,
-  'sc-smtp-email': smtpEmail,
   'sc-view-entities-view': viewEntitiesView,
   'sc-view-entities-view-group': viewEntitiesViewGroup,
   'sc-view-entities-view-user': viewEntitiesViewUser

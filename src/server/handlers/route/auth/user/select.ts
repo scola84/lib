@@ -3,7 +3,7 @@ import type { RouteData } from '../../../../helpers'
 import type { User } from '../../../../../common'
 import { sql } from '../../../../helpers'
 
-export class AuthUserGetHandler extends AuthHandler {
+export class AuthUserSelectHandler extends AuthHandler {
   public authenticate = true
 
   public async handle (data: RouteData): Promise<User> {

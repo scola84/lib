@@ -4,7 +4,7 @@ import type { RouteData } from '../../../../helpers'
 import { Struct } from '../../../../../common'
 import { sql } from '../../../../helpers'
 
-export class AuthUserGetSessionHandler extends AuthHandler {
+export class AuthSessionSelectHandler extends AuthHandler {
   public authenticate = true
 
   public async handle (data: RouteData): Promise<User> {

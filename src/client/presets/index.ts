@@ -21,46 +21,16 @@ export const presets = {
     'sc-scrollbar': 'auto',
     'sc-scrollbar-color': 'normal'
   },
-  'sc-button-group': {
-    'sc-align-y': 'center',
-    'sc-direction': 'row',
-    'sc-height': 'max@all',
-    'sc-padding-x': '0.5@all'
-  },
-  'sc-button-icon': {
-    'sc-align-x': 'center',
-    'sc-align-y': 'center',
-    'sc-bg-color': 'normal',
-    'sc-direction': 'column',
-    'sc-height': '2@all',
-    'sc-interact': '',
-    'sc-round': 'max@all',
-    'sc-text-color': 'normal',
-    'sc-width': '2@all'
-  },
-  'sc-button-icon-contrast': {
+  'sc-button-for-form': {
     'sc-align-x': 'center',
     'sc-align-y': 'center',
     'sc-bg-color': 'contrast',
     'sc-bg-color-interact': 'contrast',
-    'sc-direction': 'column',
-    'sc-height': '2@all',
-    'sc-round': 'max@all',
-    'sc-text-color': 'normal',
-    'sc-width': '2@all'
+    'sc-direction': 'row',
+    'sc-height': '3@all',
+    'sc-text-color': 'theme'
   },
-  'sc-button-icon-normal': {
-    'sc-align-x': 'center',
-    'sc-align-y': 'center',
-    'sc-bg-color': 'normal',
-    'sc-bg-color-interact': 'normal',
-    'sc-direction': 'column',
-    'sc-height': '2@all',
-    'sc-round': 'max@all',
-    'sc-text-color': 'normal',
-    'sc-width': '2@all'
-  },
-  'sc-button-menu': {
+  'sc-button-for-menu': {
     'sc-align-y': 'center',
     'sc-bg-color': 'normal',
     'sc-bg-color-active-focus': 'theme',
@@ -71,14 +41,44 @@ export const presets = {
     'sc-padding-x': '1@all',
     'sc-text-color': 'normal'
   },
-  'sc-button-submit': {
+  'sc-button-group': {
+    'sc-align-y': 'center',
+    'sc-direction': 'row',
+    'sc-height': 'max@all',
+    'sc-padding-x': '0.5@all'
+  },
+  'sc-button-with-icon': {
+    'sc-align-x': 'center',
+    'sc-align-y': 'center',
+    'sc-bg-color': 'normal',
+    'sc-direction': 'column',
+    'sc-height': '2@all',
+    'sc-interact': '',
+    'sc-round': 'max@all',
+    'sc-text-color': 'normal',
+    'sc-width': '2@all'
+  },
+  'sc-button-with-icon-contrast': {
     'sc-align-x': 'center',
     'sc-align-y': 'center',
     'sc-bg-color': 'contrast',
     'sc-bg-color-interact': 'contrast',
-    'sc-direction': 'row',
-    'sc-height': '3@all',
-    'sc-text-color': 'theme'
+    'sc-direction': 'column',
+    'sc-height': '2@all',
+    'sc-round': 'max@all',
+    'sc-text-color': 'normal',
+    'sc-width': '2@all'
+  },
+  'sc-button-with-icon-normal': {
+    'sc-align-x': 'center',
+    'sc-align-y': 'center',
+    'sc-bg-color': 'normal',
+    'sc-bg-color-interact': 'normal',
+    'sc-direction': 'column',
+    'sc-height': '2@all',
+    'sc-round': 'max@all',
+    'sc-text-color': 'normal',
+    'sc-width': '2@all'
   },
   'sc-carousel': {
     'sc-axis': 'x',
@@ -100,16 +100,14 @@ export const presets = {
     'sc-width': '1.5@all'
   },
   'sc-field': {
-    'sc-bg-color': 'contrast',
-    'sc-height': '3@all',
-    'sc-padding': '0.75@all',
-    'sc-text-color': 'normal'
+    'sc-direction': 'column',
+    'sc-position': 'relative@all'
   },
-  'sc-field-container-icon': {
+  'sc-field-container-for-icon': {
     'sc-height': '2@all',
     'sc-position': 'relative@all'
   },
-  'sc-field-container-text': {
+  'sc-field-container-for-text': {
     'sc-height': '3@all',
     'sc-position': 'relative@all'
   },
@@ -127,6 +125,18 @@ export const presets = {
     'sc-align-y': 'center',
     'sc-direction': 'row',
     'sc-width': 'flex@all'
+  },
+  'sc-field-input': {
+    'sc-bg-color': 'contrast',
+    'sc-height': '3@all',
+    'sc-padding': '0.75@all',
+    'sc-text-color': 'normal'
+  },
+  'sc-field-select': {
+    'sc-bg-color': 'contrast',
+    'sc-height': '3@all',
+    'sc-padding': '0.75@all',
+    'sc-text-color': 'normal'
   },
   'sc-field-title': {
     'sc-clip': 'text',
@@ -162,10 +172,6 @@ export const presets = {
     'sc-padding-top': '0.25@all',
     'sc-text-color': 'contrast',
     'sc-text-size': '0.9@all'
-  },
-  'sc-fieldset-item': {
-    'sc-direction': 'column',
-    'sc-position': 'relative@all'
   },
   'sc-fieldset-row': {
     'sc-direction': 'row',

@@ -4,16 +4,16 @@
   is="sc-auth"
   sc-hide
   sc-hide-mode="opacity@all"
-  sc-onauthload="sc-requester-send@#requester-get-user-session"
+  sc-onauthload="sc-requester-send@#requester-session-select"
   sc-onauthresetconfirm="sc-carousel-go?pointer=3@#carousel-auth"
   sc-onauthresetconfirmexpired="log@console sc-carousel-go?pointer=2@#carousel-auth"
   sc-onauthresetrequest="sc-carousel-go?pointer=2@#carousel-auth"
   sc-preset="sc-auth"
 >
   <object
-    id="requester-get-user-session"
+    id="requester-session-select"
     is="sc-requester"
-    sc-url="/api/auth/user/session"
+    sc-url="/api/auth/session/select"
     sc-ondata="sc-data-set@[is='sc-auth'] sc-data-set@[is='sc-app']"
     sc-onerror="sc-data-set@[is='sc-auth']"
     sc-wait
@@ -44,7 +44,7 @@
         <div is="sc-div" sc-preset="sc-header">
           <h1 is="sc-h1" sc-preset="sc-header-title" sc-text="title_login"></h1>
           <div is="sc-div" sc-preset="sc-button-group">
-            <div is="sc-div" sc-preset="sc-field-container-icon sc-button-icon">
+            <div is="sc-div" sc-preset="sc-field-container-for-icon sc-button-with-icon">
               <select
                 is="sc-select"
                 sc-aria-label="tooltip_locale"
@@ -55,7 +55,7 @@
                 sc-preset="sc-field-under-icon"
                 sc-title="tooltip_locale"
               ></select>
-              <span class="sc-text-over-field-container" is="sc-span">
+              <span class="sc-field-container-body" is="sc-span">
                 <span
                   is="sc-icon"
                   sc-code="language"
@@ -67,7 +67,7 @@
               is="sc-button"
               sc-onclick="sc-app-theme@[is='sc-app']"
               sc-aria-label="tooltip_theme"
-              sc-preset="sc-button-icon-normal"
+              sc-preset="sc-button-with-icon-normal"
               sc-title="tooltip_theme"
               type="button"
             >
@@ -93,18 +93,18 @@
             is="sc-requester"
             sc-method="POST"
             sc-onerrordata="sc-form-error@#form-login"
-            sc-onauthload="sc-requester-send@#requester-get-user-session"
+            sc-onauthload="sc-requester-send@#requester-session-select"
             sc-url="/api/auth/login"
             sc-wait
           ></object>
           <div is="sc-div" sc-preset="sc-section">
             <fieldset is="sc-fieldset" sc-preset="sc-fieldset sc-section-body">
-              <div is="sc-div" sc-preset="sc-fieldset-item">
+              <div is="sc-div" sc-preset="sc-field">
                 <label
                   for="input-login-user-identity"
                   is="sc-label"
                   sc-preset="sc-field-title"
-                  sc-text="label_user_identity"
+                  sc-text="title_user_identity_etu"
                 ></label>
                 <input
                   aria-errormessage="error-login-user-identity"
@@ -114,7 +114,7 @@
                   required
                   type="text"
                   sc-focus="form hider"
-                  sc-preset="sc-field"
+                  sc-preset="sc-field-input"
                 />
                 <span
                   id="error-login-user-identity"
@@ -123,12 +123,12 @@
                   sc-preset="sc-field-error"
                 ></span>
               </div>
-              <div is="sc-div" sc-preset="sc-fieldset-item">
+              <div is="sc-div" sc-preset="sc-field">
                 <label
                   for="input-login-user-auth-password"
                   is="sc-label"
                   sc-preset="sc-field-title"
-                  sc-text="label_user_auth_password"
+                  sc-text="title_user_auth_password"
                 ></label>
                 <input
                   aria-errormessage="error-login-user-auth-password"
@@ -139,7 +139,7 @@
                   required
                   type="password"
                   sc-focus="form"
-                  sc-preset="sc-field"
+                  sc-preset="sc-field-input"
                 />
                 <span
                   id="error-login-user-auth-password"
@@ -157,7 +157,7 @@
                 <button
                   is="sc-button"
                   type="submit"
-                  sc-preset="sc-button-submit"
+                  sc-preset="sc-button-for-form"
                   sc-text="action_login"
                 ></button>
                 <span
@@ -204,7 +204,7 @@
             sc-text="title_register"
           ></h1>
           <div is="sc-div" sc-preset="sc-button-group">
-            <div is="sc-div" sc-preset="sc-field-container-icon sc-button-icon">
+            <div is="sc-div" sc-preset="sc-field-container-for-icon sc-button-with-icon">
               <select
                 is="sc-select"
                 sc-aria-label="tooltip_locale"
@@ -215,7 +215,7 @@
                 sc-preset="sc-field-under-icon"
                 sc-title="tooltip_locale"
               ></select>
-              <span class="sc-text-over-field-container" is="sc-span">
+              <span class="sc-field-container-body" is="sc-span">
                 <span
                   is="sc-icon"
                   sc-code="language"
@@ -227,7 +227,7 @@
               is="sc-button"
               sc-onclick="sc-app-theme@[is='sc-app']"
               sc-aria-label="tooltip_theme"
-              sc-preset="sc-button-icon-normal"
+              sc-preset="sc-button-with-icon-normal"
               sc-title="tooltip_theme"
               type="button"
             >
@@ -287,12 +287,12 @@
               sc-preset="sc-fieldset sc-section-body"
             >
               <div is="sc-div"></div>
-              <div is="sc-div" sc-preset="sc-fieldset-item">
+              <div is="sc-div" sc-preset="sc-field">
                 <label
                   for="input-register-user-identity-name"
                   is="sc-label"
                   sc-preset="sc-field-title"
-                  sc-text="label_user_identity_name"
+                  sc-text="title_user_identity_name"
                 ></label>
                 <input
                   aria-errormessage="error-register-user-identity-name"
@@ -302,7 +302,7 @@
                   name="identity_name"
                   type="text"
                   sc-focus="form hider"
-                  sc-preset="sc-field"
+                  sc-preset="sc-field-input"
                 />
                 <span
                   id="error-register-user-identity-name"
@@ -311,12 +311,12 @@
                   sc-preset="sc-field-error"
                 ></span>
               </div>
-              <div is="sc-div" sc-preset="sc-fieldset-item">
+              <div is="sc-div" sc-preset="sc-field">
                 <label
                   for="input-register-user-identity-email"
                   is="sc-label"
                   sc-preset="sc-field-title"
-                  sc-text="label_user_identity_email"
+                  sc-text="title_user_identity_email"
                 ></label>
                 <input
                   aria-errormessage="error-register-user-identity-email"
@@ -326,7 +326,7 @@
                   name="identity_email"
                   type="email"
                   sc-focus="form"
-                  sc-preset="sc-field"
+                  sc-preset="sc-field-input"
                 />
                 <span
                   id="error-register-user-identity-email"
@@ -335,17 +335,17 @@
                   sc-preset="sc-field-error"
                 ></span>
               </div>
-              <div is="sc-div" sc-preset="sc-fieldset-item">
+              <div is="sc-div" sc-preset="sc-field">
                 <label
                   for="input-register-user-identity-tel-national"
                   is="sc-label"
                   sc-preset="sc-field-title"
-                  sc-text="label_user_identity_tel"
+                  sc-text="title_user_identity_tel"
                 ></label>
                 <div is="sc-div" sc-preset="sc-fieldset-row">
                   <div
                     is="sc-div"
-                    sc-preset="sc-field-container-text"
+                    sc-preset="sc-field-container-for-text"
                     sc-width="3@all"
                   >
                     <select
@@ -353,10 +353,10 @@
                       is="sc-select"
                       name="identity_tel_country_code"
                       sc-generator="sc-tel-country-code"
-                      sc-preset="sc-field sc-field-under-text"
+                      sc-preset="sc-field-select sc-field-under-text"
                       sc-width="3@all"
                     ></select>
-                    <span class="sc-text-over-field-container" is="sc-span">
+                    <span class="sc-field-container-body" is="sc-span">
                       <span
                         is="sc-span"
                         sc-align-x="center"
@@ -374,7 +374,7 @@
                     name="identity_tel_national"
                     type="tel"
                     sc-focus="form"
-                    sc-preset="sc-field"
+                    sc-preset="sc-field-input"
                     sc-width="flex@all"
                   />
                 </div>
@@ -385,12 +385,12 @@
                   sc-preset="sc-field-error"
                 ></span>
               </div>
-              <div is="sc-div" sc-preset="sc-fieldset-item">
+              <div is="sc-div" sc-preset="sc-field">
                 <label
                   for="input-register-user-identity-username"
                   is="sc-label"
                   sc-preset="sc-field-title"
-                  sc-text="label_user_identity_username"
+                  sc-text="title_user_identity_username"
                 ></label>
                 <input
                   aria-errormessage="error-register-user-identity-username"
@@ -400,7 +400,7 @@
                   name="identity_username"
                   type="text"
                   sc-focus="form"
-                  sc-preset="sc-field"
+                  sc-preset="sc-field-input"
                 />
                 <span
                   id="error-register-user-identity-username"
@@ -448,12 +448,12 @@
               sc-preset="sc-fieldset sc-section-body"
             >
               <div is="sc-div"></div>
-              <div is="sc-div" sc-preset="sc-fieldset-item">
+              <div is="sc-div" sc-preset="sc-field">
                 <label
                   for="input-register-user-auth-password"
                   is="sc-label"
                   sc-preset="sc-field-title"
-                  sc-text="label_user_auth_password_required"
+                  sc-text="title_user_auth_password_required"
                 ></label>
                 <input
                   aria-errormessage="error-register-user-auth-password"
@@ -464,7 +464,7 @@
                   required
                   type="password"
                   sc-focus="form"
-                  sc-preset="sc-field"
+                  sc-preset="sc-field-input"
                 />
                 <span
                   id="error-register-user-auth-password"
@@ -501,7 +501,7 @@
                 <button
                   is="sc-button"
                   type="submit"
-                  sc-preset="sc-button-submit"
+                  sc-preset="sc-button-for-form"
                   sc-text="action_register"
                 ></button>
                 <span
@@ -549,7 +549,7 @@
             sc-text="title_reset_request"
           ></h1>
           <div is="sc-div" sc-preset="sc-button-group">
-            <div is="sc-div" sc-preset="sc-field-container-icon sc-button-icon">
+            <div is="sc-div" sc-preset="sc-field-container-for-icon sc-button-with-icon">
               <select
                 is="sc-select"
                 sc-aria-label="tooltip_locale"
@@ -560,7 +560,7 @@
                 sc-preset="sc-field-under-icon"
                 sc-title="tooltip_locale"
               ></select>
-              <span class="sc-text-over-field-container" is="sc-span">
+              <span class="sc-field-container-body" is="sc-span">
                 <span
                   is="sc-icon"
                   sc-code="language"
@@ -572,7 +572,7 @@
               is="sc-button"
               sc-onclick="sc-app-theme@[is='sc-app']"
               sc-aria-label="tooltip_theme"
-              sc-preset="sc-button-icon-normal"
+              sc-preset="sc-button-with-icon-normal"
               sc-title="tooltip_theme"
               type="button"
             >
@@ -603,12 +603,12 @@
           ></object>
           <div is="sc-div" sc-preset="sc-section">
             <fieldset is="sc-fieldset" sc-preset="sc-fieldset sc-section-body">
-              <div is="sc-div" sc-preset="sc-fieldset-item">
+              <div is="sc-div" sc-preset="sc-field">
                 <label
                   for="input-reset-request-user-identity"
                   is="sc-label"
                   sc-preset="sc-field-title"
-                  sc-text="label_user_identity"
+                  sc-text="title_user_identity_etu"
                 ></label>
                 <input
                   aria-errormessage="error-reset-request-user-identity"
@@ -619,7 +619,7 @@
                   type="text"
                   sc-observe-target="sc-element-props-element-get-props?value=value@#input-login-user-identity"
                   sc-focus="form hider"
-                  sc-preset="sc-field"
+                  sc-preset="sc-field-input"
                 />
                 <span
                   id="error-reset-request-user-identity"
@@ -643,7 +643,7 @@
                 <button
                   is="sc-button"
                   type="submit"
-                  sc-preset="sc-button-submit"
+                  sc-preset="sc-button-for-form"
                   sc-text="action_reset_request"
                 ></button>
                 <span
@@ -699,7 +699,7 @@
             sc-text="title_reset_confirm"
           ></h1>
           <div is="sc-div" sc-preset="sc-button-group">
-            <div is="sc-div" sc-preset="sc-field-container-icon sc-button-icon">
+            <div is="sc-div" sc-preset="sc-field-container-for-icon sc-button-with-icon">
               <select
                 is="sc-select"
                 sc-aria-label="tooltip_locale"
@@ -710,7 +710,7 @@
                 sc-preset="sc-field-under-icon"
                 sc-title="tooltip_locale"
               ></select>
-              <span class="sc-text-over-field-container" is="sc-span">
+              <span class="sc-field-container-body" is="sc-span">
                 <span
                   is="sc-icon"
                   sc-code="language"
@@ -722,7 +722,7 @@
               is="sc-button"
               sc-onclick="sc-app-theme@[is='sc-app']"
               sc-aria-label="tooltip_theme"
-              sc-preset="sc-button-icon-normal"
+              sc-preset="sc-button-with-icon-normal"
               sc-title="tooltip_theme"
               type="button"
             >
@@ -781,12 +781,12 @@
               sc-preset="sc-fieldset sc-section-body"
             >
               <div is="sc-div"></div>
-              <div is="sc-div" sc-preset="sc-fieldset-item">
+              <div is="sc-div" sc-preset="sc-field">
                 <label
                   for="input-reset-confirm-user-auth-password"
                   is="sc-label"
                   sc-preset="sc-field-title"
-                  sc-text="label_user_auth_password_required"
+                  sc-text="title_user_auth_password_required"
                 ></label>
                 <input
                   aria-errormessage="error-reset-confirm-user-auth-password"
@@ -797,7 +797,7 @@
                   required
                   type="password"
                   sc-focus="form"
-                  sc-preset="sc-field"
+                  sc-preset="sc-field-input"
                 />
                 <span
                   id="error-reset-confirm-user-auth-password"
@@ -834,7 +834,7 @@
                 <button
                   is="sc-button"
                   type="submit"
-                  sc-preset="sc-button-submit"
+                  sc-preset="sc-button-for-form"
                   sc-text="action_reset_confirm"
                 ></button>
                 <span

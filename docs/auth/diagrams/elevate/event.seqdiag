@@ -1,0 +1,12 @@
+title: Elevate (event)
+
+participant person
+participant client
+participant server
+
+person->client:goto any view
+client->server:send any request
+server->server:determine elevation\ndetermine sequence
+server->client:send sequence (body)
+client->client:save request callback
+client->person:show sequence

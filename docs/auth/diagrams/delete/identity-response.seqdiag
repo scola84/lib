@@ -1,0 +1,13 @@
+title: Delete (identity response)
+
+participant person
+participant client
+participant server
+
+person->client:click url in email
+client->client:handle url
+client->server:send token (cookie)\nPOST /api/auth/delete/identity/response
+server->server:extract token from database\nverify token\ndelete user from database
+server->person:send notification (email)
+server->client:send result (body)
+client->person:show result

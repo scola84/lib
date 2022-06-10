@@ -1,0 +1,13 @@
+title: Update (email response)
+
+participant person
+participant client
+participant server
+
+person->client:click url in email
+client->client:handle url
+client->server:send token (cookie)\nPOST /api/auth/update/email/response
+server->server:extract token from database\nverify token\nupdate user in database
+server->person:send notification (email)
+server->client:send result (body)
+client->person:show result

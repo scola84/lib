@@ -1,0 +1,21 @@
+title: Insert (device)
+
+participant person
+participant client
+participant server
+
+person->client:goto profile
+client->person:show devices\nshow add button
+person->client:click add button
+client->server:send challenge request\nPOST /api/auth/insert/device/request
+server->server:generate challenge\ngenerate token\nadd challenge to token\nsave token to store
+server->client:send challenge (body)\nsend token (cookie)
+client->person:show challenge
+person->client:give response
+client->person:show device name field\nshow next button
+person->client:enter device name\nclick next button
+client->server:send device name (body)\nsend challenge response (body)\nPOST /api/auth/insert/device/response
+server->server:extract token from store\nverify challenge response\ninsert device into database
+server->person:send notification (email)
+server->client:send result (body)
+client->person:show result

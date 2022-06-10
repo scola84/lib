@@ -1,0 +1,17 @@
+title: Login (session)
+
+participant person
+participant client
+participant server
+
+person->client:goto /
+client->client:load state
+client->person:show login
+client->client:OR (if no state)
+client->server:send session request\nGET /api/auth/login/session
+server->server:select token from database
+server->client:send session (body)
+client->person:show app
+server->server:OR (if no token)
+server->client:send error (body)
+client->person:show login

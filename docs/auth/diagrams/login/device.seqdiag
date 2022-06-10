@@ -1,0 +1,16 @@
+title: Login (device)
+
+participant person
+participant client
+participant server
+
+client->server:send challenge request\nPOST /api/auth/login/device/request
+server->server:extract token from store\ngenerate challenge\ngenerate token\nadd challenge to token\nsave token to store
+server->client:send challenge (body)\nsend token (cookie)
+client->person:show challenge
+person->client:give response
+client->server:send challenge response (body)\nPOST /api/auth/login/device/response
+server->server:extract token from store\nverify challenge response\ngenerate token\nsave token to store
+server->person:send notification (email)
+server->client:send token (cookie)
+client->person:show app

@@ -1,0 +1,15 @@
+title: Register (identity)
+
+participant person
+participant client
+participant server
+
+person->client:goto register
+client->person:show identity fields\nshow next button
+person->client:enter identity\nclick next button
+client->server:send identity (body)\nPOST /api/auth/register/identity
+server->server:verify identity\ngenerate token\nadd identity to token\nsave token to store
+server->client:send token (cookie)
+client->person:show sequence buttons
+person->client:click button
+client->person:show sequence

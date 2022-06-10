@@ -1,0 +1,13 @@
+title: Login (identity)
+
+participant person
+participant client
+participant server
+
+person->client:goto login
+client->person:show identity field\nshow next button
+person->client:enter identity\nclick next button
+client->server:send identity (body)\nPOST /api/auth/login/identity
+server->server:verify identity\ndetermine sequence\ngenerate token\nsave token to store
+server->client:send sequence (body)\nsend token (cookie)
+client->person:show sequence

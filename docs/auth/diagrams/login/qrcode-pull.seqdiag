@@ -1,0 +1,25 @@
+title: Login (qrcode pull)
+
+participant person
+participant client1
+participant client2
+participant server
+
+person->client1:goto profile
+client1->person:show qrcode button
+person->client1:click qrcode button
+client1->server:send qrcode request\nPOST /api/auth/login/qrcode/pull/request
+server->server:generate token\ngenerate qrcode\nsave token to store
+server->client1:send qrcode (body)
+client1->person:show qrcode
+person->client2:goto login
+client2->person:show qrcode button
+person->client2:click qrcode button
+client2->person:show scanner
+person->client2:scan qrcode
+client2->client2:handle qrcode
+client2->server:send token (cookie)\nPOST /api/auth/login/qrcode/pull/response
+server->server:extract token from store\nverify token\ngenerate token\nsave token to store
+server->person:send notification (email)
+server->client2:send token (cookie)
+client2->person:show app

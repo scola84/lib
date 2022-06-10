@@ -1,0 +1,14 @@
+title: Delete (device)
+
+participant person
+participant client
+participant server
+
+person->client:goto profile
+client->person:show devices with delete button
+person->client:click delete button
+client->server:send device (body)\nPOST /api/auth/delete/device
+server->server:delete device from database
+server->person:send notification (email)
+server->client:send result (body)
+client->person:show result

@@ -1,0 +1,12 @@
+title: Register (confirm)
+
+participant person
+participant client
+participant server
+
+person->client:click url in email
+client->client:handle url
+client->server:send token (cookie)\nPOST /api/auth/register/confirm
+server->server:extract token from database\nverify token\nupdate user in database
+server->client:send result (body)
+client->person:show result

@@ -1,0 +1,14 @@
+title: Update (email request)
+
+participant person
+participant client
+participant server
+
+person->client:goto profile
+client->person:show email field\nshow save button
+person->client:enter email\nclick save button
+client->server:send email (body)\nPOST /api/auth/update/email/request
+server->server:generate token\nadd email to token\ninsert token into database
+server->person:send token (email)
+server->client:send result (body)
+client->person:show result

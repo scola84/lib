@@ -1,0 +1,14 @@
+title: Delete (identity request)
+
+participant person
+participant client
+participant server
+
+person->client:goto profile
+client->person:show delete button
+person->client:click delete button
+client->server:send request\nPOST /api/auth/delete/identity/request
+server->server:generate token\ninsert token into database
+server->person:send token (email)
+server->client:send result (body)
+client->person:show result

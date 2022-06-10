@@ -1,0 +1,14 @@
+title: Update (identity)
+
+participant person
+participant client
+participant server
+
+person->client:goto profile
+client->person:show identity fields\nshow save button
+person->client:enter identity\nclick save button
+client->server:send identity (body)\nPOST /api/auth/update/identity
+server->server:update user in database
+server->person:send notification (email)
+server->client:send result (body)
+client->person:show result

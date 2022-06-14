@@ -1,8 +1,5 @@
 <form name="user">
   <fieldset hidden>
-    <textarea name="auth_codes" hidden></textarea>
-    <input name="auth_totp" type="text" hidden />
-    <textarea name="auth_webauthn" type="text" hidden></textarea>
     <input name="user_id" type="number" readonly required sc-pkey sc-serial />
   </fieldset>
   <fieldset>
@@ -123,31 +120,34 @@
       <input id="auth-password" name="auth_password" type="password" />
     </div>
     <div>
-      <input id="auth-mfa" name="auth_mfa" type="checkbox" value="true" />
-      <label for="auth-mfa"
-        >Whether multi-factor authentication is enabled</label
-      >
+      <label for="auth-password">Confirmed</label>
+      <input
+        id="auth-password-confirmed"
+        name="auth_password_confirmed"
+        type="datetime-local"
+        step="1"
+        readonly
+      />
     </div>
     <fieldset>
       <legend>MFA</legend>
       <div>
-        <input
-          name="auth_hotp_email_confirmed"
-          type="checkbox"
-          value="true"
-          disabled
-          readonly
-        />
-        <input name="auth_hotp_email" type="email" readonly />
+        <input id="auth-mfa" name="auth_mfa" type="checkbox" value="true" />
+        <label for="auth-mfa"
+          >Whether multi-factor authentication is enabled</label
+        >
       </div>
       <div>
+        <input name="auth_hotp_email" type="email" readonly />
         <input
-          name="auth_hotp_tel_confirmed"
-          type="checkbox"
-          value="true"
-          disabled
+          id="auth-hotp-email-confirmed"
+          name="auth_hotp_email_confirmed"
+          type="datetime-local"
+          step="1"
           readonly
         />
+      </div>
+      <div>
         <select
           name="auth_hotp_tel_country_code"
           readonly
@@ -162,48 +162,50 @@
           readonly
           sc-generated="auth_hotp_tel?order=1"
         />
+        <input
+          id="auth-hotp-tel-confirmed"
+          name="auth_hotp_tel_confirmed"
+          type="datetime-local"
+          step="1"
+          readonly
+        />
       </div>
       <div>
+        <label for="auth-totp-confirmed">Authenticator</label>
         <input
           id="auth-totp-confirmed"
           name="auth_totp_confirmed"
-          type="checkbox"
-          value="true"
-          disabled
+          type="datetime-local"
+          step="1"
           readonly
         />
-        <label for="auth-totp-confirmed"
-          >Whether an authenticator was confirmed</label
-        >
+        <input name="auth_totp" type="text" hidden />
       </div>
       <div>
+        <label for="auth-codes-confirmed">Backup Codes</label>
         <input
           id="auth-codes-confirmed"
           name="auth_codes_confirmed"
-          type="checkbox"
-          value="true"
-          disabled
+          type="datetime-local"
+          step="1"
           readonly
         />
-        <label for="auth-codes-confirmed"
-          >Whether backup codes were confirmed</label
-        >
+        <textarea name="auth_codes" hidden></textarea>
       </div>
     </fieldset>
   </fieldset>
   <fieldset>
     <legend>Passwordless</legend>
     <div>
+      <label for="auth-webauthn-confirmed">WebAuthn</label>
       <input
         id="auth-webauthn-confirmed"
         name="auth_webauthn_confirmed"
-        type="checkbox"
-        value="true"
+        type="datetime-local"
+        step="1"
         readonly
       />
-      <label for="auth-webauthn-confirmed"
-        >Whether WebAuthn was confirmed</label
-      >
+      <textarea name="auth_webauthn" type="text" hidden></textarea>
     </div>
   </fieldset>
   <fieldset>

@@ -6,6 +6,7 @@ declare global {
   interface HTMLElementEventMap {
     'sc-popup-hide': ScolaEvent
     'sc-popup-show': ScolaEvent
+    'sc-popup-toggle': ScolaEvent
   }
 }
 
@@ -16,6 +17,11 @@ type Left =
 | 'screen-center'
 | 'start-at-end'
 | 'start'
+
+type Sync =
+| 'both'
+| 'height'
+| 'width'
 
 type Top =
 | 'bottom-at-top'
@@ -72,6 +78,8 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   public propagator: Propagator
 
+  public sync: Sync | null
+
   public top: Top
 
   public transition: boolean
@@ -96,7 +104,11 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   protected handleObserverBound = this.handleObserver.bind(this)
 
+  protected handleScrollBound = this.handleScroll.bind(this)
+
   protected handleShowBound = this.handleShow.bind(this)
+
+  protected handleToggleBound = this.handleToggle.bind(this)
 
   protected handleTransitionendBound = this.handleTransitionend.bind(this)
 
@@ -168,6 +180,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.interactor.target = 'window'
     this.interactor.touch = this.interactor.hasTouch
     this.left = (this.breakpoint.parseAttribute('sc-left') as Left | null) ?? 'center'
+    this.sync = this.breakpoint.parseAttribute('sc-sync') as Sync | null
     this.top = (this.breakpoint.parseAttribute('sc-top') as Top | null) ?? 'center'
     this.transition = this.breakpoint.parseAttribute('sc-transition') === ''
   }
@@ -176,6 +189,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     this.style.removeProperty('display')
     this.style.setProperty('opacity', '0')
     this.indexer.set(this)
+    this.syncSize()
 
     const position = {
       left: this.left,
@@ -187,11 +201,11 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
       top: 0
     }
 
-    if (this.trigger === undefined) {
-      style = this.calculateStyle(position)
-    } else {
+    if (this.trigger !== undefined) {
       style.left = this.trigger.clientX
       style.top = this.trigger.clientY
+    } else if (this.anchor !== undefined) {
+      style = this.calculateStyle(position)
     }
 
     this.setAttribute('sc-left-calc', position.left)
@@ -229,7 +243,9 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   protected addEventListeners (): void {
     this.addEventListener('sc-popup-hide', this.handleHideBound)
     this.addEventListener('sc-popup-show', this.handleShowBound)
+    this.addEventListener('sc-popup-toggle', this.handleToggleBound)
     this.addEventListener('transitionend', this.handleTransitionendBound)
+    window.addEventListener('scroll', this.handleScrollBound, true)
   }
 
   protected calculateAlternativeStyle (position: Position): Style {
@@ -241,9 +257,9 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
 
   protected calculateAlternativeStyleLeft (position: Position): number {
     const {
-      offsetLeft = 0,
-      offsetWidth = 0
-    } = this.anchor ?? {}
+      left: offsetLeft = 0,
+      width: offsetWidth = 0
+    } = this.anchor?.getBoundingClientRect() ?? {}
 
     let left = offsetLeft
 
@@ -276,14 +292,14 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
         break
     }
 
-    return left
+    return left - (this.offsetParent?.getBoundingClientRect().left ?? 0)
   }
 
   protected calculateAlternativeStyleTop (position: Position): number {
     const {
-      offsetHeight = 0,
-      offsetTop = 0
-    } = this.anchor ?? {}
+      height: offsetHeight = 0,
+      top: offsetTop = 0
+    } = this.anchor?.getBoundingClientRect() ?? {}
 
     let top = offsetTop + offsetHeight
 
@@ -309,7 +325,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
         break
     }
 
-    return top
+    return top - (this.offsetParent?.getBoundingClientRect().top ?? 0)
   }
 
   protected calculateStyle (position: Position): Style {
@@ -323,7 +339,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
       style = this.calculateAlternativeStyle(position)
       return (
         style.left >= 0 &&
-        (style.left + this.offsetWidth) <= window.innerWidth
+        (style.left + this.offsetWidth) <= (this.offsetParent?.getBoundingClientRect().width ?? window.innerWidth)
       )
     })
 
@@ -332,7 +348,7 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
       style = this.calculateAlternativeStyle(position)
       return (
         style.top >= 0 &&
-        (style.top + this.offsetHeight) <= window.innerHeight
+        (style.top + this.offsetHeight) <= (this.offsetParent?.getBoundingClientRect().height ?? window.innerHeight)
       )
     })
 
@@ -411,10 +427,21 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     }
   }
 
+  protected handleScroll (): void {
+    this.toggleAttribute('hidden', true)
+  }
+
   protected handleShow (event: ScolaEvent): void {
-    if (event.element.hasAttribute('sc-popup-anchor')) {
-      this.anchor = event.element
-      this.trigger = undefined
+    const anchor = event.element.getAttribute('sc-popup-anchor')
+
+    if (anchor !== null) {
+      if (anchor === '') {
+        this.anchor = event.element
+        this.trigger = undefined
+      } else {
+        this.anchor = document.getElementById(anchor) ?? undefined
+        this.trigger = undefined
+      }
     } else if (event.trigger instanceof MouseEvent) {
       this.trigger = event.trigger
     }
@@ -424,6 +451,24 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
     } else {
       this.show()
     }
+  }
+
+  protected handleToggle (event: ScolaEvent): void {
+    const anchor = event.element.getAttribute('sc-popup-anchor')
+
+    if (anchor !== null) {
+      if (anchor === '') {
+        this.anchor = event.element
+        this.trigger = undefined
+      } else {
+        this.anchor = document.getElementById(anchor) ?? undefined
+        this.trigger = undefined
+      }
+    } else if (event.trigger instanceof MouseEvent) {
+      this.trigger = event.trigger
+    }
+
+    this.toggleAttribute('hidden')
   }
 
   protected handleTouchstart (event: TouchEvent): void {
@@ -441,6 +486,24 @@ export class ScolaPopupElement extends HTMLDivElement implements ScolaElement {
   protected removeEventListeners (): void {
     this.removeEventListener('sc-popup-hide', this.handleHideBound)
     this.removeEventListener('sc-popup-show', this.handleShowBound)
+    this.removeEventListener('sc-popup-toggle', this.handleToggleBound)
     this.removeEventListener('transitionend', this.handleTransitionendBound)
+    window.removeEventListener('scroll', this.handleScrollBound, true)
+  }
+
+  protected syncSize (): void {
+    if (
+      this.sync === 'height' ||
+      this.sync === 'both'
+    ) {
+      this.style.setProperty('height', `${this.anchor?.offsetHeight ?? 0}px`)
+    }
+
+    if (
+      this.sync === 'width' ||
+      this.sync === 'both'
+    ) {
+      this.style.setProperty('width', `${this.anchor?.offsetWidth ?? 0}px`)
+    }
   }
 }

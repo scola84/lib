@@ -1,6 +1,6 @@
 import { Builder, Parser } from 'xml2js'
 import type { IncomingMessage, ServerResponse } from 'http'
-import { ScolaFile, Struct, cast, isPrimitive, isStruct, revive, setPush } from '../../../common'
+import { ScolaError, ScolaFile, Struct, cast, isPrimitive, isStruct, revive, setPush, toString } from '../../../common'
 import type { FileBucket } from '../file'
 import type { FileInfo } from 'busboy'
 import type { Readable } from 'stream'
@@ -70,7 +70,12 @@ export class RouteCodec {
       decoder.on('error', (error) => {
         decoder.removeAllListeners()
         decoder.destroy()
-        reject(error)
+
+        reject(new ScolaError({
+          code: 'err_codec',
+          message: toString(error),
+          status: 400
+        }))
       })
 
       decoder.on('field', (name, value) => {
@@ -127,37 +132,77 @@ export class RouteCodec {
   }
 
   public async decodeFormUrlencoded (request: IncomingMessage): Promise<Struct> {
-    return Struct.fromQuery(await this.decodePlain(request), true)
+    try {
+      return await Struct.fromQuery(await this.decodePlain(request), true)
+    } catch (error: unknown) {
+      throw new ScolaError({
+        code: 'err_codec',
+        message: toString(error),
+        status: 400
+      })
+    }
   }
 
   public async decodeJson (request: IncomingMessage): Promise<unknown> {
-    return JSON.parse(await this.decodePlain(request), revive) as unknown
+    try {
+      return JSON.parse(await this.decodePlain(request), revive) as unknown
+    } catch (error: unknown) {
+      throw new ScolaError({
+        code: 'err_codec',
+        message: toString(error),
+        status: 400
+      })
+    }
   }
 
   public async decodeOctetStream (request: IncomingMessage): Promise<Buffer> {
-    let body = Buffer.from([])
+    try {
+      let body = Buffer.from([])
 
-    for await (const data of request) {
-      if (Buffer.isBuffer(data)) {
-        body = Buffer.concat([body, data])
+      for await (const data of request) {
+        if (Buffer.isBuffer(data)) {
+          body = Buffer.concat([body, data])
+        }
       }
-    }
 
-    return body
+      return body
+    } catch (error: unknown) {
+      throw new ScolaError({
+        code: 'err_codec',
+        message: toString(error),
+        status: 400
+      })
+    }
   }
 
   public async decodePlain (request: IncomingMessage): Promise<string> {
-    let body = ''
+    try {
+      let body = ''
 
-    for await (const data of request) {
-      body += String(data)
+      for await (const data of request) {
+        body += String(data)
+      }
+
+      return body
+    } catch (error: unknown) {
+      throw new ScolaError({
+        code: 'err_codec',
+        message: toString(error),
+        status: 400
+      })
     }
-
-    return body
   }
 
   public async decodeXml (request: IncomingMessage): Promise<string> {
-    return new Parser().parseStringPromise(await this.decodePlain(request)) as Promise<string>
+    try {
+      return await (new Parser().parseStringPromise(await this.decodePlain(request)) as Promise<string>)
+    } catch (error: unknown) {
+      throw new ScolaError({
+        code: 'err_codec',
+        message: toString(error),
+        status: 400
+      })
+    }
   }
 
   public encode (data: unknown, response: ServerResponse, request?: IncomingMessage): string {
@@ -200,7 +245,11 @@ export class RouteCodec {
         body = this.encodeXml(data)
         break
       default:
-        throw new Error('Content is not acceptable')
+        throw new ScolaError({
+          code: 'err_codec',
+          message: 'Not Acceptable',
+          status: 406
+        })
     }
 
     if (!response.headersSent) {
@@ -211,47 +260,87 @@ export class RouteCodec {
   }
 
   public encodeEventStream (data: unknown): string {
-    let body = ''
+    try {
+      let body = ''
 
-    if (isStruct(data)) {
-      if (isPrimitive(data.data)) {
-        body += `data: ${data.data.toString()}\n`
+      if (isStruct(data)) {
+        if (isPrimitive(data.data)) {
+          body += `data: ${data.data.toString()}\n`
+        }
+
+        if (isPrimitive(data.event)) {
+          body += `event: ${data.event.toString()}\n`
+        }
+
+        if (isPrimitive(data.id)) {
+          body += `id: ${data.id.toString()}\n`
+        }
+
+        if (isPrimitive(data.retry)) {
+          body += `retry: ${data.retry.toString()}\n`
+        }
       }
 
-      if (isPrimitive(data.event)) {
-        body += `event: ${data.event.toString()}\n`
+      if (body.length === 0) {
+        return ''
       }
 
-      if (isPrimitive(data.id)) {
-        body += `id: ${data.id.toString()}\n`
-      }
-
-      if (isPrimitive(data.retry)) {
-        body += `retry: ${data.retry.toString()}\n`
-      }
+      return `${body}\n`
+    } catch (error: unknown) {
+      throw new ScolaError({
+        code: 'err_codec',
+        message: toString(error),
+        status: 500
+      })
     }
-
-    if (body.length === 0) {
-      return ''
-    }
-
-    return `${body}\n`
   }
 
   public encodeHtml (data: unknown): string {
-    return String(data)
+    try {
+      return String(data)
+    } catch (error: unknown) {
+      throw new ScolaError({
+        code: 'err_codec',
+        message: toString(error),
+        status: 500
+      })
+    }
   }
 
   public encodeJson (data: unknown): string {
-    return JSON.stringify(data)
+    try {
+      return JSON.stringify(data)
+    } catch (error: unknown) {
+      throw new ScolaError({
+        code: 'err_codec',
+        message: toString(error),
+        status: 500
+      })
+    }
   }
 
   public encodePlain (data: unknown): string {
-    return String(data)
+    try {
+      return String(data)
+    } catch (error: unknown) {
+      throw new ScolaError({
+        code: 'err_codec',
+        message: toString(error),
+        status: 500
+      })
+    }
   }
 
   public encodeXml (data: unknown): string {
-    return new Builder().buildObject(data)
+    try {
+      return new Builder().buildObject(data)
+    } catch (error: unknown) {
+      throw new ScolaError({
+        code: 'err_codec',
+        message: toString(error),
+        status: 500
+      })
+    }
   }
 
   protected discardStream (stream: Readable): void {

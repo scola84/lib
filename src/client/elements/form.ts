@@ -1,5 +1,5 @@
 import { Mutator, Observer, Propagator } from '../helpers'
-import { get, isError, isStruct, setPush } from '../../common'
+import { ScolaError, get, isError, isStruct, setPush } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaFieldElement } from './field'
 import { ScolaInputElement } from './input'
@@ -199,7 +199,7 @@ export class ScolaFormElement extends HTMLFormElement implements ScolaElement {
       const error = get(data, fieldElement.name)
 
       if (isError(error)) {
-        fieldElement.error = error
+        fieldElement.error = new ScolaError(error)
       } else {
         fieldElement.error = undefined
       }

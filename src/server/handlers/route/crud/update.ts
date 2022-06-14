@@ -1,9 +1,8 @@
 import type { Query, User } from '../../../../common'
 import type { Schema, SchemaField } from '../../../helpers/schema'
-import { ScolaFile, Struct, cast, isFile, isSame } from '../../../../common'
+import { ScolaError, ScolaFile, Struct, cast, isFile, isSame } from '../../../../common'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
-import type { ServerResponse } from 'http'
 
 export abstract class CrudUpdateHandler extends CrudHandler {
   public method = 'POST'
@@ -53,7 +52,7 @@ export abstract class CrudUpdateHandler extends CrudHandler {
       }))
   }
 
-  protected async update (query: Query, data: Struct, response: ServerResponse, user?: User): Promise<Struct | undefined> {
+  protected async update (query: Query, data: Struct, user?: User): Promise<Struct | undefined> {
     const selectQuery = this.database.formatter.createSelectQuery(this.object, this.keys, this.keys.primary ?? [], {
       where: data
     }, user)
@@ -61,8 +60,11 @@ export abstract class CrudUpdateHandler extends CrudHandler {
     const object = await this.database.select(selectQuery.string, selectQuery.values)
 
     if (object === undefined) {
-      response.statusCode = 404
-      throw new Error('Object is undefined')
+      throw new ScolaError({
+        code: 'err_update',
+        message: 'Object is undefined',
+        status: 404
+      })
     }
 
     if (
@@ -71,8 +73,11 @@ export abstract class CrudUpdateHandler extends CrudHandler {
       data[this.keys.modified.column] !== undefined &&
       !isSame(cast(object[this.keys.modified.column]), cast(data[this.keys.modified.column]))
     ) {
-      response.statusCode = 412
-      throw new Error('Object is modified')
+      throw new ScolaError({
+        code: 'err_update',
+        message: 'Object is modified',
+        status: 412
+      })
     }
 
     const updateQuery = this.database.formatter.createUpdateQuery(this.object, this.schema.body.schema, this.keys, data, user)

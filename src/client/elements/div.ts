@@ -199,6 +199,10 @@ export class ScolaDivElement extends HTMLDivElement implements ScolaElement {
       handled = true
     }
 
+    if (handled) {
+      this.propagator.dispatchEvents('start', [this.data], event.originalEvent)
+    }
+
     return handled
   }
 

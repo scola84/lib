@@ -37,10 +37,6 @@ export class NodeSmtp implements Smtp {
   }
 
   public async create (code: string, data: unknown, user: Pick<User, 'i18n_locale' | 'identity_email' | 'identity_name'>): Promise<SmtpSendOptions> {
-    if (user.identity_email === null) {
-      throw new Error('Email is null')
-    }
-
     const subject = this.i18n.formatText(`email_subject_${code}`, data, user.i18n_locale ?? undefined)
     const text = this.i18n.formatText(`email_text_${code}`, data, user.i18n_locale ?? undefined)
 

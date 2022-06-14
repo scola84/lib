@@ -1,9 +1,8 @@
 import type { SchemaField, Validator } from '../helpers'
-import { isArray, isStruct } from '../../common'
-import type { Struct } from '../../common'
+import { ScolaError, isArray, isStruct } from '../../common'
 
 export function minLength (name: string, field: SchemaField): Validator {
-  return (data: Struct, errors: Struct) => {
+  return (data, errors) => {
     const value = data[name]
 
     if ((
@@ -15,12 +14,12 @@ export function minLength (name: string, field: SchemaField): Validator {
     ) || (
       String(value).length < (field.minLength ?? -Infinity)
     )) {
-      errors[name] = {
+      errors[name] = new ScolaError({
         code: 'err_validator_too_short',
         data: {
           minLength: field.minLength
         }
-      }
+      })
 
       throw errors[name]
     }

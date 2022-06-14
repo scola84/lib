@@ -1,6 +1,5 @@
 import { ScolaAppElement } from './app'
 import { ScolaAudioElement } from './audio'
-import { ScolaAuthElement } from './auth'
 import { ScolaButtonElement } from './button'
 import { ScolaButtonGroupElement } from './button-group'
 import { ScolaCarouselElement } from './carousel'
@@ -46,7 +45,6 @@ import { ScolaWorkerElement } from './worker'
 export function defineElements (): void {
   ScolaAppElement.define()
   ScolaAudioElement.define()
-  ScolaAuthElement.define()
   ScolaButtonElement.define()
   ScolaButtonGroupElement.define()
   ScolaCarouselElement.define()

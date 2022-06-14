@@ -1,6 +1,6 @@
-import { I18n, isResult, isTransaction, toString } from '../../common'
+import { I18n, ScolaError, isResult, isTransaction, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { Result, ScolaError, Struct } from '../../common'
+import type { Result, Struct } from '../../common'
 import type { ScolaElement } from './element'
 
 declare global {
@@ -191,10 +191,10 @@ export class ScolaWorkerElement extends HTMLObjectElement implements ScolaElemen
   }
 
   protected handleError (error: unknown): void {
-    this.error = {
+    this.error = new ScolaError({
       code: 'err_worker',
       message: toString(error)
-    }
+    })
 
     this.propagator.dispatchEvents<ScolaError>('error', [this.error])
     this.setAttribute('aria-invalid', 'true')

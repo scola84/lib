@@ -166,6 +166,10 @@ export class ScolaButtonElement extends HTMLButtonElement implements ScolaElemen
       handled = true
     }
 
+    if (handled) {
+      this.propagator.dispatchEvents('start', [this.data], event.originalEvent)
+    }
+
     return handled
   }
 

@@ -1,6 +1,7 @@
 import { RouteHandler, sql } from '../../../helpers'
 import type { View, ViewGroup, ViewUser } from '../../../../common'
 import type { RouteData } from '../../../helpers'
+import { ScolaError } from '../../../../common'
 import type { ServerResponse } from 'http'
 
 interface ViewGetHandlerData extends RouteData {
@@ -47,8 +48,11 @@ export class ViewGetHandler extends RouteHandler {
     })
 
     if (view === undefined) {
-      response.statusCode = 404
-      throw new Error('View is undefined')
+      throw new ScolaError({
+        code: 'err_view',
+        message: 'View is undefined',
+        status: 404
+      })
     }
 
     response.setHeader('content-type', 'text/html')

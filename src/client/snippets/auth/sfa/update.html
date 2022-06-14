@@ -10,6 +10,7 @@
   <form
     id="form-update-user"
     is="sc-form"
+    novalidate
     sc-onsubmit="sc-requester-send@#requester-user-update"
     sc-preset="sc-body sc-section-group"
   >
@@ -57,7 +58,8 @@
         aria-labelledby="title-update-user-identity"
         id="fieldset-update-user-identity"
         is="sc-fieldset"
-        sc-preset="sc-fieldset sc-section-body"
+        sc-observe-save="hidden"
+        sc-preset="sc-fieldset sc-hide-height"
       >
         <div is="sc-div"></div>
         <div is="sc-div" sc-preset="sc-field">
@@ -196,6 +198,74 @@
         is="sc-button"
         type="button"
         sc-observe-state="sc-open"
+        sc-observe-target="sc-element-state-element-has-attrs?hidden=false@#fieldset-update-user-auth"
+        sc-onclick="sc-attrs-toggle?hidden=false@#fieldset-update-user-auth"
+        sc-preset="sc-section-title"
+      >
+        <span
+          id="title-update-user-auth"
+          is="sc-span"
+          sc-text="title_user_auth"
+          sc-width="flex@all"
+        ></span>
+        <span
+          is="sc-icon"
+          class="sc-arrow"
+          sc-code="chevronForward"
+          sc-preset="sc-icon-contrast-small"
+          sc-transition="@all"
+        ></span>
+      </button>
+      <fieldset
+        aria-labelledby="title-update-user-auth"
+        id="fieldset-update-user-auth"
+        is="sc-fieldset"
+        sc-observe-save="hidden"
+        sc-preset="sc-fieldset sc-hide-height"
+      >
+        <div is="sc-div"></div>
+        <div is="sc-div" sc-preset="sc-field">
+          <label
+            is="sc-label"
+            sc-preset="sc-field-title"
+            sc-text="title_user_auth_password"
+          ></label>
+          <span
+            id="span-update-user-auth-password"
+            is="sc-span"
+            sc-preset="sc-field-text"
+          >
+            <span
+              is="sc-span"
+              sc-width="flex@all"
+              sc-text="Ingesteld op $(auth_password_confirmed?dateStyle=short)d"
+            ></span>
+            <button
+              is="sc-button"
+              type="button"
+              sc-aria-label="tooltip_edit"
+              sc-cancel
+              sc-onstart="sc-popup-toggle@#popup-update-user-auth-password"
+              sc-popup-anchor="span-update-user-auth-password"
+              sc-preset="sc-button-in-field"
+              sc-title="tooltip_edit"
+            >
+              <span
+                is="sc-icon"
+                sc-code="pencil"
+                sc-preset="sc-icon-normal-small"
+              ></span>
+            </button>
+          </span>
+        </div>
+      </fieldset>
+    </div>
+    <div is="sc-div" sc-preset="sc-fieldset-divider"></div>
+    <div is="sc-div" sc-preset="sc-section">
+      <button
+        is="sc-button"
+        type="button"
+        sc-observe-state="sc-open"
         sc-observe-target="sc-element-state-element-has-attrs?hidden=false@#fieldset-update-user-email"
         sc-onclick="sc-attrs-toggle?hidden=false@#fieldset-update-user-email"
         sc-preset="sc-section-title"
@@ -218,16 +288,12 @@
         aria-labelledby="title-update-user-email"
         id="fieldset-update-user-email"
         is="sc-fieldset"
-        sc-preset="sc-fieldset sc-section-body"
+        sc-observe-save="hidden"
+        sc-preset="sc-fieldset sc-hide-height"
       >
         <div is="sc-div"></div>
         <div is="sc-div" sc-preset="sc-field">
-          <div
-            is="sc-div"
-            sc-align-y="top"
-            sc-direction="wrap"
-            sc-gap="0.5@all"
-          >
+          <div is="sc-div" sc-preset="sc-field-container-for-checkbox">
             <input
               id="input-update-user-email-auth-login"
               is="sc-input"
@@ -246,12 +312,7 @@
           </div>
         </div>
         <div is="sc-div" sc-preset="sc-field">
-          <div
-            is="sc-div"
-            sc-align-y="top"
-            sc-direction="wrap"
-            sc-gap="0.5@all"
-          >
+          <div is="sc-div" sc-preset="sc-field-container-for-checkbox">
             <input
               id="input-update-user-email-auth-update"
               is="sc-input"
@@ -302,7 +363,8 @@
         aria-labelledby="title-update-user-i18n"
         id="fieldset-update-user-i18n"
         is="sc-fieldset"
-        sc-preset="sc-fieldset sc-section-body"
+        sc-observe-save="hidden"
+        sc-preset="sc-fieldset sc-hide-height"
       >
         <div is="sc-div"></div>
         <div is="sc-div" sc-preset="sc-field">
@@ -362,10 +424,80 @@
         <button
           is="sc-button"
           type="submit"
-          sc-preset="sc-button-for-form"
+          sc-preset="sc-button-in-form"
           sc-text="action_save"
         ></button>
       </fieldset>
     </div>
   </form>
+  <div
+    id="popup-update-user-auth-password"
+    is="sc-popup"
+    sc-preset="sc-popup"
+    sc-sync="width@all"
+    sc-top="top-at-bottom@all"
+  >
+    <form
+      class="sc-shadow"
+      id="form-update-user-auth-password"
+      is="sc-form"
+      novalidate
+      sc-onsubmit="sc-requester-send@#requester-update-user-auth-password"
+      sc-preset="sc-section-group"
+    >
+      <object
+        id="requester-update-user-auth-password"
+        is="sc-requester"
+        sc-url="/api/auth/update/password"
+        sc-onresult="sc-popup-hide@#popup-update-user-auth-password sc-message-add@#message"
+        sc-onerror="sc-message-add@#message"
+        sc-onerrordata="sc-form-error@#form-update-user"
+        sc-wait
+      ></object>
+      <div is="sc-div" sc-preset="sc-section">
+        <fieldset is="sc-fieldset" sc-preset="sc-fieldset">
+          <div is="sc-div" sc-preset="sc-field">
+            <label
+              for="input-update-user-auth-password"
+              is="sc-label"
+              sc-preset="sc-field-title"
+              sc-text="title_user_auth_password_new"
+            ></label>
+            <input
+              hidden
+              is="sc-input"
+              name="identity"
+              type="text"
+              sc-observe-target="sc-element-props-element-get-props?value=value@#input-login-user-identity"
+            />
+            <input
+              aria-errormessage="error-update-user-auth-password"
+              autocomplete="new-password"
+              id="input-update-user-auth-password"
+              is="sc-input"
+              name="auth_password"
+              required
+              type="password"
+              sc-focus="popup"
+              sc-preset="sc-field-input"
+            />
+            <span
+              id="error-update-user-auth-password"
+              is="sc-span"
+              sc-observe-target="sc-element-state-field-state?aria-invalid=true@#input-update-user-auth-password"
+              sc-preset="sc-field-error"
+            ></span>
+          </div>
+          <div is="sc-div" sc-preset="sc-field">
+            <button
+              is="sc-button"
+              type="submit"
+              sc-preset="sc-button-in-form"
+              sc-text="action_edit"
+            ></button>
+          </div>
+        </fieldset>
+      </div>
+    </form>
+  </div>
 </div>

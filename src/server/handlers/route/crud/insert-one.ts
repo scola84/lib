@@ -3,7 +3,6 @@ import type { Schema, SchemaField } from '../../../helpers/schema'
 import { CrudInsertHandler } from './insert'
 import type { Merge } from 'type-fest'
 import type { RouteData } from '../../../helpers/route'
-import type { ServerResponse } from 'http'
 
 interface CrudInsertOneData extends RouteData {
   body: Struct
@@ -24,7 +23,7 @@ export abstract class CrudInsertOneHandler extends CrudInsertHandler {
     }>
   }
 
-  public async handle (data: CrudInsertOneData, response: ServerResponse): Promise<unknown> {
-    return this.insert(data.query, data.body, response, data.user)
+  public async handle (data: CrudInsertOneData): Promise<unknown> {
+    return this.insert(data.query, data.body, data.user)
   }
 }

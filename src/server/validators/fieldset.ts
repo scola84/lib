@@ -1,14 +1,14 @@
 import type { SchemaField, Validator } from '../helpers'
-import type { Struct, User } from '../../common'
+import { ScolaError, isStruct } from '../../common'
 import { SchemaValidator } from '../helpers'
-import { isStruct } from '../../common'
+import type { User } from '../../common'
 
 export function fieldset (name: string, field: SchemaField): Validator {
   const schemaValidator = new SchemaValidator(field.schema ?? {})
 
   schemaValidator.compile()
-  return async (data: Struct, errors: Struct, user?: User) => {
-    let childErrors: Struct | null = null
+  return async (data, errors, user?: User) => {
+    let childErrors: ScolaError | null = null
 
     const values = data[name]
 
@@ -29,12 +29,12 @@ export function fieldset (name: string, field: SchemaField): Validator {
 
         await schemaValidator.validate(values, user)
       } catch (error: unknown) {
-        childErrors = error as Struct
+        childErrors = ScolaError.fromError(error)
       }
     } else {
-      childErrors = {
+      childErrors = new ScolaError({
         code: 'err_validator_bad_input_fieldset'
-      }
+      })
     }
 
     if (childErrors !== null) {

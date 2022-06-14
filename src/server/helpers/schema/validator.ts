@@ -1,9 +1,11 @@
 import type { Primitive, User } from '../../../common'
-import { Struct } from '../../../common'
+import { ScolaError, Struct } from '../../../common'
 
 type Generator = () => Array<[number | string, string, boolean?]>
 
-export type Validator = (data: Struct, errors: Struct, user?: User) => Promise<void> | void
+export type Validator = (data: Struct, errors: ValidatorErrors, user?: User) => Promise<void> | void
+
+export type ValidatorErrors = Struct<ScolaError>
 
 export type ValidatorFactory = (name: string, field: SchemaField, validator: SchemaValidator) => Validator
 
@@ -88,7 +90,7 @@ export class SchemaValidator {
   }
 
   public async validate<Data extends Struct = Struct>(data: Data, user?: User): Promise<Data> {
-    const errors = Struct.create()
+    const errors = Struct.create<ValidatorErrors>()
 
     for (const validators of this.validators) {
       for (const validator of validators) {
@@ -102,7 +104,11 @@ export class SchemaValidator {
     }
 
     if (Object.keys(errors).length > 0) {
-      throw errors as unknown as Error
+      throw new ScolaError({
+        code: 'err_validator',
+        data: errors,
+        status: 400
+      })
     }
 
     return data
@@ -115,10 +121,6 @@ export class SchemaValidator {
     validators.push(SchemaValidator.validators[field.type]?.(name, field, this))
 
     if (field.custom !== undefined) {
-      if (SchemaValidator.validators[field.custom] === undefined) {
-        throw new Error(`Validator "${field.custom}" is undefined`)
-      }
-
       validators.push(SchemaValidator.validators[field.custom]?.(name, field, this))
     }
 

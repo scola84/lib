@@ -1,6 +1,5 @@
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http'
 import type { Struct, User } from '../../../common'
-import { isNil, toString } from '../../../common'
 import type { FileBucket } from '../file'
 import type { Logger } from 'pino'
 import type { RedisClientType } from 'redis'
@@ -16,8 +15,9 @@ import type { URL } from 'url'
 
 export interface RouteData extends Struct {
   body?: unknown
+  cookies: Struct
   headers: IncomingHttpHeaders
-  ip: string
+  ip?: string
   method: string
   query: Struct
   url: URL
@@ -25,7 +25,7 @@ export interface RouteData extends Struct {
 }
 
 export interface RouteHandlerOptions {
-  auth: RouteAuth
+  auth?: RouteAuth
   authenticate: boolean
   authorize: boolean
   bucket: FileBucket
@@ -33,6 +33,7 @@ export interface RouteHandlerOptions {
   database: SqlDatabase
   decode: boolean
   description: string
+  elevate: boolean
   logger: Logger
   method: string
   origin: string
@@ -64,6 +65,8 @@ export abstract class RouteHandler {
   public decode: boolean
 
   public description?: string
+
+  public elevate: boolean
 
   public logger?: Logger
 
@@ -111,6 +114,7 @@ export abstract class RouteHandler {
     this.database = handlerOptions.database
     this.decode = handlerOptions.decode ?? true
     this.description = handlerOptions.description
+    this.elevate = handlerOptions.elevate ?? false
     this.logger = handlerOptions.logger
     this.method = handlerOptions.method ?? 'GET'
     this.origin = handlerOptions.origin ?? process.env.ORIGIN ?? ''
@@ -124,68 +128,28 @@ export abstract class RouteHandler {
     this.validate = handlerOptions.validate ?? true
   }
 
-  public async handleRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<void> {
-    try {
-      if (this.authenticate) {
-        data.user = await this.auth?.authenticate(data, response)
-      }
-
-      if (this.authorize) {
-        this.auth?.authorize(data, response, this.permit)
-      }
-
-      if (this.decode) {
-        try {
-          data.body = await this.codec.decode(request, this.schema.body?.schema)
-        } catch (error: unknown) {
-          response.statusCode = 415
-          throw error
-        }
-      }
-
-      if (this.validate) {
-        try {
-          await this.validator.validate(data, data.user)
-        } catch (error: unknown) {
-          response.statusCode = 400
-          response.end(this.codec.encode(error, response, request))
-          throw error
-        }
-      }
-
-      const result = await this.handle(data, response, request)
-
-      if (!response.headersSent) {
-        if (isNil(result)) {
-          if (result === undefined) {
-            response.removeHeader('content-type')
-            response.end()
-          }
-        } else {
-          response.end(this.codec.encode(result, response, request))
-        }
-      }
-    } catch (error: unknown) {
-      if (!response.headersSent) {
-        if (response.statusCode === 403) {
-          await this.auth?.setBackoff(data, response)
-        } else {
-          if (response.statusCode < 300) {
-            response.statusCode = 500
-          }
-
-          response.removeHeader('content-type')
-          response.end()
-        }
-      }
-
-      this.logger?.error({
-        context: 'handle-route',
-        status: response.statusCode
-      }, toString(error))
-
-      throw error
+  public async handleRoute (data: RouteData, response: ServerResponse, request: IncomingMessage): Promise<unknown> {
+    if (this.authenticate) {
+      data.user = await this.auth?.authenticate(data)
     }
+
+    if (this.authorize) {
+      await this.auth?.authorize(data, this.permit)
+    }
+
+    if (this.elevate) {
+      await this.auth?.elevate(data)
+    }
+
+    if (this.decode) {
+      data.body = await this.codec.decode(request, this.schema.body?.schema)
+    }
+
+    if (this.validate) {
+      await this.validator.validate(data, data.user)
+    }
+
+    return this.handle(data, response, request)
   }
 
   public start (): void {

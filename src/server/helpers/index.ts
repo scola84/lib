@@ -1,4 +1,3 @@
-export * from './auth'
 export * from './fastify'
 export * from './file'
 export * from './queue'

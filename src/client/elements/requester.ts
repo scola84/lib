@@ -1,6 +1,6 @@
-import { I18n, Struct, flatten, isArray, isError, isFlow, isNil, isPrimitive, isResult, isStruct, isTransaction, revive, toJoint, toString } from '../../common'
+import { I18n, ScolaError, Struct, flatten, isArray, isError, isFlow, isNil, isPrimitive, isResult, isStruct, isTransaction, revive, toJoint, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { Result, ScolaError, Transaction } from '../../common'
+import type { Result, Transaction } from '../../common'
 import type { ScolaElement } from './element'
 import type { ScolaViewElement } from './view'
 import type { queue as fastq } from 'fastq'
@@ -405,10 +405,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
   }
 
   protected handleError (error: unknown): void {
-    this.error = {
+    this.error = new ScolaError({
       code: 'err_requester',
       message: toString(error)
-    }
+    })
 
     this.propagator.dispatchEvents<ScolaError>('error', [this.error])
     this.setAttribute('aria-invalid', 'true')
@@ -450,7 +450,7 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
 
       this.propagator.dispatchEvents<Transaction>('terror', [options], event)
     } else if (isError(data)) {
-      this.error = data
+      this.error = new ScolaError(data)
       this.propagator.dispatchEvents<ScolaError>('error', [this.error], event)
     } else {
       if (isStruct(data)) {
@@ -458,10 +458,10 @@ export class ScolaRequesterElement extends HTMLObjectElement implements ScolaEle
         this.propagator.dispatchEvents('errordata', [this.errorData], event)
       }
 
-      this.error = {
+      this.error = new ScolaError({
         code: `err_requester_${xhr.status}`,
         message: xhr.statusText
-      }
+      })
 
       this.propagator.dispatchEvents<ScolaError>('error', [this.error], event)
     }

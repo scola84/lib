@@ -1,17 +1,17 @@
 import type { SchemaField, Validator } from '../helpers'
-import type { Struct } from '../../common'
+import { ScolaError } from '../../common'
 
 export function max (name: string, field: SchemaField): Validator {
-  return (data: Struct, errors: Struct) => {
+  return (data, errors) => {
     const value = Number(data[name])
 
     if (value > (field.max ?? Infinity)) {
-      errors[name] = {
+      errors[name] = new ScolaError({
         code: 'err_validator_range_overflow',
         data: {
           max: field.max
         }
-      }
+      })
 
       throw errors[name]
     }

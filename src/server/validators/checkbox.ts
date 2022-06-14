@@ -1,9 +1,8 @@
 import type { SchemaField, Validator } from '../helpers'
-import type { Struct } from '../../common'
-import { isArray } from '../../common'
+import { ScolaError, isArray } from '../../common'
 
 export function checkbox (name: string, field: SchemaField): Validator {
-  return (data: Struct, errors: Struct) => {
+  return (data, errors) => {
     let values = data[name]
 
     if (
@@ -19,19 +18,19 @@ export function checkbox (name: string, field: SchemaField): Validator {
       })
 
       if (!included) {
-        errors[name] = {
+        errors[name] = new ScolaError({
           code: 'err_validator_bad_input_checkbox',
           data: {
             accept: field.values
           }
-        }
+        })
 
         throw errors[name]
       }
     } else {
-      errors[name] = {
+      errors[name] = new ScolaError({
         code: 'err_validator_bad_input_checkbox'
-      }
+      })
 
       throw errors[name]
     }

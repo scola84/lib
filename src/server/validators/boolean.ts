@@ -1,4 +1,4 @@
-import type { Struct } from '../../common'
+import { ScolaError } from '../../common'
 import type { Validator } from '../helpers'
 
 export function boolean (name: string): Validator {
@@ -7,14 +7,14 @@ export function boolean (name: string): Validator {
     true
   ]
 
-  return (data: Struct, errors: Struct) => {
+  return (data, errors) => {
     if (typeof data[name] !== 'boolean') {
-      errors[name] = {
+      errors[name] = new ScolaError({
         code: 'err_validator_bad_input_boolean',
         data: {
           accept: values
         }
-      }
+      })
 
       throw errors[name]
     }

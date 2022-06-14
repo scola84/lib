@@ -1,10 +1,9 @@
 import type { Query, Struct } from '../../../../common'
 import type { Schema, SchemaField } from '../../../helpers/schema'
-import { isStruct, toString } from '../../../../common'
+import { ScolaError, isStruct, toString } from '../../../../common'
 import { CrudInsertHandler } from './insert'
 import type { Merge } from 'type-fest'
 import type { RouteData } from '../../../helpers/route'
-import type { ServerResponse } from 'http'
 
 export interface CrudInsertManyData extends RouteData {
   body: Struct[]
@@ -25,19 +24,20 @@ export abstract class CrudInsertManyHandler extends CrudInsertHandler {
     }>
   }
 
-  public async handle (data: CrudInsertManyData, response: ServerResponse): Promise<unknown[]> {
+  public async handle (data: CrudInsertManyData): Promise<unknown[]> {
     return Promise.all(data.body.map(async (insertData) => {
       try {
         if (isStruct(insertData)) {
-          return await this.insert(data.query, insertData, response, data.user)
+          return await this.insert(data.query, insertData, data.user)
         }
 
         return undefined
       } catch (error: unknown) {
-        response.statusCode = 400
-        return {
-          message: toString(error)
-        }
+        return new ScolaError({
+          code: 'err_insert',
+          message: toString(error),
+          status: 400
+        })
       }
     }))
   }

@@ -1,9 +1,9 @@
 import type { SchemaField, Validator } from '../helpers'
-import type { Struct, User } from '../../common'
-import { isNil } from '../../common'
+import { ScolaError, isNil } from '../../common'
+import type { User } from '../../common'
 
 export function required (name: string, field: SchemaField): Validator {
-  return (data: Struct, errors: Struct, user?: User) => {
+  return (data, errors, user?: User) => {
     switch (field.var) {
       case '$created':
         data[name] = new Date()
@@ -26,9 +26,9 @@ export function required (name: string, field: SchemaField): Validator {
     ) {
       if (field.required === true) {
         if (field.value === undefined) {
-          errors[name] = {
+          errors[name] = new ScolaError({
             code: 'err_validator_value_missing'
-          }
+          })
 
           throw errors[name]
         }

@@ -1,6 +1,6 @@
 import { PassThrough, Writable } from 'stream'
 import type { Queue, Run, Struct, Task } from '../../../common'
-import { createRun, toString } from '../../../common'
+import { ScolaError, createRun, toString } from '../../../common'
 import type { Readable } from 'stream'
 import type { RedisClientType } from 'redis'
 import type { SqlDatabase } from '../sql'
@@ -90,7 +90,10 @@ export class QueueRunner {
     const database = this.databases[queue.db_name ?? '']
 
     if (database === undefined) {
-      throw new Error(`Database "${queue.db_name ?? ''}" is undefined`)
+      throw new ScolaError({
+        code: 'err_queue',
+        message: `Database "${queue.db_name ?? ''}" is undefined`
+      })
     }
 
     return database.stream(queue.db_query ?? '', parameters)

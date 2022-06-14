@@ -1,7 +1,7 @@
 import type { Query, User } from '../../../../common'
 import type { Schema, SchemaField } from '../../schema'
 import type { SqlQuery, SqlQueryKeys, SqlQueryParts } from '../query'
-import { Struct, isArray, isNil, isObject, isPrimitive } from '../../../../common'
+import { Struct, isArray, isNil, isObject } from '../../../../common'
 import type { SqlDdl } from '../formatter'
 import { SqlFormatter } from '../formatter'
 import { literal } from 'pg-format'
@@ -86,11 +86,10 @@ export class PgsqlFormatter extends SqlFormatter {
       isArray(value) ||
       isNil(value) ||
       isObject(value) ||
-      isPrimitive(value) ||
+      typeof value === 'boolean' ||
+      typeof value === 'number' ||
+      typeof value === 'string' ||
       value instanceof Date
-    ) && (
-      typeof value !== 'symbol' &&
-      !Number.isFinite(value)
     )) {
       return literal(value)
     }

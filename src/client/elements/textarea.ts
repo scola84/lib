@@ -1,6 +1,6 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import { I18n, cast, isPrimitive, isStruct } from '../../common'
-import type { Primitive, ScolaError, Struct } from '../../common'
+import { I18n, ScolaError, cast, isPrimitive, isStruct } from '../../common'
+import type { Primitive, ScolaErrorProperties, Struct } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 
@@ -53,7 +53,7 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
   }
 
   public get validityError (): ScolaError | undefined {
-    let error: ScolaError | null = null
+    let error: ScolaErrorProperties | null = null
 
     if (this.validity.badInput) {
       error = {
@@ -79,7 +79,11 @@ export class ScolaTextAreaElement extends HTMLTextAreaElement implements ScolaFi
       }
     }
 
-    return error ?? undefined
+    if (error === null) {
+      return undefined
+    }
+
+    return new ScolaError(error)
   }
 
   public get valueAsCast (): FieldValue {

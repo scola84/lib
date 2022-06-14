@@ -1,6 +1,6 @@
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import type { Primitive, ScolaError, Struct } from '../../common'
-import { cast, isArray, isPrimitive, isStruct } from '../../common'
+import type { Primitive, ScolaErrorProperties, Struct } from '../../common'
+import { ScolaError, cast, isArray, isPrimitive, isStruct } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 
@@ -66,7 +66,7 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
   }
 
   public get validityError (): ScolaError | undefined {
-    let error: ScolaError | null = null
+    let error: ScolaErrorProperties | null = null
 
     if (this.validity.badInput) {
       error = {
@@ -82,7 +82,11 @@ export class ScolaSelectElement extends HTMLSelectElement implements ScolaFieldE
       }
     }
 
-    return error ?? undefined
+    if (error === null) {
+      return undefined
+    }
+
+    return new ScolaError(error)
   }
 
   public get valueAsCast (): FieldValue {

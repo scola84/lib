@@ -92,7 +92,7 @@ export abstract class SqlFormatter {
       })
 
     if (columns.length === 0) {
-      throw new Error('Columns length is zero')
+      throw new Error('Columns are undefined')
     }
 
     const string = sql`
@@ -348,7 +348,7 @@ export abstract class SqlFormatter {
       })
 
     if (set.length === 0) {
-      throw new Error('Set length is zero')
+      throw new Error('Set is undefined')
     }
 
     const where = keys.primary?.map((key) => {

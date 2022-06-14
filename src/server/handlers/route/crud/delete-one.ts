@@ -3,7 +3,6 @@ import type { Schema, SchemaField } from '../../../helpers/schema'
 import { CrudDeleteHandler } from './delete'
 import type { Merge } from 'type-fest'
 import type { RouteData } from '../../../helpers/route'
-import type { ServerResponse } from 'http'
 
 interface CrudDeleteOneData extends RouteData {
   body: Struct
@@ -24,7 +23,7 @@ export abstract class CrudDeleteOneHandler extends CrudDeleteHandler {
     }>
   }
 
-  public async handle (data: CrudDeleteOneData, response: ServerResponse): Promise<unknown> {
-    return this.delete(data.query, data.body, response, data.user)
+  public async handle (data: CrudDeleteOneData): Promise<unknown> {
+    return this.delete(data.query, data.body, data.user)
   }
 }

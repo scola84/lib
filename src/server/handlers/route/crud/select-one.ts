@@ -1,5 +1,5 @@
 import type { Schema, SchemaField } from '../../../helpers/schema'
-import { Struct, cast, isFile, isSame, toString } from '../../../../common'
+import { ScolaError, Struct, cast, isFile, isSame, toString } from '../../../../common'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
 import type { Query } from '../../../../common'
@@ -27,8 +27,11 @@ export abstract class CrudSelectOneHandler extends CrudHandler {
     const object = await this.database.select(selectOneQuery.string, selectOneQuery.values)
 
     if (object === undefined) {
-      response.statusCode = 404
-      throw new Error('Object is undefined')
+      throw new ScolaError({
+        code: 'err_select',
+        message: 'Object is undefined',
+        status: 404
+      })
     }
 
     if (
@@ -49,16 +52,22 @@ export abstract class CrudSelectOneHandler extends CrudHandler {
       }
 
       if (file === null) {
-        response.statusCode = 404
-        throw new Error('File is null')
+        throw new ScolaError({
+          code: 'err_select',
+          message: 'File is null',
+          status: 404
+        })
       }
 
       if (isFile(file)) {
         const stream = await this.bucket?.get(file)
 
         if (stream === undefined) {
-          response.statusCode = 404
-          throw new Error('Stream is undefined')
+          throw new ScolaError({
+            code: 'err_select',
+            message: 'Stream is undefined',
+            status: 404
+          })
         }
 
         if (data.query.disposition === 'attachment') {

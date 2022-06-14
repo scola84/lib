@@ -1,4 +1,4 @@
-import type { Struct } from '../../common'
+import { ScolaError } from '../../common'
 import type { Validator } from '../helpers'
 
 export function order (name: string): Validator {
@@ -7,16 +7,16 @@ export function order (name: string): Validator {
     'desc'
   ]
 
-  return (data: Struct, errors: Struct) => {
+  return (data, errors) => {
     const value = String(data[name]).toLowerCase()
 
     if (!values.includes(value)) {
-      errors[name] = {
+      errors[name] = new ScolaError({
         code: 'err_validator_bad_input_order',
         data: {
           accept: values
         }
-      }
+      })
 
       throw errors[name]
     }

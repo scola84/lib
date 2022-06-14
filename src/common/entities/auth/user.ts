@@ -8,17 +8,17 @@ import type { UserToken } from './user-token'
 export interface User extends UserBase {
   auth_codes: string | null
 
-  auth_codes_confirmed: boolean | null
+  auth_codes_confirmed: Date | null
 
   auth_hotp?: string
 
   auth_hotp_email: string | null
 
-  auth_hotp_email_confirmed: boolean | null
+  auth_hotp_email_confirmed: Date | null
 
   auth_hotp_tel: string
 
-  auth_hotp_tel_confirmed: boolean | null
+  auth_hotp_tel_confirmed: Date | null
 
   auth_hotp_tel_country_code: string | null
 
@@ -30,11 +30,11 @@ export interface User extends UserBase {
 
   auth_totp: string | null
 
-  auth_totp_confirmed: boolean | null
+  auth_totp_confirmed: Date | null
 
   auth_webauthn: string | null
 
-  auth_webauthn_confirmed: boolean | null
+  auth_webauthn_confirmed: Date | null
 
   date_created: Date
 
@@ -79,19 +79,20 @@ export interface User extends UserBase {
 export function createUser (user?: Partial<User>, date = new Date()): User {
   return {
     auth_codes: user?.auth_codes ?? null,
-    auth_codes_confirmed: user?.auth_codes_confirmed ?? false,
+    auth_codes_confirmed: user?.auth_codes_confirmed ?? null,
     auth_hotp_email: user?.auth_hotp_email ?? null,
-    auth_hotp_email_confirmed: user?.auth_hotp_email_confirmed ?? false,
+    auth_hotp_email_confirmed: user?.auth_hotp_email_confirmed ?? null,
     auth_hotp_tel: `${user?.auth_hotp_tel_country_code ?? ''}${user?.auth_hotp_tel_national ?? ''}`,
-    auth_hotp_tel_confirmed: user?.auth_hotp_tel_confirmed ?? false,
+    auth_hotp_tel_confirmed: user?.auth_hotp_tel_confirmed ?? null,
     auth_hotp_tel_country_code: user?.auth_hotp_tel_country_code ?? null,
     auth_hotp_tel_national: user?.auth_hotp_tel_national ?? null,
     auth_mfa: user?.auth_mfa ?? false,
     auth_password: user?.auth_password ?? null,
+    auth_password_confirmed: user?.auth_password_confirmed ?? null,
     auth_totp: user?.auth_totp ?? null,
-    auth_totp_confirmed: user?.auth_totp_confirmed ?? false,
+    auth_totp_confirmed: user?.auth_totp_confirmed ?? null,
     auth_webauthn: user?.auth_webauthn ?? null,
-    auth_webauthn_confirmed: user?.auth_webauthn_confirmed ?? false,
+    auth_webauthn_confirmed: user?.auth_webauthn_confirmed ?? null,
     date_created: user?.date_created ?? date,
     date_updated: user?.date_updated ?? date,
     email_auth_login: user?.email_auth_login ?? false,

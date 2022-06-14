@@ -3,7 +3,6 @@ import type { Schema, SchemaField } from '../../../helpers/schema'
 import { CrudUpdateHandler } from './update'
 import type { Merge } from 'type-fest'
 import type { RouteData } from '../../../helpers/route'
-import type { ServerResponse } from 'http'
 
 interface CrudUpdateOneData extends RouteData {
   body: Struct
@@ -24,7 +23,7 @@ export abstract class CrudUpdateOneHandler extends CrudUpdateHandler {
     }>
   }
 
-  public async handle (data: CrudUpdateOneData, response: ServerResponse): Promise<unknown> {
-    return this.update(data.query, data.body, response, data.user)
+  public async handle (data: CrudUpdateOneData): Promise<unknown> {
+    return this.update(data.query, data.body, data.user)
   }
 }

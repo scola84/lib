@@ -1,9 +1,8 @@
-import { isNil, isStruct } from '../../common'
-import type { Struct } from '../../common'
+import { ScolaError, isNil, isStruct } from '../../common'
 import type { Validator } from '../helpers'
 
 export function identity (name: string): Validator {
-  return (data: Struct, errors: Struct) => {
+  return (data, errors) => {
     const value = data[name]
 
     if ((
@@ -18,9 +17,9 @@ export function identity (name: string): Validator {
       isNil(value.identity_username) ||
       value.identity_username === ''
     )) {
-      errors[name] = {
+      errors[name] = new ScolaError({
         code: 'err_validator_identity'
-      }
+      })
 
       throw errors[name]
     }

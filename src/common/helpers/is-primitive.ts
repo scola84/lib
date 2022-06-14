@@ -1,4 +1,4 @@
-export type Primitive = BigInt | boolean | number | string | symbol
+export type Primitive = bigint | boolean | number | string | symbol
 
 /**
  * Checks whether a value is a primitive, excluding `null` and `undefined`.

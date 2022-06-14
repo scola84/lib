@@ -1,6 +1,5 @@
 import { Media, Mutator, Observer, Propagator } from '../helpers'
-import { isStruct, toString } from '../../common'
-import type { ScolaError } from '../../common'
+import { ScolaError, isStruct, toString } from '../../common'
 import type { ScolaMediaElement } from './media'
 
 declare global {
@@ -135,10 +134,10 @@ export class ScolaAudioElement extends HTMLAudioElement implements ScolaMediaEle
   protected handleError (error: unknown): void {
     this.data = null
 
-    this.propagator.dispatchEvents<ScolaError>('error', [{
+    this.propagator.dispatchEvents<ScolaError>('error', [new ScolaError({
       code: 'err_audio',
       message: toString(error)
-    }])
+    })])
   }
 
   protected handleJump (event: CustomEvent): void {

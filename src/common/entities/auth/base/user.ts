@@ -1,18 +1,19 @@
 export interface User {
   auth_codes: string | null
-  auth_codes_confirmed: boolean | null
+  auth_codes_confirmed: Date | null
   auth_hotp_email: string | null
-  auth_hotp_email_confirmed: boolean | null
+  auth_hotp_email_confirmed: Date | null
   auth_hotp_tel: string | null
-  auth_hotp_tel_confirmed: boolean | null
+  auth_hotp_tel_confirmed: Date | null
   auth_hotp_tel_country_code: string | null
   auth_hotp_tel_national: string | null
   auth_mfa: boolean | null
   auth_password: string | null
+  auth_password_confirmed: Date | null
   auth_totp: string | null
-  auth_totp_confirmed: boolean | null
+  auth_totp_confirmed: Date | null
   auth_webauthn: string | null
-  auth_webauthn_confirmed: boolean | null
+  auth_webauthn_confirmed: Date | null
   date_created: Date
   date_updated: Date
   email_auth_login: boolean | null

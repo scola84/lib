@@ -1,6 +1,5 @@
 import { Media, Mutator, Observer, Propagator } from '../helpers'
-import { isStruct, toString } from '../../common'
-import type { ScolaError } from '../../common'
+import { ScolaError, isStruct, toString } from '../../common'
 import type { ScolaMediaElement } from './media'
 
 declare global {
@@ -143,10 +142,10 @@ export class ScolaVideoElement extends HTMLVideoElement implements ScolaMediaEle
   protected handleError (error: unknown): void {
     this.data = null
 
-    this.propagator.dispatchEvents<ScolaError>('error', [{
+    this.propagator.dispatchEvents<ScolaError>('error', [new ScolaError({
       code: 'err_video',
       message: toString(error)
-    }])
+    })])
   }
 
   protected handleFullscreen (): void {

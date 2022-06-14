@@ -1,17 +1,11 @@
 export const presets = {
-  'sc-auth': {
-    'sc-align-x': 'center',
-    'sc-align-y': 'center',
-    'sc-direction': 'column',
-    'sc-height': 'max@all',
-    'sc-position': 'absolute@all',
-    'sc-transition': '@all',
-    'sc-width': 'max@all'
-  },
-  'sc-auth-carousel': {
+  'sc-auth-login': {
     'sc-border': '@desktop',
     'sc-border-color': 'normal',
+    'sc-direction': 'column',
     'sc-height': '32@all 32@tablet max@mobile',
+    'sc-position': 'absolute@all',
+    'sc-transition': '@all',
     'sc-width': '24@all 24@tablet max@mobile'
   },
   'sc-body': {
@@ -21,7 +15,26 @@ export const presets = {
     'sc-scrollbar': 'auto',
     'sc-scrollbar-color': 'normal'
   },
-  'sc-button-for-form': {
+  'sc-button-group': {
+    'sc-align-y': 'center',
+    'sc-direction': 'row',
+    'sc-height': 'max@all',
+    'sc-padding-x': '0.5@all'
+  },
+  'sc-button-in-field': {
+    'sc-align-x': 'center',
+    'sc-align-y': 'center',
+    'sc-bg-color': 'contrast',
+    'sc-bg-color-interact': 'contrast',
+    'sc-border': '@all',
+    'sc-border-color': 'contrast',
+    'sc-direction': 'column',
+    'sc-height': '2@all',
+    'sc-round': 'max@all',
+    'sc-text-color': 'normal',
+    'sc-width': '2@all'
+  },
+  'sc-button-in-form': {
     'sc-align-x': 'center',
     'sc-align-y': 'center',
     'sc-bg-color': 'contrast',
@@ -30,7 +43,7 @@ export const presets = {
     'sc-height': '3@all',
     'sc-text-color': 'theme'
   },
-  'sc-button-for-menu': {
+  'sc-button-in-menu': {
     'sc-align-y': 'center',
     'sc-bg-color': 'normal',
     'sc-bg-color-active-focus': 'theme',
@@ -40,12 +53,6 @@ export const presets = {
     'sc-min-height': '3@all',
     'sc-padding-x': '1@all',
     'sc-text-color': 'normal'
-  },
-  'sc-button-group': {
-    'sc-align-y': 'center',
-    'sc-direction': 'row',
-    'sc-height': 'max@all',
-    'sc-padding-x': '0.5@all'
   },
   'sc-button-with-icon': {
     'sc-align-x': 'center',
@@ -82,7 +89,8 @@ export const presets = {
   },
   'sc-carousel': {
     'sc-axis': 'x',
-    'sc-clip': ''
+    'sc-clip': '',
+    'sc-direction': 'column'
   },
   'sc-carousel-body': {
     'sc-direction': 'row',
@@ -102,6 +110,11 @@ export const presets = {
   'sc-field': {
     'sc-direction': 'column',
     'sc-position': 'relative@all'
+  },
+  'sc-field-container-for-checkbox': {
+    'sc-align-y': 'top',
+    'sc-direction': 'wrap',
+    'sc-gap': '0.5@all'
   },
   'sc-field-container-for-icon': {
     'sc-height': '2@all',
@@ -129,13 +142,23 @@ export const presets = {
   'sc-field-input': {
     'sc-bg-color': 'contrast',
     'sc-height': '3@all',
-    'sc-padding': '0.75@all',
+    'sc-padding-x': '0.75@all',
     'sc-text-color': 'normal'
   },
   'sc-field-select': {
     'sc-bg-color': 'contrast',
     'sc-height': '3@all',
-    'sc-padding': '0.75@all',
+    'sc-interact': '',
+    'sc-padding-x': '0.75@all',
+    'sc-text-color': 'normal'
+  },
+  'sc-field-text': {
+    'sc-align-y': 'center',
+    'sc-bg-color': 'contrast',
+    'sc-direction': 'row',
+    'sc-gap-x': '0.5@all',
+    'sc-min-height': '3@all',
+    'sc-padding-x': '0.75@all',
     'sc-text-color': 'normal'
   },
   'sc-field-title': {
@@ -234,6 +257,13 @@ export const presets = {
     'sc-text-style': 'bold uppercase',
     'sc-width': 'flex@all'
   },
+  'sc-hide-height': {
+    'sc-clip': '',
+    'sc-direction': 'column',
+    'sc-hide': '',
+    'sc-hide-mode': 'height@all',
+    'sc-transition': '@all'
+  },
   'sc-icon': {
     'sc-height': '1.5@all',
     'sc-round': 'max@all',
@@ -268,6 +298,13 @@ export const presets = {
     'sc-round': 'max@all',
     'sc-width': '1.25@all'
   },
+  'sc-popup': {
+    'hidden': '',
+    'sc-bg-color': 'normal',
+    'sc-direction': 'column',
+    'sc-position': 'absolute@all',
+    'sc-transition': '@all'
+  },
   'sc-progress': {
     'sc-height': '0.25@all',
     'sc-position': 'absolute@all',
@@ -280,14 +317,6 @@ export const presets = {
   },
   'sc-section': {
     'sc-direction': 'column'
-  },
-  'sc-section-body': {
-    'sc-clip': '',
-    'sc-direction': 'column',
-    'sc-hide': '',
-    'sc-hide-mode': 'height@all',
-    'sc-observe-save': 'hidden',
-    'sc-transition': '@all'
   },
   'sc-section-group': {
     'sc-direction': 'column',

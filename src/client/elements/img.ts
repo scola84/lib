@@ -1,6 +1,6 @@
-import { I18n, isFile, isStruct, toString } from '../../common'
+import { I18n, ScolaError, isFile, isStruct, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { ScolaError, ScolaFileProperties, Struct } from '../../common'
+import type { ScolaFileProperties, Struct } from '../../common'
 import type { ScolaElement } from './element'
 
 export interface ImgData extends Struct {
@@ -126,10 +126,10 @@ export class ScolaImageElement extends HTMLImageElement implements ScolaElement 
   protected handleError (error: unknown): void {
     this.data = null
 
-    this.propagator.dispatchEvents<ScolaError>('error', [{
+    this.propagator.dispatchEvents<ScolaError>('error', [new ScolaError({
       code: 'err_img',
       message: toString(error)
-    }])
+    })])
   }
 
   protected isBlob (value: unknown): value is Blob {

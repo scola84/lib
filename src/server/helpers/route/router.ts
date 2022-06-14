@@ -1,18 +1,23 @@
 import type { IncomingMessage, Server, ServerResponse } from 'http'
+import { ScolaError, Struct, isError, isNil, toString } from '../../../common'
 import type { Logger } from 'pino'
+import type { RouteCodec } from './codec'
 import type { RouteHandler } from './handler'
-import { Struct } from '../../../common'
 import { URL } from 'url'
 import { createServer } from 'http'
+import { parse as parseCookie } from 'cookie'
 
 export interface RouterOptions {
   address?: string
+  codec?: RouteCodec
   logger?: Logger
   port?: number
 }
 
 export class Router {
   public address: string
+
+  public codec: RouteCodec
 
   public fastify?: (req: IncomingMessage, res: ServerResponse) => void
 
@@ -25,7 +30,12 @@ export class Router {
   public server?: Server
 
   public constructor (options: RouterOptions = {}) {
+    if (options.codec === undefined) {
+      throw new Error('Option "codec" is undefined')
+    }
+
     this.address = options.address ?? '0.0.0.0'
+    this.codec = options.codec
     this.logger = options.logger
     this.port = options.port ?? 80
   }
@@ -55,7 +65,18 @@ export class Router {
       this.server = createServer((request, response) => {
         this
           .handleRoute(request, response)
-          .catch(() => {})
+          .catch((error: unknown) => {
+            if (!response.headersSent) {
+              response.statusCode = 500
+              response.removeHeader('content-type')
+              response.end()
+            }
+
+            this.logger?.error({
+              context: 'handle-route',
+              status: response.statusCode
+            }, toString(error))
+          })
       })
 
       if (listen) {
@@ -102,9 +123,11 @@ export class Router {
 
     if (handlers === undefined) {
       if (this.fastify === undefined) {
-        response.statusCode = 404
-        response.end()
-        throw new Error('Path not found')
+        throw new ScolaError({
+          code: 'err_router',
+          message: 'Path is undefined',
+          status: 404
+        })
       } else {
         this.fastify(request, response)
         return
@@ -114,26 +137,50 @@ export class Router {
     const handler = handlers.get(request.method ?? '')
 
     if (handler === undefined) {
-      response.statusCode = 405
       response.setHeader('allow', Array.from(handlers.keys()).join(','))
-      response.end()
-      throw new Error('Method not allowed')
-    }
-
-    const ip = request.headers['x-real-ip']?.toString() ?? request.socket.remoteAddress
-
-    if (ip === undefined) {
-      throw new Error('IP is undefined')
+      throw new ScolaError({
+        code: 'err_router',
+        message: 'Method is undefined',
+        status: 405
+      })
     }
 
     const data = {
+      cookies: parseCookie(request.headers.cookie ?? ''),
       headers: request.headers,
-      ip: ip,
+      ip: request.headers['x-real-ip']?.toString() ?? request.socket.remoteAddress,
       method: request.method ?? 'GET',
       query: Struct.fromQuery(url.searchParams.toString(), true),
       url: url
     }
 
-    await handler.handleRoute(data, response, request)
+    try {
+      const result = await handler.handleRoute(data, response, request)
+
+      if (!response.headersSent) {
+        if (isNil(result)) {
+          if (result === undefined) {
+            response.removeHeader('content-type')
+            response.end()
+          }
+        } else {
+          response.end(this.codec.encode(result, response, request))
+        }
+      }
+    } catch (error: unknown) {
+      if (!response.headersSent) {
+        if (isError(error)) {
+          response.statusCode = error.status ?? 500
+          response.end(this.codec.encode(error, response, request))
+        } else {
+          throw error
+        }
+      }
+
+      this.logger?.error({
+        context: 'handle-route',
+        status: response.statusCode
+      }, toString(error))
+    }
   }
 }

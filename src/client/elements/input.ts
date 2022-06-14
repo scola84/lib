@@ -1,6 +1,6 @@
-import type { CastValue, Primitive, ScolaError, ScolaFile } from '../../common'
+import type { CastValue, Primitive, ScolaErrorProperties, ScolaFile } from '../../common'
 import { Field, Mutator, Observer, Propagator } from '../helpers'
-import { I18n, Struct, cast, isArray, isFile, isPrimitive, isStruct, set } from '../../common'
+import { I18n, ScolaError, Struct, cast, isArray, isFile, isPrimitive, isStruct, set } from '../../common'
 import type { FieldValue } from '../helpers'
 import type { ScolaFieldElement } from './field'
 import { debounce } from 'throttle-debounce'
@@ -58,7 +58,7 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
   }
 
   public get validityError (): ScolaError | undefined {
-    let error: ScolaError | null = null
+    let error: ScolaErrorProperties | null = null
 
     if (this.validity.badInput) {
       error = {
@@ -104,7 +104,11 @@ export class ScolaInputElement extends HTMLInputElement implements ScolaFieldEle
       }
     }
 
-    return error ?? undefined
+    if (error === null) {
+      return undefined
+    }
+
+    return new ScolaError(error)
   }
 
   public get valueAsCast (): FieldValue {

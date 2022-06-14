@@ -1,9 +1,8 @@
 import type { Query, Struct, User } from '../../../../common'
 import type { Schema, SchemaField, SchemaFieldKey } from '../../../helpers/schema'
+import { ScolaError, ScolaFile } from '../../../../common'
 import { CrudHandler } from './crud'
 import type { Merge } from 'type-fest'
-import { ScolaFile } from '../../../../common'
-import type { ServerResponse } from 'http'
 
 export abstract class CrudInsertHandler extends CrudHandler {
   public method = 'POST'
@@ -20,7 +19,7 @@ export abstract class CrudInsertHandler extends CrudHandler {
     }>
   }
 
-  protected async authorizeLinks (data: Struct, response: ServerResponse, user?: User): Promise<void> {
+  protected async authorizeLinks (data: Struct, user?: User): Promise<void> {
     const authKeys = [
       ...this.keys.foreign ?? [],
       ...this.keys.related ?? []
@@ -31,14 +30,17 @@ export abstract class CrudInsertHandler extends CrudHandler {
       const object = await this.database.select(selectQuery.string, selectQuery.values)
 
       if (object === undefined) {
-        response.statusCode = 404
-        throw new Error('Object is undefined')
+        throw new ScolaError({
+          code: 'err_insert',
+          message: 'Object is undefined',
+          status: 404
+        })
       }
     }))
   }
 
-  protected async insert (query: Query, data: Struct, response: ServerResponse, user?: User): Promise<Struct | undefined> {
-    await this.authorizeLinks(data, response, user)
+  protected async insert (query: Query, data: Struct, user?: User): Promise<Struct | undefined> {
+    await this.authorizeLinks(data, user)
 
     const insertQuery = this.database.formatter.createInsertQuery(this.object, this.schema.body.schema, this.keys, data, user)
     const object = await this.database.insert(insertQuery.string, insertQuery.values, null)

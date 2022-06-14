@@ -52,6 +52,7 @@
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-extra-parens": "off",
     "@typescript-eslint/no-magic-numbers": "off",
+    "@typescript-eslint/no-throw-literal": "off",
     "@typescript-eslint/no-type-alias": "off",
     "@typescript-eslint/object-curly-spacing": "off",
     "@typescript-eslint/prefer-readonly-parameter-types": "off",
@@ -84,6 +85,7 @@
         "maxEOF": 0
       }
     ],
+    "no-throw-literal": "off",
     "no-undefined": "off",
     "no-unused-vars": [
       "error",

@@ -1,8 +1,8 @@
-import { I18n, isStruct, merge, toString } from '../../common'
+import { I18n, ScolaError, isStruct, merge, toString } from '../../common'
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { ScolaError, Struct } from '../../common'
 import { ScolaAppElement } from './app'
 import type { ScolaElement } from './element'
+import type { Struct } from '../../common'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Drawer = (data: any, options: Struct) => unknown
@@ -193,10 +193,10 @@ export class ScolaDrawerElement extends HTMLDivElement implements ScolaElement {
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatchEvents<ScolaError>('error', [{
+    this.propagator.dispatchEvents<ScolaError>('error', [new ScolaError({
       code: 'err_drawer',
       message: toString(error)
-    }])
+    })])
   }
 
   protected handleLoad (): void {

@@ -1,12 +1,12 @@
 import { Mutator, Observer, Propagator } from '../helpers'
-import type { ScolaError, Struct } from '../../common'
+import { ScolaError, toString } from '../../common'
 import type { Html5Qrcode } from 'html5-qrcode'
 import type { Html5QrcodeCameraScanConfig } from 'html5-qrcode/esm/html5-qrcode'
 import { ImageCapture } from 'image-capture'
 import type { Options } from 'recordrtc'
 import type RtcRecorder from 'recordrtc'
 import type { ScolaElement } from './element'
-import { toString } from '../../common'
+import type { Struct } from '../../common'
 
 declare global {
   interface HTMLElementEventMap {
@@ -444,10 +444,10 @@ export class ScolaRecorderElement extends HTMLDivElement implements ScolaElement
   }
 
   protected handleError (error: unknown): void {
-    this.propagator.dispatchEvents<ScolaError>('error', [{
+    this.propagator.dispatchEvents<ScolaError>('error', [new ScolaError({
       code: 'err_recorder',
       message: toString(error)
-    }])
+    })])
   }
 
   protected handleObserver (): void {

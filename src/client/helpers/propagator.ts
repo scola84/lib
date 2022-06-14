@@ -26,8 +26,6 @@ export class Propagator {
 
   public i18n: I18n
 
-  public keydown: string[][]
-
   protected handleSetBound = this.handleSet.bind(this)
 
   public constructor (element: ScolaElement) {

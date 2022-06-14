@@ -1,5 +1,6 @@
 export default {
   action_cancel: 'Annuleren',
+  action_edit: 'Wijzigen',
   action_login: 'Inloggen',
   action_ok: 'OK',
   action_register: 'Registeren',
@@ -17,7 +18,7 @@ export default {
   email_subject_update_user: 'Account gewijzigd',
   email_text_login: 'Uw account is gebruikt om in te loggen op een nieuw apparaat op $(date?dateStyle=full&timeStyle=short)d.\n\nAls u dit niet zelf hebt gedaan, verander dan zo snel mogelijk uw wachtwoord via [deze link]($(url)s).',
   email_text_login_hotp: 'Uw eenmalige code is:\n\n**_$(token)s_**',
-  email_text_register: 'Er is een account geregisteerd op $(date?dateStyle=full&timeStyle=short)d.\n\nAls u dit niet zelf hebt gedaan, dan kunt u dit ongedaan maken via [deze link]($(url)s).\n(Let op: de link is geldig tot $(token.date_expires?dateStyle=full&timeStyle=short)d.)',
+  email_text_register: 'Er is een account geregisteerd op $(date?dateStyle=full&timeStyle=short)d.\n\nAls u dit niet zelf hebt gedaan, dan kunt u dit ongedaan maken via [deze link]($(url)s).',
   email_text_register_hotp: 'Uw eenmalige code is:\n\n**_$(token)s_**',
   email_text_register_identity: 'Er is een account geregistreerd op $(date?dateStyle=full&timeStyle=short)d.\n\nU kunt deze registratie bevestigen via [deze link]($(url)s).\n(Let op: de link is geldig tot $(token.date_expires?dateStyle=full&timeStyle=short)d.)',
   email_text_reset_request: 'Er is een link aangevraagd om het wachtwoord van uw account te wijzigen op $(date?dateStyle=full&timeStyle=short)d.\n\nAls u dit niet zelf hebt gedaan, dan kunt u deze e-mail negeren.\n\nU kunt uw wachtwoord wijzigen via [deze link]($(url)s).\n(Let op: de link is geldig tot $(token.date_expires?dateStyle=full&timeStyle=short)d.)',
@@ -117,6 +118,7 @@ export default {
   title_user: 'Account',
   title_user_auth: 'Beveiliging',
   title_user_auth_password: 'Wachtwoord',
+  title_user_auth_password_new: 'Nieuw wachtwoord',
   title_user_auth_password_required: 'Wachtwoord (verplicht)',
   title_user_email: 'Berichten',
   title_user_i18n: 'Taal & tijdzone',
@@ -128,6 +130,7 @@ export default {
   title_user_identity_name: 'Naam',
   title_user_identity_tel: 'Telefoon',
   title_user_identity_username: 'Gebruikersnaam',
-  tooltip_locale: 'Wijzig de taal',
-  tooltip_theme: 'Wijzig het thema'
+  tooltip_edit: 'Wijzigen',
+  tooltip_edit_locale: 'Wijzig de taal',
+  tooltip_edit_theme: 'Wijzig het thema'
 }
